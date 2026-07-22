@@ -9,10 +9,10 @@
         ja: 'gugopro-22'
     };
 
-    // Amazon domains
-    const AMAZON_DOMAINS = {
-        en: 'https://www.amazon.com/dp/',
-        ja: 'https://www.amazon.co.jp/dp/'
+    // Amazon search URLs
+    const AMAZON_SEARCH = {
+        en: 'https://www.amazon.com/s?k=',
+        ja: 'https://www.amazon.co.jp/s?k='
     };
 
     // Current language
@@ -63,15 +63,42 @@
     }
 
     function updateAffiliateLinks() {
-        var domain = AMAZON_DOMAINS[currentLang];
+        var searchBase = AMAZON_SEARCH[currentLang];
         var tag = AFFILIATE_TAGS[currentLang];
 
+        // Update product link buttons
         document.querySelectorAll('.product-link').forEach(function(link) {
-            var asin = link.getAttribute('data-asin');
-            if (asin) {
-                link.href = domain + asin + '?tag=' + tag;
+            var searchQuery = link.getAttribute('data-search-' + currentLang) || link.getAttribute('data-search-en');
+            if (searchQuery) {
+                var url = searchBase + encodeURIComponent(searchQuery) + '&tag=' + tag;
+                link.href = url;
                 link.target = '_blank';
                 link.rel = 'noopener noreferrer nofollow';
+            }
+        });
+
+        // Update clickable product cards
+        document.querySelectorAll('.product-card').forEach(function(card) {
+            var link = card.querySelector('.product-link');
+            if (link) {
+                var searchQuery = link.getAttribute('data-search-' + currentLang) || link.getAttribute('data-search-en');
+                if (searchQuery) {
+                    var url = searchBase + encodeURIComponent(searchQuery) + '&tag=' + tag;
+                    card.setAttribute('data-href', url);
+                }
+            }
+        });
+    }
+
+    // ===== Make Product Cards Clickable =====
+    function initClickableCards() {
+        document.addEventListener('click', function(e) {
+            var card = e.target.closest('.product-card');
+            if (card) {
+                var href = card.getAttribute('data-href');
+                if (href) {
+                    window.open(href, '_blank', 'noopener,noreferrer');
+                }
             }
         });
     }
@@ -135,6 +162,7 @@
     function init() {
         var lang = detectLanguage();
         setLanguage(lang);
+        initClickableCards();
         initMobileMenu();
         initLanguageButtons();
         initSmoothScroll();
