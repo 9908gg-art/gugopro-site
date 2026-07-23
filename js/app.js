@@ -1,4 +1,4 @@
-// ===== GugoPro Amazon Smart Finder =====
+// ===== GugoPro Amazon Smart Finder v3 =====
 (function() {
     'use strict';
 
@@ -10,170 +10,150 @@
 
     // ===== Detect Region =====
     let region = 'us';
-    (function detectRegion() {
+    (function() {
         const lang = (navigator.language || '').toLowerCase();
         if (lang.startsWith('ja')) region = 'jp';
     })();
 
-    // ===== Category Data =====
+    // ===== Category Data with Brands =====
     const data = {
         featured: {
-            icon: '⭐', name: { us: 'Featured', jp: '精選' },
-            items: {
-                us: ['Best Sellers', 'New Arrivals', 'Deals of the Day', 'Top Rated', 'Gift Ideas', 'Under $25', 'Under $50'],
-                jp: ['ベストセラー', '新着商品', '本日のセール', '高評価', 'ギフト', '2500円以下', '5000円以下']
-            }
+            icon: '⭐', name: { us: 'Featured', jp: 'おすすめ' },
+            items: { us: ['Best Sellers', 'New Arrivals', 'Deals', 'Top Rated', 'Gift Ideas', 'Under $25', 'Under $50', 'Under $100'], jp: ['ベストセラー', '新着', 'セール', '高評価', 'ギフト', '2500円以下', '5000円以下', '10000円以下'] }
         },
-        electronics: {
-            icon: '💻', name: { us: 'Electronics', jp: '家電' },
-            items: {
-                us: ['Headphones', 'Earbuds', 'Bluetooth Speaker', 'Laptop', 'Tablet', 'Smartwatch', 'Keyboard', 'Mouse', 'Monitor', 'Webcam', 'USB Hub', 'Charger', 'Power Bank', 'Phone Case', 'Screen Protector', 'HDMI Cable', 'SSD', 'Memory Card'],
-                jp: ['ヘッドホン', 'イヤホン', 'Bluetoothスピーカー', 'ノートPC', 'タブレット', 'スマートウォッチ', 'キーボード', 'マウス', 'モニター', 'ウェブカメラ', 'USBハブ', '充電器', 'モバイルバッテリー', 'スマホケース', '保護フィルム', 'HDMIケーブル', 'SSD', 'メモリーカード']
-            },
-            materials: { us: ['Wireless', 'Bluetooth 5.0', 'USB-C', 'Noise Cancelling', 'Waterproof'], jp: ['ワイヤレス', 'Bluetooth 5.0', 'USB-C', 'ノイキャン', '防水'] }
+        laptops: {
+            icon: '💻', name: { us: 'Laptops & PCs', jp: 'パソコン' },
+            items: { us: ['Laptop', 'Gaming Laptop', 'Chromebook', 'Desktop PC', 'Mini PC', 'All-in-One PC', '2-in-1 Laptop'], jp: ['ノートPC', 'ゲーミングPC', 'Chromebook', 'デスクトップPC', 'ミニPC', '一体型PC', '2in1 PC'] },
+            brands: { us: ['Apple', 'Dell', 'HP', 'Lenovo', 'ASUS', 'Acer', 'MSI', 'Microsoft'], jp: ['Apple', 'Dell', 'HP', 'Lenovo', 'ASUS', 'Acer', 'MSI', 'Microsoft'] },
+            priceMax: { us: 3000, jp: 300000 }
         },
-        pc: {
-            icon: '🖥️', name: { us: 'Computers', jp: 'PC周辺' },
-            items: {
-                us: ['Gaming Laptop', 'Desktop PC', 'Gaming Monitor', 'Mechanical Keyboard', 'Gaming Mouse', 'Mousepad', 'PC Case', 'Graphics Card', 'RAM', 'CPU Cooler', 'Router', 'Mesh WiFi'],
-                jp: ['ゲーミングノートPC', 'デスクトップPC', 'ゲーミングモニター', 'メカニカルキーボード', 'ゲーミングマウス', 'マウスパッド', 'PCケース', 'グラフィックカード', 'メモリ', 'CPUクーラー', 'ルーター', 'メッシュWiFi']
-            }
+        phones: {
+            icon: '📱', name: { us: 'Phones & Tablets', jp: 'スマホ・タブレット' },
+            items: { us: ['Smartphone', 'Tablet', 'E-Reader', 'Phone Case', 'Screen Protector', 'Wireless Charger', 'Car Mount', 'Phone Stand'], jp: ['スマートフォン', 'タブレット', '電子書籍リーダー', 'スマホケース', '保護フィルム', 'ワイヤレス充電器', '車載ホルダー', 'スマホスタンド'] },
+            brands: { us: ['Apple', 'Samsung', 'Google', 'OnePlus', 'Motorola', 'Sony'], jp: ['Apple', 'Samsung', 'Google', 'Sony', 'OPPO', 'Xiaomi'] },
+            priceMax: { us: 1500, jp: 150000 }
         },
-        phone: {
-            icon: '📱', name: { us: 'Phones', jp: '通訊' },
-            items: {
-                us: ['iPhone Case', 'Android Phone', 'Phone Stand', 'Wireless Charger', 'Car Mount', 'Ring Light', 'Selfie Stick', 'Gimbal', 'Lightning Cable', 'USB-C Cable'],
-                jp: ['iPhoneケース', 'Androidスマホ', 'スマホスタンド', 'ワイヤレス充電器', '車載ホルダー', 'リングライト', '自撮り棒', 'ジンバル', 'Lightningケーブル', 'USB-Cケーブル']
-            }
+        audio: {
+            icon: '🎧', name: { us: 'Audio', jp: 'オーディオ' },
+            items: { us: ['Wireless Headphones', 'Earbuds', 'Bluetooth Speaker', 'Soundbar', 'Turntable', 'Microphone', 'DAC', 'Wired Headphones'], jp: ['ワイヤレスヘッドホン', 'イヤホン', 'Bluetoothスピーカー', 'サウンドバー', 'レコードプレーヤー', 'マイク', 'DAC', '有線ヘッドホン'] },
+            brands: { us: ['Sony', 'Bose', 'Apple', 'JBL', 'Sennheiser', 'Audio-Technica', 'Beats', 'Anker'], jp: ['Sony', 'Bose', 'Apple', 'JBL', 'ゼンハイザー', 'オーディオテクニカ', 'Beats', 'Anker'] },
+            features: { us: ['Noise Cancelling', 'Wireless', 'Waterproof', 'Hi-Res', 'Bass Boost'], jp: ['ノイズキャンセリング', 'ワイヤレス', '防水', 'ハイレゾ', '重低音'] },
+            priceMax: { us: 500, jp: 50000 }
         },
-        appliances: {
-            icon: '🏠', name: { us: 'Appliances', jp: '家電' },
-            items: {
-                us: ['Robot Vacuum', 'Air Purifier', 'Humidifier', 'Dehumidifier', 'Space Heater', 'Fan', 'Iron', 'Sewing Machine', 'Washing Machine', 'Dryer'],
-                jp: ['ロボット掃除機', '空気清浄機', '加湿器', '除湿機', 'ヒーター', '扇風機', 'アイロン', 'ミシン', '洗濯機', '乾燥機']
-            }
+        peripherals: {
+            icon: '⌨️', name: { us: 'PC Accessories', jp: 'PC周辺機器' },
+            items: { us: ['Monitor', 'Keyboard', 'Mouse', 'Webcam', 'USB Hub', 'External SSD', 'Mousepad', 'Monitor Arm', 'Docking Station', 'Graphics Card'], jp: ['モニター', 'キーボード', 'マウス', 'ウェブカメラ', 'USBハブ', '外付けSSD', 'マウスパッド', 'モニターアーム', 'ドッキングステーション', 'グラフィックカード'] },
+            brands: { us: ['Logitech', 'Razer', 'Corsair', 'Samsung', 'LG', 'BenQ', 'Keychron', 'Elgato'], jp: ['Logicool', 'Razer', 'Corsair', 'Samsung', 'LG', 'BenQ', 'Keychron', 'Elgato'] },
+            priceMax: { us: 1000, jp: 100000 }
+        },
+        smarthome: {
+            icon: '🏠', name: { us: 'Smart Home', jp: 'スマートホーム' },
+            items: { us: ['Smart Speaker', 'Robot Vacuum', 'Smart Light', 'Smart Lock', 'Security Camera', 'Smart Plug', 'Smart Display', 'Video Doorbell', 'Air Purifier', 'Thermostat'], jp: ['スマートスピーカー', 'ロボット掃除機', 'スマートライト', 'スマートロック', '防犯カメラ', 'スマートプラグ', 'スマートディスプレイ', 'ドアベル', '空気清浄機', 'スマート温度計'] },
+            brands: { us: ['Amazon Echo', 'Google Nest', 'iRobot', 'Ring', 'Philips Hue', 'TP-Link', 'Dyson', 'Ecovacs'], jp: ['Amazon Echo', 'Google Nest', 'iRobot', 'Ring', 'Philips Hue', 'TP-Link', 'Dyson', 'Ecovacs'] },
+            priceMax: { us: 800, jp: 80000 }
         },
         kitchen: {
             icon: '🍳', name: { us: 'Kitchen', jp: 'キッチン' },
-            items: {
-                us: ['Air Fryer', 'Coffee Maker', 'Blender', 'Instant Pot', 'Rice Cooker', 'Toaster', 'Knife Set', 'Cutting Board', 'Cookware Set', 'Food Storage', 'Water Filter', 'Electric Kettle'],
-                jp: ['エアフライヤー', 'コーヒーメーカー', 'ブレンダー', '電気圧力鍋', '炊飯器', 'トースター', '包丁セット', 'まな板', '鍋セット', '保存容器', '浄水器', '電気ケトル']
-            },
-            materials: { us: ['Stainless Steel', 'Non-Stick', 'Cast Iron', 'Ceramic', 'BPA Free'], jp: ['ステンレス', 'ノンスティック', '鋳鉄', 'セラミック', 'BPAフリー'] }
+            items: { us: ['Air Fryer', 'Coffee Maker', 'Espresso Machine', 'Blender', 'Instant Pot', 'Rice Cooker', 'Toaster Oven', 'Knife Set', 'Cookware Set', 'Food Processor', 'Electric Kettle', 'Sous Vide'], jp: ['エアフライヤー', 'コーヒーメーカー', 'エスプレッソマシン', 'ブレンダー', '電気圧力鍋', '炊飯器', 'トースター', '包丁セット', '鍋セット', 'フードプロセッサー', '電気ケトル', '低温調理器'] },
+            brands: { us: ['Ninja', 'KitchenAid', 'Breville', 'Cuisinart', 'Instant Pot', 'Vitamix', 'Zojirushi', 'Le Creuset'], jp: ['Ninja', 'デロンギ', 'Breville', 'パナソニック', '象印', 'タイガー', 'バーミキュラ', 'ル・クルーゼ'] },
+            materials: { us: ['Stainless Steel', 'Non-Stick', 'Cast Iron', 'Ceramic', 'Glass'], jp: ['ステンレス', 'フッ素加工', '鋳鉄', 'セラミック', 'ガラス'] },
+            priceMax: { us: 500, jp: 50000 }
         },
         furniture: {
             icon: '🛋️', name: { us: 'Furniture', jp: '家具' },
-            items: {
-                us: ['Sofa', 'Office Chair', 'Standing Desk', 'Bookshelf', 'Bed Frame', 'Mattress', 'Coffee Table', 'TV Stand', 'Shoe Rack', 'Wardrobe', 'Dining Table', 'Bar Stool'],
-                jp: ['ソファ', 'オフィスチェア', 'スタンディングデスク', '本棚', 'ベッドフレーム', 'マットレス', 'コーヒーテーブル', 'テレビ台', 'シューズラック', 'ワードローブ', 'ダイニングテーブル', 'バースツール']
-            },
-            materials: { us: ['Leather', 'Fabric', 'Velvet', 'Wood', 'Metal', 'Bamboo'], jp: ['本革', 'ファブリック', 'ベルベット', '木製', 'メタル', '竹製'] },
-            features: { us: ['Recliner', 'Ergonomic', 'Foldable', 'With Storage', 'Adjustable Height'], jp: ['リクライニング', 'エルゴノミクス', '折りたたみ', '収納付き', '高さ調節'] }
-        },
-        daily: {
-            icon: '🧴', name: { us: 'Daily Use', jp: '日用品' },
-            items: {
-                us: ['Laundry Detergent', 'Paper Towels', 'Trash Bags', 'Cleaning Spray', 'Sponges', 'Light Bulbs', 'Batteries', 'Extension Cord', 'Storage Bins', 'Hangers'],
-                jp: ['洗濯洗剤', 'ペーパータオル', 'ゴミ袋', '掃除スプレー', 'スポンジ', '電球', '電池', '延長コード', '収納ボックス', 'ハンガー']
-            }
-        },
-        baby: {
-            icon: '👶', name: { us: 'Baby & Kids', jp: '母嬰' },
-            items: {
-                us: ['Stroller', 'Car Seat', 'Baby Monitor', 'Diaper Bag', 'High Chair', 'Baby Carrier', 'Crib', 'Diapers', 'Baby Wipes', 'Bottle Warmer', 'Toys 0-3', 'Toys 3-6'],
-                jp: ['ベビーカー', 'チャイルドシート', 'ベビーモニター', 'マザーズバッグ', 'ハイチェア', '抱っこ紐', 'ベビーベッド', 'おむつ', 'おしりふき', '哺乳瓶ウォーマー', '知育玩具0-3歳', '知育玩具3-6歳']
-            }
-        },
-        food: {
-            icon: '🍱', name: { us: 'Food & Drinks', jp: '食品' },
-            items: {
-                us: ['Protein Powder', 'Coffee Beans', 'Tea', 'Snacks', 'Nuts', 'Chocolate', 'Energy Bars', 'Vitamins', 'Organic Food', 'Meal Replacement'],
-                jp: ['プロテイン', 'コーヒー豆', 'お茶', 'お菓子', 'ナッツ', 'チョコレート', 'エナジーバー', 'ビタミン', 'オーガニック食品', '置き換え食']
-            }
-        },
-        health: {
-            icon: '💊', name: { us: 'Health', jp: '保健' },
-            items: {
-                us: ['Supplements', 'First Aid Kit', 'Blood Pressure Monitor', 'Thermometer', 'Massage Gun', 'Heating Pad', 'Eye Drops', 'Probiotics', 'Melatonin', 'Collagen'],
-                jp: ['サプリメント', '救急セット', '血圧計', '体温計', 'マッサージガン', 'ホットパッド', '目薬', 'プロバイオティクス', 'メラトニン', 'コラーゲン']
-            }
+            items: { us: ['Sofa', 'Office Chair', 'Standing Desk', 'Bed Frame', 'Mattress', 'Bookshelf', 'TV Stand', 'Coffee Table', 'Dining Set', 'Shoe Rack', 'Wardrobe', 'Bar Stool'], jp: ['ソファ', 'オフィスチェア', 'スタンディングデスク', 'ベッドフレーム', 'マットレス', '本棚', 'テレビ台', 'コーヒーテーブル', 'ダイニングセット', 'シューズラック', 'ワードローブ', 'バースツール'] },
+            brands: { us: ['Herman Miller', 'IKEA', 'Secretlab', 'Zinus', 'Walker Edison', 'Flash Furniture', 'Modway'], jp: ['Herman Miller', 'ニトリ', 'Secretlab', 'LOWYA', 'タンスのゲン', 'アイリスオーヤマ', '無印良品'] },
+            materials: { us: ['Leather', 'Fabric', 'Velvet', 'Wood', 'Metal', 'Mesh'], jp: ['本革', 'ファブリック', 'ベルベット', '木製', 'メタル', 'メッシュ'] },
+            features: { us: ['Ergonomic', 'Recliner', 'Foldable', 'Storage', 'Adjustable', 'Memory Foam'], jp: ['エルゴノミクス', 'リクライニング', '折りたたみ', '収納付き', '高さ調節', '低反発'] },
+            priceMax: { us: 2000, jp: 200000 }
         },
         beauty: {
-            icon: '✨', name: { us: 'Beauty', jp: '美妝' },
-            items: {
-                us: ['Skincare Set', 'Sunscreen', 'Moisturizer', 'Serum', 'Face Mask', 'Hair Dryer', 'Curling Iron', 'Makeup Brush Set', 'Lipstick', 'Foundation', 'Perfume', 'Nail Polish'],
-                jp: ['スキンケアセット', '日焼け止め', '保湿クリーム', '美容液', 'フェイスマスク', 'ヘアドライヤー', 'コテ', 'メイクブラシセット', '口紅', 'ファンデーション', '香水', 'ネイル']
-            }
+            icon: '✨', name: { us: 'Beauty', jp: '美容' },
+            items: { us: ['Skincare Set', 'Sunscreen', 'Moisturizer', 'Serum', 'Face Mask', 'Hair Dryer', 'Curling Iron', 'Makeup Brush', 'Lipstick', 'Foundation', 'Perfume', 'Electric Shaver'], jp: ['スキンケアセット', '日焼け止め', '保湿クリーム', '美容液', 'フェイスマスク', 'ヘアドライヤー', 'コテ', 'メイクブラシ', '口紅', 'ファンデーション', '香水', '電気シェーバー'] },
+            brands: { us: ['Dyson', 'CeraVe', 'La Roche-Posay', 'Neutrogena', 'Olaplex', 'The Ordinary', 'SK-II', 'Revlon'], jp: ['Dyson', 'SK-II', '資生堂', 'コスメデコルテ', 'パナソニック', 'SHIRO', 'イプサ', 'ReFa'] },
+            priceMax: { us: 300, jp: 30000 }
+        },
+        health: {
+            icon: '💊', name: { us: 'Health & Wellness', jp: '健康' },
+            items: { us: ['Supplements', 'Massage Gun', 'Blood Pressure Monitor', 'Electric Toothbrush', 'Water Flosser', 'Heating Pad', 'Probiotics', 'Protein Powder', 'Collagen', 'Vitamins'], jp: ['サプリメント', 'マッサージガン', '血圧計', '電動歯ブラシ', '口腔洗浄器', 'ホットパッド', 'プロバイオティクス', 'プロテイン', 'コラーゲン', 'ビタミン'] },
+            brands: { us: ['Theragun', 'Oral-B', 'Philips', 'Waterpik', 'Optimum Nutrition', 'Garden of Life', 'NOW Foods'], jp: ['Theragun', 'オーラルB', 'フィリップス', 'パナソニック', 'ザバス', 'DHC', 'ファンケル'] },
+            priceMax: { us: 400, jp: 40000 }
         },
         outdoor: {
-            icon: '🏕️', name: { us: 'Outdoor', jp: 'アウトドア' },
-            items: {
-                us: ['Backpack', 'Tent', 'Sleeping Bag', 'Hiking Boots', 'Water Bottle', 'Sunglasses', 'Camping Chair', 'Flashlight', 'Cooler', 'Bike Lock', 'Fishing Rod', 'Hammock'],
-                jp: ['バックパック', 'テント', '寝袋', 'トレッキングシューズ', '水筒', 'サングラス', 'キャンプチェア', '懐中電灯', 'クーラーボックス', '自転車ロック', '釣り竿', 'ハンモック']
-            }
+            icon: '🏕️', name: { us: 'Outdoor & Sports', jp: 'アウトドア' },
+            items: { us: ['Backpack', 'Tent', 'Sleeping Bag', 'Hiking Boots', 'Water Bottle', 'Camping Chair', 'Flashlight', 'Cooler', 'Bike', 'Fishing Rod', 'Hammock', 'GPS Watch'], jp: ['バックパック', 'テント', '寝袋', 'トレッキングシューズ', '水筒', 'キャンプチェア', '懐中電灯', 'クーラーボックス', '自転車', '釣り竿', 'ハンモック', 'GPSウォッチ'] },
+            brands: { us: ['The North Face', 'Osprey', 'YETI', 'Columbia', 'Patagonia', 'Garmin', 'REI', 'Coleman'], jp: ['ノースフェイス', 'Osprey', 'YETI', 'コロンビア', 'モンベル', 'Garmin', 'スノーピーク', 'コールマン'] },
+            priceMax: { us: 500, jp: 50000 }
         },
         fitness: {
             icon: '🏋️', name: { us: 'Fitness', jp: 'フィットネス' },
-            items: {
-                us: ['Yoga Mat', 'Dumbbells', 'Resistance Bands', 'Jump Rope', 'Foam Roller', 'Fitness Tracker', 'Running Shoes', 'Gym Bag', 'Workout Gloves', 'Pull-up Bar'],
-                jp: ['ヨガマット', 'ダンベル', 'レジスタンスバンド', '縄跳び', 'フォームローラー', 'フィットネストラッカー', 'ランニングシューズ', 'ジムバッグ', 'トレーニンググローブ', '懸垂バー']
-            }
+            items: { us: ['Yoga Mat', 'Dumbbells', 'Resistance Bands', 'Treadmill', 'Exercise Bike', 'Pull-up Bar', 'Foam Roller', 'Jump Rope', 'Kettlebell', 'Fitness Tracker'], jp: ['ヨガマット', 'ダンベル', 'レジスタンスバンド', 'ランニングマシン', 'エアロバイク', '懸垂バー', 'フォームローラー', '縄跳び', 'ケトルベル', 'フィットネストラッカー'] },
+            brands: { us: ['Peloton', 'Bowflex', 'NordicTrack', 'Fitbit', 'Garmin', 'Apple', 'Manduka', 'TRX'], jp: ['Peloton', 'ALINCO', 'Fitbit', 'Garmin', 'Apple', 'STEADY', 'Manduka', 'アディダス'] },
+            priceMax: { us: 2000, jp: 200000 }
+        },
+        baby: {
+            icon: '👶', name: { us: 'Baby & Kids', jp: 'ベビー・キッズ' },
+            items: { us: ['Stroller', 'Car Seat', 'Baby Monitor', 'High Chair', 'Crib', 'Diaper Bag', 'Baby Carrier', 'Toys 0-3yr', 'Toys 3-6yr', 'Kids Tablet'], jp: ['ベビーカー', 'チャイルドシート', 'ベビーモニター', 'ハイチェア', 'ベビーベッド', 'マザーズバッグ', '抱っこ紐', '知育玩具0-3歳', '知育玩具3-6歳', 'キッズタブレット'] },
+            brands: { us: ['Graco', 'UPPAbaby', 'Baby Bjorn', 'Fisher-Price', 'LEGO', 'Chicco', 'Halo'], jp: ['コンビ', 'アップリカ', 'ベビービョルン', 'フィッシャープライス', 'LEGO', 'ピジョン', 'エルゴベビー'] },
+            priceMax: { us: 800, jp: 80000 }
         },
         fashion: {
             icon: '👔', name: { us: 'Fashion', jp: 'ファッション' },
-            items: {
-                us: ['T-Shirt', 'Jeans', 'Sneakers', 'Watch', 'Wallet', 'Backpack', 'Sunglasses', 'Belt', 'Jacket', 'Dress', 'Handbag', 'Jewelry'],
-                jp: ['Tシャツ', 'ジーンズ', 'スニーカー', '腕時計', '財布', 'リュック', 'サングラス', 'ベルト', 'ジャケット', 'ワンピース', 'ハンドバッグ', 'アクセサリー']
-            }
+            items: { us: ['Sneakers', 'Watch', 'Sunglasses', 'Wallet', 'Backpack', 'Jacket', 'Dress', 'Jeans', 'Handbag', 'Jewelry', 'Belt', 'Scarf'], jp: ['スニーカー', '腕時計', 'サングラス', '財布', 'リュック', 'ジャケット', 'ワンピース', 'ジーンズ', 'ハンドバッグ', 'アクセサリー', 'ベルト', 'マフラー'] },
+            brands: { us: ['Nike', 'Adidas', 'Levi\'s', 'Ray-Ban', 'Coach', 'Michael Kors', 'Fossil', 'Calvin Klein'], jp: ['Nike', 'Adidas', 'ユニクロ', 'Ray-Ban', 'Coach', 'SEIKO', 'CASIO', 'ポールスミス'] },
+            priceMax: { us: 500, jp: 50000 }
         },
         books: {
-            icon: '📚', name: { us: 'Books', jp: '書籍' },
-            items: {
-                us: ['Best Sellers Fiction', 'Self-Help Books', 'Business Books', 'Cookbooks', 'Children Books', 'Manga', 'Kindle', 'Audiobooks', 'Textbooks', 'Art Books'],
-                jp: ['ベストセラー小説', '自己啓発本', 'ビジネス書', '料理本', '児童書', '漫画', 'Kindle本', 'オーディオブック', '参考書', 'アート本']
-            }
+            icon: '📚', name: { us: 'Books & Media', jp: '本・メディア' },
+            items: { us: ['Fiction', 'Non-Fiction', 'Self-Help', 'Business', 'Cookbook', 'Children', 'Manga', 'Textbook', 'Audiobook', 'Kindle'], jp: ['小説', 'ノンフィクション', '自己啓発', 'ビジネス書', '料理本', '児童書', '漫画', '参考書', 'オーディオブック', 'Kindle本'] },
+            priceMax: { us: 50, jp: 5000 }
         },
         pets: {
             icon: '🐾', name: { us: 'Pets', jp: 'ペット' },
-            items: {
-                us: ['Dog Food', 'Cat Food', 'Dog Bed', 'Cat Tree', 'Pet Toys', 'Leash', 'Pet Carrier', 'Grooming Kit', 'Aquarium', 'Bird Cage'],
-                jp: ['ドッグフード', 'キャットフード', '犬用ベッド', 'キャットタワー', 'ペットおもちゃ', 'リード', 'ペットキャリー', 'グルーミングセット', '水槽', '鳥かご']
-            }
+            items: { us: ['Dog Food', 'Cat Food', 'Dog Bed', 'Cat Tree', 'Pet Toys', 'Leash', 'Pet Carrier', 'Aquarium', 'Grooming Kit', 'Pet Camera'], jp: ['ドッグフード', 'キャットフード', '犬用ベッド', 'キャットタワー', 'ペットおもちゃ', 'リード', 'ペットキャリー', '水槽', 'グルーミング', 'ペットカメラ'] },
+            brands: { us: ['Blue Buffalo', 'Royal Canin', 'Kong', 'Purina', 'Furminator', 'PetSafe'], jp: ['ロイヤルカナン', 'ヒルズ', 'Kong', 'ピュリナ', 'ユニチャーム', 'アイリスオーヤマ'] },
+            priceMax: { us: 200, jp: 20000 }
         },
         office: {
             icon: '📎', name: { us: 'Office', jp: 'オフィス' },
-            items: {
-                us: ['Desk Organizer', 'Printer', 'Ink Cartridge', 'Notebook', 'Pens', 'Whiteboard', 'Label Maker', 'Shredder', 'Desk Lamp', 'Ergonomic Chair'],
-                jp: ['デスクオーガナイザー', 'プリンター', 'インクカートリッジ', 'ノート', 'ペン', 'ホワイトボード', 'ラベルライター', 'シュレッダー', 'デスクライト', 'エルゴチェア']
-            }
+            items: { us: ['Desk Lamp', 'Printer', 'Shredder', 'Whiteboard', 'Desk Organizer', 'Label Maker', 'Notebook', 'Pens', 'Ergonomic Chair', 'Standing Desk Mat'], jp: ['デスクライト', 'プリンター', 'シュレッダー', 'ホワイトボード', 'デスク収納', 'ラベルライター', 'ノート', 'ペン', 'エルゴチェア', 'スタンディングマット'] },
+            priceMax: { us: 500, jp: 50000 }
+        },
+        gaming: {
+            icon: '🎮', name: { us: 'Gaming', jp: 'ゲーム' },
+            items: { us: ['Gaming Headset', 'Controller', 'Gaming Chair', 'Capture Card', 'Stream Deck', 'VR Headset', 'Nintendo Switch', 'PS5 Accessories', 'Gaming Monitor', 'RGB Lights'], jp: ['ゲーミングヘッドセット', 'コントローラー', 'ゲーミングチェア', 'キャプチャーボード', 'Stream Deck', 'VRヘッドセット', 'Nintendo Switch', 'PS5周辺機器', 'ゲーミングモニター', 'RGBライト'] },
+            brands: { us: ['SteelSeries', 'HyperX', 'Razer', 'Elgato', 'Secretlab', 'Meta', 'Nintendo', 'Sony'], jp: ['SteelSeries', 'HyperX', 'Razer', 'Elgato', 'Secretlab', 'Meta', '任天堂', 'Sony'] },
+            priceMax: { us: 1000, jp: 100000 }
         }
     };
 
-    // Popular searches
+    // Popular
     const popular = {
-        us: ['AirPods Pro', 'Robot Vacuum', 'Air Fryer', 'Standing Desk', 'Kindle', 'Yoga Mat', 'Instant Pot', 'Ring Doorbell', 'Nintendo Switch', 'Protein Powder', 'LED Strip Lights', 'Portable Charger'],
-        jp: ['AirPods Pro', 'ロボット掃除機', 'エアフライヤー', 'スタンディングデスク', 'Kindle', 'ヨガマット', '電気圧力鍋', 'スマートロック', 'Nintendo Switch', 'プロテイン', 'LEDテープライト', 'モバイルバッテリー']
+        us: ['AirPods Pro', 'Robot Vacuum', 'Air Fryer', 'Standing Desk', 'Kindle Paperwhite', 'Yoga Mat', 'Instant Pot', 'Ring Doorbell', 'Nintendo Switch', 'Protein Powder', 'LED Strip Lights', 'Portable Charger', 'Noise Cancelling Headphones', 'Electric Toothbrush'],
+        jp: ['AirPods Pro', 'ロボット掃除機', 'エアフライヤー', 'スタンディングデスク', 'Kindle Paperwhite', 'ヨガマット', '電気圧力鍋', 'スマートロック', 'Nintendo Switch', 'プロテイン', 'LEDテープライト', 'モバイルバッテリー', 'ノイキャンヘッドホン', '電動歯ブラシ']
     };
 
-    // UI text
+    // UI
     const ui = {
-        us: { catTitle: 'Categories', popularTitle: 'Popular Searches', searchPH: 'Search Amazon...', goText: 'Search on Amazon.com', pricePH: ['Min', 'Max'], currency: 'USD', rating: '★4+ only', matLabel: 'Material:', featLabel: 'Features:', priceLabel: 'Price:' },
-        jp: { catTitle: 'カテゴリー', popularTitle: '人気の検索', searchPH: 'Amazonで検索...', goText: 'Amazon.co.jpで検索', pricePH: ['最低', '最高'], currency: 'JPY', rating: '★4以上のみ', matLabel: '素材:', featLabel: '特徴:', priceLabel: '価格:' }
+        us: { catTitle: 'CATEGORIES', popularTitle: 'TRENDING NOW', searchPH: 'Search anything on Amazon...', goText: 'Search on Amazon.com', priceLabel: 'Price Range', matLabel: 'MATERIAL', featLabel: 'FEATURES', brandTitle: 'BRAND', ratingText: '4 stars & above' },
+        jp: { catTitle: 'カテゴリー', popularTitle: '人気の検索', searchPH: 'Amazonで何でも検索...', goText: 'Amazon.co.jpで検索', priceLabel: '価格帯', matLabel: '素材', featLabel: '特徴', brandTitle: 'ブランド', ratingText: '星4つ以上' }
     };
 
     // ===== State =====
-    let selectedCategory = null;
+    let selectedCat = null;
     let selectedItem = null;
+    let selectedBrand = null;
     let selectedMaterials = [];
     let selectedFeatures = [];
 
-    // ===== DOM =====
     const $ = id => document.getElementById(id);
 
+    // ===== Init =====
     function init() {
         renderUI();
         renderCategories();
         renderPopular();
+        initSlider();
         bindEvents();
     }
 
@@ -183,147 +163,178 @@
         $('popular-title').textContent = t.popularTitle;
         $('search-input').placeholder = t.searchPH;
         $('go-text').textContent = t.goText;
-        $('rating-text').textContent = t.rating;
-        $('label-material').textContent = t.matLabel;
-        $('label-features').textContent = t.featLabel;
-        $('label-price').textContent = t.priceLabel;
-        $('currency').textContent = t.currency;
-        $('price-min').placeholder = t.pricePH[0];
-        $('price-max').placeholder = t.pricePH[1];
+        $('price-label').textContent = t.priceLabel;
+        $('material-label').textContent = t.matLabel;
+        $('feature-label').textContent = t.featLabel;
+        $('brand-title').textContent = t.brandTitle;
+        $('rating-text').textContent = t.ratingText;
     }
 
     function renderCategories() {
         let html = '';
         for (const key in data) {
-            const cat = data[key];
-            html += '<div class="tag" data-cat="' + key + '"><span class="tag-icon">' + cat.icon + '</span>' + cat.name[region] + '</div>';
+            html += '<div class="tag" data-cat="' + key + '"><span class="tag-icon">' + data[key].icon + '</span>' + data[key].name[region] + '</div>';
         }
         $('main-categories').innerHTML = html;
     }
 
     function renderPopular() {
         let html = '';
-        popular[region].forEach(function(term) {
-            html += '<div class="popular-tag" data-term="' + term + '">' + term + '</div>';
-        });
+        popular[region].forEach(t => { html += '<div class="popular-tag" data-term="' + t + '">' + t + '</div>'; });
         $('popular-grid').innerHTML = html;
     }
 
-    function showSubcategories(catKey) {
-        selectedCategory = catKey;
+    // ===== Price Slider =====
+    function initSlider() {
+        updateSliderUI(0, 1000);
+    }
+
+    function updateSliderRange(max) {
+        $('price-slider-min').max = max;
+        $('price-slider-max').max = max;
+        $('price-slider-min').value = 0;
+        $('price-slider-max').value = max;
+        updateSliderUI(0, max);
+    }
+
+    function updateSliderUI(min, max) {
+        const sliderMax = parseInt($('price-slider-max').max) || 1000;
+        const leftPct = (min / sliderMax) * 100;
+        const rightPct = 100 - (max / sliderMax) * 100;
+        $('slider-track').style.setProperty('--left', leftPct + '%');
+        $('slider-track').style.setProperty('--right', rightPct + '%');
+
+        const currency = region === 'us' ? '$' : '¥';
+        const maxLabel = region === 'us' ? '$' + sliderMax : '¥' + sliderMax.toLocaleString();
+        $('slider-min-label').textContent = currency + (region === 'us' ? min : min.toLocaleString());
+        $('slider-max-label').textContent = maxLabel;
+        $('price-display').textContent = currency + (region === 'us' ? min : min.toLocaleString()) + ' - ' + currency + (region === 'us' ? max : max.toLocaleString());
+    }
+
+    // ===== Show Subcategories =====
+    function showSub(catKey) {
+        selectedCat = catKey;
         selectedItem = null;
+        selectedBrand = null;
+        selectedMaterials = [];
+        selectedFeatures = [];
+
         const cat = data[catKey];
         $('sub-title').textContent = cat.icon + ' ' + cat.name[region];
+
+        // Items
         let html = '';
-        cat.items[region].forEach(function(item) {
-            html += '<div class="tag" data-item="' + item + '">' + item + '</div>';
-        });
+        cat.items[region].forEach(item => { html += '<div class="tag" data-item="' + item + '">' + item + '</div>'; });
         $('sub-categories').innerHTML = html;
         $('sub-section').style.display = 'block';
 
-        // Show filters if category has materials/features
-        if (cat.materials || cat.features) {
-            $('filters-section').style.display = 'block';
-            if (cat.materials) {
-                $('filter-materials').style.display = 'flex';
-                let mhtml = '';
-                cat.materials[region].forEach(function(m) {
-                    mhtml += '<div class="filter-tag" data-val="' + m + '">' + m + '</div>';
-                });
-                $('material-tags').innerHTML = mhtml;
-            } else {
-                $('filter-materials').style.display = 'none';
-            }
-            if (cat.features) {
-                $('filter-features').style.display = 'flex';
-                let fhtml = '';
-                cat.features[region].forEach(function(f) {
-                    fhtml += '<div class="filter-tag" data-val="' + f + '">' + f + '</div>';
-                });
-                $('feature-tags').innerHTML = fhtml;
-            } else {
-                $('filter-features').style.display = 'none';
-            }
+        // Brands
+        if (cat.brands) {
+            let bhtml = '';
+            cat.brands[region].forEach(b => { bhtml += '<div class="tag" data-brand="' + b + '">' + b + '</div>'; });
+            $('brand-tags').innerHTML = bhtml;
+            $('brand-section').style.display = 'block';
         } else {
-            $('filters-section').style.display = 'block';
-            $('filter-materials').style.display = 'none';
-            $('filter-features').style.display = 'none';
+            $('brand-section').style.display = 'none';
         }
 
-        // Show action
-        $('action-section').style.display = 'block';
+        // Filters panel
+        $('filters-panel').style.display = 'block';
+
+        // Price slider range
+        const pmax = cat.priceMax ? cat.priceMax[region] : (region === 'us' ? 500 : 50000);
+        updateSliderRange(pmax);
+
+        // Materials
+        if (cat.materials) {
+            let mhtml = '';
+            cat.materials[region].forEach(m => { mhtml += '<div class="tag" data-val="' + m + '">' + m + '</div>'; });
+            $('material-tags').innerHTML = mhtml;
+            $('material-block').style.display = 'block';
+        } else {
+            $('material-block').style.display = 'none';
+        }
+
+        // Features
+        if (cat.features) {
+            let fhtml = '';
+            cat.features[region].forEach(f => { fhtml += '<div class="tag" data-val="' + f + '">' + f + '</div>'; });
+            $('feature-tags').innerHTML = fhtml;
+            $('feature-block').style.display = 'block';
+        } else {
+            $('feature-block').style.display = 'none';
+        }
+
+        // Action
+        $('action-bar').style.display = 'block';
         updatePreview();
 
-        // Highlight active category
-        document.querySelectorAll('#main-categories .tag').forEach(function(el) {
-            el.classList.toggle('active', el.getAttribute('data-cat') === catKey);
-        });
+        // Highlight
+        document.querySelectorAll('#main-categories .tag').forEach(el => el.classList.toggle('active', el.dataset.cat === catKey));
 
         // Bind sub events
-        document.querySelectorAll('#sub-categories .tag').forEach(function(el) {
+        bindSubEvents();
+    }
+
+    function bindSubEvents() {
+        document.querySelectorAll('#sub-categories .tag').forEach(el => {
             el.addEventListener('click', function() {
-                selectedItem = this.getAttribute('data-item');
                 document.querySelectorAll('#sub-categories .tag').forEach(t => t.classList.remove('active'));
                 this.classList.add('active');
+                selectedItem = this.dataset.item;
                 updatePreview();
             });
         });
-
-        // Bind material filter events
-        document.querySelectorAll('#material-tags .filter-tag').forEach(function(el) {
+        document.querySelectorAll('#brand-tags .tag').forEach(el => {
             el.addEventListener('click', function() {
-                this.classList.toggle('active');
-                updateSelectedFilters();
+                if (this.classList.contains('active')) {
+                    this.classList.remove('active');
+                    selectedBrand = null;
+                } else {
+                    document.querySelectorAll('#brand-tags .tag').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    selectedBrand = this.dataset.brand;
+                }
                 updatePreview();
             });
         });
-
-        // Bind feature filter events
-        document.querySelectorAll('#feature-tags .filter-tag').forEach(function(el) {
+        document.querySelectorAll('#material-tags .tag').forEach(el => {
             el.addEventListener('click', function() {
                 this.classList.toggle('active');
-                updateSelectedFilters();
+                selectedMaterials = Array.from(document.querySelectorAll('#material-tags .tag.active')).map(t => t.dataset.val);
+                updatePreview();
+            });
+        });
+        document.querySelectorAll('#feature-tags .tag').forEach(el => {
+            el.addEventListener('click', function() {
+                this.classList.toggle('active');
+                selectedFeatures = Array.from(document.querySelectorAll('#feature-tags .tag.active')).map(t => t.dataset.val);
                 updatePreview();
             });
         });
     }
 
-    function updateSelectedFilters() {
-        selectedMaterials = [];
-        document.querySelectorAll('#material-tags .filter-tag.active').forEach(function(el) {
-            selectedMaterials.push(el.getAttribute('data-val'));
-        });
-        selectedFeatures = [];
-        document.querySelectorAll('#feature-tags .filter-tag.active').forEach(function(el) {
-            selectedFeatures.push(el.getAttribute('data-val'));
-        });
-    }
-
-    function hideSubcategories() {
-        selectedCategory = null;
-        selectedItem = null;
-        selectedMaterials = [];
-        selectedFeatures = [];
+    function hideSub() {
+        selectedCat = null; selectedItem = null; selectedBrand = null;
+        selectedMaterials = []; selectedFeatures = [];
         $('sub-section').style.display = 'none';
-        $('filters-section').style.display = 'none';
-        $('action-section').style.display = 'none';
+        $('brand-section').style.display = 'none';
+        $('filters-panel').style.display = 'none';
+        $('action-bar').style.display = 'none';
         document.querySelectorAll('#main-categories .tag').forEach(el => el.classList.remove('active'));
     }
 
+    // ===== Build =====
     function buildKeywords() {
-        // Free text takes priority
-        const freeText = $('search-input').value.trim();
-        if (freeText) return freeText;
+        const free = $('search-input').value.trim();
+        if (free) return free;
 
-        // Build from selections
         const parts = [];
-        if (selectedItem) {
-            parts.push(selectedItem);
-        } else if (selectedCategory && data[selectedCategory]) {
-            parts.push(data[selectedCategory].name[region]);
-        }
-        if (selectedMaterials.length > 0) parts.push(selectedMaterials.join(' '));
-        if (selectedFeatures.length > 0) parts.push(selectedFeatures.join(' '));
+        if (selectedBrand) parts.push(selectedBrand);
+        if (selectedItem) parts.push(selectedItem);
+        else if (selectedCat && data[selectedCat]) parts.push(data[selectedCat].name[region]);
+        if (selectedMaterials.length) parts.push(selectedMaterials.join(' '));
+        if (selectedFeatures.length) parts.push(selectedFeatures.join(' '));
         return parts.join(' ');
     }
 
@@ -335,17 +346,17 @@
         let url = base + encodeURIComponent(kw);
         if (tag) url += '&tag=' + tag;
 
-        // Rating
         if ($('rating-filter').checked) {
             url += '&rh=p_72%3A' + (region === 'us' ? '2661618011' : '2221615051');
         }
 
-        // Price
-        const pmin = $('price-min').value;
-        const pmax = $('price-max').value;
-        if (pmin || pmax) {
-            const min = pmin ? (region === 'us' ? pmin + '00' : pmin) : '';
-            const max = pmax ? (region === 'us' ? pmax + '00' : pmax) : '';
+        // Price from slider
+        const pmin = parseInt($('price-slider-min').value);
+        const pmax = parseInt($('price-slider-max').value);
+        const sliderMax = parseInt($('price-slider-max').max);
+        if (pmin > 0 || pmax < sliderMax) {
+            const min = region === 'us' ? pmin * 100 : pmin;
+            const max = region === 'us' ? pmax * 100 : pmax;
             url += '&rh=' + encodeURIComponent('p_36:' + min + '-' + max);
         }
 
@@ -354,73 +365,63 @@
 
     function updatePreview() {
         const kw = buildKeywords();
-        if (kw) {
-            $('preview-text').textContent = kw;
-            $('action-section').style.display = 'block';
-        } else if (selectedCategory) {
-            $('preview-text').textContent = data[selectedCategory].name[region];
-            $('action-section').style.display = 'block';
-        }
+        $('preview-text').textContent = kw || '...';
     }
 
-    function goToAmazon() {
+    function go() {
         const url = buildUrl();
         if (url) window.open(url, '_blank', 'noopener,noreferrer');
     }
 
+    // ===== Events =====
     function bindEvents() {
-        // Category clicks
         $('main-categories').addEventListener('click', function(e) {
             const tag = e.target.closest('.tag');
             if (!tag) return;
-            const catKey = tag.getAttribute('data-cat');
-            if (catKey === selectedCategory) {
-                hideSubcategories();
-            } else {
-                showSubcategories(catKey);
-            }
+            const key = tag.dataset.cat;
+            if (key === selectedCat) hideSub();
+            else showSub(key);
         });
 
-        // Back button
-        $('back-btn').addEventListener('click', hideSubcategories);
+        $('back-btn').addEventListener('click', hideSub);
 
-        // Search input
         $('search-input').addEventListener('input', function() {
             if (this.value.trim()) {
-                $('action-section').style.display = 'block';
+                $('action-bar').style.display = 'block';
                 updatePreview();
             }
         });
-        $('search-input').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') goToAmazon();
+        $('search-input').addEventListener('keypress', function(e) { if (e.key === 'Enter') go(); });
+        $('search-btn').addEventListener('click', go);
+        $('go-btn').addEventListener('click', go);
+
+        // Sliders
+        $('price-slider-min').addEventListener('input', function() {
+            let min = parseInt(this.value);
+            let max = parseInt($('price-slider-max').value);
+            if (min > max) { this.value = max; min = max; }
+            updateSliderUI(min, max);
+        });
+        $('price-slider-max').addEventListener('input', function() {
+            let max = parseInt(this.value);
+            let min = parseInt($('price-slider-min').value);
+            if (max < min) { this.value = min; max = min; }
+            updateSliderUI(min, max);
         });
 
-        // Search button
-        $('search-btn').addEventListener('click', goToAmazon);
-
-        // Go button
-        $('go-btn').addEventListener('click', goToAmazon);
-
-        // Price & rating changes
-        $('price-min').addEventListener('input', updatePreview);
-        $('price-max').addEventListener('input', updatePreview);
         $('rating-filter').addEventListener('change', updatePreview);
 
-        // Popular tags
         $('popular-grid').addEventListener('click', function(e) {
             const tag = e.target.closest('.popular-tag');
             if (!tag) return;
-            $('search-input').value = tag.getAttribute('data-term');
-            $('action-section').style.display = 'block';
+            $('search-input').value = tag.dataset.term;
+            $('action-bar').style.display = 'block';
             updatePreview();
-            goToAmazon();
+            go();
         });
     }
 
-    // ===== Start =====
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
-    }
+    // Start
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+    else init();
 })();

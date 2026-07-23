@@ -9,79 +9,112 @@
     <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
-    <!-- Header with Search -->
+    <!-- Header -->
     <header class="header">
         <div class="container">
             <div class="header-row">
                 <a href="/" class="logo">✦ GugoPro</a>
                 <div class="search-bar">
-                    <input type="text" id="search-input" placeholder="Search Amazon...">
+                    <input type="text" id="search-input">
                     <button id="search-btn">🔍</button>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Main Content -->
     <main class="main">
         <div class="container">
-            <!-- Category Tags -->
-            <section class="category-section">
-                <h2 id="cat-title">Categories</h2>
+            <!-- Main Categories -->
+            <section class="section" id="cat-section">
+                <div class="section-header">
+                    <h2 id="cat-title">Categories</h2>
+                </div>
                 <div class="tag-grid" id="main-categories"></div>
             </section>
 
-            <!-- Subcategory Tags (shown after selecting a main category) -->
-            <section class="subcategory-section" id="sub-section" style="display:none;">
-                <div class="sub-header">
-                    <h3 id="sub-title"></h3>
-                    <button class="back-btn" id="back-btn">✕</button>
+            <!-- Subcategory Panel -->
+            <section class="section panel" id="sub-section" style="display:none;">
+                <div class="section-header">
+                    <h2 id="sub-title"></h2>
+                    <button class="close-btn" id="back-btn">✕</button>
                 </div>
                 <div class="tag-grid" id="sub-categories"></div>
             </section>
 
-            <!-- Quick Filters (shown after selecting subcategory) -->
-            <section class="filters-section" id="filters-section" style="display:none;">
-                <div class="filter-row" id="filter-materials" style="display:none;">
-                    <span class="filter-label" id="label-material">Material:</span>
-                    <div class="filter-tags" id="material-tags"></div>
+            <!-- Brand Filter -->
+            <section class="section panel" id="brand-section" style="display:none;">
+                <div class="section-header">
+                    <h2 id="brand-title">Brand</h2>
                 </div>
-                <div class="filter-row" id="filter-features" style="display:none;">
-                    <span class="filter-label" id="label-features">Features:</span>
-                    <div class="filter-tags" id="feature-tags"></div>
-                </div>
-                <div class="filter-row">
-                    <span class="filter-label" id="label-price">Price:</span>
-                    <div class="price-inputs">
-                        <input type="number" id="price-min" placeholder="Min">
-                        <span>-</span>
-                        <input type="number" id="price-max" placeholder="Max">
-                        <span class="currency" id="currency">USD</span>
+                <div class="tag-grid" id="brand-tags"></div>
+            </section>
+
+            <!-- Filters Panel -->
+            <section class="section panel" id="filters-panel" style="display:none;">
+                <!-- Price Slider -->
+                <div class="filter-block">
+                    <div class="filter-block-header">
+                        <span id="price-label">Price Range</span>
+                        <span class="price-display" id="price-display"></span>
+                    </div>
+                    <div class="slider-container">
+                        <input type="range" id="price-slider-min" min="0" max="1000" value="0" step="10">
+                        <input type="range" id="price-slider-max" min="0" max="1000" value="1000" step="10">
+                        <div class="slider-track" id="slider-track"></div>
+                    </div>
+                    <div class="slider-labels">
+                        <span id="slider-min-label">0</span>
+                        <span id="slider-max-label">1000</span>
                     </div>
                 </div>
-                <div class="filter-row">
-                    <label class="rating-check">
-                        <input type="checkbox" id="rating-filter">
-                        <span id="rating-text">★4+ only</span>
-                    </label>
+
+                <!-- Rating -->
+                <div class="filter-block">
+                    <div class="rating-row">
+                        <span class="stars">★★★★☆</span>
+                        <label class="toggle-label">
+                            <input type="checkbox" id="rating-filter">
+                            <span class="toggle-switch"></span>
+                            <span id="rating-text">4 stars & above</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Material Tags -->
+                <div class="filter-block" id="material-block" style="display:none;">
+                    <div class="filter-block-header">
+                        <span id="material-label">Material</span>
+                    </div>
+                    <div class="tag-grid small" id="material-tags"></div>
+                </div>
+
+                <!-- Feature Tags -->
+                <div class="filter-block" id="feature-block" style="display:none;">
+                    <div class="filter-block-header">
+                        <span id="feature-label">Features</span>
+                    </div>
+                    <div class="tag-grid small" id="feature-tags"></div>
                 </div>
             </section>
 
-            <!-- Preview & Go -->
-            <section class="action-section" id="action-section" style="display:none;">
-                <div class="preview-line">
-                    <span class="preview-label">🔍</span>
+            <!-- Action Bar -->
+            <section class="action-bar" id="action-bar" style="display:none;">
+                <div class="preview-line" id="preview-line">
+                    <span class="preview-icon">🔍</span>
                     <span class="preview-text" id="preview-text"></span>
                 </div>
                 <button class="go-btn" id="go-btn">
-                    <span id="go-text">Search on Amazon</span> ➔
+                    <span id="go-text">Search on Amazon</span>
+                    <span class="go-arrow">→</span>
                 </button>
             </section>
 
             <!-- Popular Searches -->
-            <section class="popular-section">
-                <h2 id="popular-title">Popular Searches</h2>
-                <div class="popular-grid" id="popular-grid"></div>
+            <section class="section" id="popular-section">
+                <div class="section-header">
+                    <h2 id="popular-title">Trending Now</h2>
+                </div>
+                <div class="tag-grid" id="popular-grid"></div>
             </section>
         </div>
     </main>
@@ -89,8 +122,8 @@
     <!-- Footer -->
     <footer class="footer">
         <div class="container">
-            <p>As an Amazon Associate, I earn from qualifying purchases.<br>当サイトはAmazonアソシエイトに参加しています。</p>
-            <p>© 2026 GugoPro</p>
+            <p class="disclosure">As an Amazon Associate, I earn from qualifying purchases.<br>当サイトはAmazonアソシエイトに参加しています。</p>
+            <p class="copy">© 2026 GugoPro. All rights reserved.</p>
         </div>
     </footer>
 
