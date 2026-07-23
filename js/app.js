@@ -1,496 +1,423 @@
-// ===== GugoPro Amazon Smart Finder - Core Logic =====
-
+// ===== GugoPro Amazon Smart Finder =====
 (function() {
     'use strict';
 
-    // ===== Affiliate Tags =====
+    // ===== Config =====
     const TAG_US = '9908qq-20';
     const TAG_JP = 'gugopro-22';
-
-    // ===== Amazon Base URLs =====
     const BASE_US = 'https://www.amazon.com/s?k=';
     const BASE_JP = 'https://www.amazon.co.jp/s?k=';
 
-    // ===== Current State =====
-    let currentRegion = 'us'; // 'us' or 'jp'
+    // ===== Detect Region =====
+    let region = 'us';
+    (function detectRegion() {
+        const lang = (navigator.language || '').toLowerCase();
+        if (lang.startsWith('ja')) region = 'jp';
+    })();
 
     // ===== Category Data =====
-    const categories = {
-        electronics: {
-            icon: '💻',
-            name: { us: 'Electronics & Gadgets', jp: '家電・ガジェット' },
-            subcategories: {
-                us: ['Wireless Headphones', 'Bluetooth Speaker', 'Laptop', 'Tablet', 'Smartwatch', 'Keyboard', 'Mouse', 'Monitor', 'Webcam', 'Charger'],
-                jp: ['ワイヤレスヘッドホン', 'Bluetoothスピーカー', 'ノートパソコン', 'タブレット', 'スマートウォッチ', 'キーボード', 'マウス', 'モニター', 'ウェブカメラ', '充電器']
-            },
-            features: {
-                us: ['Noise Cancelling', 'Wireless', 'USB-C', 'Portable', 'Waterproof'],
-                jp: ['ノイズキャンセリング', 'ワイヤレス', 'USB-C', 'ポータブル', '防水']
+    const data = {
+        featured: {
+            icon: '⭐', name: { us: 'Featured', jp: '精選' },
+            items: {
+                us: ['Best Sellers', 'New Arrivals', 'Deals of the Day', 'Top Rated', 'Gift Ideas', 'Under $25', 'Under $50'],
+                jp: ['ベストセラー', '新着商品', '本日のセール', '高評価', 'ギフト', '2500円以下', '5000円以下']
             }
         },
-        furniture: {
-            icon: '🛋️',
-            name: { us: 'Furniture & Home', jp: '家具・インテリア' },
-            subcategories: {
-                us: ['Sofa', 'Office Chair', 'Desk', 'Bookshelf', 'Bed Frame', 'Coffee Table', 'TV Stand', 'Dining Table'],
-                jp: ['ソファ', 'オフィスチェア', 'デスク', '本棚', 'ベッドフレーム', 'コーヒーテーブル', 'テレビ台', 'ダイニングテーブル']
+        electronics: {
+            icon: '💻', name: { us: 'Electronics', jp: '家電' },
+            items: {
+                us: ['Headphones', 'Earbuds', 'Bluetooth Speaker', 'Laptop', 'Tablet', 'Smartwatch', 'Keyboard', 'Mouse', 'Monitor', 'Webcam', 'USB Hub', 'Charger', 'Power Bank', 'Phone Case', 'Screen Protector', 'HDMI Cable', 'SSD', 'Memory Card'],
+                jp: ['ヘッドホン', 'イヤホン', 'Bluetoothスピーカー', 'ノートPC', 'タブレット', 'スマートウォッチ', 'キーボード', 'マウス', 'モニター', 'ウェブカメラ', 'USBハブ', '充電器', 'モバイルバッテリー', 'スマホケース', '保護フィルム', 'HDMIケーブル', 'SSD', 'メモリーカード']
             },
-            materials: {
-                us: ['Leather', 'Faux Leather', 'Velvet', 'Fabric', 'Wood', 'Metal'],
-                jp: ['本革', '合皮', 'ベルベット', 'ファブリック', '木製', 'メタル']
-            },
-            features: {
-                us: ['Recliner', 'Sleeper', 'Mid-Century Modern', 'Minimalist', 'Storage', 'Adjustable'],
-                jp: ['リクライニング', 'ソファベッド', '北欧風', 'ミニマリスト', '収納付き', '高さ調節']
+            materials: { us: ['Wireless', 'Bluetooth 5.0', 'USB-C', 'Noise Cancelling', 'Waterproof'], jp: ['ワイヤレス', 'Bluetooth 5.0', 'USB-C', 'ノイキャン', '防水'] }
+        },
+        pc: {
+            icon: '🖥️', name: { us: 'Computers', jp: 'PC周辺' },
+            items: {
+                us: ['Gaming Laptop', 'Desktop PC', 'Gaming Monitor', 'Mechanical Keyboard', 'Gaming Mouse', 'Mousepad', 'PC Case', 'Graphics Card', 'RAM', 'CPU Cooler', 'Router', 'Mesh WiFi'],
+                jp: ['ゲーミングノートPC', 'デスクトップPC', 'ゲーミングモニター', 'メカニカルキーボード', 'ゲーミングマウス', 'マウスパッド', 'PCケース', 'グラフィックカード', 'メモリ', 'CPUクーラー', 'ルーター', 'メッシュWiFi']
+            }
+        },
+        phone: {
+            icon: '📱', name: { us: 'Phones', jp: '通訊' },
+            items: {
+                us: ['iPhone Case', 'Android Phone', 'Phone Stand', 'Wireless Charger', 'Car Mount', 'Ring Light', 'Selfie Stick', 'Gimbal', 'Lightning Cable', 'USB-C Cable'],
+                jp: ['iPhoneケース', 'Androidスマホ', 'スマホスタンド', 'ワイヤレス充電器', '車載ホルダー', 'リングライト', '自撮り棒', 'ジンバル', 'Lightningケーブル', 'USB-Cケーブル']
+            }
+        },
+        appliances: {
+            icon: '🏠', name: { us: 'Appliances', jp: '家電' },
+            items: {
+                us: ['Robot Vacuum', 'Air Purifier', 'Humidifier', 'Dehumidifier', 'Space Heater', 'Fan', 'Iron', 'Sewing Machine', 'Washing Machine', 'Dryer'],
+                jp: ['ロボット掃除機', '空気清浄機', '加湿器', '除湿機', 'ヒーター', '扇風機', 'アイロン', 'ミシン', '洗濯機', '乾燥機']
             }
         },
         kitchen: {
-            icon: '🍳',
-            name: { us: 'Kitchen & Dining', jp: 'キッチン・ダイニング' },
-            subcategories: {
-                us: ['Coffee Maker', 'Air Fryer', 'Blender', 'Knife Set', 'Cookware Set', 'Rice Cooker', 'Toaster Oven', 'Food Processor'],
-                jp: ['コーヒーメーカー', 'エアフライヤー', 'ブレンダー', '包丁セット', '鍋セット', '炊飯器', 'トースター', 'フードプロセッサー']
+            icon: '🍳', name: { us: 'Kitchen', jp: 'キッチン' },
+            items: {
+                us: ['Air Fryer', 'Coffee Maker', 'Blender', 'Instant Pot', 'Rice Cooker', 'Toaster', 'Knife Set', 'Cutting Board', 'Cookware Set', 'Food Storage', 'Water Filter', 'Electric Kettle'],
+                jp: ['エアフライヤー', 'コーヒーメーカー', 'ブレンダー', '電気圧力鍋', '炊飯器', 'トースター', '包丁セット', 'まな板', '鍋セット', '保存容器', '浄水器', '電気ケトル']
             },
-            materials: {
-                us: ['Stainless Steel', 'Cast Iron', 'Non-Stick', 'Ceramic', 'Glass'],
-                jp: ['ステンレス', '鋳鉄', 'ノンスティック', 'セラミック', 'ガラス']
-            },
-            features: {
-                us: ['Dishwasher Safe', 'BPA Free', 'Programmable', 'Compact', 'Professional Grade'],
-                jp: ['食洗機対応', 'BPAフリー', 'プログラム機能', 'コンパクト', 'プロ仕様']
-            }
+            materials: { us: ['Stainless Steel', 'Non-Stick', 'Cast Iron', 'Ceramic', 'BPA Free'], jp: ['ステンレス', 'ノンスティック', '鋳鉄', 'セラミック', 'BPAフリー'] }
         },
-        health: {
-            icon: '✨',
-            name: { us: 'Health & Beauty', jp: '健康・美容' },
-            subcategories: {
-                us: ['Skincare', 'Hair Dryer', 'Electric Toothbrush', 'Massage Gun', 'Supplements', 'Yoga Mat', 'Fitness Tracker', 'Essential Oils'],
-                jp: ['スキンケア', 'ヘアドライヤー', '電動歯ブラシ', 'マッサージガン', 'サプリメント', 'ヨガマット', 'フィットネストラッカー', 'エッセンシャルオイル']
+        furniture: {
+            icon: '🛋️', name: { us: 'Furniture', jp: '家具' },
+            items: {
+                us: ['Sofa', 'Office Chair', 'Standing Desk', 'Bookshelf', 'Bed Frame', 'Mattress', 'Coffee Table', 'TV Stand', 'Shoe Rack', 'Wardrobe', 'Dining Table', 'Bar Stool'],
+                jp: ['ソファ', 'オフィスチェア', 'スタンディングデスク', '本棚', 'ベッドフレーム', 'マットレス', 'コーヒーテーブル', 'テレビ台', 'シューズラック', 'ワードローブ', 'ダイニングテーブル', 'バースツール']
             },
-            features: {
-                us: ['Organic', 'Dermatologist Recommended', 'Fragrance Free', 'Vegan', 'Travel Size'],
-                jp: ['オーガニック', '皮膚科医推奨', '無香料', 'ヴィーガン', 'トラベルサイズ']
-            }
+            materials: { us: ['Leather', 'Fabric', 'Velvet', 'Wood', 'Metal', 'Bamboo'], jp: ['本革', 'ファブリック', 'ベルベット', '木製', 'メタル', '竹製'] },
+            features: { us: ['Recliner', 'Ergonomic', 'Foldable', 'With Storage', 'Adjustable Height'], jp: ['リクライニング', 'エルゴノミクス', '折りたたみ', '収納付き', '高さ調節'] }
         },
-        outdoor: {
-            icon: '🏕️',
-            name: { us: 'Outdoor & Sports', jp: 'アウトドア・スポーツ' },
-            subcategories: {
-                us: ['Backpack', 'Tent', 'Sleeping Bag', 'Water Bottle', 'Hiking Shoes', 'Bike Accessories', 'Camping Gear', 'Sunglasses'],
-                jp: ['バックパック', 'テント', '寝袋', '水筒', 'トレッキングシューズ', '自転車アクセサリー', 'キャンプ用品', 'サングラス']
-            },
-            features: {
-                us: ['Waterproof', 'Lightweight', 'UV Protection', 'Insulated', 'Foldable'],
-                jp: ['防水', '軽量', 'UV保護', '保温', '折りたたみ']
+        daily: {
+            icon: '🧴', name: { us: 'Daily Use', jp: '日用品' },
+            items: {
+                us: ['Laundry Detergent', 'Paper Towels', 'Trash Bags', 'Cleaning Spray', 'Sponges', 'Light Bulbs', 'Batteries', 'Extension Cord', 'Storage Bins', 'Hangers'],
+                jp: ['洗濯洗剤', 'ペーパータオル', 'ゴミ袋', '掃除スプレー', 'スポンジ', '電球', '電池', '延長コード', '収納ボックス', 'ハンガー']
             }
         },
         baby: {
-            icon: '👶',
-            name: { us: 'Baby & Kids', jp: 'ベビー・キッズ' },
-            subcategories: {
-                us: ['Stroller', 'Car Seat', 'Baby Monitor', 'Diaper Bag', 'High Chair', 'Toys', 'Baby Carrier', 'Crib'],
-                jp: ['ベビーカー', 'チャイルドシート', 'ベビーモニター', 'マザーズバッグ', 'ハイチェア', 'おもちゃ', '抱っこ紐', 'ベビーベッド']
-            },
-            features: {
-                us: ['Safety Certified', 'Lightweight', 'Foldable', 'Washable', 'Organic'],
-                jp: ['安全認証', '軽量', '折りたたみ', '洗える', 'オーガニック']
+            icon: '👶', name: { us: 'Baby & Kids', jp: '母嬰' },
+            items: {
+                us: ['Stroller', 'Car Seat', 'Baby Monitor', 'Diaper Bag', 'High Chair', 'Baby Carrier', 'Crib', 'Diapers', 'Baby Wipes', 'Bottle Warmer', 'Toys 0-3', 'Toys 3-6'],
+                jp: ['ベビーカー', 'チャイルドシート', 'ベビーモニター', 'マザーズバッグ', 'ハイチェア', '抱っこ紐', 'ベビーベッド', 'おむつ', 'おしりふき', '哺乳瓶ウォーマー', '知育玩具0-3歳', '知育玩具3-6歳']
             }
-        }
-    };
-
-    // ===== UI Text =====
-    const uiText = {
-        us: {
-            heroTitle: 'Find the Perfect Product on Amazon',
-            heroSubtitle: 'Choose your market, set your preferences, and we\'ll generate the perfect search for you.',
-            filtersTitle: 'Or use smart filters to narrow down',
-            labelCategory: 'CATEGORY',
-            labelSubcategory: 'TYPE / PRODUCT',
-            labelMaterial: 'MATERIAL',
-            labelPrice: 'PRICE RANGE',
-            labelRating: 'MINIMUM RATING',
-            labelFeatures: 'FEATURES',
-            ratingAny: 'Any',
-            ratingUp: '& up',
-            currency: 'USD',
-            searchPlaceholder: 'Search anything... (e.g. wireless headphones, sofa, coffee maker)',
-            searchBtn: 'Search on Amazon',
-            goBtn: 'Search on Amazon.com',
-            previewTitle: '🔍 Live Search Preview',
-            previewEmpty: 'Your search keywords will appear here...',
-            quickTitle: 'Popular Categories',
-            selectCategory: '-- Select Category --'
         },
-        jp: {
-            heroTitle: 'Amazonで最適な商品を見つけよう',
-            heroSubtitle: 'マーケットを選び、条件を設定すると、最適な検索を生成します。',
-            filtersTitle: 'スマートフィルターで絞り込み',
-            labelCategory: 'カテゴリー',
-            labelSubcategory: 'タイプ / 商品',
-            labelMaterial: '素材',
-            labelPrice: '価格帯',
-            labelRating: '最低評価',
-            labelFeatures: '特徴',
-            ratingAny: 'すべて',
-            ratingUp: '以上',
-            currency: 'JPY',
-            searchPlaceholder: '検索... (例: ワイヤレスヘッドホン、ソファ、コーヒーメーカー)',
-            searchBtn: 'Amazonで検索',
-            goBtn: 'Amazon.co.jpで検索',
-            previewTitle: '🔍 検索プレビュー',
-            previewEmpty: '検索キーワードがここに表示されます...',
-            quickTitle: '人気カテゴリー',
-            selectCategory: '-- カテゴリーを選択 --'
+        food: {
+            icon: '🍱', name: { us: 'Food & Drinks', jp: '食品' },
+            items: {
+                us: ['Protein Powder', 'Coffee Beans', 'Tea', 'Snacks', 'Nuts', 'Chocolate', 'Energy Bars', 'Vitamins', 'Organic Food', 'Meal Replacement'],
+                jp: ['プロテイン', 'コーヒー豆', 'お茶', 'お菓子', 'ナッツ', 'チョコレート', 'エナジーバー', 'ビタミン', 'オーガニック食品', '置き換え食']
+            }
+        },
+        health: {
+            icon: '💊', name: { us: 'Health', jp: '保健' },
+            items: {
+                us: ['Supplements', 'First Aid Kit', 'Blood Pressure Monitor', 'Thermometer', 'Massage Gun', 'Heating Pad', 'Eye Drops', 'Probiotics', 'Melatonin', 'Collagen'],
+                jp: ['サプリメント', '救急セット', '血圧計', '体温計', 'マッサージガン', 'ホットパッド', '目薬', 'プロバイオティクス', 'メラトニン', 'コラーゲン']
+            }
+        },
+        beauty: {
+            icon: '✨', name: { us: 'Beauty', jp: '美妝' },
+            items: {
+                us: ['Skincare Set', 'Sunscreen', 'Moisturizer', 'Serum', 'Face Mask', 'Hair Dryer', 'Curling Iron', 'Makeup Brush Set', 'Lipstick', 'Foundation', 'Perfume', 'Nail Polish'],
+                jp: ['スキンケアセット', '日焼け止め', '保湿クリーム', '美容液', 'フェイスマスク', 'ヘアドライヤー', 'コテ', 'メイクブラシセット', '口紅', 'ファンデーション', '香水', 'ネイル']
+            }
+        },
+        outdoor: {
+            icon: '🏕️', name: { us: 'Outdoor', jp: 'アウトドア' },
+            items: {
+                us: ['Backpack', 'Tent', 'Sleeping Bag', 'Hiking Boots', 'Water Bottle', 'Sunglasses', 'Camping Chair', 'Flashlight', 'Cooler', 'Bike Lock', 'Fishing Rod', 'Hammock'],
+                jp: ['バックパック', 'テント', '寝袋', 'トレッキングシューズ', '水筒', 'サングラス', 'キャンプチェア', '懐中電灯', 'クーラーボックス', '自転車ロック', '釣り竿', 'ハンモック']
+            }
+        },
+        fitness: {
+            icon: '🏋️', name: { us: 'Fitness', jp: 'フィットネス' },
+            items: {
+                us: ['Yoga Mat', 'Dumbbells', 'Resistance Bands', 'Jump Rope', 'Foam Roller', 'Fitness Tracker', 'Running Shoes', 'Gym Bag', 'Workout Gloves', 'Pull-up Bar'],
+                jp: ['ヨガマット', 'ダンベル', 'レジスタンスバンド', '縄跳び', 'フォームローラー', 'フィットネストラッカー', 'ランニングシューズ', 'ジムバッグ', 'トレーニンググローブ', '懸垂バー']
+            }
+        },
+        fashion: {
+            icon: '👔', name: { us: 'Fashion', jp: 'ファッション' },
+            items: {
+                us: ['T-Shirt', 'Jeans', 'Sneakers', 'Watch', 'Wallet', 'Backpack', 'Sunglasses', 'Belt', 'Jacket', 'Dress', 'Handbag', 'Jewelry'],
+                jp: ['Tシャツ', 'ジーンズ', 'スニーカー', '腕時計', '財布', 'リュック', 'サングラス', 'ベルト', 'ジャケット', 'ワンピース', 'ハンドバッグ', 'アクセサリー']
+            }
+        },
+        books: {
+            icon: '📚', name: { us: 'Books', jp: '書籍' },
+            items: {
+                us: ['Best Sellers Fiction', 'Self-Help Books', 'Business Books', 'Cookbooks', 'Children Books', 'Manga', 'Kindle', 'Audiobooks', 'Textbooks', 'Art Books'],
+                jp: ['ベストセラー小説', '自己啓発本', 'ビジネス書', '料理本', '児童書', '漫画', 'Kindle本', 'オーディオブック', '参考書', 'アート本']
+            }
+        },
+        pets: {
+            icon: '🐾', name: { us: 'Pets', jp: 'ペット' },
+            items: {
+                us: ['Dog Food', 'Cat Food', 'Dog Bed', 'Cat Tree', 'Pet Toys', 'Leash', 'Pet Carrier', 'Grooming Kit', 'Aquarium', 'Bird Cage'],
+                jp: ['ドッグフード', 'キャットフード', '犬用ベッド', 'キャットタワー', 'ペットおもちゃ', 'リード', 'ペットキャリー', 'グルーミングセット', '水槽', '鳥かご']
+            }
+        },
+        office: {
+            icon: '📎', name: { us: 'Office', jp: 'オフィス' },
+            items: {
+                us: ['Desk Organizer', 'Printer', 'Ink Cartridge', 'Notebook', 'Pens', 'Whiteboard', 'Label Maker', 'Shredder', 'Desk Lamp', 'Ergonomic Chair'],
+                jp: ['デスクオーガナイザー', 'プリンター', 'インクカートリッジ', 'ノート', 'ペン', 'ホワイトボード', 'ラベルライター', 'シュレッダー', 'デスクライト', 'エルゴチェア']
+            }
         }
     };
 
-    // ===== DOM Elements =====
-    const els = {};
+    // Popular searches
+    const popular = {
+        us: ['AirPods Pro', 'Robot Vacuum', 'Air Fryer', 'Standing Desk', 'Kindle', 'Yoga Mat', 'Instant Pot', 'Ring Doorbell', 'Nintendo Switch', 'Protein Powder', 'LED Strip Lights', 'Portable Charger'],
+        jp: ['AirPods Pro', 'ロボット掃除機', 'エアフライヤー', 'スタンディングデスク', 'Kindle', 'ヨガマット', '電気圧力鍋', 'スマートロック', 'Nintendo Switch', 'プロテイン', 'LEDテープライト', 'モバイルバッテリー']
+    };
 
-    function cacheDom() {
-        els.btnUs = document.getElementById('btn-us');
-        els.btnJp = document.getElementById('btn-jp');
-        els.heroTitle = document.getElementById('hero-title');
-        els.heroSubtitle = document.getElementById('hero-subtitle');
-        els.filtersTitle = document.getElementById('filters-title');
-        els.labelCategory = document.getElementById('label-category');
-        els.labelSubcategory = document.getElementById('label-subcategory');
-        els.labelMaterial = document.getElementById('label-material');
-        els.labelPrice = document.getElementById('label-price');
-        els.labelRating = document.getElementById('label-rating');
-        els.labelFeatures = document.getElementById('label-features');
-        els.ratingAny = document.getElementById('rating-any');
-        els.ratingUp = document.getElementById('rating-up');
-        els.priceCurrency = document.getElementById('price-currency');
-        els.searchInput = document.getElementById('search-input');
-        els.searchGoBtn = document.getElementById('search-go-btn');
-        els.searchBtnText = document.getElementById('search-btn-text');
-        els.filterCategory = document.getElementById('filter-category');
-        els.subcategoryGroup = document.getElementById('subcategory-group');
-        els.filterSubcategory = document.getElementById('filter-subcategory');
-        els.materialGroup = document.getElementById('material-group');
-        els.filterMaterial = document.getElementById('filter-material');
-        els.featuresGroup = document.getElementById('features-group');
-        els.filterFeatures = document.getElementById('filter-features');
-        els.priceMin = document.getElementById('price-min');
-        els.priceMax = document.getElementById('price-max');
-        els.previewTitle = document.getElementById('preview-title');
-        els.previewKeywords = document.getElementById('preview-keywords');
-        els.previewUrl = document.getElementById('preview-url');
-        els.goBtn = document.getElementById('go-btn');
-        els.goBtnText = document.getElementById('go-btn-text');
-        els.quickTitle = document.getElementById('quick-title');
-        els.quickGrid = document.getElementById('quick-grid');
+    // UI text
+    const ui = {
+        us: { catTitle: 'Categories', popularTitle: 'Popular Searches', searchPH: 'Search Amazon...', goText: 'Search on Amazon.com', pricePH: ['Min', 'Max'], currency: 'USD', rating: '★4+ only', matLabel: 'Material:', featLabel: 'Features:', priceLabel: 'Price:' },
+        jp: { catTitle: 'カテゴリー', popularTitle: '人気の検索', searchPH: 'Amazonで検索...', goText: 'Amazon.co.jpで検索', pricePH: ['最低', '最高'], currency: 'JPY', rating: '★4以上のみ', matLabel: '素材:', featLabel: '特徴:', priceLabel: '価格:' }
+    };
+
+    // ===== State =====
+    let selectedCategory = null;
+    let selectedItem = null;
+    let selectedMaterials = [];
+    let selectedFeatures = [];
+
+    // ===== DOM =====
+    const $ = id => document.getElementById(id);
+
+    function init() {
+        renderUI();
+        renderCategories();
+        renderPopular();
+        bindEvents();
     }
 
-    // ===== Region Switching =====
-    function setRegion(region) {
-        currentRegion = region;
-
-        // Update buttons
-        els.btnUs.classList.toggle('active', region === 'us');
-        els.btnJp.classList.toggle('active', region === 'jp');
-
-        // Update UI text
-        const text = uiText[region];
-        els.heroTitle.textContent = text.heroTitle;
-        els.heroSubtitle.textContent = text.heroSubtitle;
-        els.filtersTitle.textContent = text.filtersTitle;
-        els.labelCategory.textContent = text.labelCategory;
-        els.labelSubcategory.textContent = text.labelSubcategory;
-        els.labelMaterial.textContent = text.labelMaterial;
-        els.labelPrice.textContent = text.labelPrice;
-        els.labelRating.textContent = text.labelRating;
-        els.labelFeatures.textContent = text.labelFeatures;
-        els.ratingAny.textContent = text.ratingAny;
-        els.ratingUp.textContent = text.ratingUp;
-        els.priceCurrency.textContent = text.currency;
-        els.searchInput.placeholder = text.searchPlaceholder;
-        els.searchBtnText.textContent = text.searchBtn;
-        els.goBtnText.textContent = text.goBtn;
-        els.previewTitle.textContent = text.previewTitle;
-        els.quickTitle.textContent = text.quickTitle;
-
-        // Rebuild category dropdown
-        buildCategoryDropdown();
-        // Rebuild quick links
-        buildQuickLinks();
-        // Reset filters
-        resetFilters();
-        // Update preview
-        updatePreview();
+    function renderUI() {
+        const t = ui[region];
+        $('cat-title').textContent = t.catTitle;
+        $('popular-title').textContent = t.popularTitle;
+        $('search-input').placeholder = t.searchPH;
+        $('go-text').textContent = t.goText;
+        $('rating-text').textContent = t.rating;
+        $('label-material').textContent = t.matLabel;
+        $('label-features').textContent = t.featLabel;
+        $('label-price').textContent = t.priceLabel;
+        $('currency').textContent = t.currency;
+        $('price-min').placeholder = t.pricePH[0];
+        $('price-max').placeholder = t.pricePH[1];
     }
 
-    // ===== Build Category Dropdown =====
-    function buildCategoryDropdown() {
-        const text = uiText[currentRegion];
-        let html = '<option value="">' + text.selectCategory + '</option>';
-        for (const key in categories) {
-            const cat = categories[key];
-            html += '<option value="' + key + '">' + cat.icon + ' ' + cat.name[currentRegion] + '</option>';
-        }
-        els.filterCategory.innerHTML = html;
-    }
-
-    // ===== Build Quick Links =====
-    function buildQuickLinks() {
+    function renderCategories() {
         let html = '';
-        for (const key in categories) {
-            const cat = categories[key];
-            html += '<div class="quick-card" data-category="' + key + '">';
-            html += '<span class="quick-card-icon">' + cat.icon + '</span>';
-            html += '<span class="quick-card-name">' + cat.name[currentRegion] + '</span>';
-            html += '</div>';
+        for (const key in data) {
+            const cat = data[key];
+            html += '<div class="tag" data-cat="' + key + '"><span class="tag-icon">' + cat.icon + '</span>' + cat.name[region] + '</div>';
         }
-        els.quickGrid.innerHTML = html;
-
-        // Add click events
-        document.querySelectorAll('.quick-card').forEach(function(card) {
-            card.addEventListener('click', function() {
-                const catKey = this.getAttribute('data-category');
-                els.filterCategory.value = catKey;
-                onCategoryChange();
-                // Scroll to filters
-                document.querySelector('.filters-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
-            });
-        });
+        $('main-categories').innerHTML = html;
     }
 
-    // ===== Build Checkbox Group =====
-    function buildCheckboxGroup(container, items) {
+    function renderPopular() {
         let html = '';
-        items.forEach(function(item) {
-            html += '<label><input type="checkbox" value="' + item + '"><span>' + item + '</span></label>';
+        popular[region].forEach(function(term) {
+            html += '<div class="popular-tag" data-term="' + term + '">' + term + '</div>';
         });
-        container.innerHTML = html;
+        $('popular-grid').innerHTML = html;
+    }
 
-        // Add toggle class on click
-        container.querySelectorAll('label').forEach(function(label) {
-            label.addEventListener('click', function(e) {
-                if (e.target.tagName === 'INPUT') return;
-                const checkbox = this.querySelector('input');
-                checkbox.checked = !checkbox.checked;
-                this.classList.toggle('checked', checkbox.checked);
-                updatePreview();
-                e.preventDefault();
-            });
-            label.querySelector('input').addEventListener('change', function() {
-                label.classList.toggle('checked', this.checked);
-                updatePreview();
-            });
+    function showSubcategories(catKey) {
+        selectedCategory = catKey;
+        selectedItem = null;
+        const cat = data[catKey];
+        $('sub-title').textContent = cat.icon + ' ' + cat.name[region];
+        let html = '';
+        cat.items[region].forEach(function(item) {
+            html += '<div class="tag" data-item="' + item + '">' + item + '</div>';
         });
-    }
+        $('sub-categories').innerHTML = html;
+        $('sub-section').style.display = 'block';
 
-    // ===== Category Change =====
-    function onCategoryChange() {
-        const catKey = els.filterCategory.value;
-
-        if (!catKey || !categories[catKey]) {
-            els.subcategoryGroup.style.display = 'none';
-            els.materialGroup.style.display = 'none';
-            els.featuresGroup.style.display = 'none';
-            updatePreview();
-            return;
-        }
-
-        const cat = categories[catKey];
-        const region = currentRegion === 'us' ? 'us' : 'jp';
-
-        // Subcategories
-        if (cat.subcategories) {
-            els.subcategoryGroup.style.display = 'block';
-            buildCheckboxGroup(els.filterSubcategory, cat.subcategories[region]);
-        } else {
-            els.subcategoryGroup.style.display = 'none';
-        }
-
-        // Materials
-        if (cat.materials) {
-            els.materialGroup.style.display = 'block';
-            buildCheckboxGroup(els.filterMaterial, cat.materials[region]);
-        } else {
-            els.materialGroup.style.display = 'none';
-        }
-
-        // Features
-        if (cat.features) {
-            els.featuresGroup.style.display = 'block';
-            buildCheckboxGroup(els.filterFeatures, cat.features[region]);
-        } else {
-            els.featuresGroup.style.display = 'none';
-        }
-
-        updatePreview();
-    }
-
-    // ===== Reset Filters =====
-    function resetFilters() {
-        els.filterCategory.value = '';
-        els.subcategoryGroup.style.display = 'none';
-        els.materialGroup.style.display = 'none';
-        els.featuresGroup.style.display = 'none';
-        els.priceMin.value = '';
-        els.priceMax.value = '';
-        document.querySelectorAll('input[name="rating"]')[0].checked = true;
-        els.searchInput.value = '';
-    }
-
-    // ===== Build Search Keywords =====
-    function buildKeywords() {
-        // If free text search is filled, use that
-        const freeText = els.searchInput.value.trim();
-        if (freeText) {
-            return freeText;
-        }
-
-        // Otherwise build from filters
-        const parts = [];
-
-        // Category name
-        const catKey = els.filterCategory.value;
-        if (catKey && categories[catKey]) {
-            // Get selected subcategories
-            const selectedSubs = getCheckedValues(els.filterSubcategory);
-            if (selectedSubs.length > 0) {
-                parts.push(selectedSubs.join(' '));
+        // Show filters if category has materials/features
+        if (cat.materials || cat.features) {
+            $('filters-section').style.display = 'block';
+            if (cat.materials) {
+                $('filter-materials').style.display = 'flex';
+                let mhtml = '';
+                cat.materials[region].forEach(function(m) {
+                    mhtml += '<div class="filter-tag" data-val="' + m + '">' + m + '</div>';
+                });
+                $('material-tags').innerHTML = mhtml;
             } else {
-                parts.push(categories[catKey].name[currentRegion]);
+                $('filter-materials').style.display = 'none';
             }
-
-            // Materials
-            const selectedMats = getCheckedValues(els.filterMaterial);
-            if (selectedMats.length > 0) {
-                parts.push(selectedMats.join(' '));
+            if (cat.features) {
+                $('filter-features').style.display = 'flex';
+                let fhtml = '';
+                cat.features[region].forEach(function(f) {
+                    fhtml += '<div class="filter-tag" data-val="' + f + '">' + f + '</div>';
+                });
+                $('feature-tags').innerHTML = fhtml;
+            } else {
+                $('filter-features').style.display = 'none';
             }
-
-            // Features
-            const selectedFeats = getCheckedValues(els.filterFeatures);
-            if (selectedFeats.length > 0) {
-                parts.push(selectedFeats.join(' '));
-            }
+        } else {
+            $('filters-section').style.display = 'block';
+            $('filter-materials').style.display = 'none';
+            $('filter-features').style.display = 'none';
         }
 
+        // Show action
+        $('action-section').style.display = 'block';
+        updatePreview();
+
+        // Highlight active category
+        document.querySelectorAll('#main-categories .tag').forEach(function(el) {
+            el.classList.toggle('active', el.getAttribute('data-cat') === catKey);
+        });
+
+        // Bind sub events
+        document.querySelectorAll('#sub-categories .tag').forEach(function(el) {
+            el.addEventListener('click', function() {
+                selectedItem = this.getAttribute('data-item');
+                document.querySelectorAll('#sub-categories .tag').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                updatePreview();
+            });
+        });
+
+        // Bind material filter events
+        document.querySelectorAll('#material-tags .filter-tag').forEach(function(el) {
+            el.addEventListener('click', function() {
+                this.classList.toggle('active');
+                updateSelectedFilters();
+                updatePreview();
+            });
+        });
+
+        // Bind feature filter events
+        document.querySelectorAll('#feature-tags .filter-tag').forEach(function(el) {
+            el.addEventListener('click', function() {
+                this.classList.toggle('active');
+                updateSelectedFilters();
+                updatePreview();
+            });
+        });
+    }
+
+    function updateSelectedFilters() {
+        selectedMaterials = [];
+        document.querySelectorAll('#material-tags .filter-tag.active').forEach(function(el) {
+            selectedMaterials.push(el.getAttribute('data-val'));
+        });
+        selectedFeatures = [];
+        document.querySelectorAll('#feature-tags .filter-tag.active').forEach(function(el) {
+            selectedFeatures.push(el.getAttribute('data-val'));
+        });
+    }
+
+    function hideSubcategories() {
+        selectedCategory = null;
+        selectedItem = null;
+        selectedMaterials = [];
+        selectedFeatures = [];
+        $('sub-section').style.display = 'none';
+        $('filters-section').style.display = 'none';
+        $('action-section').style.display = 'none';
+        document.querySelectorAll('#main-categories .tag').forEach(el => el.classList.remove('active'));
+    }
+
+    function buildKeywords() {
+        // Free text takes priority
+        const freeText = $('search-input').value.trim();
+        if (freeText) return freeText;
+
+        // Build from selections
+        const parts = [];
+        if (selectedItem) {
+            parts.push(selectedItem);
+        } else if (selectedCategory && data[selectedCategory]) {
+            parts.push(data[selectedCategory].name[region]);
+        }
+        if (selectedMaterials.length > 0) parts.push(selectedMaterials.join(' '));
+        if (selectedFeatures.length > 0) parts.push(selectedFeatures.join(' '));
         return parts.join(' ');
     }
 
-    // ===== Build Full URL =====
     function buildUrl() {
-        const keywords = buildKeywords();
-        if (!keywords) return '';
+        const kw = buildKeywords();
+        if (!kw) return '';
+        const base = region === 'us' ? BASE_US : BASE_JP;
+        const tag = region === 'us' ? TAG_US : TAG_JP;
+        let url = base + encodeURIComponent(kw);
+        if (tag) url += '&tag=' + tag;
 
-        const base = currentRegion === 'us' ? BASE_US : BASE_JP;
-        const tag = currentRegion === 'us' ? TAG_US : TAG_JP;
-        let url = base + encodeURIComponent(keywords);
-
-        // Add tag
-        if (tag) {
-            url += '&tag=' + tag;
+        // Rating
+        if ($('rating-filter').checked) {
+            url += '&rh=p_72%3A' + (region === 'us' ? '2661618011' : '2221615051');
         }
 
-        // Add rating filter
-        const rating = document.querySelector('input[name="rating"]:checked').value;
-        if (rating === '4') {
-            url += '&rh=p_72%3A' + (currentRegion === 'us' ? '2661618011' : '2221615051');
-        }
-
-        // Add price range
-        const priceMin = els.priceMin.value;
-        const priceMax = els.priceMax.value;
-        if (priceMin || priceMax) {
-            const min = priceMin ? (currentRegion === 'us' ? priceMin + '00' : priceMin) : '';
-            const max = priceMax ? (currentRegion === 'us' ? priceMax + '00' : priceMax) : '';
+        // Price
+        const pmin = $('price-min').value;
+        const pmax = $('price-max').value;
+        if (pmin || pmax) {
+            const min = pmin ? (region === 'us' ? pmin + '00' : pmin) : '';
+            const max = pmax ? (region === 'us' ? pmax + '00' : pmax) : '';
             url += '&rh=' + encodeURIComponent('p_36:' + min + '-' + max);
         }
 
         return url;
     }
 
-    // ===== Update Preview =====
     function updatePreview() {
-        const keywords = buildKeywords();
-        const url = buildUrl();
-        const text = uiText[currentRegion];
-
-        if (keywords) {
-            els.previewKeywords.textContent = keywords;
-            els.previewKeywords.style.color = 'var(--color-primary)';
-            els.previewUrl.textContent = url;
-            els.goBtn.style.opacity = '1';
-            els.goBtn.style.pointerEvents = 'auto';
-        } else {
-            els.previewKeywords.textContent = text.previewEmpty;
-            els.previewKeywords.style.color = 'var(--color-text-light)';
-            els.previewUrl.textContent = '';
-            els.goBtn.style.opacity = '0.5';
-            els.goBtn.style.pointerEvents = 'none';
+        const kw = buildKeywords();
+        if (kw) {
+            $('preview-text').textContent = kw;
+            $('action-section').style.display = 'block';
+        } else if (selectedCategory) {
+            $('preview-text').textContent = data[selectedCategory].name[region];
+            $('action-section').style.display = 'block';
         }
     }
 
-    // ===== Get Checked Values =====
-    function getCheckedValues(container) {
-        const values = [];
-        container.querySelectorAll('input:checked').forEach(function(input) {
-            values.push(input.value);
-        });
-        return values;
-    }
-
-    // ===== Go to Amazon =====
     function goToAmazon() {
         const url = buildUrl();
-        if (url) {
-            window.open(url, '_blank', 'noopener,noreferrer');
-        }
+        if (url) window.open(url, '_blank', 'noopener,noreferrer');
     }
 
-    // ===== Event Listeners =====
     function bindEvents() {
-        // Region buttons
-        els.btnUs.addEventListener('click', function() { setRegion('us'); });
-        els.btnJp.addEventListener('click', function() { setRegion('jp'); });
+        // Category clicks
+        $('main-categories').addEventListener('click', function(e) {
+            const tag = e.target.closest('.tag');
+            if (!tag) return;
+            const catKey = tag.getAttribute('data-cat');
+            if (catKey === selectedCategory) {
+                hideSubcategories();
+            } else {
+                showSubcategories(catKey);
+            }
+        });
 
-        // Category change
-        els.filterCategory.addEventListener('change', onCategoryChange);
+        // Back button
+        $('back-btn').addEventListener('click', hideSubcategories);
 
         // Search input
-        els.searchInput.addEventListener('input', updatePreview);
-        els.searchInput.addEventListener('keypress', function(e) {
+        $('search-input').addEventListener('input', function() {
+            if (this.value.trim()) {
+                $('action-section').style.display = 'block';
+                updatePreview();
+            }
+        });
+        $('search-input').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') goToAmazon();
         });
 
-        // Search button (in search box)
-        els.searchGoBtn.addEventListener('click', goToAmazon);
+        // Search button
+        $('search-btn').addEventListener('click', goToAmazon);
 
         // Go button
-        els.goBtn.addEventListener('click', goToAmazon);
+        $('go-btn').addEventListener('click', goToAmazon);
 
-        // Price inputs
-        els.priceMin.addEventListener('input', updatePreview);
-        els.priceMax.addEventListener('input', updatePreview);
+        // Price & rating changes
+        $('price-min').addEventListener('input', updatePreview);
+        $('price-max').addEventListener('input', updatePreview);
+        $('rating-filter').addEventListener('change', updatePreview);
 
-        // Rating
-        document.querySelectorAll('input[name="rating"]').forEach(function(radio) {
-            radio.addEventListener('change', updatePreview);
+        // Popular tags
+        $('popular-grid').addEventListener('click', function(e) {
+            const tag = e.target.closest('.popular-tag');
+            if (!tag) return;
+            $('search-input').value = tag.getAttribute('data-term');
+            $('action-section').style.display = 'block';
+            updatePreview();
+            goToAmazon();
         });
     }
 
-    // ===== Auto Detect Language =====
-    function detectRegion() {
-        const browserLang = navigator.language || navigator.userLanguage || '';
-        if (browserLang.toLowerCase().startsWith('ja')) {
-            return 'jp';
-        }
-        return 'us';
-    }
-
-    // ===== Initialize =====
-    function init() {
-        cacheDom();
-        bindEvents();
-        const region = detectRegion();
-        setRegion(region);
-    }
-
+    // ===== Start =====
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {

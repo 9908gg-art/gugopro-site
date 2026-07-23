@@ -3,125 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GugoPro - Amazon Smart Finder | 亞馬遜智能選購工具</title>
-    <meta name="description" content="Smart shopping tool for Amazon US and Japan. Find the best products with intelligent filters and direct search links. アマゾン米国・日本のスマート検索ツール。">
+    <title>GugoPro - Amazon Smart Finder | アマゾン スマート検索</title>
+    <meta name="description" content="Smart shopping tool for Amazon US and Japan. Find the best products with intelligent category filters and direct search. アマゾン米国・日本のスマート検索ツール。">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
-    <!-- Header -->
+    <!-- Header with Search -->
     <header class="header">
         <div class="container">
-            <div class="header-inner">
-                <a href="/" class="logo">
-                    <span class="logo-icon">✦</span>
-                    <span class="logo-text">GugoPro</span>
-                </a>
-                <p class="tagline" id="tagline">Amazon Smart Finder</p>
+            <div class="header-row">
+                <a href="/" class="logo">✦ GugoPro</a>
+                <div class="search-bar">
+                    <input type="text" id="search-input" placeholder="Search Amazon...">
+                    <button id="search-btn">🔍</button>
+                </div>
             </div>
         </div>
     </header>
 
-    <!-- Main Tool -->
+    <!-- Main Content -->
     <main class="main">
         <div class="container">
-            <!-- Hero -->
-            <section class="hero">
-                <h1 id="hero-title">Find the Perfect Product on Amazon</h1>
-                <p id="hero-subtitle">Choose your market, set your preferences, and we'll generate the perfect search for you.</p>
+            <!-- Category Tags -->
+            <section class="category-section">
+                <h2 id="cat-title">Categories</h2>
+                <div class="tag-grid" id="main-categories"></div>
             </section>
 
-            <!-- Region Switcher -->
-            <section class="region-switcher">
-                <button class="region-btn active" id="btn-us" data-region="us">
-                    <span class="region-flag">🇺🇸</span>
-                    <span class="region-name">Amazon.com</span>
-                    <span class="region-lang">English</span>
-                </button>
-                <button class="region-btn" id="btn-jp" data-region="jp">
-                    <span class="region-flag">🇯🇵</span>
-                    <span class="region-name">Amazon.co.jp</span>
-                    <span class="region-lang">日本語</span>
-                </button>
+            <!-- Subcategory Tags (shown after selecting a main category) -->
+            <section class="subcategory-section" id="sub-section" style="display:none;">
+                <div class="sub-header">
+                    <h3 id="sub-title"></h3>
+                    <button class="back-btn" id="back-btn">✕</button>
+                </div>
+                <div class="tag-grid" id="sub-categories"></div>
             </section>
 
-            <!-- Search Box -->
-            <section class="search-section">
-                <div class="search-box">
-                    <input type="text" id="search-input" placeholder="Search anything... (e.g. wireless headphones, sofa, coffee maker)">
-                    <button class="search-go-btn" id="search-go-btn">
-                        <span id="search-btn-text">Search on Amazon</span> ➔
-                    </button>
+            <!-- Quick Filters (shown after selecting subcategory) -->
+            <section class="filters-section" id="filters-section" style="display:none;">
+                <div class="filter-row" id="filter-materials" style="display:none;">
+                    <span class="filter-label" id="label-material">Material:</span>
+                    <div class="filter-tags" id="material-tags"></div>
                 </div>
-            </section>
-
-            <!-- Filters -->
-            <section class="filters-section">
-                <h2 id="filters-title">Or use smart filters</h2>
-
-                <!-- Category Select -->
-                <div class="filter-group">
-                    <label id="label-category">Category</label>
-                    <select id="filter-category">
-                        <option value="">-- Select Category --</option>
-                    </select>
+                <div class="filter-row" id="filter-features" style="display:none;">
+                    <span class="filter-label" id="label-features">Features:</span>
+                    <div class="filter-tags" id="feature-tags"></div>
                 </div>
-
-                <!-- Subcategory / Type -->
-                <div class="filter-group" id="subcategory-group" style="display:none;">
-                    <label id="label-subcategory">Type / Style</label>
-                    <div class="checkbox-grid" id="filter-subcategory"></div>
-                </div>
-
-                <!-- Material -->
-                <div class="filter-group" id="material-group" style="display:none;">
-                    <label id="label-material">Material</label>
-                    <div class="checkbox-grid" id="filter-material"></div>
-                </div>
-
-                <!-- Price Range -->
-                <div class="filter-group">
-                    <label id="label-price">Price Range</label>
-                    <div class="price-range">
+                <div class="filter-row">
+                    <span class="filter-label" id="label-price">Price:</span>
+                    <div class="price-inputs">
                         <input type="number" id="price-min" placeholder="Min">
-                        <span class="price-separator">—</span>
+                        <span>-</span>
                         <input type="number" id="price-max" placeholder="Max">
-                        <span class="price-currency" id="price-currency">USD</span>
+                        <span class="currency" id="currency">USD</span>
                     </div>
                 </div>
-
-                <!-- Rating -->
-                <div class="filter-group">
-                    <label id="label-rating">Minimum Rating</label>
-                    <div class="rating-options">
-                        <label class="radio-label"><input type="radio" name="rating" value="" checked> <span id="rating-any">Any</span></label>
-                        <label class="radio-label"><input type="radio" name="rating" value="4"> ★★★★ <span id="rating-up">& up</span></label>
-                    </div>
-                </div>
-
-                <!-- Features (for specific categories) -->
-                <div class="filter-group" id="features-group" style="display:none;">
-                    <label id="label-features">Features</label>
-                    <div class="checkbox-grid" id="filter-features"></div>
+                <div class="filter-row">
+                    <label class="rating-check">
+                        <input type="checkbox" id="rating-filter">
+                        <span id="rating-text">★4+ only</span>
+                    </label>
                 </div>
             </section>
 
-            <!-- Live Preview & Go Button -->
-            <section class="preview-section">
-                <div class="preview-box">
-                    <h3 id="preview-title">🔍 Live Search Preview</h3>
-                    <p class="preview-keywords" id="preview-keywords">Your search keywords will appear here...</p>
-                    <p class="preview-url" id="preview-url"></p>
+            <!-- Preview & Go -->
+            <section class="action-section" id="action-section" style="display:none;">
+                <div class="preview-line">
+                    <span class="preview-label">🔍</span>
+                    <span class="preview-text" id="preview-text"></span>
                 </div>
                 <button class="go-btn" id="go-btn">
-                    <span id="go-btn-text">Search on Amazon</span> ➔
+                    <span id="go-text">Search on Amazon</span> ➔
                 </button>
             </section>
 
-            <!-- Popular Categories Quick Links -->
-            <section class="quick-links">
-                <h2 id="quick-title">Popular Categories</h2>
-                <div class="quick-grid" id="quick-grid"></div>
+            <!-- Popular Searches -->
+            <section class="popular-section">
+                <h2 id="popular-title">Popular Searches</h2>
+                <div class="popular-grid" id="popular-grid"></div>
             </section>
         </div>
     </main>
@@ -129,8 +89,8 @@
     <!-- Footer -->
     <footer class="footer">
         <div class="container">
-            <p class="affiliate-disclosure">As an Amazon Associate, I earn from qualifying purchases. 当サイトはAmazonアソシエイトに参加しています。</p>
-            <p class="copyright">© 2026 GugoPro. All rights reserved.</p>
+            <p>As an Amazon Associate, I earn from qualifying purchases.<br>当サイトはAmazonアソシエイトに参加しています。</p>
+            <p>© 2026 GugoPro</p>
         </div>
     </footer>
 
