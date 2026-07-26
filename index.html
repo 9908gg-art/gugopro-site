@@ -1,132 +1,409 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GugoPro - Amazon Smart Finder | アマゾン スマート検索</title>
-    <meta name="description" content="Smart shopping tool for Amazon US and Japan. Find the best products with intelligent category filters and direct search. アマゾン米国・日本のスマート検索ツール。">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/app.css">
+    <title>GugoPro 官方首頁 | 自動化 AI 工具大軍、財經籌碼與電商導購總入口網</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="GugoPro 官方總入口網 (gugopro.com)。整合美台股籌碼終端、Gemini API 官方額度監控、美日亞馬遜智能搜尋館、塔羅占卜與各類實用 Web AI 工具。提供開發者贊助與合作服務。">
+    <meta name="keywords" content="gugopro, gugopro.com, 財經籌碼, Gemini API 免費額度, 亞馬遜智能搜尋, 塔羅占卜, 雙語對照閱讀器, 工時計算器, 贊助開發者">
+    <meta name="author" content="GugoPro AI Team">
+    <link rel="canonical" href="https://gugopro.com/">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://gugopro.com/">
+    <meta property="og:title" content="GugoPro 官方首頁 | 自動化 AI 工具大軍與財經籌碼總入口網">
+    <meta property="og:description" content="一站式探索 GugoPro 旗下所有 Web 工具、財經數據與電商搜尋服務，並支援開發者贊助與合作。">
+    <meta property="og:image" content="https://gugopro.com/screenshot.png">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="css/app.css?v=2.0.0">
 </head>
 <body>
-    <!-- Header -->
-    <header class="header">
-        <div class="container">
-            <div class="header-row">
-                <a href="/" class="logo">✦ GugoPro</a>
-                <div class="search-bar">
-                    <input type="text" id="search-input">
-                    <button id="search-btn">🔍</button>
+    <!-- Top Global Header -->
+    <header class="main-header">
+        <div class="header-bg-gradient"></div>
+        <div class="container header-container">
+            <div class="brand-box">
+                <div class="brand-logo">
+                    <i class="fa-solid fa-rocket brand-icon"></i>
+                    <span class="brand-name">GugoPro</span>
                 </div>
+                <span class="brand-tagline">跨國智能 AI 工具與內容大軍總入口網</span>
             </div>
+
+            <nav class="nav-links">
+                <a href="#tools-section"><i class="fa-solid fa-grip"></i> 全站工具總覽</a>
+                <a href="#sponsor-section" class="nav-sponsor-link"><i class="fa-solid fa-mug-hot"></i> 贊助開發者</a>
+                <a href="https://shop-ja.gugopro.com" target="_blank"><i class="fa-solid fa-bag-shopping"></i> 日本亞馬遜館</a>
+                <a href="https://tarot.gugopro.com" target="_blank"><i class="fa-solid fa-wand-magic-sparkles"></i> 塔羅占卜</a>
+            </nav>
         </div>
     </header>
 
-    <main class="main">
-        <div class="container">
-            <!-- Main Categories -->
-            <section class="section" id="cat-section">
-                <div class="section-header">
-                    <h2 id="cat-title">Categories</h2>
-                </div>
-                <div class="tag-grid" id="main-categories"></div>
-            </section>
-
-            <!-- Subcategory Panel -->
-            <section class="section panel" id="sub-section" style="display:none;">
-                <div class="section-header">
-                    <h2 id="sub-title"></h2>
-                    <button class="close-btn" id="back-btn">✕</button>
-                </div>
-                <div class="tag-grid" id="sub-categories"></div>
-            </section>
-
-            <!-- Brand Filter -->
-            <section class="section panel" id="brand-section" style="display:none;">
-                <div class="section-header">
-                    <h2 id="brand-title">Brand</h2>
-                </div>
-                <div class="tag-grid" id="brand-tags"></div>
-            </section>
-
-            <!-- Filters Panel -->
-            <section class="section panel" id="filters-panel" style="display:none;">
-                <!-- Price Slider -->
-                <div class="filter-block">
-                    <div class="filter-block-header">
-                        <span id="price-label">Price Range</span>
-                        <span class="price-display" id="price-display"></span>
-                    </div>
-                    <div class="slider-container">
-                        <input type="range" id="price-slider-min" min="0" max="1000" value="0" step="10">
-                        <input type="range" id="price-slider-max" min="0" max="1000" value="1000" step="10">
-                        <div class="slider-track" id="slider-track"></div>
-                    </div>
-                    <div class="slider-labels">
-                        <span id="slider-min-label">0</span>
-                        <span id="slider-max-label">1000</span>
-                    </div>
-                </div>
-
-                <!-- Rating -->
-                <div class="filter-block">
-                    <div class="rating-row">
-                        <span class="stars">★★★★☆</span>
-                        <label class="toggle-label">
-                            <input type="checkbox" id="rating-filter">
-                            <span class="toggle-switch"></span>
-                            <span id="rating-text">4 stars & above</span>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Material Tags -->
-                <div class="filter-block" id="material-block" style="display:none;">
-                    <div class="filter-block-header">
-                        <span id="material-label">Material</span>
-                    </div>
-                    <div class="tag-grid small" id="material-tags"></div>
-                </div>
-
-                <!-- Feature Tags -->
-                <div class="filter-block" id="feature-block" style="display:none;">
-                    <div class="filter-block-header">
-                        <span id="feature-label">Features</span>
-                    </div>
-                    <div class="tag-grid small" id="feature-tags"></div>
-                </div>
-            </section>
-
-            <!-- Action Bar -->
-            <section class="action-bar" id="action-bar" style="display:none;">
-                <div class="preview-line" id="preview-line">
-                    <span class="preview-icon">🔍</span>
-                    <span class="preview-text" id="preview-text"></span>
-                </div>
-                <button class="go-btn" id="go-btn">
-                    <span id="go-text">Search on Amazon</span>
-                    <span class="go-arrow">→</span>
-                </button>
-            </section>
-
-            <!-- Popular Searches -->
-            <section class="section" id="popular-section">
-                <div class="section-header">
-                    <h2 id="popular-title">Trending Now</h2>
-                </div>
-                <div class="tag-grid" id="popular-grid"></div>
-            </section>
+    <!-- Hero Banner -->
+    <section class="hero-section">
+        <div class="container hero-content">
+            <div class="hero-badge"><i class="fa-solid fa-sparkles"></i> GUGO PRO AUTOMATED ECOSYSTEM</div>
+            <h1 class="hero-title">賦能日常與開發者的 <span class="gradient-text">Web 工具與財經數據矩陣</span></h1>
+            <p class="hero-subtitle">
+                匯聚股市籌碼分析、Gemini API 額度監控、跨國電商智慧搜尋與日常生活工具，一站存取所有服務。
+            </p>
+            <div class="hero-actions">
+                <a href="#tools-section" class="btn btn-primary"><i class="fa-solid fa-compass"></i> 即刻探索全站工具</a>
+                <a href="#sponsor-section" class="btn btn-secondary"><i class="fa-solid fa-heart" style="color: #ef4444;"></i> 支持與贊助我們</a>
+            </div>
         </div>
+    </section>
+
+    <main class="container main-layout">
+        <!-- SECTION 1: Developer Sponsorship & Support Center -->
+        <section id="sponsor-section" class="section-card sponsor-card-highlight">
+            <div class="section-header">
+                <div class="section-header-left">
+                    <h2 class="section-title text-amber">
+                        <i class="fa-solid fa-mug-hot"></i> ☕ 開發者贊助與支持中心 (Developer Sponsorship)
+                    </h2>
+                    <p class="section-subtitle">
+                        您的贊助將直接用於支應伺服器託管、API 爬蟲營運與全新 Web AI 工具的自動化擴充研發！
+                    </p>
+                </div>
+                <span class="header-badge badge-amber"><i class="fa-solid fa-hand-holding-heart"></i> 支持開源與自由服務</span>
+            </div>
+
+            <div class="sponsor-grid">
+                <!-- Option 1: Buy Me a Coffee -->
+                <div class="sponsor-box box-coffee">
+                    <div class="sponsor-box-icon"><i class="fa-solid fa-mug-saucer"></i></div>
+                    <h3>Buy Me a Coffee</h3>
+                    <p>請開發者喝一杯咖啡，支持每日 API 爬蟲維護與數據同步。</p>
+                    <a href="https://www.buymeacoffee.com" target="_blank" class="btn-sponsor btn-yellow">
+                        <i class="fa-solid fa-mug-hot"></i> 線上贊助咖啡 ☕
+                    </a>
+                </div>
+
+                <!-- Option 2: PayPal / Credit Card -->
+                <div class="sponsor-box box-paypal">
+                    <div class="sponsor-box-icon"><i class="fa-brands fa-paypal"></i></div>
+                    <h3>PayPal / 信用卡贊助</h3>
+                    <p>支援全球信用卡與 PayPal 快速極速贊助任意金額。</p>
+                    <a href="https://www.paypal.com" target="_blank" class="btn-sponsor btn-blue">
+                        <i class="fa-solid fa-credit-card"></i> PayPal 贊助 💳
+                    </a>
+                </div>
+
+                <!-- Option 3: Crypto Wallet -->
+                <div class="sponsor-box box-crypto">
+                    <div class="sponsor-box-icon"><i class="fa-brands fa-bitcoin"></i></div>
+                    <h3>加密貨幣贊助 (Crypto)</h3>
+                    <p>支援 USDT (TRC20/ERC20)、BTC、ETH 區塊鏈錢包贊助。</p>
+                    <button onclick="toggleCryptoModal()" class="btn-sponsor btn-purple">
+                        <i class="fa-solid fa-wallet"></i> 檢視錢包地址 🪙
+                    </button>
+                </div>
+
+                <!-- Option 4: Patreon / Membership -->
+                <div class="sponsor-box box-patreon">
+                    <div class="sponsor-box-icon"><i class="fa-brands fa-patreon"></i></div>
+                    <h3>Patreon 定額訂閱贊助</h3>
+                    <p>成為 VIP 月度贊助會員，優先提議與試用全新 AI 工具。</p>
+                    <a href="https://www.patreon.com" target="_blank" class="btn-sponsor btn-red">
+                        <i class="fa-solid fa-crown"></i> 成為 Patreon 會員 👑
+                    </a>
+                </div>
+            </div>
+
+            <!-- Crypto Modal (Hidden by default) -->
+            <div id="crypto-modal" class="crypto-modal-box" style="display: none;">
+                <h4><i class="fa-solid fa-coins"></i> 加密貨幣收款錢包地址</h4>
+                <div class="crypto-address-item">
+                    <strong>USDT (TRC20):</strong> <code>T9yD14Nj9j7x8k2Lp3mN4q5r6s7t8u9v0w</code>
+                </div>
+                <div class="crypto-address-item">
+                    <strong>USDT (ERC20) / ETH:</strong> <code>0x71C7656EC7ab88b098defB751B7401B5f6d8976F</code>
+                </div>
+                <div class="crypto-address-item">
+                    <strong>Bitcoin (BTC):</strong> <code>bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh</code>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: Categorized Sub-Sites & Web Tools List -->
+        <section id="tools-section">
+            <div class="main-section-title-bar">
+                <h2><i class="fa-solid fa-cubes-stacked"></i> GugoPro 全站子網頁與 Web 工具大軍</h2>
+                <p>已分類整合目前所有上線運作的網站服務，未來將持續陸續擴充！</p>
+            </div>
+
+            <!-- Category A: Finance & Stock Tools -->
+            <div class="category-block">
+                <div class="category-title-flex">
+                    <h3><i class="fa-solid fa-chart-line text-blue"></i> 📊 財經籌碼與美台股市專區 (Stock Intelligence)</h3>
+                    <span class="cat-count">3 個服務線上運行中</span>
+                </div>
+                <div class="tools-grid">
+                    <!-- Tool A1: Taiwan Stock Chips -->
+                    <div class="tool-card border-blue">
+                        <div class="tool-card-top">
+                            <div class="tool-icon icon-blue"><i class="fa-solid fa-chart-pie"></i></div>
+                            <span class="status-online"><i class="fa-solid fa-circle-check"></i> 在線運行</span>
+                        </div>
+                        <h4>台灣股市三大法人籌碼終端</h4>
+                        <p>實時追蹤外資、投信、自營商每日買賣超數據，附帶互動式 K 線與多空籌碼解析。</p>
+                        <div class="tool-card-bottom">
+                            <span class="tool-domain">taiwan-stock--chips</span>
+                            <a href="https://9908gg-art.github.io/taiwan-stock--chips/" target="_blank" class="btn-visit btn-visit-blue">
+                                開啟工具 <i class="fa-solid fa-arrow-right-long"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Tool A2: TSMC News & ADR -->
+                    <div class="tool-card border-blue">
+                        <div class="tool-card-top">
+                            <div class="tool-icon icon-blue"><i class="fa-solid fa-microchip"></i></div>
+                            <span class="status-online"><i class="fa-solid fa-circle-check"></i> 在線運行</span>
+                        </div>
+                        <h4>台積電 (2330 / TSM) 財經新聞與 ADR 對照</h4>
+                        <p>專為 2330 與美股 TSM ADR 設計，即時彙整最新財經新聞、溢價率與 TradingView 線圖。</p>
+                        <div class="tool-card-bottom">
+                            <span class="tool-domain">tsmc-news</span>
+                            <a href="https://9908gg-art.github.io/taiwan-stock--chips/tsmc-news/" target="_blank" class="btn-visit btn-visit-blue">
+                                開啟工具 <i class="fa-solid fa-arrow-right-long"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Tool A3: GugoPro Academy -->
+                    <div class="tool-card border-blue">
+                        <div class="tool-card-top">
+                            <div class="tool-icon icon-blue"><i class="fa-solid fa-graduation-cap"></i></div>
+                            <span class="status-online"><i class="fa-solid fa-circle-check"></i> 在線運行</span>
+                        </div>
+                        <h4>GugoPro 財經商務學院與討論區</h4>
+                        <p>提供完整美股、台股、技術分析、演算法交易策略教學與社群討論論壇。</p>
+                        <div class="tool-card-bottom">
+                            <span class="tool-domain">gugopro-academy</span>
+                            <a href="https://9908gg-art.github.io/gugopro-academy/" target="_blank" class="btn-visit btn-visit-blue">
+                                開啟學院 <i class="fa-solid fa-arrow-right-long"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category B: Developer & Utility AI Tools -->
+            <div class="category-block">
+                <div class="category-title-flex">
+                    <h3><i class="fa-solid fa-screwdriver-wrench text-emerald"></i> 🛠️ 開發者與實用 AI Web 工具 (Utility & AI Tools)</h3>
+                    <span class="cat-count">4 個服務線上運行中</span>
+                </div>
+                <div class="tools-grid">
+                    <!-- Tool B1: Gemini Rate Limits Monitor -->
+                    <div class="tool-card border-emerald">
+                        <div class="tool-card-top">
+                            <div class="tool-icon icon-emerald"><i class="fa-solid fa-bolt"></i></div>
+                            <span class="status-online"><i class="fa-solid fa-circle-check"></i> 每日自動更新</span>
+                        </div>
+                        <h4>Gemini API 官方額度查詢與模型分類</h4>
+                        <p>即時同步 Google AI Studio 限額數據，提供 10.0 分動態版本評分、Failover 指南與 JSON API 直連。</p>
+                        <div class="tool-card-bottom">
+                            <span class="tool-domain">gemini-quota-fetcher</span>
+                            <a href="https://9908gg-art.github.io/gemini-quota-fetcher/" target="_blank" class="btn-visit btn-visit-emerald">
+                                開啟工具 <i class="fa-solid fa-arrow-right-long"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Tool B2: Bilingual Reader Translate -->
+                    <div class="tool-card border-emerald">
+                        <div class="tool-card-top">
+                            <div class="tool-icon icon-emerald"><i class="fa-solid fa-language"></i></div>
+                            <span class="status-online"><i class="fa-solid fa-circle-check"></i> 在線運行</span>
+                        </div>
+                        <h4>雙語對照閱讀器與智能翻譯工具</h4>
+                        <p>雙語沉浸式文章閱讀器，支援英/日/中自動對照翻譯、語音朗讀與單字解析。</p>
+                        <div class="tool-card-bottom">
+                            <span class="tool-domain">translate</span>
+                            <a href="https://9908gg-art.github.io/taiwan-stock--chips/translate/" target="_blank" class="btn-visit btn-visit-emerald">
+                                開啟工具 <i class="fa-solid fa-arrow-right-long"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Tool B3: SRT to VTT Converter -->
+                    <div class="tool-card border-emerald">
+                        <div class="tool-card-top">
+                            <div class="tool-icon icon-emerald"><i class="fa-solid fa-file-video"></i></div>
+                            <span class="status-online"><i class="fa-solid fa-circle-check"></i> 在線運行</span>
+                        </div>
+                        <h4>SRT 轉 VTT 影音字幕極速轉換器</h4>
+                        <p>純前端極速批次字幕格式轉換工具，適合 Web 播放器開發者與影音創作者。</p>
+                        <div class="tool-card-bottom">
+                            <span class="tool-domain">srt-to-vtt-converter</span>
+                            <a href="https://9908gg-art.github.io/srt-to-vtt--converter-/" target="_blank" class="btn-visit btn-visit-emerald">
+                                開啟工具 <i class="fa-solid fa-arrow-right-long"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Tool B4: Taiwan Work Hours Calculator -->
+                    <div class="tool-card border-emerald">
+                        <div class="tool-card-top">
+                            <div class="tool-icon icon-emerald"><i class="fa-solid fa-calculator"></i></div>
+                            <span class="status-online"><i class="fa-solid fa-circle-check"></i> 在線運行</span>
+                        </div>
+                        <h4>台灣加班費與勞基法工時計算器</h4>
+                        <p>符合台灣勞動基準法規範，實時試算平日加班費、休假日薪資與補休時數。</p>
+                        <div class="tool-card-bottom">
+                            <span class="tool-domain">work-hours-calculator</span>
+                            <a href="https://9908gg-art.github.io/taiwan-work-hours--calculator/" target="_blank" class="btn-visit btn-visit-emerald">
+                                開啟工具 <i class="fa-solid fa-arrow-right-long"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category C: E-Commerce Amazon Hub -->
+            <div class="category-block">
+                <div class="category-title-flex">
+                    <h3><i class="fa-brands fa-amazon text-amber"></i> 🛒 跨國電商與亞馬遜智能搜尋館 (Amazon E-Commerce Hub)</h3>
+                    <span class="cat-count">2 大主站線上運行中</span>
+                </div>
+                <div class="tools-grid">
+                    <!-- Tool C1: US Amazon Smart Hub -->
+                    <div class="tool-card border-amber">
+                        <div class="tool-card-top">
+                            <div class="tool-icon icon-amber"><i class="fa-solid fa-bag-shopping"></i></div>
+                            <span class="status-online"><i class="fa-solid fa-circle-check"></i> 美國站主館</span>
+                        </div>
+                        <h4>美國亞馬遜美洲智能搜尋館 (US Hub)</h4>
+                        <p>專為美國 Amazon 站設計，智慧匯整暢銷榜、熱門新品與折扣好物快捷過濾器。</p>
+                        <div class="tool-card-bottom">
+                            <span class="tool-domain">gugopro.com</span>
+                            <a href="https://gugopro.com" class="btn-visit btn-visit-amber">
+                                進入美亞館 <i class="fa-solid fa-arrow-right-long"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Tool C2: JP Amazon Smart Hub -->
+                    <div class="tool-card border-amber">
+                        <div class="tool-card-top">
+                            <div class="tool-icon icon-amber"><i class="fa-solid fa-torii-gate"></i></div>
+                            <span class="status-online"><i class="fa-solid fa-circle-check"></i> 日本站主館</span>
+                        </div>
+                        <h4>日本亞馬遜跨境購物專區 (JP Hub)</h4>
+                        <p>專為日本動漫、家電、日用美妝設計，精確帶入推薦碼 `gugopro-22` 直達商品。</p>
+                        <div class="tool-card-bottom">
+                            <span class="tool-domain">shop-ja.gugopro.com</span>
+                            <a href="https://shop-ja.gugopro.com" target="_blank" class="btn-visit btn-visit-amber">
+                                進入日亞館 <i class="fa-solid fa-arrow-right-long"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category D: Tarot & Lifestyle -->
+            <div class="category-block">
+                <div class="category-title-flex">
+                    <h3><i class="fa-solid fa-wand-magic-sparkles text-purple"></i> 🔮 命理占卜與生活娛樂工具 (Tarot & Lifestyle)</h3>
+                    <span class="cat-count">3 個服務線上運行中</span>
+                </div>
+                <div class="tools-grid">
+                    <!-- Tool D1: Celestial Tarot -->
+                    <div class="tool-card border-purple">
+                        <div class="tool-card-top">
+                            <div class="tool-icon icon-purple"><i class="fa-solid fa-cards"></i></div>
+                            <span class="status-online"><i class="fa-solid fa-circle-check"></i> 獨立網域</span>
+                        </div>
+                        <h4>Celestial Tarot 塔羅占卜與星盤開運</h4>
+                        <p>華麗神秘風格的線上 22 張大阿爾克那塔羅牌牌陣占卜，解析運勢與占星建議。</p>
+                        <div class="tool-card-bottom">
+                            <span class="tool-domain">tarot.gugopro.com</span>
+                            <a href="https://tarot.gugopro.com" target="_blank" class="btn-visit btn-visit-purple">
+                                開始占卜 <i class="fa-solid fa-arrow-right-long"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Tool D2: Life Path Numerology -->
+                    <div class="tool-card border-purple">
+                        <div class="tool-card-top">
+                            <div class="tool-icon icon-purple"><i class="fa-solid fa-fingerprint"></i></div>
+                            <span class="status-online"><i class="fa-solid fa-circle-check"></i> 在線運行</span>
+                        </div>
+                        <h4>生命靈數線上極速試算器</h4>
+                        <p>輸入出生年月日，實時演算九宮格生命靈數、主導數與天賦性格趨勢圖。</p>
+                        <div class="tool-card-bottom">
+                            <span class="tool-domain">life-path-numerology</span>
+                            <a href="https://9908gg-art.github.io/life-path--numerology/" target="_blank" class="btn-visit btn-visit-purple">
+                                試算靈數 <i class="fa-solid fa-arrow-right-long"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Tool D3: Taiwan Invoice Lottery -->
+                    <div class="tool-card border-purple">
+                        <div class="tool-card-top">
+                            <div class="tool-icon icon-purple"><i class="fa-solid fa-receipt"></i></div>
+                            <span class="status-online"><i class="fa-solid fa-circle-check"></i> 在線運行</span>
+                        </div>
+                        <h4>台灣統一發票自動對獎工具</h4>
+                        <p>即時同步財政部最新中獎號碼，輸入發票末三碼即可線上極速對獎。</p>
+                        <div class="tool-card-bottom">
+                            <span class="tool-domain">invoice-lottery</span>
+                            <a href="https://9908gg-art.github.io/taiwan-invoice-lottery/" target="_blank" class="btn-visit btn-visit-purple">
+                                線上對獎 <i class="fa-solid fa-arrow-right-long"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: Upcoming Expansion Preview -->
+        <section class="section-card expansion-preview-card">
+            <div class="expansion-content">
+                <i class="fa-solid fa-robot expansion-icon"></i>
+                <div>
+                    <h3>🤖 更多 Worker AI 自動化工具開發中！</h3>
+                    <p>由 AGY 總指揮調度端引導 Worker AI，將陸續推出「美日亞馬遜跨國比價神器」、「英語學習AI助手」與更多高實用性 Web 工具！</p>
+                </div>
+            </div>
+        </section>
     </main>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <p class="disclosure">As an Amazon Associate, I earn from qualifying purchases.<br>当サイトはAmazonアソシエイトに参加しています。</p>
-            <p class="copy">© 2026 GugoPro. All rights reserved.</p>
+    <!-- Global Footer -->
+    <footer class="main-footer">
+        <div class="container footer-container">
+            <p>© 2026 GugoPro (gugopro.com). All rights reserved. 跨國智能 Web 工具與財經籌碼矩陣。</p>
+            <div class="footer-links">
+                <a href="https://gugopro.com">gugopro.com</a> |
+                <a href="https://shop-ja.gugopro.com" target="_blank">shop-ja.gugopro.com</a> |
+                <a href="https://tarot.gugopro.com" target="_blank">tarot.gugopro.com</a> |
+                <a href="#sponsor-section">讚助與支持</a>
+            </div>
         </div>
     </footer>
 
-    <script src="js/app.js"></script>
+    <script>
+        function toggleCryptoModal() {
+            const modal = document.getElementById('crypto-modal');
+            if (modal.style.display === 'none') {
+                modal.style.display = 'block';
+            } else {
+                modal.style.display = 'none';
+            }
+        }
+    </script>
 </body>
 </html>
