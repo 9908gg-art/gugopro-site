@@ -451,27 +451,27 @@
 
         <div class="board-row" id="board-row">
             <span class="board-label">Flop:</span>
-            <div class="board-card-slot" data-board-idx="0" onclick="activateSlot('board', 0)"><span class="slot-label">F1</span></div>
-            <div class="board-card-slot" data-board-idx="1" onclick="activateSlot('board', 1)"><span class="slot-label">F2</span></div>
-            <div class="board-card-slot" data-board-idx="2" onclick="activateSlot('board', 2)"><span class="slot-label">F3</span></div>
+            <div class="board-card-slot" data-board-idx="0"><span class="slot-label">F1</span></div>
+            <div class="board-card-slot" data-board-idx="1"><span class="slot-label">F2</span></div>
+            <div class="board-card-slot" data-board-idx="2"><span class="slot-label">F3</span></div>
         </div>
         <div class="board-row" id="board-row-2">
             <span class="board-label">Turn:</span>
-            <div class="board-card-slot" data-board-idx="3" onclick="activateSlot('board', 3)"><span class="slot-label">T</span></div>
+            <div class="board-card-slot" data-board-idx="3"><span class="slot-label">T</span></div>
         </div>
         <div class="board-row" id="board-row-3">
             <span class="board-label">River:</span>
-            <div class="board-card-slot" data-board-idx="4" onclick="activateSlot('board', 4)"><span class="slot-label">R</span></div>
+            <div class="board-card-slot" data-board-idx="4"><span class="slot-label">R</span></div>
         </div>
     </div>
 
     <!-- Simulation Controls -->
     <div class="section-card" style="text-align: center;">
         <div class="sim-controls">
-            <button class="btn-calc" id="btn-calculate" onclick="runSimulation()">
+            <button class="btn-calc" id="btn-calculate">
                 <i class="fa-solid fa-calculator"></i> 開始模擬 (10,000 次)
             </button>
-            <button class="btn-reset" onclick="resetAll()">
+            <button class="btn-reset" id="btn-reset-all">
                 <i class="fa-solid fa-rotate-left"></i> 重置全部
             </button>
         </div>
@@ -505,12 +505,7 @@
     <!-- Ko-fi Widget -->
     <div class="section-card kofi-section">
         <h3><i class="fa-solid fa-mug-hot" style="color: #72a4f2;"></i> 贊助開發者 (Powered by Ko-fi)</h3>
-        <div id="kofi-widget-container">
-            <script type='text/javascript'>
-                kofiwidget2.init('Buy me a coffee', '#72a4f2', 'R1K123XRS9');
-                kofiwidget2.draw();
-            </script>
-        </div>
+        <div id="kofi-widget-container"></div>
     </div>
 
 </div>
@@ -593,7 +588,7 @@
 <div class="card-picker-wrapper" id="card-picker">
     <div class="picker-header">
         <span><i class="fa-solid fa-hand-pointer"></i> 選擇牌面 / 快速輸入 (如 As, Kh, 10d)</span>
-        <button class="picker-close" onclick="closePicker()"><i class="fa-solid fa-xmark"></i></button>
+        <button class="picker-close" id="picker-close-btn"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="card-picker-grid" id="picker-grid">
         <!-- Dynamically generated -->
@@ -604,8 +599,11 @@
 <script type='text/javascript' src='https://storage.ko-fi.com/cdn/widget/Widget_2.js'></script>
 
 <script>
+(function() {
+'use strict';
+
 /* ===================================================================
-   POKER ODDS CALCULATOR — Pure Vanilla JS Engine
+   POKER ODDS CALCULATOR — Pure Vanilla JS Engine (Event Delegation)
    =================================================================== */
 
 // ---- Constants ----
@@ -619,49 +617,133 @@ const MIN_PLAYERS = 2;
 
 // ---- State ----
 let numPlayers = 2;
-let players = []; // [{ hole: [card, card|null], folded: false }]
-let board = [null, null, null, null, null]; // 5 community cards
-let activeSlot = null; // { type: 'player'|'board', idx: number, slotIdx: number }
-let usedCards = new Set(); // set of "Rs" strings
+let players = [];
+let board = [null, null, null, null, null];
+let activeSlot = null;
+let usedCards = new Set();
+let simRunning = false;
+let lastRunDone = false;
 
-// ---- Initialize ----
+// ---- Init ----
 function init() {
+    // Pre-populate players array for all MAX_PLAYERS slots
     for (let i = 0; i < MAX_PLAYERS; i++) {
         players.push({ hole: [null, null], folded: false });
     }
-    renderPlayers();
+
+    // Build static board slots (they don't change)
+    bindBoardSlots();
+
+    // Build card picker grid
     buildPickerGrid();
-    updateFoldButtons();
+
+    // Render initial players
+    renderPlayers();
+
+    // Bind all controls via event delegation
+    bindControls();
+
+    // Draw Ko-fi widget after a short delay to ensure script loaded
+    setTimeout(function() {
+        if (typeof kofiwidget2 !== 'undefined') {
+            kofiwidget2.init('Buy me a coffee', '#72a4f2', 'R1K123XRS9');
+            kofiwidget2.draw();
+        }
+    }, 500);
+}
+
+// ---- Bind Board Slots ----
+function bindBoardSlots() {
+    document.querySelectorAll('.board-card-slot').forEach(function(el) {
+        el.addEventListener('click', function() {
+            var idx = parseInt(this.getAttribute('data-board-idx'));
+            activateSlot('board', idx);
+        });
+    });
+}
+
+// ---- Bind All Controls (Event Delegation) ----
+function bindControls() {
+    // Add / Remove player buttons
+    document.getElementById('btn-add-player').addEventListener('click', addPlayer);
+    document.getElementById('btn-remove-player').addEventListener('click', removePlayer);
+
+    // Calculate button
+    document.getElementById('btn-calculate').addEventListener('click', runSimulation);
+
+    // Reset button
+    document.getElementById('btn-reset-all').addEventListener('click', resetAll);
+
+    // Close picker button
+    document.getElementById('picker-close-btn').addEventListener('click', closePicker);
+
+    // Event delegation on players-grid for fold toggles and card slots
+    document.getElementById('players-grid').addEventListener('click', function(e) {
+        // Fold toggle
+        var foldEl = e.target.closest('.fold-toggle');
+        if (foldEl) {
+            var playerIdx = parseInt(foldEl.getAttribute('data-player-idx'));
+            toggleFold(playerIdx);
+            return;
+        }
+        // Card slot
+        var slotEl = e.target.closest('.card-slot');
+        if (slotEl) {
+            var pIdx = parseInt(slotEl.getAttribute('data-player'));
+            var sIdx = parseInt(slotEl.getAttribute('data-slot'));
+            activateSlot('player', pIdx, sIdx);
+        }
+    });
+
+    // Keyboard input
     setupKeyboardInput();
 }
 
 // ---- Player Management ----
 function addPlayer() {
-    if (numPlayers >= MAX_PLAYERS) return;
+    if (numPlayers >= MAX_PLAYERS || simRunning) return;
     numPlayers++;
-    renderPlayers();
-    updateFoldButtons();
-}
-
-function removePlayer() {
-    if (numPlayers <= MIN_PLAYERS) return;
-    // Remove the last player's cards from usedCards
-    const p = players[numPlayers - 1];
-    p.hole.forEach(c => { if (c) usedCards.delete(cardKey(c)); });
-    p.folded = false;
-    numPlayers--;
     renderPlayers();
     updateFoldButtons();
     updatePickerDisabled();
 }
 
+function removePlayer() {
+    if (numPlayers <= MIN_PLAYERS || simRunning) return;
+    // Clear the last player's cards from usedCards
+    var lastIdx = numPlayers - 1;
+    players[lastIdx].hole.forEach(function(c) {
+        if (c) usedCards.delete(cardKey(c));
+    });
+    players[lastIdx].folded = false;
+    // Clear win bars for removed player
+    clearWinBar(lastIdx);
+    numPlayers--;
+    renderPlayers();
+    updateFoldButtons();
+    updatePickerDisabled();
+    // If simulation was done, re-run
+    if (lastRunDone) runSimulation();
+}
+
 function toggleFold(idx) {
+    if (simRunning) return;
     players[idx].folded = !players[idx].folded;
     renderPlayers();
-    // Re-run simulation if active
-    if (document.getElementById('sim-progress').dataset.lastRun === 'true') {
+    if (lastRunDone) {
         runSimulation();
     }
+}
+
+function clearWinBar(idx) {
+    var winEl = document.getElementById('winpct-' + idx);
+    var tieEl = document.getElementById('tiepct-' + idx);
+    var winFill = document.getElementById('winfill-' + idx);
+    var tieFill = document.getElementById('tiefill-' + idx);
+    if (winEl) winEl.textContent = '—';
+    if (tieEl) tieEl.textContent = '—';
+    if (winFill) winFill.style.width = '0%';
+    if (tieFill) tieFill.style.width = '0%';
 }
 
 function updateFoldButtons() {
@@ -671,75 +753,73 @@ function updateFoldButtons() {
 }
 
 function renderPlayers() {
-    const grid = document.getElementById('players-grid');
+    var grid = document.getElementById('players-grid');
     grid.innerHTML = '';
-    for (let i = 0; i < numPlayers; i++) {
-        const p = players[i];
-        const cardDiv = (slotIdx) => {
-            const c = p.hole[slotIdx];
-            const filled = c ? 'filled' : '';
-            const suitClass = c ? SUIT_CLASSES[c.suit] : '';
-            return `<div class="card-slot ${filled}" data-player="${i}" data-slot="${slotIdx}" onclick="activateSlot('player', ${i}, ${slotIdx})">
-                ${c ? `<span class="card-rank ${suitClass}">${c.rank === '10' ? '10' : c.rank}</span><span class="card-suit ${suitClass}">${SUIT_SYMBOLS[c.suit]}</span>` : `<span class="slot-label">C${slotIdx+1}</span>`}
-            </div>`;
-        };
+    for (var i = 0; i < numPlayers; i++) {
+        var p = players[i];
+        var cardHtml = '';
+        for (var s = 0; s < 2; s++) {
+            var c = p.hole[s];
+            var filledCls = c ? ' filled' : '';
+            var suitCls = c ? SUIT_CLASSES[c.suit] : '';
+            var rankText = c ? (c.rank === '10' ? '10' : c.rank) : '';
+            var suitText = c ? SUIT_SYMBOLS[c.suit] : '';
+            var slotLabel = !c ? '<span class="slot-label">C' + (s + 1) + '</span>' : '';
+            cardHtml += '<div class="card-slot' + filledCls + '" data-player="' + i + '" data-slot="' + s + '">' +
+                (c ? '<span class="card-rank ' + suitCls + '">' + rankText + '</span><span class="card-suit ' + suitCls + '">' + suitText + '</span>' : slotLabel) +
+                '</div>';
+        }
 
-        const card = document.createElement('div');
-        card.className = `player-card${p.folded ? ' folded' : ''}`;
-        card.id = `player-card-${i}`;
-        card.innerHTML = `
-            <div class="player-header">
-                <div class="player-name">
-                    <div class="player-avatar">P${i+1}</div>
-                    玩家 ${i+1}
-                </div>
-                <div class="fold-toggle ${p.folded ? 'active' : ''}" onclick="toggleFold(${i})">
-                    <span>Fold</span>
-                    <div class="toggle-track"></div>
-                </div>
-            </div>
-            <div class="card-slots">
-                ${cardDiv(0)}${cardDiv(1)}
-            </div>
-            <div class="win-bar-container" id="winbar-${i}">
-                <div class="win-bar-label"><span>Win%</span><span id="winpct-${i}">—</span></div>
-                <div class="win-bar-track"><div class="win-bar-fill" id="winfill-${i}"></div></div>
-                <div class="win-bar-label"><span>Tie%</span><span id="tiepct-${i}">—</span></div>
-                <div class="win-bar-track"><div class="win-bar-fill tie-bar" id="tiefill-${i}"></div></div>
-            </div>
-        `;
+        var card = document.createElement('div');
+        card.className = 'player-card' + (p.folded ? ' folded' : '');
+        card.id = 'player-card-' + i;
+        card.innerHTML = '<div class="player-header">' +
+            '<div class="player-name"><div class="player-avatar">P' + (i + 1) + '</div>玩家 ' + (i + 1) + '</div>' +
+            '<div class="fold-toggle' + (p.folded ? ' active' : '') + '" data-player-idx="' + i + '">' +
+                '<span>Fold</span><div class="toggle-track"></div>' +
+            '</div></div>' +
+            '<div class="card-slots">' + cardHtml + '</div>' +
+            '<div class="win-bar-container" id="winbar-' + i + '">' +
+                '<div class="win-bar-label"><span>Win%</span><span id="winpct-' + i + '">—</span></div>' +
+                '<div class="win-bar-track"><div class="win-bar-fill" id="winfill-' + i + '"></div></div>' +
+                '<div class="win-bar-label"><span>Tie%</span><span id="tiepct-' + i + '">—</span></div>' +
+                '<div class="win-bar-track"><div class="win-bar-fill tie-bar" id="tiefill-' + i + '"></div></div>' +
+            '</div>';
         grid.appendChild(card);
     }
 }
 
-// ---- Board ----
+// ---- Board Rendering ----
 function renderBoard() {
-    for (let i = 0; i < 5; i++) {
-        const el = document.querySelector(`.board-card-slot[data-board-idx="${i}"]`);
-        const c = board[i];
+    for (var i = 0; i < 5; i++) {
+        var el = document.querySelector('.board-card-slot[data-board-idx="' + i + '"]');
+        var c = board[i];
         if (c) {
             el.classList.add('filled');
-            const suitClass = SUIT_CLASSES[c.suit];
-            el.innerHTML = `<span class="card-rank ${suitClass}">${c.rank === '10' ? '10' : c.rank}</span><span class="card-suit ${suitClass}">${SUIT_SYMBOLS[c.suit]}</span>`;
+            var suitCls = SUIT_CLASSES[c.suit];
+            var rankText = c.rank === '10' ? '10' : c.rank;
+            el.innerHTML = '<span class="card-rank ' + suitCls + '">' + rankText + '</span><span class="card-suit ' + suitCls + '">' + SUIT_SYMBOLS[c.suit] + '</span>';
         } else {
             el.classList.remove('filled');
-            const labels = ['F1','F2','F3','T','R'];
-            el.innerHTML = `<span class="slot-label">${labels[i]}</span>`;
+            var labels = ['F1', 'F2', 'F3', 'T', 'R'];
+            el.innerHTML = '<span class="slot-label">' + labels[i] + '</span>';
         }
     }
 }
 
 // ---- Card Picker ----
 function buildPickerGrid() {
-    const grid = document.getElementById('picker-grid');
+    var grid = document.getElementById('picker-grid');
     grid.innerHTML = '';
-    SUITS.forEach(suit => {
-        RANKS.forEach(rank => {
-            const btn = document.createElement('div');
-            btn.className = `picker-card ${SUIT_CLASSES[suit]}`;
-            btn.dataset.card = cardKey({ rank, suit });
-            btn.innerHTML = `<span class="pk-rank">${rank === '10' ? '10' : rank}</span><span class="pk-suit">${SUIT_SYMBOLS[suit]}</span>`;
-            btn.onclick = () => selectCard({ rank, suit });
+    SUITS.forEach(function(suit) {
+        RANKS.forEach(function(rank) {
+            var btn = document.createElement('div');
+            btn.className = 'picker-card ' + SUIT_CLASSES[suit];
+            btn.setAttribute('data-card', cardKey({ rank: rank, suit: suit }));
+            btn.innerHTML = '<span class="pk-rank">' + (rank === '10' ? '10' : rank) + '</span><span class="pk-suit">' + SUIT_SYMBOLS[suit] + '</span>';
+            btn.addEventListener('click', function() {
+                selectCard({ rank: rank, suit: suit });
+            });
             grid.appendChild(btn);
         });
     });
@@ -747,22 +827,28 @@ function buildPickerGrid() {
 }
 
 function updatePickerDisabled() {
-    document.querySelectorAll('.picker-card').forEach(el => {
-        el.classList.toggle('disabled', usedCards.has(el.dataset.card));
-    });
+    var cards = document.querySelectorAll('.picker-card');
+    for (var i = 0; i < cards.length; i++) {
+        cards[i].classList.toggle('disabled', usedCards.has(cards[i].getAttribute('data-card')));
+    }
 }
 
-function activateSlot(type, idx, slotIdx = 0) {
-    activeSlot = { type, idx, slotIdx };
-    // Clear previous active
-    document.querySelectorAll('.card-slot.active, .board-card-slot.active').forEach(el => el.classList.remove('active'));
+function activateSlot(type, idx, slotIdx) {
+    if (simRunning) return;
+    if (slotIdx === undefined) slotIdx = 0;
+    activeSlot = { type: type, idx: idx, slotIdx: slotIdx };
+
+    // Clear all active states
+    var activeEls = document.querySelectorAll('.card-slot.active, .board-card-slot.active');
+    for (var i = 0; i < activeEls.length; i++) activeEls[i].classList.remove('active');
+
     // Mark new active
     if (type === 'player') {
-        const el = document.querySelector(`.card-slot[data-player="${idx}"][data-slot="${slotIdx}"]`);
+        var el = document.querySelector('.card-slot[data-player="' + idx + '"][data-slot="' + slotIdx + '"]');
         if (el) el.classList.add('active');
     } else {
-        const el = document.querySelector(`.board-card-slot[data-board-idx="${idx}"]`);
-        if (el) el.classList.add('active');
+        var bel = document.querySelector('.board-card-slot[data-board-idx="' + idx + '"]');
+        if (bel) bel.classList.add('active');
     }
     openPicker();
 }
@@ -776,24 +862,24 @@ function openPicker() {
 function closePicker() {
     document.getElementById('card-picker').classList.remove('visible');
     document.body.classList.remove('picker-open');
-    document.querySelectorAll('.card-slot.active, .board-card-slot.active').forEach(el => el.classList.remove('active'));
+    var activeEls = document.querySelectorAll('.card-slot.active, .board-card-slot.active');
+    for (var i = 0; i < activeEls.length; i++) activeEls[i].classList.remove('active');
     activeSlot = null;
 }
 
 function selectCard(card) {
-    if (!activeSlot) return;
-    const key = cardKey(card);
+    if (!activeSlot || simRunning) return;
+    var key = cardKey(card);
     if (usedCards.has(key)) return;
 
     // Remove old card if exists
-    let oldCard = null;
     if (activeSlot.type === 'player') {
-        oldCard = players[activeSlot.idx].hole[activeSlot.slotIdx];
+        var oldCard = players[activeSlot.idx].hole[activeSlot.slotIdx];
         if (oldCard) usedCards.delete(cardKey(oldCard));
         players[activeSlot.idx].hole[activeSlot.slotIdx] = card;
     } else {
-        oldCard = board[activeSlot.idx];
-        if (oldCard) usedCards.delete(cardKey(oldCard));
+        var oldB = board[activeSlot.idx];
+        if (oldB) usedCards.delete(cardKey(oldB));
         board[activeSlot.idx] = card;
     }
     usedCards.add(key);
@@ -801,7 +887,14 @@ function selectCard(card) {
     if (activeSlot.type === 'player') {
         renderPlayers();
         // Auto-focus next slot
-        const nextSlot = activeSlot.slotIdx === 0 ? { type: 'player', idx: activeSlot.idx, slotIdx: 1 } : findNextEmpty();
+        var nextSlot = null;
+        if (activeSlot.slotIdx === 0) {
+            // Move to second card of same player
+            nextSlot = { type: 'player', idx: activeSlot.idx, slotIdx: 1 };
+        } else {
+            // Find next empty slot
+            nextSlot = findNextEmpty();
+        }
         if (nextSlot) {
             activateSlot(nextSlot.type, nextSlot.idx, nextSlot.slotIdx);
         } else {
@@ -809,7 +902,7 @@ function selectCard(card) {
         }
     } else {
         renderBoard();
-        const nextBoard = findNextEmptyBoard();
+        var nextBoard = findNextEmptyBoard();
         if (nextBoard !== null) {
             activateSlot('board', nextBoard);
         } else {
@@ -820,9 +913,8 @@ function selectCard(card) {
 }
 
 function findNextEmpty() {
-    // Find next empty player slot
-    for (let i = 0; i < numPlayers; i++) {
-        for (let j = 0; j < 2; j++) {
+    for (var i = 0; i < numPlayers; i++) {
+        for (var j = 0; j < 2; j++) {
             if (!players[i].hole[j]) return { type: 'player', idx: i, slotIdx: j };
         }
     }
@@ -830,7 +922,7 @@ function findNextEmpty() {
 }
 
 function findNextEmptyBoard() {
-    for (let i = 0; i < 5; i++) {
+    for (var i = 0; i < 5; i++) {
         if (!board[i]) return i;
     }
     return null;
@@ -839,38 +931,36 @@ function findNextEmptyBoard() {
 function cardKey(card) { return card.rank + card.suit[0]; }
 
 // ---- Keyboard Input ----
+var kbBuffer = '';
 function setupKeyboardInput() {
-    document.addEventListener('keydown', (e) => {
-        if (!activeSlot) return;
-        if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) return;
+    document.addEventListener('keydown', function(e) {
+        if (!activeSlot || simRunning) return;
+        if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+        if (e.key.length !== 1) return;
 
-        // Build keyboard buffer
-        if (!window._kbBuffer) window._kbBuffer = '';
-        window._kbBuffer += e.key;
+        kbBuffer += e.key;
 
-        // Try to parse
-        const parsed = parseCardInput(window._kbBuffer);
+        var parsed = parseCardInput(kbBuffer);
         if (parsed) {
-            const key = cardKey(parsed);
+            var key = cardKey(parsed);
             if (!usedCards.has(key)) {
                 selectCard(parsed);
             }
-            window._kbBuffer = '';
-        } else if (window._kbBuffer.length > 3) {
-            window._kbBuffer = window._kbBuffer.slice(-3);
+            kbBuffer = '';
+        } else if (kbBuffer.length > 3) {
+            kbBuffer = kbBuffer.slice(-3);
         }
     });
-    // Clear buffer on click outside
-    document.addEventListener('click', () => { window._kbBuffer = ''; });
+
+    document.addEventListener('click', function() { kbBuffer = ''; });
 }
 
 function parseCardInput(input) {
     input = input.trim();
     if (input.length < 2) return null;
 
-    // Parse: rank + suit letter
-    let rankStr, suitLetter;
-    if (input.length === 3 && input.startsWith('10')) {
+    var rankStr, suitLetter;
+    if (input.length === 3 && input.substring(0, 2) === '10') {
         rankStr = '10';
         suitLetter = input[2].toLowerCase();
     } else if (input.length === 2) {
@@ -880,131 +970,130 @@ function parseCardInput(input) {
         return null;
     }
 
-    // Validate rank
-    if (!RANKS.includes(rankStr)) return null;
+    if (RANKS.indexOf(rankStr) === -1) return null;
 
-    // Validate suit
-    const suitMap = { s: 'spades', h: 'hearts', d: 'diamonds', c: 'clubs' };
-    const suit = suitMap[suitLetter];
+    var suitMap = { s: 'spades', h: 'hearts', d: 'diamonds', c: 'clubs' };
+    var suit = suitMap[suitLetter];
     if (!suit) return null;
 
-    return { rank: rankStr, suit };
+    return { rank: rankStr, suit: suit };
 }
 
 // ---- Monte Carlo Engine ----
 function runSimulation() {
-    // Collect active (non-folded) players
-    const activePlayers = [];
-    for (let i = 0; i < numPlayers; i++) {
+    if (simRunning) return;
+
+    // Collect active (non-folded) players with both cards set
+    var activePlayers = [];
+    for (var i = 0; i < numPlayers; i++) {
         if (!players[i].folded && players[i].hole[0] && players[i].hole[1]) {
-            activePlayers.push({ idx: i, hole: [...players[i].hole] });
+            activePlayers.push({ idx: i, hole: [players[i].hole[0], players[i].hole[1]] });
         }
     }
 
     if (activePlayers.length < 2) {
         document.getElementById('sim-progress').textContent = '⚠️ 至少需要 2 位非棄牌玩家，且每位需設定 2 張手牌。';
-        document.getElementById('sim-progress').dataset.lastRun = 'false';
+        lastRunDone = false;
         return;
     }
 
-    // Determine required board cards
-    const boardFilled = board.filter(c => c !== null);
-    const remainingBoard = 5 - boardFilled.length;
-
-    if (boardFilled.length < 3) {
-        // Need at least flop
+    // Check board
+    var boardFilled = 0;
+    for (var b = 0; b < 5; b++) { if (board[b]) boardFilled++; }
+    if (boardFilled < 3) {
         document.getElementById('sim-progress').textContent = '⚠️ 請先設定至少 3 張 Flop 公共牌再進行模擬。';
-        document.getElementById('sim-progress').dataset.lastRun = 'false';
+        lastRunDone = false;
         return;
     }
 
-    // Build deck of remaining cards
-    const usedSet = new Set(usedCards);
-    const deck = [];
-    SUITS.forEach(suit => {
-        RANKS.forEach(rank => {
-            const k = rank + suit[0];
-            if (!usedSet.has(k)) deck.push({ rank, suit, key: k });
+    // Build remaining deck
+    var usedSet = new Set(usedCards);
+    var deck = [];
+    SUITS.forEach(function(suit) {
+        RANKS.forEach(function(rank) {
+            var k = rank + suit[0];
+            if (!usedSet.has(k)) deck.push({ rank: rank, suit: suit });
         });
     });
 
-    // Shuffle function
+    // Fisher-Yates shuffle
     function shuffle(arr) {
-        for (let i = arr.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [arr[i], arr[j]] = [arr[j], arr[i]];
+        for (var i = arr.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
         }
         return arr;
     }
 
-    const btn = document.getElementById('btn-calculate');
+    simRunning = true;
+    var btn = document.getElementById('btn-calculate');
     btn.disabled = true;
-    const progEl = document.getElementById('sim-progress');
+    var progEl = document.getElementById('sim-progress');
+    var chunkSize = 2000;
+    var totalWins = new Array(activePlayers.length).fill(0);
+    var totalTies = new Array(activePlayers.length).fill(0);
+    var completed = 0;
 
-    // Run in chunks for UI responsiveness
-    const chunkSize = 2000;
-    let totalWins = new Array(activePlayers.length).fill(0);
-    let totalTies = new Array(activePlayers.length).fill(0);
-    let completed = 0;
+    progEl.textContent = '正在模擬中... 0 / ' + SIM_ITERATIONS;
 
-    // Use setTimeout for non-blocking
-    progEl.textContent = `正在模擬中... 0 / ${SIM_ITERATIONS}`;
+    // Pre-compute current board array (sparse)
+    var currentBoardBase = [null, null, null, null, null];
+    for (var b2 = 0; b2 < 5; b2++) {
+        if (board[b2]) currentBoardBase[b2] = board[b2];
+    }
 
     function runChunk() {
-        const end = Math.min(completed + chunkSize, SIM_ITERATIONS);
-        for (let iter = completed; iter < end; iter++) {
-            // Create a working deck copy
-            const workingDeck = [...deck];
+        var end = Math.min(completed + chunkSize, SIM_ITERATIONS);
+        for (var iter = completed; iter < end; iter++) {
+            var workingDeck = deck.slice();
             shuffle(workingDeck);
 
-            // Deal remaining board cards
-            const currentBoard = [...board.filter(c => c !== null)];
-            let deckIdx = 0;
-            for (let b = 0; b < 5; b++) {
-                if (!currentBoard[b]) {
-                    currentBoard[b] = workingDeck[deckIdx++];
+            // Fill remaining board cards
+            var cb = currentBoardBase.slice();
+            var deckIdx = 0;
+            for (var b3 = 0; b3 < 5; b3++) {
+                if (!cb[b3]) {
+                    cb[b3] = workingDeck[deckIdx++];
                 }
             }
 
-            // Deal hole cards for each active player (skip if already dealt)
-            const handCards = [];
-            for (let p = 0; p < activePlayers.length; p++) {
+            // Evaluate all active players
+            var handCards = [];
+            for (var p = 0; p < activePlayers.length; p++) {
                 handCards.push([activePlayers[p].hole[0], activePlayers[p].hole[1]]);
             }
 
-            // Evaluate
-            const bestHandRank = bestEval(currentBoard, handCards);
-            let bestScore = -1;
-            let winners = [];
+            var scores = evaluateAll(cb, handCards);
+            var bestScore = -1;
+            var winners = [];
 
-            for (let p = 0; p < activePlayers.length; p++) {
-                const score = handScore(bestHandRank[p]);
-                if (score > bestScore) {
-                    bestScore = score;
-                    winners = [p];
-                } else if (score === bestScore) {
-                    winners.push(p);
+            for (var p2 = 0; p2 < activePlayers.length; p2++) {
+                if (scores[p2] > bestScore) {
+                    bestScore = scores[p2];
+                    winners = [p2];
+                } else if (scores[p2] === bestScore) {
+                    winners.push(p2);
                 }
             }
 
             if (winners.length === 1) {
                 totalWins[winners[0]]++;
             } else {
-                winners.forEach(w => totalTies[w]++);
+                for (var w = 0; w < winners.length; w++) totalTies[winners[w]]++;
             }
         }
 
         completed = end;
-        progEl.textContent = `正在模擬中... ${completed} / ${SIM_ITERATIONS}`;
+        progEl.textContent = '正在模擬中... ' + completed + ' / ' + SIM_ITERATIONS;
 
         if (completed < SIM_ITERATIONS) {
             setTimeout(runChunk, 0);
         } else {
-            // Display results
             displayResults(activePlayers, totalWins, totalTies);
             btn.disabled = false;
-            progEl.textContent = `✅ 模擬完成！共 ${SIM_ITERATIONS.toLocaleString()} 次迭代。`;
-            progEl.dataset.lastRun = 'true';
+            simRunning = false;
+            progEl.textContent = '✅ 模擬完成！共 ' + SIM_ITERATIONS.toLocaleString() + ' 次迭代。';
+            lastRunDone = true;
         }
     }
 
@@ -1013,167 +1102,191 @@ function runSimulation() {
 
 function displayResults(activePlayers, wins, ties) {
     // Reset all winner highlights
-    document.querySelectorAll('.player-card').forEach(c => c.classList.remove('winner'));
+    var allCards = document.querySelectorAll('.player-card');
+    for (var i = 0; i < allCards.length; i++) allCards[i].classList.remove('winner');
 
-    let maxWinPct = -1;
-    const results = [];
-
-    for (let i = 0; i < activePlayers.length; i++) {
-        const winPct = (wins[i] / SIM_ITERATIONS * 100).toFixed(1);
-        const tiePct = (ties[i] / SIM_ITERATIONS * 100).toFixed(1);
-        const pIdx = activePlayers[i].idx;
-        results.push({ pIdx, winPct: parseFloat(winPct), tiePct: parseFloat(tiePct) });
+    var results = [];
+    for (var i = 0; i < activePlayers.length; i++) {
+        var winPct = parseFloat((wins[i] / SIM_ITERATIONS * 100).toFixed(1));
+        var tiePct = parseFloat((ties[i] / SIM_ITERATIONS * 100).toFixed(1));
+        results.push({ pIdx: activePlayers[i].idx, winPct: winPct, tiePct: tiePct });
     }
 
-    // Find max
-    maxWinPct = Math.max(...results.map(r => r.winPct));
+    var maxWin = -1;
+    for (var r = 0; r < results.length; r++) {
+        if (results[r].winPct > maxWin) maxWin = results[r].winPct;
+    }
 
-    results.forEach(r => {
-        const pIdx = r.pIdx;
-        document.getElementById(`winpct-${pIdx}`).textContent = r.winPct + '%';
-        document.getElementById(`tiepct-${pIdx}`).textContent = r.tiePct + '%';
-        document.getElementById(`winfill-${pIdx}`).style.width = r.winPct + '%';
-        document.getElementById(`tiefill-${pIdx}`).style.width = r.tiePct + '%';
+    results.forEach(function(r) {
+        var pIdx = r.pIdx;
+        var winEl = document.getElementById('winpct-' + pIdx);
+        var tieEl = document.getElementById('tiepct-' + pIdx);
+        var winFill = document.getElementById('winfill-' + pIdx);
+        var tieFill = document.getElementById('tiefill-' + pIdx);
 
-        // Color gradient based on win%
-        const fill = document.getElementById(`winfill-${pIdx}`);
-        if (r.winPct >= 60) {
-            fill.style.background = 'linear-gradient(90deg, #00ff88, #00cc6a)';
-        } else if (r.winPct >= 40) {
-            fill.style.background = 'linear-gradient(90deg, #3b82f6, #60a5fa)';
-        } else {
-            fill.style.background = 'linear-gradient(90deg, #f59e0b, #fbbf24)';
+        if (winEl) winEl.textContent = r.winPct + '%';
+        if (tieEl) tieEl.textContent = r.tiePct + '%';
+        if (winFill) winFill.style.width = r.winPct + '%';
+        if (tieFill) tieFill.style.width = r.tiePct + '%';
+
+        if (winFill) {
+            if (r.winPct >= 60) {
+                winFill.style.background = 'linear-gradient(90deg, #00ff88, #00cc6a)';
+            } else if (r.winPct >= 40) {
+                winFill.style.background = 'linear-gradient(90deg, #3b82f6, #60a5fa)';
+            } else {
+                winFill.style.background = 'linear-gradient(90deg, #f59e0b, #fbbf24)';
+            }
         }
 
-        if (r.winPct === maxWinPct) {
-            document.getElementById(`player-card-${pIdx}`).classList.add('winner');
+        if (r.winPct === maxWin) {
+            var cardEl = document.getElementById('player-card-' + pIdx);
+            if (cardEl) cardEl.classList.add('winner');
         }
     });
 }
 
-// ---- Hand Evaluator (Monte Carlo compatible) ----
-function bestEval(board, hands) {
-    return hands.map(h => evaluateHand([...board, ...h]));
+// ---- Hand Evaluator ----
+function evaluateAll(boardCards, hands) {
+    return hands.map(function(h) {
+        return scoreHand(boardCards.concat(h));
+    });
 }
 
-function handScore(evalResult) {
-    return evalResult[0] * 10000000000 + evalResult[1] * 100000000 + evalResult[2] * 1000000 + evalResult[3] * 10000 + evalResult[4] * 100 + evalResult[5];
-}
+function scoreHand(cards) {
+    // 7 cards, find best 5
+    var rankVals = cards.map(function(c) { return RANKS.indexOf(c.rank) + 2; });
+    var suitArr = cards.map(function(c) { return c.suit; });
 
-function evaluateHand(cards) {
-    // cards = 7 cards, find best 5
-    const rankVals = cards.map(c => RANKS.indexOf(c.rank) + 2); // A=14, K=13, ..., 2=2
-    const suitArr = cards.map(c => c.suit);
+    var bestScore = -1;
+    var combos = combinations5of7();
 
-    // Generate all 5-card combinations
-    let bestScore = [-1];
-    const combos = combinations(7, 5);
-
-    for (const combo of combos) {
-        const fiveRanks = combo.map(i => rankVals[i]);
-        const fiveSuits = combo.map(i => suitArr[i]);
-        const score = evaluate5Card(fiveRanks, fiveSuits);
-        if (handScore(score) > handScore(bestScore)) {
-            bestScore = score;
-        }
+    for (var i = 0; i < combos.length; i++) {
+        var combo = combos[i];
+        var fiveRanks = [rankVals[combo[0]], rankVals[combo[1]], rankVals[combo[2]], rankVals[combo[3]], rankVals[combo[4]]];
+        var fiveSuits = [suitArr[combo[0]], suitArr[combo[1]], suitArr[combo[2]], suitArr[combo[3]], suitArr[combo[4]]];
+        var score = evaluate5Card(fiveRanks, fiveSuits);
+        var scoreVal = scoreToNum(score);
+        if (scoreVal > bestScore) bestScore = scoreVal;
     }
     return bestScore;
 }
 
 function evaluate5Card(ranks, suits) {
     // Sort descending
-    ranks.sort((a, b) => b - a);
+    ranks = ranks.slice().sort(function(a, b) { return b - a; });
 
-    const isFlush = suits.every(s => s === suits[0]);
-    const isStraight = isStraightCheck(ranks);
-    const rankCounts = {};
-    ranks.forEach(r => { rankCounts[r] = (rankCounts[r] || 0) + 1; });
-    const counts = Object.values(rankCounts).sort((a, b) => b - a);
+    var isFlush = suits.every(function(s) { return s === suits[0]; });
+    var straightInfo = isStraightCheck(ranks);
+    var rankCounts = {};
+    ranks.forEach(function(r) { rankCounts[r] = (rankCounts[r] || 0) + 1; });
+    var counts = Object.values(rankCounts).sort(function(a, b) { return b - a; });
 
-    // [handType, ...kickers] — handType: 9=SF, 8=4K, 7=Full, 6=Flush, 5=Str, 4=3K, 3=2P, 2=Pair, 1=High
-    if (isFlush && isStraight) {
-        // Check royal (A high straight flush)
-        const topRank = isStraight[0];
-        return [9, topRank];
+    // [handType, ...kickers] — 9=SF, 8=4K, 7=Full, 6=Flush, 5=Str, 4=3K, 3=2P, 2=Pair, 1=High
+    if (isFlush && straightInfo) {
+        return [9, straightInfo[0]];
     }
     if (counts[0] === 4) {
-        const four = ranks.filter(r => rankCounts[r] === 4)[0];
-        const kicker = ranks.find(r => rankCounts[r] === 1);
+        var four = ranks.filter(function(r) { return rankCounts[r] === 4; })[0];
+        var kicker = ranks.find(function(r) { return rankCounts[r] === 1; });
         return [8, four, kicker];
     }
     if (counts[0] === 3 && counts[1] === 2) {
-        const three = ranks.filter(r => rankCounts[r] === 3)[0];
-        const pair = ranks.filter(r => rankCounts[r] === 2)[0];
+        var three = ranks.filter(function(r) { return rankCounts[r] === 3; })[0];
+        var pair = ranks.filter(function(r) { return rankCounts[r] === 2; })[0];
         return [7, three, pair];
     }
     if (isFlush) {
-        return [6, ...ranks];
+        return [6].concat(ranks);
     }
-    if (isStraight) {
-        return [5, isStraight[0]];
+    if (straightInfo) {
+        return [5, straightInfo[0]];
     }
     if (counts[0] === 3) {
-        const three = ranks.filter(r => rankCounts[r] === 3)[0];
-        const kickers = ranks.filter(r => rankCounts[r] === 1).sort((a, b) => b - a);
-        return [4, three, kickers[0], kickers[1]];
+        var three2 = ranks.filter(function(r) { return rankCounts[r] === 3; })[0];
+        var kickers = ranks.filter(function(r) { return rankCounts[r] === 1; }).sort(function(a, b) { return b - a; });
+        return [4, three2, kickers[0], kickers[1]];
     }
     if (counts[0] === 2 && counts[1] === 2) {
-        const pairs = ranks.filter(r => rankCounts[r] === 2);
-        const uniquePairs = [...new Set(pairs)].sort((a, b) => b - a);
-        const kicker = ranks.find(r => rankCounts[r] === 1);
-        return [3, uniquePairs[0], uniquePairs[1], kicker];
+        var pairs = ranks.filter(function(r) { return rankCounts[r] === 2; });
+        var uniquePairs = Array.from(new Set(pairs)).sort(function(a, b) { return b - a; });
+        var kicker2 = ranks.find(function(r) { return rankCounts[r] === 1; });
+        return [3, uniquePairs[0], uniquePairs[1], kicker2];
     }
     if (counts[0] === 2) {
-        const pair = ranks.filter(r => rankCounts[r] === 2)[0];
-        const kickers = ranks.filter(r => rankCounts[r] === 1).sort((a, b) => b - a);
-        return [2, pair, kickers[0], kickers[1], kickers[2]];
+        var pair2 = ranks.filter(function(r) { return rankCounts[r] === 2; })[0];
+        var kickers2 = ranks.filter(function(r) { return rankCounts[r] === 1; }).sort(function(a, b) { return b - a; });
+        return [2, pair2, kickers2[0], kickers2[1], kickers2[2]];
     }
-    return [1, ...ranks];
+    return [1].concat(ranks);
 }
 
 function isStraightCheck(ranks) {
-    const unique = [...new Set(ranks)].sort((a, b) => b - a);
+    var unique = Array.from(new Set(ranks)).sort(function(a, b) { return b - a; });
     if (unique.length < 5) return false;
 
-    // Check normal straight
-    for (let i = 0; i <= unique.length - 5; i++) {
-        if (unique[i] - unique[i+4] === 4) {
-            return [unique[i]]; // return high card
+    // Normal straight
+    for (var i = 0; i <= unique.length - 5; i++) {
+        if (unique[i] - unique[i + 4] === 4) {
+            return [unique[i]];
         }
     }
-    // Check A-2-3-4-5 wheel
-    if (unique.includes(14) && unique.includes(5) && unique.includes(4) && unique.includes(3) && unique.includes(2)) {
-        return [5]; // 5-high straight
+    // A-2-3-4-5 wheel
+    if (unique.indexOf(14) !== -1 && unique.indexOf(5) !== -1 && unique.indexOf(4) !== -1 && unique.indexOf(3) !== -1 && unique.indexOf(2) !== -1) {
+        return [5];
     }
     return false;
 }
 
-function combinations(n, k) {
-    const result = [];
-    const combo = [];
-    function generate(start) {
-        if (combo.length === k) { result.push([...combo]); return; }
-        for (let i = start; i < n; i++) {
+function scoreToNum(score) {
+    var val = score[0];
+    for (var i = 1; i < score.length; i++) {
+        val = val * 15 + score[i];
+    }
+    return val;
+}
+
+// Pre-computed C(7,5) = 21 combinations
+function combinations5of7() {
+    var result = [];
+    function gen(start, combo) {
+        if (combo.length === 5) { result.push(combo.slice()); return; }
+        for (var i = start; i < 7; i++) {
             combo.push(i);
-            generate(i + 1);
+            gen(i + 1, combo);
             combo.pop();
         }
     }
-    generate(0);
+    gen(0, []);
+    return result;
+}
+
+function combinations(n, k) {
+    var result = [];
+    function gen(start, combo) {
+        if (combo.length === k) { result.push(combo.slice()); return; }
+        for (var i = start; i < n; i++) {
+            combo.push(i);
+            gen(i + 1, combo);
+            combo.pop();
+        }
+    }
+    gen(0, []);
     return result;
 }
 
 // ---- Reset ----
 function resetAll() {
-    for (let i = 0; i < MAX_PLAYERS; i++) {
+    if (simRunning) return;
+    for (var i = 0; i < MAX_PLAYERS; i++) {
         players[i].hole = [null, null];
         players[i].folded = false;
     }
     board = [null, null, null, null, null];
     usedCards.clear();
+    lastRunDone = false;
     document.getElementById('sim-progress').textContent = '';
-    document.getElementById('sim-progress').dataset.lastRun = 'false';
-    document.querySelectorAll('.player-card').forEach(c => c.classList.remove('winner'));
+
     renderPlayers();
     renderBoard();
     updatePickerDisabled();
@@ -1181,7 +1294,13 @@ function resetAll() {
 }
 
 // ---- Start ----
-document.addEventListener('DOMContentLoaded', init);
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}
+
+})();
 </script>
 
 </body>
