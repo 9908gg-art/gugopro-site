@@ -97,7 +97,7 @@
     .btn-back-home:hover { background: rgba(59, 130, 246, 0.25); transform: translateY(-1px); }
 
     /* ========== HERO ========== */
-    .hero-section { padding: 40px 0 24px 0; text-align: center; position: relative; }
+    .hero-section { padding: 40px 0 24px 0; text-align: center; }
     .hero-badge {
         display: inline-flex; align-items: center; gap: 6px;
         background: rgba(0, 255, 136, 0.10); color: var(--neon-green);
@@ -163,8 +163,9 @@
         border-radius: var(--radius-md);
         padding: 14px; transition: all 0.3s ease; position: relative;
     }
-    .player-card.folded { opacity: 0.45; filter: grayscale(80%); }
-    .player-card.winner { border-color: var(--neon-green); box-shadow: 0 0 20px rgba(0,255,136,0.2); }
+    .player-card.is-folded { opacity: 0.45; filter: grayscale(80%); }
+    .player-card.is-winner { border-color: var(--neon-green); box-shadow: 0 0 20px rgba(0,255,136,0.2); }
+    .player-card.is-hidden { display: none; }
     .player-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
     .player-name { font-weight: 700; font-size: 0.92rem; display: flex; align-items: center; gap: 6px; }
     .player-avatar {
@@ -173,7 +174,7 @@
         display: flex; align-items: center; justify-content: center;
         font-size: 0.85rem; font-weight: 800; color: #fff;
     }
-    .player-card.folded .player-avatar { background: linear-gradient(135deg, #555, #777); }
+    .player-card.is-folded .player-avatar { background: linear-gradient(135deg, #555, #777); }
 
     /* Fold Toggle */
     .fold-toggle {
@@ -188,9 +189,9 @@
         content: ''; position: absolute; width: 16px; height: 16px; border-radius: 50%;
         background: #fff; top: 2px; left: 2px; transition: transform 0.25s ease;
     }
-    .fold-toggle.active .toggle-track { background: var(--color-red); }
-    .fold-toggle.active .toggle-track::after { transform: translateX(18px); }
-    .fold-toggle.active { color: var(--color-red); }
+    .fold-toggle.is-active .toggle-track { background: var(--color-red); }
+    .fold-toggle.is-active .toggle-track::after { transform: translateX(18px); }
+    .fold-toggle.is-active { color: var(--color-red); }
 
     /* Card Slots */
     .card-slots { display: flex; gap: 8px; margin-bottom: 10px; }
@@ -203,11 +204,12 @@
         font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 1.1rem;
         position: relative; background: rgba(0,0,0,0.2);
     }
-    .card-slot.active { border-color: var(--neon-blue); box-shadow: 0 0 12px rgba(0,212,255,0.3); }
-    .card-slot.filled { border-style: solid; }
+    .card-slot.is-active { border-color: var(--neon-blue); box-shadow: 0 0 12px rgba(0,212,255,0.3); }
+    .card-slot.is-filled { border-style: solid; }
     .card-slot .card-rank { font-size: 1.05rem; line-height: 1; }
     .card-slot .card-suit { font-size: 0.9rem; line-height: 1; margin-top: 2px; }
     .card-slot .slot-label { font-size: 0.6rem; color: var(--text-muted); position: absolute; bottom: 2px; }
+    .card-slot .slot-value { font-size: 0.95rem; line-height: 1; }
 
     /* Suit colors */
     .suit-spades, .suit-clubs { color: #e2e8f0; }
@@ -247,8 +249,8 @@
         font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 1.15rem;
         position: relative; background: rgba(0,0,0,0.25);
     }
-    .board-card-slot.active { border-color: var(--neon-green); box-shadow: 0 0 14px rgba(0,255,136,0.25); }
-    .board-card-slot.filled { border-style: solid; }
+    .board-card-slot.is-active { border-color: var(--neon-green); box-shadow: 0 0 14px rgba(0,255,136,0.25); }
+    .board-card-slot.is-filled { border-style: solid; }
     .board-card-slot .card-rank { font-size: 1.1rem; line-height: 1; }
     .board-card-slot .card-suit { font-size: 0.95rem; line-height: 1; margin-top: 2px; }
 
@@ -284,7 +286,7 @@
         transition: transform 0.3s ease;
         max-height: 52vh; overflow-y: auto;
     }
-    .card-picker-wrapper.visible { transform: translateY(0); }
+    .card-picker-wrapper.is-visible { transform: translateY(0); }
     .picker-header {
         display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
     }
@@ -310,8 +312,8 @@
         transition: all 0.15s ease;
         position: relative;
     }
-    .picker-card:hover:not(.disabled) { background: rgba(0,212,255,0.15); border-color: var(--neon-blue); transform: scale(1.05); }
-    .picker-card.disabled { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
+    .picker-card:hover:not(.is-disabled) { background: rgba(0,212,255,0.15); border-color: var(--neon-blue); transform: scale(1.05); }
+    .picker-card.is-disabled { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
     .picker-card .pk-rank { line-height: 1; }
     .picker-card .pk-suit { font-size: 0.75em; line-height: 1; margin-top: 1px; }
 
@@ -439,41 +441,182 @@
             <button class="btn-player" id="btn-add-player"><i class="fa-solid fa-plus"></i></button>
         </div>
 
+        <!-- PLAYER CARDS — DOM-First: all 6 cards in HTML, JS toggles visibility -->
         <div class="players-grid" id="players-grid">
-            <!-- Dynamically generated -->
+
+            <!-- Player 1 -->
+            <div class="player-card" id="player-card-0">
+                <div class="player-header">
+                    <div class="player-name">
+                        <div class="player-avatar">P1</div>
+                        玩家 1
+                    </div>
+                    <div class="fold-toggle" id="fold-0">
+                        <span>Fold</span>
+                        <div class="toggle-track"></div>
+                    </div>
+                </div>
+                <div class="card-slots">
+                    <div class="card-slot" id="slot-0-0"><span class="slot-label">C1</span></div>
+                    <div class="card-slot" id="slot-0-1"><span class="slot-label">C2</span></div>
+                </div>
+                <div class="win-bar-container">
+                    <div class="win-bar-label"><span>Win%</span><span id="winpct-0">—</span></div>
+                    <div class="win-bar-track"><div class="win-bar-fill" id="winfill-0"></div></div>
+                    <div class="win-bar-label"><span>Tie%</span><span id="tiepct-0">—</span></div>
+                    <div class="win-bar-track"><div class="win-bar-fill tie-bar" id="tiefill-0"></div></div>
+                </div>
+            </div>
+
+            <!-- Player 2 -->
+            <div class="player-card" id="player-card-1">
+                <div class="player-header">
+                    <div class="player-name">
+                        <div class="player-avatar">P2</div>
+                        玩家 2
+                    </div>
+                    <div class="fold-toggle" id="fold-1">
+                        <span>Fold</span>
+                        <div class="toggle-track"></div>
+                    </div>
+                </div>
+                <div class="card-slots">
+                    <div class="card-slot" id="slot-1-0"><span class="slot-label">C1</span></div>
+                    <div class="card-slot" id="slot-1-1"><span class="slot-label">C2</span></div>
+                </div>
+                <div class="win-bar-container">
+                    <div class="win-bar-label"><span>Win%</span><span id="winpct-1">—</span></div>
+                    <div class="win-bar-track"><div class="win-bar-fill" id="winfill-1"></div></div>
+                    <div class="win-bar-label"><span>Tie%</span><span id="tiepct-1">—</span></div>
+                    <div class="win-bar-track"><div class="win-bar-fill tie-bar" id="tiefill-1"></div></div>
+                </div>
+            </div>
+
+            <!-- Player 3 (hidden by default) -->
+            <div class="player-card is-hidden" id="player-card-2">
+                <div class="player-header">
+                    <div class="player-name">
+                        <div class="player-avatar">P3</div>
+                        玩家 3
+                    </div>
+                    <div class="fold-toggle" id="fold-2">
+                        <span>Fold</span>
+                        <div class="toggle-track"></div>
+                    </div>
+                </div>
+                <div class="card-slots">
+                    <div class="card-slot" id="slot-2-0"><span class="slot-label">C1</span></div>
+                    <div class="card-slot" id="slot-2-1"><span class="slot-label">C2</span></div>
+                </div>
+                <div class="win-bar-container">
+                    <div class="win-bar-label"><span>Win%</span><span id="winpct-2">—</span></div>
+                    <div class="win-bar-track"><div class="win-bar-fill" id="winfill-2"></div></div>
+                    <div class="win-bar-label"><span>Tie%</span><span id="tiepct-2">—</span></div>
+                    <div class="win-bar-track"><div class="win-bar-fill tie-bar" id="tiefill-2"></div></div>
+                </div>
+            </div>
+
+            <!-- Player 4 (hidden) -->
+            <div class="player-card is-hidden" id="player-card-3">
+                <div class="player-header">
+                    <div class="player-name">
+                        <div class="player-avatar">P4</div>
+                        玩家 4
+                    </div>
+                    <div class="fold-toggle" id="fold-3">
+                        <span>Fold</span>
+                        <div class="toggle-track"></div>
+                    </div>
+                </div>
+                <div class="card-slots">
+                    <div class="card-slot" id="slot-3-0"><span class="slot-label">C1</span></div>
+                    <div class="card-slot" id="slot-3-1"><span class="slot-label">C2</span></div>
+                </div>
+                <div class="win-bar-container">
+                    <div class="win-bar-label"><span>Win%</span><span id="winpct-3">—</span></div>
+                    <div class="win-bar-track"><div class="win-bar-fill" id="winfill-3"></div></div>
+                    <div class="win-bar-label"><span>Tie%</span><span id="tiepct-3">—</span></div>
+                    <div class="win-bar-track"><div class="win-bar-fill tie-bar" id="tiefill-3"></div></div>
+                </div>
+            </div>
+
+            <!-- Player 5 (hidden) -->
+            <div class="player-card is-hidden" id="player-card-4">
+                <div class="player-header">
+                    <div class="player-name">
+                        <div class="player-avatar">P5</div>
+                        玩家 5
+                    </div>
+                    <div class="fold-toggle" id="fold-4">
+                        <span>Fold</span>
+                        <div class="toggle-track"></div>
+                    </div>
+                </div>
+                <div class="card-slots">
+                    <div class="card-slot" id="slot-4-0"><span class="slot-label">C1</span></div>
+                    <div class="card-slot" id="slot-4-1"><span class="slot-label">C2</span></div>
+                </div>
+                <div class="win-bar-container">
+                    <div class="win-bar-label"><span>Win%</span><span id="winpct-4">—</span></div>
+                    <div class="win-bar-track"><div class="win-bar-fill" id="winfill-4"></div></div>
+                    <div class="win-bar-label"><span>Tie%</span><span id="tiepct-4">—</span></div>
+                    <div class="win-bar-track"><div class="win-bar-fill tie-bar" id="tiefill-4"></div></div>
+                </div>
+            </div>
+
+            <!-- Player 6 (hidden) -->
+            <div class="player-card is-hidden" id="player-card-5">
+                <div class="player-header">
+                    <div class="player-name">
+                        <div class="player-avatar">P6</div>
+                        玩家 6
+                    </div>
+                    <div class="fold-toggle" id="fold-5">
+                        <span>Fold</span>
+                        <div class="toggle-track"></div>
+                    </div>
+                </div>
+                <div class="card-slots">
+                    <div class="card-slot" id="slot-5-0"><span class="slot-label">C1</span></div>
+                    <div class="card-slot" id="slot-5-1"><span class="slot-label">C2</span></div>
+                </div>
+                <div class="win-bar-container">
+                    <div class="win-bar-label"><span>Win%</span><span id="winpct-5">—</span></div>
+                    <div class="win-bar-track"><div class="win-bar-fill" id="winfill-5"></div></div>
+                    <div class="win-bar-label"><span>Tie%</span><span id="tiepct-5">—</span></div>
+                    <div class="win-bar-track"><div class="win-bar-fill tie-bar" id="tiefill-5"></div></div>
+                </div>
+            </div>
+
         </div>
     </div>
 
-    <!-- Board Section -->
+    <!-- Board Section — DOM-First -->
     <div class="section-card board-section">
         <div class="section-title" style="justify-content: center;"><i class="fa-solid fa-table-cards" style="color: var(--neon-green);"></i> 公共牌區 (Community Board)</div>
         <p class="section-subtitle" style="text-align: center;">依序設定 Flop (翻牌)、Turn (轉牌)、River (河牌)，可只設定部分公共牌。</p>
 
-        <div class="board-row" id="board-row">
+        <div class="board-row">
             <span class="board-label">Flop:</span>
-            <div class="board-card-slot" data-board-idx="0"><span class="slot-label">F1</span></div>
-            <div class="board-card-slot" data-board-idx="1"><span class="slot-label">F2</span></div>
-            <div class="board-card-slot" data-board-idx="2"><span class="slot-label">F3</span></div>
+            <div class="board-card-slot" id="board-slot-0"><span class="slot-label">F1</span></div>
+            <div class="board-card-slot" id="board-slot-1"><span class="slot-label">F2</span></div>
+            <div class="board-card-slot" id="board-slot-2"><span class="slot-label">F3</span></div>
         </div>
-        <div class="board-row" id="board-row-2">
+        <div class="board-row">
             <span class="board-label">Turn:</span>
-            <div class="board-card-slot" data-board-idx="3"><span class="slot-label">T</span></div>
+            <div class="board-card-slot" id="board-slot-3"><span class="slot-label">T</span></div>
         </div>
-        <div class="board-row" id="board-row-3">
+        <div class="board-row">
             <span class="board-label">River:</span>
-            <div class="board-card-slot" data-board-idx="4"><span class="slot-label">R</span></div>
+            <div class="board-card-slot" id="board-slot-4"><span class="slot-label">R</span></div>
         </div>
     </div>
 
     <!-- Simulation Controls -->
     <div class="section-card" style="text-align: center;">
         <div class="sim-controls">
-            <button class="btn-calc" id="btn-calculate">
-                <i class="fa-solid fa-calculator"></i> 開始模擬 (10,000 次)
-            </button>
-            <button class="btn-reset" id="btn-reset-all">
-                <i class="fa-solid fa-rotate-left"></i> 重置全部
-            </button>
+            <button class="btn-calc" id="btn-calculate"><i class="fa-solid fa-calculator"></i> 開始模擬 (10,000 次)</button>
+            <button class="btn-reset" id="btn-reset-all"><i class="fa-solid fa-rotate-left"></i> 重置全部</button>
         </div>
         <div class="sim-progress" id="sim-progress"></div>
     </div>
@@ -584,298 +727,278 @@
     </div>
 </footer>
 
-<!-- ===== CARD PICKER (Virtual Keyboard) ===== -->
+<!-- ===== CARD PICKER (Virtual Keyboard) — DOM-First ===== -->
 <div class="card-picker-wrapper" id="card-picker">
     <div class="picker-header">
         <span><i class="fa-solid fa-hand-pointer"></i> 選擇牌面 / 快速輸入 (如 As, Kh, 10d)</span>
         <button class="picker-close" id="picker-close-btn"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="card-picker-grid" id="picker-grid">
-        <!-- Dynamically generated -->
+        <!-- Spades -->
+        <div class="picker-card suit-spades" data-card="As"><span class="pk-rank">A</span><span class="pk-suit">♠</span></div>
+        <div class="picker-card suit-spades" data-card="2s"><span class="pk-rank">2</span><span class="pk-suit">♠</span></div>
+        <div class="picker-card suit-spades" data-card="3s"><span class="pk-rank">3</span><span class="pk-suit">♠</span></div>
+        <div class="picker-card suit-spades" data-card="4s"><span class="pk-rank">4</span><span class="pk-suit">♠</span></div>
+        <div class="picker-card suit-spades" data-card="5s"><span class="pk-rank">5</span><span class="pk-suit">♠</span></div>
+        <div class="picker-card suit-spades" data-card="6s"><span class="pk-rank">6</span><span class="pk-suit">♠</span></div>
+        <div class="picker-card suit-spades" data-card="7s"><span class="pk-rank">7</span><span class="pk-suit">♠</span></div>
+        <div class="picker-card suit-spades" data-card="8s"><span class="pk-rank">8</span><span class="pk-suit">♠</span></div>
+        <div class="picker-card suit-spades" data-card="9s"><span class="pk-rank">9</span><span class="pk-suit">♠</span></div>
+        <div class="picker-card suit-spades" data-card="10s"><span class="pk-rank">10</span><span class="pk-suit">♠</span></div>
+        <div class="picker-card suit-spades" data-card="Js"><span class="pk-rank">J</span><span class="pk-suit">♠</span></div>
+        <div class="picker-card suit-spades" data-card="Qs"><span class="pk-rank">Q</span><span class="pk-suit">♠</span></div>
+        <div class="picker-card suit-spades" data-card="Ks"><span class="pk-rank">K</span><span class="pk-suit">♠</span></div>
+        <!-- Hearts -->
+        <div class="picker-card suit-hearts" data-card="Ah"><span class="pk-rank">A</span><span class="pk-suit">♥</span></div>
+        <div class="picker-card suit-hearts" data-card="2h"><span class="pk-rank">2</span><span class="pk-suit">♥</span></div>
+        <div class="picker-card suit-hearts" data-card="3h"><span class="pk-rank">3</span><span class="pk-suit">♥</span></div>
+        <div class="picker-card suit-hearts" data-card="4h"><span class="pk-rank">4</span><span class="pk-suit">♥</span></div>
+        <div class="picker-card suit-hearts" data-card="5h"><span class="pk-rank">5</span><span class="pk-suit">♥</span></div>
+        <div class="picker-card suit-hearts" data-card="6h"><span class="pk-rank">6</span><span class="pk-suit">♥</span></div>
+        <div class="picker-card suit-hearts" data-card="7h"><span class="pk-rank">7</span><span class="pk-suit">♥</span></div>
+        <div class="picker-card suit-hearts" data-card="8h"><span class="pk-rank">8</span><span class="pk-suit">♥</span></div>
+        <div class="picker-card suit-hearts" data-card="9h"><span class="pk-rank">9</span><span class="pk-suit">♥</span></div>
+        <div class="picker-card suit-hearts" data-card="10h"><span class="pk-rank">10</span><span class="pk-suit">♥</span></div>
+        <div class="picker-card suit-hearts" data-card="Jh"><span class="pk-rank">J</span><span class="pk-suit">♥</span></div>
+        <div class="picker-card suit-hearts" data-card="Qh"><span class="pk-rank">Q</span><span class="pk-suit">♥</span></div>
+        <div class="picker-card suit-hearts" data-card="Kh"><span class="pk-rank">K</span><span class="pk-suit">♥</span></div>
+        <!-- Diamonds -->
+        <div class="picker-card suit-diamonds" data-card="Ad"><span class="pk-rank">A</span><span class="pk-suit">♦</span></div>
+        <div class="picker-card suit-diamonds" data-card="2d"><span class="pk-rank">2</span><span class="pk-suit">♦</span></div>
+        <div class="picker-card suit-diamonds" data-card="3d"><span class="pk-rank">3</span><span class="pk-suit">♦</span></div>
+        <div class="picker-card suit-diamonds" data-card="4d"><span class="pk-rank">4</span><span class="pk-suit">♦</span></div>
+        <div class="picker-card suit-diamonds" data-card="5d"><span class="pk-rank">5</span><span class="pk-suit">♦</span></div>
+        <div class="picker-card suit-diamonds" data-card="6d"><span class="pk-rank">6</span><span class="pk-suit">♦</span></div>
+        <div class="picker-card suit-diamonds" data-card="7d"><span class="pk-rank">7</span><span class="pk-suit">♦</span></div>
+        <div class="picker-card suit-diamonds" data-card="8d"><span class="pk-rank">8</span><span class="pk-suit">♦</span></div>
+        <div class="picker-card suit-diamonds" data-card="9d"><span class="pk-rank">9</span><span class="pk-suit">♦</span></div>
+        <div class="picker-card suit-diamonds" data-card="10d"><span class="pk-rank">10</span><span class="pk-suit">♦</span></div>
+        <div class="picker-card suit-diamonds" data-card="Jd"><span class="pk-rank">J</span><span class="pk-suit">♦</span></div>
+        <div class="picker-card suit-diamonds" data-card="Qd"><span class="pk-rank">Q</span><span class="pk-suit">♦</span></div>
+        <div class="picker-card suit-diamonds" data-card="Kd"><span class="pk-rank">K</span><span class="pk-suit">♦</span></div>
+        <!-- Clubs -->
+        <div class="picker-card suit-clubs" data-card="Ac"><span class="pk-rank">A</span><span class="pk-suit">♣</span></div>
+        <div class="picker-card suit-clubs" data-card="2c"><span class="pk-rank">2</span><span class="pk-suit">♣</span></div>
+        <div class="picker-card suit-clubs" data-card="3c"><span class="pk-rank">3</span><span class="pk-suit">♣</span></div>
+        <div class="picker-card suit-clubs" data-card="4c"><span class="pk-rank">4</span><span class="pk-suit">♣</span></div>
+        <div class="picker-card suit-clubs" data-card="5c"><span class="pk-rank">5</span><span class="pk-suit">♣</span></div>
+        <div class="picker-card suit-clubs" data-card="6c"><span class="pk-rank">6</span><span class="pk-suit">♣</span></div>
+        <div class="picker-card suit-clubs" data-card="7c"><span class="pk-rank">7</span><span class="pk-suit">♣</span></div>
+        <div class="picker-card suit-clubs" data-card="8c"><span class="pk-rank">8</span><span class="pk-suit">♣</span></div>
+        <div class="picker-card suit-clubs" data-card="9c"><span class="pk-rank">9</span><span class="pk-suit">♣</span></div>
+        <div class="picker-card suit-clubs" data-card="10c"><span class="pk-rank">10</span><span class="pk-suit">♣</span></div>
+        <div class="picker-card suit-clubs" data-card="Jc"><span class="pk-rank">J</span><span class="pk-suit">♣</span></div>
+        <div class="picker-card suit-clubs" data-card="Qc"><span class="pk-rank">Q</span><span class="pk-suit">♣</span></div>
+        <div class="picker-card suit-clubs" data-card="Kc"><span class="pk-rank">K</span><span class="pk-suit">♣</span></div>
     </div>
 </div>
 
-<!-- ===== Ko-fi Widget Script ===== -->
-<script type='text/javascript' src='https://storage.ko-fi.com/cdn/widget/Widget_2.js'></script>
+<!-- ===== Ko-fi Widget Script (loaded AFTER main JS, non-blocking) ===== -->
+<script type='text/javascript' src='https://storage.ko-fi.com/cdn/widget/Widget_2.js' defer></script>
 
 <script>
 (function() {
 'use strict';
 
 /* ===================================================================
-   POKER ODDS CALCULATOR — Pure Vanilla JS Engine (Event Delegation)
+   POKER ODDS CALCULATOR — DOM-First Architecture
+   All HTML structure exists in DOM. JS only updates state + classes.
    =================================================================== */
 
 // ---- Constants ----
-const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
-const SUITS = ['spades','hearts','diamonds','clubs'];
-const SUIT_SYMBOLS = { spades: '♠', hearts: '♥', diamonds: '♦', clubs: '♣' };
-const SUIT_CLASSES = { spades: 'suit-spades', hearts: 'suit-hearts', diamonds: 'suit-diamonds', clubs: 'suit-clubs' };
-const SIM_ITERATIONS = 10000;
-const MAX_PLAYERS = 6;
-const MIN_PLAYERS = 2;
+var RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+var SUITS = ['spades','hearts','diamonds','clubs'];
+var SUIT_SYMBOLS = { spades: '\u2660', hearts: '\u2665', diamonds: '\u2666', clubs: '\u2663' };
+var SUIT_SHORT = { spades: 's', hearts: 'h', diamonds: 'd', clubs: 'c' };
+var SIM_ITERATIONS = 10000;
+var MAX_PLAYERS = 6;
+var MIN_PLAYERS = 2;
 
 // ---- State ----
-let numPlayers = 2;
-let players = [];
-let board = [null, null, null, null, null];
-let activeSlot = null;
-let usedCards = new Set();
-let simRunning = false;
-let lastRunDone = false;
+var numPlayers = 2;
+var players = [];  // [{ hole: [card|null, card|null], folded: false }]
+var board = [null, null, null, null, null];
+var activeSlot = null;  // { type:'player'|'board', idx:0-5, slotIdx:0-1 }
+var usedCards = new Set();
+var simRunning = false;
+var lastRunDone = false;
+var kbBuffer = '';
 
-// ---- Init ----
-function init() {
-    // Pre-populate players array for all MAX_PLAYERS slots
-    for (let i = 0; i < MAX_PLAYERS; i++) {
+// ---- Helpers ----
+function $(id) { return document.getElementById(id); }
+function $$(sel) { return document.querySelectorAll(sel); }
+
+function cardKey(card) { return card.rank + card.suit[0]; }
+
+function parseCardInput(input) {
+    input = input.trim();
+    if (input.length < 2) return null;
+    var rankStr, suitLetter;
+    if (input.length === 3 && input.substring(0, 2) === '10') {
+        rankStr = '10';
+        suitLetter = input[2].toLowerCase();
+    } else if (input.length === 2) {
+        rankStr = input[0].toUpperCase();
+        suitLetter = input[1].toLowerCase();
+    } else {
+        return null;
+    }
+    if (RANKS.indexOf(rankStr) === -1) return null;
+    var suitMap = { s: 'spades', h: 'hearts', d: 'diamonds', c: 'clubs' };
+    var suit = suitMap[suitLetter];
+    if (!suit) return null;
+    return { rank: rankStr, suit: suit };
+}
+
+// ---- State Init ----
+function initState() {
+    for (var i = 0; i < MAX_PLAYERS; i++) {
         players.push({ hole: [null, null], folded: false });
     }
+}
 
-    // Build static board slots (they don't change)
-    bindBoardSlots();
-
-    // Build card picker grid
-    buildPickerGrid();
-
-    // Render initial players
-    renderPlayers();
-
-    // Bind all controls via event delegation
-    bindControls();
-
-    // Draw Ko-fi widget after a short delay to ensure script loaded
-    setTimeout(function() {
-        if (typeof kofiwidget2 !== 'undefined') {
-            kofiwidget2.init('Buy me a coffee', '#72a4f2', 'R1K123XRS9');
-            kofiwidget2.draw();
+// ---- Sync DOM from State ----
+function syncPlayerVisibility() {
+    for (var i = 0; i < MAX_PLAYERS; i++) {
+        var el = $('player-card-' + i);
+        if (!el) continue;
+        if (i < numPlayers) {
+            el.classList.remove('is-hidden');
+        } else {
+            el.classList.add('is-hidden');
         }
-    }, 500);
-}
-
-// ---- Bind Board Slots ----
-function bindBoardSlots() {
-    document.querySelectorAll('.board-card-slot').forEach(function(el) {
-        el.addEventListener('click', function() {
-            var idx = parseInt(this.getAttribute('data-board-idx'));
-            activateSlot('board', idx);
-        });
-    });
-}
-
-// ---- Bind All Controls (Event Delegation) ----
-function bindControls() {
-    // Add / Remove player buttons
-    document.getElementById('btn-add-player').addEventListener('click', addPlayer);
-    document.getElementById('btn-remove-player').addEventListener('click', removePlayer);
-
-    // Calculate button
-    document.getElementById('btn-calculate').addEventListener('click', runSimulation);
-
-    // Reset button
-    document.getElementById('btn-reset-all').addEventListener('click', resetAll);
-
-    // Close picker button
-    document.getElementById('picker-close-btn').addEventListener('click', closePicker);
-
-    // Event delegation on players-grid for fold toggles and card slots
-    document.getElementById('players-grid').addEventListener('click', function(e) {
-        // Fold toggle
-        var foldEl = e.target.closest('.fold-toggle');
-        if (foldEl) {
-            var playerIdx = parseInt(foldEl.getAttribute('data-player-idx'));
-            toggleFold(playerIdx);
-            return;
-        }
-        // Card slot
-        var slotEl = e.target.closest('.card-slot');
-        if (slotEl) {
-            var pIdx = parseInt(slotEl.getAttribute('data-player'));
-            var sIdx = parseInt(slotEl.getAttribute('data-slot'));
-            activateSlot('player', pIdx, sIdx);
-        }
-    });
-
-    // Keyboard input
-    setupKeyboardInput();
-}
-
-// ---- Player Management ----
-function addPlayer() {
-    if (numPlayers >= MAX_PLAYERS || simRunning) return;
-    numPlayers++;
-    renderPlayers();
-    updateFoldButtons();
-    updatePickerDisabled();
-}
-
-function removePlayer() {
-    if (numPlayers <= MIN_PLAYERS || simRunning) return;
-    // Clear the last player's cards from usedCards
-    var lastIdx = numPlayers - 1;
-    players[lastIdx].hole.forEach(function(c) {
-        if (c) usedCards.delete(cardKey(c));
-    });
-    players[lastIdx].folded = false;
-    // Clear win bars for removed player
-    clearWinBar(lastIdx);
-    numPlayers--;
-    renderPlayers();
-    updateFoldButtons();
-    updatePickerDisabled();
-    // If simulation was done, re-run
-    if (lastRunDone) runSimulation();
-}
-
-function toggleFold(idx) {
-    if (simRunning) return;
-    players[idx].folded = !players[idx].folded;
-    renderPlayers();
-    if (lastRunDone) {
-        runSimulation();
     }
 }
 
-function clearWinBar(idx) {
-    var winEl = document.getElementById('winpct-' + idx);
-    var tieEl = document.getElementById('tiepct-' + idx);
-    var winFill = document.getElementById('winfill-' + idx);
-    var tieFill = document.getElementById('tiefill-' + idx);
-    if (winEl) winEl.textContent = '—';
-    if (tieEl) tieEl.textContent = '—';
-    if (winFill) winFill.style.width = '0%';
-    if (tieFill) tieFill.style.width = '0%';
-}
-
-function updateFoldButtons() {
-    document.getElementById('btn-add-player').disabled = numPlayers >= MAX_PLAYERS;
-    document.getElementById('btn-remove-player').disabled = numPlayers <= MIN_PLAYERS;
-    document.getElementById('player-count-display').textContent = numPlayers + ' 位玩家';
-}
-
-function renderPlayers() {
-    var grid = document.getElementById('players-grid');
-    grid.innerHTML = '';
-    for (var i = 0; i < numPlayers; i++) {
-        var p = players[i];
-        var cardHtml = '';
-        for (var s = 0; s < 2; s++) {
-            var c = p.hole[s];
-            var filledCls = c ? ' filled' : '';
-            var suitCls = c ? SUIT_CLASSES[c.suit] : '';
-            var rankText = c ? (c.rank === '10' ? '10' : c.rank) : '';
-            var suitText = c ? SUIT_SYMBOLS[c.suit] : '';
-            var slotLabel = !c ? '<span class="slot-label">C' + (s + 1) + '</span>' : '';
-            cardHtml += '<div class="card-slot' + filledCls + '" data-player="' + i + '" data-slot="' + s + '">' +
-                (c ? '<span class="card-rank ' + suitCls + '">' + rankText + '</span><span class="card-suit ' + suitCls + '">' + suitText + '</span>' : slotLabel) +
-                '</div>';
-        }
-
-        var card = document.createElement('div');
-        card.className = 'player-card' + (p.folded ? ' folded' : '');
-        card.id = 'player-card-' + i;
-        card.innerHTML = '<div class="player-header">' +
-            '<div class="player-name"><div class="player-avatar">P' + (i + 1) + '</div>玩家 ' + (i + 1) + '</div>' +
-            '<div class="fold-toggle' + (p.folded ? ' active' : '') + '" data-player-idx="' + i + '">' +
-                '<span>Fold</span><div class="toggle-track"></div>' +
-            '</div></div>' +
-            '<div class="card-slots">' + cardHtml + '</div>' +
-            '<div class="win-bar-container" id="winbar-' + i + '">' +
-                '<div class="win-bar-label"><span>Win%</span><span id="winpct-' + i + '">—</span></div>' +
-                '<div class="win-bar-track"><div class="win-bar-fill" id="winfill-' + i + '"></div></div>' +
-                '<div class="win-bar-label"><span>Tie%</span><span id="tiepct-' + i + '">—</span></div>' +
-                '<div class="win-bar-track"><div class="win-bar-fill tie-bar" id="tiefill-' + i + '"></div></div>' +
-            '</div>';
-        grid.appendChild(card);
+function syncPlayerFolded(idx) {
+    var card = $('player-card-' + idx);
+    var fold = $('fold-' + idx);
+    if (!card || !fold) return;
+    if (players[idx].folded) {
+        card.classList.add('is-folded');
+        fold.classList.add('is-active');
+    } else {
+        card.classList.remove('is-folded');
+        fold.classList.remove('is-active');
     }
 }
 
-// ---- Board Rendering ----
-function renderBoard() {
+function syncPlayerCards(idx) {
+    var p = players[idx];
+    for (var s = 0; s < 2; s++) {
+        var slot = $('slot-' + idx + '-' + s);
+        if (!slot) continue;
+        var c = p.hole[s];
+        if (c) {
+            var suitCls = 'suit-' + c.suit;
+            slot.classList.add('is-filled');
+            slot.innerHTML = '<span class="slot-value ' + suitCls + '">' +
+                c.rank + ' ' + SUIT_SYMBOLS[c.suit] + '</span>';
+        } else {
+            slot.classList.remove('is-filled');
+            slot.innerHTML = '<span class="slot-label">C' + (s + 1) + '</span>';
+        }
+    }
+}
+
+function syncBoard() {
     for (var i = 0; i < 5; i++) {
-        var el = document.querySelector('.board-card-slot[data-board-idx="' + i + '"]');
+        var el = $('board-slot-' + i);
+        if (!el) continue;
         var c = board[i];
         if (c) {
-            el.classList.add('filled');
-            var suitCls = SUIT_CLASSES[c.suit];
-            var rankText = c.rank === '10' ? '10' : c.rank;
-            el.innerHTML = '<span class="card-rank ' + suitCls + '">' + rankText + '</span><span class="card-suit ' + suitCls + '">' + SUIT_SYMBOLS[c.suit] + '</span>';
+            var suitCls = 'suit-' + c.suit;
+            el.classList.add('is-filled');
+            el.innerHTML = '<span class="slot-value ' + suitCls + '">' +
+                c.rank + ' ' + SUIT_SYMBOLS[c.suit] + '</span>';
         } else {
-            el.classList.remove('filled');
-            var labels = ['F1', 'F2', 'F3', 'T', 'R'];
+            el.classList.remove('is-filled');
+            var labels = ['F1','F2','F3','T','R'];
             el.innerHTML = '<span class="slot-label">' + labels[i] + '</span>';
         }
     }
 }
 
-// ---- Card Picker ----
-function buildPickerGrid() {
-    var grid = document.getElementById('picker-grid');
-    grid.innerHTML = '';
-    SUITS.forEach(function(suit) {
-        RANKS.forEach(function(rank) {
-            var btn = document.createElement('div');
-            btn.className = 'picker-card ' + SUIT_CLASSES[suit];
-            btn.setAttribute('data-card', cardKey({ rank: rank, suit: suit }));
-            btn.innerHTML = '<span class="pk-rank">' + (rank === '10' ? '10' : rank) + '</span><span class="pk-suit">' + SUIT_SYMBOLS[suit] + '</span>';
-            btn.addEventListener('click', function() {
-                selectCard({ rank: rank, suit: suit });
-            });
-            grid.appendChild(btn);
-        });
-    });
-    updatePickerDisabled();
+function syncCount() {
+    $('player-count-display').textContent = numPlayers + ' 位玩家';
+    $('btn-add-player').disabled = numPlayers >= MAX_PLAYERS;
+    $('btn-remove-player').disabled = numPlayers <= MIN_PLAYERS;
 }
 
-function updatePickerDisabled() {
-    var cards = document.querySelectorAll('.picker-card');
+function syncPickerDisabled() {
+    var cards = $$('.picker-card');
     for (var i = 0; i < cards.length; i++) {
-        cards[i].classList.toggle('disabled', usedCards.has(cards[i].getAttribute('data-card')));
+        var key = cards[i].getAttribute('data-card');
+        if (usedCards.has(key)) {
+            cards[i].classList.add('is-disabled');
+        } else {
+            cards[i].classList.remove('is-disabled');
+        }
     }
 }
 
+function clearActiveSlots() {
+    var actives = $$('.card-slot.is-active, .board-card-slot.is-active');
+    for (var i = 0; i < actives.length; i++) {
+        actives[i].classList.remove('is-active');
+    }
+}
+
+function clearWinBars(idx) {
+    var w = $('winpct-' + idx);
+    var t = $('tiepct-' + idx);
+    var wf = $('winfill-' + idx);
+    var tf = $('tiefill-' + idx);
+    if (w) w.textContent = '—';
+    if (t) t.textContent = '—';
+    if (wf) wf.style.width = '0%';
+    if (tf) tf.style.width = '0%';
+}
+
+function clearAllWinBars() {
+    for (var i = 0; i < MAX_PLAYERS; i++) clearWinBars(i);
+}
+
+// ---- Slot Activation ----
 function activateSlot(type, idx, slotIdx) {
     if (simRunning) return;
     if (slotIdx === undefined) slotIdx = 0;
     activeSlot = { type: type, idx: idx, slotIdx: slotIdx };
+    clearActiveSlots();
 
-    // Clear all active states
-    var activeEls = document.querySelectorAll('.card-slot.active, .board-card-slot.active');
-    for (var i = 0; i < activeEls.length; i++) activeEls[i].classList.remove('active');
-
-    // Mark new active
     if (type === 'player') {
-        var el = document.querySelector('.card-slot[data-player="' + idx + '"][data-slot="' + slotIdx + '"]');
-        if (el) el.classList.add('active');
+        var el = $('slot-' + idx + '-' + slotIdx);
+        if (el) el.classList.add('is-active');
     } else {
-        var bel = document.querySelector('.board-card-slot[data-board-idx="' + idx + '"]');
-        if (bel) bel.classList.add('active');
+        var bel = $('board-slot-' + idx);
+        if (bel) bel.classList.add('is-active');
     }
     openPicker();
 }
 
 function openPicker() {
-    document.getElementById('card-picker').classList.add('visible');
+    $('card-picker').classList.add('is-visible');
     document.body.classList.add('picker-open');
-    updatePickerDisabled();
+    syncPickerDisabled();
 }
 
 function closePicker() {
-    document.getElementById('card-picker').classList.remove('visible');
+    $('card-picker').classList.remove('is-visible');
     document.body.classList.remove('picker-open');
-    var activeEls = document.querySelectorAll('.card-slot.active, .board-card-slot.active');
-    for (var i = 0; i < activeEls.length; i++) activeEls[i].classList.remove('active');
+    clearActiveSlots();
     activeSlot = null;
 }
 
+// ---- Card Selection ----
 function selectCard(card) {
     if (!activeSlot || simRunning) return;
     var key = cardKey(card);
     if (usedCards.has(key)) return;
 
-    // Remove old card if exists
+    // Remove old card
     if (activeSlot.type === 'player') {
-        var oldCard = players[activeSlot.idx].hole[activeSlot.slotIdx];
-        if (oldCard) usedCards.delete(cardKey(oldCard));
+        var old = players[activeSlot.idx].hole[activeSlot.slotIdx];
+        if (old) usedCards.delete(cardKey(old));
         players[activeSlot.idx].hole[activeSlot.slotIdx] = card;
     } else {
         var oldB = board[activeSlot.idx];
@@ -885,15 +1008,12 @@ function selectCard(card) {
     usedCards.add(key);
 
     if (activeSlot.type === 'player') {
-        renderPlayers();
-        // Auto-focus next slot
+        syncPlayerCards(activeSlot.idx);
         var nextSlot = null;
         if (activeSlot.slotIdx === 0) {
-            // Move to second card of same player
             nextSlot = { type: 'player', idx: activeSlot.idx, slotIdx: 1 };
         } else {
-            // Find next empty slot
-            nextSlot = findNextEmpty();
+            nextSlot = findNextEmptyPlayerSlot();
         }
         if (nextSlot) {
             activateSlot(nextSlot.type, nextSlot.idx, nextSlot.slotIdx);
@@ -901,7 +1021,7 @@ function selectCard(card) {
             closePicker();
         }
     } else {
-        renderBoard();
+        syncBoard();
         var nextBoard = findNextEmptyBoard();
         if (nextBoard !== null) {
             activateSlot('board', nextBoard);
@@ -909,10 +1029,10 @@ function selectCard(card) {
             closePicker();
         }
     }
-    updatePickerDisabled();
+    syncPickerDisabled();
 }
 
-function findNextEmpty() {
+function findNextEmptyPlayerSlot() {
     for (var i = 0; i < numPlayers; i++) {
         for (var j = 0; j < 2; j++) {
             if (!players[i].hole[j]) return { type: 'player', idx: i, slotIdx: j };
@@ -928,22 +1048,51 @@ function findNextEmptyBoard() {
     return null;
 }
 
-function cardKey(card) { return card.rank + card.suit[0]; }
+// ---- Player Add / Remove ----
+function addPlayer() {
+    if (numPlayers >= MAX_PLAYERS || simRunning) return;
+    numPlayers++;
+    syncPlayerVisibility();
+    syncCount();
+}
+
+function removePlayer() {
+    if (numPlayers <= MIN_PLAYERS || simRunning) return;
+    var lastIdx = numPlayers - 1;
+    // Clear cards from usedCards
+    players[lastIdx].hole.forEach(function(c) {
+        if (c) usedCards.delete(cardKey(c));
+    });
+    players[lastIdx].folded = false;
+    players[lastIdx].hole = [null, null];
+    clearWinBars(lastIdx);
+    syncPlayerCards(lastIdx);
+    syncPlayerFolded(lastIdx);
+    numPlayers--;
+    syncPlayerVisibility();
+    syncCount();
+    syncPickerDisabled();
+    if (lastRunDone) runSimulation();
+}
+
+function toggleFold(idx) {
+    if (simRunning) return;
+    players[idx].folded = !players[idx].folded;
+    syncPlayerFolded(idx);
+    if (lastRunDone) runSimulation();
+}
 
 // ---- Keyboard Input ----
-var kbBuffer = '';
-function setupKeyboardInput() {
+function setupKeyboard() {
     document.addEventListener('keydown', function(e) {
         if (!activeSlot || simRunning) return;
         if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
         if (e.key.length !== 1) return;
 
         kbBuffer += e.key;
-
         var parsed = parseCardInput(kbBuffer);
         if (parsed) {
-            var key = cardKey(parsed);
-            if (!usedCards.has(key)) {
+            if (!usedCards.has(cardKey(parsed))) {
                 selectCard(parsed);
             }
             kbBuffer = '';
@@ -951,39 +1100,14 @@ function setupKeyboardInput() {
             kbBuffer = kbBuffer.slice(-3);
         }
     });
-
     document.addEventListener('click', function() { kbBuffer = ''; });
-}
-
-function parseCardInput(input) {
-    input = input.trim();
-    if (input.length < 2) return null;
-
-    var rankStr, suitLetter;
-    if (input.length === 3 && input.substring(0, 2) === '10') {
-        rankStr = '10';
-        suitLetter = input[2].toLowerCase();
-    } else if (input.length === 2) {
-        rankStr = input[0].toUpperCase();
-        suitLetter = input[1].toLowerCase();
-    } else {
-        return null;
-    }
-
-    if (RANKS.indexOf(rankStr) === -1) return null;
-
-    var suitMap = { s: 'spades', h: 'hearts', d: 'diamonds', c: 'clubs' };
-    var suit = suitMap[suitLetter];
-    if (!suit) return null;
-
-    return { rank: rankStr, suit: suit };
 }
 
 // ---- Monte Carlo Engine ----
 function runSimulation() {
     if (simRunning) return;
 
-    // Collect active (non-folded) players with both cards set
+    // Collect active players
     var activePlayers = [];
     for (var i = 0; i < numPlayers; i++) {
         if (!players[i].folded && players[i].hole[0] && players[i].hole[1]) {
@@ -991,17 +1115,18 @@ function runSimulation() {
         }
     }
 
+    var progEl = $('sim-progress');
+
     if (activePlayers.length < 2) {
-        document.getElementById('sim-progress').textContent = '⚠️ 至少需要 2 位非棄牌玩家，且每位需設定 2 張手牌。';
+        progEl.textContent = '\u26A0\uFE0F 至少需要 2 位非棄牌玩家，且每位需設定 2 張手牌。';
         lastRunDone = false;
         return;
     }
 
-    // Check board
     var boardFilled = 0;
     for (var b = 0; b < 5; b++) { if (board[b]) boardFilled++; }
     if (boardFilled < 3) {
-        document.getElementById('sim-progress').textContent = '⚠️ 請先設定至少 3 張 Flop 公共牌再進行模擬。';
+        progEl.textContent = '\u26A0\uFE0F 請先設定至少 3 張 Flop 公共牌再進行模擬。';
         lastRunDone = false;
         return;
     }
@@ -1026,21 +1151,20 @@ function runSimulation() {
     }
 
     simRunning = true;
-    var btn = document.getElementById('btn-calculate');
-    btn.disabled = true;
-    var progEl = document.getElementById('sim-progress');
+    $('btn-calculate').disabled = true;
+    clearAllWinBars();
+    $$('.player-card').forEach(function(c) { c.classList.remove('is-winner'); });
+
     var chunkSize = 2000;
     var totalWins = new Array(activePlayers.length).fill(0);
     var totalTies = new Array(activePlayers.length).fill(0);
     var completed = 0;
 
-    progEl.textContent = '正在模擬中... 0 / ' + SIM_ITERATIONS;
+    // Pre-compute board base
+    var boardBase = [null, null, null, null, null];
+    for (var b2 = 0; b2 < 5; b2++) { if (board[b2]) boardBase[b2] = board[b2]; }
 
-    // Pre-compute current board array (sparse)
-    var currentBoardBase = [null, null, null, null, null];
-    for (var b2 = 0; b2 < 5; b2++) {
-        if (board[b2]) currentBoardBase[b2] = board[b2];
-    }
+    progEl.textContent = '\u6B63\u5728\u6A21\u64EC\u4E2D... 0 / ' + SIM_ITERATIONS;
 
     function runChunk() {
         var end = Math.min(completed + chunkSize, SIM_ITERATIONS);
@@ -1048,16 +1172,12 @@ function runSimulation() {
             var workingDeck = deck.slice();
             shuffle(workingDeck);
 
-            // Fill remaining board cards
-            var cb = currentBoardBase.slice();
+            var cb = boardBase.slice();
             var deckIdx = 0;
             for (var b3 = 0; b3 < 5; b3++) {
-                if (!cb[b3]) {
-                    cb[b3] = workingDeck[deckIdx++];
-                }
+                if (!cb[b3]) cb[b3] = workingDeck[deckIdx++];
             }
 
-            // Evaluate all active players
             var handCards = [];
             for (var p = 0; p < activePlayers.length; p++) {
                 handCards.push([activePlayers[p].hole[0], activePlayers[p].hole[1]]);
@@ -1066,7 +1186,6 @@ function runSimulation() {
             var scores = evaluateAll(cb, handCards);
             var bestScore = -1;
             var winners = [];
-
             for (var p2 = 0; p2 < activePlayers.length; p2++) {
                 if (scores[p2] > bestScore) {
                     bestScore = scores[p2];
@@ -1084,15 +1203,15 @@ function runSimulation() {
         }
 
         completed = end;
-        progEl.textContent = '正在模擬中... ' + completed + ' / ' + SIM_ITERATIONS;
+        progEl.textContent = '\u6B63\u5728\u6A21\u64EC\u4E2D... ' + completed + ' / ' + SIM_ITERATIONS;
 
         if (completed < SIM_ITERATIONS) {
             setTimeout(runChunk, 0);
         } else {
             displayResults(activePlayers, totalWins, totalTies);
-            btn.disabled = false;
+            $('btn-calculate').disabled = false;
             simRunning = false;
-            progEl.textContent = '✅ 模擬完成！共 ' + SIM_ITERATIONS.toLocaleString() + ' 次迭代。';
+            progEl.textContent = '\u2705 \u6A21\u64EC\u5B8C\u6210\uFF01\u5171 ' + SIM_ITERATIONS.toLocaleString() + ' \u6B21\u8FED\u4EE3\u3002';
             lastRunDone = true;
         }
     }
@@ -1101,9 +1220,7 @@ function runSimulation() {
 }
 
 function displayResults(activePlayers, wins, ties) {
-    // Reset all winner highlights
-    var allCards = document.querySelectorAll('.player-card');
-    for (var i = 0; i < allCards.length; i++) allCards[i].classList.remove('winner');
+    $$('.player-card').forEach(function(c) { c.classList.remove('is-winner'); });
 
     var results = [];
     for (var i = 0; i < activePlayers.length; i++) {
@@ -1117,12 +1234,13 @@ function displayResults(activePlayers, wins, ties) {
         if (results[r].winPct > maxWin) maxWin = results[r].winPct;
     }
 
-    results.forEach(function(r) {
+    for (var ri = 0; ri < results.length; ri++) {
+        var r = results[ri];
         var pIdx = r.pIdx;
-        var winEl = document.getElementById('winpct-' + pIdx);
-        var tieEl = document.getElementById('tiepct-' + pIdx);
-        var winFill = document.getElementById('winfill-' + pIdx);
-        var tieFill = document.getElementById('tiefill-' + pIdx);
+        var winEl = $('winpct-' + pIdx);
+        var tieEl = $('tiepct-' + pIdx);
+        var winFill = $('winfill-' + pIdx);
+        var tieFill = $('tiefill-' + pIdx);
 
         if (winEl) winEl.textContent = r.winPct + '%';
         if (tieEl) tieEl.textContent = r.tiePct + '%';
@@ -1140,26 +1258,23 @@ function displayResults(activePlayers, wins, ties) {
         }
 
         if (r.winPct === maxWin) {
-            var cardEl = document.getElementById('player-card-' + pIdx);
-            if (cardEl) cardEl.classList.add('winner');
+            var cardEl = $('player-card-' + pIdx);
+            if (cardEl) cardEl.classList.add('is-winner');
         }
-    });
+    }
 }
 
 // ---- Hand Evaluator ----
 function evaluateAll(boardCards, hands) {
-    return hands.map(function(h) {
-        return scoreHand(boardCards.concat(h));
-    });
+    return hands.map(function(h) { return scoreHand(boardCards.concat(h)); });
 }
 
 function scoreHand(cards) {
-    // 7 cards, find best 5
     var rankVals = cards.map(function(c) { return RANKS.indexOf(c.rank) + 2; });
     var suitArr = cards.map(function(c) { return c.suit; });
 
     var bestScore = -1;
-    var combos = combinations5of7();
+    var combos = genCombos5of7();
 
     for (var i = 0; i < combos.length; i++) {
         var combo = combos[i];
@@ -1173,19 +1288,14 @@ function scoreHand(cards) {
 }
 
 function evaluate5Card(ranks, suits) {
-    // Sort descending
     ranks = ranks.slice().sort(function(a, b) { return b - a; });
-
     var isFlush = suits.every(function(s) { return s === suits[0]; });
     var straightInfo = isStraightCheck(ranks);
     var rankCounts = {};
     ranks.forEach(function(r) { rankCounts[r] = (rankCounts[r] || 0) + 1; });
     var counts = Object.values(rankCounts).sort(function(a, b) { return b - a; });
 
-    // [handType, ...kickers] — 9=SF, 8=4K, 7=Full, 6=Flush, 5=Str, 4=3K, 3=2P, 2=Pair, 1=High
-    if (isFlush && straightInfo) {
-        return [9, straightInfo[0]];
-    }
+    if (isFlush && straightInfo) return [9, straightInfo[0]];
     if (counts[0] === 4) {
         var four = ranks.filter(function(r) { return rankCounts[r] === 4; })[0];
         var kicker = ranks.find(function(r) { return rankCounts[r] === 1; });
@@ -1196,12 +1306,8 @@ function evaluate5Card(ranks, suits) {
         var pair = ranks.filter(function(r) { return rankCounts[r] === 2; })[0];
         return [7, three, pair];
     }
-    if (isFlush) {
-        return [6].concat(ranks);
-    }
-    if (straightInfo) {
-        return [5, straightInfo[0]];
-    }
+    if (isFlush) return [6].concat(ranks);
+    if (straightInfo) return [5, straightInfo[0]];
     if (counts[0] === 3) {
         var three2 = ranks.filter(function(r) { return rankCounts[r] === 3; })[0];
         var kickers = ranks.filter(function(r) { return rankCounts[r] === 1; }).sort(function(a, b) { return b - a; });
@@ -1224,14 +1330,9 @@ function evaluate5Card(ranks, suits) {
 function isStraightCheck(ranks) {
     var unique = Array.from(new Set(ranks)).sort(function(a, b) { return b - a; });
     if (unique.length < 5) return false;
-
-    // Normal straight
     for (var i = 0; i <= unique.length - 5; i++) {
-        if (unique[i] - unique[i + 4] === 4) {
-            return [unique[i]];
-        }
+        if (unique[i] - unique[i + 4] === 4) return [unique[i]];
     }
-    // A-2-3-4-5 wheel
     if (unique.indexOf(14) !== -1 && unique.indexOf(5) !== -1 && unique.indexOf(4) !== -1 && unique.indexOf(3) !== -1 && unique.indexOf(2) !== -1) {
         return [5];
     }
@@ -1240,38 +1341,20 @@ function isStraightCheck(ranks) {
 
 function scoreToNum(score) {
     var val = score[0];
-    for (var i = 1; i < score.length; i++) {
-        val = val * 15 + score[i];
-    }
+    for (var i = 1; i < score.length; i++) val = val * 15 + score[i];
     return val;
 }
 
-// Pre-computed C(7,5) = 21 combinations
-function combinations5of7() {
+var _combos5of7 = null;
+function genCombos5of7() {
+    if (_combos5of7) return _combos5of7;
     var result = [];
     function gen(start, combo) {
         if (combo.length === 5) { result.push(combo.slice()); return; }
-        for (var i = start; i < 7; i++) {
-            combo.push(i);
-            gen(i + 1, combo);
-            combo.pop();
-        }
+        for (var i = start; i < 7; i++) { combo.push(i); gen(i + 1, combo); combo.pop(); }
     }
     gen(0, []);
-    return result;
-}
-
-function combinations(n, k) {
-    var result = [];
-    function gen(start, combo) {
-        if (combo.length === k) { result.push(combo.slice()); return; }
-        for (var i = start; i < n; i++) {
-            combo.push(i);
-            gen(i + 1, combo);
-            combo.pop();
-        }
-    }
-    gen(0, []);
+    _combos5of7 = result;
     return result;
 }
 
@@ -1281,23 +1364,105 @@ function resetAll() {
     for (var i = 0; i < MAX_PLAYERS; i++) {
         players[i].hole = [null, null];
         players[i].folded = false;
+        syncPlayerCards(i);
+        syncPlayerFolded(i);
+        clearWinBars(i);
+        var cardEl = $('player-card-' + i);
+        if (cardEl) cardEl.classList.remove('is-winner');
     }
     board = [null, null, null, null, null];
     usedCards.clear();
     lastRunDone = false;
-    document.getElementById('sim-progress').textContent = '';
-
-    renderPlayers();
-    renderBoard();
-    updatePickerDisabled();
+    $('sim-progress').textContent = '';
+    syncBoard();
+    syncPickerDisabled();
     closePicker();
 }
 
-// ---- Start ----
+// ---- Init ----
+function init() {
+    initState();
+
+    // Sync all DOM from initial state
+    syncPlayerVisibility();
+    for (var i = 0; i < MAX_PLAYERS; i++) {
+        syncPlayerCards(i);
+        syncPlayerFolded(i);
+    }
+    syncBoard();
+    syncCount();
+    syncPickerDisabled();
+
+    // Bind all event listeners
+    // Add / Remove
+    $('btn-add-player').addEventListener('click', addPlayer);
+    $('btn-remove-player').addEventListener('click', removePlayer);
+
+    // Calculate / Reset
+    $('btn-calculate').addEventListener('click', runSimulation);
+    $('btn-reset-all').addEventListener('click', resetAll);
+
+    // Close picker
+    $('picker-close-btn').addEventListener('click', closePicker);
+
+    // Card slot clicks (event delegation on grid)
+    $('players-grid').addEventListener('click', function(e) {
+        var foldEl = e.target.closest('.fold-toggle');
+        if (foldEl) {
+            var idx = parseInt(foldEl.id.replace('fold-', ''));
+            toggleFold(idx);
+            return;
+        }
+        var slotEl = e.target.closest('.card-slot');
+        if (slotEl) {
+            var parts = slotEl.id.split('-');
+            var pIdx = parseInt(parts[1]);
+            var sIdx = parseInt(parts[2]);
+            activateSlot('player', pIdx, sIdx);
+        }
+    });
+
+    // Board slot clicks
+    for (var b = 0; b < 5; b++) {
+        (function(idx) {
+            var el = $('board-slot-' + idx);
+            if (el) {
+                el.addEventListener('click', function() { activateSlot('board', idx); });
+            }
+        })(b);
+    }
+
+    // Picker card clicks (event delegation)
+    $('picker-grid').addEventListener('click', function(e) {
+        var card = e.target.closest('.picker-card');
+        if (!card || card.classList.contains('is-disabled')) return;
+        var key = card.getAttribute('data-card');
+        var rank = key.substring(0, key.length - 1);
+        var suitLetter = key[key.length - 1];
+        var suitMap = { s: 'spades', h: 'hearts', d: 'diamonds', c: 'clubs' };
+        selectCard({ rank: rank, suit: suitMap[suitLetter] });
+    });
+
+    // Keyboard
+    setupKeyboard();
+
+    // Ko-fi widget (deferred, won't block init)
+    setTimeout(function() {
+        try {
+            if (typeof kofiwidget2 !== 'undefined') {
+                kofiwidget2.init('Buy me a coffee', '#72a4f2', 'R1K123XRS9');
+                kofiwidget2.draw();
+            }
+        } catch (err) { /* Ko-fi load failure is non-fatal */ }
+    }, 1000);
+}
+
+// ---- Start safely ----
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
 } else {
-    init();
+    // DOM already ready (e.g., script loaded after DOM parsed)
+    setTimeout(init, 0);
 }
 
 })();
