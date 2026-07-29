@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>麻將摸牌即時切牌與進張勝率計算器 | GugoPro</title>
+    <meta name="description" content="摸牌後即時分析最佳切牌建議，比較各切牌選項的聽牌張數與進張勝率。支援台灣16張與日麻13張模式，純前端極速計算。">
+    <meta name="keywords" content="麻將切牌, 麻將勝率, 進張計算, 摸牌建議, 麻將策略, Mahjong discard calculator, 切牌推薦">
+    <meta name="author" content="GugoPro">
+    <meta name="robots" content="index, follow">
+    <meta property="og:title" content="麻將摸牌即時切牌與進張勝率計算器">
+    <meta property="og:description" content="摸牌後即時分析最佳切牌建議，比較各切牌選項的聽牌張數與進張勝率">
+    <meta property="og:type" content="website">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-GF1DYLWMKX"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-GF1DYLWMKX');
+    </script>
+    <style>
+        :root {
+            --primary: #00d4ff;
+            --secondary: #7c3aed;
+            --accent: #f59e0b;
+            --bg-dark: #0a0e1a;
+            --bg-card: rgba(15, 20, 40, 0.85);
+            --bg-glass: rgba(255, 255, 255, 0.05);
+            --border-glass: rgba(255, 255, 255, 0.1);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --tile-man: #dc2626;
+            --tile-pin: #2563eb;
+            --tile-sou: #16a34a;
+            --tile-honor: #6b7280;
+            --glow-primary: 0 0 20px rgba(0, 212, 255, 0.3);
+            --glow-success: 0 0 20px rgba(16, 185, 129, 0.3);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Noto Sans TC', 'Inter', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        .neon-bg {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: -1;
+            background:
+                radial-gradient(ellipse at 20% 50%, rgba(0, 212, 255, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(124, 58, 237, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 80%, rgba(245, 158, 11, 0.05) 0%, transparent 50%);
+        }
+        .neon-bg::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .nav-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-glass);
+            backdrop-filter: blur(20px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-bar a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+        .nav-bar a:hover { color: #fff; text-shadow: var(--glow-primary); }
+        .nav-bar .brand {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 1.3rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero {
+            text-align: center;
+            padding: 40px 20px 30px;
+        }
+        .hero h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(1.5rem, 4vw, 2.2rem);
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        .hero p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+        .mode-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .mode-btn {
+            padding: 10px 24px;
+            border: 2px solid var(--border-glass);
+            border-radius: 12px;
+            background: var(--bg-glass);
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+        .mode-btn.active {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: rgba(0, 212, 255, 0.1);
+            box-shadow: var(--glow-primary);
+        }
+        .mode-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(20px);
+        }
+        .section-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-title i { color: var(--primary); }
+        .tile-picker {
+            display: grid;
+            gap: 12px;
+        }
+        .suit-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+        .suit-label {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            min-width: 50px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .tile {
+            width: 52px;
+            height: 68px;
+            border: 2px solid var(--border-glass);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            user-select: none;
+            background: var(--bg-glass);
+        }
+        .tile:hover { border-color: var(--primary); transform: translateY(-2px); }
+        .tile.selected { border-color: var(--primary); box-shadow: var(--glow-primary); }
+        .tile.dead { opacity: 0.35; border-color: var(--danger); }
+        .tile.dead::after {
+            content: '×';
+            position: absolute;
+            font-size: 2rem;
+            color: var(--danger);
+            font-weight: bold;
+        }
+        .tile .num { font-size: 1.1rem; font-weight: 700; }
+        .tile .count-badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: var(--primary);
+            color: #000;
+            font-size: 0.65rem;
+            font-weight: 700;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .tile-man .num { color: var(--tile-man); }
+        .tile-pin .num { color: var(--tile-pin); }
+        .tile-sou .num { color: var(--tile-sou); }
+        .tile-honor .num { color: var(--tile-honor); }
+        .action-bar {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin: 24px 0;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 12px 28px;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-draw {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: #fff;
+            box-shadow: var(--glow-primary);
+        }
+        .btn-draw:hover { transform: translateY(-2px); box-shadow: 0 0 30px rgba(0, 212, 255, 0.5); }
+        .btn-draw:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .btn-clear {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-glass);
+            color: var(--text-secondary);
+        }
+        .btn-clear:hover { border-color: var(--danger); color: var(--danger); }
+        .btn-reset {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-glass);
+            color: var(--text-secondary);
+        }
+        .btn-reset:hover { border-color: var(--warning); color: var(--warning); }
+        .hand-display {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            min-height: 80px;
+            align-items: center;
+            justify-content: center;
+        }
+        .hand-tile {
+            width: 40px;
+            height: 54px;
+            border: 1px solid var(--border-glass);
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--bg-glass);
+        }
+        .hand-tile:hover { border-color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+        .hand-tile.drawn { border-color: var(--accent); background: rgba(245, 158, 11, 0.15); animation: pulse-glow 1s ease-in-out; }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(245, 158, 11, 0.3); }
+            50% { box-shadow: 0 0 20px rgba(245, 158, 11, 0.6); }
+        }
+        .hand-tile .ht-num { font-size: 0.9rem; }
+        .hand-tile .ht-label { font-size: 0.55rem; opacity: 0.7; }
+        .hand-tile.ht-man { border-color: var(--tile-man); color: var(--tile-man); }
+        .hand-tile.ht-pin { border-color: var(--tile-pin); color: var(--tile-pin); }
+        .hand-tile.ht-sou { border-color: var(--tile-sou); color: var(--tile-sou); }
+        .hand-tile.ht-honor { border-color: var(--tile-honor); color: var(--tile-honor); }
+        .hand-count {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        .hand-count span { color: var(--primary); font-weight: 700; }
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            backdrop-filter: blur(5px);
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: linear-gradient(135deg, rgba(15, 20, 40, 0.95), rgba(30, 20, 60, 0.95));
+            border: 1px solid var(--border-glass);
+            border-radius: 20px;
+            padding: 32px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 0 60px rgba(0, 212, 255, 0.15);
+            animation: modalIn 0.3s ease-out;
+        }
+        @keyframes modalIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .modal-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .modal-header h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent), var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .best-discard {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(0, 212, 255, 0.1));
+            border: 1px solid var(--accent);
+            border-radius: 14px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .best-discard .label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        .best-discard .tile-name {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--accent);
+        }
+        .best-discard .stats {
+            margin-top: 12px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .stat-item {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 10px;
+        }
+        .stat-item .stat-label { font-size: 0.75rem; color: var(--text-secondary); }
+        .stat-item .stat-value { font-size: 1.1rem; font-weight: 700; color: var(--primary); }
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+        .comparison-table th, .comparison-table td {
+            padding: 10px 14px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-glass);
+            font-size: 0.85rem;
+        }
+        .comparison-table th {
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .comparison-table .best-row {
+            background: rgba(16, 185, 129, 0.1);
+        }
+        .comparison-table .best-row td { color: var(--success); font-weight: 600; }
+        .modal-close {
+            display: block;
+            margin: 20px auto 0;
+            padding: 10px 32px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-glass);
+            border-radius: 10px;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .modal-close:hover { border-color: var(--primary); color: var(--primary); }
+        .discard-pool {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 12px;
+            background: rgba(239, 68, 68, 0.05);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 10px;
+            min-height: 50px;
+            align-items: center;
+            justify-content: center;
+        }
+        .discard-pool .pool-label {
+            font-size: 0.8rem;
+            color: var(--danger);
+            margin-right: 8px;
+        }
+        .discard-pool .pool-tile {
+            width: 32px;
+            height: 42px;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .discard-pool .pool-tile:hover { border-color: var(--danger); }
+        .discard-pool .pool-tile .pt-num { font-size: 0.8rem; }
+        .amazon-card {
+            background: linear-gradient(135deg, rgba(35, 47, 62, 0.8), rgba(20, 30, 50, 0.8));
+            border: 1px solid rgba(255, 153, 0, 0.3);
+            border-radius: 14px;
+            padding: 20px;
+            margin: 20px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .amazon-card .amz-text {
+            flex: 1;
+            min-width: 200px;
+        }
+        .amazon-card .amz-text h3 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.95rem;
+            color: #fbbf24;
+            margin-bottom: 4px;
+        }
+        .amazon-card .amz-text p { font-size: 0.8rem; color: var(--text-secondary); }
+        .amazon-card .amz-links { display: flex; gap: 10px; flex-wrap: wrap; }
+        .amazon-card .amz-link {
+            padding: 8px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #fff;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .amazon-card .amz-link.us { background: #f59e0b; color: #000; }
+        .amazon-card .amz-link.jp { background: #dc2626; }
+        .amazon-card .amz-link:hover { transform: translateY(-1px); }
+        .kofi-section {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .kofi-button {
+            background: #72a4f2;
+            color: #fff;
+            padding: 10px 18px;
+            border-radius: 8px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .kofi-button:hover { background: #5a8de0; transform: translateY(-1px); }
+        .footer-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            padding: 24px;
+            margin: 20px 0;
+        }
+        .footer-section h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.2rem;
+            color: var(--primary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .footer-section p, .footer-section li {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            font-size: 0.9rem;
+        }
+        .footer-section ul { padding-left: 20px; margin: 10px 0; }
+        .disclaimer {
+            background: rgba(239, 68, 68, 0.05);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .disclaimer i { color: var(--danger); margin-right: 8px; }
+        .disclaimer p { font-size: 0.8rem; color: var(--text-secondary); }
+        .site-footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            border-top: 1px solid var(--border-glass);
+            margin-top: 40px;
+        }
+        .no-result {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-secondary);
+        }
+        .no-result i { font-size: 2rem; margin-bottom: 10px; display: block; }
+        @media (max-width: 768px) {
+            .tile { width: 42px; height: 56px; }
+            .tile .num { font-size: 0.9rem; }
+            .modal { padding: 20px; }
+            .section { padding: 16px; }
+            .hand-tile { width: 34px; height: 46px; }
+            .btn { padding: 10px 20px; font-size: 0.9rem; }
+        }
+        @media (max-width: 480px) {
+            .tile { width: 36px; height: 48px; }
+            .tile .num { font-size: 0.8rem; }
+            .suit-row { gap: 4px; }
+            .container { padding: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="neon-bg"></div>
+
+    <nav class="nav-bar">
+        <a href="https://gugopro.com"><i class="fa-solid fa-house"></i> 返回 GugoPro 首頁</a>
+        <span class="brand">GugoPro Mahjong</span>
+    </nav>
+
+    <div class="container">
+        <div class="hero">
+            <h1><i class="fa-solid fa-hand-holding"></i> 麻將摸牌即時切牌與進張勝率計算器</h1>
+            <p>摸牌後即時分析最佳切牌建議，比較各切牌選項的聽牌張數與進張勝率</p>
+        </div>
+
+        <!-- Mode Toggle -->
+        <div class="mode-toggle">
+            <button class="mode-btn active" data-mode="tw" onclick="setMode('tw')">
+                <i class="fa-solid fa-flag"></i> 台灣麻將 16 張模式
+            </button>
+            <button class="mode-btn" data-mode="jp" onclick="setMode('jp')">
+                <i class="fa-solid fa-flag"></i> 日本麻將 13 張模式
+            </button>
+        </div>
+
+        <!-- Tile Picker -->
+        <div class="section">
+            <div class="section-title"><i class="fa-solid fa-th"></i> 牌面選擇器</div>
+            <p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:12px;">點擊牌面加入手牌，再次點擊可移除。每張牌最多 4 張。</p>
+            <div class="tile-picker" id="tilePicker"></div>
+        </div>
+
+        <!-- Hand Display -->
+        <div class="section">
+            <div class="section-title"><i class="fa-solid fa-layer-group"></i> 目前手牌</div>
+            <div class="hand-display" id="handDisplay">
+                <span style="color:var(--text-secondary);font-size:0.85rem;">尚未選擇手牌</span>
+            </div>
+            <div class="hand-count">
+                手牌數：<span id="handCount">0</span> / <span id="handMax">16</span> 張
+            </div>
+        </div>
+
+        <!-- Discard Pool -->
+        <div class="section">
+            <div class="section-title"><i class="fa-solid fa-ban"></i> 河牌 / 副露（死牌標記）</div>
+            <p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:12px;">選擇已出現的牌，計算器會自動扣除剩餘可用張數。</p>
+            <div class="discard-pool" id="discardPool">
+                <span class="pool-label">已標記死牌：</span>
+            </div>
+        </div>
+
+        <!-- Action Bar -->
+        <div class="action-bar">
+            <button class="btn btn-draw" id="drawBtn" onclick="drawTile()" disabled>
+                <i class="fa-solid fa-arrow-up-from-bracket"></i> 摸進第 <span id="drawCount">17</span> 張牌
+            </button>
+            <button class="btn btn-clear" onclick="clearHand()">
+                <i class="fa-solid fa-eraser"></i> 清除手牌
+            </button>
+            <button class="btn btn-reset" onclick="resetAll()">
+                <i class="fa-solid fa-rotate"></i> 全部重置
+            </button>
+        </div>
+
+        <!-- Modal -->
+        <div class="modal-overlay" id="modalOverlay">
+            <div class="modal" id="modalContent">
+                <div class="modal-header">
+                    <h2><i class="fa-solid fa-bolt"></i> 切牌建議分析</h2>
+                </div>
+                <div id="modalBody"></div>
+                <button class="modal-close" onclick="closeModal()">關閉</button>
+            </div>
+        </div>
+
+        <!-- Amazon Card -->
+        <div class="amazon-card">
+            <div class="amz-text">
+                <h3><i class="fa-brands fa-amazon"></i> 麻將桌遊與娛樂週邊：搜尋精選麻將組與電動麻將桌</h3>
+                <p>無論是傳統手搓麻將還是電動麻將桌，都能找到適合您的選擇。</p>
+            </div>
+            <div class="amz-links">
+                <a href="https://www.amazon.com/s?k=mahjong+sets+and+tiles&tag=9908qq-20" target="_blank" rel="noopener" class="amz-link us">
+                    <i class="fa-brands fa-amazon"></i> 美國 Amazon
+                </a>
+                <a href="https://www.amazon.co.jp/s?k=麻雀+マット+牌&tag=gugopro-22" target="_blank" rel="noopener" class="amz-link jp">
+                    <i class="fa-brands fa-amazon"></i> 日本 Amazon
+                </a>
+            </div>
+        </div>
+
+        <!-- Ko-fi -->
+        <div class="kofi-section">
+            <a href="https://ko-fi.com/R1K123XRS9" target="_blank" rel="noopener" class="kofi-button">
+                <i class="fa-solid fa-mug-hot"></i> Buy me a coffee
+            </a>
+        </div>
+
+        <!-- Footer SEO Content -->
+        <div class="footer-section">
+            <h2><i class="fa-solid fa-book-open"></i> 如何利用進張期望值決定最佳切牌？</h2>
+            <p>在麻將遊戲中，「進張」是指能讓您手牌更接近聽牌或胡牌的牌張。進張期望值（Uke-ire）是指剩餘牌山中能被有效利用的牌張總數。計算進張數的基本方法如下：</p>
+            <ul>
+                <li><strong>聽牌型進張：</strong>計算所有能讓您胡牌的牌型組合，每種牌型的進張張數乘以該牌型剩餘可摸到的張數。</li>
+                <li><strong>一向聽進張：</strong>計算摸到哪些牌可以讓您進入聽牌狀態，這通常比直接算胡牌更重要，因為先聽牌才有機會摸到胡牌。</li>
+                <li><strong>切牌後進張比較：</strong>當您有多種切牌選擇時，分別計算每種選擇後的進張數，選擇進張最多的打法。</li>
+            </ul>
+            <p>本工具的核心價值在於：當您摸進新牌後（手牌多出一張），自動幫您比較「打出哪一張牌後進張最多」，並顯示各選項的聽牌張數與下巡進張率，讓您做出最科學的切牌決策。</p>
+        </div>
+
+        <div class="footer-section">
+            <h2><i class="fa-solid fa-chess"></i> 台灣麻將與日麻在聽牌與過水時的打牌策略</h2>
+            <p><strong>台灣麻將（16 張）策略：</strong></p>
+            <ul>
+                <li>台灣麻將有「過水」規則，過水後不能胡之前可以胡的牌，因此聽牌時要考慮聽牌的「廣度」而非單一張的等待。</li>
+                <li>16 張手牌意味著有更多的面子組合可能，切牌時要優先保留能形成多種組合的牌型（如雙面搭子）。</li>
+                <li>台灣麻將的花牌系統增加了聽牌的複雜度，本工具目前以基本牌型分析為主。</li>
+            </ul>
+            <p><strong>日本麻將（13 張）策略：</strong></p>
+            <ul>
+                <li>日麻沒有過水規則，但重視「立直」的時機選擇，聽牌後是否立直需要綜合判斷。</li>
+                <li>日麻的役種系統（如斷么九、平和、立直等）影響切牌策略，本工具以基本牌型進張為核心。</li>
+                <li>日麻的「振聽」規則使得聽牌選擇更加關鍵，選擇進張面寬的聽牌型可以減少振聽風險。</li>
+            </ul>
+        </div>
+
+        <!-- Disclaimer -->
+        <div class="disclaimer">
+            <p><i class="fa-solid fa-triangle-exclamation"></i> 免責聲明：本工具僅供麻將牌型研究、切牌策略分析與娛樂復盤使用，請勿用於任何形式之非法賭博或真錢交易。</p>
+        </div>
+
+        <footer class="site-footer">
+            <p>&copy; 2026 GugoPro. All rights reserved. | 麻將工具由 GugoPro 團隊開發</p>
+        </footer>
+    </div>
+
+    <script>
+    // ============ Configuration ============
+    const MODES = { tw: { base: 16, draw: 17 }, jp: { base: 13, draw: 14 } };
+    let currentMode = 'tw';
+    let hand = []; // Array of tile strings
+    let deadTiles = {}; // tile -> count of dead tiles
+
+    // ============ Tile System ============
+    const SUITS = {
+        man: { label: '萬', key: 'man', color: 'tile-man', tiles: ['1萬','2萬','3萬','4萬','5萬','6萬','7萬','8萬','9萬'] },
+        pin: { label: '筒', key: 'pin', color: 'tile-pin', tiles: ['1筒','2筒','3筒','4筒','5筒','6筒','7筒','8筒','9筒'] },
+        sou: { label: '條', key: 'sou', color: 'tile-sou', tiles: ['1條','2條','3條','4條','5條','6條','7條','8條','9條'] },
+        honor: { label: '字', key: 'honor', color: 'tile-honor', tiles: ['東','南','西','北','中','發','白'] }
+    };
+
+    const ALL_TILES = [];
+    for (const key in SUITS) {
+        SUITS[key].tiles.forEach(t => ALL_TILES.push(t));
+    }
+
+    function tileToId(tile) {
+        // Convert tile name to a sortable ID for analysis
+        const map = {
+            '1萬':0,'2萬':1,'3萬':2,'4萬':3,'5萬':4,'6萬':5,'7萬':6,'8萬':7,'9萬':8,
+            '1筒':9,'2筒':10,'3筒':11,'4筒':12,'5筒':13,'6筒':14,'7筒':15,'8筒':16,'9筒':17,
+            '1條':18,'2條':19,'3條':20,'4條':21,'5條':22,'6條':23,'7條':24,'8條':25,'9條':26,
+            '東':27,'南':28,'西':29,'北':30,'中':31,'發':32,'白':33
+        };
+        return map[tile] || -1;
+    }
+
+    function idToTile(id) {
+        const tiles = Object.keys({
+            '1萬':0,'2萬':1,'3萬':2,'4萬':3,'5萬':4,'6萬':5,'7萬':6,'8萬':7,'9萬':8,
+            '1筒':9,'2筒':10,'3筒':11,'4筒':12,'5筒':13,'6筒':14,'7筒':15,'8筒':16,'9筒':17,
+            '1條':18,'2條':19,'3條':20,'4條':21,'5條':22,'6條':23,'7條':24,'8條':25,'9條':26,
+            '東':27,'南':28,'西':29,'北':30,'中':31,'發':32,'白':33
+        }).filter(k => ({
+            '1萬':0,'2萬':1,'3萬':2,'4萬':3,'5萬':4,'6萬':5,'7萬':6,'8萬':7,'9萬':8,
+            '1筒':9,'2筒':10,'3筒':11,'4筒':12,'5筒':13,'6筒':14,'7筒':15,'8筒':16,'9筒':17,
+            '1條':18,'2條':19,'3條':20,'4條':21,'5條':22,'6條':23,'7條':24,'8條':25,'9條':26,
+            '東':27,'南':28,'西':29,'北':30,'中':31,'發':32,'白':33
+        }[k]) === id);
+        return tiles[0];
+    }
+
+    // Build tile lookup
+    const TILE_MAP = {
+        '1萬':0,'2萬':1,'3萬':2,'4萬':3,'5萬':4,'6萬':5,'7萬':6,'8萬':7,'9萬':8,
+        '1筒':9,'2筒':10,'3筒':11,'4筒':12,'5筒':13,'6筒':14,'7筒':15,'8筒':16,'9筒':17,
+        '1條':18,'2條':19,'3條':20,'4條':21,'5條':22,'6條':23,'7條':24,'8條':25,'9條':26,
+        '東':27,'南':28,'西':29,'北':30,'中':31,'發':32,'白':33
+    };
+    const ID_TO_TILE = {};
+    for (const [k, v] of Object.entries(TILE_MAP)) ID_TO_TILE[v] = k;
+
+    // ============ UI Functions ============
+    function setMode(mode) {
+        currentMode = mode;
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
+        document.getElementById('handMax').textContent = MODES[mode].base;
+        document.getElementById('drawCount').textContent = MODES[mode].draw;
+        updateHandDisplay();
+    }
+
+    function buildTilePicker() {
+        const picker = document.getElementById('tilePicker');
+        picker.innerHTML = '';
+        for (const suitKey in SUITS) {
+            const suit = SUITS[suitKey];
+            const row = document.createElement('div');
+            row.className = 'suit-row';
+            row.innerHTML = `<span class="suit-label" style="color:var(--tile-${suitKey === 'honor' ? 'honor' : suitKey})">${suit.label}</span>`;
+            suit.tiles.forEach(tile => {
+                const div = document.createElement('div');
+                div.className = `tile ${suit.color}`;
+                div.dataset.tile = tile;
+                div.onclick = () => toggleTile(tile);
+                div.innerHTML = `<span class="num">${tile}</span>`;
+                row.appendChild(div);
+            });
+            picker.appendChild(row);
+        }
+    }
+
+    function toggleTile(tile) {
+        const currentCount = hand.filter(t => t === tile).length;
+        if (currentCount >= 4) return;
+
+        // Check dead tiles
+        const deadCount = deadTiles[tile] || 0;
+        if (currentCount + deadCount >= 4) return;
+
+        const maxHand = MODES[currentMode].base;
+        if (hand.length >= maxHand) return;
+
+        hand.push(tile);
+        updateAll();
+    }
+
+    function removeFromHand(index) {
+        hand.splice(index, 1);
+        updateAll();
+    }
+
+    function removeFromDeadPool(tile) {
+        if (deadTiles[tile] && deadTiles[tile] > 0) {
+            deadTiles[tile]--;
+            if (deadTiles[tile] === 0) delete deadTiles[tile];
+            updateAll();
+        }
+    }
+
+    function addToDeadPool(tile) {
+        if (!deadTiles[tile]) deadTiles[tile] = 0;
+        if (deadTiles[tile] < 4) {
+            deadTiles[tile]++;
+            updateAll();
+        }
+    }
+
+    function updateAll() {
+        updateTilePicker();
+        updateHandDisplay();
+        updateDeadPool();
+        updateDrawButton();
+    }
+
+    function updateTilePicker() {
+        document.querySelectorAll('.tile').forEach(el => {
+            const tile = el.dataset.tile;
+            const count = hand.filter(t => t === tile).length;
+            const dead = deadTiles[tile] || 0;
+            const total = count + dead;
+            el.classList.toggle('selected', count > 0);
+            el.classList.toggle('dead', dead > 0 && count === 0);
+
+            let badge = el.querySelector('.count-badge');
+            if (total > 0) {
+                if (!badge) {
+                    badge = document.createElement('span');
+                    badge.className = 'count-badge';
+                    el.appendChild(badge);
+                }
+                badge.textContent = total;
+            } else if (badge) {
+                badge.remove();
+            }
+        });
+    }
+
+    function updateHandDisplay() {
+        const display = document.getElementById('handDisplay');
+        const count = hand.length;
+        document.getElementById('handCount').textContent = count;
+
+        if (count === 0) {
+            display.innerHTML = '<span style="color:var(--text-secondary);font-size:0.85rem;">尚未選擇手牌</span>';
+            return;
+        }
+
+        display.innerHTML = '';
+        // Group and sort
+        const sorted = [...hand].sort((a, b) => TILE_MAP[a] - TILE_MAP[b]);
+        sorted.forEach((tile, idx) => {
+            const origIdx = hand.indexOf(tile);
+            const suitKey = getSuitKey(tile);
+            const div = document.createElement('div');
+            div.className = `hand-tile ht-${suitKey}`;
+            const num = tile.replace(/[萬筒條]/g, '');
+            const label = tile.match(/[萬筒條]/) ? tile.match(/[萬筒條]/)[0] : tile;
+            div.innerHTML = `<span class="ht-num">${num}${label.length > 1 ? '' : label}</span>`;
+            div.onclick = () => removeFromHand(hand.indexOf(tile, idx === 0 ? 0 : hand.findIndex((t, i) => i >= idx && t === tile)));
+            display.appendChild(div);
+        });
+
+        // Re-bind with proper indices
+        display.innerHTML = '';
+        const idMap = {};
+        hand.forEach((tile, i) => {
+            if (!idMap[tile]) idMap[tile] = 0;
+            idMap[tile]++;
+        });
+        const usedCount = {};
+        sorted.forEach(tile => {
+            if (!usedCount[tile]) usedCount[tile] = 0;
+            usedCount[tile]++;
+            const suitKey = getSuitKey(tile);
+            const div = document.createElement('div');
+            div.className = `hand-tile ht-${suitKey}`;
+            const num = tile.replace(/[萬筒條]/g, '');
+            const label = tile.match(/[萬筒條]/) ? tile.match(/[萬筒條]/)[0] : tile;
+            div.innerHTML = `<span class="ht-num">${num}${label}</span>`;
+            const captureIdx = usedCount[tile];
+            div.onclick = () => {
+                // Find the Nth occurrence of this tile in hand
+                let found = 0;
+                for (let i = 0; i < hand.length; i++) {
+                    if (hand[i] === tile) {
+                        found++;
+                        if (found === captureIdx) {
+                            removeFromHand(i);
+                            break;
+                        }
+                    }
+                }
+            };
+            display.appendChild(div);
+        });
+    }
+
+    function getSuitKey(tile) {
+        if (tile.includes('萬')) return 'man';
+        if (tile.includes('筒')) return 'pin';
+        if (tile.includes('條')) return 'sou';
+        return 'honor';
+    }
+
+    function updateDeadPool() {
+        const pool = document.getElementById('discardPool');
+        let html = '<span class="pool-label">已標記死牌：</span>';
+        let hasDead = false;
+        for (const tile in deadTiles) {
+            if (deadTiles[tile] > 0) {
+                hasDead = true;
+                for (let i = 0; i < deadTiles[tile]; i++) {
+                    html += `<div class="pool-tile" onclick="removeFromDeadPool('${tile}')" title="點擊移除"><span class="pt-num">${tile}</span></div>`;
+                }
+            }
+        }
+        if (!hasDead) html += '<span style="color:var(--text-secondary);font-size:0.8rem;">無</span>';
+        pool.innerHTML = html;
+    }
+
+    function updateDrawButton() {
+        const btn = document.getElementById('drawBtn');
+        const maxHand = MODES[currentMode].base;
+        btn.disabled = hand.length !== maxHand;
+    }
+
+    function clearHand() {
+        hand = [];
+        updateAll();
+    }
+
+    function resetAll() {
+        hand = [];
+        deadTiles = {};
+        updateAll();
+    }
+
+    // ============ Core Algorithm ============
+    function drawTile() {
+        if (hand.length !== MODES[currentMode].base) return;
+
+        // Find which tiles are still available (not all 4 used + dead)
+        const availableTiles = [];
+        ALL_TILES.forEach(tile => {
+            const inHand = hand.filter(t => t === tile).length;
+            const dead = deadTiles[tile] || 0;
+            if (inHand + dead < 4) {
+                availableTiles.push(tile);
+            }
+        });
+
+        if (availableTiles.length === 0) {
+            showModal('所有牌都已用完，無法摸牌。');
+            return;
+        }
+
+        // Try all possible drawn tiles and find best discard for each
+        let bestResults = [];
+
+        for (const drawnTile of availableTiles) {
+            const tempHand = [...hand, drawnTile];
+
+            // For each possible discard, calculate acceptance
+            const discards = [];
+            for (let i = 0; i < tempHand.length; i++) {
+                const discardTile = tempHand[i];
+                const afterDiscard = tempHand.filter((_, j) => j !== i);
+
+                const acceptance = calculateAcceptance(afterDiscard, discardTile);
+                discards.push({
+                    tile: discardTile,
+                    tiles: acceptance.tiles,
+                    totalAccept: acceptance.totalAccept,
+                    nextTurnWinRate: acceptance.nextTurnWinRate
+                });
+            }
+
+            // Remove duplicates (same tile value)
+            const uniqueDiscards = [];
+            const seen = new Set();
+            for (const d of discards) {
+                if (!seen.has(d.tile)) {
+                    seen.add(d.tile);
+                    uniqueDiscards.push(d);
+                }
+            }
+
+            // Sort by totalAccept descending
+            uniqueDiscards.sort((a, b) => b.totalAccept - a.totalAccept);
+
+            // Count how many tiles in hand to determine count for each discard option
+            const tileCounts = {};
+            tempHand.forEach(t => { tileCounts[t] = (tileCounts[t] || 0) + 1; });
+
+            bestResults.push({
+                drawnTile,
+                discards: uniqueDiscards.map(d => ({
+                    ...d,
+                    count: tileCounts[d.tile]
+                }))
+            });
+        }
+
+        // Sort drawn tiles by best acceptance
+        bestResults.sort((a, b) => b.discards[0].totalAccept - a.discards[0].totalAccept);
+
+        // Show modal with best draw + best discard
+        showDiscardModal(bestResults);
+    }
+
+    function calculateAcceptance(handTiles, discardedTile) {
+        // Calculate what tiles improve the hand after discarding
+        // Count remaining tiles
+        const tileCounts = {};
+        ALL_TILES.forEach(t => tileCounts[t] = 0);
+        handTiles.forEach(t => tileCounts[t]++);
+        for (const t in deadTiles) {
+            tileCounts[t] = (tileCounts[t] || 0) + deadTiles[t];
+        }
+
+        // Try drawing each remaining tile
+        const acceptInfo = [];
+        let totalAccept = 0;
+
+        for (const tile of ALL_TILES) {
+            const remaining = 4 - (tileCounts[tile] || 0);
+            if (remaining <= 0) continue;
+
+            const testHand = [...handTiles, tile];
+            const shape = analyzeHandShape(testHand);
+
+            if (shape.complete) {
+                // This tile wins (Ron/Tsumo)
+                acceptInfo.push({ tile, remaining, type: '胡' });
+                totalAccept += remaining;
+            } else if (shape.tenpai) {
+                // This tile brings us to tenpai
+                acceptInfo.push({ tile, remaining, type: '聽' });
+                totalAccept += remaining;
+            } else {
+                // Check improvement
+                if (shape.improvement > 0) {
+                    acceptInfo.push({ tile, remaining, type: '進' });
+                    totalAccept += remaining;
+                }
+            }
+        }
+
+        // Calculate next turn win rate
+        const totalRemainingTiles = ALL_TILES.reduce((sum, t) => {
+            const r = 4 - (tileCounts[t] || 0);
+            return sum + Math.max(0, r);
+        }, 0);
+
+        const winningTiles = acceptInfo.filter(a => a.type === '胡').reduce((s, a) => s + a.remaining, 0);
+        const nextTurnWinRate = totalRemainingTiles > 0 ? (winningTiles / totalRemainingTiles * 100) : 0;
+
+        // For tenpai hands, calculate wait tiles
+        const tenpaiWaits = acceptInfo.filter(a => a.type === '胡');
+        const tenpaiWaitTiles = tenpaiWaits.length;
+        const tenpaiWaitCount = tenpaiWaits.reduce((s, a) => s + a.remaining, 0);
+
+        return {
+            tiles: acceptInfo,
+            totalAccept,
+            nextTurnWinRate,
+            tenpai: tenpaiWaits.length > 0,
+            tenpaiWaitTiles,
+            tenpaiWaitCount
+        };
+    }
+
+    function analyzeHandShape(handTiles) {
+        const n = handTiles.length;
+        if (n === 0) return { complete: false, tenpai: false, improvement: 0 };
+
+        // For 13 tiles (JP) or 14 tiles (complete hand check)
+        const isCompleteHand = (currentMode === 'tw' && n === 16) || (currentMode === 'jp' && n === 13);
+        const isDrawnHand = (currentMode === 'tw' && n === 17) || (currentMode === 'jp' && n === 14);
+
+        if (isCompleteHand) {
+            // Check if this hand is complete (4 mentsu + 1 pair)
+            const result = tryCompleteHand(handTiles);
+            return { complete: result, tenpai: false, improvement: 0 };
+        }
+
+        if (isDrawnHand) {
+            // Check if drawn hand is complete (14 tiles = complete + 1)
+            const result = tryCompleteHand(handTiles);
+            if (result) return { complete: true, tenpai: false, improvement: 0 };
+
+            // Check if any discard leads to tenpai
+            for (let i = 0; i < handTiles.length; i++) {
+                const without = handTiles.filter((_, j) => j !== i);
+                if (isInTenpai(without)) {
+                    return { complete: false, tenpai: true, improvement: 1 };
+                }
+            }
+            return { complete: false, tenpai: false, improvement: 0 };
+        }
+
+        // General case: check if close to tenpai
+        // Count shanten
+        const shanten = calculateShanten(handTiles);
+        return {
+            complete: false,
+            tenpai: shanten === 0,
+            improvement: Math.max(0, 1 - shanten)
+        };
+    }
+
+    function calculateShanten(handTiles) {
+        // Returns shanten number (0 = tenpai, -1 = complete)
+        const n = handTiles.length;
+        const targetMentsu = currentMode === 'tw' ? 5 : 4; // 5 groups for 16 tiles, 4 for 13 tiles
+
+        // Try all combinations of complete hands
+        const result = tryCompleteHand(handTiles);
+        if (result) return -1;
+
+        // If drawn hand, try discarding one tile
+        if ((currentMode === 'tw' && n === 17) || (currentMode === 'jp' && n === 14)) {
+            for (let i = 0; i < handTiles.length; i++) {
+                const without = handTiles.filter((_, j) => j !== i);
+                if (tryCompleteHand(without)) return 0; // tenpai
+            }
+        }
+
+        // Count partial mentsu
+        let bestShanten = 8;
+        const best = findBestPartial(handTiles, targetMentsu);
+        return best;
+    }
+
+    function tryCompleteHand(tiles) {
+        const n = tiles.length;
+        if (n !== 13 && n !== 16) return false;
+
+        // Try each tile as pair, then check if rest forms complete mentsu
+        const sorted = [...tiles].sort((a, b) => TILE_MAP[a] - TILE_MAP[b]);
+        const targetMentsu = n === 16 ? 5 : 4;
+
+        // Try all possible pairs
+        const pairUsed = new Set();
+        for (let i = 0; i < sorted.length; i++) {
+            if (pairUsed.has(i)) continue;
+            for (let j = i + 1; j < sorted.length; j++) {
+                if (pairUsed.has(j)) continue;
+                if (sorted[i] !== sorted[j]) continue;
+
+                pairUsed.add(i);
+                pairUsed.add(j);
+                const rest = sorted.filter((_, k) => k !== i && k !== j);
+                if (canFormCompleteMentsu(rest, 0)) {
+                    return true;
+                }
+                pairUsed.delete(i);
+                pairUsed.delete(j);
+                break; // Only need to try one pair with this tile value
+            }
+        }
+        return false;
+    }
+
+    function canFormCompleteMentsu(tiles, depth) {
+        if (tiles.length === 0) return true;
+        if (depth > 100) return false; // Safety
+
+        const sorted = [...tiles].sort((a, b) => TILE_MAP[a] - TILE_MAP[b]);
+
+        // Try triplet (koutsu)
+        if (sorted[0] === sorted[1] && sorted[1] === sorted[2]) {
+            const rest = sorted.filter((_, i) => i > 2);
+            if (canFormCompleteMentsu(rest, depth + 1)) return true;
+        }
+
+        // Try sequence (shuntsu) - only for numbered tiles
+        const firstId = TILE_MAP[sorted[0]];
+        if (firstId < 27) { // Not honor
+            const firstSuit = Math.floor(firstId / 9);
+            const nextId1 = firstId + 1;
+            const nextId2 = firstId + 2;
+            if (Math.floor(nextId1 / 9) === firstSuit && Math.floor(nextId2 / 9) === firstSuit) {
+                const tile2 = ID_TO_TILE[nextId1];
+                const tile3 = ID_TO_TILE[nextId2];
+                const idx2 = sorted.indexOf(tile2);
+                if (idx2 >= 0) {
+                    const idx3 = sorted.indexOf(tile3, idx2 + 1);
+                    if (idx3 >= 0) {
+                        const rest = sorted.filter((_, k) => k !== 0 && k !== idx2 && k !== idx3);
+                        if (canFormCompleteMentsu(rest, depth + 1)) return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    function isInTenpai(tiles) {
+        // Check if tiles are one tile away from complete hand
+        const n = tiles.length;
+        if (n === 13) {
+            // JP: 13 tiles, check if adding one tile completes
+            for (const tile of ALL_TILES) {
+                const count = tiles.filter(t => t === tile).length;
+                if (count >= 4) continue;
+                if (tryCompleteHand([...tiles, tile])) return true;
+            }
+        } else if (n === 16) {
+            // TW: 16 tiles
+            for (const tile of ALL_TILES) {
+                const count = tiles.filter(t => t === tile).length;
+                if (count >= 4) continue;
+                if (tryCompleteHand([...tiles, tile])) return true;
+            }
+        }
+        return false;
+    }
+
+    function findBestPartial(tiles, targetMentsu) {
+        // Simple shanten calculation
+        // Shanten = 8 - 2*mentsu - partial - (pair ? 1 : 0)
+        const best = getBestShape(tiles);
+        const { mentsu, taatsu, hasPair } = best;
+        const shanten = 8 - 2 * mentsu - Math.min(taatsu, targetMentsu - mentsu) - (hasPair ? 1 : 0);
+        return Math.max(0, shanten);
+    }
+
+    function getBestShape(tiles) {
+        // Count tiles
+        const counts = {};
+        ALL_TILES.forEach(t => counts[t] = 0);
+        tiles.forEach(t => counts[t]++);
+
+        let bestMentsu = 0, bestTaatsu = 0, bestHasPair = false;
+
+        // Try all possible decompositions
+        function tryDecomp(remaining, mentsu, taatsu, hasPair) {
+            // Update best
+            const score = 2 * mentsu + Math.min(taatsu, 4 - mentsu) + (hasPair ? 1 : 0);
+            const currentBest = 2 * bestMentsu + Math.min(bestTaatsu, 4 - bestMentsu) + (bestHasPair ? 1 : 0);
+            if (score > currentBest) {
+                bestMentsu = mentsu;
+                bestTaatsu = taatsu;
+                bestHasPair = hasPair;
+            }
+
+            // Find first non-empty tile
+            let firstTile = null;
+            for (const t of ALL_TILES) {
+                if (remaining[t] > 0) { firstTile = t; break; }
+            }
+            if (!firstTile) return;
+
+            // Option 1: Use as triplet
+            if (remaining[firstTile] >= 3) {
+                remaining[firstTile] -= 3;
+                tryDecomp(remaining, mentsu + 1, taatsu, hasPair);
+                remaining[firstTile] += 3;
+            }
+
+            // Option 2: Use as sequence
+            const firstId = TILE_MAP[firstTile];
+            if (firstId < 27) {
+                const suit = Math.floor(firstId / 9);
+                const t2 = ID_TO_TILE[firstId + 1];
+                const t3 = ID_TO_TILE[firstId + 2];
+                if (t2 && t3 && Math.floor(TILE_MAP[t2] / 9) === suit && Math.floor(TILE_MAP[t3] / 9) === suit) {
+                    if (remaining[t2] > 0 && remaining[t3] > 0) {
+                        remaining[firstTile]--;
+                        remaining[t2]--;
+                        remaining[t3]--;
+                        tryDecomp(remaining, mentsu + 1, taatsu, hasPair);
+                        remaining[firstTile]++;
+                        remaining[t2]++;
+                        remaining[t3]++;
+                    }
+                }
+            }
+
+            // Option 3: Use as pair
+            if (remaining[firstTile] >= 2 && !hasPair) {
+                remaining[firstTile] -= 2;
+                tryDecomp(remaining, mentsu, taatsu, true);
+                remaining[firstTile] += 2;
+            }
+
+            // Option 4: Use as taatsu (incomplete sequence)
+            if (firstId < 27) {
+                const suit = Math.floor(firstId / 9);
+                // Two-sided wait (ryanmen)
+                const t2 = ID_TO_TILE[firstId + 1];
+                if (t2 && Math.floor(TILE_MAP[t2] / 9) === suit && remaining[t2] > 0) {
+                    remaining[firstTile]--;
+                    remaining[t2]--;
+                    tryDecomp(remaining, mentsu, taatsu + 1, hasPair);
+                    remaining[firstTile]++;
+                    remaining[t2]++;
+                }
+                // Edge wait (penchan)
+                if (suit === 0 || suit === 2) {
+                    const t2b = ID_TO_TILE[firstId + 1];
+                    if (t2b && remaining[t2b] > 0 && Math.floor(TILE_MAP[t2b] / 9) === suit) {
+                        // Already covered by ryanmen
+                    }
+                }
+                // Closed wait (kanchan)
+                const t3b = ID_TO_TILE[firstId + 2];
+                if (t3b && Math.floor(TILE_MAP[t3b] / 9) === suit && remaining[t3b] > 0) {
+                    remaining[firstTile]--;
+                    remaining[t3b]--;
+                    tryDecomp(remaining, mentsu, taatsu + 1, hasPair);
+                    remaining[firstTile]++;
+                    remaining[t3b]++;
+                }
+            }
+
+            // Option 5: Use honor pair as taatsu
+            if (firstId >= 27 && remaining[firstTile] >= 2) {
+                remaining[firstTile] -= 2;
+                tryDecomp(remaining, mentsu, taatsu + 1, hasPair);
+                remaining[firstTile] += 2;
+            }
+
+            // Option 6: Skip this tile
+            const skip = new Set();
+            for (const t of ALL_TILES) {
+                if (t === firstTile) skip.add(t);
+                else break;
+            }
+            // Remove all firstTile from consideration
+            const origCount = remaining[firstTile];
+            remaining[firstTile] = 0;
+            tryDecomp(remaining, mentsu, taatsu, hasPair);
+            remaining[firstTile] = origCount;
+        }
+
+        const remaining = { ...counts };
+        tryDecomp(remaining, 0, 0, false);
+
+        return { mentsu: bestMentsu, taatsu: bestTaatsu, hasPair: bestHasPair };
+    }
+
+    // ============ Modal ============
+    function showDiscardModal(results) {
+        const overlay = document.getElementById('modalOverlay');
+        const body = document.getElementById('modalBody');
+
+        // Show best result (first one)
+        const best = results[0];
+        const bestDiscard = best.discards[0];
+
+        let html = `
+            <p style="text-align:center;font-size:0.85rem;color:var(--text-secondary);margin-bottom:12px;">
+                摸進：【${best.drawnTile}】→ 最佳切牌分析
+            </p>
+        `;
+
+        if (bestDiscard.tiles.some(t => t.type === '胡')) {
+            html += `
+                <div class="best-discard">
+                    <div class="label">🏆 建議打出</div>
+                    <div class="tile-name">${bestDiscard.tile}</div>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <div class="stat-label">聽牌狀態</div>
+                            <div class="stat-value" style="color:var(--success);">聽牌中！</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">胡牌張數</div>
+                            <div class="stat-value">${bestDiscard.tiles.filter(t => t.type === '胡').length} 門</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else if (bestDiscard.tiles.some(t => t.type === '聽')) {
+            html += `
+                <div class="best-discard">
+                    <div class="label">🏆 建議打出</div>
+                    <div class="tile-name">${bestDiscard.tile}</div>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <div class="stat-label">聽牌張數</div>
+                            <div class="stat-value">${bestDiscard.tiles.filter(t => t.type === '聽').length} 門</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">聽牌接受</div>
+                            <div class="stat-value">${bestDiscard.tiles.filter(t => t.type === '聽').reduce((s, t) => s + t.remaining, 0)} 張</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            html += `
+                <div class="best-discard">
+                    <div class="label">🏆 建議打出</div>
+                    <div class="tile-name">${bestDiscard.tile}</div>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <div class="stat-label">進張門數</div>
+                            <div class="stat-value">${bestDiscard.tiles.length} 門</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">進張總數</div>
+                            <div class="stat-value">${bestDiscard.totalAccept} 張</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Comparison table
+        html += `
+            <h3 style="font-size:0.95rem;margin:16px 0 10px;color:var(--text-secondary);">
+                <i class="fa-solid fa-ranking-star"></i> 完整切牌比較
+            </h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>切牌</th>
+                        <th>進張/聽牌張數</th>
+                        <th>進張總數</th>
+                        <th>下巡進張率</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        for (let i = 0; i < best.discards.length; i++) {
+            const d = best.discards[i];
+            const isBest = i === 0;
+            const winTiles = d.tiles.filter(t => t.type === '胡');
+            const tenpaiTiles = d.tiles.filter(t => t.type === '聽');
+            const acceptTiles = d.tiles.filter(t => t.type === '進');
+
+            let acceptInfo = '';
+            if (winTiles.length > 0) {
+                acceptInfo = `胡牌 ${winTiles.length} 門`;
+            } else if (tenpaiTiles.length > 0) {
+                const waitCount = tenpaiTiles.reduce((s, t) => s + t.remaining, 0);
+                acceptInfo = `聽牌 ${tenpaiTiles.length} 門 (${waitCount} 張)`;
+            } else {
+                acceptInfo = `進張 ${d.tiles.length} 門`;
+            }
+
+            const totalRemaining = ALL_TILES.reduce((sum, t) => {
+                const c = hand.filter(tt => tt === t).length + (deadTiles[t] || 0) + 1; // +1 for drawn
+                return sum + Math.max(0, 4 - c);
+            }, 0);
+            const winRate = totalRemaining > 0 ? (winTiles.reduce((s, t) => s + t.remaining, 0) / totalRemaining * 100) : 0;
+            const acceptRate = totalRemaining > 0 ? (d.totalAccept / totalRemaining * 100) : 0;
+
+            html += `
+                <tr class="${isBest ? 'best-row' : ''}">
+                    <td>${d.tile}${d.count > 1 ? ' ×' + d.count : ''}</td>
+                    <td>${acceptInfo}</td>
+                    <td>${d.totalAccept} 張</td>
+                    <td>${winRate > 0 ? winRate.toFixed(1) + '%' : acceptRate.toFixed(1) + '%'}</td>
+                </tr>
+            `;
+        }
+
+        html += `
+                </tbody>
+            </table>
+        `;
+
+        // If multiple draw options, show summary
+        if (results.length > 1) {
+            html += `
+                <div style="margin-top:16px;padding:12px;background:rgba(0,0,0,0.2);border-radius:8px;">
+                    <p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:8px;">
+                        <i class="fa-solid fa-info-circle"></i> 共有 ${results.length} 種摸牌可能，以上顯示最佳結果。
+                        摸到其他牌時的切牌建議可能不同。
+                    </p>
+                </div>
+            `;
+        }
+
+        body.innerHTML = html;
+        overlay.classList.add('active');
+    }
+
+    function showModal(msg) {
+        const overlay = document.getElementById('modalOverlay');
+        const body = document.getElementById('modalBody');
+        body.innerHTML = `<div class="no-result"><i class="fa-solid fa-circle-info"></i><p>${msg}</p></div>`;
+        overlay.classList.add('active');
+    }
+
+    function closeModal() {
+        document.getElementById('modalOverlay').classList.remove('active');
+    }
+
+    // Close modal on overlay click
+    document.getElementById('modalOverlay').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+
+    // ============ Init ============
+    buildTilePicker();
+    updateAll();
+    </script>
+</body>
+</html>
