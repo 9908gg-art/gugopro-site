@@ -1,0 +1,1629 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>麻將聽牌張數與進張勝率計算器 | GugoPro 麻將策略工具</title>
+<meta name="description" content="支援台灣16張與日麻13張模式，自動分析聽牌張數、最佳切牌策略與進張機率。專業麻將聽牌計算器，精確計算剩餘牌張與摸牌勝率。">
+<meta name="keywords" content="麻將聽牌計算器,聽牌張數,進張機率,日麻13張,台灣麻將16張,切牌策略,麻將分析工具,Mahjong Calculator">
+<meta name="author" content="GugoPro">
+<meta property="og:title" content="麻將聽牌張數與進張勝率計算器">
+<meta property="og:description" content="支援台灣16張與日麻13張模式，自動分析聽牌張數、最佳切牌策略與進張機率。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://gugopro.com/tools/games/mahjong-waits-calculator.html">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://gugopro.com/tools/games/mahjong-waits-calculator.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<!-- GA4 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GF1DYLWMKX"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-GF1DYLWMKX');
+</script>
+
+<style>
+:root {
+  --bg-primary: #0a0e1a;
+  --bg-secondary: #111827;
+  --bg-card: rgba(17, 24, 39, 0.7);
+  --bg-glass: rgba(255, 255, 255, 0.03);
+  --border-glass: rgba(255, 255, 255, 0.08);
+  --text-primary: #f0f4ff;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --accent-cyan: #06d6a0;
+  --accent-purple: #7c3aed;
+  --accent-blue: #3b82f6;
+  --accent-pink: #ec4899;
+  --accent-orange: #f59e0b;
+  --accent-red: #ef4444;
+  --glow-cyan: 0 0 20px rgba(6, 214, 160, 0.3);
+  --glow-purple: 0 0 20px rgba(124, 58, 237, 0.3);
+  --radius: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Noto Sans TC', 'Inter', 'Outfit', sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  line-height: 1.7;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: 
+    radial-gradient(ellipse at 20% 20%, rgba(124, 58, 237, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(6, 214, 160, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(59, 130, 246, 0.04) 0%, transparent 70%);
+  z-index: -1;
+  animation: bgFloat 20s ease-in-out infinite;
+}
+
+@keyframes bgFloat {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  33% { transform: translate(2%, -2%) rotate(1deg); }
+  66% { transform: translate(-1%, 1%) rotate(-0.5deg); }
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Navigation */
+.top-nav {
+  background: var(--bg-glass);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border-glass);
+  padding: 14px 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.top-nav a {
+  color: var(--accent-cyan);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s;
+}
+
+.top-nav a:hover {
+  color: #00ffcc;
+  text-shadow: 0 0 10px rgba(6, 214, 160, 0.5);
+}
+
+/* Hero */
+.hero {
+  text-align: center;
+  padding: 50px 20px 30px;
+}
+
+.hero h1 {
+  font-family: 'Outfit', 'Noto Sans TC', sans-serif;
+  font-size: clamp(28px, 5vw, 42px);
+  font-weight: 800;
+  background: linear-gradient(135deg, #06d6a0, #3b82f6, #7c3aed);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 10px;
+}
+
+.hero p {
+  color: var(--text-secondary);
+  font-size: 15px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Mode Toggle */
+.mode-toggle {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin: 24px auto;
+  max-width: 400px;
+}
+
+.mode-btn {
+  flex: 1;
+  padding: 12px 20px;
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius);
+  background: var(--bg-glass);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s;
+  text-align: center;
+}
+
+.mode-btn.active {
+  background: linear-gradient(135deg, rgba(6, 214, 160, 0.15), rgba(59, 130, 246, 0.15));
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+  box-shadow: var(--glow-cyan);
+}
+
+.mode-btn:hover:not(.active) {
+  border-color: rgba(255,255,255,0.2);
+  color: var(--text-primary);
+}
+
+/* Card */
+.glass-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.glass-card h2 {
+  font-family: 'Outfit', 'Noto Sans TC', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.glass-card h2 i {
+  color: var(--accent-cyan);
+}
+
+/* Hand Display */
+.hand-display {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 70px;
+  padding: 16px;
+  background: rgba(0,0,0,0.3);
+  border-radius: var(--radius);
+  border: 1px dashed var(--border-glass);
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.hand-tile {
+  width: 52px;
+  height: 68px;
+  background: linear-gradient(180deg, #fefefe 0%, #f0f0f0 100%);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1a2e;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.8);
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  user-select: none;
+}
+
+.hand-tile:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.8);
+}
+
+.hand-tile .suit-label {
+  font-size: 10px;
+  font-weight: 400;
+  opacity: 0.7;
+  margin-top: 2px;
+}
+
+.hand-tile .remove-btn {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 18px;
+  height: 18px;
+  background: var(--accent-red);
+  color: white;
+  border-radius: 50%;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+  cursor: pointer;
+}
+
+.hand-tile:hover .remove-btn {
+  opacity: 1;
+}
+
+/* Tile Picker */
+.tile-picker-section {
+  margin-top: 8px;
+}
+
+.suit-group {
+  margin-bottom: 16px;
+}
+
+.suit-group-title {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.suit-group-title i {
+  font-size: 12px;
+}
+
+.tile-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tile-btn {
+  width: 44px;
+  height: 58px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
+  border: 1px solid var(--border-glass);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  position: relative;
+  user-select: none;
+}
+
+.tile-btn:hover {
+  background: rgba(6, 214, 160, 0.1);
+  border-color: var(--accent-cyan);
+  transform: translateY(-2px);
+}
+
+.tile-btn.maxed {
+  opacity: 0.3;
+  pointer-events: none;
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.tile-btn .count-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 16px;
+  height: 16px;
+  background: var(--accent-cyan);
+  color: #000;
+  border-radius: 50%;
+  font-size: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.tile-btn .tile-char {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.tile-btn .tile-num {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* Discard Section */
+.discard-section {
+  margin-top: 16px;
+}
+
+.discard-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 50px;
+  padding: 12px;
+  background: rgba(0,0,0,0.2);
+  border-radius: var(--radius);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+}
+
+.discard-tile {
+  width: 36px;
+  height: 46px;
+  background: linear-gradient(180deg, #f0f0f0 0%, #d0d0d0 100%);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+  position: relative;
+  border: 2px solid var(--accent-orange);
+  transition: all 0.2s;
+}
+
+.discard-tile:hover {
+  transform: scale(1.1);
+  border-color: var(--accent-red);
+}
+
+.discard-tile .remove-btn {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 14px;
+  height: 14px;
+  background: var(--accent-red);
+  color: white;
+  border-radius: 50%;
+  font-size: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.discard-tile:hover .remove-btn {
+  opacity: 1;
+}
+
+/* Controls */
+.controls {
+  display: flex;
+  gap: 12px;
+  margin: 20px 0;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.ctrl-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: var(--radius);
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ctrl-btn.primary {
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+  color: #000;
+  box-shadow: var(--glow-cyan);
+}
+
+.ctrl-btn.primary:hover {
+  box-shadow: 0 0 30px rgba(6, 214, 160, 0.5);
+  transform: translateY(-2px);
+}
+
+.ctrl-btn.danger {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: var(--accent-red);
+}
+
+.ctrl-btn.danger:hover {
+  background: rgba(239, 68, 68, 0.25);
+}
+
+/* Results */
+.results-section {
+  margin-top: 24px;
+}
+
+.result-card {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 12px;
+}
+
+.result-card h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.result-card h3.best {
+  color: var(--accent-cyan);
+}
+
+.result-card h3.good {
+  color: var(--accent-blue);
+}
+
+.result-card h3.ok {
+  color: var(--accent-orange);
+}
+
+.wait-tile {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: rgba(6, 214, 160, 0.1);
+  border: 1px solid rgba(6, 214, 160, 0.3);
+  border-radius: 8px;
+  margin: 4px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.wait-tile .remaining {
+  color: var(--accent-orange);
+  font-size: 12px;
+}
+
+.wait-tile .probability {
+  color: var(--accent-cyan);
+  font-size: 12px;
+}
+
+.best-play {
+  background: linear-gradient(135deg, rgba(6, 214, 160, 0.1), rgba(59, 130, 246, 0.1));
+  border: 1px solid rgba(6, 214, 160, 0.3);
+  padding: 16px;
+  border-radius: var(--radius);
+  margin-top: 12px;
+}
+
+.best-play-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent-cyan);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Status Messages */
+.status-msg {
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  margin: 12px 0;
+  display: none;
+}
+
+.status-msg.info {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: var(--accent-blue);
+  display: block;
+}
+
+.status-msg.warning {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: var(--accent-orange);
+  display: block;
+}
+
+.status-msg.success {
+  background: rgba(6, 214, 160, 0.1);
+  border: 1px solid rgba(6, 214, 160, 0.3);
+  color: var(--accent-cyan);
+  display: block;
+}
+
+/* Amazon Promo */
+.amazon-promo {
+  background: linear-gradient(135deg, rgba(255, 153, 0, 0.08), rgba(255, 153, 0, 0.02));
+  border: 1px solid rgba(255, 153, 0, 0.2);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin: 32px 0;
+  text-align: center;
+}
+
+.amazon-promo h3 {
+  font-size: 16px;
+  color: #ffa500;
+  margin-bottom: 12px;
+}
+
+.amazon-links {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.amazon-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: rgba(255, 165, 0, 0.1);
+  border: 1px solid rgba(255, 165, 0, 0.3);
+  border-radius: 8px;
+  color: #ffa500;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.amazon-link:hover {
+  background: rgba(255, 165, 0, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Ko-fi */
+.kofi-section {
+  text-align: center;
+  margin: 24px 0;
+}
+
+.kofi-button {
+  transition: all 0.3s;
+}
+
+.kofi-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(114, 164, 242, 0.4);
+}
+
+/* SEO Section */
+.seo-section {
+  margin-top: 40px;
+}
+
+.seo-section h2 {
+  font-family: 'Outfit', 'Noto Sans TC', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.seo-content {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.9;
+}
+
+.seo-content h3 {
+  color: var(--accent-cyan);
+  font-size: 16px;
+  margin: 20px 0 10px;
+}
+
+.seo-content p {
+  margin-bottom: 12px;
+}
+
+.seo-content strong {
+  color: var(--text-primary);
+}
+
+/* Disclaimer */
+.disclaimer {
+  background: rgba(239, 68, 68, 0.05);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin: 32px 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* Footer */
+.footer {
+  text-align: center;
+  padding: 30px 20px;
+  border-top: 1px solid var(--border-glass);
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.footer a {
+  color: var(--accent-cyan);
+  text-decoration: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hero h1 { font-size: 24px; }
+  .glass-card { padding: 16px; }
+  .tile-btn { width: 38px; height: 50px; }
+  .hand-tile { width: 44px; height: 58px; font-size: 11px; }
+  .controls { flex-direction: column; align-items: stretch; }
+  .amazon-links { flex-direction: column; align-items: center; }
+  .mode-toggle { max-width: 320px; }
+}
+
+@media (max-width: 480px) {
+  .tile-btn { width: 34px; height: 44px; font-size: 11px; }
+  .tile-btn .tile-char { font-size: 12px; }
+  .hand-tile { width: 38px; height: 52px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Top Navigation -->
+<nav class="top-nav">
+  <div class="container">
+    <a href="https://gugopro.com"><i class="fa-solid fa-house"></i> 返回 GugoPro 首頁</a>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <h1><i class="fa-solid fa-game-board-simple"></i> 麻將聽牌張數與進張勝率計算器</h1>
+  <p>支援台灣16張與日麻13張模式，自動分析聽牌張數、最佳切牌策略與進張機率。輸入手牌，讓演算法幫你找出最高勝率的打法。</p>
+</section>
+
+<div class="container">
+
+  <!-- Mode Toggle -->
+  <div class="mode-toggle">
+    <button class="mode-btn active" data-mode="tw16" onclick="setMode('tw16')">
+      <i class="fa-solid fa-flag"></i> 台灣麻將 16張
+    </button>
+    <button class="mode-btn" data-mode="jp13" onclick="setMode('jp13')">
+      <i class="fa-solid fa-torii-gate"></i> 日麻 13張
+    </button>
+  </div>
+
+  <!-- Hand Section -->
+  <div class="glass-card">
+    <h2><i class="fa-solid fa-hand-sparkles"></i> 目前手牌</h2>
+    <div class="hand-display" id="handDisplay">
+      <span style="color: var(--text-muted); font-size: 14px;">請從下方牌面選擇器點選牌張...</span>
+    </div>
+    <div id="handStatus" class="status-msg"></div>
+    <div class="controls">
+      <button class="ctrl-btn danger" onclick="clearHand()"><i class="fa-solid fa-rotate-left"></i> 清除手牌</button>
+      <button class="ctrl-btn danger" onclick="clearDiscards()"><i class="fa-solid fa-trash"></i> 清除死牌</button>
+    </div>
+  </div>
+
+  <!-- Tile Picker -->
+  <div class="glass-card tile-picker-section">
+    <h2><i class="fa-solid fa-grid-2"></i> 牌面選擇器（點選加入手牌）</h2>
+    
+    <div class="suit-group">
+      <div class="suit-group-title"><i class="fa-solid fa-droplet" style="color:#e74c3c;"></i> 萬子 (Manzu)</div>
+      <div class="tile-grid" id="manzuGrid"></div>
+    </div>
+    
+    <div class="suit-group">
+      <div class="suit-group-title"><i class="fa-solid fa-circle" style="color:#3498db;"></i> 筒子 (Pinzu)</div>
+      <div class="tile-grid" id="pinzuGrid"></div>
+    </div>
+    
+    <div class="suit-group">
+      <div class="suit-group-title"><i class="fa-solid fa-bamboo" style="color:#27ae60;"></i> 條子 (Souzu)</div>
+      <div class="tile-grid" id="souzuGrid"></div>
+    </div>
+    
+    <div class="suit-group">
+      <div class="suit-group-title"><i class="fa-solid fa-wind" style="color:#9b59b6;"></i> 字牌 (Honors)</div>
+      <div class="tile-grid" id="honorsGrid"></div>
+    </div>
+  </div>
+
+  <!-- Discard Section -->
+  <div class="glass-card discard-section">
+    <h2><i class="fa-solid fa-dice-d6"></i> 死牌 / 河牌標記（已出現的牌）</h2>
+    <p style="color:var(--text-muted); font-size:13px; margin-bottom:12px;">
+      <i class="fa-solid fa-circle-info"></i> 標記桌面上或河牌中已經出現的牌，計算器會自動扣除這些「死牌」的張數，精確計算剩餘可摸到的牌張數。請先從上方牌面選擇器選好死牌，再點擊「加入死牌」按鈕。
+    </p>
+    <div class="controls" style="margin-top: 8px;">
+      <button class="ctrl-btn primary" onclick="addSelectedToDiscard()"><i class="fa-solid fa-plus"></i> 將已選牌加入死牌區</button>
+    </div>
+    <div class="discard-grid" id="discardDisplay">
+      <span style="color: var(--text-muted); font-size: 13px;" id="discardPlaceholder">尚無標記的死牌...</span>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="glass-card results-section" id="resultsSection">
+    <h2><i class="fa-solid fa-chart-bar"></i> 分析結果</h2>
+    <div id="resultsContent">
+      <p style="color: var(--text-muted); text-align: center; padding: 20px;">
+        請選擇牌張填入手牌，系統將自動進行聽牌分析...
+      </p>
+    </div>
+  </div>
+
+  <!-- Amazon Promo -->
+  <div class="amazon-promo">
+    <h3><i class="fa-brands fa-amazon"></i> 麻將桌遊與娛樂週邊：搜尋精選麻將組與電動麻將桌</h3>
+    <div class="amazon-links">
+      <a href="https://www.amazon.com/s?k=mahjong+sets+and+tiles&tag=9908qq-20" target="_blank" rel="noopener sponsored" class="amazon-link">
+        <i class="fa-solid fa-cart-shopping"></i> Amazon 美國搜尋麻將組
+      </a>
+      <a href="https://www.amazon.co.jp/s?k=麻雀+マット+牌&tag=gugopro-22" target="_blank" rel="noopener sponsored" class="amazon-link">
+        <i class="fa-solid fa-cart-shopping"></i> Amazon 日本搜尋麻雀牌
+      </a>
+    </div>
+  </div>
+
+  <!-- Ko-fi -->
+  <div class="kofi-section">
+    <a href="https://ko-fi.com/R1K123XRS9" target="_blank" rel="noopener" class="kofi-button" style="background:#72a4f2; color:#fff; padding:10px 18px; border-radius:8px; text-decoration:none; display:inline-flex; align-items:center; gap:8px; font-weight:bold;">
+      <i class="fa-solid fa-mug-hot"></i> Buy me a coffee
+    </a>
+  </div>
+
+  <!-- SEO Section -->
+  <div class="glass-card seo-section">
+    <h2>麻將聽牌分析教學與策略指南</h2>
+    <div class="seo-content">
+      <h3>如何快速計算麻將聽牌張數 (Tile Acceptance)？</h3>
+      <p>麻將聽牌張數（Tile Acceptance）是指你當前手牌在聽牌狀態下，能夠摸到並完成和牌的剩餘牌張總數。計算步驟為：首先將手牌拆解為「面子（順子+刻子）+ 雀頭」的組合結構，找出差一張就能完成所有面子的牌型。然後逐一檢查每張聽牌的剩餘數量——扣除了你自己手牌中的相同牌、以及河牌中已經被打出或副露的「死牌」後，剩下的就是實際可摸到的張數。</p>
+      <p>在日麻13張模式中，聽牌最多可以聽4門（如兩面+兩面的四門聽），理論上最多可接受16張牌。台灣16張模式因為多3張手牌，牌型結構更為複雜，但基本邏輯相同。</p>
+
+      <h3>什麼是多門聽與牌型拆解</h3>
+      <p><strong>牌型拆解</strong>是麻將計算的核心概念。一組完整和牌需要「4面子 + 1雀頭」（共14張），聽牌就是差1張就能完成此結構的狀態（13張或15張手牌）。拆解方式是嘗試將手牌排列組合，找出所有可能的面子分配方案。</p>
+      <p><strong>多門聽</strong>指的是同時聽多張不同的牌。常見的聽牌類型包括：</p>
+      <p><strong>兩面聽</strong>（如聽3萬和6萬）、<strong>嵌張聽</strong>（如聽5筒）、<strong>邊張聽</strong>（如聽12條聽3條）、<strong>雙碰聽</strong>（如聽兩個對子中的一張）、<strong>單騎聽</strong>（如單聽一個字牌或幺九牌）。</p>
+      <p>優秀的牌型（如一盃口、斷幺九）往往能同時聽3-4門，大幅提高和牌機率。</p>
+
+      <h3>如何利用死牌計算提高摸牌勝率</h3>
+      <p>死牌（Dead Tiles）是指已經在牌桌上可見的牌——包括自己與其他玩家的河牌、副露（吃碰槓）的牌，以及你自己手牌中的重複牌。每張麻將牌最多只有4張，因此扣除死牌後的剩餘張數才是真正「可摸到」的牌。</p>
+      <p>舉例來說，如果你聽「三萬」和「六萬」，理論上有8張可摸。但如果三萬已經在河牌中出現2張、六萬出現1張，那麼實際剩餘就是 3 張（8 - 2 - 1 = 5 張可用）。這時如果另一種打法能聽更多的剩餘牌，即使門數較少，實際勝率可能反而更高。</p>
+      <p><strong>本計算器自動完成上述所有計算</strong>，只需輸入手牌和已見到的死牌，即可獲得精確的進張機率與最佳切牌建議。</p>
+    </div>
+  </div>
+
+  <!-- Disclaimer -->
+  <div class="disclaimer">
+    <i class="fa-solid fa-triangle-exclamation"></i> 免責聲明：本工具僅供麻將牌型研究、切牌策略分析與娛樂復盤使用，請勿用於任何形式之非法賭博或真錢交易。
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>&copy; 2026 <a href="https://gugopro.com">GugoPro</a>. All rights reserved. | 麻將聽牌張數與進張勝率計算器</p>
+  </footer>
+
+</div>
+
+<script>
+// ==================== CORE ENGINE ====================
+
+const SUITS = ['m', 'p', 's', 'z'];
+const SUIT_NAMES = { m: '萬', p: '筒', s: '條', z: '字' };
+const SUIT_COLORS = { m: '#e74c3c', p: '#3498db', s: '#27ae60', z: '#9b59b6' };
+const HONOR_NAMES = ['東', '南', '西', '北', '中', '發', '白'];
+const TILE_UNICODE = {
+  m: ['一萬','二萬','三萬','四萬','五萬','六萬','七萬','八萬','九萬'],
+  p: ['一筒','二筒','三筒','四筒','五筒','六筒','七筒','八筒','九筒'],
+  s: ['一索','二索','三索','四索','五索','六索','七索','八索','九索'],
+  z: ['東','南','西','北','中','發','白']
+};
+
+let currentMode = 'tw16';
+let hand = []; // Array of tile strings like '3m', '7z'
+let discards = []; // Array of tile strings
+let pendingSelection = []; // Tiles selected from picker (not yet in hand)
+
+// Tile indexing: suit index (0-3) * 10 + number (1-9)
+function tileKey(tile) { return tile; }
+function suitOf(tile) { return tile[tile.length - 1]; }
+function numOf(tile) { return parseInt(tile.slice(0, -1)); }
+function suitIndex(tile) { return SUITS.indexOf(suitOf(tile)); }
+
+// Count tiles
+function countTiles(arr) {
+  const map = {};
+  arr.forEach(t => { map[t] = (map[t] || 0) + 1; });
+  return map;
+}
+
+// Remove tile from hand at index
+function removeTileFromHand(index) {
+  hand.splice(index, 1);
+  renderHand();
+  analyze();
+}
+
+// Add tile to hand
+function addTileToHand(tile) {
+  const total = hand.length;
+  const maxTiles = currentMode === 'tw16' ? 16 : 13;
+  // For tw16 mode, hand can be up to 16 tiles
+  // For jp13 mode, hand can be up to 13 tiles (or 14 for discard suggestion)
+  
+  const counts = countTiles(hand);
+  const tileCount = counts[tile] || 0;
+  const discardCount = countTiles(discards)[tile] || 0;
+  
+  if (tileCount + discardCount >= 4) {
+    showStatus('每張牌最多只能有 4 張！', 'warning');
+    return;
+  }
+  
+  if (total >= maxTiles + 1) {
+    const modeName = currentMode === 'tw16' ? '16張' : '13張';
+    showStatus(`${modeName}模式最多 ${modeName === '16張' ? 17 : 14} 張（含打牌前多一張）！`, 'warning');
+    return;
+  }
+  
+  hand.push(tile);
+  pendingSelection = [];
+  renderHand();
+  renderTilePicker();
+  analyze();
+}
+
+// Check if hand is tenpai (1-shanten = 0)
+function checkTenpai(handArr) {
+  const len = handArr.length;
+  const expectedLen = currentMode === 'tw16' ? 16 : 13;
+  
+  if (len !== expectedLen) return null;
+  
+  const counts = countTiles(handArr);
+  const totalTiles = 34;
+  const waits = [];
+  
+  for (let i = 1; i <= 9; i++) {
+    for (const suit of SUITS) {
+      if (suit === 'z' && i > 7) continue;
+      const tile = i + suit;
+      // Simulate adding this tile
+      const testHand = [...handArr, tile];
+      if (isWiningHand(testHand)) {
+        waits.push(tile);
+      }
+    }
+  }
+  
+  return waits;
+}
+
+// Check if hand is complete (4 mentsu + 1 pair)
+function isWiningHand(tiles) {
+  const len = tiles.length;
+  const counts = countTiles(tiles);
+  
+  // For 16-tile mode: 5 mentsu + 1 pair = 17 tiles, so 16 is tenpai
+  // For 13-tile mode: 4 mentsu + 1 pair = 14 tiles, so 13 is tenpai
+  const expectedMentsu = len === 17 ? 5 : 4;
+  const expectedTotal = len === 17 ? 17 : 14;
+  
+  if (tiles.length !== expectedTotal) return false;
+  
+  return canFormMentsu(counts, expectedMentsu, false, 0);
+}
+
+// Recursive function to check if tiles can form n mentsu + 1 pair
+function canFormMentsu(counts, mentsuNeeded, hasPair, idx) {
+  // Find first tile with count > 0
+  let startIdx = idx;
+  while (startIdx < 34 && getCountByIndex(counts, startIdx) === 0) startIdx++;
+  
+  if (startIdx >= 34) {
+    return mentsuNeeded === 0 && hasPair;
+  }
+  
+  if (mentsuNeeded < 0) return false;
+  
+  const count = getCountByIndex(counts, startIdx);
+  
+  if (count === 0) return canFormMentsu(counts, mentsuNeeded, hasPair, startIdx + 1);
+  
+  // Try triplet (koutsu)
+  if (count >= 3) {
+    const newCounts = { ...counts };
+    setCountByIndex(newCounts, startIdx, count - 3);
+    if (canFormMentsu(newCounts, mentsuNeeded - 1, hasPair, startIdx + 1)) return true;
+  }
+  
+  // Try sequence (shuntsu) - only for suits m, p, s
+  const suit = indexToSuit(startIdx);
+  const num = indexToNum(startIdx);
+  if (suit !== 'z' && num <= 7) {
+    const idx1 = startIdx;
+    const idx2 = suitToIndex(suit, num + 1);
+    const idx3 = suitToIndex(suit, num + 2);
+    const c1 = getCountByIndex(counts, idx1);
+    const c2 = getCountByIndex(counts, idx2);
+    const c3 = getCountByIndex(counts, idx3);
+    if (c1 >= 1 && c2 >= 1 && c3 >= 1) {
+      const newCounts = { ...counts };
+      setCountByIndex(newCounts, idx1, c1 - 1);
+      setCountByIndex(newCounts, idx2, c2 - 1);
+      setCountByIndex(newCounts, idx3, c3 - 1);
+      if (canFormMentsu(newCounts, mentsuNeeded - 1, hasPair, startIdx)) return true;
+    }
+  }
+  
+  // Try pair (toitsu)
+  if (!hasPair && count >= 2) {
+    const newCounts = { ...counts };
+    setCountByIndex(newCounts, startIdx, count - 2);
+    if (canFormMentsu(newCounts, mentsuNeeded, true, startIdx + 1)) return true;
+  }
+  
+  return false;
+}
+
+function getCountByIndex(counts, idx) {
+  const tile = indexToTile(idx);
+  return counts[tile] || 0;
+}
+
+function setCountByIndex(counts, idx, val) {
+  const tile = indexToTile(idx);
+  counts[tile] = val;
+  if (val <= 0) delete counts[tile];
+}
+
+function indexToTile(idx) {
+  const suit = SUITS[Math.floor(idx / 10)];
+  const num = (idx % 10);
+  return num + suit;
+}
+
+function indexToSuit(idx) {
+  return SUITS[Math.floor(idx / 10)];
+}
+
+function indexToNum(idx) {
+  return idx % 10;
+}
+
+function suitToIndex(suit, num) {
+  return SUITS.indexOf(suit) * 10 + num;
+}
+
+// Calculate remaining tiles considering discards
+function getRemainingTile(tile, handCounts, discardCounts) {
+  const total = 4;
+  const inHand = handCounts[tile] || 0;
+  const inDiscards = discardCounts[tile] || 0;
+  return Math.max(0, total - inHand - inDiscards);
+}
+
+// Calculate acceptance probability
+function calcProbability(remainingTiles, totalRemaining) {
+  if (totalRemaining <= 0) return 0;
+  return (remainingTiles / totalRemaining * 100);
+}
+
+// Get tile display name
+function tileName(tile) {
+  const num = numOf(tile);
+  const suit = suitOf(tile);
+  if (suit === 'z') return HONOR_NAMES[num - 1];
+  return num + SUIT_NAMES[suit];
+}
+
+// ==================== UI RENDERING ====================
+
+function renderHand() {
+  const display = document.getElementById('handDisplay');
+  const status = document.getElementById('handStatus');
+  
+  if (hand.length === 0) {
+    display.innerHTML = '<span style="color: var(--text-muted); font-size: 14px;">請從下方牌面選擇器點選牌張...</span>';
+    status.className = 'status-msg';
+    return;
+  }
+  
+  // Sort hand: by suit then by number
+  const sorted = [...hand].sort((a, b) => {
+    const si = suitIndex(a) - suitIndex(b);
+    if (si !== 0) return si;
+    return numOf(a) - numOf(b);
+  });
+  
+  let html = '';
+  sorted.forEach((tile, idx) => {
+    const num = numOf(tile);
+    const suit = suitOf(tile);
+    const name = suit === 'z' ? HONOR_NAMES[num - 1] : num + SUIT_NAMES[suit];
+    const color = SUIT_COLORS[suit];
+    const origIdx = hand.indexOf(tile);
+    html += `<div class="hand-tile" onclick="removeTileFromHand(${origIdx})" title="點擊移除">
+      <span class="tile-char" style="color:${color}">${name}</span>
+      <span class="remove-btn">&times;</span>
+    </div>`;
+  });
+  display.innerHTML = html;
+  
+  // Update status
+  const maxLen = currentMode === 'tw16' ? 17 : 14;
+  const targetLen = currentMode === 'tw16' ? 16 : 13;
+  if (hand.length === targetLen) {
+    showStatus(`已達 ${targetLen} 張，可進行聽牌分析`, 'success');
+  } else if (hand.length === targetLen + 1) {
+    showStatus(`已達 ${targetLen + 1} 張，系統將建議最佳切牌`, 'info');
+  } else {
+    showStatus(`目前 ${hand.length} 張，目標 ${targetLen} 張（${targetLen + 1} 張可觸發切牌建議）`, 'info');
+  }
+}
+
+function renderTilePicker() {
+  const handCounts = countTiles(hand);
+  const discardCounts = countTiles(discards);
+  
+  for (const suit of SUITS) {
+    const gridId = suit + 'z' === 'zz' ? 'honorsGrid' : suit + 'zuGrid';
+    let gridEl;
+    if (suit === 'm') gridEl = document.getElementById('manzuGrid');
+    else if (suit === 'p') gridEl = document.getElementById('pinzuGrid');
+    else if (suit === 's') gridEl = document.getElementById('souzuGrid');
+    else gridEl = document.getElementById('honorsGrid');
+    
+    const maxNum = suit === 'z' ? 7 : 9;
+    let html = '';
+    
+    for (let i = 1; i <= maxNum; i++) {
+      const tile = i + suit;
+      const totalUsed = (handCounts[tile] || 0) + (discardCounts[tile] || 0);
+      const isMaxed = totalUsed >= 4;
+      const name = suit === 'z' ? HONOR_NAMES[i - 1] : i;
+      const color = SUIT_COLORS[suit];
+      
+      html += `<div class="tile-btn ${isMaxed ? 'maxed' : ''}" onclick="selectTile('${tile}')" title="${tileName(tile)}">
+        <span class="tile-char" style="color:${color}">${name}</span>
+        <span class="tile-num">${SUIT_NAMES[suit]}</span>
+        ${totalUsed > 0 ? `<span class="count-badge">${totalUsed}</span>` : ''}
+      </div>`;
+    }
+    
+    gridEl.innerHTML = html;
+  }
+}
+
+function selectTile(tile) {
+  pendingSelection.push(tile);
+  // Visual feedback
+  const btns = document.querySelectorAll('.tile-btn');
+  // Brief highlight
+  addTileToHand(tile);
+}
+
+function showStatus(msg, type) {
+  const el = document.getElementById('handStatus');
+  el.className = 'status-msg ' + type;
+  el.innerHTML = `<i class="fa-solid fa-circle-info"></i> ${msg}`;
+}
+
+function setMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === mode);
+  });
+  hand = [];
+  discards = [];
+  renderHand();
+  renderTilePicker();
+  renderDiscards();
+  document.getElementById('resultsContent').innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 20px;">已切換模式，請重新輸入牌張...</p>';
+}
+
+function clearHand() {
+  hand = [];
+  pendingSelection = [];
+  renderHand();
+  renderTilePicker();
+  document.getElementById('resultsContent').innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 20px;">手牌已清除，請重新輸入...</p>';
+}
+
+function clearDiscards() {
+  discards = [];
+  renderDiscards();
+  renderTilePicker();
+  if (hand.length > 0) analyze();
+}
+
+function addSelectedToDiscard() {
+  // Add all currently selected tiles as discards
+  // This adds one instance of each unique tile that's been highlighted
+  // For simplicity, we add one of each tile type that appears in hand beyond what's needed
+  // Actually, let's just mark tiles from the picker as discards
+  // We'll add the pending selection
+  if (pendingSelection.length > 0) {
+    const tile = pendingSelection[pendingSelection.length - 1];
+    const discardCounts = countTiles(discards);
+    const handCounts = countTiles(hand);
+    if ((discardCounts[tile] || 0) + (handCounts[tile] || 0) < 4) {
+      discards.push(tile);
+      renderDiscards();
+      renderTilePicker();
+      if (hand.length > 0) analyze();
+    }
+    pendingSelection = [];
+  }
+}
+
+function renderDiscards() {
+  const display = document.getElementById('discardDisplay');
+  const placeholder = document.getElementById('discardPlaceholder');
+  
+  if (discards.length === 0) {
+    display.innerHTML = '<span style="color: var(--text-muted); font-size: 13px;" id="discardPlaceholder">尚無標記的死牌...</span>';
+    return;
+  }
+  
+  let html = '';
+  discards.forEach((tile, idx) => {
+    const num = numOf(tile);
+    const suit = suitOf(tile);
+    const name = tileName(tile);
+    const color = SUIT_COLORS[suit];
+    html += `<div class="discard-tile" onclick="removeDiscard(${idx})" title="點擊移除">
+      <span style="color:${color};font-size:11px;">${name}</span>
+      <span class="remove-btn">&times;</span>
+    </div>`;
+  });
+  display.innerHTML = html;
+}
+
+function removeDiscard(index) {
+  discards.splice(index, 1);
+  renderDiscards();
+  renderTilePicker();
+  if (hand.length > 0) analyze();
+}
+
+// ==================== ANALYSIS ENGINE ====================
+
+function analyze() {
+  const targetLen = currentMode === 'tw16' ? 16 : 13;
+  const discLen = targetLen + 1; // 17 for tw, 14 for jp
+  const len = hand.length;
+  
+  if (len < 10) {
+    document.getElementById('resultsContent').innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 20px;">請至少輸入 10 張牌以獲得有效分析...</p>';
+    return;
+  }
+  
+  if (len === targetLen) {
+    // Check tenpai
+    const waits = checkTenpai(hand);
+    if (waits && waits.length > 0) {
+      displayTenpaiResult(waits);
+    } else {
+      // Not tenpai yet - show distance to tenpai
+      const shanten = calcShanten(hand);
+      showNotTenpai(shanten);
+    }
+  } else if (len === discLen) {
+    // Check which tile to discard for best acceptance
+    showDiscardSuggestions();
+  } else if (len < targetLen) {
+    document.getElementById('resultsContent').innerHTML = `<p style="color: var(--text-muted); text-align: center; padding: 20px;">目前 ${len} 張，還需要 ${targetLen - len} 張才能進行聽牌分析。</p>`;
+  } else {
+    document.getElementById('resultsContent').innerHTML = '<p style="color: var(--accent-red); text-align: center; padding: 20px;">牌張數過多，請清除後重新輸入。</p>';
+  }
+}
+
+function calcShanten(handArr) {
+  const len = handArr.length;
+  const expectedMentsu = currentMode === 'tw16' ? 5 : 4;
+  const counts = countTiles(handArr);
+  
+  // BFS/iterative approach to find minimum shanten
+  let minShanten = 99;
+  
+  // Try all possible pair assignments
+  for (let p = 0; p < 34; p++) {
+    const pCount = getCountByIndex(counts, p);
+    if (pCount < 2) continue;
+    
+    const noPairCounts = { ...counts };
+    setCountByIndex(noPairCounts, p, pCount - 2);
+    
+    let mentsu = 0;
+    let taatsu = 0; // partial groups (ryanmen, kanchan, penchan, shaonbu)
+    const remaining = { ...noPairCounts };
+    
+    // Extract complete mentsu first (greedy)
+    for (let i = 0; i < 34; i++) {
+      const c = getCountByIndex(remaining, i);
+      if (c >= 3) {
+        const m = Math.floor(c / 3);
+        mentsu += m;
+        setCountByIndex(remaining, i, c % 3);
+      }
+    }
+    
+    // Extract sequences
+    for (let i = 0; i < 34; i++) {
+      const c1 = getCountByIndex(remaining, i);
+      if (c1 === 0) continue;
+      const suit = indexToSuit(i);
+      const num = indexToNum(i);
+      if (suit === 'z' || num > 7) continue;
+      
+      const i2 = suitToIndex(suit, num + 1);
+      const i3 = suitToIndex(suit, num + 2);
+      const c2 = getCountByIndex(remaining, i2);
+      const c3 = getCountByIndex(remaining, i3);
+      
+      const seq = Math.min(c1, c2, c3);
+      if (seq > 0) {
+        mentsu += seq;
+        setCountByIndex(remaining, i, c1 - seq);
+        setCountByIndex(remaining, i2, c2 - seq);
+        setCountByIndex(remaining, i3, c3 - seq);
+      }
+    }
+    
+    // Count partial groups
+    for (let i = 0; i < 34; i++) {
+      const c = getCountByIndex(remaining, i);
+      if (c === 0) continue;
+      if (c >= 2) {
+        taatsu += 1;
+        setCountByIndex(remaining, i, c - 2);
+      }
+    }
+    
+    // Count ryanmen/kanchan/penchan
+    for (let i = 0; i < 34; i++) {
+      const c = getCountByIndex(remaining, i);
+      if (c === 0) continue;
+      const suit = indexToSuit(i);
+      const num = indexToNum(i);
+      
+      if (suit === 'z') continue;
+      
+      // Check ryanmen
+      if (num <= 7) {
+        const i2 = suitToIndex(suit, num + 1);
+        if (getCountByIndex(remaining, i2) > 0) {
+          taatsu += 1;
+          setCountByIndex(remaining, i, c - 1);
+          setCountByIndex(remaining, i2, getCountByIndex(remaining, i2) - 1);
+        }
+      }
+      // Check kanchan/penchan
+      if (num >= 1 && num <= 7) {
+        const i2 = suitToIndex(suit, num + 2);
+        if (getCountByIndex(remaining, i2) > 0) {
+          taatsu += 1;
+          setCountByIndex(remaining, i, c - 1);
+          setCountByIndex(remaining, i2, getCountByIndex(remaining, i2) - 1);
+        }
+      }
+    }
+    
+    const shanten = expectedMentsu - mentsu - Math.min(taatsu, expectedMentsu - mentsu);
+    minShanten = Math.min(minShanten, shanten);
+  }
+  
+  // Also try without pair (headless)
+  let noPairMentsu = 0;
+  const noPairRemaining = { ...counts };
+  
+  for (let i = 0; i < 34; i++) {
+    const c = getCountByIndex(noPairRemaining, i);
+    if (c >= 3) {
+      const m = Math.floor(c / 3);
+      noPairMentsu += m;
+      setCountByIndex(noPairRemaining, i, c % 3);
+    }
+  }
+  
+  for (let i = 0; i < 34; i++) {
+    const c1 = getCountByIndex(noPairRemaining, i);
+    if (c1 === 0) continue;
+    const suit = indexToSuit(i);
+    const num = indexToNum(i);
+    if (suit === 'z' || num > 7) continue;
+    const i2 = suitToIndex(suit, num + 1);
+    const i3 = suitToIndex(suit, num + 2);
+    const c2 = getCountByIndex(noPairRemaining, i2);
+    const c3 = getCountByIndex(noPairRemaining, i3);
+    const seq = Math.min(c1, c2, c3);
+    if (seq > 0) {
+      noPairMentsu += seq;
+      setCountByIndex(noPairRemaining, i, c1 - seq);
+      setCountByIndex(noPairRemaining, i2, c2 - seq);
+      setCountByIndex(noPairRemaining, i3, c3 - seq);
+    }
+  }
+  
+  let noPairTaatsu = 0;
+  for (let i = 0; i < 34; i++) {
+    const c = getCountByIndex(noPairRemaining, i);
+    if (c === 0) continue;
+    if (c >= 2) {
+      noPairTaatsu += 1;
+      setCountByIndex(noPairRemaining, i, c - 2);
+    }
+  }
+  
+  for (let i = 0; i < 34; i++) {
+    const c = getCountByIndex(noPairRemaining, i);
+    if (c === 0) continue;
+    const suit = indexToSuit(i);
+    const num = indexToNum(i);
+    if (suit === 'z') continue;
+    if (num <= 7) {
+      const i2 = suitToIndex(suit, num + 1);
+      if (getCountByIndex(noPairRemaining, i2) > 0) {
+        noPairTaatsu += 1;
+        setCountByIndex(noPairRemaining, i, c - 1);
+        setCountByIndex(noPairRemaining, i2, getCountByIndex(noPairRemaining, i2) - 1);
+      }
+    }
+    if (num >= 1 && num <= 7) {
+      const i2 = suitToIndex(suit, num + 2);
+      if (getCountByIndex(noPairRemaining, i2) > 0) {
+        noPairTaatsu += 1;
+        setCountByIndex(noPairRemaining, i, c - 1);
+        setCountByIndex(noPairRemaining, i2, getCountByIndex(noPairRemaining, i2) - 1);
+      }
+    }
+  }
+  
+  const headlessShanten = expectedMentsu - noPairMentsu - Math.min(noPairTaatsu, expectedMentsu - noPairMentsu) - 1;
+  minShanten = Math.min(minShanten, headlessShanten);
+  
+  return Math.max(0, minShanten);
+}
+
+function showNotTenpai(shanten) {
+  const targetLen = currentMode === 'tw16' ? 16 : 13;
+  const msg = shanten === 0 ? '已聽牌！' : `向聽數：${shanten}（距離聽牌還差 ${shanten} 張有效進張）`;
+  const icon = shanten === 0 ? 'fa-star' : shanten <= 2 ? 'fa-bolt' : 'fa-hourglass-half';
+  const color = shanten === 0 ? 'var(--accent-cyan)' : shanten <= 2 ? 'var(--accent-orange)' : 'var(--accent-red)';
+  
+  document.getElementById('resultsContent').innerHTML = `
+    <div class="result-card">
+      <h3 style="color: ${color}"><i class="fa-solid ${icon}"></i> 手牌狀態分析</h3>
+      <p style="font-size:15px; margin-top:8px;">${msg}</p>
+      <p style="font-size:13px; color: var(--text-muted); margin-top:8px;">
+        目前手牌 ${hand.length} 張（目標 ${targetLen} 張）。${shanten === 0 ? '系統已顯示聽牌資訊。' : '繼續進張以接近聽牌狀態，或重新排列組合尋找更優打法。'}
+      </p>
+    </div>
+  `;
+}
+
+function displayTenpaiResult(waits) {
+  const handCounts = countTiles(hand);
+  const discardCounts = countTiles(discards);
+  const totalRemaining = calcTotalRemaining(handCounts, discardCounts);
+  
+  let html = `<div class="result-card">
+    <h3 class="best"><i class="fa-solid fa-star"></i> 聽牌分析：已聽牌！</h3>
+    <p style="font-size:14px; color:var(--text-secondary); margin-bottom:12px;">
+      共聽 <strong style="color:var(--accent-cyan)">${waits.length}</strong> 門牌：
+    </p>
+    <div style="margin-bottom:12px;">`;
+  
+  let totalWaitTiles = 0;
+  waits.forEach(tile => {
+    const remaining = getRemainingTile(tile, handCounts, discardCounts);
+    totalWaitTiles += remaining;
+    const prob = calcProbability(remaining, totalRemaining);
+    const type = classifyWaitType(hand, tile);
+    html += `<div class="wait-tile">
+      <span>聽 <strong>${tileName(tile)}</strong> ${type}</span>
+      <span class="remaining">剩 ${remaining} 張</span>
+      <span class="probability">${prob.toFixed(1)}%</span>
+    </div>`;
+  });
+  
+  html += `</div>
+    <p style="font-size:13px; color:var(--text-secondary);">
+      <i class="fa-solid fa-circle-info"></i> 總計可摸到 <strong style="color:var(--accent-cyan)">${totalWaitTiles}</strong> 張聽牌 / 剩餘牌山約 ${totalRemaining} 張
+    </p>
+  </div>`;
+  
+  document.getElementById('resultsContent').innerHTML = html;
+}
+
+function classifyWaitType(handArr, tile) {
+  const num = numOf(tile);
+  const suit = suitOf(tile);
+  
+  // Simple classification based on the tile's relationship to hand
+  if (suit === 'z') return '(單騎)';
+  
+  // Check if it's a ryanmen wait
+  const tile1 = (num - 1) + suit;
+  const tile2 = (num - 2) + suit;
+  const tile3 = (num + 1) + suit;
+  const tile4 = (num + 2) + suit;
+  
+  const handCounts = countTiles(handArr);
+  
+  if (num >= 3 && (handCounts[tile1] || 0) > 0 && (handCounts[tile2] || 0) > 0) return '(兩面)';
+  if (num <= 7 && (handCounts[tile3] || 0) > 0 && (handCounts[tile4] || 0) > 0) return '(兩面)';
+  if (num >= 2 && num <= 8 && (handCounts[tile1] || 0) > 0 && (handCounts[tile3] || 0) > 0) return '(嵌張)';
+  if (num === 3 && (handCounts['2' + suit] || 0) > 0) return '(邊張)';
+  if (num === 7 && (handCounts['8' + suit] || 0) > 0) return '(邊張)';
+  
+  return '';
+}
+
+function calcTotalRemaining(handCounts, discardCounts) {
+  let total = 0;
+  for (let i = 0; i < 34; i++) {
+    const tile = indexToTile(i);
+    const remaining = getRemainingTile(tile, handCounts, discardCounts);
+    total += remaining;
+  }
+  return total;
+}
+
+function showDiscardSuggestions() {
+  const targetLen = currentMode === 'tw16' ? 16 : 13;
+  const handCounts = countTiles(hand);
+  const discardCounts = countTiles(discards);
+  const totalRemaining = calcTotalRemaining(handCounts, discardCounts);
+  
+  let bestDiscard = null;
+  let bestAcceptance = 0;
+  let bestWaits = [];
+  const suggestions = [];
+  
+  // Try discarding each unique tile
+  const uniqueTiles = [...new Set(hand)];
+  
+  for (const discardTile of uniqueTiles) {
+    const testHand = hand.filter((t, i) => {
+      // Remove only one instance
+      let removed = false;
+      return t !== discardTile || removed ? true : (removed = true, false);
+    });
+    
+    // Actually need to remove exactly one instance
+    const idx = hand.indexOf(discardTile);
+    const testHand2 = hand.slice();
+    testHand2.splice(idx, 1);
+    
+    if (testHand2.length !== targetLen) continue;
+    
+    const waits = checkTenpai(testHand2);
+    if (!waits || waits.length === 0) continue;
+    
+    let acceptance = 0;
+    waits.forEach(w => {
+      acceptance += getRemainingTile(w, handCounts, discardCounts);
+    });
+    
+    suggestions.push({
+      discard: discardTile,
+      waits: waits,
+      acceptance: acceptance
+    });
+    
+    if (acceptance > bestAcceptance) {
+      bestAcceptance = acceptance;
+      bestDiscard = discardTile;
+      bestWaits = waits;
+    }
+  }
+  
+  if (suggestions.length === 0) {
+    // Not tenpai after any discard
+    let html = `<div class="result-card">
+      <h3 style="color:var(--accent-orange)"><i class="fa-solid fa-hourglass-half"></i> 尚無法聽牌</h3>
+      <p style="font-size:14px; margin-top:8px;">
+        目前 ${hand.length} 張牌的組合中，無論打出哪一張都無法聽牌。建議繼續進張或重新組合牌型。
+      </p>
+    </div>`;
+    document.getElementById('resultsContent').innerHTML = html;
+    return;
+  }
+  
+  // Sort by acceptance
+  suggestions.sort((a, b) => b.acceptance - a.acceptance);
+  
+  let html = '';
+  suggestions.forEach((s, i) => {
+    const level = i === 0 ? 'best' : i === 1 ? 'good' : 'ok';
+    const icon = i === 0 ? 'fa-crown' : i === 1 ? 'fa-thumbs-up' : 'fa-lightbulb';
+    
+    html += `<div class="result-card">
+      <h3 class="${level}"><i class="fa-solid ${icon}"></i> 打出 ${tileName(s.discard)}</h3>
+      <div style="margin: 8px 0;">
+        <span style="color:var(--text-secondary); font-size:13px;">聽牌門數：</span>
+        <strong style="color:var(--accent-cyan)">${s.waits.length} 門</strong>
+        <span style="color:var(--text-secondary); font-size:13px; margin-left:12px;">總接受張數：</span>
+        <strong style="color:var(--accent-orange)">${s.acceptance} 張</strong>
+      </div>
+      <div>`;
+    
+    s.waits.forEach(w => {
+      const remaining = getRemainingTile(w, handCounts, discardCounts);
+      const prob = calcProbability(remaining, totalRemaining);
+      html += `<span class="wait-tile">
+        聽 <strong>${tileName(w)}</strong>
+        <span class="remaining">剩 ${remaining} 張</span>
+        <span class="probability">${prob.toFixed(1)}%</span>
+      </span>`;
+    });
+    
+    html += `</div></div>`;
+  });
+  
+  // Best play highlight
+  if (bestDiscard) {
+    html = `<div class="best-play">
+      <div class="best-play-title"><i class="fa-solid fa-crown"></i> 最佳切牌建議</div>
+      <p style="font-size:15px; color:var(--text-primary);">
+        打出 <strong style="color:var(--accent-cyan)">${tileName(bestDiscard)}</strong>，聽 <strong>${bestWaits.length} 門</strong>共 <strong style="color:var(--accent-orange)">${bestAcceptance} 張</strong>
+      </p>
+      <p style="font-size:13px; color:var(--text-secondary); margin-top:6px;">
+        聽牌：${bestWaits.map(w => tileName(w) + ' (剩' + getRemainingTile(w, handCounts, discardCounts) + '張)').join('、')}
+      </p>
+    </div>` + html;
+  }
+  
+  document.getElementById('resultsContent').innerHTML = html;
+}
+
+// ==================== INITIALIZATION ====================
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderTilePicker();
+  renderHand();
+});
+</script>
+</body>
+</html>
