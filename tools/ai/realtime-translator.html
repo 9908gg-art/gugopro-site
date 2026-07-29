@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>手機面對面即時對話翻譯機 | GugoPro AI 旅遊必備工具</title>
+    <meta name="description" content="專為手機平放面對面溝通設計的即時對話翻譯機。支援 180 度文字翻轉、免 API Key、雙向語音辨識與朗讀，是您出國旅遊、商務交流的最佳夥伴。">
+    
+    <!-- Google Analytics 4 (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-GF1DYLWMKX"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-GF1DYLWMKX');
+    </script>
+
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Noto+Sans+TC:wght@400;700&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-neon: #00f2ff;
+            --secondary-neon: #7000ff;
+            --bg-dark: #0a0b10;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #e0e0e0;
+            --text-dim: #a0a0a0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(0, 242, 255, 0.05) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(112, 0, 255, 0.05) 0%, transparent 20%);
+        }
+
+        /* Header */
+        header {
+            padding: 12px 16px;
+            background: rgba(10, 11, 16, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .btn-back-home {
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+            transition: color 0.3s;
+        }
+
+        .btn-back-home:hover {
+            color: var(--primary-neon);
+        }
+
+        .logo-text {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 1.1rem;
+            background: linear-gradient(45deg, var(--primary-neon), var(--secondary-neon));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Main Container */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Split Screen Areas */
+        .translate-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .area-partner {
+            border-bottom: 1px dashed var(--glass-border);
+            background: rgba(112, 0, 255, 0.02);
+        }
+
+        .area-partner.flipped {
+            transform: rotate(180deg);
+        }
+
+        .area-self {
+            background: rgba(0, 242, 255, 0.02);
+        }
+
+        /* Controls Overlay */
+        .flip-control {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 50;
+        }
+
+        .btn-flip {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .btn-flip.active {
+            color: var(--primary-neon);
+            border-color: var(--primary-neon);
+            box-shadow: 0 0 10px var(--primary-neon);
+        }
+
+        /* Content Display */
+        .display-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            gap: 15px;
+        }
+
+        .lang-select-wrapper {
+            margin-bottom: 10px;
+        }
+
+        select {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            outline: none;
+        }
+
+        .text-original {
+            font-size: 1rem;
+            color: var(--text-dim);
+            min-height: 1.2em;
+        }
+
+        .text-translated {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.3;
+            text-shadow: 0 0 20px rgba(255,255,255,0.2);
+            word-break: break-word;
+            max-width: 90%;
+        }
+
+        /* Mic Buttons */
+        .controls-bar {
+            padding: 20px;
+            background: rgba(10, 11, 16, 0.9);
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .mic-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .btn-mic {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .btn-mic-self {
+            background: linear-gradient(135deg, #00d2ff, #3a7bd5);
+            box-shadow: 0 0 15px rgba(0, 210, 255, 0.4);
+        }
+
+        .btn-mic-partner {
+            background: linear-gradient(135deg, #8e2de2, #4a00e0);
+            box-shadow: 0 0 15px rgba(142, 45, 226, 0.4);
+        }
+
+        .btn-mic.recording {
+            animation: pulse 1.5s infinite;
+            transform: scale(1.1);
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(255, 255, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+        }
+
+        .mic-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-dim);
+        }
+
+        /* Footer & Extra Content */
+        .extra-content {
+            background: var(--bg-dark);
+            padding: 30px 20px;
+            border-top: 1px solid var(--glass-border);
+            overflow-y: auto;
+            max-height: 40vh;
+        }
+
+        .section-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: var(--primary-neon);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .amazon-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .amazon-links {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .amazon-link {
+            background: #ff9900;
+            color: #000;
+            text-decoration: none;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: 700;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+
+        .instruction-list {
+            list-style: none;
+            color: var(--text-dim);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .instruction-list li {
+            margin-bottom: 10px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .instruction-list i {
+            color: var(--primary-neon);
+            margin-top: 4px;
+        }
+
+        .footer-bottom {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--glass-border);
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+
+        .disclaimer {
+            margin-top: 10px;
+            font-style: italic;
+        }
+
+        /* Status Indicator */
+        #status-bar {
+            position: fixed;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            z-index: 1000;
+            display: none;
+            border: 1px solid var(--primary-neon);
+            color: var(--primary-neon);
+        }
+
+        /* Mobile Adjustments */
+        @media (max-height: 600px) {
+            .btn-mic { width: 55px; height: 55px; font-size: 1.4rem; }
+            .text-translated { font-size: 1.4rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="https://gugopro.com" class="btn-back-home">
+            <i class="fa-solid fa-house"></i> 返回 GugoPro 首頁
+        </a>
+        <div class="logo-text">GugoPro AI</div>
+    </header>
+
+    <div id="status-bar">正在辨識中...</div>
+
+    <main>
+        <!-- Top Area (Partner) -->
+        <section class="translate-area area-partner" id="partner-area">
+            <div class="lang-select-wrapper">
+                <select id="partner-lang">
+                    <option value="en-US">English (US)</option>
+                    <option value="ja-JP">日本語</option>
+                    <option value="ko-KR">한국어</option>
+                    <option value="th-TH">ไทย</option>
+                    <option value="vi-VN">Tiếng Việt</option>
+                    <option value="fr-FR">Français</option>
+                    <option value="de-DE">Deutsch</option>
+                    <option value="es-ES">Español</option>
+                </select>
+            </div>
+            <div class="display-box">
+                <div class="text-original" id="partner-original">Waiting...</div>
+                <div class="text-translated" id="partner-display">你好！請點擊下方按鈕開始對話</div>
+            </div>
+            <div class="flip-control">
+                <button class="btn-flip" id="toggle-flip" title="翻轉對面視角">
+                    <i class="fa-solid fa-arrows-rotate"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- Bottom Area (Self) -->
+        <section class="translate-area area-self" id="self-area">
+            <div class="lang-select-wrapper">
+                <select id="self-lang">
+                    <option value="zh-TW">繁體中文 (台灣)</option>
+                    <option value="zh-CN">简体中文</option>
+                    <option value="en-US">English</option>
+                </select>
+            </div>
+            <div class="display-box">
+                <div class="text-original" id="self-original">等待中...</div>
+                <div class="text-translated" id="self-display">Hello! Click below to start</div>
+            </div>
+        </section>
+
+        <!-- Mic Controls -->
+        <div class="controls-bar">
+            <div class="mic-group">
+                <button class="btn-mic btn-mic-self" id="mic-self">
+                    <i class="fa-solid fa-microphone"></i>
+                </button>
+                <span class="mic-label">我講話 (Self)</span>
+            </div>
+            <div class="mic-group">
+                <button class="btn-mic btn-mic-partner" id="mic-partner">
+                    <i class="fa-solid fa-microphone"></i>
+                </button>
+                <span class="mic-label">對方講話 (Partner)</span>
+            </div>
+        </div>
+    </main>
+
+    <div class="extra-content">
+        <!-- Amazon Card -->
+        <div class="amazon-card">
+            <h2 class="section-title"><i class="fa-solid fa-suitcase-rolling"></i> 出國旅遊必備推薦</h2>
+            <p style="font-size: 0.9rem; color: var(--text-dim); margin-bottom: 12px;">搜尋精選雙向翻譯耳機與旅行隨身配件，讓旅程更輕鬆！</p>
+            <div class="amazon-links">
+                <a href="https://www.amazon.com/s?k=language+translator+device+and+travel+accessories&tag=9908qq-20" target="_blank" class="amazon-link">
+                    <i class="fa-brands fa-amazon"></i> 美國亞馬遜精選配件
+                </a>
+                <a href="https://www.amazon.co.jp/s?k=自動翻譯機+海外旅行+周邊&tag=gugopro-22" target="_blank" class="amazon-link">
+                    <i class="fa-brands fa-amazon"></i> 日本亞馬遜旅行小物
+                </a>
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <h2 class="section-title"><i class="fa-solid fa-circle-info"></i> 操作教學</h2>
+        <ul class="instruction-list">
+            <li>
+                <i class="fa-solid fa-1"></i>
+                <span>將手機平放於桌面，位於兩人中間。</span>
+            </li>
+            <li>
+                <i class="fa-solid fa-2"></i>
+                <span>點擊右上角「🔄」按鈕，翻轉上方區域文字，方便對面朋友閱讀。</span>
+            </li>
+            <li>
+                <i class="fa-solid fa-3"></i>
+                <span>您說話時按左側藍色麥克風；對方說話時按右側紫色麥克風。</span>
+            </li>
+            <li>
+                <i class="fa-solid fa-shield-halved"></i>
+                <span>首次使用請務必「允許」瀏覽器存取麥克風權限。</span>
+            </li>
+        </ul>
+
+        <!-- Ko-fi -->
+        <div style="margin: 25px 0; text-align: center;">
+            <a href="https://ko-fi.com/R1K123XRS9" target="_blank" rel="noopener" class="kofi-button" style="background:#72a4f2; color:#fff; padding:12px 20px; border-radius:8px; text-decoration:none; display:inline-flex; align-items:center; gap:8px; font-weight:bold; box-shadow: 0 4px 15px rgba(114, 164, 242, 0.3);">
+                <i class="fa-solid fa-mug-hot"></i> 贊助一杯咖啡，支持開發
+            </a>
+        </div>
+
+        <div class="footer-bottom">
+            <p>&copy; 2026 GugoPro. All rights reserved.</p>
+            <p class="disclaimer">免責聲明：本工具採用瀏覽器原生語音引擎與網路公開翻譯端點，僅供日常溝通、旅遊交流與學習參考。</p>
+        </div>
+    </div>
+
+    <script>
+        // --- State Management ---
+        let isRecording = false;
+        let recognition = null;
+        const statusBar = document.getElementById('status-bar');
+        
+        // --- Initialization ---
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+        } else {
+            alert('您的瀏覽器不支援語音辨識功能，請使用 Chrome 或 Safari。');
+        }
+
+        // --- UI Interactions ---
+        const toggleFlip = document.getElementById('toggle-flip');
+        const partnerArea = document.getElementById('partner-area');
+        toggleFlip.addEventListener('click', () => {
+            partnerArea.classList.toggle('flipped');
+            toggleFlip.classList.toggle('active');
+        });
+
+        // --- Translation Engine ---
+        async function translateText(text, from, to) {
+            try {
+                // MyMemory API
+                const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`);
+                const data = await res.json();
+                if (data.responseData) {
+                    return data.responseData.translatedText;
+                }
+                return "翻譯失敗，請重試";
+            } catch (err) {
+                console.error(err);
+                return "網路連線異常";
+            }
+        }
+
+        // --- TTS Engine ---
+        function speak(text, lang) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = lang;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // --- Voice Logic ---
+        function startRecognition(mode) {
+            if (!recognition || isRecording) return;
+
+            const selfLang = document.getElementById('self-lang').value;
+            const partnerLang = document.getElementById('partner-lang').value;
+            
+            recognition.lang = (mode === 'self') ? selfLang : partnerLang;
+            
+            recognition.onstart = () => {
+                isRecording = true;
+                statusBar.style.display = 'block';
+                statusBar.textContent = '正在聽取中...';
+                document.getElementById(`mic-${mode}`).classList.add('recording');
+            };
+
+            recognition.onresult = async (event) => {
+                const transcript = event.results[0][0].transcript;
+                
+                if (mode === 'self') {
+                    document.getElementById('self-original').textContent = transcript;
+                    statusBar.textContent = '翻譯中...';
+                    const translated = await translateText(transcript, selfLang, partnerLang);
+                    document.getElementById('partner-display').textContent = translated;
+                    speak(translated, partnerLang);
+                } else {
+                    document.getElementById('partner-original').textContent = transcript;
+                    statusBar.textContent = '翻譯中...';
+                    const translated = await translateText(transcript, partnerLang, selfLang);
+                    document.getElementById('self-display').textContent = translated;
+                    speak(translated, selfLang);
+                }
+            };
+
+            recognition.onerror = (event) => {
+                console.error(event.error);
+                statusBar.textContent = '辨識出錯：' + event.error;
+                setTimeout(() => statusBar.style.display = 'none', 2000);
+            };
+
+            recognition.onend = () => {
+                isRecording = false;
+                statusBar.style.display = 'none';
+                document.getElementById('mic-self').classList.remove('recording');
+                document.getElementById('mic-partner').classList.remove('recording');
+            };
+
+            recognition.start();
+        }
+
+        document.getElementById('mic-self').addEventListener('click', () => startRecognition('self'));
+        document.getElementById('mic-partner').addEventListener('click', () => startRecognition('partner'));
+
+    </script>
+</body>
+</html>
