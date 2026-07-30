@@ -90,6 +90,13 @@
             -webkit-text-fill-color: transparent;
         }
 
+        .model-info {
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            margin-top: 2px;
+            text-align: right;
+        }
+
         /* Chat Container */
         #chat-container {
             flex: 1;
@@ -368,7 +375,10 @@
         <a href="https://gugopro.com" class="btn-back-home">
             <i class="fa-solid fa-house"></i> 返回 GugoPro
         </a>
-        <div class="logo-text">AI Tutor & Quiz</div>
+        <div style="text-align: center;">
+            <div class="logo-text">AI Tutor & Quiz</div>
+            <div id="current-model-display" class="model-info">正在獲取模型資料...</div>
+        </div>
         <button id="btn-config" class="btn-tool"><i class="fa-solid fa-key"></i></button>
     </header>
 
@@ -478,7 +488,7 @@
         // --- Core State ---
         let chatHistory = [];
         let weaknessBank = JSON.parse(localStorage.getItem('weakness_bank') || '[]');
-        let currentModel = 'gemini-2.5-flash'; // Official Standard Fallback
+        let currentModel = null; // No hardcoded fallback
         let recognition = null;
         let isRecording = false;
 
@@ -491,16 +501,37 @@
         });
 
         async function fetchLatestModel() {
+            const display = document.getElementById('current-model-display');
             try {
                 const res = await fetch('https://quota.gugopro.com/models.json');
                 if (!res.ok) throw new Error("Fetch Failed");
                 const data = await res.json();
-                if (data && data.default_model) {
-                    currentModel = data.default_model;
+                
+                // Expecting data to be an array or have a specific structure.
+                // If it's the structure from quota.gugopro.com, we look for available free models.
+                let selectedModel = null;
+                
+                if (Array.isArray(data)) {
+                    // Find first model that is likely free/available
+                    selectedModel = data[0]?.name || data[0]?.model;
+                } else if (data.models && Array.isArray(data.models)) {
+                    selectedModel = data.models[0]?.name || data.models[0]?.model;
+                } else if (data.default_model) {
+                    selectedModel = data.default_model;
+                }
+
+                if (selectedModel) {
+                    currentModel = selectedModel;
+                    display.textContent = `Model: ${currentModel}`;
+                } else {
+                    throw new Error("No model found in JSON");
                 }
             } catch (e) {
-                console.warn("Model fetch failed, using official fallback: gemini-2.5-flash");
-                currentModel = 'gemini-2.5-flash';
+                console.error("Model fetch failed:", e);
+                display.textContent = "❌ 無法取得模型資料";
+                display.style.color = "var(--error-red)";
+                showError("❌ 無法取得模型資料，請檢查網路連線後重試。");
+                currentModel = null; // Ensure it stays null to prevent calls
             }
         }
 
@@ -531,6 +562,11 @@
 
         // --- Chat Logic ---
         async function sendMessage() {
+            if (!currentModel) {
+                showError("❌ 尚未取得有效的模型資料，請重新整理頁面。");
+                return;
+            }
+
             const textInput = document.getElementById('user-text');
             const content = textInput.value.trim();
             if (!content) return;
@@ -729,6 +765,10 @@
 
         // --- Quiz Mode ---
         document.getElementById('btn-quiz').addEventListener('click', async () => {
+            if (!currentModel) {
+                showError("❌ 尚未取得有效的模型資料，請重新整理頁面。");
+                return;
+            }
             if (weaknessBank.length === 0) {
                 alert("目前尚無弱點紀錄，請先開始對話練習！");
                 return;
