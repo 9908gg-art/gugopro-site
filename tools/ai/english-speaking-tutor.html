@@ -400,7 +400,10 @@
         <div class="input-wrapper">
             <div id="error-panel" class="error-panel">
                 <span id="error-msg"></span>
-                <button id="btn-fix-key" class="btn-tool" style="margin-left:10px; background:#fff; color:#000;">🔑 變更 API Key</button>
+                <div style="margin-top:10px;">
+                    <button id="btn-retry-model" class="btn-tool" style="background:#fff; color:#000;">🔄 手動重試</button>
+                    <button id="btn-fix-key" class="btn-tool" style="margin-left:10px; background:#fff; color:#000;">🔑 變更 API Key</button>
+                </div>
             </div>
 
             <div class="tool-row">
@@ -488,7 +491,9 @@
         // --- Core State ---
         let chatHistory = [];
         let weaknessBank = JSON.parse(localStorage.getItem('weakness_bank') || '[]');
-        let currentModel = null; // No hardcoded fallback
+        let availableModels = [];
+        let currentModelIndex = 0;
+        let currentModel = null;
         let recognition = null;
         let isRecording = false;
 
@@ -502,36 +507,40 @@
 
         async function fetchLatestModel() {
             const display = document.getElementById('current-model-display');
+            display.textContent = "正在獲取模型資料...";
+            display.style.color = "var(--text-dim)";
+            hideError();
+
             try {
-                const res = await fetch('https://quota.gugopro.com/models.json');
+                const res = await fetch('https://quota.gugopro.com/gemini_rate_limits.json');
                 if (!res.ok) throw new Error("Fetch Failed");
                 const data = await res.json();
                 
-                // Expecting data to be an array or have a specific structure.
-                // If it's the structure from quota.gugopro.com, we look for available free models.
-                let selectedModel = null;
-                
-                if (Array.isArray(data)) {
-                    // Find first model that is likely free/available
-                    selectedModel = data[0]?.name || data[0]?.model;
-                } else if (data.models && Array.isArray(data.models)) {
-                    selectedModel = data.models[0]?.name || data.models[0]?.model;
-                } else if (data.default_model) {
-                    selectedModel = data.default_model;
-                }
+                if (data && data.models && Array.isArray(data.models)) {
+                    // Filter: free, rest-compatible, text_generation
+                    availableModels = data.models.filter(m => 
+                        m.is_free_tier === true && 
+                        m.is_rest_compatible === true && 
+                        m.capabilities.includes("text_generation")
+                    );
 
-                if (selectedModel) {
-                    currentModel = selectedModel;
-                    display.textContent = `Model: ${currentModel}`;
+                    if (availableModels.length > 0) {
+                        currentModelIndex = 0;
+                        currentModel = availableModels[currentModelIndex].api_name;
+                        const updateDate = data.last_updated_date || '未知';
+                        display.textContent = `Model: ${currentModel} (${updateDate})`;
+                    } else {
+                        throw new Error("No compatible free models found");
+                    }
                 } else {
-                    throw new Error("No model found in JSON");
+                    throw new Error("Invalid JSON structure");
                 }
             } catch (e) {
                 console.error("Model fetch failed:", e);
                 display.textContent = "❌ 無法取得模型資料";
                 display.style.color = "var(--error-red)";
                 showError("❌ 無法取得模型資料，請檢查網路連線後重試。");
-                currentModel = null; // Ensure it stays null to prevent calls
+                currentModel = null;
             }
         }
 
@@ -560,10 +569,12 @@
             document.getElementById('modal-api').style.display = 'flex';
         });
 
+        document.getElementById('btn-retry-model').addEventListener('click', fetchLatestModel);
+
         // --- Chat Logic ---
         async function sendMessage() {
             if (!currentModel) {
-                showError("❌ 尚未取得有效的模型資料，請重新整理頁面。");
+                showError("❌ 尚未取得有效的模型資料，請重試或重新整理頁面。");
                 return;
             }
 
@@ -581,8 +592,12 @@
             addMessage('user', content);
             chatHistory.push({ role: 'user', content });
 
+            await performChat(content, targetLang, apiKey);
+        }
+
+        async function performChat(userInput, targetLang, apiKey) {
             try {
-                const tutorResponse = await callGemini(content, targetLang, apiKey);
+                const tutorResponse = await callGemini(userInput, targetLang, apiKey);
                 
                 // 2. Process AI Response
                 addMessage('tutor', tutorResponse.tutor_reply, {
@@ -604,13 +619,23 @@
                 saveHistoryToLocal();
 
             } catch (err) {
-                console.error("Full API Error Details:", err);
+                console.error("API Error Details:", err);
+                
+                // Failover Mechanism for 429
+                if (err.status === 429 && currentModelIndex < availableModels.length - 1) {
+                    currentModelIndex++;
+                    currentModel = availableModels[currentModelIndex].api_name;
+                    document.getElementById('current-model-display').textContent = `Model: ${currentModel} (Failover)`;
+                    console.warn(`Rate limit hit. Switching to backup model: ${currentModel}`);
+                    return performChat(userInput, targetLang, apiKey);
+                }
+
                 if (err.status) {
                     let msg = `❌ API 錯誤 (${err.status})`;
                     if (err.status === 400) msg = "❌ 請求格式不符 (400)";
                     if (err.status === 403) msg = "❌ API Key 權限不足 (403)";
                     if (err.status === 404) msg = "❌ 模型名稱錯誤 (404)";
-                    if (err.status === 429) msg = "❌ 配額已滿請稍後再試 (429)";
+                    if (err.status === 429) msg = "❌ 配額已滿且無備援模型 (429)";
                     showError(msg);
                 } else {
                     showError("❌ API 連線異常，請檢查網路或 API Key。");
@@ -766,7 +791,7 @@
         // --- Quiz Mode ---
         document.getElementById('btn-quiz').addEventListener('click', async () => {
             if (!currentModel) {
-                showError("❌ 尚未取得有效的模型資料，請重新整理頁面。");
+                showError("❌ 尚未取得有效的模型資料，請重試或重新整理頁面。");
                 return;
             }
             if (weaknessBank.length === 0) {
