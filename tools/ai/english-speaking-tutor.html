@@ -257,6 +257,25 @@
             width: 100%;
         }
 
+        .welcome-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 10px;
+            color: var(--text-dim);
+            font-size: 0.9rem;
+            line-height: 1.8;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .welcome-card h4 { color: var(--primary-neon); margin-bottom: 10px; font-family: 'Outfit', sans-serif; }
+        .welcome-card ul { list-style: none; }
+        .welcome-card li { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+        .welcome-card i { color: var(--primary-neon); margin-top: 4px; font-size: 0.8rem; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
         .message {
             max-width: 88%;
             padding: 16px 20px;
@@ -347,16 +366,51 @@
             padding: 10px 16px 20px;
         }
 
-        .lang-settings-bottom {
+        .lang-compact-bar {
             max-width: 900px;
             margin: 0 auto 12px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .btn-lang-toggle {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            padding: 6px 16px;
+            border-radius: 20px;
+            color: var(--text-main);
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .btn-lang-toggle:hover { background: rgba(255,255,255,0.1); border-color: var(--primary-neon); }
+
+        .lang-panel {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(-10px);
+            background: #1a1b23;
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 16px;
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 1001;
+            width: 280px;
+        }
+        .lang-panel.active { display: flex; }
+
+        .lang-settings-grid {
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 10px;
-            padding: 8px;
-            background: rgba(255,255,255,0.03);
-            border-radius: 12px;
         }
 
         .lang-box { display: flex; flex-direction: column; gap: 2px; }
@@ -454,18 +508,6 @@
             0% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7); }
             70% { box-shadow: 0 0 0 12px rgba(255, 59, 48, 0); }
             100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); }
-        }
-
-        .recording-hint {
-            position: absolute;
-            top: -30px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 0.75rem;
-            color: var(--error-red);
-            font-weight: 600;
-            display: none;
-            white-space: nowrap;
         }
 
         /* Back to Top */
@@ -602,61 +644,71 @@
     </header>
 
     <main id="chat-container">
-        <!-- Messages will appear here -->
+        <!-- Welcome card will be inserted here -->
     </main>
 
     <div class="bottom-controls">
-        <div class="lang-settings-bottom">
-            <div class="lang-box">
-                <span class="lang-label">我的語言</span>
-                <select id="my-lang" class="lang-select">
-                    <option value="zh-TW">繁體中文</option>
-                    <option value="zh-CN">简体中文</option>
-                    <option value="en-US">English</option>
-                    <option value="ja-JP">日本語</option>
-                    <option value="ko-KR">한국어</option>
-                    <option value="fr-FR">Français</option>
-                    <option value="de-DE">Deutsch</option>
-                    <option value="es-ES">Español</option>
-                    <option value="th-TH">ไทย</option>
-                    <option value="vi-VN">Tiếng Việt</option>
-                    <option value="id-ID">Bahasa Indonesia</option>
-                    <option value="pt-BR">Português</option>
-                    <option value="it-IT">Italiano</option>
-                    <option value="ru-RU">Русский</option>
-                    <option value="ar-SA">العربية</option>
-                    <option value="hi-IN">हिन्दी</option>
-                    <option value="ms-MY">Bahasa Melayu</option>
-                    <option value="nl-NL">Nederlands</option>
-                    <option value="pl-PL">Polski</option>
-                    <option value="tr-TR">Türkçe</option>
-                </select>
-            </div>
-            <button id="btn-swap-lang" class="btn-swap-mini"><i class="fa-solid fa-right-left"></i></button>
-            <div class="lang-box">
-                <span class="lang-label">學習語言</span>
-                <select id="target-lang" class="lang-select">
-                    <option value="en-US">English</option>
-                    <option value="ja-JP">日本語</option>
-                    <option value="ko-KR">한국어</option>
-                    <option value="zh-TW">繁體中文</option>
-                    <option value="zh-CN">简体中文</option>
-                    <option value="fr-FR">Français</option>
-                    <option value="de-DE">Deutsch</option>
-                    <option value="es-ES">Español</option>
-                    <option value="th-TH">ไทย</option>
-                    <option value="vi-VN">Tiếng Việt</option>
-                    <option value="id-ID">Bahasa Indonesia</option>
-                    <option value="pt-BR">Português</option>
-                    <option value="it-IT">Italiano</option>
-                    <option value="ru-RU">Русский</option>
-                    <option value="ar-SA">العربية</option>
-                    <option value="hi-IN">हिन्दी</option>
-                    <option value="ms-MY">Bahasa Melayu</option>
-                    <option value="nl-NL">Nederlands</option>
-                    <option value="pl-PL">Polski</option>
-                    <option value="tr-TR">Türkçe</option>
-                </select>
+        <div class="lang-compact-bar">
+            <button id="btn-lang-toggle" class="btn-lang-toggle">
+                <span id="lang-display-label">載入中...</span>
+                <i class="fa-solid fa-chevron-up"></i>
+            </button>
+            
+            <div id="lang-panel" class="lang-panel">
+                <div class="lang-settings-grid">
+                    <div class="lang-box">
+                        <span class="lang-label">我的語言</span>
+                        <select id="my-lang" class="lang-select">
+                            <option value="zh-TW">繁體中文</option>
+                            <option value="zh-CN">简体中文</option>
+                            <option value="en-US">English</option>
+                            <option value="ja-JP">日本語</option>
+                            <option value="ko-KR">한국어</option>
+                            <option value="fr-FR">Français</option>
+                            <option value="de-DE">Deutsch</option>
+                            <option value="es-ES">Español</option>
+                            <option value="th-TH">ไทย</option>
+                            <option value="vi-VN">Tiếng Việt</option>
+                            <option value="id-ID">Bahasa Indonesia</option>
+                            <option value="pt-BR">Português</option>
+                            <option value="it-IT">Italiano</option>
+                            <option value="ru-RU">Русский</option>
+                            <option value="ar-SA">العربية</option>
+                            <option value="hi-IN">हिन्दी</option>
+                            <option value="ms-MY">Bahasa Melayu</option>
+                            <option value="nl-NL">Nederlands</option>
+                            <option value="pl-PL">Polski</option>
+                            <option value="tr-TR">Türkçe</option>
+                        </select>
+                    </div>
+                    <button id="btn-swap-lang" class="btn-swap-mini"><i class="fa-solid fa-right-left"></i></button>
+                    <div class="lang-box">
+                        <span class="lang-label">學習語言</span>
+                        <select id="target-lang" class="lang-select">
+                            <option value="en-US">English</option>
+                            <option value="ja-JP">日本語</option>
+                            <option value="ko-KR">한국어</option>
+                            <option value="zh-TW">繁體中文</option>
+                            <option value="zh-CN">简体中文</option>
+                            <option value="fr-FR">Français</option>
+                            <option value="de-DE">Deutsch</option>
+                            <option value="es-ES">Español</option>
+                            <option value="th-TH">ไทย</option>
+                            <option value="vi-VN">Tiếng Việt</option>
+                            <option value="id-ID">Bahasa Indonesia</option>
+                            <option value="pt-BR">Português</option>
+                            <option value="it-IT">Italiano</option>
+                            <option value="ru-RU">Русский</option>
+                            <option value="ar-SA">العربية</option>
+                            <option value="hi-IN">हिन्दी</option>
+                            <option value="ms-MY">Bahasa Melayu</option>
+                            <option value="nl-NL">Nederlands</option>
+                            <option value="pl-PL">Polski</option>
+                            <option value="tr-TR">Türkçe</option>
+                        </select>
+                    </div>
+                </div>
+                <button id="btn-lang-confirm" class="btn-full btn-send" style="margin-top: 10px; padding: 8px;">確認設定</button>
             </div>
         </div>
 
@@ -675,10 +727,7 @@
             </div>
 
             <div class="main-input-group">
-                <div style="position: relative;">
-                    <button id="btn-mic" class="btn-circle btn-mic"><i class="fa-solid fa-microphone"></i></button>
-                    <span id="recording-hint" class="recording-hint">錄音中...再按一次結束</span>
-                </div>
+                <button id="btn-mic" class="btn-circle btn-mic"><i class="fa-solid fa-microphone"></i></button>
                 <input type="text" id="user-text" placeholder="說話或輸入..." autocomplete="off">
                 <button id="btn-send" class="btn-circle btn-send"><i class="fa-solid fa-paper-plane"></i></button>
             </div>
@@ -774,6 +823,7 @@
             checkApiKey();
             fetchLatestModel();
             initSpeechRecognition();
+            initLangPanel();
             
             // Scroll Event for Back to Top
             window.onscroll = () => {
@@ -790,7 +840,7 @@
         });
 
         function initChatSystem() {
-            const saved = localStorage.getItem('gugopro_ai_tutor_rooms_v2');
+            const saved = localStorage.getItem('gugopro_ai_tutor_rooms_v3');
             if (saved) {
                 const data = JSON.parse(saved);
                 chatRooms = data.chatRooms;
@@ -813,7 +863,7 @@
 
         function detectBrowserLang() {
             const browserLang = navigator.language;
-            const supported = ['zh-TW', 'zh-CN', 'en-US', 'ja-JP', 'ko-KR', 'fr-FR', 'de-DE', 'es-ES', 'th-TH', 'vi-VN', 'id-ID', 'pt-BR', 'it-IT', 'ru-RU', 'ar-SA', 'hi-IN', 'ms-MY', 'nl-NL', 'pl-PL', 'tr-TR'];
+            const supported = Object.keys(LANG_NAMES);
             for (let lang of supported) {
                 if (browserLang.startsWith(lang.split('-')[0])) return lang;
             }
@@ -846,7 +896,53 @@
         }
 
         function saveRoomsToLocal() {
-            localStorage.setItem('gugopro_ai_tutor_rooms_v2', JSON.stringify({ chatRooms, activeRoomId }));
+            localStorage.setItem('gugopro_ai_tutor_rooms_v3', JSON.stringify({ chatRooms, activeRoomId }));
+        }
+
+        // --- UI Logic ---
+        function initLangPanel() {
+            const btn = document.getElementById('btn-lang-toggle');
+            const panel = document.getElementById('lang-panel');
+            const confirmBtn = document.getElementById('btn-lang-confirm');
+            
+            btn.onclick = (e) => { e.stopPropagation(); panel.classList.toggle('active'); };
+            panel.onclick = (e) => e.stopPropagation();
+            document.onclick = () => panel.classList.remove('active');
+            
+            confirmBtn.onclick = () => {
+                const my = document.getElementById('my-lang').value;
+                const target = document.getElementById('target-lang').value;
+                const room = chatRooms.find(r => r.id === activeRoomId);
+                if (room) {
+                    room.language.my = my;
+                    room.language.learning = target;
+                    updateLangDisplay();
+                    saveRoomsToLocal();
+                }
+                panel.classList.remove('active');
+            };
+        }
+
+        function updateLangDisplay() {
+            const my = document.getElementById('my-lang').value;
+            const target = document.getElementById('target-lang').value;
+            document.getElementById('lang-display-label').textContent = `${LANG_NAMES[my]} → ${LANG_NAMES[target]}`;
+        }
+
+        function addWelcomeCard() {
+            const container = document.getElementById('chat-container');
+            const card = document.createElement('div');
+            card.className = 'welcome-card';
+            card.innerHTML = `
+                <h4>👋 歡迎使用 AI 語言導師！</h4>
+                <ul>
+                    <li><i class="fa-solid fa-microphone"></i> 點擊麥克風用語音輸入，或直接打字</li>
+                    <li><i class="fa-solid fa-comments"></i> 你可以要求特定主題對話練習（如：旅遊、點餐、商務）</li>
+                    <li><i class="fa-solid fa-language"></i> 切換母語/學習語言按鈕可用母語提問</li>
+                    <li><i class="fa-solid fa-gear"></i> 右上角選單可管理教室和設定</li>
+                </ul>
+            `;
+            container.prepend(card);
         }
 
         // --- Room Management ---
@@ -876,9 +972,11 @@
             
             document.getElementById('my-lang').value = room.language.my;
             document.getElementById('target-lang').value = room.language.learning;
+            updateLangDisplay();
             
             const container = document.getElementById('chat-container');
             container.innerHTML = '';
+            addWelcomeCard();
             room.messages.forEach(m => addMessageToUI(m.role, m.learning, m.my, m.correction, m.id));
             
             renderRoomList();
@@ -926,15 +1024,6 @@
         };
 
         // --- UI Events ---
-        document.getElementById('my-lang').onchange = (e) => {
-            const room = chatRooms.find(r => r.id === activeRoomId);
-            if (room) { room.language.my = e.target.value; saveRoomsToLocal(); }
-        };
-        document.getElementById('target-lang').onchange = (e) => {
-            const room = chatRooms.find(r => r.id === activeRoomId);
-            if (room) { room.language.learning = e.target.value; saveRoomsToLocal(); }
-        };
-
         const menu = document.getElementById('side-menu');
         const overlay = document.getElementById('side-menu-overlay');
         document.getElementById('btn-menu').onclick = () => { menu.classList.add('active'); overlay.classList.add('active'); };
@@ -965,8 +1054,7 @@
             const my = document.getElementById('my-lang');
             const target = document.getElementById('target-lang');
             const temp = my.value; my.value = target.value; target.value = temp;
-            const room = chatRooms.find(r => r.id === activeRoomId);
-            if (room) { room.language.my = my.value; room.language.learning = target.value; saveRoomsToLocal(); }
+            updateLangDisplay();
         };
 
         function setInputMode(mode) {
@@ -1104,15 +1192,35 @@
             recognition = new SpeechRecognition();
             recognition.continuous = true;
             recognition.interimResults = true;
-            recognition.onstart = () => { isRecording = true; document.getElementById('btn-mic').classList.add('recording'); document.getElementById('recording-hint').style.display = 'block'; };
+            
+            recognition.onstart = () => { isRecording = true; document.getElementById('btn-mic').classList.add('recording'); };
+            
             recognition.onresult = (e) => {
-                let transcript = '';
-                for (let i = e.resultIndex; i < e.results.length; ++i) { 
-                    transcript += e.results[i][0].transcript; 
+                const input = document.getElementById('user-text');
+                const start = input.selectionStart;
+                const end = input.selectionEnd;
+                const currentVal = input.value;
+                
+                let interimTranscript = '';
+                let finalTranscript = '';
+                
+                for (let i = e.resultIndex; i < e.results.length; ++i) {
+                    if (e.results[i].isFinal) {
+                        finalTranscript += e.results[i][0].transcript;
+                    } else {
+                        interimTranscript += e.results[i][0].transcript;
+                    }
                 }
-                document.getElementById('user-text').value = transcript;
+                
+                if (finalTranscript) {
+                    const newVal = currentVal.substring(0, start) + finalTranscript + currentVal.substring(end);
+                    input.value = newVal;
+                    const newCursor = start + finalTranscript.length;
+                    input.setSelectionRange(newCursor, newCursor);
+                }
             };
-            recognition.onend = () => { isRecording = false; document.getElementById('btn-mic').classList.remove('recording'); document.getElementById('recording-hint').style.display = 'none'; };
+            
+            recognition.onend = () => { isRecording = false; document.getElementById('btn-mic').classList.remove('recording'); };
         }
 
         document.getElementById('btn-mic').onclick = () => {
