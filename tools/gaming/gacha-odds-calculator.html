@@ -1,1358 +1,1199 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>手遊抽卡期望值與保底機率計算器 | GugoPro</title>
-    <meta name="description" content="GugoPro 手遊抽卡期望值與保底機率計算器，支援原神、崩壞星穹鐵道、絕區零、FGO 等熱門遊戲預設範本，純前端計算累積機率曲線、期望值、50%/95%把握度所需抽數，搭配 Chart.js 霓虹圖表。">
-    <meta name="keywords" content="抽卡計算器, Gacha Calculator, 原神抽卡, 崩壞星穹鐵道, 絕區零, FGO, 保底機率, 軟保底, 硬保底, 期望值, 抽卡模擬, Genshin Impact, Honkai Star Rail, ZZZ, Fate Grand Order, 保底計算, 抽卡期望">
-    <meta name="author" content="GugoPro AI Team">
-    <link rel="canonical" href="https://gugopro.com/tools/gaming/gacha-odds-calculator.html">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>手遊抽卡期望值與保底模擬器 v2 | GugoPro</title>
+<meta name="description" content="終極實戰版手遊抽卡模擬器：蒙特卡羅 10,000 次演算法，支援原神、崩壞星穹鐵道、鳴潮、明日方舟、蔚藍檔案、賽馬娘，精確計算累積機率、期望抽數、保底策略與課金預算轉換。">
+<meta name="keywords" content="抽卡計算器,保底模擬器,蒙特卡羅,原神抽卡,星穹鐵道抽卡,鳴潮抽卡,明日方舟抽卡,蔚藍檔案抽卡,賽馬娘抽卡,Gacha Calculator,Pity System">
+<meta name="author" content="GugoPro">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://gugopro.com/tools/gaming/gacha-odds-calculator.html">
 
-    <!-- Open Graph -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://gugopro.com/tools/gaming/gacha-odds-calculator.html">
-    <meta property="og:title" content="手遊抽卡期望值與保底機率計算器 | GugoPro">
-    <meta property="og:description" content="支援原神、崩壞星穹鐵道、絕區零、FGO 預設範本，計算累積機率曲線、期望值、50%/95%把握度。">
+<!-- Open Graph -->
+<meta property="og:title" content="手遊抽卡期望值與保底模擬器 v2 | GugoPro">
+<meta property="og:description" content="蒙特卡羅 10,000 次抽卡模擬，支援多遊戲保底模板，精確計算累積機率與課金預算。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://gugopro.com/tools/gaming/gacha-odds-calculator.html">
+<meta property="og:image" content="https://gugopro.com/assets/og-gacha.png">
 
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
+<!-- Google Analytics 4 (GA4) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GF1DYLWMKX"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-GF1DYLWMKX');
+</script>
 
-    <!-- GA4 Tracking Code -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-GF1DYLWMKX"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'G-GF1DYLWMKX');
-    </script>
+<!-- Fonts & Icons -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&family=Noto+Sans+TC:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
-    <style>
-    /* ========== ROOT VARIABLES ========== */
-    :root {
-        --bg-dark: #090d16;
-        --bg-card: rgba(15, 23, 42, 0.75);
-        --bg-card-hover: rgba(20, 30, 55, 0.85);
-        --border-card: rgba(255, 255, 255, 0.08);
-        --border-glow: rgba(59, 130, 246, 0.4);
-        --text-primary: #f8fafc;
-        --text-secondary: #cbd5e1;
-        --text-muted: #94a3b8;
-        --color-blue: #3b82f6;
-        --color-emerald: #10b981;
-        --color-amber: #f59e0b;
-        --color-purple: #a855f7;
-        --color-red: #ef4444;
-        --color-pink: #ec4899;
-        --radius-lg: 16px;
-        --radius-md: 12px;
-        --radius-sm: 8px;
-        --radius-xs: 6px;
-        --neon-green: #00ff88;
-        --neon-blue: #00d4ff;
-        --neon-purple: #b44aff;
-        --glass-blur: blur(20px);
-    }
+<style>
+:root {
+  --bg-primary: #0a0e1a;
+  --bg-secondary: #111827;
+  --bg-card: rgba(17, 24, 39, 0.85);
+  --bg-glass: rgba(255,255,255,0.04);
+  --border-glow: rgba(99, 102, 241, 0.3);
+  --border-active: rgba(99, 102, 241, 0.6);
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --accent-primary: #6366f1;
+  --accent-secondary: #8b5cf6;
+  --accent-gold: #f59e0b;
+  --accent-cyan: #06b6d4;
+  --accent-green: #10b981;
+  --accent-red: #ef4444;
+  --accent-pink: #ec4899;
+  --shadow-lg: 0 25px 50px -12px rgba(0,0,0,0.5);
+  --radius: 16px;
+  --radius-sm: 10px;
+}
 
-    /* ========== RESET & BASE ========== */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
-    body {
-        background-color: var(--bg-dark);
-        color: var(--text-primary);
-        font-family: 'Inter', 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
-        line-height: 1.6;
-        overflow-x: hidden;
-        background-image:
-            radial-gradient(ellipse at 10% 20%, rgba(59, 130, 246, 0.10) 0%, transparent 50%),
-            radial-gradient(ellipse at 90% 80%, rgba(168, 85, 247, 0.08) 0%, transparent 50%);
-        background-attachment: fixed;
-    }
-    .container { max-width: 1280px; margin: 0 auto; padding: 0 20px; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
-    /* ========== HEADER ========== */
-    .main-header {
-        position: sticky; top: 0; z-index: 100;
-        background: rgba(9, 13, 22, 0.92);
-        backdrop-filter: var(--glass-blur);
-        -webkit-backdrop-filter: var(--glass-blur);
-        border-bottom: 1px solid var(--border-card);
-        padding: 12px 0;
-    }
-    .header-container { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
-    .brand-box { display: flex; align-items: center; gap: 12px; }
-    .brand-logo { display: flex; align-items: center; gap: 8px; font-family: 'Outfit', sans-serif; font-size: 1.4rem; font-weight: 800; color: #fff; }
-    .brand-icon { color: var(--color-blue); font-size: 1.3rem; }
-    .brand-tagline { font-size: 0.82rem; color: var(--text-muted); border-left: 1px solid rgba(255,255,255,0.15); padding-left: 10px; }
-    .btn-back-home {
-        display: inline-flex; align-items: center; gap: 6px;
-        background: rgba(59, 130, 246, 0.12); color: #60a5fa;
-        border: 1px solid rgba(59, 130, 246, 0.3);
-        padding: 8px 18px; border-radius: 24px;
-        font-size: 0.88rem; font-weight: 700;
-        text-decoration: none; transition: all 0.25s ease;
-    }
-    .btn-back-home:hover { background: rgba(59, 130, 246, 0.25); transform: translateY(-1px); }
+body {
+  font-family: 'Noto Sans TC', 'Inter', sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  line-height: 1.7;
+}
 
-    /* ========== HERO ========== */
-    .hero-section { padding: 40px 0 24px 0; text-align: center; }
-    .hero-badge {
-        display: inline-flex; align-items: center; gap: 6px;
-        background: rgba(0, 255, 136, 0.10); color: var(--neon-green);
-        border: 1px solid rgba(0, 255, 136, 0.25);
-        padding: 6px 16px; border-radius: 30px;
-        font-size: 0.82rem; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 16px;
-    }
-    .hero-title {
-        font-family: 'Outfit', 'Noto Sans TC', sans-serif;
-        font-size: 2.4rem; font-weight: 800; line-height: 1.2; margin-bottom: 10px;
-    }
-    .gradient-text {
-        background: linear-gradient(135deg, var(--neon-green) 0%, var(--neon-blue) 50%, var(--neon-purple) 100%);
-        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    }
-    .hero-subtitle { font-size: 1rem; color: var(--text-secondary); max-width: 700px; margin: 0 auto 20px auto; }
+/* Animated background */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 10% 20%, rgba(99,102,241,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 80% at 90% 80%, rgba(139,92,246,0.10) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 50% at 50% 50%, rgba(6,182,212,0.06) 0%, transparent 50%);
+  z-index: -1;
+  pointer-events: none;
+}
 
-    /* ========== MAIN TOOL AREA ========== */
-    .tool-area { padding-bottom: 40px; }
+/* Header */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(10, 14, 26, 0.92);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border-glow);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
 
-    /* ---- Section Card ---- */
-    .section-card {
-        background: var(--bg-card);
-        border: 1px solid var(--border-card);
-        border-radius: var(--radius-lg);
-        padding: 24px;
-        margin-bottom: 24px;
-        backdrop-filter: var(--glass-blur);
-    }
-    .section-title {
-        font-family: 'Outfit', 'Noto Sans TC', sans-serif;
-        font-size: 1.25rem; font-weight: 800; color: #fff;
-        display: flex; align-items: center; gap: 10px; margin-bottom: 4px;
-    }
-    .section-subtitle { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 16px; }
+.btn-back-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  color: #fff;
+  padding: 8px 18px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.3s;
+  border: none;
+  cursor: pointer;
+}
+.btn-back-home:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(99,102,241,0.4);
+}
 
-    /* ---- Template Selector ---- */
-    .template-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 12px; margin-bottom: 20px;
-    }
-    .template-btn {
-        background: rgba(255,255,255,0.03);
-        border: 2px solid var(--border-card);
-        border-radius: var(--radius-md);
-        padding: 16px; text-align: center;
-        cursor: pointer; transition: all 0.25s ease;
-        position: relative;
-    }
-    .template-btn:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.2); }
-    .template-btn.is-active {
-        border-color: var(--neon-green);
-        box-shadow: 0 0 20px rgba(0,255,136,0.15);
-        background: rgba(0,255,136,0.05);
-    }
-    .template-btn .tpl-icon { font-size: 1.8rem; margin-bottom: 8px; display: block; }
-    .template-btn .tpl-name { font-weight: 700; font-size: 0.95rem; color: #fff; margin-bottom: 4px; }
-    .template-btn .tpl-desc { font-size: 0.78rem; color: var(--text-muted); }
-    .template-btn .tpl-check {
-        position: absolute; top: 8px; right: 10px;
-        color: var(--neon-green); font-size: 0.9rem;
-        opacity: 0; transition: opacity 0.2s ease;
-    }
-    .template-btn.is-active .tpl-check { opacity: 1; }
+.site-logo {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 900;
+  font-size: 1.4rem;
+  background: linear-gradient(135deg, #6366f1, #06b6d4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
 
-    /* ---- Custom Params Form ---- */
-    .params-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 14px; margin-bottom: 16px;
-    }
-    .param-group { display: flex; flex-direction: column; gap: 4px; }
-    .param-group label {
-        font-size: 0.82rem; font-weight: 600; color: var(--text-secondary);
-        display: flex; align-items: center; gap: 5px;
-    }
-    .param-group label i { color: var(--neon-blue); font-size: 0.8rem; }
-    .param-group input, .param-group select {
-        background: rgba(0,0,0,0.3);
-        border: 1px solid rgba(255,255,255,0.12);
-        border-radius: var(--radius-sm);
-        padding: 10px 12px;
-        color: var(--text-primary);
-        font-size: 0.92rem;
-        font-family: 'Inter', 'Noto Sans TC', sans-serif;
-        transition: border-color 0.2s ease;
-    }
-    .param-group input:focus, .param-group select:focus {
-        outline: none;
-        border-color: var(--neon-blue);
-        box-shadow: 0 0 10px rgba(0,212,255,0.15);
-    }
-    .param-group input::placeholder { color: var(--text-muted); }
+/* Main Container */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px 60px;
+}
 
-    /* ---- Toggle Switch ---- */
-    .toggle-row {
-        display: flex; align-items: center; gap: 10px;
-        margin: 12px 0; flex-wrap: wrap;
-    }
-    .toggle-label {
-        font-size: 0.88rem; color: var(--text-secondary); font-weight: 600;
-    }
-    .toggle-switch {
-        position: relative; width: 48px; height: 26px;
-        background: rgba(255,255,255,0.12); border-radius: 13px;
-        cursor: pointer; transition: background 0.25s ease;
-    }
-    .toggle-switch::after {
-        content: ''; position: absolute; width: 20px; height: 20px;
-        border-radius: 50%; background: #fff;
-        top: 3px; left: 3px; transition: transform 0.25s ease;
-    }
-    .toggle-switch.is-on { background: var(--neon-green); }
-    .toggle-switch.is-on::after { transform: translateX(22px); }
-    .toggle-desc { font-size: 0.78rem; color: var(--text-muted); margin-left: auto; }
+/* Hero */
+.hero {
+  text-align: center;
+  padding: 40px 20px 30px;
+}
+.hero h1 {
+  font-family: 'Outfit', sans-serif;
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  font-weight: 900;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6, #06b6d4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 8px;
+}
+.hero .subtitle {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  font-weight: 500;
+}
 
-    /* ---- Resource Calculator ---- */
-    .resource-row {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 10px; align-items: end;
-    }
-    .resource-item {
-        background: rgba(255,255,255,0.03);
-        border: 1px solid var(--border-card);
-        border-radius: var(--radius-sm);
-        padding: 12px; text-align: center;
-    }
-    .resource-item .res-label { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 6px; }
-    .resource-item .res-value { font-size: 1.3rem; font-weight: 800; font-family: 'Outfit', sans-serif; }
-    .resource-item .res-unit { font-size: 0.78rem; color: var(--text-muted); }
+/* Card base */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-glow);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 24px;
+  backdrop-filter: blur(10px);
+  transition: border-color 0.3s;
+}
+.card:hover {
+  border-color: var(--border-active);
+}
+.card-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.card-title i {
+  color: var(--accent-primary);
+}
 
-    /* ---- Action Buttons ---- */
-    .action-row {
-        display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-        justify-content: center; margin-top: 16px;
-    }
-    .btn-calc {
-        background: linear-gradient(135deg, var(--neon-green), #00cc6a);
-        color: #000; font-weight: 800; font-size: 1rem;
-        padding: 12px 32px; border-radius: 30px; border: none; cursor: pointer;
-        display: inline-flex; align-items: center; gap: 8px;
-        box-shadow: 0 6px 24px rgba(0,255,136,0.3);
-        transition: all 0.25s ease;
-    }
-    .btn-calc:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,255,136,0.45); }
-    .btn-reset {
-        background: rgba(255,255,255,0.08); color: var(--text-secondary);
-        border: 1px solid rgba(255,255,255,0.15); border-radius: 30px;
-        padding: 12px 24px; font-weight: 700; font-size: 0.95rem; cursor: pointer;
-        display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s ease;
-    }
-    .btn-reset:hover { background: rgba(255,255,255,0.14); }
+/* Game presets */
+.preset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.preset-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 10px;
+  border-radius: var(--radius-sm);
+  border: 2px solid rgba(99,102,241,0.2);
+  background: var(--bg-glass);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.preset-btn:hover, .preset-btn.active {
+  border-color: var(--accent-primary);
+  background: rgba(99,102,241,0.12);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(99,102,241,0.2);
+}
+.preset-btn .emoji { font-size: 1.5rem; }
 
-    /* ---- Results Cards ---- */
-    .results-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 12px; margin-bottom: 20px;
-    }
-    .result-card {
-        background: rgba(255,255,255,0.03);
-        border: 1px solid var(--border-card);
-        border-radius: var(--radius-md);
-        padding: 16px; text-align: center;
-        transition: all 0.3s ease;
-    }
-    .result-card:hover { border-color: rgba(255,255,255,0.2); }
-    .result-card .rc-icon { font-size: 1.6rem; margin-bottom: 6px; }
-    .result-card .rc-label { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 4px; }
-    .result-card .rc-value {
-        font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 800;
-    }
-    .result-card .rc-sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
-    .rc-blue { color: var(--neon-blue); }
-    .rc-green { color: var(--neon-green); }
-    .rc-purple { color: var(--neon-purple); }
-    .rc-amber { color: var(--color-amber); }
+/* Form */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.form-group label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.form-group input,
+.form-group select {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(99,102,241,0.2);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: border-color 0.3s;
+  outline: none;
+}
+.form-group input:focus,
+.form-group select:focus {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+}
+.form-group select option {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
 
-    /* ---- Chart Container ---- */
-    .chart-container {
-        background: rgba(0,0,0,0.2);
-        border: 1px solid var(--border-card);
-        border-radius: var(--radius-md);
-        padding: 16px; position: relative;
-        height: 400px;
-    }
-    .chart-container canvas { max-height: 360px; }
+/* Toggle */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+.toggle-switch {
+  position: relative;
+  width: 48px;
+  height: 26px;
+  cursor: pointer;
+}
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.1);
+  border-radius: 13px;
+  transition: 0.3s;
+}
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  left: 3px;
+  bottom: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: 0.3s;
+}
+.toggle-switch input:checked + .toggle-slider {
+  background: var(--accent-primary);
+}
+.toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(22px);
+}
+.toggle-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
 
-    /* ---- Probability Table ---- */
-    .prob-table {
-        width: 100%; border-collapse: collapse; margin-top: 12px;
-    }
-    .prob-table th, .prob-table td {
-        padding: 10px 14px; text-align: center;
-        border-bottom: 1px solid var(--border-card);
-        font-size: 0.88rem;
-    }
-    .prob-table th {
-        background: rgba(255,255,255,0.05);
-        font-weight: 700; color: var(--text-secondary);
-    }
-    .prob-table td { color: var(--text-secondary); }
-    .prob-table .highlight { color: var(--neon-green); font-weight: 700; }
+/* Custom fields */
+.custom-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(99,102,241,0.15);
+}
+.custom-fields.hidden { display: none; }
 
-    /* ---- Affiliate Cards ---- */
-    .affiliate-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
-    .affiliate-card {
-        background: rgba(255,255,255,0.03);
-        border: 1px solid var(--border-card);
-        border-radius: var(--radius-md);
-        padding: 20px; text-align: center;
-        transition: all 0.25s ease;
-    }
-    .affiliate-card:hover { transform: translateY(-3px); border-color: rgba(245,158,11,0.4); }
-    .affiliate-card .af-icon { font-size: 2rem; color: var(--color-amber); margin-bottom: 10px; }
-    .affiliate-card h4 { font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 6px; }
-    .affiliate-card p { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 14px; }
-    .btn-affiliate {
-        display: inline-flex; align-items: center; gap: 6px;
-        background: linear-gradient(135deg, #f59e0b, #d97706);
-        color: #000; font-weight: 700; font-size: 0.88rem;
-        padding: 10px 22px; border-radius: 24px; border: none;
-        text-decoration: none; transition: all 0.2s ease;
-        box-shadow: 0 4px 16px rgba(245,158,11,0.3);
-    }
-    .btn-affiliate:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(245,158,11,0.45); }
+/* Buttons */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 16px 32px;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-top: 8px;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(99,102,241,0.4);
+}
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
 
-    /* ---- Ko-fi Widget ---- */
-    .kofi-section { text-align: center; padding: 20px 0; }
-    .kofi-section h3 { font-size: 1.15rem; font-weight: 700; color: #fff; margin-bottom: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; }
-    #kofi-widget-container { display: inline-block; }
+/* Progress */
+.sim-progress {
+  margin-top: 16px;
+  display: none;
+}
+.sim-progress.visible { display: block; }
+.progress-bar {
+  height: 6px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-cyan));
+  border-radius: 3px;
+  width: 0%;
+  transition: width 0.1s;
+}
+.progress-text {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 6px;
+  text-align: center;
+}
 
-    /* ---- Footer SEO Section ---- */
-    .seo-section { padding: 30px 0; }
-    .seo-section h2 {
-        font-family: 'Outfit', 'Noto Sans TC', sans-serif;
-        font-size: 1.5rem; font-weight: 800; color: #fff;
-        margin-bottom: 16px; display: flex; align-items: center; gap: 10px;
-    }
-    .seo-section h3 { font-size: 1.1rem; font-weight: 700; color: #e2e8f0; margin: 16px 0 8px; }
-    .seo-section p { font-size: 0.92rem; color: var(--text-secondary); margin-bottom: 10px; line-height: 1.7; }
-    .seo-section ul { margin: 8px 0 12px 20px; color: var(--text-secondary); }
-    .seo-section li { margin-bottom: 6px; font-size: 0.9rem; }
-    .seo-section .term { font-weight: 700; color: var(--neon-green); }
+/* Results */
+.results-section { display: none; }
+.results-section.visible { display: block; }
 
-    .disclaimer-box {
-        background: rgba(239, 68, 68, 0.06);
-        border: 1px solid rgba(239, 68, 68, 0.2);
-        border-radius: var(--radius-md);
-        padding: 18px 20px; margin-top: 20px;
-    }
-    .disclaimer-box h3 { color: var(--color-red); font-size: 1rem; margin-bottom: 8px; }
-    .disclaimer-box p { font-size: 0.88rem; color: var(--text-muted); line-height: 1.7; }
+/* Stat cards */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.stat-card {
+  background: var(--bg-glass);
+  border: 1px solid rgba(99,102,241,0.15);
+  border-radius: var(--radius-sm);
+  padding: 18px 16px;
+  text-align: center;
+}
+.stat-card .label {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+.stat-card .value {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 900;
+  line-height: 1.2;
+}
+.stat-card .unit {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.stat-card.green .value { color: var(--accent-green); }
+.stat-card.yellow .value { color: var(--accent-gold); }
+.stat-card.red .value { color: var(--accent-red); }
+.stat-card.cyan .value { color: var(--accent-cyan); }
+.stat-card.purple .value { color: var(--accent-secondary); }
+.stat-card.gold .value { color: var(--accent-gold); }
 
-    /* ---- Footer ---- */
-    .main-footer {
-        border-top: 1px solid var(--border-card);
-        background: rgba(9, 13, 22, 0.95);
-        padding: 24px 0; text-align: center; font-size: 0.85rem; color: var(--text-muted);
-    }
-    .footer-links a { color: var(--text-secondary); text-decoration: none; margin: 0 6px; font-weight: 500; }
-    .footer-links a:hover { color: var(--color-blue); }
+/* Chart container */
+.chart-container {
+  position: relative;
+  width: 100%;
+  height: 320px;
+  margin: 16px 0;
+}
 
-    /* ========== RESPONSIVE ========== */
-    @media (max-width: 768px) {
-        .brand-tagline { display: none; }
-        .header-container { justify-content: center; }
-        .hero-title { font-size: 1.7rem; }
-        .hero-subtitle { font-size: 0.9rem; }
-        .params-grid { grid-template-columns: 1fr; }
-        .template-grid { grid-template-columns: 1fr 1fr; }
-        .affiliate-grid { grid-template-columns: 1fr; }
-        .results-grid { grid-template-columns: 1fr 1fr; }
-        .resource-row { grid-template-columns: 1fr; }
-        .chart-container { height: 300px; }
-    }
-    @media (max-width: 480px) {
-        .template-grid { grid-template-columns: 1fr; }
-        .results-grid { grid-template-columns: 1fr; }
-        .hero-title { font-size: 1.4rem; }
-    }
-    </style>
+/* Currency converter */
+.currency-section {
+  border-top: 1px solid rgba(99,102,241,0.15);
+  padding-top: 20px;
+  margin-top: 20px;
+}
+
+/* Amazon cards */
+.amazon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+.amazon-card {
+  background: var(--bg-glass);
+  border: 1px solid rgba(245,158,11,0.2);
+  border-radius: var(--radius-sm);
+  padding: 20px;
+  text-decoration: none;
+  color: var(--text-primary);
+  transition: all 0.3s;
+}
+.amazon-card:hover {
+  border-color: var(--accent-gold);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(245,158,11,0.15);
+}
+.amazon-card h4 {
+  font-size: 0.95rem;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.amazon-card .flag { font-size: 1.2rem; }
+.amazon-card p {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+.amazon-card .cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  color: var(--accent-gold);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+/* Tutorial */
+.tutorial-content h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--accent-cyan);
+  margin: 16px 0 8px;
+}
+.tutorial-content p {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+.tutorial-content ul {
+  padding-left: 20px;
+  margin-bottom: 10px;
+}
+.tutorial-content li {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+/* Disclaimer */
+.disclaimer {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  padding: 16px;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--radius-sm);
+  background: var(--bg-glass);
+}
+
+/* Ko-fi */
+.kofi-section {
+  text-align: center;
+  padding: 30px 20px;
+}
+.kofi-button {
+  background: #72a4f2;
+  color: #fff;
+  padding: 14px 24px;
+  border-radius: 8px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 1rem;
+  transition: all 0.3s;
+  border: 2px solid transparent;
+}
+.kofi-button:hover {
+  background: #5b8de0;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(114,164,242,0.3);
+}
+
+/* Footer */
+.site-footer {
+  text-align: center;
+  padding: 30px 20px;
+  border-top: 1px solid rgba(99,102,241,0.1);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+.site-footer a {
+  color: var(--accent-primary);
+  text-decoration: none;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .hero { padding: 24px 12px 20px; }
+  .card { padding: 16px; }
+  .preset-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .preset-btn { padding: 10px 6px; font-size: 0.72rem; }
+  .preset-btn .emoji { font-size: 1.2rem; }
+  .form-grid { grid-template-columns: 1fr; }
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+  .chart-container { height: 250px; }
+}
+
+/* Loading shimmer */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.loading-text {
+  background: linear-gradient(90deg, var(--text-muted), var(--text-primary), var(--text-muted));
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 2s infinite;
+  font-weight: 600;
+}
+</style>
 </head>
 <body>
 
-<!-- ===== HEADER ===== -->
-<header class="main-header">
-    <div class="container header-container">
-        <div class="brand-box">
-            <div class="brand-logo">
-                <i class="fa-solid fa-bolt brand-icon"></i>
-                GugoPro
-            </div>
-            <span class="brand-tagline">AI-Powered Gacha Analytics</span>
-        </div>
-        <a href="https://gugopro.com" class="btn-back-home">
-            <i class="fa-solid fa-house"></i> 返回 GugoPro 首頁
-        </a>
-    </div>
+<!-- Header -->
+<header class="site-header">
+  <a href="https://gugopro.com" class="btn-back-home">
+    <i class="fa-solid fa-house"></i> 返回 GugoPro 首頁
+  </a>
+  <div class="site-logo">GugoPro</div>
 </header>
 
-<!-- ===== HERO ===== -->
-<section class="hero-section">
-    <div class="container">
-        <div class="hero-badge"><i class="fa-solid fa-chart-line"></i> Gacha Probability Engine</div>
-        <h1 class="hero-title">
-            <span class="gradient-text">手遊抽卡期望值與保底機率計算器</span>
-        </h1>
-        <p class="hero-subtitle">
-            輸入遊戲參數，即時計算累積抽中機率、期望值、50%/95% 把握度所需抽數。
-            支援原神、崩壞星穹鐵道、絕區零、FGO 預設範本，搭配 Chart.js 霓虹曲線圖。
-        </p>
-    </div>
-</section>
+<div class="container">
 
-<!-- ===== MAIN TOOL ===== -->
-<div class="container tool-area">
+  <!-- Hero -->
+  <section class="hero">
+    <h1><i class="fa-solid fa-dice-d20"></i> 手遊抽卡期望值與保底模擬器 v2</h1>
+    <p class="subtitle">蒙特卡羅 10,000 次精準模擬 · 支援多遊戲保底模板 · 課金預算計算</p>
+  </section>
 
-    <!-- Template Selector -->
-    <div class="section-card">
-        <div class="section-title"><i class="fa-solid fa-gamepad" style="color: var(--neon-purple);"></i> 選擇遊戲預設範本</div>
-        <p class="section-subtitle">一鍵載入對應遊戲的抽卡規則，也可切換至自訂模式手動輸入。</p>
-        <div class="template-grid">
-            <div class="template-btn is-active" data-tpl="genshin" onclick="selectTemplate('genshin')">
-                <span class="tpl-check"><i class="fa-solid fa-circle-check"></i></span>
-                <span class="tpl-icon">&#9889;</span>
-                <div class="tpl-name">原神 / 崩壞星穹鐵道</div>
-                <div class="tpl-desc">0.6% · 74抽軟保底 · 90抽硬保底 · 50/50</div>
-            </div>
-            <div class="template-btn" data-tpl="zzz" onclick="selectTemplate('zzz')">
-                <span class="tpl-check"><i class="fa-solid fa-circle-check"></i></span>
-                <span class="tpl-icon">&#9878;</span>
-                <div class="tpl-name">絕區零 (ZZZ)</div>
-                <div class="tpl-desc">0.6% · 74抽軟保底 · 90抽硬保底 · 50/50</div>
-            </div>
-            <div class="template-btn" data-tpl="fgo" onclick="selectTemplate('fgo')">
-                <span class="tpl-check"><i class="fa-solid fa-circle-check"></i></span>
-                <span class="tpl-icon">&#127922;</span>
-                <div class="tpl-name">Fate/Grand Order</div>
-                <div class="tpl-desc">1.0% · 330抽硬保底 · 無軟保底</div>
-            </div>
-            <div class="template-btn" data-tpl="custom" onclick="selectTemplate('custom')">
-                <span class="tpl-check"><i class="fa-solid fa-circle-check"></i></span>
-                <span class="tpl-icon">&#9881;</span>
-                <div class="tpl-name">自訂模式</div>
-                <div class="tpl-desc">手動設定所有抽卡參數</div>
-            </div>
-        </div>
+  <!-- 1. Game Preset -->
+  <section class="card">
+    <div class="card-title"><i class="fa-solid fa-gamepad"></i> 選擇遊戲模板</div>
+    <div class="preset-grid" id="presetGrid">
+      <button class="preset-btn active" data-game="genshin" onclick="loadPreset('genshin')">
+        <span class="emoji">✨</span> 原神 / 崩壞星鐵 / 鳴潮
+      </button>
+      <button class="preset-btn" data-game="arknights" onclick="loadPreset('arknights')">
+        <span class="emoji">⚔️</span> 明日方舟
+      </button>
+      <button class="preset-btn" data-game="bluearchive" onclick="loadPreset('bluearchive')">
+        <span class="emoji">☕</span> 蔚藍檔案 / 賽馬娘
+      </button>
+      <button class="preset-btn" data-game="custom" onclick="loadPreset('custom')">
+        <span class="emoji">⚙️</span> 自訂模式
+      </button>
     </div>
 
-    <!-- Custom Parameters -->
-    <div class="section-card">
-        <div class="section-title"><i class="fa-solid fa-sliders" style="color: var(--neon-blue);"></i> 抽卡參數設定</div>
-        <p class="section-subtitle">根據選擇的範本自動填入，自訂模式下可自由修改。</p>
-        <div class="params-grid">
-            <div class="param-group">
-                <label><i class="fa-solid fa-percent"></i> 基礎 SSR 機率 (%)</label>
-                <input type="number" id="param-base-rate" step="0.1" min="0" max="100" value="0.6" placeholder="例如 0.6">
-            </div>
-            <div class="param-group">
-                <label><i class="fa-solid fa-layer-group"></i> 當前累積抽數</label>
-                <input type="number" id="param-current-pulls" step="1" min="0" value="0" placeholder="已抽次數">
-            </div>
-            <div class="param-group">
-                <label><i class="fa-solid fa-shield-halved"></i> 硬保底上限 (抽)</label>
-                <input type="number" id="param-hard-pity" step="1" min="1" value="90" placeholder="例如 90">
-            </div>
-            <div class="param-group">
-                <label><i class="fa-solid fa-arrow-up"></i> 軟保底觸發抽數</label>
-                <input type="number" id="param-soft-pity" step="1" min="1" value="74" placeholder="例如 74">
-            </div>
-            <div class="param-group">
-                <label><i class="fa-solid fa-chart-line"></i> 每抽遞增機率 (%)</label>
-                <input type="number" id="param-pity-increment" step="0.1" min="0" value="6" placeholder="軟保底後每抽增加%">
-            </div>
-            <div class="param-group">
-                <label><i class="fa-solid fa-gem"></i> 持有抽數 / 資源</label>
-                <input type="number" id="param-pulls-available" step="1" min="0" value="160" placeholder="可用抽數">
-            </div>
-        </div>
-
-        <!-- Toggles -->
+    <div class="form-grid">
+      <div class="form-group">
+        <label>目標數量 (命座)</label>
+        <select id="targetCount">
+          <option value="1">1 張 (C0)</option>
+          <option value="2">2 張 (C1)</option>
+          <option value="3">3 張 (C2)</option>
+          <option value="4">4 張 (C3)</option>
+          <option value="5">5 張 (C4)</option>
+          <option value="6">6 張 (C5)</option>
+          <option value="7">7 張 (C6 滿命)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>目前已抽次數 (水位)</label>
+        <input type="number" id="currentPulls" value="0" min="0" max="200" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>大保底狀態 (下次必中)</label>
         <div class="toggle-row">
-            <span class="toggle-label"><i class="fa-solid fa-star-half-stroke" style="color: var(--color-purple);"></i> UP角色 / 大保底 (50/50 歪後必中)</span>
-            <div class="toggle-switch is-on" id="toggle-pity" onclick="toggleSwitch(this)"></div>
-            <span class="toggle-desc">啟用後將計算歪牌後大保底必中機率</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="isBigPity">
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="toggle-label">上次歪了，下次必中</span>
         </div>
-        <div class="toggle-row">
-            <span class="toggle-label"><i class="fa-solid fa-star-half-stroke" style="color: var(--color-pink);"></i> 模擬大保底已歪 (下次必中)</span>
-            <div class="toggle-switch" id="toggle-guaranteed" onclick="toggleSwitch(this)"></div>
-            <span class="toggle-desc">勾選後視同已歪，下一次獲得 SSR 必為 UP 角色</span>
-        </div>
-
-        <!-- Resource Calculator -->
-        <div style="margin-top: 20px;">
-            <div class="section-title" style="font-size: 1.05rem;"><i class="fa-solid fa-coins" style="color: var(--color-amber);"></i> 資源換算</div>
-            <p class="section-subtitle">輸入持有資源，自動換算為可用抽數。</p>
-            <div class="resource-row" style="margin-bottom: 12px;">
-                <div class="param-group">
-                    <label>原石 / 星瓊 / 抽卡資源</label>
-                    <input type="number" id="res-currency" step="1" min="0" value="0" placeholder="例如 16000" oninput="calcResources()">
-                </div>
-                <div class="param-group">
-                    <label>每抽消耗</label>
-                    <input type="number" id="res-cost" step="1" min="1" value="160" placeholder="例如 160" oninput="calcResources()">
-                </div>
-                <div class="param-group">
-                    <label>免費抽數</label>
-                    <input type="number" id="res-free-pulls" step="1" min="0" value="0" placeholder="例如 10" oninput="calcResources()">
-                </div>
-            </div>
-            <div class="resource-row">
-                <div class="resource-item">
-                    <div class="res-label">資源可換算抽數</div>
-                    <div class="res-value rc-green" id="res-converted">0</div>
-                    <div class="res-unit">抽</div>
-                </div>
-                <div class="resource-item">
-                    <div class="res-label">免費抽數</div>
-                    <div class="res-value rc-blue" id="res-free">0</div>
-                    <div class="res-unit">抽</div>
-                </div>
-                <div class="resource-item">
-                    <div class="res-label">總可用抽數</div>
-                    <div class="res-value rc-amber" id="res-total">160</div>
-                    <div class="res-unit">抽</div>
-                </div>
-            </div>
-        </div>
+      </div>
+      <div class="form-group">
+        <label>模擬次數</label>
+        <select id="simCount">
+          <option value="5000">5,000 次 (快速)</option>
+          <option value="10000" selected>10,000 次 (標準)</option>
+          <option value="50000">50,000 次 (精確)</option>
+        </select>
+      </div>
     </div>
 
-    <!-- Action Buttons -->
-    <div class="section-card" style="text-align: center;">
-        <div class="action-row">
-            <button class="btn-calc" id="btn-calculate"><i class="fa-solid fa-calculator"></i> 計算抽卡機率</button>
-            <button class="btn-reset" id="btn-reset"><i class="fa-solid fa-rotate-left"></i> 重置</button>
-        </div>
+    <!-- Custom fields -->
+    <div class="custom-fields hidden" id="customFields">
+      <div class="form-group">
+        <label>基礎機率 (%)</label>
+        <input type="number" id="baseRate" value="0.6" min="0.01" max="50" step="0.01">
+      </div>
+      <div class="form-group">
+        <label>軟保底開始抽數</label>
+        <input type="number" id="softPityStart" value="74" min="1" max="300">
+      </div>
+      <div class="form-group">
+        <label>軟保底每抽加成 (%)</label>
+        <input type="number" id="softPityRate" value="6.0" min="0.1" max="100" step="0.1">
+      </div>
+      <div class="form-group">
+        <label>硬保底上限 (抽)</label>
+        <input type="number" id="hardPity" value="90" min="1" max="500">
+      </div>
+      <div class="form-group">
+        <label>大保底機制</label>
+        <select id="bigPityMode">
+          <option value="5050">50/50 (歪了下次必中)</option>
+          <option value="guaranteed">100% 保證 UP</option>
+          <option value="none">無大保底</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>天井兌換數 (0=無)</label>
+        <input type="number" id="pityExchange" value="0" min="0" max="300" step="1">
+      </div>
     </div>
+  </section>
 
-    <!-- Results -->
-    <div class="section-card" id="results-section" style="display: none;">
-        <div class="section-title"><i class="fa-solid fa-chart-pie" style="color: var(--neon-green);"></i> 計算結果</div>
+  <!-- Simulate button -->
+  <button class="btn-primary" id="simBtn" onclick="runSimulation()">
+    <i class="fa-solid fa-bolt"></i> 開始蒙特卡羅模擬
+  </button>
 
-        <!-- Summary Cards -->
-        <div class="results-grid">
-            <div class="result-card">
-                <div class="rc-icon rc-green"><i class="fa-solid fa-bullseye"></i></div>
-                <div class="rc-label">期望抽數 (1隻)</div>
-                <div class="rc-value rc-green" id="res-exp-1">—</div>
-                <div class="rc-sub">取得第一隻目標 SSR</div>
-            </div>
-            <div class="result-card">
-                <div class="rc-icon rc-blue"><i class="fa-solid fa-bullseye"></i></div>
-                <div class="rc-label">期望抽數 (6隻)</div>
-                <div class="rc-value rc-blue" id="res-exp-6">—</div>
-                <div class="rc-sub">滿命 / 滿凸所需</div>
-            </div>
-            <div class="result-card">
-                <div class="rc-icon rc-amber"><i class="fa-solid fa-gauge-high"></i></div>
-                <div class="rc-label">50% 把握度</div>
-                <div class="rc-value rc-amber" id="res-p50">—</div>
-                <div class="rc-sub">1隻目標 SSR</div>
-            </div>
-            <div class="result-card">
-                <div class="rc-icon rc-purple"><i class="fa-solid fa-gauge-high"></i></div>
-                <div class="rc-label">95% 把握度</div>
-                <div class="rc-value rc-purple" id="res-p95">—</div>
-                <div class="rc-sub">1隻目標 SSR</div>
-            </div>
-            <div class="result-card">
-                <div class="rc-icon rc-green"><i class="fa-solid fa-check-double"></i></div>
-                <div class="rc-label">當前抽數累積機率</div>
-                <div class="rc-value rc-green" id="res-current-pct">—</div>
-                <div class="rc-sub" id="res-current-label">—</div>
-            </div>
-            <div class="result-card">
-                <div class="rc-icon rc-amber"><i class="fa-solid fa-wallet"></i></div>
-                <div class="rc-label">可用抽數能獲得</div>
-                <div class="rc-value rc-amber" id="res-budget-pct">—</div>
-                <div class="rc-sub" id="res-budget-label">—</div>
-            </div>
+  <!-- Progress -->
+  <div class="sim-progress" id="simProgress">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">準備模擬中...</div>
+  </div>
+
+  <!-- Results -->
+  <div class="results-section" id="resultsSection">
+
+    <!-- Stat cards -->
+    <section class="card" style="margin-top:24px">
+      <div class="card-title"><i class="fa-solid fa-chart-line"></i> 模擬結果摘要</div>
+      <div class="stat-grid" id="statGrid">
+        <div class="stat-card cyan">
+          <div class="label">期望抽數 (平均)</div>
+          <div class="value" id="statAvg">—</div>
+          <div class="unit">抽</div>
         </div>
-
-        <!-- Probability Table -->
-        <div style="overflow-x: auto;">
-            <table class="prob-table" id="prob-table">
-                <thead>
-                    <tr>
-                        <th>目標數量</th>
-                        <th>100抽內機率</th>
-                        <th>180抽內機率</th>
-                        <th>200抽內機率</th>
-                        <th>300抽內機率</th>
-                        <th>400抽內機率</th>
-                    </tr>
-                </thead>
-                <tbody id="prob-table-body">
-                </tbody>
-            </table>
+        <div class="stat-card green">
+          <div class="label">🟢 50% 歐非中位數</div>
+          <div class="value" id="statMedian">—</div>
+          <div class="unit">抽</div>
         </div>
-    </div>
-
-    <!-- Chart -->
-    <div class="section-card" id="chart-section" style="display: none;">
-        <div class="section-title"><i class="fa-solid fa-chart-area" style="color: var(--neon-blue);"></i> 累積抽中機率曲線</div>
-        <p class="section-subtitle">X 軸：抽卡次數 ｜ Y 軸：累積至少抽中 1 隻的機率</p>
-        <div class="chart-container">
-            <canvas id="gacha-chart"></canvas>
+        <div class="stat-card yellow">
+          <div class="label">🟡 80% 建議安全儲備</div>
+          <div class="value" id="statP80">—</div>
+          <div class="unit">抽</div>
         </div>
-    </div>
-
-    <!-- Affiliate Cards -->
-    <div class="section-card">
-        <div class="section-title"><i class="fa-brands fa-amazon" style="color: var(--color-amber);"></i> 精選遊戲周邊與裝備</div>
-        <p class="section-subtitle">想提升遊戲體驗？搜尋精選遊戲周邊與電競裝備，直達 Amazon 全球館。</p>
-        <div class="affiliate-grid">
-            <div class="affiliate-card">
-                <div class="af-icon"><i class="fa-solid fa-headset"></i></div>
-                <h4>美國 Amazon 精選好物</h4>
-                <p>Gaming Gear &amp; Accessories — 搜尋電競耳機、控制器、遊戲周邊與裝備。</p>
-                <a href="https://www.amazon.com/s?k=gaming+gear+and+accessories&tag=9908qq-20" target="_blank" rel="noopener" class="btn-affiliate">
-                    <i class="fa-brands fa-amazon"></i> 前往美國 Amazon 搜尋
-                </a>
-            </div>
-            <div class="affiliate-card">
-                <div class="af-icon"><i class="fa-solid fa-torii-gate"></i></div>
-                <h4>日本 Amazon 精選好物</h4>
-                <p>ゲーム周辺機器 — 搜尋日本亞馬遜遊戲周邊機器與電競裝備。</p>
-                <a href="https://www.amazon.co.jp/s?k=ゲーム+周辺機器&tag=gugopro-22" target="_blank" rel="noopener" class="btn-affiliate">
-                    <i class="fa-brands fa-amazon"></i> 前往日本 Amazon 搜尋
-                </a>
-            </div>
+        <div class="stat-card red">
+          <div class="label">🔴 95% 非酋極限線</div>
+          <div class="value" id="statP95">—</div>
+          <div class="unit">抽</div>
         </div>
-    </div>
+        <div class="stat-card purple">
+          <div class="label">最少抽數</div>
+          <div class="value" id="statMin">—</div>
+          <div class="unit">抽</div>
+        </div>
+        <div class="stat-card gold">
+          <div class="label">最多抽數</div>
+          <div class="value" id="statMax">—</div>
+          <div class="unit">抽</div>
+        </div>
+      </div>
 
-    <!-- Ko-fi Support -->
-    <div id="kofi-section-anchor" class="section-card kofi-section">
-        <h3><i class="fa-solid fa-mug-hot" style="color: #72a4f2;"></i> 贊助開發者 (Powered by Ko-fi)</h3>
-        <a href="https://ko-fi.com/R1K123XRS9" target="_blank" rel="noopener" style="background:#72a4f2; color:#fff; padding:10px 18px; border-radius:8px; text-decoration:none; display:inline-flex; align-items:center; gap:8px; font-weight:bold;">
-            <i class="fa-solid fa-mug-hot"></i> Buy me a coffee
-        </a>
+      <!-- Chart -->
+      <div class="card-title" style="margin-top:16px"><i class="fa-solid fa-chart-area"></i> 累積成功率圖表</div>
+      <div class="chart-container">
+        <canvas id="successChart"></canvas>
+      </div>
+    </section>
+
+    <!-- Currency converter -->
+    <section class="card currency-section">
+      <div class="card-title"><i class="fa-solid fa-coins"></i> 原石 / 課金預算轉換計算器</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>現有原石 / 水晶數量</label>
+          <input type="number" id="currentGems" value="0" min="0" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label>已有抽卡券數量</label>
+          <input type="number" id="currentTickets" value="0" min="0" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label>每抽所需原石</label>
+          <input type="number" id="gemsPerPull" value="160" min="1">
+        </div>
+      </div>
+
+      <div class="stat-grid" style="margin-top:16px">
+        <div class="stat-card cyan">
+          <div class="label">尚缺抽數</div>
+          <div class="value" id="resMissingPulls">—</div>
+          <div class="unit">抽</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="label">尚缺原石</div>
+          <div class="value" id="resMissingGems">—</div>
+          <div class="unit">原石</div>
+        </div>
+        <div class="stat-card yellow">
+          <div class="label">預估費用 (TWD)</div>
+          <div class="value" id="resCostTWD">—</div>
+          <div class="unit">新台幣</div>
+        </div>
+        <div class="stat-card gold">
+          <div class="label">預估費用 (USD)</div>
+          <div class="value" id="resCostUSD">—</div>
+          <div class="unit">美金</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Amazon Cards -->
+  <section class="card">
+    <div class="card-title"><i class="fa-solid fa-cart-shopping"></i> 手遊週邊與電競設備推薦</div>
+    <p style="font-size:0.88rem;color:var(--text-secondary);margin-bottom:14px;">抽卡之餘，也別忘了升級你的遊戲設備！以下為精選高畫質遊戲手機與散熱器：</p>
+    <div class="amazon-grid">
+      <a href="https://www.amazon.com/s?k=gaming+phone+and+cooling+fan&tag=9908qq-20" target="_blank" rel="noopener sponsored" class="amazon-card">
+        <h4><span class="flag">🇺🇸</span> 美國亞馬遜</h4>
+        <p>Gaming Phone &amp; Cooling Fan — 精選散熱風扇與高性能遊戲手機</p>
+        <span class="cta"><i class="fa-solid fa-arrow-right"></i> 前往選購</span>
+      </a>
+      <a href="https://www.amazon.co.jp/s?k=ゲーミングスマホ+冷卻ファン&tag=gugopro-22" target="_blank" rel="noopener sponsored" class="amazon-card">
+        <h4><span class="flag">🇯🇵</span> 日本亞馬遜</h4>
+        <p>ゲーミングスマホ 冷卻ファン — 電競手機與冷卻設備精選</p>
+        <span class="cta"><i class="fa-solid fa-arrow-right"></i> 前往選購</span>
+      </a>
     </div>
+  </section>
+
+  <!-- Tutorial -->
+  <section class="card">
+    <div class="card-title"><i class="fa-solid fa-book-open"></i> 操作教學：軟保底與大小保底機制</div>
+    <div class="tutorial-content">
+      <h3>什麼是軟保底 (Soft Pity)？</h3>
+      <p>軟保底是指當你的抽卡次數達到特定門檻後，每次抽卡的機率會逐步提升。例如原神在 <strong>第 74 抽</strong> 開始，原本 0.6% 的基礎機率會每抽增加 6%，直到第 90 抽的硬保底必定命中。</p>
+      <ul>
+        <li><strong>硬保底 (Hard Pity)</strong>：達到上限抽數後必定獲得目標角色/武器。</li>
+        <li><strong>軟保底 (Soft Pity)</strong>：達到門檻後機率逐步遞增，大幅降低期望抽數。</li>
+        <li><strong>50/50 機制</strong>：命中目標後，有 50% 機率是 UP 角色，50% 機率歪到其他角色。若歪了，下次命中必定為 UP。</li>
+      </ul>
+
+      <h3>如何利用蒙特卡羅模擬計算 C2R1 真實成本？</h3>
+      <p>蒙特卡羅模擬透過大量隨機抽樣來估算複雜機率分佈。本工具每次執行 <strong>10,000 次</strong>獨立抽卡模擬，精確計算：</p>
+      <ul>
+        <li><strong>期望抽數</strong>：所有模擬結果的平均值。</li>
+        <li><strong>50% 中位數</strong>：代表「一般運氣」的抽數門檻。</li>
+        <li><strong>80% 安全線</strong>：80% 的玩家在此抽數內可達成目標，建議作為儲備基準。</li>
+        <li><strong>95% 極限線</strong>：極端非酋情況，建議課金規劃的上限參考。</li>
+      </ul>
+      <p>搭配下方的 <strong>原石預算轉換器</strong>，你可以直接輸入現有資源，立即算出還差多少抽與對應的現金金額。</p>
+    </div>
+  </section>
+
+  <!-- Disclaimer -->
+  <section class="card">
+    <div class="disclaimer">
+      <i class="fa-solid fa-circle-info"></i>
+      <strong>免責聲明：</strong>本工具機率模擬採用蒙特卡羅演算法與各遊戲官方公佈之機制推算，結果僅供抽卡預算規劃參考。實際遊戲內的抽卡結果由遊戲伺服器隨機數生成器決定，本工具無法保證任何特定結果。
+    </div>
+  </section>
+
+  <!-- Ko-fi -->
+  <section class="kofi-section">
+    <p style="color:var(--text-secondary);margin-bottom:14px;font-size:0.9rem;">如果這個工具對你有幫助，歡迎請我喝杯咖啡 ☕</p>
+    <a href="https://ko-fi.com/R1K123XRS9" target="_blank" rel="noopener" class="kofi-button">
+      <i class="fa-solid fa-mug-hot"></i> Buy me a coffee
+    </a>
+  </section>
 
 </div>
 
-<!-- ===== SEO Footer ===== -->
-<div class="container seo-section">
-    <div class="section-card">
-        <h2><i class="fa-solid fa-book-open" style="color: var(--neon-green);"></i> 如何使用抽卡期望值與保底機率計算器？</h2>
-        <p>
-            本工具是一款專為手遊玩家設計的抽卡機率運算引擎，採用精確的機率模型，計算在各種保底機制下的
-            累積抽中機率、期望值與把握度。以下是完整的操作教學：
-        </p>
-
-        <h3>步驟一：選擇遊戲預設範本</h3>
-        <p>
-            在頁面頂部的範本選擇區，點擊對應的遊戲卡片即可一鍵載入該遊戲的抽卡規則。目前支援：
-        </p>
-        <ul>
-            <li><span class="term">原神 (Genshin Impact) / 崩壞星穹鐵道 (Honkai: Star Rail)</span>：基礎 SSR 機率 0.6%，第 74 抽起觸發軟保底（每抽遞增 6%），第 90 抽硬保底必中。UP 角色池採用 50/50 機制，歪牌後下一次必中 UP 角色。</li>
-            <li><span class="term">絕區零 (Zenless Zone Zero)</span>：與原神相同的 0.6% 基礎機率與 74/90 保底機制，同樣採用 50/50 UP 機制。</li>
-            <li><span class="term">Fate/Grand Order (FGO)</span>：SSR 基礎機率 1.0%，330 抽硬保底，無軟保底機制。</li>
-            <li><span class="term">自訂模式</span>：手動設定所有參數，適用於任何遊戲的抽卡模擬。</li>
-        </ul>
-
-        <h3>步驟二：什麼是軟保底與硬保底？</h3>
-        <p>
-            <span class="term">軟保底 (Soft Pity)</span>：指在達到某一抽數後，每抽的實際機率開始遞增的機制。以原神為例，從第 74 抽開始，每多抽一抽，SSR 機率在原基礎上增加約 6%，使得第 90 抽時的實際機率已接近 100%。軟保底大幅降低了玩家在最壞情況下才獲得 SSR 的機率。
-        </p>
-        <p>
-            <span class="term">硬保底 (Hard Pity)</span>：指在達到某一抽數上限時，必定獲得 SSR 的機制。以原神為例，第 90 抽必定獲得 SSR 角色。硬保底是玩家抽卡成本的絕對上限。
-        </p>
-        <p>
-            <span class="term">50/50 與大保底</span>：在 UP 角色池中，獲得 SSR 時有 50% 機率為 UP 角色，50% 機率為其他角色（俗稱「歪」）。若歪牌，下一次獲得 SSR 時必為 UP 角色（大保底）。本工具可設定是否啟用此機制，以及是否已進入大保底狀態。
-        </p>
-
-        <h3>步驟三：理解二項式分佈與機率模型</h3>
-        <p>
-            <span class="term">二項式分佈 (Binomial Distribution)</span>：在每次抽卡結果為獨立事件且固定機率的情況下，抽中 SSR 的次數服從二項式分佈。然而，由於保底機制的存在，每次抽卡的機率並非固定，因此本工具採用 Markov Chain 精確模型來計算。
-        </p>
-        <p>
-            <span class="term">Markov Chain 精確模型</span>：本工具建立以「抽數累積」為狀態的 Markov Chain，精確計算在每一抽獲得 SSR 的機率，進而得出累積機率曲線。此方法比蒙地卡羅模擬更精確，且不依賴隨機抽樣。
-        </p>
-        <p>
-            <span class="term">蒙地卡羅模擬 (Monte Carlo Simulation)</span>：另一種常用的機率估算方法，透過大量隨機模擬抽卡過程來統計結果。本工具採用精確 Markov Chain 模型，因此不需要蒙地卡羅模擬即可得出準確結果。
-        </p>
-
-        <h3>步驟四：解讀計算結果</h3>
-        <p>
-            計算結果包含以下關鍵指標：
-        </p>
-        <ul>
-            <li><span class="term">期望抽數 (Expected Value)</span>：平均需要多少抽才能獲得 1 隻或 6 隻目標 SSR。這是預算規劃的核心參考。</li>
-            <li><span class="term">50% 把握度所需抽數</span>：有 50% 機率在此抽數內至少獲得 1 隻目標 SSR。這是最樂觀的合理預算。</li>
-            <li><span class="term">95% 把握度所需抽數</span>：有 95% 機率在此抽數內至少獲得 1 隻目標 SSR。這是最保守的安全預算。</li>
-            <li><span class="term">累積機率曲線</span>：Chart.js 繪製的霓虹風格曲線圖，視覺化呈現隨抽數增加的累積機率。</li>
-        </ul>
-
-        <h3>常見抽卡專有名詞</h3>
-        <ul>
-            <li><span class="term">SSR (Super Super Rare)</span>：遊戲中最高稀有度的角色或裝備，通常為抽卡的主要目標。</li>
-            <li><span class="term">UP 角色池 (Rate-Up Banner)</span>：特定角色的機率提升活動，UP 角色的出現機率會高於一般 SSR。</li>
-            <li><span class="term">保底 (Pity)</span>：抽卡系統中的安全機制，確保玩家在達到一定抽數後必定獲得高稀有度物品。</li>
-            <li><span class="term">歪 (Loss of 50/50)</span>：在 UP 池中獲得 SSR 但非 UP 角色，需要等待大保底。</li>
-            <li><span class="term">滿命 / 滿凸 (C6 / E6)</span>：同一角色重複獲得 6 次後的最高強化等級。</li>
-            <li><span class="term">原石 / 星瓊</span>：原神與崩壞星穹鐵道中的抽卡貨幣，通常 160 原石/星瓊 = 1 抽。</li>
-        </ul>
-    </div>
-
-    <!-- Disclaimer -->
-    <div class="disclaimer-box">
-        <h3><i class="fa-solid fa-triangle-exclamation"></i> 使用條款與免責聲明 (Disclaimer)</h3>
-        <p>
-            本工具僅供數學機率模擬與消費預算評估使用。計算結果基於公開的抽卡機率資料與數學模型，
-            不代表任何遊戲廠商的官方保證。實際遊戲中的抽卡結果可能因版本更新、活動調整等因素而有所不同。
-            本站不提供任何投資、博彩或法律建議。使用者應自行判斷並承擔使用本工具的一切風險與後果。
-            請理性消費，量力而為。
-        </p>
-    </div>
-</div>
-
-<!-- ===== FOOTER ===== -->
-<footer class="main-footer">
-    <div class="container">
-        <p>&copy; 2026 GugoPro (gugopro.com). All rights reserved. 跨國智能 Web 工具與財經籌碼矩陣。</p>
-        <div class="footer-links">
-            <a href="https://gugopro.com">gugopro.com</a> |
-            <a href="https://shop-ja.gugopro.com" target="_blank">shop-ja.gugopro.com</a> |
-            <a href="https://tarot.gugopro.com" target="_blank">tarot.gugopro.com</a> |
-            <a href="#kofi-section-anchor">贊助與支持</a>
-        </div>
-    </div>
+<!-- Footer -->
+<footer class="site-footer">
+  <p>&copy; 2026 <a href="https://gugopro.com">GugoPro</a>. All rights reserved. | Built with ❤️</p>
 </footer>
 
-
-
 <script>
-(function() {
-'use strict';
-
-/* ===================================================================
-   GACHA ODDS CALCULATOR — Markov Chain Precision Model
-   =================================================================== */
-
-// ---- Template Presets ----
-var TEMPLATES = {
-    genshin: { baseRate: 0.6, softPity: 74, hardPity: 90, increment: 6, hasPity: true },
-    zzz:     { baseRate: 0.6, softPity: 74, hardPity: 90, increment: 6, hasPity: true },
-    fgo:     { baseRate: 1.0, softPity: 0,   hardPity: 330, increment: 0, hasPity: false },
-    custom:  { baseRate: 0.6, softPity: 74, hardPity: 90, increment: 6, hasPity: true }
+// ===== GAME PRESETS =====
+const PRESETS = {
+  genshin: {
+    baseRate: 0.6,
+    softPityStart: 74,
+    softPityRate: 6.0,
+    hardPity: 90,
+    bigPityMode: '5050',
+    pityExchange: 0,
+    gemsPerPull: 160
+  },
+  arknights: {
+    baseRate: 2.0,
+    softPityStart: 50,
+    softPityRate: 2.0,
+    hardPity: 99,
+    bigPityMode: 'none',
+    pityExchange: 0,
+    gemsPerPull: 600
+  },
+  bluearchive: {
+    baseRate: 0.7,
+    softPityStart: 0,
+    softPityRate: 0,
+    hardPity: 200,
+    bigPityMode: 'guaranteed',
+    pityExchange: 200,
+    gemsPerPull: 120
+  },
+  custom: {
+    baseRate: 0.6,
+    softPityStart: 74,
+    softPityRate: 6.0,
+    hardPity: 90,
+    bigPityMode: '5050',
+    pityExchange: 0,
+    gemsPerPull: 160
+  }
 };
 
-var currentTemplate = 'genshin';
+let currentPreset = 'genshin';
+let chartInstance = null;
 
-// ---- DOM Helpers ----
-function $(id) { return document.getElementById(id); }
+// ===== LOAD PRESET =====
+function loadPreset(game) {
+  currentPreset = game;
+  // Update active button
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.preset-btn[data-game="' + game + '"]').classList.add('active');
 
-function val(id) { return parseFloat($(id).value) || 0; }
+  const p = PRESETS[game];
+  const customFields = document.getElementById('customFields');
 
-// ---- Template Selection ----
-function selectTemplate(name) {
-    currentTemplate = name;
-    var btns = document.querySelectorAll('.template-btn');
-    btns.forEach(function(b) { b.classList.remove('is-active'); });
-    var target = document.querySelector('.template-btn[data-tpl="' + name + '"]');
-    if (target) target.classList.add('active');
-
-    var tpl = TEMPLATES[name];
-    if (name !== 'custom') {
-        $('param-base-rate').value = tpl.baseRate;
-        $('param-soft-pity').value = tpl.softPity;
-        $('param-hard-pity').value = tpl.hardPity;
-        $('param-pity-increment').value = tpl.increment;
-
-        var pitToggle = $('toggle-pity');
-        if (tpl.hasPity) {
-            pitToggle.classList.add('is-on');
-        } else {
-            pitToggle.classList.remove('is-on');
-        }
-    }
+  if (game === 'custom') {
+    customFields.classList.remove('hidden');
+    document.getElementById('baseRate').value = p.baseRate;
+    document.getElementById('softPityStart').value = p.softPityStart;
+    document.getElementById('softPityRate').value = p.softPityRate;
+    document.getElementById('hardPity').value = p.hardPity;
+    document.getElementById('bigPityMode').value = p.bigPityMode;
+    document.getElementById('pityExchange').value = p.pityExchange;
+    document.getElementById('gemsPerPull').value = p.gemsPerPull;
+  } else {
+    customFields.classList.add('hidden');
+    document.getElementById('gemsPerPull').value = p.gemsPerPull;
+  }
 }
-window.selectTemplate = selectTemplate;
 
-// ---- Toggle Switch ----
-function toggleSwitch(el) {
-    el.classList.toggle('is-on');
-}
-window.toggleSwitch = toggleSwitch;
+// ===== GET CURRENT CONFIG =====
+function getConfig() {
+  const game = currentPreset;
+  const p = PRESETS[game];
 
-// ---- Resource Calculator ----
-function calcResources() {
-    var currency = val('res-currency');
-    var cost = val('res-cost') || 160;
-    var free = val('res-free-pulls');
-    var converted = cost > 0 ? Math.floor(currency / cost) : 0;
-    var total = converted + free;
-
-    $('res-converted').textContent = converted;
-    $('res-free').textContent = free;
-    $('res-total').textContent = total;
-
-    // Sync to available pulls
-    $('param-pulls-available').value = total;
-}
-window.calcResources = calcResources;
-
-// ---- Get Current Params ----
-function getParams() {
+  if (game === 'custom') {
     return {
-        baseRate: val('param-base-rate') || 0.6,
-        currentPulls: val('param-current-pulls') || 0,
-        hardPity: val('param-hard-pity') || 90,
-        softPity: val('param-soft-pity') || 0,
-        increment: val('param-pity-increment') || 0,
-        availablePulls: val('param-pulls-available') || 0,
-        usePity: $('toggle-pity').classList.contains('is-on'),
-        guaranteed: $('toggle-guaranteed').classList.contains('is-on')
+      baseRate: parseFloat(document.getElementById('baseRate').value) || 0.6,
+      softPityStart: parseInt(document.getElementById('softPityStart').value) || 74,
+      softPityRate: parseFloat(document.getElementById('softPityRate').value) || 6.0,
+      hardPity: parseInt(document.getElementById('hardPity').value) || 90,
+      bigPityMode: document.getElementById('bigPityMode').value,
+      pityExchange: parseInt(document.getElementById('pityExchange').value) || 0,
+      gemsPerPull: parseInt(document.getElementById('gemsPerPull').value) || 160
     };
+  }
+
+  return {
+    baseRate: p.baseRate,
+    softPityStart: p.softPityStart,
+    softPityRate: p.softPityRate,
+    hardPity: p.hardPity,
+    bigPityMode: p.bigPityMode,
+    pityExchange: p.pityExchange,
+    gemsPerPull: p.gemsPerPull
+  };
 }
 
-// ---- Calculate SSR probability at pull N (considering pity) ----
-function getPityRate(n, params) {
-    var rate = params.baseRate;
-    if (params.usePity && params.softPity > 0 && n >= params.softPity) {
-        rate += params.increment * (n - params.softPity + 1);
+// ===== SINGLE PULL (returns object) =====
+function singlePull(pullNum, config, isBigPityActive) {
+  var baseRate = config.baseRate;
+  var softPityStart = config.softPityStart;
+  var softPityRate = config.softPityRate;
+  var hardPity = config.hardPity;
+  var bigPityMode = config.bigPityMode;
+
+  // If at hard pity, guaranteed hit
+  if (pullNum >= hardPity) {
+    if (bigPityMode === '5050' && !isBigPityActive) {
+      var isUp = Math.random() < 0.5;
+      return { hit: true, isUp: isUp };
     }
-    if (n >= params.hardPity) {
-        rate = 100;
-    }
-    return Math.min(rate / 100, 1);
+    return { hit: true, isUp: true };
+  }
+
+  // Calculate rate for this pull
+  var rate = baseRate / 100;
+
+  // Apply soft pity
+  if (softPityStart > 0 && pullNum >= softPityStart) {
+    var extraPulls = pullNum - softPityStart;
+    rate += (extraPulls + 1) * (softPityRate / 100);
+  }
+
+  // Cap at 100%
+  rate = Math.min(rate, 1.0);
+
+  // Roll
+  var hit = Math.random() < rate;
+
+  if (!hit) return { hit: false, isUp: false };
+
+  // If hit, determine if UP or not
+  if (bigPityMode === 'guaranteed' || isBigPityActive) {
+    return { hit: true, isUp: true };
+  } else if (bigPityMode === 'none') {
+    return { hit: true, isUp: true };
+  } else {
+    // 50/50
+    var isUp = Math.random() < 0.5;
+    return { hit: true, isUp: isUp };
+  }
 }
 
-// ---- Markov Chain: cumulative probability of getting at least 1 SSR in N pulls ----
-function calcCumulativeProb(params, maxPulls) {
-    // state[i] = probability of NOT having obtained SSR after i pulls
-    // We track: P(not got SSR after i pulls, starting from 0 accumulated)
-    // For simple pity (no 50/50): just track "got SSR or not"
-    // With 50/50 + guarantee: we need to track guarantee state
+// ===== SIMULATE ONE RUN (until target reached) =====
+function simulateOneRun(config, targetCount, startPulls, isBigPity) {
+  var currentPulls = startPulls;
+  var hits = 0;
+  var bigPityState = isBigPity;
+  var hasExchange = config.pityExchange > 0;
+  var exchangeCounter = 0;
 
-    var baseRate = params.baseRate / 100;
-    var hardPity = params.hardPity;
-    var softPity = params.softPity;
-    var increment = params.increment / 100;
-    var usePity = params.usePity;
-    var guaranteed = params.guaranteed;
+  while (hits < targetCount) {
+    currentPulls++;
+    exchangeCounter++;
 
-    if (!usePity) {
-        // Simple case: fixed rate, hard pity only
-        var probNoSSR = 1;
-        var cumulative = [];
-        for (var i = 1; i <= maxPulls; i++) {
-            var rate = baseRate;
-            if (i >= hardPity) rate = 1;
-            probNoSSR *= (1 - rate);
-            cumulative.push(1 - probNoSSR);
-        }
-        return cumulative;
+    // Check exchange (天井)
+    if (hasExchange && exchangeCounter >= config.pityExchange) {
+      hits++;
+      exchangeCounter = 0;
+      bigPityState = false;
+      continue;
     }
 
-    // With pity: track state (accumulated pulls since last SSR)
-    // For 50/50: also track whether guaranteed
-    // State: [accumulatedPity][isGuaranteed] -> probability
+    var result = singlePull(currentPulls, config, bigPityState);
 
-    var maxState = Math.max(hardPity, 1) + 1;
-    // probNotGot[acc][guar] = probability of being in this state (not having gotten target SSR)
-    // We use a simplified approach: simulate pull-by-pull with state probabilities
-
-    // For "at least 1 SSR" (considering 50/50):
-    // When we get an SSR, 50% it's the target (if not guaranteed)
-    // If guaranteed, 100% it's the target
-
-    // Track: prob of being in each state (not having gotten target yet)
-    // States indexed by: accumulated pity pulls (0..hardPity)
-    // We need separate tracking for guaranteed vs not guaranteed
-
-    // Simplified: use the standard approach of tracking cumulative probability
-    // P(at least 1 target SSR in n pulls) using recursive Markov chain
-
-    // For each pull i, the probability of getting SSR is pityRate(i_in_cycle)
-    // We need to track: cycle position (pity counter resets after each SSR)
-    // and whether we're in guaranteed state (for 50/50)
-
-    // State: [pityCounter][isGuaranteed]
-    // pityCounter: 0..hardPity
-    // isGuaranteed: 0 or 1
-
-    // Use iterative approach
-    var size = (hardPity + 1) * 2;
-    var prob = new Array(size).fill(0);
-    // Initial state: pityCounter=0, guaranteed=guaranteed_start
-    var startIdx = 0 * 2 + (guaranteed ? 1 : 0);
-    prob[startIdx] = 1;
-
-    var probGotTarget = 0; // cumulative probability of having gotten at least 1 target SSR
-    var cumulative = [];
-
-    for (var step = 1; step <= maxPulls; step++) {
-        var newProb = new Array(size).fill(0);
-        var stepGotTarget = 0;
-
-        for (var pc = 0; pc <= hardPity; pc++) {
-            for (var g = 0; g <= 1; g++) {
-                var idx = pc * 2 + g;
-                if (prob[idx] < 1e-15) continue;
-
-                // Calculate SSR rate at this pity level
-                // Actual pull number in cycle = pc + 1 (1-indexed within cycle)
-                var pullInCycle = pc + 1;
-                var rate = baseRate;
-                if (softPity > 0 && pullInCycle >= softPity) {
-                    rate += increment * (pullInCycle - softPity + 1);
-                }
-                if (pullInCycle >= hardPity) {
-                    rate = 1;
-                }
-                rate = Math.min(rate, 1);
-
-                var pNoSSR = 1 - rate;
-                var pSSR = rate;
-
-                // If we don't get SSR: move to next pity counter
-                if (pullInCycle < hardPity) {
-                    var nextPC = pc + 1;
-                    newProb[nextPC * 2 + g] += prob[idx] * pNoSSR;
-                } else {
-                    // At hard pity, we must get SSR, so pNoSSR = 0
-                    newProb[nextPC * 2 + g] += prob[idx] * pNoSSR; // will be 0
-                }
-
-                // If we get SSR:
-                var isTarget;
-                if (g === 1) {
-                    isTarget = 1; // guaranteed
-                } else {
-                    isTarget = 0.5; // 50/50
-                }
-
-                // SSR is target
-                stepGotTarget += prob[idx] * pSSR * isTarget;
-
-                // SSR is NOT target (only possible if not guaranteed)
-                if (g === 0) {
-                    // Went from not-guaranteed to guaranteed, reset pity counter
-                    newProb[0 * 2 + 1] += prob[idx] * pSSR * (1 - isTarget);
-                }
-
-                // SSR is target -> absorbed state (we've gotten our target)
-                // Don't add back to prob (it's absorbed)
-            }
-        }
-
-        prob = newProb;
-        probGotTarget += stepGotTarget;
-        // Clamp
-        probGotTarget = Math.min(probGotTarget, 1);
-        cumulative.push(probGotTarget);
+    if (result.hit) {
+      if (bigPityState || result.isUp) {
+        // Got UP character
+        hits++;
+        bigPityState = false;
+        exchangeCounter = 0;
+      } else {
+        // Got off-banner (50/50 lost)
+        bigPityState = true;
+      }
     }
+  }
 
-    return cumulative;
+  return currentPulls;
 }
 
-// ---- Calculate expected pulls for N targets ----
-function calcExpectedPulls(params, targetCount) {
-    // Use Markov chain to compute expected pulls
-    // For 1 target: straightforward
-    // For N targets: sum of expected pulls for each (geometric-like with pity)
+// ===== RUN FULL SIMULATION =====
+function runSimulation() {
+  var config = getConfig();
+  var targetCount = parseInt(document.getElementById('targetCount').value) || 1;
+  var startPulls = parseInt(document.getElementById('currentPulls').value) || 0;
+  var isBigPity = document.getElementById('isBigPity').checked;
+  var simCount = parseInt(document.getElementById('simCount').value) || 10000;
 
-    // We'll use the cumulative probability to find expected value
-    // E[X] = sum of (1 - CDF(k)) for k = 0, 1, 2, ...
-    // But since we have a finite hard pity, we can compute exactly
+  // UI updates
+  var btn = document.getElementById('simBtn');
+  var progress = document.getElementById('simProgress');
+  var progressFill = document.getElementById('progressFill');
+  var progressText = document.getElementById('progressText');
 
-    // Alternative: direct computation using state-based expected value
-    // This is more complex; use approximation via cumulative prob
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading-text"><i class="fa-solid fa-spinner fa-spin"></i> 模擬進行中...</span>';
+  progress.classList.add('visible');
 
-    // For simplicity, use: E = sum_{k=0}^{inf} (1 - P(X <= k))
-    // Truncate at some reasonable max (e.g., 2000 pulls)
+  var results = [];
+  var batchSize = Math.max(100, Math.floor(simCount / 20));
+  var completed = 0;
 
-    var maxIter = 2000;
-    var cum = calcCumulativeProb(params, maxIter);
-    var expected = 0;
-    for (var k = 0; k < maxIter; k++) {
-        expected += (1 - cum[k]);
+  function runBatch() {
+    var end = Math.min(completed + batchSize, simCount);
+    var i;
+    for (i = completed; i < end; i++) {
+      results.push(simulateOneRun(config, targetCount, startPulls, isBigPity));
     }
+    completed = end;
+    var pct = Math.round((completed / simCount) * 100);
+    progressFill.style.width = pct + '%';
+    progressText.textContent = '已完成 ' + completed.toLocaleString() + ' / ' + simCount.toLocaleString() + ' 次模擬 (' + pct + '%)';
 
-    if (targetCount > 1) {
-        // For multiple targets with 50/50: each target after first may need different expected
-        // First target: normal expectation (with 50/50)
-        // Second+ targets: always guaranteed (since after getting 1, we know the 50/50 outcome)
-        // Actually: after getting 1 target, the next SSR has 50/50 again (unless we track state)
-
-        // More accurate: simulate state transitions
-        // After getting 1st target: state is "just got SSR, not guaranteed for next"
-        // So expected for each additional target ≈ same as first (due to 50/50 memorylessness)
-
-        // But actually after getting 1st SSR (which was the target), the next 50/50 is fresh
-        // So expected pulls for each target ≈ same
-
-        expected = expected * targetCount;
+    if (completed < simCount) {
+      setTimeout(runBatch, 0);
+    } else {
+      finishSimulation(results, targetCount, config);
     }
+  }
 
-    return expected;
+  runBatch();
 }
 
-// ---- Find pulls needed for target probability ----
-function findPullsForProb(params, targetProb) {
-    var maxIter = 2000;
-    var cum = calcCumulativeProb(params, maxIter);
-    for (var k = 0; k < maxIter; k++) {
-        if (cum[k] >= targetProb) return k + 1;
-    }
-    return maxIter;
+function finishSimulation(results, targetCount, config) {
+  // Sort for percentile
+  results.sort(function(a, b) { return a - b; });
+
+  var len = results.length;
+  var sum = 0;
+  var i;
+  for (i = 0; i < len; i++) { sum += results[i]; }
+  var avg = sum / len;
+
+  var min = results[0];
+  var max = results[len - 1];
+  var median = results[Math.floor(len * 0.50)];
+  var p80 = results[Math.floor(len * 0.80)];
+  var p95 = results[Math.floor(len * 0.95)];
+
+  // Update stat cards
+  document.getElementById('statAvg').textContent = avg.toFixed(1);
+  document.getElementById('statMedian').textContent = median;
+  document.getElementById('statP80').textContent = p80;
+  document.getElementById('statP95').textContent = p95;
+  document.getElementById('statMin').textContent = min;
+  document.getElementById('statMax').textContent = max;
+
+  // Build cumulative probability data
+  var maxPulls = results[len - 1];
+  var step = Math.max(1, Math.floor(maxPulls / 200));
+  var labels = [];
+  var data = [];
+  var ri = 0;
+  var pulls;
+
+  for (pulls = 0; pulls <= maxPulls; pulls += step) {
+    labels.push(pulls);
+    while (ri < len && results[ri] <= pulls) { ri++; }
+    var pct = ((ri / len) * 100).toFixed(2);
+    data.push(parseFloat(pct));
+  }
+
+  // Update currency converter
+  updateCurrency(results, targetCount, config);
+
+  // Draw chart
+  drawChart(labels, data);
+
+  // Show results
+  document.getElementById('resultsSection').classList.add('visible');
+
+  // Reset button
+  var btn = document.getElementById('simBtn');
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fa-solid fa-bolt"></i> 重新模擬';
+  document.getElementById('simProgress').classList.remove('visible');
+
+  // Scroll to results
+  document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-// ---- Main Calculation ----
-var gachaChart = null;
+// ===== CURRENCY CONVERTER =====
+function updateCurrency(results, targetCount, config) {
+  var len = results.length;
+  var sum = 0;
+  var i;
+  for (i = 0; i < len; i++) { sum += results[i]; }
+  var avg = sum / len;
 
-function runCalculation() {
-    var params = getParams();
+  var currentGems = parseInt(document.getElementById('currentGems').value) || 0;
+  var currentTickets = parseInt(document.getElementById('currentTickets').value) || 0;
+  var gemsPerPull = config.gemsPerPull;
 
-    // Sync available pulls from resource calc
-    params.availablePulls = val('param-pulls-available') || 0;
+  var totalAvailablePulls = Math.floor(currentGems / gemsPerPull) + currentTickets;
+  var neededPulls = Math.max(0, Math.ceil(avg) - totalAvailablePulls);
+  var neededGems = neededPulls * gemsPerPull;
 
-    var maxPulls = 500;
-    var cum1 = calcCumulativeProb(params, maxPulls);
+  // Rough pricing estimates
+  // TWD: ~30 TWD per pull (rough estimate for mobile game packs)
+  var costTWD = neededPulls * 30;
+  // USD: ~$1.00 per pull
+  var costUSD = neededPulls * 1.0;
 
-    // Expected pulls for 1 target
-    var exp1 = calcExpectedPulls(params, 1);
-
-    // Expected pulls for 6 targets (with 50/50 consideration)
-    // More accurate: first target uses 50/50, subsequent targets alternate
-    // Expected for 6 = exp(1st) + exp(2nd) + ... + exp(6th)
-    // With 50/50: exp(n-th target) varies by position
-    // Simplified: use simulation for 6 targets
-    var exp6 = simulateExpectedMulti(params, 6);
-
-    // 50% probability pulls
-    var p50 = findPullsForProb(params, 0.5);
-
-    // 95% probability pulls
-    var p95 = findPullsForProb(params, 0.95);
-
-    // Current pulls probability
-    var currentProb = 0;
-    var currentPulls = params.currentPulls;
-    if (currentPulls > 0 && currentPulls <= maxPulls) {
-        currentProb = cum1[currentPulls - 1];
-    }
-
-    // Available pulls probability
-    var availProb = 0;
-    var availPulls = params.availablePulls;
-    if (availPulls > 0 && availPulls <= maxPulls) {
-        availProb = cum1[availPulls - 1];
-    }
-
-    // Update DOM
-    $('results-section').style.display = 'block';
-    $('chart-section').style.display = 'block';
-
-    $('res-exp-1').textContent = exp1.toFixed(1);
-    $('res-exp-6').textContent = exp6.toFixed(1);
-    $('res-p50').textContent = p50 + ' 抽';
-    $('res-p95').textContent = p95 + ' 抽';
-
-    $('res-current-pct').textContent = (currentProb * 100).toFixed(1) + '%';
-    $('res-current-label').textContent = '已抽 ' + currentPulls + ' 次';
-
-    $('res-budget-pct').textContent = (availProb * 100).toFixed(1) + '%';
-    $('res-budget-label').textContent = '可用 ' + availPulls + ' 抽';
-
-    // Probability table
-    var targets = [1, 2, 6];
-    var pullMarks = [100, 180, 200, 300, 400];
-    var tbody = $('prob-table-body');
-    tbody.innerHTML = '';
-
-    targets.forEach(function(t) {
-        var tr = document.createElement('tr');
-        var tdName = document.createElement('td');
-        tdName.textContent = t + ' 隻';
-        tdName.style.fontWeight = '700';
-        tr.appendChild(tdName);
-
-        pullMarks.forEach(function(pm) {
-            var td = document.createElement('td');
-            var pct = calcMultiTargetProb(params, pm, t);
-            td.textContent = (pct * 100).toFixed(1) + '%';
-            if (pct >= 0.95) td.classList.add('highlight');
-            tr.appendChild(td);
-        });
-
-        tbody.appendChild(tr);
-    });
-
-    // Draw chart
-    drawChart(cum1, params);
-
-    // GA4 event
-    if (typeof gtag === 'function') {
-        gtag('event', 'gacha_calculation', {
-            'event_category': 'tool',
-            'event_label': currentTemplate
-        });
-    }
+  document.getElementById('resMissingPulls').textContent = neededPulls;
+  document.getElementById('resMissingGems').textContent = neededGems.toLocaleString();
+  document.getElementById('resCostTWD').textContent = '$' + costTWD.toLocaleString();
+  document.getElementById('resCostUSD').textContent = '$' + costUSD.toFixed(0);
 }
 
-// ---- Multi-target probability (simplified) ----
-function calcMultiTargetProb(params, pulls, targetCount) {
-    // For 1 target: use cumulative directly
-    if (targetCount === 1) {
-        var cum = calcCumulativeProb(params, pulls);
-        return cum[pulls - 1] || 0;
-    }
+// ===== CHART =====
+function drawChart(labels, data) {
+  var ctx = document.getElementById('successChart').getContext('2d');
 
-    // For multiple targets: simulate
-    // Simplified approach: use geometric approximation
-    // Each "success" resets the pity counter
-    // With 50/50: need to track guarantee state
+  if (chartInstance) {
+    chartInstance.destroy();
+  }
 
-    // Use Markov chain simulation for multi-target
-    var maxState = params.hardPity + 1;
-    var size = maxState * 2; // [pityCounter][guaranteed]
-
-    // Track probability of having gotten exactly k targets
-    // Use DP: prob[step][pityCounter][guaranteed][targetsGotten]
-    // This is expensive; use simplified approach
-
-    // Alternative: approximate using expected value and variance
-    // For 2 targets: P(at least 2 in N pulls) ≈ P(at least 2 independent cycles fit in N)
-    // Each cycle: expected length = exp1, then next cycle starts fresh with 50/50
-
-    // Use a recursive Markov chain for multiple targets
-    return simulateMultiTargetProb(params, pulls, targetCount);
-}
-
-function simulateMultiTargetProb(params, pulls, targetCount) {
-    // State: [pityCounter][guaranteed][targetsGotten]
-    // This is computationally expensive for large target counts
-    // Use Monte Carlo approximation for multi-target
-
-    var simulations = 50000;
-    var successCount = 0;
-
-    for (var sim = 0; sim < simulations; sim++) {
-        var targets = 0;
-        var pity = 0;
-        var guaranteed = params.guaranteed;
-
-        for (var p = 1; p <= pulls; p++) {
-            if (targets >= targetCount) break;
-
-            // Calculate rate
-            var rate = params.baseRate / 100;
-            if (params.usePity && params.softPity > 0 && pity >= params.softPity - 1) {
-                rate += (params.increment / 100) * (pity - params.softPity + 2);
-            }
-            if (pity >= params.hardPity - 1) {
-                rate = 1;
-            }
-            rate = Math.min(rate, 1);
-
-            var roll = Math.random();
-            if (roll < rate) {
-                // Got SSR
-                var isTarget = guaranteed ? 1 : (Math.random() < 0.5 ? 1 : 0);
-                if (isTarget) {
-                    targets++;
-                    // After getting target, next is 50/50 (not guaranteed)
-                    guaranteed = false;
-                } else {
-                    // Got non-target SSR, now guaranteed
-                    guaranteed = true;
-                }
-                pity = 0;
-            } else {
-                pity++;
-            }
-        }
-
-        if (targets >= targetCount) successCount++;
-    }
-
-    return successCount / simulations;
-}
-
-function simulateExpectedMulti(params, targetCount) {
-    var simulations = 50000;
-    var totalPulls = 0;
-
-    for (var sim = 0; sim < simulations; sim++) {
-        var targets = 0;
-        var pity = 0;
-        var guaranteed = params.guaranteed;
-        var pulls = 0;
-
-        while (targets < targetCount && pulls < 5000) {
-            pulls++;
-
-            var rate = params.baseRate / 100;
-            if (params.usePity && params.softPity > 0 && pity >= params.softPity - 1) {
-                rate += (params.increment / 100) * (pity - params.softPity + 2);
-            }
-            if (pity >= params.hardPity - 1) {
-                rate = 1;
-            }
-            rate = Math.min(rate, 1);
-
-            var roll = Math.random();
-            if (roll < rate) {
-                var isTarget = guaranteed ? 1 : (Math.random() < 0.5 ? 1 : 0);
-                if (isTarget) {
-                    targets++;
-                    guaranteed = false;
-                } else {
-                    guaranteed = true;
-                }
-                pity = 0;
-            } else {
-                pity++;
-            }
-        }
-
-        totalPulls += pulls;
-    }
-
-    return totalPulls / simulations;
-}
-
-// ---- Chart Drawing ----
-function drawChart(cumulative, params) {
-    var ctx = $('gacha-chart');
-    if (!ctx) return;
-
-    var labels = [];
-    var data = [];
-    var data6 = [];
-
-    // Show up to 300 pulls or params.hardPity * 4, whichever is larger
-    var showMax = Math.max(300, params.hardPity * 3);
-    if (showMax > cumulative.length) showMax = cumulative.length;
-
-    for (var i = 0; i < showMax; i++) {
-        labels.push(i + 1);
-        data.push(cumulative[i]);
-    }
-
-    // Calculate cumulative for 6 targets at same pull counts
-    // Approximate: use the multi-target simulation for a few key points
-    // For chart: just show 1-target curve
-
-    if (gachaChart) {
-        gachaChart.destroy();
-    }
-
-    // Chart.js neon theme
-    gachaChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: '累積抽中機率 (1隻)',
-                data: data,
-                borderColor: '#00ff88',
-                backgroundColor: 'rgba(0, 255, 136, 0.08)',
-                borderWidth: 2.5,
-                fill: true,
-                tension: 0.3,
-                pointRadius: 0,
-                pointHoverRadius: 5,
-                pointHoverBackgroundColor: '#00ff88',
-            }]
+  chartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: '累積成功概率 (%)',
+        data: data,
+        borderColor: '#6366f1',
+        backgroundColor: 'rgba(99, 102, 241, 0.15)',
+        fill: true,
+        tension: 0.4,
+        borderWidth: 2.5,
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        pointHoverBackgroundColor: '#6366f1',
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 800 },
+      plugins: {
+        legend: {
+          labels: { color: '#94a3b8', font: { size: 12 } }
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: {
-                intersect: false,
-                mode: 'index',
-            },
-            plugins: {
-                legend: {
-                    labels: { color: '#cbd5e1', font: { size: 12, family: "'Inter', 'Noto Sans TC'" } }
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                    titleColor: '#f8fafc',
-                    bodyColor: '#cbd5e1',
-                    borderColor: 'rgba(255,255,255,0.1)',
-                    borderWidth: 1,
-                    callbacks: {
-                        label: function(context) {
-                            return '累積機率: ' + (context.parsed.y * 100).toFixed(1) + '%';
-                        }
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    title: { display: true, text: '抽卡次數', color: '#94a3b8', font: { size: 12, family: "'Inter', 'Noto Sans TC'" } },
-                    ticks: { color: '#94a3b8', maxTicksLimit: 15, font: { size: 11 } },
-                    grid: { color: 'rgba(255,255,255,0.04)' }
-                },
-                y: {
-                    title: { display: true, text: '累積機率 (%)', color: '#94a3b8', font: { size: 12, family: "'Inter', 'Noto Sans TC'" } },
-                    ticks: {
-                        color: '#94a3b8',
-                        font: { size: 11 },
-                        callback: function(value) { return (value * 100).toFixed(0) + '%'; }
-                    },
-                    min: 0,
-                    max: 1,
-                    grid: { color: 'rgba(255,255,255,0.04)' }
-                }
-            }
+        tooltip: {
+          backgroundColor: 'rgba(17, 24, 39, 0.95)',
+          titleColor: '#f1f5f9',
+          bodyColor: '#e2e8f0',
+          borderColor: '#6366f1',
+          borderWidth: 1,
+          callbacks: {
+            title: function(items) { return '抽數: ' + items[0].label; },
+            label: function(item) { return '成功率: ' + item.raw + '%'; }
+          }
         }
-    });
+      },
+      scales: {
+        x: {
+          title: { display: true, text: '消耗抽數', color: '#94a3b8', font: { size: 12 } },
+          ticks: { color: '#64748b', maxTicksLimit: 10 },
+          grid: { color: 'rgba(255,255,255,0.04)' }
+        },
+        y: {
+          title: { display: true, text: '累積概率 (%)', color: '#94a3b8', font: { size: 12 } },
+          min: 0,
+          max: 100,
+          ticks: { color: '#64748b', stepSize: 20 },
+          grid: { color: 'rgba(255,255,255,0.04)' }
+        }
+      }
+    }
+  });
 }
-
-// ---- Reset ----
-function resetAll() {
-    selectTemplate('genshin');
-    $('param-current-pulls').value = 0;
-    $('param-pulls-available').value = 160;
-    $('res-currency').value = 0;
-    $('res-cost').value = 160;
-    $('res-free-pulls').value = 0;
-    $('toggle-guaranteed').classList.remove('is-on');
-    $('results-section').style.display = 'none';
-    $('chart-section').style.display = 'none';
-    calcResources();
-    if (gachaChart) { gachaChart.destroy(); gachaChart = null; }
-}
-
-// ---- Init ----
-function init() {
-    calcResources();
-    $('btn-calculate').addEventListener('click', runCalculation);
-    $('btn-reset').addEventListener('click', resetAll);
-
-
-}
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-} else {
-    setTimeout(init, 0);
-}
-
-})();
 </script>
-
 </body>
 </html>
