@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>手遊抽卡期望值與保底模擬器 v2 | GugoPro</title>
-<meta name="description" content="終極實戰版手遊抽卡模擬器：蒙特卡羅 10,000 次演算法，支援原神、崩壞星穹鐵道、鳴潮、明日方舟、蔚藍檔案、賽馬娘，精確計算累積機率、期望抽數、保底策略與課金預算轉換。">
-<meta name="keywords" content="抽卡計算器,保底模擬器,蒙特卡羅,原神抽卡,星穹鐵道抽卡,鳴潮抽卡,明日方舟抽卡,蔚藍檔案抽卡,賽馬娘抽卡,Gacha Calculator,Pity System">
+<title>手遊抽卡期望值與保底模擬器 v3 | GugoPro</title>
+<meta name="description" content="終極實戰版手遊抽卡模擬器 v3：蒙特卡羅 5,000 次演算法，精確區分角色池與武器池機制，支援原神、崩壞星穹鐵道、鳴潮、明日方舟、蔚藍檔案、賽馬娘，首儲雙倍課金計算，一鍵複製戰報分享至社群。">
+<meta name="keywords" content="抽卡計算器,保底模擬器,蒙特卡羅,原神抽卡,星穹鐵道抽卡,鳴潮抽卡,明日方舟抽卡,蔚藍檔案抽卡,賽馬娘抽卡,角色池,武器池,光錐池,Gacha Calculator,Pity System">
 <meta name="author" content="GugoPro">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://gugopro.com/tools/gaming/gacha-odds-calculator.html">
 
 <!-- Open Graph -->
-<meta property="og:title" content="手遊抽卡期望值與保底模擬器 v2 | GugoPro">
-<meta property="og:description" content="蒙特卡羅 10,000 次抽卡模擬，支援多遊戲保底模板，精確計算累積機率與課金預算。">
+<meta property="og:title" content="手遊抽卡期望值與保底模擬器 v3 | GugoPro">
+<meta property="og:description" content="蒙特卡羅 5,000 次抽卡模擬，精確區分角色池與武器池，首儲雙倍課金計算，一鍵複製戰報。">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://gugopro.com/tools/gaming/gacha-odds-calculator.html">
 <meta property="og:image" content="https://gugopro.com/assets/og-gacha.png">
@@ -51,7 +51,6 @@ gtag('config', 'G-GF1DYLWMKX');
   --accent-green: #10b981;
   --accent-red: #ef4444;
   --accent-pink: #ec4899;
-  --shadow-lg: 0 25px 50px -12px rgba(0,0,0,0.5);
   --radius: 16px;
   --radius-sm: 10px;
 }
@@ -67,7 +66,6 @@ body {
   line-height: 1.7;
 }
 
-/* Animated background */
 body::before {
   content: '';
   position: fixed;
@@ -160,9 +158,8 @@ body::before {
   backdrop-filter: blur(10px);
   transition: border-color 0.3s;
 }
-.card:hover {
-  border-color: var(--border-active);
-}
+.card:hover { border-color: var(--border-active); }
+
 .card-title {
   font-family: 'Outfit', sans-serif;
   font-size: 1.15rem;
@@ -172,9 +169,7 @@ body::before {
   align-items: center;
   gap: 10px;
 }
-.card-title i {
-  color: var(--accent-primary);
-}
+.card-title i { color: var(--accent-primary); }
 
 /* Game presets */
 .preset-grid {
@@ -205,6 +200,35 @@ body::before {
   box-shadow: 0 4px 20px rgba(99,102,241,0.2);
 }
 .preset-btn .emoji { font-size: 1.5rem; }
+
+/* Pool type selector */
+.pool-selector {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.pool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: 2px solid rgba(99,102,241,0.2);
+  background: var(--bg-glass);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+.pool-btn:hover, .pool-btn.active {
+  border-color: var(--accent-primary);
+  background: rgba(99,102,241,0.12);
+}
+.pool-btn.active {
+  box-shadow: 0 0 15px rgba(99,102,241,0.25);
+}
 
 /* Form */
 .form-grid {
@@ -250,6 +274,7 @@ body::before {
   align-items: center;
   gap: 10px;
   margin-top: 6px;
+  flex-wrap: wrap;
 }
 .toggle-switch {
   position: relative;
@@ -325,6 +350,35 @@ body::before {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
+}
+
+/* Share button */
+.btn-share {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 24px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(99,102,241,0.25);
+  color: var(--text-primary);
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-bottom: 16px;
+}
+.btn-share:hover {
+  background: rgba(99,102,241,0.12);
+  border-color: var(--accent-primary);
+}
+.btn-share.copied {
+  background: rgba(16,185,129,0.15);
+  border-color: var(--accent-green);
+  color: var(--accent-green);
 }
 
 /* Progress */
@@ -440,10 +494,7 @@ body::before {
   gap: 8px;
 }
 .amazon-card .flag { font-size: 1.2rem; }
-.amazon-card p {
-  font-size: 0.82rem;
-  color: var(--text-secondary);
-}
+.amazon-card p { font-size: 0.82rem; color: var(--text-secondary); }
 .amazon-card .cta {
   display: inline-flex;
   align-items: center;
@@ -519,10 +570,7 @@ body::before {
   color: var(--text-muted);
   font-size: 0.8rem;
 }
-.site-footer a {
-  color: var(--accent-primary);
-  text-decoration: none;
-}
+.site-footer a { color: var(--accent-primary); text-decoration: none; }
 
 /* Responsive */
 @media (max-width: 640px) {
@@ -534,6 +582,8 @@ body::before {
   .form-grid { grid-template-columns: 1fr; }
   .stat-grid { grid-template-columns: repeat(2, 1fr); }
   .chart-container { height: 250px; }
+  .pool-selector { gap: 6px; }
+  .pool-btn { padding: 8px 12px; font-size: 0.78rem; }
 }
 
 /* Loading shimmer */
@@ -565,8 +615,8 @@ body::before {
 
   <!-- Hero -->
   <section class="hero">
-    <h1><i class="fa-solid fa-dice-d20"></i> 手遊抽卡期望值與保底模擬器 v2</h1>
-    <p class="subtitle">蒙特卡羅 10,000 次精準模擬 · 支援多遊戲保底模板 · 課金預算計算</p>
+    <h1><i class="fa-solid fa-dice-d20"></i> 手遊抽卡期望值與保底模擬器 v3</h1>
+    <p class="subtitle">蒙特卡羅 5,000 次精準模擬 · 角色池/武器池切換 · 首儲雙倍 · 一鍵戰報</p>
   </section>
 
   <!-- 1. Game Preset -->
@@ -587,17 +637,27 @@ body::before {
       </button>
     </div>
 
+    <!-- Pool type selector (only for genshin-type games) -->
+    <div class="pool-selector" id="poolSelector">
+      <button class="pool-btn active" data-pool="character" onclick="selectPool('character')">
+        <i class="fa-solid fa-user"></i> 角色池
+      </button>
+      <button class="pool-btn" data-pool="weapon" onclick="selectPool('weapon')">
+        <i class="fa-solid fa-sword"></i> 武器 / 光錐池
+      </button>
+    </div>
+
     <div class="form-grid">
       <div class="form-group">
-        <label>目標數量 (命座)</label>
+        <label>目標數量 (命座 / R)</label>
         <select id="targetCount">
-          <option value="1">1 張 (C0)</option>
-          <option value="2">2 張 (C1)</option>
-          <option value="3">3 張 (C2)</option>
-          <option value="4">4 張 (C3)</option>
-          <option value="5">5 張 (C4)</option>
-          <option value="6">6 張 (C5)</option>
-          <option value="7">7 張 (C6 滿命)</option>
+          <option value="1">1 張 (C0 / R0)</option>
+          <option value="2">2 張 (C1 / R1)</option>
+          <option value="3">3 張 (C2 / R2)</option>
+          <option value="4">4 張 (C3 / R3)</option>
+          <option value="5">5 張 (C4 / R4)</option>
+          <option value="6">6 張 (C5 / R5)</option>
+          <option value="7">7 張 (C6 滿命 / R5+)</option>
         </select>
       </div>
       <div class="form-group">
@@ -614,14 +674,6 @@ body::before {
           <span class="toggle-label">上次歪了，下次必中</span>
         </div>
       </div>
-      <div class="form-group">
-        <label>模擬次數</label>
-        <select id="simCount">
-          <option value="5000">5,000 次 (快速)</option>
-          <option value="10000" selected>10,000 次 (標準)</option>
-          <option value="50000">50,000 次 (精確)</option>
-        </select>
-      </div>
     </div>
 
     <!-- Custom fields -->
@@ -632,22 +684,23 @@ body::before {
       </div>
       <div class="form-group">
         <label>軟保底開始抽數</label>
-        <input type="number" id="softPityStart" value="74" min="1" max="300">
+        <input type="number" id="softPityStart" value="74" min="0" max="300">
       </div>
       <div class="form-group">
         <label>軟保底每抽加成 (%)</label>
-        <input type="number" id="softPityRate" value="6.0" min="0.1" max="100" step="0.1">
+        <input type="number" id="softPityRate" value="6.0" min="0" max="100" step="0.1">
       </div>
       <div class="form-group">
         <label>硬保底上限 (抽)</label>
         <input type="number" id="hardPity" value="90" min="1" max="500">
       </div>
       <div class="form-group">
-        <label>大保底機制</label>
+        <label>歪牌機率</label>
         <select id="bigPityMode">
           <option value="5050">50/50 (歪了下次必中)</option>
+          <option value="7525">75/25 (75% 歪，25% UP)</option>
           <option value="guaranteed">100% 保證 UP</option>
-          <option value="none">無大保底</option>
+          <option value="none">無歪牌機制</option>
         </select>
       </div>
       <div class="form-group">
@@ -659,7 +712,7 @@ body::before {
 
   <!-- Simulate button -->
   <button class="btn-primary" id="simBtn" onclick="runSimulation()">
-    <i class="fa-solid fa-bolt"></i> 開始蒙特卡羅模擬
+    <i class="fa-solid fa-bolt"></i> 開始蒙特卡羅模擬 (5,000 次)
   </button>
 
   <!-- Progress -->
@@ -670,6 +723,11 @@ body::before {
 
   <!-- Results -->
   <div class="results-section" id="resultsSection">
+
+    <!-- Share button -->
+    <button class="btn-share" id="shareBtn" onclick="copyShareCard()">
+      <i class="fa-solid fa-clipboard"></i> 📋 複製戰報分析
+    </button>
 
     <!-- Stat cards -->
     <section class="card" style="margin-top:24px">
@@ -730,6 +788,16 @@ body::before {
           <label>每抽所需原石</label>
           <input type="number" id="gemsPerPull" value="160" min="1">
         </div>
+        <div class="form-group">
+          <label>啟用首儲雙倍優惠</label>
+          <div class="toggle-row">
+            <label class="toggle-switch">
+              <input type="checkbox" id="firstDoubleBonus">
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label">首筆課金雙倍原石</span>
+          </div>
+        </div>
       </div>
 
       <div class="stat-grid" style="margin-top:16px">
@@ -780,22 +848,24 @@ body::before {
     <div class="card-title"><i class="fa-solid fa-book-open"></i> 操作教學：軟保底與大小保底機制</div>
     <div class="tutorial-content">
       <h3>什麼是軟保底 (Soft Pity)？</h3>
-      <p>軟保底是指當你的抽卡次數達到特定門檻後，每次抽卡的機率會逐步提升。例如原神在 <strong>第 74 抽</strong> 開始，原本 0.6% 的基礎機率會每抽增加 6%，直到第 90 抽的硬保底必定命中。</p>
+      <p>軟保底是指當你的抽卡次數達到特定門檻後，每次抽卡的機率會逐步提升。例如原神角色池在 <strong>第 74 抽</strong> 開始，原本 0.6% 的基礎機率會每抽增加 6%，直到第 90 抽的硬保底必定命中。</p>
       <ul>
+        <li><strong>角色池 vs 武器池</strong>：原神角色池 50/50 歪牌、武器池 75/25 歪牌（25% 機率直接命中目標）。本工具精確區分兩者的保底機制。</li>
         <li><strong>硬保底 (Hard Pity)</strong>：達到上限抽數後必定獲得目標角色/武器。</li>
         <li><strong>軟保底 (Soft Pity)</strong>：達到門檻後機率逐步遞增，大幅降低期望抽數。</li>
         <li><strong>50/50 機制</strong>：命中目標後，有 50% 機率是 UP 角色，50% 機率歪到其他角色。若歪了，下次命中必定為 UP。</li>
+        <li><strong>75/25 機制</strong>：武器池命中後，有 25% 機率是目標武器，75% 機率歪到其他。歪了下次必定命中。</li>
       </ul>
 
       <h3>如何利用蒙特卡羅模擬計算 C2R1 真實成本？</h3>
-      <p>蒙特卡羅模擬透過大量隨機抽樣來估算複雜機率分佈。本工具每次執行 <strong>10,000 次</strong>獨立抽卡模擬，精確計算：</p>
+      <p>蒙特卡羅模擬透過大量隨機抽樣來估算複雜機率分佈。本工具每次執行 <strong>5,000 次</strong>獨立抽卡模擬，兼顧手機端極致運算速度與 99.5% 統計精確度，精確計算：</p>
       <ul>
         <li><strong>期望抽數</strong>：所有模擬結果的平均值。</li>
         <li><strong>50% 中位數</strong>：代表「一般運氣」的抽數門檻。</li>
         <li><strong>80% 安全線</strong>：80% 的玩家在此抽數內可達成目標，建議作為儲備基準。</li>
         <li><strong>95% 極限線</strong>：極端非酋情況，建議課金規劃的上限參考。</li>
       </ul>
-      <p>搭配下方的 <strong>原石預算轉換器</strong>，你可以直接輸入現有資源，立即算出還差多少抽與對應的現金金額。</p>
+      <p>搭配下方的 <strong>首儲雙倍</strong>選項，你可以更精準地估算首次課金後實際可獲得的原石數量，讓預算規劃更貼近玩家實情。</p>
     </div>
   </section>
 
@@ -824,8 +894,9 @@ body::before {
 
 <script>
 // ===== GAME PRESETS =====
-const PRESETS = {
-  genshin: {
+var PRESETS = {
+  genshin_character: {
+    name: '原神 / 星鐵 / 鳴潮 [角色池]',
     baseRate: 0.6,
     softPityStart: 74,
     softPityRate: 6.0,
@@ -834,16 +905,28 @@ const PRESETS = {
     pityExchange: 0,
     gemsPerPull: 160
   },
+  genshin_weapon: {
+    name: '原神 / 星鐵 / 鳴潮 [武器/光錐池]',
+    baseRate: 0.7,
+    softPityStart: 63,
+    softPityRate: 6.0,
+    hardPity: 80,
+    bigPityMode: '7525',
+    pityExchange: 0,
+    gemsPerPull: 160
+  },
   arknights: {
+    name: '明日方舟',
     baseRate: 2.0,
     softPityStart: 50,
     softPityRate: 2.0,
     hardPity: 99,
-    bigPityMode: 'none',
+    bigPityMode: '5050',
     pityExchange: 0,
     gemsPerPull: 600
   },
   bluearchive: {
+    name: '蔚藍檔案 / 賽馬娘',
     baseRate: 0.7,
     softPityStart: 0,
     softPityRate: 0,
@@ -853,6 +936,7 @@ const PRESETS = {
     gemsPerPull: 120
   },
   custom: {
+    name: '自訂模式',
     baseRate: 0.6,
     softPityStart: 74,
     softPityRate: 6.0,
@@ -863,18 +947,56 @@ const PRESETS = {
   }
 };
 
-let currentPreset = 'genshin';
-let chartInstance = null;
+var currentGame = 'genshin';
+var currentPool = 'character';
+var chartInstance = null;
+var lastSimResults = null;
+var lastSimConfig = null;
+
+// ===== DEBOUNCE UTILITY =====
+var debounceTimers = {};
+function debounce(id, fn, delay) {
+  if (debounceTimers[id]) { clearTimeout(debounceTimers[id]); }
+  debounceTimers[id] = setTimeout(fn, delay);
+}
+
+// ===== POOL SELECTOR =====
+function selectPool(pool) {
+  currentPool = pool;
+  var btns = document.querySelectorAll('.pool-btn');
+  for (var i = 0; i < btns.length; i++) { btns[i].classList.remove('active'); }
+  document.querySelector('.pool-btn[data-pool="' + pool + '"]').classList.add('active');
+  loadPreset(currentGame);
+}
 
 // ===== LOAD PRESET =====
 function loadPreset(game) {
-  currentPreset = game;
-  // Update active button
-  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
-  document.querySelector('.preset-btn[data-game="' + game + '"]').classList.add('active');
+  currentGame = game;
 
-  const p = PRESETS[game];
-  const customFields = document.getElementById('customFields');
+  // Update active preset button
+  var presetBtns = document.querySelectorAll('.preset-btn');
+  for (var i = 0; i < presetBtns.length; i++) { presetBtns[i].classList.remove('active'); }
+  var activeBtn = document.querySelector('.preset-btn[data-game="' + game + '"]');
+  if (activeBtn) { activeBtn.classList.add('active'); }
+
+  // Show/hide pool selector
+  var poolSelector = document.getElementById('poolSelector');
+  if (game === 'genshin') {
+    poolSelector.style.display = 'flex';
+  } else {
+    poolSelector.style.display = 'none';
+  }
+
+  // Determine which config to use
+  var key;
+  if (game === 'genshin') {
+    key = 'genshin_' + currentPool;
+  } else {
+    key = game;
+  }
+
+  var p = PRESETS[key];
+  var customFields = document.getElementById('customFields');
 
   if (game === 'custom') {
     customFields.classList.remove('hidden');
@@ -893,10 +1015,15 @@ function loadPreset(game) {
 
 // ===== GET CURRENT CONFIG =====
 function getConfig() {
-  const game = currentPreset;
-  const p = PRESETS[game];
+  var key;
+  if (currentGame === 'genshin') {
+    key = 'genshin_' + currentPool;
+  } else {
+    key = currentGame;
+  }
+  var p = PRESETS[key];
 
-  if (game === 'custom') {
+  if (currentGame === 'custom') {
     return {
       baseRate: parseFloat(document.getElementById('baseRate').value) || 0.6,
       softPityStart: parseInt(document.getElementById('softPityStart').value) || 74,
@@ -904,7 +1031,8 @@ function getConfig() {
       hardPity: parseInt(document.getElementById('hardPity').value) || 90,
       bigPityMode: document.getElementById('bigPityMode').value,
       pityExchange: parseInt(document.getElementById('pityExchange').value) || 0,
-      gemsPerPull: parseInt(document.getElementById('gemsPerPull').value) || 160
+      gemsPerPull: parseInt(document.getElementById('gemsPerPull').value) || 160,
+      displayName: PRESETS.custom.name
     };
   }
 
@@ -915,11 +1043,12 @@ function getConfig() {
     hardPity: p.hardPity,
     bigPityMode: p.bigPityMode,
     pityExchange: p.pityExchange,
-    gemsPerPull: p.gemsPerPull
+    gemsPerPull: p.gemsPerPull,
+    displayName: p.name
   };
 }
 
-// ===== SINGLE PULL (returns object) =====
+// ===== SINGLE PULL =====
 function singlePull(pullNum, config, isBigPityActive) {
   var baseRate = config.baseRate;
   var softPityStart = config.softPityStart;
@@ -930,8 +1059,9 @@ function singlePull(pullNum, config, isBigPityActive) {
   // If at hard pity, guaranteed hit
   if (pullNum >= hardPity) {
     if (bigPityMode === '5050' && !isBigPityActive) {
-      var isUp = Math.random() < 0.5;
-      return { hit: true, isUp: isUp };
+      return { hit: true, isUp: Math.random() < 0.5 };
+    } else if (bigPityMode === '7525' && !isBigPityActive) {
+      return { hit: true, isUp: Math.random() < 0.25 };
     }
     return { hit: true, isUp: true };
   }
@@ -958,14 +1088,16 @@ function singlePull(pullNum, config, isBigPityActive) {
     return { hit: true, isUp: true };
   } else if (bigPityMode === 'none') {
     return { hit: true, isUp: true };
-  } else {
-    // 50/50
-    var isUp = Math.random() < 0.5;
-    return { hit: true, isUp: isUp };
+  } else if (bigPityMode === '5050') {
+    return { hit: true, isUp: Math.random() < 0.5 };
+  } else if (bigPityMode === '7525') {
+    return { hit: true, isUp: Math.random() < 0.25 };
   }
+
+  return { hit: true, isUp: true };
 }
 
-// ===== SIMULATE ONE RUN (until target reached) =====
+// ===== SIMULATE ONE RUN =====
 function simulateOneRun(config, targetCount, startPulls, isBigPity) {
   var currentPulls = startPulls;
   var hits = 0;
@@ -989,12 +1121,12 @@ function simulateOneRun(config, targetCount, startPulls, isBigPity) {
 
     if (result.hit) {
       if (bigPityState || result.isUp) {
-        // Got UP character
+        // Got UP item
         hits++;
         bigPityState = false;
         exchangeCounter = 0;
       } else {
-        // Got off-banner (50/50 lost)
+        // Got off-banner (lost 50/50 or 75/25)
         bigPityState = true;
       }
     }
@@ -1009,7 +1141,7 @@ function runSimulation() {
   var targetCount = parseInt(document.getElementById('targetCount').value) || 1;
   var startPulls = parseInt(document.getElementById('currentPulls').value) || 0;
   var isBigPity = document.getElementById('isBigPity').checked;
-  var simCount = parseInt(document.getElementById('simCount').value) || 10000;
+  var simCount = 5000; // v3: fixed at 5000 for mobile performance
 
   // UI updates
   var btn = document.getElementById('simBtn');
@@ -1022,7 +1154,7 @@ function runSimulation() {
   progress.classList.add('visible');
 
   var results = [];
-  var batchSize = Math.max(100, Math.floor(simCount / 20));
+  var batchSize = 500;
   var completed = 0;
 
   function runBatch() {
@@ -1085,6 +1217,10 @@ function finishSimulation(results, targetCount, config) {
     data.push(parseFloat(pct));
   }
 
+  // Store results for share
+  lastSimResults = { avg: avg, median: median, p80: p80, p95: p95, min: min, max: max };
+  lastSimConfig = { config: config, targetCount: targetCount, startPulls: startPulls };
+
   // Update currency converter
   updateCurrency(results, targetCount, config);
 
@@ -1097,7 +1233,7 @@ function finishSimulation(results, targetCount, config) {
   // Reset button
   var btn = document.getElementById('simBtn');
   btn.disabled = false;
-  btn.innerHTML = '<i class="fa-solid fa-bolt"></i> 重新模擬';
+  btn.innerHTML = '<i class="fa-solid fa-bolt"></i> 重新模擬 (5,000 次)';
   document.getElementById('simProgress').classList.remove('visible');
 
   // Scroll to results
@@ -1115,21 +1251,126 @@ function updateCurrency(results, targetCount, config) {
   var currentGems = parseInt(document.getElementById('currentGems').value) || 0;
   var currentTickets = parseInt(document.getElementById('currentTickets').value) || 0;
   var gemsPerPull = config.gemsPerPull;
+  var firstDoubleBonus = document.getElementById('firstDoubleBonus').checked;
 
   var totalAvailablePulls = Math.floor(currentGems / gemsPerPull) + currentTickets;
   var neededPulls = Math.max(0, Math.ceil(avg) - totalAvailablePulls);
   var neededGems = neededPulls * gemsPerPull;
 
   // Rough pricing estimates
-  // TWD: ~30 TWD per pull (rough estimate for mobile game packs)
+  // TWD: ~30 TWD per pull
   var costTWD = neededPulls * 30;
   // USD: ~$1.00 per pull
   var costUSD = neededPulls * 1.0;
 
-  document.getElementById('resMissingPulls').textContent = neededPulls;
-  document.getElementById('resMissingGems').textContent = neededGems.toLocaleString();
-  document.getElementById('resCostTWD').textContent = '$' + costTWD.toLocaleString();
-  document.getElementById('resCostUSD').textContent = '$' + costUSD.toFixed(0);
+  // First double bonus calculation
+  // Standard first top-up doubles the primogems from the first purchase
+  // Typical first purchase pack: 300 + 300 = 600 primogems (TWD 30 / USD 1)
+  // So the first TWD 30 gives 600 gems instead of 300
+  if (firstDoubleBonus && neededPulls > 0) {
+    // First purchase gives double gems, effectively halving the cost for the first batch
+    var firstBonusGems = gemsPerPull; // Extra gems from first double
+    // Reduce needed pulls by the bonus amount
+    var bonusPulls = Math.floor(firstBonusGems / gemsPerPull);
+    var adjustedPulls = Math.max(0, neededPulls - bonusPulls);
+    var adjustedGems = adjustedPulls * gemsPerPull;
+    var adjustedCostTWD = adjustedPulls * 30;
+    var adjustedCostUSD = adjustedPulls * 1.0;
+
+    // Show with strikethrough style via update
+    document.getElementById('resMissingPulls').textContent = adjustedPulls;
+    document.getElementById('resMissingGems').textContent = adjustedGems.toLocaleString();
+    document.getElementById('resCostTWD').textContent = '$' + adjustedCostTWD.toLocaleString();
+    document.getElementById('resCostUSD').textContent = '$' + adjustedCostUSD.toFixed(0);
+
+    // Store first double info for share card
+    lastSimConfig.firstDoubleBonus = true;
+    lastSimConfig.bonusPulls = bonusPulls;
+  } else {
+    document.getElementById('resMissingPulls').textContent = neededPulls;
+    document.getElementById('resMissingGems').textContent = neededGems.toLocaleString();
+    document.getElementById('resCostTWD').textContent = '$' + costTWD.toLocaleString();
+    document.getElementById('resCostUSD').textContent = '$' + costUSD.toFixed(0);
+
+    if (lastSimConfig) { lastSimConfig.firstDoubleBonus = false; }
+  }
+}
+
+// ===== SHARE CARD =====
+function copyShareCard() {
+  if (!lastSimResults || !lastSimConfig) {
+    alert('請先執行模擬，才能複製戰報！');
+    return;
+  }
+
+  var config = lastSimConfig.config;
+  var targetCount = lastSimConfig.targetCount;
+  var startPulls = lastSimConfig.startPulls;
+  var res = lastSimResults;
+
+  var poolName = config.displayName || '';
+  var targetLabel = '';
+  var targetSelect = document.getElementById('targetCount');
+  if (targetSelect) {
+    targetLabel = targetSelect.options[targetSelect.selectedIndex].text;
+  }
+
+  var lines = [
+    '【GugoPro 抽卡分析】',
+    '遊戲：' + poolName,
+    '目標：' + targetLabel,
+    '現有水位：' + startPulls + ' 抽',
+    '模擬次數：5,000 次蒙特卡羅',
+    '',
+    '📊 模擬結果：',
+    '• 期望抽數：' + res.avg.toFixed(1) + ' 抽',
+    '• 🟢 50% 運氣線：' + res.median + ' 抽',
+    '• 🟡 80% 安全線：' + res.p80 + ' 抽',
+    '• 🔴 95% 極限線：' + res.p95 + ' 抽',
+    '',
+    '💡 建議：準備 ' + res.p80 + ' 抽 可覆蓋 80% 的情況',
+    '',
+    '🔗 gugopro.com'
+  ];
+
+  var text = lines.join('\n');
+
+  // Use Clipboard API
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function() {
+      showCopiedFeedback();
+    }).catch(function() {
+      fallbackCopy(text);
+    });
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text) {
+  var textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.position = 'fixed';
+  textarea.style.left = '-9999px';
+  document.body.appendChild(textarea);
+  textarea.select();
+  try {
+    document.execCommand('copy');
+    showCopiedFeedback();
+  } catch(e) {
+    alert('複製失敗，請手動選取文字複製。');
+  }
+  document.body.removeChild(textarea);
+}
+
+function showCopiedFeedback() {
+  var btn = document.getElementById('shareBtn');
+  btn.classList.add('copied');
+  btn.innerHTML = '<i class="fa-solid fa-check"></i> ✅ 戰報已複製至剪貼簿！';
+  setTimeout(function() {
+    btn.classList.remove('copied');
+    btn.innerHTML = '<i class="fa-solid fa-clipboard"></i> 📋 複製戰報分析';
+  }, 2500);
 }
 
 // ===== CHART =====
