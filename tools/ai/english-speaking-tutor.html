@@ -816,7 +816,8 @@
         let recognition = null;
         let isRecording = false;
         let inputMode = 'target'; // 'target' or 'my'
-        let existingTextBeforeRecord = '';
+        let textBeforeCursor = '';
+        let textAfterCursor = '';
 
         const LANG_NAMES = {
             'zh-TW': '繁體中文', 'zh-CN': '简体中文', 'en-US': 'English',
@@ -1210,7 +1211,11 @@
             recognition.onstart = () => {
                 isRecording = true;
                 document.getElementById('btn-mic').classList.add('recording');
-                existingTextBeforeRecord = document.getElementById('user-text').value;
+                
+                const input = document.getElementById('user-text');
+                const pos = input.selectionStart || input.value.length;
+                textBeforeCursor = input.value.substring(0, pos);
+                textAfterCursor = input.value.substring(pos);
             };
             
             recognition.onresult = (event) => {
@@ -1226,8 +1231,12 @@
                     }
                 }
                 
-                // Append to existing text
-                input.value = existingTextBeforeRecord + finalTranscript + interimTranscript;
+                // Cumulative append at cursor position
+                input.value = textBeforeCursor + finalTranscript + interimTranscript + textAfterCursor;
+                
+                // Keep cursor at the end of newly inserted text
+                const newPos = textBeforeCursor.length + finalTranscript.length + interimTranscript.length;
+                input.setSelectionRange(newPos, newPos);
             };
             
             recognition.onerror = (event) => {
