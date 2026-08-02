@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>凱利公式與資金控管模擬器 | GugoPro</title>
-    <meta name="description" content="專業級凱利公式計算器：支援博弈/運彩與股票/加密貨幣雙模式，內建 Half Kelly 實戰推薦、勝率壓力測試、蒙特卡羅500次路徑模擬、最大回撤與破產機率分析。">
-    <meta name="keywords" content="凱利公式, Kelly Criterion, Half Kelly, 蒙特卡羅模擬, 最大回撤, 破產機率, 資金管理, Position Sizing, 壓力測試, 交易策略, 加密貨幣">
+    <title>凱利公式與資金控管模擬器（終極實戰版）| GugoPro</title>
+    <meta name="description" content="專業級凱利公式計算器終極實戰版：情境預設按鈕、負EV防呆警示、蒙特卡羅500次路徑模擬、最大回撤分析、一鍵複製風控摘要。">
+    <meta name="keywords" content="凱利公式, Kelly Criterion, Half Kelly, 蒙特卡羅模擬, 最大回撤, 破產機率, 資金管理, Position Sizing, 壓力測試, 交易策略, 加密貨幣, 情境預設, 防呆警示">
     <meta name="author" content="GugoPro AI Team">
     <link rel="canonical" href="https://gugopro.com/tools/finance/kelly-criterion-calculator.html">
 
     <!-- Open Graph -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://gugopro.com/tools/finance/kelly-criterion-calculator.html">
-    <meta property="og:title" content="凱利公式與資金控管模擬器 | GugoPro">
-    <meta property="og:description" content="專業級雙模式凱利公式計算器，內建蒙特卡羅路徑模擬與壓力測試。">
+    <meta property="og:title" content="凱利公式與資金控管模擬器（終極實戰版）| GugoPro">
+    <meta property="og:description" content="專業級雙模式凱利公式計算器，情境預設按鈕、防呆警示、蒙特卡羅路徑模擬與壓力測試。">
 
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
@@ -138,6 +138,41 @@
     }
     .section-subtitle { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 20px; }
 
+    /* ---- Quick Scenario Presets (NEW) ---- */
+    .preset-section { margin-bottom: 24px; }
+    .preset-title {
+        font-size: 0.92rem; font-weight: 700; color: var(--neon-amber);
+        margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+    }
+    .preset-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 10px;
+    }
+    .preset-btn {
+        display: flex; align-items: center; gap: 10px;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid var(--border-card);
+        border-radius: var(--radius-sm);
+        padding: 12px 14px; cursor: pointer;
+        transition: all 0.25s ease;
+        font-family: 'Inter', sans-serif; font-size: 0.85rem; color: var(--text-secondary);
+    }
+    .preset-btn:hover {
+        border-color: var(--neon-amber);
+        background: rgba(245, 158, 11, 0.06);
+        transform: translateY(-1px);
+    }
+    .preset-btn.active {
+        border-color: var(--neon-amber);
+        background: rgba(245, 158, 11, 0.10);
+        box-shadow: 0 0 14px rgba(245, 158, 11, 0.12);
+        color: #fff;
+    }
+    .preset-btn .pb-icon { font-size: 1.3rem; }
+    .preset-btn .pb-label { font-weight: 600; line-height: 1.3; }
+    .preset-btn .pb-desc { font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 2px; }
+
     /* ---- Mode Tabs ---- */
     .mode-tabs { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
     .mode-tab {
@@ -206,6 +241,33 @@
     }
     .btn-calculate:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(6,182,212,0.45); }
 
+    /* ---- Warning Cards (NEW) ---- */
+    .warning-card {
+        padding: 16px 20px;
+        border-radius: var(--radius-md);
+        margin-bottom: 16px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        font-size: 0.92rem;
+        line-height: 1.6;
+        animation: fadeIn 0.4s ease;
+    }
+    .warning-card .wc-icon { font-size: 1.2rem; margin-top: 2px; flex-shrink: 0; }
+    .warning-card.negative-ev {
+        background: rgba(239, 68, 68, 0.08);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: #fca5a5;
+    }
+    .warning-card.negative-ev .wc-icon { color: var(--color-red); }
+    .warning-card.leverage-warn {
+        background: rgba(245, 158, 11, 0.08);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        color: #fcd34d;
+    }
+    .warning-card.leverage-warn .wc-icon { color: var(--color-amber); }
+    .warning-card strong { font-weight: 700; }
+
     /* ---- Results Grid ---- */
     .results-grid {
         display: grid;
@@ -227,6 +289,52 @@
     .rc-red { color: var(--color-red); }
     .rc-cyan { color: var(--color-cyan); }
     .rc-purple { color: var(--neon-purple); }
+
+    /* ---- Copy Summary Button (NEW) ---- */
+    .btn-copy-summary {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: rgba(168, 85, 247, 0.12);
+        border: 1px solid rgba(168, 85, 247, 0.3);
+        color: var(--neon-purple);
+        font-weight: 700; font-size: 0.9rem;
+        padding: 10px 22px; border-radius: 24px;
+        cursor: pointer; transition: all 0.25s ease;
+        margin-top: 16px;
+        font-family: 'Inter', 'Noto Sans TC', sans-serif;
+    }
+    .btn-copy-summary:hover {
+        background: rgba(168, 85, 247, 0.22);
+        border-color: var(--neon-purple);
+        box-shadow: 0 0 16px rgba(168, 85, 247, 0.15);
+    }
+    .btn-copy-summary.copied {
+        background: rgba(0, 255, 136, 0.12);
+        border-color: var(--neon-green);
+        color: var(--neon-green);
+    }
+
+    /* ---- Copy Toast (NEW) ---- */
+    .copy-toast {
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%) translateY(80px);
+        background: rgba(0, 255, 136, 0.95);
+        color: #000;
+        font-weight: 700;
+        font-size: 0.9rem;
+        padding: 12px 28px;
+        border-radius: 30px;
+        z-index: 9999;
+        opacity: 0;
+        transition: all 0.35s ease;
+        pointer-events: none;
+        box-shadow: 0 6px 24px rgba(0, 255, 136, 0.3);
+    }
+    .copy-toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
 
     /* ---- Kelly Matrix ---- */
     .kelly-matrix {
@@ -382,6 +490,12 @@
     .footer-links a { color: var(--text-secondary); text-decoration: none; margin: 0 6px; font-weight: 500; }
     .footer-links a:hover { color: var(--color-cyan); }
 
+    /* ---- Animations ---- */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-8px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
     /* ========== RESPONSIVE ========== */
     @media (max-width: 768px) {
         .brand-tagline { display: none; }
@@ -394,6 +508,7 @@
         .results-grid { grid-template-columns: repeat(2, 1fr); }
         .chart-wrap { height: 280px; }
         .mode-tabs { flex-direction: column; }
+        .preset-grid { grid-template-columns: 1fr 1fr; }
     }
     @media (max-width: 480px) {
         .hero-title { font-size: 1.3rem; }
@@ -401,6 +516,7 @@
         .results-grid { grid-template-columns: 1fr; }
         .risk-metrics { grid-template-columns: 1fr; }
         .mc-settings { flex-direction: column; }
+        .preset-grid { grid-template-columns: 1fr; }
     }
     </style>
 </head>
@@ -425,19 +541,54 @@
     <!-- ===== HERO ===== -->
     <section class="hero-section">
         <div class="container">
-            <div class="hero-badge"><i class="fa-solid fa-chart-line"></i> Professional Position Sizing</div>
+            <div class="hero-badge"><i class="fa-solid fa-rocket"></i> Ultimate Edition</div>
             <h1 class="hero-title">
                 <span class="gradient-text">凱利公式與資金控管模擬器</span>
             </h1>
             <p class="hero-subtitle">
-                專業級雙模式凱利公式計算器 — 支援博弈/運彩與股票/加密貨幣交易模式，
-                內建 Half Kelly 實戰推薦、勝率壓力測試、蒙特卡羅 500 次路徑模擬。
+                專業級雙模式凱利公式計算器 — 情境預設按鈕 · 負EV防呆警示 · 蒙特卡羅 500 次路徑模擬 · 一鍵複製風控摘要。
             </p>
         </div>
     </section>
 
     <!-- ===== MAIN TOOL ===== -->
     <div class="container tool-area">
+
+        <!-- Quick Scenario Presets (NEW) -->
+        <div class="section-card preset-section">
+            <div class="preset-title"><i class="fa-solid fa-bolt"></i> 一鍵實戰情境預設 (Quick Scenario Presets)</div>
+            <p class="section-subtitle">點擊任一情境按鈕，自動填入對應參數，立即切換計算模式並執行計算。</p>
+            <div class="preset-grid">
+                <button class="preset-btn" onclick="applyPreset('stock')">
+                    <span class="pb-icon">📈</span>
+                    <span>
+                        <span class="pb-label">台股/美股波段交易</span>
+                        <span class="pb-desc">勝率 45% · 獲利 15% · 停損 5%</span>
+                    </span>
+                </button>
+                <button class="preset-btn" onclick="applyPreset('crypto')">
+                    <span class="pb-icon">🪙</span>
+                    <span>
+                        <span class="pb-label">加密貨幣突破策略</span>
+                        <span class="pb-desc">勝率 38% · 獲利 25% · 停損 6%</span>
+                    </span>
+                </button>
+                <button class="preset-btn" onclick="applyPreset('sports')">
+                    <span class="pb-icon">⚽</span>
+                    <span>
+                        <span class="pb-label">運彩足球勝負平</span>
+                        <span class="pb-desc">勝率 55% · 賠率 1.95</span>
+                    </span>
+                </button>
+                <button class="preset-btn" onclick="applyPreset('poker')">
+                    <span class="pb-icon">♠️</span>
+                    <span>
+                        <span class="pb-label">德州撲克轉牌聽牌</span>
+                        <span class="pb-desc">勝率 35% · 賠率 3.0</span>
+                    </span>
+                </button>
+            </div>
+        </div>
 
         <!-- Mode Selection -->
         <div class="section-card">
@@ -508,11 +659,19 @@
             </button>
         </div>
 
+        <!-- Warning Cards Area (NEW - shown dynamically) -->
+        <div id="warning-area" style="display:none;"></div>
+
         <!-- Results Section -->
         <div class="section-card" id="results-section" style="display:none;">
             <div class="section-title"><i class="fa-solid fa-chart-pie" style="color: var(--neon-green);"></i> 凱利公式計算結果</div>
             <p class="section-subtitle">根據您輸入的參數，計算最佳下注比例與期望值。</p>
             <div class="results-grid" id="results-grid"></div>
+
+            <!-- Copy Summary Button (NEW) -->
+            <button class="btn-copy-summary" id="btn-copy-summary" onclick="copyRiskSummary()">
+                <i class="fa-solid fa-clipboard"></i> 一鍵複製風控摘要
+            </button>
         </div>
 
         <!-- Kelly Matrix -->
@@ -528,7 +687,7 @@
             <p class="section-subtitle">模擬勝率下降時，您的策略是否仍為正期望值 (+EV)。拖動滑桿測試勝率下降幅度。</p>
             <div class="stress-slider-wrap">
                 <label>勝率下降幅度：<strong id="stress-value">-0%</strong></label>
-                <input type="range" class="stress-slider" id="stress-slider" min="0" max="10" value="0" step="1" oninput="updateStressTest()">
+                <input type="range" class="stress-slider" id="stress-slider" min="0" max="10" value="0" step="1">
             </div>
             <div class="stress-result" id="stress-result"></div>
         </div>
@@ -583,7 +742,7 @@
                     <div class="af-icon"><i class="fa-solid fa-book-open"></i></div>
                     <h4>美國 Amazon 精選書單</h4>
                     <p>Kelly Criterion &amp; Position Sizing Books — 搜尋凱利公式與資金管理專業書籍。</p>
-                    <a href="https://www.amazon.com/s?k=kelly+criterion+and+position+sizing+books&tag=9908qq-20" target="_blank" rel="noopener" class="btn-affiliate">
+                    <a href="https://www.amazon.com/s?k=kelly+criterion+and+position+sizing+books&tag=9908qq-20" target="_blank" rel="noopener sponsored" class="btn-affiliate">
                         <i class="fa-brands fa-amazon"></i> 前往美國 Amazon 搜尋
                     </a>
                 </div>
@@ -591,7 +750,7 @@
                     <div class="af-icon"><i class="fa-solid fa-torii-gate"></i></div>
                     <h4>日本 Amazon 精選好物</h4>
                     <p>資金管理・投資の本 — 搜尋日本亞馬遜資金管理與投資策略相關書籍。</p>
-                    <a href="https://www.amazon.co.jp/s?k=資金管理+投資+本&tag=gugopro-22" target="_blank" rel="noopener" class="btn-affiliate">
+                    <a href="https://www.amazon.co.jp/s?k=資金管理+投資+本&tag=gugopro-22" target="_blank" rel="noopener sponsored" class="btn-affiliate">
                         <i class="fa-brands fa-amazon"></i> 前往日本 Amazon 搜尋
                     </a>
                 </div>
@@ -672,6 +831,11 @@
         </div>
     </footer>
 
+    <!-- Copy Toast (NEW) -->
+    <div class="copy-toast" id="copy-toast">
+        <i class="fa-solid fa-check-circle"></i> 風控摘要已複製到剪貼簿！
+    </div>
+
 <script>
 (function() {
 'use strict';
@@ -679,6 +843,156 @@
 var currentMode = 'gambling';
 var mcChart = null;
 var lastCalc = null;
+var currentScenario = '';
+
+/* ===================================================================
+   DEBOUNCE UTILITY (NEW - Performance Fix for Stress Slider)
+   =================================================================== */
+function debounce(fn, delay) {
+    var timer = null;
+    return function() {
+        var args = arguments;
+        var context = this;
+        clearTimeout(timer);
+        timer = setTimeout(function() {
+            fn.apply(context, args);
+        }, delay);
+    };
+}
+
+var debouncedStressUpdate = debounce(function() {
+    updateStressTest();
+}, 200);
+
+/* ===================================================================
+   COPY SUMMARY (NEW)
+   =================================================================== */
+window.copyRiskSummary = function() {
+    if (!lastCalc) return;
+
+    var modeLabel = lastCalc.mode === 'gambling' ? '博弈/運彩' : '股票/期貨';
+    var halfF = Math.max(0, lastCalc.f * 0.5);
+    var halfPct = (halfF * 100).toFixed(1);
+    var scenarioLabel = getScenarioLabel();
+
+    // Get max drawdown from last MC result if available
+    var maxDDText = '待模擬';
+    if (lastCalc.lastMaxDD !== undefined) {
+        maxDDText = lastCalc.lastMaxDD.toFixed(1) + '%';
+    }
+
+    var summary = '[GugoPro 凱利風控報告] ' +
+        '策略：' + scenarioLabel + ' | ' +
+        '模式：' + modeLabel + ' | ' +
+        '勝率：' + (lastCalc.p * 100).toFixed(1) + '%';
+
+    if (lastCalc.mode === 'gambling') {
+        summary += ' | 賠率：' + lastCalc.b.toFixed(2);
+    } else {
+        summary += ' | 停利：' + (lastCalc.W * 100).toFixed(1) + '% | 停損：' + (lastCalc.L * 100).toFixed(1) + '%';
+    }
+
+    summary += ' | 全凱利比例：' + (lastCalc.f * 100).toFixed(2) + '%' +
+        ' | 建議最佳持倉：' + halfPct + '% (半凱利)' +
+        ' | 預估最大回撤：' + maxDDText +
+        ' | 生成時間：' + new Date().toLocaleString('zh-TW');
+
+    // Copy to clipboard
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(summary).then(function() {
+            showCopyToast();
+        }).catch(function() {
+            fallbackCopy(summary);
+        });
+    } else {
+        fallbackCopy(summary);
+    }
+};
+
+function fallbackCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch(e) {}
+    document.body.removeChild(ta);
+    showCopyToast();
+}
+
+function showCopyToast() {
+    var toast = document.getElementById('copy-toast');
+    var btn = document.getElementById('btn-copy-summary');
+    toast.classList.add('show');
+    if (btn) {
+        btn.classList.add('copied');
+        btn.innerHTML = '<i class="fa-solid fa-check-circle"></i> 已複製！';
+    }
+    setTimeout(function() {
+        toast.classList.remove('show');
+        if (btn) {
+            btn.classList.remove('copied');
+            btn.innerHTML = '<i class="fa-solid fa-clipboard"></i> 一鍵複製風控摘要';
+        }
+    }, 2500);
+}
+
+function getScenarioLabel() {
+    var labels = {
+        'stock': '美股波段交易',
+        'crypto': '加密貨幣突破',
+        'sports': '運彩足球勝負平',
+        'poker': '德州撲克轉牌聽牌'
+    };
+    return labels[currentScenario] || (lastCalc && lastCalc.mode === 'gambling' ? '博弈/運彩' : '股票/期貨');
+}
+
+/* ===================================================================
+   QUICK SCENARIO PRESETS (NEW)
+   =================================================================== */
+window.applyPreset = function(scenario) {
+    currentScenario = scenario;
+
+    // Clear active states
+    document.querySelectorAll('.preset-btn').forEach(function(b) { b.classList.remove('active'); });
+    // Find the clicked button by scenario name
+    var btns = document.querySelectorAll('.preset-btn');
+    var presets = ['stock', 'crypto', 'sports', 'poker'];
+    var idx = presets.indexOf(scenario);
+    if (idx >= 0 && btns[idx]) btns[idx].classList.add('active');
+
+    if (scenario === 'stock') {
+        // 台股/美股波段交易：勝率 45%、預期獲利 15%、預期停損 5%
+        switchMode('trading');
+        document.getElementById('t-winrate').value = 45;
+        document.getElementById('t-winpct').value = 15;
+        document.getElementById('t-losspct').value = 5;
+        document.getElementById('t-balance').value = 50000;
+    } else if (scenario === 'crypto') {
+        // 加密貨幣突破策略：勝率 38%、預期獲利 25%、預期停損 6%
+        switchMode('trading');
+        document.getElementById('t-winrate').value = 38;
+        document.getElementById('t-winpct').value = 25;
+        document.getElementById('t-losspct').value = 6;
+        document.getElementById('t-balance').value = 30000;
+    } else if (scenario === 'sports') {
+        // 運彩足球勝負平：勝率 55%、賠率 1.95
+        switchMode('gambling');
+        document.getElementById('g-winrate').value = 55;
+        document.getElementById('g-odds').value = 0.95; // b = 1.95 - 1 = 0.95
+        document.getElementById('g-balance').value = 5000;
+    } else if (scenario === 'poker') {
+        // 德州撲克轉牌聽牌：勝率 35%、賠率 3.0
+        switchMode('gambling');
+        document.getElementById('g-winrate').value = 35;
+        document.getElementById('g-odds').value = 3.0;
+        document.getElementById('g-balance').value = 10000;
+    }
+
+    // Auto calculate
+    setTimeout(function() { runCalculation(); }, 150);
+};
 
 /* ===================================================================
    MODE SWITCHING
@@ -693,13 +1007,16 @@ window.switchMode = function(mode) {
     document.getElementById('kelly-matrix-section').style.display = 'none';
     document.getElementById('stress-test-section').style.display = 'none';
     document.getElementById('mc-section').style.display = 'none';
+    document.getElementById('warning-area').style.display = 'none';
+    document.getElementById('warning-area').innerHTML = '';
 };
 
 /* ===================================================================
-   KELLY CALCULATION
+   KELLY CALCULATION (with -EV and Leverage guard)
    =================================================================== */
 window.runCalculation = function() {
     var p, b, balance, f, W, L;
+    var warningHtml = '';
 
     if (currentMode === 'gambling') {
         p = parseFloat(document.getElementById('g-winrate').value) / 100;
@@ -732,13 +1049,50 @@ window.runCalculation = function() {
         ev = p * W - (1 - p) * L;
     }
 
-    lastCalc = { mode: currentMode, p: p, b: b, f: f, ev: ev, balance: balance };
+    // ---- NEGATIVE EV GUARD (NEW) ----
+    if (f <= 0) {
+        f = 0; // Never show negative percentage
+    }
+
+    var fullF = lastCalc ? lastCalc.fullF : f;
+    if (fullF === undefined) fullF = f;
+
+    // ---- LEVERAGE GUARD (NEW, trading mode only) ----
+    if (currentMode === 'trading' && fullF > 1) {
+        var leverageRatio = fullF.toFixed(1);
+        warningHtml += '<div class="warning-card leverage-warn">' +
+            '<span class="wc-icon"><i class="fa-solid fa-triangle-exclamation"></i></span>' +
+            '<span><strong>⚠️ 建議部位需開立槓桿 (' + leverageRatio + '×)，請注意穿倉與斷頭風險。</strong><br>' +
+            'Full Kelly 比例超過 100%，代表需要槓桿才能達到理論最佳配置。實戰中強烈建議使用 Half Kelly 或更低比例。</span>' +
+        '</div>';
+    }
+
+    lastCalc = { mode: currentMode, p: p, b: b, f: f, fullF: fullF, ev: ev, balance: balance };
     if (currentMode === 'trading') {
         lastCalc.W = W;
         lastCalc.L = L;
     }
 
-    displayResults(f, ev, balance);
+    // Show/hide warnings
+    var warnArea = document.getElementById('warning-area');
+    if (warningHtml) {
+        warnArea.innerHTML = warningHtml;
+        warnArea.style.display = '';
+    } else {
+        warnArea.style.display = 'none';
+        warnArea.innerHTML = '';
+    }
+
+    // Special -EV warning in results area
+    var negEvWarning = '';
+    if (fullF <= 0) {
+        negEvWarning = '<div class="warning-card negative-ev" style="margin-top:16px;">' +
+            '<span class="wc-icon"><i class="fa-solid fa-skull-crossbones"></i></span>' +
+            '<span><strong>⚠️ 負期望值（-EV）策略！數學證明長期下注必敗，請勿入場。</strong></span>' +
+        '</div>';
+    }
+
+    displayResults(f, ev, balance, negEvWarning);
     displayKellyMatrix(f, balance);
     displayStressTest();
 
@@ -746,6 +1100,12 @@ window.runCalculation = function() {
     document.getElementById('kelly-matrix-section').style.display = '';
     document.getElementById('stress-test-section').style.display = '';
     document.getElementById('mc-section').style.display = '';
+
+    // Clear MC data when recalculating
+    if (lastCalc) lastCalc.lastMaxDD = undefined;
+
+    // Scroll to results
+    document.getElementById('results-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
     if (typeof gtag === 'function') {
         gtag('event', 'kelly_calculation', {
@@ -756,7 +1116,7 @@ window.runCalculation = function() {
     }
 };
 
-function displayResults(f, ev, balance) {
+function displayResults(f, ev, balance, negEvWarning) {
     var grid = document.getElementById('results-grid');
     var isPositive = f > 0;
     var pct = (f * 100).toFixed(2);
@@ -764,7 +1124,7 @@ function displayResults(f, ev, balance) {
     var color = isPositive ? 'rc-green' : 'rc-red';
     var sign = isPositive ? '+' : '';
 
-    grid.innerHTML =
+    grid.innerHTML = negEvWarning +
         '<div class="result-card">' +
             '<div class="rc-label">Full Kelly 比例 (f*)</div>' +
             '<div class="rc-value ' + color + '">' + sign + pct + '%</div>' +
@@ -829,15 +1189,18 @@ function displayKellyMatrix(f, balance) {
 }
 
 /* ===================================================================
-   STRESS TEST
+   STRESS TEST (with Debounce)
    =================================================================== */
 function displayStressTest() {
     var slider = document.getElementById('stress-slider');
     slider.value = 0;
+    // Remove old listener if any, attach debounced one
+    slider.removeEventListener('input', debouncedStressUpdate);
+    slider.addEventListener('input', debouncedStressUpdate);
     updateStressTest();
 }
 
-window.updateStressTest = function() {
+function updateStressTest() {
     if (!lastCalc) return;
     var drop = parseInt(document.getElementById('stress-slider').value);
     document.getElementById('stress-value').textContent = '-' + drop + '%';
@@ -876,7 +1239,7 @@ window.updateStressTest = function() {
             '勝率下降 ' + drop + '% 後 (調整勝率 ' + (adjustedP * 100).toFixed(1) + '%)，策略已變為 <strong>負期望值 (-EV)</strong>！<br>' +
             '此時不應下注，建議重新評估勝率估計或放棄此策略。';
     }
-};
+}
 
 /* ===================================================================
    MONTE CARLO SIMULATION
@@ -951,6 +1314,9 @@ window.runMonteCarlo = function() {
     }
     maxDrawdowns.sort(function(a, b) { return a - b; });
     var avgMaxDD = maxDrawdowns[Math.floor(numSims * 0.50)];
+
+    // Store for copy summary
+    if (lastCalc) lastCalc.lastMaxDD = avgMaxDD;
 
     // Draw chart
     drawChart(numTrades, bestPath, midPath, worstPath, balance);
@@ -1078,7 +1444,7 @@ function drawChart(numTrades, best, mid, worst, initial) {
 if (typeof gtag === 'function') {
     gtag('event', 'page_view', {
         'event_category': 'tool',
-        'page_title': 'kelly-criterion-calculator'
+        'page_title': 'kelly-criterion-calculator-ultimate'
     });
 }
 
