@@ -66,6 +66,25 @@
             overflow-y: auto;
         }
 
+        /* Desktop Sidebar Layout */
+        @media (min-width: 1024px) {
+            body { flex-direction: row; }
+            #app-main { flex: 1; display: flex; flex-direction: column; position: relative; }
+            .side-menu {
+                position: sticky !important;
+                top: 0;
+                right: 0;
+                transform: none !important;
+                transition: width 0.3s;
+                border-left: 1px solid var(--glass-border);
+                box-shadow: none;
+            }
+            .side-menu.collapsed { width: 0; overflow: hidden; padding: 0; border: none; }
+            .side-menu-overlay { display: none !important; }
+        }
+
+        #app-main { width: 100%; min-height: 100vh; display: flex; flex-direction: column; }
+
         /* Layout */
         header {
             padding: 12px 16px;
@@ -194,6 +213,7 @@
             overflow-y: auto;
             display: flex;
             flex-direction: column;
+            flex-shrink: 0;
         }
 
         .side-menu.active { right: 0; }
@@ -606,6 +626,33 @@
 
         .hidden { display: none !important; }
 
+        /* Room Ops Modal Specific */
+        .room-ops-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+        }
+        .room-op-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px;
+            background: var(--glass-bg);
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .room-op-item input[type="checkbox"], .room-op-item input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary-neon);
+        }
+
         /* Amazon Section in Menu */
         .amazon-menu-section {
             margin-top: 25px;
@@ -639,107 +686,109 @@
 </head>
 <body>
 
-    <header id="main-header">
-        <div class="header-left">
-            <a href="https://gugopro.com" class="btn-back-home">
-                <i class="fa-solid fa-house"></i> 返回 GugoPro
-            </a>
-            <div class="logo-text">AI Language Tutor</div>
-        </div>
-        
-        <div class="header-right">
-            <div class="lang-compact-header">
-                <button id="btn-lang-toggle" class="btn-lang-toggle">
-                    <span id="lang-display-label">載入中...</span>
-                    <i class="fa-solid fa-chevron-down"></i>
-                </button>
-                
-                <div id="lang-panel" class="lang-panel">
-                    <div class="lang-settings-grid">
-                        <div class="lang-box">
-                            <span class="lang-label">我的語言</span>
-                            <select id="my-lang" class="lang-select">
-                                <option value="zh-TW">繁體中文</option>
-                                <option value="zh-CN">简体中文</option>
-                                <option value="en-US">English</option>
-                                <option value="ja-JP">日本語</option>
-                                <option value="ko-KR">한국어</option>
-                                <option value="fr-FR">Français</option>
-                                <option value="de-DE">Deutsch</option>
-                                <option value="es-ES">Español</option>
-                                <option value="th-TH">ไทย</option>
-                                <option value="vi-VN">Tiếng Việt</option>
-                                <option value="id-ID">Bahasa Indonesia</option>
-                                <option value="pt-BR">Português</option>
-                                <option value="it-IT">Italiano</option>
-                                <option value="ru-RU">Русский</option>
-                                <option value="ar-SA">العربية</option>
-                                <option value="hi-IN">हिन्दी</option>
-                                <option value="ms-MY">Bahasa Melayu</option>
-                                <option value="nl-NL">Nederlands</option>
-                                <option value="pl-PL">Polski</option>
-                                <option value="tr-TR">Türkçe</option>
-                            </select>
-                        </div>
-                        <button id="btn-swap-lang" class="btn-swap-mini"><i class="fa-solid fa-right-left"></i></button>
-                        <div class="lang-box">
-                            <span class="lang-label">學習語言</span>
-                            <select id="target-lang" class="lang-select">
-                                <option value="en-US">English</option>
-                                <option value="ja-JP">日本語</option>
-                                <option value="ko-KR">한국어</option>
-                                <option value="zh-TW">繁體中文</option>
-                                <option value="zh-CN">简体中文</option>
-                                <option value="fr-FR">Français</option>
-                                <option value="de-DE">Deutsch</option>
-                                <option value="es-ES">Español</option>
-                                <option value="th-TH">ไทย</option>
-                                <option value="vi-VN">Tiếng Việt</option>
-                                <option value="id-ID">Bahasa Indonesia</option>
-                                <option value="pt-BR">Português</option>
-                                <option value="it-IT">Italiano</option>
-                                <option value="ru-RU">Русский</option>
-                                <option value="ar-SA">العربية</option>
-                                <option value="hi-IN">हिन्दी</option>
-                                <option value="ms-MY">Bahasa Melayu</option>
-                                <option value="nl-NL">Nederlands</option>
-                                <option value="pl-PL">Polski</option>
-                                <option value="tr-TR">Türkçe</option>
-                            </select>
-                        </div>
-                    </div>
-                    <button id="btn-lang-confirm" class="btn-full btn-send" style="margin-top: 10px; padding: 8px;">確認設定</button>
-                </div>
+    <div id="app-main">
+        <header id="main-header">
+            <div class="header-left">
+                <a href="https://gugopro.com" class="btn-back-home">
+                    <i class="fa-solid fa-house"></i> 返回 GugoPro
+                </a>
+                <div class="logo-text">AI Language Tutor</div>
             </div>
             
-            <button id="btn-menu" style="background:none; border:none; color:#fff; font-size:1.4rem; cursor:pointer; padding: 8px;">
-                <i class="fa-solid fa-bars"></i>
-            </button>
-        </div>
-    </header>
-
-    <main id="chat-container">
-        <!-- Welcome card will be inserted here -->
-    </main>
-
-    <div class="bottom-controls">
-        <div class="input-wrapper">
-            <div id="error-panel" class="error-panel">
-                <span id="error-msg"></span>
-                <button id="btn-retry-model" class="btn-tool" style="background:#fff; color:#000; padding:4px 12px; font-size:0.8rem; border-radius:6px; margin-left:10px; font-weight:bold;">🔄 重試</button>
-            </div>
-
-            <div class="input-options">
-                <div class="input-mode-toggle">
-                    <button id="mode-target" class="mode-btn active" onclick="setInputMode('target')">🗣️ 學習語言</button>
-                    <button id="mode-my" class="mode-btn" onclick="setInputMode('my')">🗣️ 母語</button>
+            <div class="header-right">
+                <div class="lang-compact-header">
+                    <button id="btn-lang-toggle" class="btn-lang-toggle">
+                        <span id="lang-display-label">載入中...</span>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    
+                    <div id="lang-panel" class="lang-panel">
+                        <div class="lang-settings-grid">
+                            <div class="lang-box">
+                                <span class="lang-label">我的語言</span>
+                                <select id="my-lang" class="lang-select">
+                                    <option value="zh-TW">繁體中文</option>
+                                    <option value="zh-CN">简体中文</option>
+                                    <option value="en-US">English</option>
+                                    <option value="ja-JP">日本語</option>
+                                    <option value="ko-KR">한국어</option>
+                                    <option value="fr-FR">Français</option>
+                                    <option value="de-DE">Deutsch</option>
+                                    <option value="es-ES">Español</option>
+                                    <option value="th-TH">ไทย</option>
+                                    <option value="vi-VN">Tiếng Việt</option>
+                                    <option value="id-ID">Bahasa Indonesia</option>
+                                    <option value="pt-BR">Português</option>
+                                    <option value="it-IT">Italiano</option>
+                                    <option value="ru-RU">Русский</option>
+                                    <option value="ar-SA">العربية</option>
+                                    <option value="hi-IN">हिन्दी</option>
+                                    <option value="ms-MY">Bahasa Melayu</option>
+                                    <option value="nl-NL">Nederlands</option>
+                                    <option value="pl-PL">Polski</option>
+                                    <option value="tr-TR">Türkçe</option>
+                                </select>
+                            </div>
+                            <button id="btn-swap-lang" class="btn-swap-mini"><i class="fa-solid fa-right-left"></i></button>
+                            <div class="lang-box">
+                                <span class="lang-label">學習語言</span>
+                                <select id="target-lang" class="lang-select">
+                                    <option value="en-US">English</option>
+                                    <option value="ja-JP">日本語</option>
+                                    <option value="ko-KR">한국어</option>
+                                    <option value="zh-TW">繁體中文</option>
+                                    <option value="zh-CN">简体中文</option>
+                                    <option value="fr-FR">Français</option>
+                                    <option value="de-DE">Deutsch</option>
+                                    <option value="es-ES">Español</option>
+                                    <option value="th-TH">ไทย</option>
+                                    <option value="vi-VN">Tiếng Việt</option>
+                                    <option value="id-ID">Bahasa Indonesia</option>
+                                    <option value="pt-BR">Português</option>
+                                    <option value="it-IT">Italiano</option>
+                                    <option value="ru-RU">Русский</option>
+                                    <option value="ar-SA">العربية</option>
+                                    <option value="hi-IN">हिन्दी</option>
+                                    <option value="ms-MY">Bahasa Melayu</option>
+                                    <option value="nl-NL">Nederlands</option>
+                                    <option value="pl-PL">Polski</option>
+                                    <option value="tr-TR">Türkçe</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button id="btn-lang-confirm" class="btn-full btn-send" style="margin-top: 10px; padding: 8px;">確認設定</button>
+                    </div>
                 </div>
+                
+                <button id="btn-menu" style="background:none; border:none; color:#fff; font-size:1.4rem; cursor:pointer; padding: 8px;">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
             </div>
+        </header>
 
-            <div class="main-input-group">
-                <button id="btn-mic" class="btn-circle btn-mic"><i class="fa-solid fa-microphone"></i></button>
-                <input type="text" id="user-text" placeholder="說話或輸入..." autocomplete="off">
-                <button id="btn-send" class="btn-circle btn-send"><i class="fa-solid fa-paper-plane"></i></button>
+        <main id="chat-container">
+            <!-- Welcome card will be inserted here -->
+        </main>
+
+        <div class="bottom-controls">
+            <div class="input-wrapper">
+                <div id="error-panel" class="error-panel">
+                    <span id="error-msg"></span>
+                    <button id="btn-retry-model" class="btn-tool" style="background:#fff; color:#000; padding:4px 12px; font-size:0.8rem; border-radius:6px; margin-left:10px; font-weight:bold;">🔄 重試</button>
+                </div>
+
+                <div class="input-options">
+                    <div class="input-mode-toggle">
+                        <button id="mode-target" class="mode-btn active" onclick="setInputMode('target')">🗣️ 學習語言</button>
+                        <button id="mode-my" class="mode-btn" onclick="setInputMode('my')">🗣️ 母語</button>
+                    </div>
+                </div>
+
+                <div class="main-input-group">
+                    <button id="btn-mic" class="btn-circle btn-mic"><i class="fa-solid fa-microphone"></i></button>
+                    <input type="text" id="user-text" placeholder="說話或輸入..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" data-lpignore="true">
+                    <button id="btn-send" class="btn-circle btn-send"><i class="fa-solid fa-paper-plane"></i></button>
+                </div>
             </div>
         </div>
     </div>
@@ -762,10 +811,11 @@
         </div>
 
         <div class="menu-section">
-            <div class="menu-title">當前教室操作</div>
-            <button id="btn-export" class="menu-item"><i class="fa-solid fa-download"></i> 匯出對話紀錄 (JSON)</button>
-            <button id="btn-import" class="menu-item"><i class="fa-solid fa-upload"></i> 導入對話紀錄 (JSON)</button>
-            <button id="btn-clear-chat" class="menu-item"><i class="fa-solid fa-trash-can"></i> 清除所有對話</button>
+            <div class="menu-title">教室進階操作</div>
+            <button id="btn-room-export-ops" class="menu-item"><i class="fa-solid fa-file-export"></i> 匯出對話紀錄 (多選/全選)</button>
+            <button id="btn-export-all" class="menu-item"><i class="fa-solid fa-box-archive"></i> 一鍵匯出全部教室</button>
+            <button id="btn-import" class="menu-item"><i class="fa-solid fa-upload"></i> 導入對話到當前教室</button>
+            <button id="btn-room-delete-ops" class="menu-item"><i class="fa-solid fa-trash-can"></i> 清除或刪除教室</button>
         </div>
 
         <div class="menu-section">
@@ -804,6 +854,37 @@
         </div>
     </div>
 
+    <div id="modal-stt-guide" class="modal-overlay">
+        <div class="modal-content">
+            <h3 class="modal-h3">您的瀏覽器尚未啟用語音辨識功能</h3>
+            <p class="modal-p">為了獲得最佳體驗，請參考以下引導：</p>
+            <div style="color: var(--text-dim); font-size: 0.9rem; line-height: 1.6; margin-bottom: 20px;">
+                <ul style="padding-left: 20px;">
+                    <li>建議使用 <b>Google Chrome</b> 瀏覽器。</li>
+                    <li>請確認已允許本網頁的<b>麥克風權限</b>。</li>
+                    <li><b>iOS 用戶</b>：請使用 Safari 並確認「設定 > Safari > 麥克風」已開啟。</li>
+                    <li><b>Android 用戶</b>：請在 Chrome 網址列左方點擊鎖頭圖示允許麥克風。</li>
+                </ul>
+                <p style="margin-top: 15px; color: var(--primary-neon);">💡 您仍可使用文字輸入進行對話練習。</p>
+            </div>
+            <button onclick="document.getElementById('modal-stt-guide').style.display='none'" class="btn-full btn-send">我了解了</button>
+        </div>
+    </div>
+
+    <div id="modal-room-ops" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="room-ops-title" class="modal-h3">教室操作</h3>
+            <p id="room-ops-desc" class="modal-p">請選擇要操作的教室：</p>
+            <div id="room-ops-list" class="room-ops-list">
+                <!-- Room checkboxes/radios here -->
+            </div>
+            <div id="room-ops-footer">
+                <button id="btn-room-ops-confirm" class="btn-full btn-send">確認執行</button>
+                <button onclick="document.getElementById('modal-room-ops').style.display='none'" class="btn-full" style="background:rgba(255,255,255,0.1); color:#fff;">取消</button>
+            </div>
+        </div>
+    </div>
+
     <input type="file" id="file-import" class="hidden" accept=".json">
 
     <script>
@@ -816,7 +897,7 @@
         let recognition = null;
         let isRecording = false;
         let inputMode = 'target'; // 'target' or 'my'
-        let textBeforeCursor = '';
+        let baseText = '';
         let textAfterCursor = '';
 
         const LANG_NAMES = {
@@ -1036,7 +1117,14 @@
         // --- UI Events ---
         const menu = document.getElementById('side-menu');
         const overlay = document.getElementById('side-menu-overlay');
-        document.getElementById('btn-menu').onclick = () => { menu.classList.add('active'); overlay.classList.add('active'); };
+        document.getElementById('btn-menu').onclick = () => { 
+            if (window.innerWidth >= 1024) {
+                menu.classList.toggle('collapsed');
+            } else {
+                menu.classList.add('active'); 
+                overlay.classList.add('active'); 
+            }
+        };
         const closeMenu = () => { menu.classList.remove('active'); overlay.classList.remove('active'); };
         document.getElementById('btn-menu-close').onclick = closeMenu;
         overlay.onclick = closeMenu;
@@ -1052,12 +1140,96 @@
             if (key) { localStorage.setItem('gemini_api_key', key); document.getElementById('modal-api').style.display = 'none'; hideError(); }
         };
 
-        document.getElementById('btn-clear-chat').onclick = () => {
-            if (confirm("確定要清除此教室的所有對話嗎？")) {
-                const room = chatRooms.find(r => r.id === activeRoomId);
-                if (room) { room.messages = []; saveRoomsToLocal(); switchRoom(activeRoomId); }
-                closeMenu();
+        // --- Room Advanced Operations ---
+        let currentRoomOp = ''; // 'export' or 'delete'
+
+        document.getElementById('btn-room-export-ops').onclick = () => {
+            currentRoomOp = 'export';
+            showRoomOpsModal("匯出對話紀錄", "請勾選要匯出的教室：", "checkbox");
+        };
+
+        document.getElementById('btn-room-delete-ops').onclick = () => {
+            currentRoomOp = 'delete';
+            showRoomOpsModal("清除或刪除教室", "請選擇要操作的教室：", "radio");
+        };
+
+        document.getElementById('btn-export-all').onclick = () => {
+            const allData = chatRooms.map(r => ({ name: r.name, language: r.language, messages: r.messages }));
+            downloadJson(allData, `ai-tutor-all-rooms-${Date.now()}.json`);
+        };
+
+        function showRoomOpsModal(title, desc, inputType) {
+            document.getElementById('room-ops-title').textContent = title;
+            document.getElementById('room-ops-desc').textContent = desc;
+            const list = document.getElementById('room-ops-list');
+            list.innerHTML = '';
+            chatRooms.forEach(room => {
+                const label = document.createElement('label');
+                label.className = 'room-op-item';
+                label.innerHTML = `
+                    <input type="${inputType}" name="room-op-select" value="${room.id}">
+                    <span>${room.name} (${room.messages.length} 則訊息)</span>
+                `;
+                list.appendChild(label);
+            });
+            document.getElementById('modal-room-ops').style.display = 'flex';
+            closeMenu();
+        }
+
+        document.getElementById('btn-room-ops-confirm').onclick = () => {
+            const selected = Array.from(document.querySelectorAll('input[name="room-op-select"]:checked')).map(el => el.value);
+            if (selected.length === 0) { alert("請至少選擇一個教室。"); return; }
+
+            if (currentRoomOp === 'export') {
+                const exportData = chatRooms.filter(r => selected.includes(r.id)).map(r => ({ name: r.name, language: r.language, messages: r.messages }));
+                downloadJson(exportData, `ai-tutor-export-${Date.now()}.json`);
+            } else if (currentRoomOp === 'delete') {
+                const op = confirm("請選擇操作：\n確定 [是]：清除選中教室的對話紀錄\n取消 [否]：直接刪除選中的教室");
+                if (op) {
+                    // Clear messages
+                    chatRooms.forEach(r => { if(selected.includes(r.id)) r.messages = []; });
+                } else {
+                    // Delete rooms
+                    if (selected.length >= chatRooms.length) { alert("不能刪除所有教室。"); return; }
+                    chatRooms = chatRooms.filter(r => !selected.includes(r.id));
+                    if (selected.includes(activeRoomId)) activeRoomId = chatRooms[0].id;
+                }
+                saveRoomsToLocal();
+                switchRoom(activeRoomId);
             }
+            document.getElementById('modal-room-ops').style.display = 'none';
+        };
+
+        function downloadJson(data, filename) {
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = filename;
+            document.body.appendChild(a); a.click();
+            setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+        }
+
+        document.getElementById('btn-import').onclick = () => document.getElementById('file-import').click();
+        document.getElementById('file-import').onchange = (e) => {
+            const file = e.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    const data = JSON.parse(ev.target.result);
+                    const room = chatRooms.find(r => r.id === activeRoomId);
+                    if (room) { 
+                        // If imported data is an array of messages, import to current
+                        if (Array.isArray(data)) {
+                            room.messages = data;
+                        } else if (data.messages) {
+                            room.messages = data.messages;
+                        }
+                        saveRoomsToLocal(); 
+                        switchRoom(activeRoomId); 
+                        closeMenu(); 
+                    }
+                } catch(err) { alert("無效的 JSON 檔案"); }
+            };
+            reader.readAsText(file);
         };
 
         document.getElementById('btn-swap-lang').onclick = () => {
@@ -1211,32 +1383,24 @@
             recognition.onstart = () => {
                 isRecording = true;
                 document.getElementById('btn-mic').classList.add('recording');
+                baseText = document.getElementById('user-text').value;
                 
                 const input = document.getElementById('user-text');
                 const pos = input.selectionStart || input.value.length;
-                textBeforeCursor = input.value.substring(0, pos);
                 textAfterCursor = input.value.substring(pos);
+                // We'll append at the end as per request: "追加到輸入框現有文字的最後面"
             };
             
             recognition.onresult = (event) => {
                 const input = document.getElementById('user-text');
-                let finalTranscript = '';
-                let interimTranscript = '';
+                let transcript = '';
                 
                 for (let i = event.resultIndex; i < event.results.length; i++) {
-                    if (event.results[i].isFinal) {
-                        finalTranscript += event.results[i][0].transcript;
-                    } else {
-                        interimTranscript += event.results[i][0].transcript;
-                    }
+                    transcript += event.results[i][0].transcript;
                 }
                 
-                // Cumulative append at cursor position
-                input.value = textBeforeCursor + finalTranscript + interimTranscript + textAfterCursor;
-                
-                // Keep cursor at the end of newly inserted text
-                const newPos = textBeforeCursor.length + finalTranscript.length + interimTranscript.length;
-                input.setSelectionRange(newPos, newPos);
+                // Cumulative append at the end of baseText
+                input.value = baseText + transcript;
             };
             
             recognition.onerror = (event) => {
@@ -1256,7 +1420,11 @@
         }
 
         document.getElementById('btn-mic').onclick = () => {
-            if (!recognition) { alert("您的瀏覽器不支援語音辨識功能。"); return; }
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                document.getElementById('modal-stt-guide').style.display = 'flex';
+                return;
+            }
             if (isRecording) {
                 stopRecording();
             } else {
@@ -1276,31 +1444,6 @@
             const msgDiv = btn.closest('.message');
             const text = msgDiv.querySelector('.msg-learning').textContent;
             speak(text, document.getElementById('target-lang').value);
-        };
-
-        // --- History & Export ---
-        document.getElementById('btn-export').onclick = () => {
-            const room = chatRooms.find(r => r.id === activeRoomId);
-            if (!room || room.messages.length === 0) { alert("無對話紀錄可匯出"); return; }
-            const blob = new Blob([JSON.stringify(room.messages, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = url; a.download = `ai-tutor-${room.name}-${new Date().getTime()}.json`;
-            document.body.appendChild(a); a.click();
-            setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
-        };
-
-        document.getElementById('btn-import').onclick = () => document.getElementById('file-import').click();
-        document.getElementById('file-import').onchange = (e) => {
-            const file = e.target.files[0]; if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                try {
-                    const data = JSON.parse(ev.target.result);
-                    const room = chatRooms.find(r => r.id === activeRoomId);
-                    if (room) { room.messages = data; saveRoomsToLocal(); switchRoom(activeRoomId); closeMenu(); }
-                } catch(err) { alert("無效的 JSON 檔案"); }
-            };
-            reader.readAsText(file);
         };
 
         // --- Helpers ---
