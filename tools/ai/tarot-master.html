@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 塔羅大師 | GugoPro</title>
+    <meta name="description" content="專業 AI 塔羅占卜大師：完整 78 張韋特塔羅牌、5 大專業牌陣、3D 翻牌動畫、Gemini AI 深度交叉解牌、占卜紀錄管理。">
+    <meta name="keywords" content="塔羅牌, 塔羅占卜, Tarot Reading, 韋特塔羅, 牌陣, 凱爾特十字, 時間流, AI 解牌, Gemini, 占卜">
+    <meta name="author" content="GugoPro AI Team">
+    <link rel="canonical" href="https://gugopro.com/tools/ai/tarot-master.html">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://gugopro.com/tools/ai/tarot-master.html">
+    <meta property="og:title" content="AI 塔羅大師 | GugoPro">
+    <meta property="og:description" content="專業 AI 塔羅占卜大師：78 張韋特牌、5 大專業牌陣、Gemini AI 深度交叉解牌。">
+
+    <!-- Google Fonts: Outfit, Inter, Noto Sans TC, Cinzel -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- GA4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-GF1DYLWMKX"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-GF1DYLWMKX');
+    </script>
+
+    <style>
+    /* ========== ROOT ========== */
+    :root {
+        --bg-dark: #0a0a14;
+        --bg-card: rgba(18, 12, 36, 0.82);
+        --border-card: rgba(168, 85, 247, 0.15);
+        --text-primary: #f0e6ff;
+        --text-secondary: #c4b5d4;
+        --text-muted: #8b7fa0;
+        --neon-purple: #b44aff;
+        --neon-gold: #ffd700;
+        --neon-pink: #ff6ec7;
+        --accent-purple: #a855f7;
+        --accent-indigo: #6366f1;
+        --glass-blur: blur(20px);
+        --radius-lg: 18px;
+        --radius-md: 12px;
+        --radius-sm: 8px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+        background-color: var(--bg-dark);
+        color: var(--text-primary);
+        font-family: 'Inter', 'Noto Sans TC', -apple-system, sans-serif;
+        line-height: 1.6;
+        overflow-x: hidden;
+        background-image:
+            radial-gradient(ellipse at 15% 10%, rgba(168, 85, 247, 0.10) 0%, transparent 50%),
+            radial-gradient(ellipse at 85% 90%, rgba(255, 215, 0, 0.06) 0%, transparent 50%),
+            radial-gradient(ellipse at 50% 50%, rgba(99, 102, 241, 0.04) 0%, transparent 60%);
+        background-attachment: fixed;
+        min-height: 100vh;
+    }
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+
+    /* ========== HEADER ========== */
+    .main-header {
+        position: sticky; top: 0; z-index: 100;
+        background: rgba(10, 10, 20, 0.92);
+        backdrop-filter: var(--glass-blur);
+        border-bottom: 1px solid var(--border-card);
+        padding: 12px 0;
+    }
+    .header-container { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+    .brand-box { display: flex; align-items: center; gap: 12px; }
+    .brand-logo { display: flex; align-items: center; gap: 8px; font-family: 'Cinzel', 'Outfit', serif; font-size: 1.4rem; font-weight: 700; color: #fff; }
+    .brand-icon { color: var(--neon-purple); font-size: 1.3rem; }
+    .brand-tagline { font-size: 0.82rem; color: var(--text-muted); border-left: 1px solid rgba(255,255,255,0.12); padding-left: 10px; }
+    .btn-back-home {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: rgba(168, 85, 247, 0.12); color: #c084fc;
+        border: 1px solid rgba(168, 85, 247, 0.3);
+        padding: 8px 18px; border-radius: 24px;
+        font-size: 0.88rem; font-weight: 700;
+        text-decoration: none; transition: all 0.25s ease;
+    }
+    .btn-back-home:hover { background: rgba(168, 85, 247, 0.25); transform: translateY(-1px); }
+
+    /* ========== HERO ========== */
+    .hero-section { padding: 40px 0 24px 0; text-align: center; }
+    .hero-badge {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: rgba(168, 85, 247, 0.10); color: var(--neon-purple);
+        border: 1px solid rgba(168, 85, 247, 0.25);
+        padding: 6px 16px; border-radius: 30px;
+        font-size: 0.82rem; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 16px;
+    }
+    .hero-title {
+        font-family: 'Cinzel', 'Noto Sans TC', serif;
+        font-size: 2.4rem; font-weight: 900; line-height: 1.2; margin-bottom: 10px;
+    }
+    .gradient-text {
+        background: linear-gradient(135deg, var(--neon-purple) 0%, var(--neon-gold) 50%, var(--neon-pink) 100%);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero-subtitle { font-size: 1rem; color: var(--text-secondary); max-width: 720px; margin: 0 auto; }
+
+    /* ========== TOOL AREA ========== */
+    .tool-area { padding-bottom: 40px; }
+    .section-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-card);
+        border-radius: var(--radius-lg);
+        padding: 28px;
+        margin-bottom: 24px;
+        backdrop-filter: var(--glass-blur);
+    }
+    .section-title {
+        font-family: 'Cinzel', 'Noto Sans TC', serif;
+        font-size: 1.2rem; font-weight: 700; color: #fff;
+        display: flex; align-items: center; gap: 10px; margin-bottom: 4px;
+    }
+    .section-subtitle { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 20px; }
+
+    /* ========== SPREAD SELECTOR ========== */
+    .spread-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+    .spread-card {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid var(--border-card);
+        border-radius: var(--radius-md);
+        padding: 16px; cursor: pointer;
+        text-align: center; transition: all 0.25s ease;
+    }
+    .spread-card:hover { border-color: rgba(168,85,247,0.4); }
+    .spread-card.active {
+        border-color: var(--neon-purple);
+        background: rgba(168, 85, 247, 0.08);
+        box-shadow: 0 0 20px rgba(168,85,247,0.15);
+    }
+    .spread-card .sc-icon { font-size: 1.6rem; margin-bottom: 8px; }
+    .spread-card .sc-name { font-weight: 700; font-size: 0.9rem; color: #fff; margin-bottom: 2px; }
+    .spread-card .sc-desc { font-size: 0.75rem; color: var(--text-muted); }
+    .spread-card .sc-count { font-size: 0.72rem; color: var(--neon-gold); margin-top: 4px; }
+
+    /* ========== QUESTION INPUT ========== */
+    .question-area { margin-top: 20px; }
+    .input-group { position: relative; }
+    .input-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
+    .input-group input, .input-group textarea, .input-group select {
+        width: 100%;
+        background: rgba(0,0,0,0.3);
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: var(--radius-sm);
+        padding: 12px 14px;
+        color: var(--text-primary);
+        font-size: 0.95rem;
+        font-family: 'Inter', sans-serif;
+        transition: border-color 0.2s ease;
+    }
+    .input-group input:focus, .input-group textarea:focus, .input-group select:focus {
+        outline: none; border-color: var(--neon-purple);
+        box-shadow: 0 0 10px rgba(168,85,247,0.15);
+    }
+    .input-group textarea { min-height: 80px; resize: vertical; }
+    .input-group select option { background: #1a1030; }
+
+    /* ========== BUTTONS ========== */
+    .btn-primary {
+        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        background: linear-gradient(135deg, var(--accent-purple), var(--accent-indigo));
+        color: #fff; font-weight: 800; font-size: 1rem;
+        padding: 14px 36px; border-radius: 30px; border: none; cursor: pointer;
+        box-shadow: 0 6px 24px rgba(168,85,247,0.3);
+        transition: all 0.25s ease; width: 100%; margin-top: 16px;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(168,85,247,0.45); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .btn-secondary {
+        display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+        background: rgba(255,215,0,0.10); color: var(--neon-gold);
+        border: 1px solid rgba(255,215,0,0.3);
+        padding: 10px 20px; border-radius: 24px; font-size: 0.88rem; font-weight: 700;
+        cursor: pointer; transition: all 0.2s ease; text-decoration: none;
+    }
+    .btn-secondary:hover { background: rgba(255,215,0,0.2); }
+
+    /* ========== CARD TABLE AREA ========== */
+    .card-table {
+        display: flex; justify-content: center; align-items: flex-end;
+        min-height: 220px; perspective: 1000px;
+        padding: 20px 0; position: relative;
+        overflow-x: auto;
+    }
+
+    /* Tarot Card 3D */
+    .tarot-card {
+        width: 100px; height: 170px;
+        position: relative;
+        transform-style: preserve-3d;
+        transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        margin: 0 6px;
+        flex-shrink: 0;
+    }
+    .tarot-card.dealing {
+        animation: dealIn 0.5s ease-out forwards;
+    }
+    .tarot-card.flipped {
+        transform: rotateY(180deg);
+    }
+    .tarot-card.reversed .card-front-inner {
+        transform: rotateY(180deg) rotate(180deg);
+    }
+    .tarot-card:hover:not(.flipped) {
+        transform: translateY(-8px);
+    }
+    .tarot-card:hover.flipped {
+        transform: rotateY(180deg) translateY(-8px);
+    }
+
+    @keyframes dealIn {
+        0% { opacity: 0; transform: translateY(-60px) scale(0.8) rotateY(0deg); }
+        100% { opacity: 1; transform: translateY(0) scale(1) rotateY(0deg); }
+    }
+
+    .card-back, .card-front {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        border-radius: 10px;
+        backface-visibility: hidden;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+    }
+    .card-back {
+        background: linear-gradient(135deg, #1a0a3e, #2d1b69);
+        border: 2px solid rgba(168, 85, 247, 0.4);
+        box-shadow: 0 4px 20px rgba(168,85,247,0.2);
+    }
+    .card-back::after {
+        content: '✦';
+        font-size: 2rem;
+        color: var(--neon-gold);
+        text-shadow: 0 0 10px rgba(255,215,0,0.5);
+    }
+    .card-back-pattern {
+        position: absolute; top: 8px; left: 8px; right: 8px; bottom: 8px;
+        border: 1px solid rgba(168,85,247,0.2);
+        border-radius: 6px;
+        display: flex; align-items: center; justify-content: center;
+    }
+
+    .card-front-inner {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        backface-visibility: hidden;
+        transform: rotateY(180deg);
+        border-radius: 10px;
+        background: linear-gradient(135deg, #0f0a20, #1a0f35);
+        border: 2px solid var(--neon-gold);
+        box-shadow: 0 0 20px rgba(255,215,0,0.15);
+        overflow: hidden;
+    }
+    .card-front-inner .cf-emoji {
+        font-size: 2rem; margin-bottom: 4px;
+    }
+    .card-front-inner .cf-name {
+        font-family: 'Cinzel', serif;
+        font-size: 0.55rem; font-weight: 700; color: var(--neon-gold);
+        text-align: center; padding: 0 6px;
+        line-height: 1.2;
+    }
+    .card-front-inner .cf-position {
+        font-size: 0.5rem; color: var(--text-muted);
+        margin-top: 3px; text-align: center;
+    }
+    .card-front-inner .cf-reversed {
+        font-size: 0.5rem; color: var(--neon-pink);
+        margin-top: 2px; font-weight: 700;
+    }
+
+    /* Card table instructions */
+    .card-instructions {
+        text-align: center; margin-top: 12px;
+        font-size: 0.88rem; color: var(--text-muted);
+    }
+
+    /* ========== AI READING ========== */
+    .ai-reading-box {
+        background: rgba(168, 85, 247, 0.05);
+        border: 1px solid rgba(168, 85, 247, 0.2);
+        border-radius: var(--radius-md);
+        padding: 24px; margin-top: 20px;
+        white-space: pre-wrap; line-height: 1.9;
+        font-size: 0.95rem; color: var(--text-secondary);
+    }
+    .ai-reading-box h3 {
+        font-family: 'Cinzel', serif;
+        color: var(--neon-gold); font-size: 1.1rem; margin-bottom: 14px;
+    }
+    .ai-loading {
+        display: flex; align-items: center; gap: 10px;
+        color: var(--neon-purple); font-weight: 600;
+    }
+    .ai-loading .spinner {
+        width: 24px; height: 24px;
+        border: 3px solid rgba(168,85,247,0.2);
+        border-top-color: var(--neon-purple);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Chat area */
+    .chat-area { margin-top: 16px; }
+    .chat-messages {
+        max-height: 300px; overflow-y: auto;
+        background: rgba(0,0,0,0.2);
+        border-radius: var(--radius-sm);
+        padding: 14px; margin-bottom: 12px;
+    }
+    .chat-msg { margin-bottom: 12px; padding: 10px 14px; border-radius: var(--radius-sm); font-size: 0.9rem; line-height: 1.7; }
+    .chat-msg.user { background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.2); }
+    .chat-msg.ai { background: rgba(168,85,247,0.10); border: 1px solid rgba(168,85,247,0.15); white-space: pre-wrap; }
+    .chat-input-row { display: flex; gap: 10px; }
+    .chat-input-row input { flex: 1; }
+
+    /* ========== HISTORY ========== */
+    .history-list { max-height: 400px; overflow-y: auto; }
+    .history-item {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid var(--border-card);
+        border-radius: var(--radius-sm);
+        padding: 14px; margin-bottom: 10px;
+    }
+    .history-item .hi-question { font-weight: 700; color: #fff; margin-bottom: 4px; }
+    .history-item .hi-meta { font-size: 0.78rem; color: var(--text-muted); }
+    .history-item .hi-summary { font-size: 0.85rem; color: var(--text-secondary); margin-top: 6px; }
+
+    /* ========== AFFILIATE ========== */
+    .affiliate-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+    .affiliate-card {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid var(--border-card);
+        border-radius: var(--radius-md);
+        padding: 20px; text-align: center; transition: all 0.25s ease;
+    }
+    .affiliate-card:hover { transform: translateY(-3px); border-color: rgba(255,215,0,0.4); }
+    .affiliate-card .af-icon { font-size: 2rem; color: var(--neon-gold); margin-bottom: 10px; }
+    .affiliate-card h4 { font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 6px; }
+    .affiliate-card p { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 14px; }
+    .btn-affiliate {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: #000; font-weight: 700; font-size: 0.88rem;
+        padding: 10px 22px; border-radius: 24px; border: none;
+        text-decoration: none; transition: all 0.2s ease;
+        box-shadow: 0 4px 16px rgba(245,158,11,0.3);
+    }
+    .btn-affiliate:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(245,158,11,0.45); }
+
+    /* ========== HELP / SEO ========== */
+    .help-item {
+        background: rgba(255,255,255,0.02);
+        border: 1px solid var(--border-card);
+        border-radius: var(--radius-md);
+        padding: 20px; margin-bottom: 14px;
+    }
+    .help-item h2 {
+        font-family: 'Cinzel', 'Noto Sans TC', serif;
+        font-size: 1.05rem; font-weight: 700; color: var(--neon-purple);
+        margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+    }
+    .help-item p { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.8; }
+
+    /* ========== DISCLAIMER ========== */
+    .disclaimer-box {
+        background: rgba(239, 68, 68, 0.06);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        border-radius: var(--radius-md);
+        padding: 18px 20px; margin-top: 20px;
+    }
+    .disclaimer-box h3 { color: var(--color-red, #ef4444); font-size: 1rem; margin-bottom: 8px; }
+    .disclaimer-box p { font-size: 0.88rem; color: var(--text-muted); line-height: 1.7; }
+
+    /* ========== KO-FI ========== */
+    .kofi-section { text-align: center; padding: 20px 0; }
+    .kofi-section h3 { font-size: 1.15rem; font-weight: 700; color: #fff; margin-bottom: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+    /* ========== MODAL ========== */
+    .modal-overlay {
+        display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.7); z-index: 1000;
+        align-items: center; justify-content: center;
+        backdrop-filter: blur(8px);
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-content {
+        background: var(--bg-card);
+        border: 1px solid var(--neon-purple);
+        border-radius: var(--radius-lg);
+        padding: 32px; max-width: 480px; width: 90%;
+        text-align: center;
+    }
+    .modal-content h3 { font-family: 'Cinzel', serif; color: var(--neon-gold); font-size: 1.2rem; margin-bottom: 14px; }
+    .modal-content p { color: var(--text-secondary); margin-bottom: 20px; font-size: 0.95rem; }
+
+    /* ========== FOOTER ========== */
+    .main-footer {
+        border-top: 1px solid var(--border-card);
+        background: rgba(10, 10, 20, 0.95);
+        padding: 24px 0; text-align: center; font-size: 0.85rem; color: var(--text-muted);
+    }
+    .footer-links a { color: var(--text-secondary); text-decoration: none; margin: 0 6px; font-weight: 500; }
+    .footer-links a:hover { color: var(--neon-purple); }
+
+    /* ========== RESPONSIVE ========== */
+    @media (max-width: 768px) {
+        .brand-tagline { display: none; }
+        .header-container { justify-content: center; }
+        .hero-title { font-size: 1.7rem; }
+        .hero-subtitle { font-size: 0.9rem; }
+        .spread-grid { grid-template-columns: repeat(2, 1fr); }
+        .affiliate-grid { grid-template-columns: 1fr; }
+        .tarot-card { width: 76px; height: 130px; margin: 0 3px; }
+        .card-back::after { font-size: 1.4rem; }
+        .card-front-inner .cf-emoji { font-size: 1.4rem; }
+        .card-front-inner .cf-name { font-size: 0.45rem; }
+        .card-front-inner .cf-position { font-size: 0.4rem; }
+        .card-front-inner .cf-reversed { font-size: 0.4rem; }
+        .card-table { min-height: 180px; }
+    }
+    @media (max-width: 480px) {
+        .hero-title { font-size: 1.4rem; }
+        .section-card { padding: 18px; }
+        .spread-grid { grid-template-columns: 1fr; }
+        .tarot-card { width: 62px; height: 106px; margin: 0 2px; }
+        .card-back::after { font-size: 1.1rem; }
+        .card-front-inner .cf-emoji { font-size: 1.1rem; }
+    }
+    </style>
+</head>
+<body>
+
+    <!-- ===== HEADER ===== -->
+    <header class="main-header">
+        <div class="container header-container">
+            <div class="brand-box">
+                <div class="brand-logo">
+                    <i class="brand-icon fa-solid fa-star-of-david"></i>
+                    GugoPro
+                </div>
+                <div class="brand-tagline">AI Mystic Tools</div>
+            </div>
+            <a href="https://gugopro.com" class="btn-back-home">
+                <i class="fa-solid fa-house"></i> 返回 GugoPro 首頁
+            </a>
+        </div>
+    </header>
+
+    <!-- ===== HERO ===== -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="hero-badge"><i class="fa-solid fa-wand-sparkles"></i> AI-Powered Tarot Reading</div>
+            <h1 class="hero-title">
+                <span class="gradient-text">AI 塔羅大師</span>
+            </h1>
+            <p class="hero-subtitle">
+                完整 78 張韋特塔羅牌、5 大專業牌陣、3D 翻牌動畫、Gemini AI 深度交叉解牌。
+                靜心抽牌，讓 AI 為你揭開命運的指引。
+            </p>
+        </div>
+    </section>
+
+    <!-- ===== MAIN TOOL ===== -->
+    <div class="container tool-area">
+
+        <!-- API Key Modal -->
+        <div class="modal-overlay" id="api-modal">
+            <div class="modal-content">
+                <h3><i class="fa-solid fa-key" style="color: var(--neon-gold);"></i> 需要設定 Gemini API Key</h3>
+                <p>請先取得免費的 Google Gemini API Key，即可使用 AI 深度解牌功能。</p>
+                <a href="https://gugopro.com/tools/tutorials/how-to-get-gemini-api-key.html" target="_blank" rel="noopener" class="btn-secondary" style="margin-bottom: 14px;">
+                    <i class="fa-solid fa-book-open"></i> 查看如何取得 API Key
+                </a>
+                <div style="margin-top: 16px;">
+                    <div class="input-group" style="text-align:left;">
+                        <label>輸入您的 Gemini API Key</label>
+                        <input type="password" id="modal-api-key" placeholder="AIzaSy...">
+                    </div>
+                    <button class="btn-primary" style="margin-top: 12px;" onclick="saveModalApiKey()">
+                        <i class="fa-solid fa-lock"></i> 儲存並開始占卜
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Spread Selection -->
+        <div class="section-card">
+            <div class="section-title"><i class="fa-solid fa-spa" style="color: var(--neon-purple);"></i> 選擇牌陣</div>
+            <p class="section-subtitle">根據你的問題選擇最適合的牌陣。</p>
+            <div class="spread-grid" id="spread-grid">
+                <div class="spread-card active" data-spread="daily" onclick="selectSpread('daily')">
+                    <div class="sc-icon">🔮</div>
+                    <div class="sc-name">每日運勢與靈性指引</div>
+                    <div class="sc-desc">今日核心能量</div>
+                    <div class="sc-count">1 張牌</div>
+                </div>
+                <div class="spread-card" data-spread="timeline" onclick="selectSpread('timeline')">
+                    <div class="sc-icon">⏳</div>
+                    <div class="sc-name">時間流牌陣</div>
+                    <div class="sc-desc">過去 / 現在 / 未來</div>
+                    <div class="sc-count">3 張牌</div>
+                </div>
+                <div class="spread-card" data-spread="choice" onclick="selectSpread('choice')">
+                    <div class="sc-icon">⚖️</div>
+                    <div class="sc-name">二選一抉擇牌陣</div>
+                    <div class="sc-desc">A 與 B 的選擇分析</div>
+                    <div class="sc-count">5 張牌</div>
+                </div>
+                <div class="spread-card" data-spread="love" onclick="selectSpread('love')">
+                    <div class="sc-icon">💖</div>
+                    <div class="sc-name">感情關係牌陣</div>
+                    <div class="sc-desc">雙方想法與未來發展</div>
+                    <div class="sc-count">4 張牌</div>
+                </div>
+                <div class="spread-card" data-spread="celtic" onclick="selectSpread('celtic')">
+                    <div class="sc-icon">🔯</div>
+                    <div class="sc-name">凱爾特十字牌陣</div>
+                    <div class="sc-desc">深度全盤命運解析</div>
+                    <div class="sc-count">10 張牌</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Question Input -->
+        <div class="section-card">
+            <div class="section-title"><i class="fa-solid fa-pen-fancy" style="color: var(--neon-gold);"></i> 你的問題</div>
+            <p class="section-subtitle">靜心專注，將你的問題清楚地寫下來。問題越具體，指引越精準。</p>
+            <div class="input-group">
+                <label><i class="fa-solid fa-circle-question"></i> 具體問題</label>
+                <input type="text" id="question-input" placeholder="例如：我下個月的工作變動會帶來什麼結果？">
+            </div>
+            <div class="input-group" style="margin-top: 12px;">
+                <label><i class="fa-solid fa-tag"></i> 問題類別</label>
+                <select id="category-select">
+                    <option value="general">綜合 / 一般運勢</option>
+                    <option value="love">愛情 / 感情</option>
+                    <option value="career">事業 / 工作</option>
+                    <option value="finance">財務 / 金錢</option>
+                    <option value="health">健康 / 身心</option>
+                    <option value="decision">決策 / 選擇</option>
+                    <option value="spiritual">靈性 / 自我成長</option>
+                </select>
+            </div>
+            <button class="btn-primary" id="btn-shuffle" onclick="startReading()">
+                <i class="fa-solid fa-shuffle"></i> 開始洗牌抽牌
+            </button>
+        </div>
+
+        <!-- Card Table -->
+        <div class="section-card" id="card-table-section" style="display:none;">
+            <div class="section-title"><i class="fa-solid fa-hand-pointer" style="color: var(--neon-gold);"></i> 點擊卡片翻牌</div>
+            <p class="section-subtitle" id="table-subtitle">從牌堆中點選所有卡片以揭曉你的命運。</p>
+            <div class="card-table" id="card-table">
+                <!-- Cards injected by JS -->
+            </div>
+            <div class="card-instructions" id="card-instructions">
+                <i class="fa-solid fa-hand-point-up"></i> 點擊每一張牌卡以翻開
+            </div>
+        </div>
+
+        <!-- AI Reading -->
+        <div class="section-card" id="ai-reading-section" style="display:none;">
+            <div class="section-title"><i class="fa-solid fa-robot" style="color: var(--neon-purple);"></i> AI 深度解牌</div>
+            <div class="ai-reading-box" id="ai-reading-box">
+                <!-- Filled by JS -->
+            </div>
+            <div class="chat-area" id="chat-area" style="display:none;">
+                <h4 style="color: var(--neon-gold); font-family: 'Cinzel', serif; margin-bottom: 10px;">
+                    <i class="fa-solid fa-comments"></i> 繼續追問
+                </h4>
+                <div class="chat-messages" id="chat-messages"></div>
+                <div class="chat-input-row">
+                    <input type="text" id="chat-input" placeholder="輸入你的追問..." onkeydown="if(event.key==='Enter')sendChat()">
+                    <button class="btn-secondary" onclick="sendChat()" style="flex-shrink:0;">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="section-card" id="action-section" style="display:none;">
+            <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;">
+                <button class="btn-secondary" onclick="copyReport()">
+                    <i class="fa-solid fa-copy"></i> 複製占卜報告
+                </button>
+                <button class="btn-secondary" onclick="saveHistory()">
+                    <i class="fa-solid fa-bookmark"></i> 儲存占卜紀錄
+                </button>
+                <button class="btn-secondary" onclick="location.reload()">
+                    <i class="fa-solid fa-rotate"></i> 重新占卜
+                </button>
+            </div>
+        </div>
+
+        <!-- History -->
+        <div class="section-card">
+            <div class="section-title"><i class="fa-solid fa-clock-rotate-left" style="color: var(--neon-purple);"></i> 占卜紀錄</div>
+            <p class="section-subtitle">你過去的所有占卜紀錄，儲存在本地瀏覽器中。</p>
+            <div class="history-list" id="history-list">
+                <!-- Filled by JS -->
+            </div>
+        </div>
+
+        <!-- Affiliate -->
+        <div class="section-card">
+            <div class="section-title"><i class="fa-brands fa-amazon" style="color: var(--neon-gold);"></i> 塔羅牌與水晶靈性用品：精選經典韋特塔羅牌、占卜桌布與天然水晶</div>
+            <p class="section-subtitle">想親自體驗塔羅占卜？搜尋精選韋特塔羅牌與天然水晶，直達 Amazon 全球館。</p>
+            <div class="affiliate-grid">
+                <div class="affiliate-card">
+                    <div class="af-icon"><i class="fa-solid fa-gem"></i></div>
+                    <h4>美國 Amazon 精選好物</h4>
+                    <p>Tarot Cards Deck and Crystals — 搜尋韋特塔羅牌與天然水晶。</p>
+                    <a href="https://www.amazon.com/s?k=tarot+cards+deck+and+crystals&tag=9908qq-20" target="_blank" rel="noopener" class="btn-affiliate">
+                        <i class="fa-brands fa-amazon"></i> 前往美國 Amazon 搜尋
+                    </a>
+                </div>
+                <div class="affiliate-card">
+                    <div class="af-icon"><i class="fa-solid fa-torii-gate"></i></div>
+                    <h4>日本 Amazon 精選好物</h4>
+                    <p>タロットカード・天然石 — 搜尋日本亞馬遜塔羅牌與天然石。</p>
+                    <a href="https://www.amazon.co.jp/s?k=タロットカード+天然石&tag=gugopro-22" target="_blank" rel="noopener" class="btn-affiliate">
+                        <i class="fa-brands fa-amazon"></i> 前往日本 Amazon 搜尋
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- SEO Help -->
+        <div class="section-card">
+            <div class="section-title"><i class="fa-solid fa-graduation-cap" style="color: var(--neon-purple);"></i> 塔羅占卜操作教學</div>
+            <p class="section-subtitle">了解塔羅占卜的基本知識與技巧。</p>
+
+            <div class="help-item">
+                <h2><i class="fa-solid fa-om"></i> 如何靜心並向塔羅牌提出精準問題</h2>
+                <p>
+                    占卜前的靜心是關鍵步驟。先深呼吸三次，將注意力集中在你真正想問的問題上。
+                    好的塔羅問題應該具備三個特質：<strong>具體</strong>（不要問「我的未來會怎樣」）、<strong>開放式</strong>（避免是非題）、<strong>聚焦當下</strong>。
+                    例如：「我目前這份工作在未來三個月中會面臨什麼挑戰，我該如何應對？」
+                    這樣的問題能引導塔羅給出更具體、更有用的指引。
+                </p>
+            </div>
+
+            <div class="help-item">
+                <h2><i class="fa-solid fa-arrows-rotate"></i> 正位與逆位牌義有何差別</h2>
+                <p>
+                    每張塔羅牌都有正位與逆位兩種面向。<strong>正位</strong>代表牌義的直接展現，
+                    能量以正面、外向的方式流動。<strong>逆位</strong>（倒立）則代表能量的內化、
+                    延遲、過度或不足。例如「力量」正位代表內在勇氣與耐心，逆位則可能暗示
+                    自我懷疑或過度控制。逆位並非一定是「壞」的，它更多是指能量的阻塞或需要調整的方向。
+                    本工具每張牌抽中時有 50% 機率為正位、50% 機率為逆位，提供最完整的解牌體驗。
+                </p>
+            </div>
+
+            <div class="help-item">
+                <h2><i class="fa-solid fa-diagram-project"></i> 什麼是時間流與二選一牌陣</h2>
+                <p>
+                    <strong>時間流牌陣</strong>（3 張）是最經典的牌陣之一：左為過去原因、中為現在狀態、右為未來趨勢。
+                    它幫助你理解事件的發展脈絡，而非單純預測結果。
+                    <strong>二選一牌陣</strong>（5 張）專為抉擇設計：第一張為當前困境，
+                    第二、三張分別為選擇 A 與 B 的後果，第四、五張為對應的建議。
+                    塔羅不會替你做決定，而是揭示每個選擇背後的能量與潛在結果，幫助你做出更清醒的選擇。
+                    <strong>凱爾特十字牌陣</strong>（10 張）則是最全面的全盤解析牌陣，
+                    涵蓋現況、挑戰、潛意識、過去基礎、最佳結果等多個面向。
+                </p>
+            </div>
+        </div>
+
+        <!-- Disclaimer -->
+        <div class="disclaimer-box">
+            <h3><i class="fa-solid fa-triangle-exclamation"></i> 免責聲明</h3>
+            <p>
+                本工具占卜與 AI 解牌結果僅供心理探索、自我覺察與娛樂參考，不構成任何醫療、法律或財務建議。
+                塔羅牌是一種自我反思工具，最終的決定權始終在你手中。請理性看待占卜結果，
+                如有心理或健康問題，請尋求專業人士協助。
+            </p>
+        </div>
+
+        <!-- Ko-fi -->
+        <div id="kofi-section-anchor" class="section-card kofi-section">
+            <h3><i class="fa-solid fa-mug-hot" style="color: #72a4f2;"></i> 贊助開發者 (Powered by Ko-fi)</h3>
+            <a href="https://ko-fi.com/R1K123XRS9" target="_blank" rel="noopener" style="background:#72a4f2; color:#fff; padding:10px 18px; border-radius:8px; text-decoration:none; display:inline-flex; align-items:center; gap:8px; font-weight:bold;">
+                <i class="fa-solid fa-mug-hot"></i> Buy me a coffee
+            </a>
+        </div>
+
+    </div>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="main-footer">
+        <div class="container">
+            <div class="footer-links">
+                <a href="https://gugopro.com">首頁</a>
+                <a href="https://gugopro.com/tools/">工具目錄</a>
+            </div>
+            <p style="margin-top:8px;">&copy; 2026 GugoPro. All rights reserved.</p>
+        </div>
+    </footer>
+
+<script>
+(function(){
+'use strict';
+
+/* =====================================================================
+   COMPLETE 78-CARD RIDER-WAITE DECK
+   ===================================================================== */
+var DECK = [
+  // ---- 22 Major Arcana ----
+  {n:0,name:'愚者',en:'The Fool',emoji:'🃏',u:'開始、冒險、自由、新旅程',r:'魯莽、不負責任、害怕風險'},
+  {n:1,name:'魔術師',en:'The Magician',emoji:'🎩',u:'創造力、意志力、資源齊備、顯化',r:'操控、欺騙、能力未發揮'},
+  {n:2,name:'女祭司',en:'The High Priestess',emoji:'🌙',u:'直覺、潛意識、神秘智慧、內省',r:'忽略直覺、表面知識、隱秘被揭'},
+  {n:3,name:'皇后',en:'The Empress',emoji:'👑',u:'豐饒、母性、創造力、自然之美',r:'依賴、創造力受阻、缺乏關愛'},
+  {n:4,name:'皇帝',en:'The Emperor',emoji:'⚔️',u:'權威、結構、穩定、領導力',r:'僵化、專制、缺乏紀律'},
+  {n:5,name:'教皇',en:'The Hierophant',emoji:'📿',u:'傳統、精神指引、教育、信念',r:'非傳統、反叛教條、尋求自由'},
+  {n:6,name:'戀人',en:'The Lovers',emoji:'💕',u:'愛情、選擇、和諧、價值觀',r:'不和諧、價值衝突、錯誤選擇'},
+  {n:7,name:'戰車',en:'The Chariot',emoji:'🏇',u:'勝利、意志力、決心、控制',r:'缺乏方向、失控、侵略性'},
+  {n:8,name:'力量',en:'Strength',emoji:'🦁',u:'內在力量、勇氣、耐心、溫柔',r:'自我懷疑、軟弱、壓抑情緒'},
+  {n:9,name:'隱士',en:'The Hermit',emoji:'🏔️',u:'孤獨、內省、智慧、尋求真理',r:'孤立、封閉、拒絕幫助'},
+  {n:10,name:'命運之輪',en:'Wheel of Fortune',emoji:'🎡',u:'轉變、循環、命運、幸運',r:'壞運氣、抗拒改變、失控感'},
+  {n:11,name:'正義',en:'Justice',emoji:'⚖️',u:'公正、因果、真相、平衡',r:'不公、逃避責任、偏見'},
+  {n:12,name:'倒吊人',en:'The Hanged Man',emoji:'🙃',u:'犧牲、新視角、等待、放手',r:'無意義犧牲、拖延、拒絕放手'},
+  {n:13,name:'死神',en:'Death',emoji:'💀',u:'結束、轉變、重生、放下過去',r:'抗拒改變、停滯、恐懼新開始'},
+  {n:14,name:'節制',en:'Temperance',emoji:'🕊️',u:'平衡、耐心、中庸、調和',r:'極端、失衡、缺乏耐心'},
+  {n:15,name:'惡魔',en:'The Devil',emoji:'😈',u:'束縛、慾望、物質執著、陰影',r:'解脫、打破束縛、覺醒'},
+  {n:16,name:'塔',en:'The Tower',emoji:'⚡',u:'突然的改變、 разрушение、真相揭露',r:'逃避災難、延遲的改變、內在心碎'},
+  {n:17,name:'星星',en:'The Star',emoji:'⭐',u:'希望、靈感、寧靜、信念',r:'失去信念、絕望、 disconnected'},
+  {n:18,name:'月亮',en:'The Moon',emoji:'🌕',u:'幻覺、潛意識、恐懼、不確定',r:'恐懼散去、真相浮現、 clarity'},
+  {n:19,name:'太陽',en:'The Sun',emoji:'☀️',u:'快樂、成功、活力、光明',r:'暫時受阻、過度樂觀、內在陰影'},
+  {n:20,name:'審判',en:'Judgement',emoji:'📯',u:'重生、呼喚、覺醒、原諒',r:'自我批判、逃避呼喚、未解決的過去'},
+  {n:21,name:'世界',en:'The World',emoji:'🌍',u:'完成、成就、整合、圓滿',r:'未完成、缺乏閉合、延遲的成功'},
+
+  // ---- 14 Wands 權杖 ----
+  {n:22,name:'權杖王牌',en:'Ace of Wands',emoji:'🔥',u:'靈感、新計畫、熱情爆發',r:'延遲、缺乏方向、能量受阻'},
+  {n:23,name:'權杖二',en:'Two of Wands',emoji:'🔱',u:'計畫未來、決策、遠見',r:'猶豫不決、恐懼未知'},
+  {n:24,name:'權杖三',en:'Three of Wands',emoji:'🚢',u:'前進、擴展、國際機會',r:'延遲、障礙、計畫受阻'},
+  {n:25,name:'權杖四',en:'Four of Wands',emoji:'🏠',u:'慶祝、和諧、穩定、歸屬',r:'缺乏支持、不穩定、慶祝延遲'},
+  {n:26,name:'權杖五',en:'Five of Wands',emoji:'🥊',u:'衝突、競爭、挑戰、摩擦',r:'避免衝突、內心矛盾、解決紛爭'},
+  {n:27,name:'權杖六',en:'Six of Wands',emoji:'🏆',u:'勝利、認可、自信、成功',r:'失敗、缺乏信心、延遲的勝利'},
+  {n:28,name:'權杖七',en:'Seven of Wands',emoji:'🛡️',u:'堅持、防禦、守護信念',r:'放棄、過度防衛、精力耗盡'},
+  {n:29,name:'權杖八',en:'Eight of Wands',emoji:'💨',u:'快速行動、訊息到達、前進',r:'延遲、急躁、方向錯誤'},
+  {n:30,name:'權杖九',en:'Nine of Wands',emoji:'🏰',u:'韌性、最後的堅持、警惕',r:'過度防衛、偏執、精力耗竭'},
+  {n:31,name:'權杖十',en:'Ten of Wands',emoji:'📦',u:'負擔、責任過重、壓力',r:'放下負擔、尋求幫助、重新分配'},
+  {n:32,name:'權杖侍者',en:'Page of Wands',emoji:'🌱',u:'新想法、熱情、冒險精神',r:'衝動、計畫不周、缺乏承諾'},
+  {n:33,name:'權杖騎士',en:'Knight of Wands',emoji:'🐎',u:'行動力、冒險、熱情追求',r:'魯莽、急躁、半途而廢'},
+  {n:34,name:'權杖皇后',en:'Queen of Wands',emoji:'👸',u:'自信、魅力、獨立、熱情',r:'嫉妒、控制慾、缺乏自信'},
+  {n:35,name:'權杖國王',en:'King of Wands',emoji:'🤴',u:'領導力、遠見、魅力、行動',r:'專制、衝動、缺乏同理心'},
+
+  // ---- 14 Cups 聖杯 ----
+  {n:36,name:'聖杯王牌',en:'Ace of Cups',emoji:'💧',u:'新的情感開始、愛、直覺',r:'情感阻塞、空虛、愛的封閉'},
+  {n:37,name:'聖杯二',en:'Two of Cups',emoji:'🥂',u:'相互吸引、合作、靈魂伴侶',r:'關係失衡、誤解、不平等'},
+  {n:38,name:'聖杯三',en:'Three of Cups',emoji:'🎉',u:'慶祝、友誼、社群、歡樂',r:'過度享樂、八卦、孤立'},
+  {n:39,name:'聖杯四',en:'Four of Cups',emoji:'😐',u:'冷漠、不滿、忽視機會',r:'重新振作、接受新機會、覺醒'},
+  {n:40,name:'聖杯五',en:'Five of Cups',emoji:'😢',u:'失落、悲傷、聚焦失去',r:'走出悲傷、接受現實、向前看'},
+  {n:41,name:'聖杯六',en:'Six of Cups',emoji:'🧸',u:'懷舊、童年、回憶、純真',r:'活在過去、無法放下、過度理想化'},
+  {n:42,name:'聖杯七',en:'Seven of Cups',emoji:'🌈',u:'幻想、選擇過多、白日夢',r:'現實感、做出選擇、打破幻象'},
+  {n:43,name:'聖杯八',en:'Eight of Cups',emoji:'🚶',u:'離開、尋求更深意義、放下',r:'害怕離開、猶豫、回頭'},
+  {n:44,name:'聖杯九',en:'Nine of Cups',emoji:'😊',u:'滿足、願望成真、感恩',r:'不滿、物質主義、空洞的滿足'},
+  {n:45,name:'聖杯十',en:'Ten of Cups',emoji:'🌈',u:'家庭幸福、情感圓滿、和諧',r:'家庭衝突、理想破滅、不完美'},
+  {n:46,name:'聖杯侍者',en:'Page of Cups',emoji:'🐟',u:'創意訊息、情感新開始、直覺',r:'情緒化、不成熟、幻想過度'},
+  {n:47,name:'聖杯騎士',en:'Knight of Cups',emoji:'🏰',u:'浪漫、追求夢想、情感邀約',r:'不切實際、情緒操控、優柔寡斷'},
+  {n:48,name:'聖杯皇后',en:'Queen of Cups',emoji:'🧝',u:'同理心、直覺、情感成熟',r:'情緒過度、依賴、情感封閉'},
+  {n:49,name:'聖杯國王',en:'King of Cups',emoji:'🧙',u:'情感智慧、平靜、慈悲',r:'情緒操控、冷漠、壓抑情感'},
+
+  // ---- 14 Swords 寶劍 ----
+  {n:50,name:'寶劍王牌',en:'Ace of Swords',emoji:'⚔️',u:'清晰、真理、突破、新思維',r:'困惑、殘忍的真相、思維混亂'},
+  {n:51,name:'寶劍二',en:'Two of Swords',emoji:'🗡️',u:'僵局、逃避選擇、內心的平靜',r:'做出決定、打破僵局、資訊揭露'},
+  {n:52,name:'寶劍三',en:'Three of Swords',emoji:'💔',u:'心碎、悲傷、分離、痛苦',r:'癒合、原諒、走出傷痛'},
+  {n:53,name:'寶劍四',en:'Four of Swords',emoji:'🛌',u:'休息、恢復、冥想、獨處',r:'焦躁、無法休息、過度思慮'},
+  {n:54,name:'寶劍五',en:'Five of Swords',emoji:'🥷',u:'衝突、勝利但有代價、自尊',r:'放下爭執、承認錯誤、和解'},
+  {n:55,name:'寶劍六',en:'Six of Swords',emoji:'⛵',u:'過渡、離開痛苦、前往平靜',r:'無法離開、被困住、拒絕改變'},
+  {n:56,name:'寶劍七',en:'Seven of Swords',emoji:'🦊',u:'策略、欺騙、偷偷行動',r:'揭露真相、面對後果、誠實'},
+  {n:57,name:'寶劍八',en:'Eight of Swords',emoji:'🔗',u:'受困、無力感、自我限制',r:'看見出路、打破限制、自由'},
+  {n:58,name:'寶劍九',en:'Nine of Swords',emoji:'😰',u:'焦慮、噩夢、擔憂、恐懼',r:'焦慮減輕、面對恐懼、希望'},
+  {n:59,name:'寶劍十',en:'Ten of Swords',emoji:'🗡️',u:'結束、底谷、徹底摧毀',r:'復原開始、最壞已過、重生'},
+  {n:60,name:'寶劍侍者',en:'Page of Swords',emoji:'🔍',u:'好奇心、新想法、機警',r:'八卦、散播謠言、不成熟的計畫'},
+  {n:61,name:'寶劍騎士',en:'Knight of Swords',emoji:'🏇',u:'迅速行動、直接、雄心',r:'魯莽、衝動、缺乏計畫'},
+  {n:62,name:'寶劍皇后',en:'Queen of Swords',emoji:'❄️',u:'獨立、清晰判斷、直接',r:'冷酷、批判性過強、情感封閉'},
+  {n:63,name:'寶劍國王',en:'King of Swords',emoji:'👨‍⚖️',u:'公正、邏輯、權威、清晰',r:'專制、冷酷、濫用權力'},
+
+  // ---- 14 Pentacles 錢幣 ----
+  {n:64,name:'錢幣王牌',en:'Ace of Pentacles',emoji:'🪙',u:'新財務機會、物質開始、繁榮',r:'錯失機會、財務延遲、貪婪'},
+  {n:65,name:'錢幣二',en:'Two of Pentacles',emoji:'🎭',u:'平衡、管理、適應變化',r:'失衡、超載、無法應對'},
+  {n:66,name:'錢幣三',en:'Three of Pentacles',emoji:'🏗️',u:'團隊合作、技藝、專業',r:'缺乏合作、品質下降、平庸'},
+  {n:67,name:'錢幣四',en:'Four of Pentacles',emoji:'🔒',u:'安全、保守、囤積、穩定',r:'放手、慷慨、放下控制'},
+  {n:68,name:'錢幣五',en:'Five of Pentacles',emoji:'🏚️',u:'匱乏、困難、孤立、匱乏',r:'走出困境、找到幫助、恢復'},
+  {n:69,name:'錢幣六',en:'Six of Pentacles',emoji:'🤝',u:'慷慨、給予與接收、平衡',r:'不平等、施捨心態、債務'},
+  {n:70,name:'錢幣七',en:'Seven of Pentacles',emoji:'🌿',u:'耐心等待、評估進展、投資',r:'不耐煩、成果不足、浪費'},
+  {n:71,name:'錢幣八',en:'Eight of Pentacles',emoji:'⚒️',u:'精進、專注、技藝磨練',r:'偷工減料、缺乏熱情、平庸'},
+  {n:72,name:'錢幣九',en:'Nine of Pentacles',emoji:'🦚',u:'獨立、自足、豐盛、優雅',r:'依賴他人、過度消費、空虛'},
+  {n:73,name:'錢幣十',en:'Ten of Pentacles',emoji:'🏛️',u:'家族遺產、長期穩定、繁榮',r:'家族衝突、財務損失、基礎不穩'},
+  {n:74,name:'錢幣侍者',en:'Page of Pentacles',emoji:'🌾',u:'學習、新技能、實用計畫',r:'拖延、缺乏承諾、短視'},
+  {n:75,name:'錢幣騎士',en:'Knight of Pentacles',emoji:'🐢',u:'勤奮、可靠、穩步前進',r:'停滯、過於保守、缺乏動力'},
+  {n:76,name:'錢幣皇后',en:'Queen of Pentacles',emoji:'👩‍🌾',u:'實用、照顧、豐饒、溫暖',r:'過度付出、忽視自己、物質主義'},
+  {n:77,name:'錢幣國王',en:'King of Pentacles',emoji:'🤴',u:'成功、穩定、財富、務實',r:'貪婪、固執、過度物質導向'}
+];
+
+/* =====================================================================
+   SPREAD DEFINITIONS
+   ===================================================================== */
+var SPREADS = {
+  daily: {
+    name: '每日運勢與靈性指引',
+    count: 1,
+    positions: ['今日核心能量']
+  },
+  timeline: {
+    name: '時間流牌陣',
+    count: 3,
+    positions: ['過去 / 原因', '現在 / 狀態', '未來 / 趨勢']
+  },
+  choice: {
+    name: '二選一抉擇牌陣',
+    count: 5,
+    positions: ['當前困境', '選擇 A 的後果', '選擇 B 的後果', '選擇 A 的建議', '選擇 B 的建議']
+  },
+  love: {
+    name: '感情關係牌陣',
+    count: 4,
+    positions: ['我的真實想法', '對方的真實想法', '兩人當前障礙', '未來關係發展']
+  },
+  celtic: {
+    name: '凱爾特十字牌陣',
+    count: 10,
+    positions: ['現況 / 核心主題', '挑戰 / 阻礙', '潛意識 / 底層動機', '過去 / 近期基礎',
+                '最佳可能結果', '近期未來', '你的態度與能量', '外在環境影響',
+                '希望與恐懼', '最終結果']
+  }
+};
+
+/* =====================================================================
+   STATE
+   ===================================================================== */
+var state = {
+  spread: 'daily',
+  cards: [],
+  drawn: [],
+  flipped: 0,
+  flippedCount: 0,
+  geminiModel: 'gemini-2.5-flash',
+  apiKey: '',
+  chatContext: '',
+  isChatMode: false
+};
+
+/* =====================================================================
+   INIT
+   ===================================================================== */
+function init() {
+  loadApiKey();
+  fetchModel();
+  loadHistory();
+  if (typeof gtag === 'function') {
+    gtag('event', 'page_view', {'event_category': 'tool', 'page_title': 'tarot-master'});
+  }
+}
+
+function loadApiKey() {
+  var stored = localStorage.getItem('tarot_api_key');
+  if (stored) {
+    state.apiKey = stored;
+  } else {
+    document.getElementById('api-modal').classList.add('show');
+  }
+}
+
+function saveModalApiKey() {
+  var key = document.getElementById('modal-api-key').value.trim();
+  if (!key) { alert('請輸入 API Key。'); return; }
+  state.apiKey = key;
+  localStorage.setItem('tarot_api_key', key);
+  document.getElementById('api-modal').classList.remove('show');
+}
+
+async function fetchModel() {
+  try {
+    var resp = await fetch('https://quota.gugopro.com/', {method:'GET', cache:'no-store'});
+    if (resp.ok) {
+      var data = await resp.json();
+      // Try to find a free gemini model
+      if (data && data.models) {
+        var models = Array.isArray(data.models) ? data.models : [];
+        var freeGemini = models.find(function(m) {
+          return (m.id || '').toLowerCase().includes('gemini') &&
+                 !(m.id || '').toLowerCase().includes('1.5') &&
+                 !(m.id || '').toLowerCase().includes('gemini-pro');
+        });
+        if (freeGemini) {
+          state.geminiModel = freeGemini.id;
+        }
+      }
+    }
+  } catch(e) {
+    // Keep default gemini-2.5-flash
+  }
+}
+
+/* =====================================================================
+   SPREAD SELECTION
+   ===================================================================== */
+window.selectSpread = function(spread) {
+  state.spread = spread;
+  document.querySelectorAll('.spread-card').forEach(function(c) { c.classList.remove('active'); });
+  document.querySelector('.spread-card[data-spread="' + spread + '"]').classList.add('active');
+};
+
+/* =====================================================================
+   START READING
+   ===================================================================== */
+window.startReading = function() {
+  var question = document.getElementById('question-input').value.trim();
+  if (!question) { alert('請先輸入你的問題。'); return; }
+
+  // Ensure API key
+  if (!state.apiKey) {
+    document.getElementById('api-modal').classList.add('show');
+    return;
+  }
+
+  var spread = SPREADS[state.spread];
+  var count = spread.count;
+
+  // Shuffle and draw
+  var deck = DECK.slice();
+  for (var i = deck.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = deck[i]; deck[i] = deck[j]; deck[j] = tmp;
+  }
+  state.cards = deck.slice(0, count);
+  state.drawn = state.cards.map(function(c) {
+    return { card: c, reversed: Math.random() < 0.5, position: '' };
+  });
+  state.flipped = 0;
+  state.flippedCount = 0;
+
+  // Hide action sections
+  document.getElementById('ai-reading-section').style.display = 'none';
+  document.getElementById('action-section').style.display = 'none';
+
+  // Show card table
+  var tableSection = document.getElementById('card-table-section');
+  tableSection.style.display = '';
+
+  var table = document.getElementById('card-table');
+  table.innerHTML = '';
+
+  var instructions = document.getElementById('card-instructions');
+  instructions.innerHTML = '<i class="fa-solid fa-hand-point-up"></i> 點擊每一張牌卡以翻開 (' + state.flippedCount + '/' + count + ')';
+
+  var subtitle = document.getElementById('table-subtitle');
+  subtitle.textContent = '請靜心點擊所有 ' + count + ' 張牌卡，揭曉你的命運。';
+
+  // Create cards with staggered animation
+  for (var idx = 0; idx < count; idx++) {
+    var d = state.drawn[idx];
+    var el = document.createElement('div');
+    el.className = 'tarot-card dealing';
+    el.style.animationDelay = (idx * 0.15) + 's';
+    el.dataset.idx = idx;
+    el.onclick = (function(index) {
+      return function() { flipCard(index); };
+    })(idx);
+
+    var posLabel = spread.positions[idx] || '';
+    var revLabel = d.reversed ? '<div class="cf-reversed">逆位</div>' : '';
+
+    el.innerHTML =
+      '<div class="card-back"><div class="card-back-pattern"></div></div>' +
+      '<div class="card-front-inner"' + (d.reversed ? ' style="transform: rotateY(180deg) rotate(180deg);"' : '') + '>' +
+        '<div class="cf-emoji">' + d.card.emoji + '</div>' +
+        '<div class="cf-name">' + d.card.name + '</div>' +
+        '<div class="cf-position">' + posLabel + '</div>' +
+        revLabel +
+      '</div>';
+
+    table.appendChild(el);
+  }
+
+  if (typeof gtag === 'function') {
+    gtag('event', 'tarot_spread_selected', {
+      'event_category': 'tarot',
+      'event_label': state.spread,
+      'value': count
+    });
+  }
+};
+
+/* =====================================================================
+   FLIP CARD
+   ===================================================================== */
+function flipCard(idx) {
+  var cards = document.querySelectorAll('.tarot-card');
+  var card = cards[idx];
+  if (card.classList.contains('flipped')) return;
+
+  card.classList.add('flipped');
+  state.flippedCount++;
+
+  var spread = SPREADS[state.spread];
+  var instructions = document.getElementById('card-instructions');
+  instructions.innerHTML = '<i class="fa-solid fa-hand-point-up"></i> 已翻開 ' + state.flippedCount + '/' + spread.count + ' 張牌';
+
+  // Check if all flipped
+  if (state.flippedCount >= spread.count) {
+    setTimeout(function() {
+      instructions.innerHTML = '<i class="fa-solid fa-wand-sparkles"></i> 所有牌卡已揭曉，正在召喚 AI 深度解牌...';
+      generateReading();
+    }, 800);
+  }
+}
+
+/* =====================================================================
+   AI READING
+   ===================================================================== */
+async function generateReading() {
+  var spread = SPREADS[state.spread];
+  var question = document.getElementById('question-input').value.trim();
+  var category = document.getElementById('category-select').value;
+  var categoryNames = {general:'綜合運勢',love:'愛情感情',career:'事業工作',finance:'財務金錢',health:'健康身心',decision:'決策選擇',spiritual:'靈性成長'};
+
+  // Build prompt
+  var cardDescriptions = state.drawn.map(function(d, i) {
+    var pos = spread.positions[i] || '位置' + (i+1);
+    var orientation = d.reversed ? '逆位 (Reversed)' : '正位 (Upright)';
+    var meaning = d.reversed ? d.card.r : d.card.u;
+    return '位置 ' + (i+1) + ' [' + pos + ']：' + d.card.name + ' (' + d.card.en + ') — ' + orientation + ' — 關鍵字：' + meaning;
+  }).join('\n');
+
+  var prompt =
+    '你是一位擁有 20 年經驗的專業塔羅占卜師，精通韋特塔羅牌的深度解讀。請根據以下牌陣進行全面且深入的交叉解牌分析。\n\n' +
+    '【問題】：' + question + '\n' +
+    '【問題類別】：' + (categoryNames[category] || category) + '\n' +
+    '【牌陣】：' + spread.name + '（' + spread.count + ' 張牌）\n\n' +
+    '【牌卡詳情】：\n' + cardDescriptions + '\n\n' +
+    '請按照以下三個部分進行深度解讀：\n\n' +
+    '🌟 一、牌陣整體能量概述\n' +
+    '分析整體牌陣的能量流動、大阿卡納與小阿卡納的比例、主要元素（火水風土）的分布，以及這些如何反映問卜者的整體狀態。\n\n' +
+    '🔍 二、各位置牌卡深度剖析\n' +
+    '逐一分析每個位置的牌卡意義，特別注意正位與逆位的細微差異。解釋每張牌在該位置上的獨特含義，以及牌與牌之間的互動關係。\n\n' +
+    '💡 三、針對問題的實體行動建議\n' +
+    '根據牌陣的整體訊息，提供 3-5 條具體、可執行的行動建議。建議應具建設性、鼓勵性，幫助問卜者做出更好的決策。';
+
+  state.chatContext = prompt + '\n\n【牌陣與結果摘要】\n' + cardDescriptions;
+  state.isChatMode = false;
+
+  var readingBox = document.getElementById('ai-reading-box');
+  readingBox.innerHTML = '<div class="ai-loading"><div class="spinner"></div> AI 正在深度解牌中，請稍候...</div>';
+
+  document.getElementById('ai-reading-section').style.display = '';
+  document.getElementById('action-section').style.display = '';
+
+  try {
+    var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + state.geminiModel + ':generateContent?key=' + encodeURIComponent(state.apiKey);
+    var resp = await fetch(url, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.8, maxOutputTokens: 4096 }
+      })
+    });
+
+    if (!resp.ok) {
+      throw new Error('API Error: ' + resp.status);
+    }
+
+    var data = await resp.json();
+    var text = '';
+    if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
+      text = data.candidates[0].content.parts.map(function(p) { return p.text || ''; }).join('');
+    }
+
+    readingBox.innerHTML = '<h3><i class="fa-solid fa-star" style="color: var(--neon-gold);"></i> AI 深度解牌結果</h3>' + escapeHtml(text);
+
+    // Show chat area
+    document.getElementById('chat-area').style.display = '';
+
+    if (typeof gtag === 'function') {
+      gtag('event', 'tarot_ai_reading', {
+        'event_category': 'tarot',
+        'event_label': state.spread,
+        'value': spread.count
+      });
+    }
+  } catch(e) {
+    readingBox.innerHTML =
+      '<h3><i class="fa-solid fa-circle-exclamation" style="color: var(--color-red, #ef4444);"></i> AI 解牌失敗</h3>' +
+      '<p>錯誤：' + escapeHtml(e.message) + '</p>' +
+      '<p style="margin-top:10px;">請確認 API Key 是否正確，或<a href="https://gugopro.com/tools/tutorials/how-to-get-gemini-api-key.html" target="_blank" rel="noopener" style="color:var(--neon-gold);">查看如何取得 API Key</a>。</p>';
+  }
+}
+
+/* =====================================================================
+   CHAT FOLLOW-UP
+   ===================================================================== */
+window.sendChat = function() {
+  var input = document.getElementById('chat-input');
+  var msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+
+  var chatMessages = document.getElementById('chat-messages');
+  chatMessages.innerHTML += '<div class="chat-msg user"><i class="fa-solid fa-user"></i> ' + escapeHtml(msg) + '</div>';
+
+  // AI request with context
+  var prompt = state.chatContext + '\n\n【使用者追問】：' + msg + '\n\n請根據上述牌陣內容，回答使用者的追問。';
+
+  var aiDiv = document.createElement('div');
+  aiDiv.className = 'chat-msg ai ai-loading';
+  aiDiv.innerHTML = '<div class="spinner"></div> AI 思考中...';
+  chatMessages.appendChild(aiDiv);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+
+  fetch('https://generativelanguage.googleapis.com/v1beta/models/' + state.geminiModel + ':generateContent?key=' + encodeURIComponent(state.apiKey), {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig: { temperature: 0.8, maxOutputTokens: 2048 }
+    })
+  }).then(function(resp) {
+    return resp.json();
+  }).then(function(data) {
+    var text = '';
+    if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
+      text = data.candidates[0].content.parts.map(function(p) { return p.text || ''; }).join('');
+    }
+    aiDiv.className = 'chat-msg ai';
+    aiDiv.innerHTML = '<i class="fa-solid fa-robot" style="color: var(--neon-purple);"></i> ' + escapeHtml(text);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }).catch(function(e) {
+    aiDiv.className = 'chat-msg ai';
+    aiDiv.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> 請求失敗：' + escapeHtml(e.message);
+  });
+};
+
+/* =====================================================================
+   COPY REPORT
+   ===================================================================== */
+window.copyReport = function() {
+  var spread = SPREADS[state.spread];
+  var question = document.getElementById('question-input').value.trim();
+  var report = '【塔羅占卜報告】\n';
+  report += '牌陣：' + spread.name + '\n';
+  report += '問題：' + question + '\n\n';
+
+  state.drawn.forEach(function(d, i) {
+    var pos = spread.positions[i] || '位置' + (i+1);
+    report += (i+1) + '. [' + pos + '] ' + d.card.name + ' (' + d.card.en + ')';
+    if (d.reversed) report += ' — 逆位';
+    else report += ' — 正位';
+    report += '\n   關鍵字：' + (d.reversed ? d.card.r : d.card.u) + '\n\n';
+  });
+
+  var aiText = document.getElementById('ai-reading-box').innerText;
+  report += '【AI 解牌摘要】\n' + aiText;
+
+  navigator.clipboard.writeText(report).then(function() {
+    alert('占卜報告已複製到剪貼簿！');
+  }).catch(function() {
+    // Fallback
+    var ta = document.createElement('textarea');
+    ta.value = report;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    alert('占卜報告已複製！');
+  });
+
+  if (typeof gtag === 'function') {
+    gtag('event', 'tarot_copy_report', {'event_category': 'tarot'});
+  }
+};
+
+/* =====================================================================
+   HISTORY
+   ===================================================================== */
+window.saveHistory = function() {
+  var spread = SPREADS[state.spread];
+  var question = document.getElementById('question-input').value.trim();
+  var aiText = document.getElementById('ai-reading-box').innerText.substring(0, 300);
+
+  var entry = {
+    date: new Date().toISOString(),
+    question: question,
+    spread: spread.name,
+    cards: state.drawn.map(function(d) {
+      return d.card.name + (d.reversed ? ' (逆位)' : '');
+    }).join(', '),
+    summary: aiText
+  };
+
+  var history = [];
+  try { history = JSON.parse(localStorage.getItem('tarot_history') || '[]'); } catch(e) {}
+  history.unshift(entry);
+  if (history.length > 30) history = history.slice(0, 30);
+  localStorage.setItem('tarot_history', JSON.stringify(history));
+
+  loadHistory();
+  alert('占卜紀錄已儲存！');
+};
+
+function loadHistory() {
+  var history = [];
+  try { history = JSON.parse(localStorage.getItem('tarot_history') || '[]'); } catch(e) {}
+
+  var list = document.getElementById('history-list');
+  if (!history.length) {
+    list.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding: 20px;">尚無占卜紀錄。完成占卜後點擊「儲存占卜紀錄」即可保存。</p>';
+    return;
+  }
+
+  var html = '';
+  history.forEach(function(entry) {
+    var date = new Date(entry.date).toLocaleString('zh-TW');
+    html +=
+      '<div class="history-item">' +
+        '<div class="hi-question">' + escapeHtml(entry.question) + '</div>' +
+        '<div class="hi-meta"><i class="fa-solid fa-clock"></i> ' + date + ' | ' + escapeHtml(entry.spread) + ' | ' + escapeHtml(entry.cards) + '</div>' +
+        '<div class="hi-summary">' + escapeHtml(entry.summary) + '...</div>' +
+      '</div>';
+  });
+  list.innerHTML = html;
+}
+
+/* =====================================================================
+   UTILS
+   ===================================================================== */
+function escapeHtml(str) {
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// Init
+init();
+
+})();
+</script>
+</body>
+</html>
