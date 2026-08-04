@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>麻將切牌勝率計算器 V2 | 台灣16張與日麻13張最佳切牌建議</title>
+    <title>麻將四家實戰桌面與即時勝率計算器 | GugoPro</title>
     
     <!-- SEO Tags -->
-    <meta name="description" content="GugoPro 麻將切牌勝率計算器 V2，支援台灣16張與日麻13張模式。透過決策矩陣分析最佳切牌建議，自動扣除海牌已見張數，計算真實剩餘進張率，助您精準聽牌。">
-    <meta name="keywords" content="麻將計算器, 切牌建議, 台灣16張麻將, 日本麻將, 進張數計算, 麻將策略, 聽牌分析, 真實剩餘張數">
+    <meta name="description" content="GugoPro 麻將實戰算牌工具：支援四家桌面布局，即時記錄自家手牌與三家河牌、露牌。內建真實機率引擎，精確計算下巡進張率與最佳切牌建議，助您在台灣16張與日麻實戰中百戰百勝。">
+    <meta name="keywords" content="麻將算牌, 實戰翻譯機, 麻將勝率, 四家桌面, 進張率, 台灣16張, 日本麻將, 聽牌分析, 真實剩餘張數">
     
     <!-- Google Analytics 4 (GA4) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-GF1DYLWMKX"></script>
@@ -38,6 +38,7 @@
             --tile-pin: #4da6ff;
             --tile-sou: #4dff4d;
             --tile-honor: #ffffff;
+            --table-green: #1a472a;
         }
 
         * {
@@ -52,17 +53,14 @@
             background-color: var(--bg-dark);
             color: var(--text-main);
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
             background-image: 
-                radial-gradient(circle at 5% 5%, rgba(0, 242, 255, 0.05) 0%, transparent 25%),
-                radial-gradient(circle at 95% 95%, rgba(112, 0, 255, 0.05) 0%, transparent 25%);
+                radial-gradient(circle at 50% 50%, rgba(26, 71, 42, 0.2) 0%, transparent 70%);
             overflow-x: hidden;
         }
 
         /* Navigation */
         header {
-            padding: 16px 20px;
+            padding: 12px 20px;
             background: rgba(10, 11, 16, 0.9);
             border-bottom: 1px solid var(--glass-border);
             display: flex;
@@ -80,113 +78,158 @@
             align-items: center;
             gap: 8px;
             font-weight: 600;
-            transition: color 0.3s;
         }
         .btn-back-home:hover { color: var(--primary-neon); }
-
         .logo-text {
             font-family: 'Outfit', sans-serif;
             font-weight: 700;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             background: linear-gradient(45deg, var(--primary-neon), var(--accent-gold));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
         .container {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
-            width: 100%;
+            padding: 15px;
         }
 
         /* Rule Switch */
+        .rule-bar {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
         .rule-selector {
             display: flex;
             background: var(--glass-bg);
             border: 1px solid var(--glass-border);
-            border-radius: 12px;
-            padding: 4px;
-            margin-bottom: 20px;
+            border-radius: 20px;
+            padding: 3px;
         }
         .rule-btn {
-            flex: 1;
-            padding: 10px;
+            padding: 6px 15px;
             border: none;
             background: none;
             color: var(--text-dim);
             cursor: pointer;
             font-weight: 600;
-            border-radius: 8px;
+            border-radius: 17px;
+            font-size: 0.8rem;
             transition: all 0.3s;
         }
         .rule-btn.active {
             background: var(--primary-neon);
             color: #000;
-            box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
         }
 
-        /* Section Styling */
-        .section-card {
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 20px;
-            margin-bottom: 20px;
-            backdrop-filter: blur(10px);
-        }
-        .section-title {
-            font-family: 'Outfit', sans-serif;
-            font-size: 1.1rem;
-            margin-bottom: 15px;
-            color: var(--primary-neon);
-            display: flex;
-            align-items: center;
+        /* Battle Table Layout */
+        .battle-table {
+            display: grid;
+            grid-template-areas: 
+                ". top ."
+                "left center right"
+                ". bottom .";
+            grid-template-columns: 1fr 2fr 1fr;
+            grid-template-rows: auto auto auto;
             gap: 10px;
+            background: var(--table-green);
+            border: 4px solid #3d2b1f;
+            border-radius: 30px;
+            padding: 15px;
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.5), 0 10px 30px rgba(0,0,0,0.5);
+            margin-bottom: 20px;
+            position: relative;
         }
 
-        /* Tile Display */
-        .tile-display-area {
+        .player-zone {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            padding: 10px;
+            border-radius: 15px;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .player-zone.active {
+            border-color: var(--primary-neon);
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.2);
+            background: rgba(0, 242, 255, 0.05);
+        }
+        .player-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            display: flex;
+            justify-content: space-between;
+        }
+        .player-zone.active .player-label { color: var(--primary-neon); }
+
+        .zone-top { grid-area: top; }
+        .zone-bottom { grid-area: bottom; }
+        .zone-left { grid-area: left; }
+        .zone-right { grid-area: right; }
+        .table-center { 
+            grid-area: center; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center;
+            text-align: center;
+        }
+
+        /* River/Hand Display */
+        .tile-list {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
-            min-height: 80px;
-            padding: 10px;
-            background: rgba(0,0,0,0.2);
-            border-radius: 12px;
-            margin-bottom: 10px;
-            justify-content: center;
-            align-items: center;
+            gap: 3px;
+            min-height: 40px;
         }
-
-        .mj-tile {
-            width: 45px;
-            height: 60px;
+        .mini-tile {
+            width: 24px;
+            height: 32px;
             background: #fff;
-            border-radius: 4px;
+            border-radius: 2px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             color: #000;
             font-weight: 700;
-            font-size: 1.2rem;
+            font-size: 0.7rem;
+            box-shadow: 0 2px 0 #ccc;
             position: relative;
-            cursor: pointer;
-            box-shadow: 0 4px 0 #ccc, 0 6px 10px rgba(0,0,0,0.5);
-            transition: transform 0.1s;
-            user-select: none;
         }
-        .mj-tile:active { transform: translateY(2px); box-shadow: 0 2px 0 #ccc, 0 3px 5px rgba(0,0,0,0.5); }
-        .mj-tile.man { color: var(--tile-man); }
-        .mj-tile.pin { color: var(--tile-pin); }
-        .mj-tile.sou { color: var(--tile-sou); }
-        .mj-tile.honor { color: #333; }
-        .mj-tile .tile-suit { font-size: 0.6rem; text-transform: uppercase; margin-top: -2px; }
+        .mini-tile.man { color: var(--tile-man); }
+        .mini-tile.pin { color: var(--tile-pin); }
+        .mini-tile.sou { color: var(--tile-sou); }
         
-        .mj-tile.exposed { opacity: 0.7; transform: scale(0.9); background: #eee; }
+        .zone-bottom .mini-tile { width: 30px; height: 40px; font-size: 0.9rem; }
 
-        /* Tile Keyboard */
+        /* Keyboard Panel */
+        .keyboard-section {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 15px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+        .keyboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .target-indicator {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--primary-neon);
+        }
         .keyboard-tabs {
             display: flex;
             gap: 5px;
@@ -195,12 +238,12 @@
         .tab-btn {
             flex: 1;
             padding: 8px;
-            background: var(--glass-bg);
+            background: rgba(255,255,255,0.05);
             border: 1px solid var(--glass-border);
             color: var(--text-dim);
             border-radius: 8px;
             cursor: pointer;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
         }
         .tab-btn.active {
             border-color: var(--primary-neon);
@@ -211,14 +254,12 @@
         .keyboard-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 10px;
+            gap: 8px;
             justify-items: center;
         }
-        @media (max-width: 480px) { .keyboard-grid { grid-template-columns: repeat(3, 1fr); } }
-
         .key-tile {
-            width: 50px;
-            height: 68px;
+            width: 55px;
+            height: 75px;
             background: #fff;
             border-radius: 6px;
             display: flex;
@@ -227,7 +268,7 @@
             justify-content: center;
             color: #000;
             font-weight: 800;
-            font-size: 1.4rem;
+            font-size: 1.5rem;
             cursor: pointer;
             box-shadow: 0 4px 0 #ccc;
             position: relative;
@@ -251,108 +292,85 @@
         .key-tile.disabled { opacity: 0.3; cursor: not-allowed; filter: grayscale(1); }
 
         /* Decision Matrix */
+        .results-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
         .matrix-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
         }
         .matrix-table th, .matrix-table td {
-            padding: 12px;
+            padding: 10px;
             text-align: left;
             border-bottom: 1px solid var(--glass-border);
         }
-        .matrix-table th { color: var(--text-dim); font-size: 0.8rem; text-transform: uppercase; }
+        .matrix-table th { color: var(--text-dim); font-size: 0.75rem; text-transform: uppercase; }
         .matrix-row.best { background: rgba(52, 199, 89, 0.1); }
-        .matrix-row.best td:first-child { border-left: 4px solid var(--success-green); }
+        .matrix-row.dead { color: var(--error-red); }
         
-        .wait-tiles { display: flex; flex-wrap: wrap; gap: 4px; }
-        .wait-tile-small {
-            font-size: 0.7rem;
+        .wait-tag {
+            display: inline-block;
             background: rgba(255,255,255,0.1);
-            padding: 2px 6px;
+            padding: 2px 5px;
             border-radius: 4px;
-            border: 1px solid var(--glass-border);
+            font-size: 0.7rem;
+            margin-right: 3px;
         }
 
-        /* Controls */
-        .controls-row {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-        .btn-action {
-            flex: 1;
-            padding: 12px;
-            border-radius: 12px;
-            border: none;
-            cursor: pointer;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: all 0.3s;
-        }
-        .btn-reset { background: var(--error-red); color: #fff; }
-        .btn-calc { background: var(--success-green); color: #fff; }
-        .btn-action:hover { opacity: 0.9; transform: translateY(-2px); }
-
-        /* SEO & Footer */
-        .footer-content {
-            margin-top: 40px;
-            padding: 30px 20px;
-            background: rgba(0,0,0,0.3);
-            border-top: 1px solid var(--glass-border);
-        }
-        .footer-content h2 { color: var(--primary-neon); margin-bottom: 15px; }
-        .footer-content h3 { color: var(--accent-gold); margin: 20px 0 10px; }
-        .footer-content p, .footer-content li {
-            color: var(--text-dim);
-            line-height: 1.7;
-            margin-bottom: 10px;
-            font-size: 0.95rem;
-        }
-        .disclaimer {
-            font-size: 0.8rem;
-            color: #666;
-            margin-top: 30px;
-            padding: 15px;
-            border: 1px dashed #444;
-            border-radius: 10px;
-        }
-
-        /* Amazon Ad */
-        .amazon-ad-card {
-            background: linear-gradient(135deg, #232f3e, #37475a);
+        /* Footer & Others */
+        .kofi-section { text-align: center; margin: 20px 0; }
+        .amazon-section {
+            background: #232f3e;
             border-radius: 15px;
-            padding: 20px;
+            padding: 15px;
             margin: 20px 0;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
             border: 1px solid #ff9900;
         }
-        .amazon-ad-title { color: #ff9900; font-weight: 700; font-size: 1rem; }
-        .amazon-links { display: flex; gap: 10px; flex-wrap: wrap; }
-        .amazon-btn {
+        .amazon-title { color: #ff9900; font-weight: 700; font-size: 0.9rem; margin-bottom: 10px; }
+        .amazon-btns { display: flex; gap: 10px; }
+        .amazon-link {
             background: #ff9900;
             color: #000;
-            padding: 8px 16px;
-            border-radius: 20px;
+            padding: 6px 12px;
+            border-radius: 15px;
             text-decoration: none;
             font-weight: 700;
-            font-size: 0.85rem;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            font-size: 0.8rem;
         }
 
-        /* Ko-fi Button */
-        .kofi-container { text-align: center; margin: 30px 0; }
+        .info-content {
+            padding: 20px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 15px;
+        }
+        .info-content h2 { color: var(--primary-neon); margin-bottom: 15px; font-size: 1.2rem; }
+        .info-content h3 { color: var(--accent-gold); margin: 15px 0 10px; font-size: 1rem; }
+        .info-content p, .info-content li { color: var(--text-dim); font-size: 0.9rem; line-height: 1.6; margin-bottom: 8px; }
 
-        /* Animation */
-        .fade-in { animation: fadeIn 0.5s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .disclaimer {
+            font-size: 0.75rem;
+            color: #555;
+            margin-top: 20px;
+            border-top: 1px solid #333;
+            padding-top: 10px;
+        }
+
+        /* Mobile specific adjustments */
+        @media (max-width: 600px) {
+            .battle-table {
+                grid-template-columns: 1fr 1.5fr 1fr;
+                padding: 10px;
+                gap: 5px;
+            }
+            .player-zone { padding: 5px; }
+            .mini-tile { width: 18px; height: 24px; font-size: 0.6rem; }
+            .zone-bottom .mini-tile { width: 22px; height: 30px; font-size: 0.75rem; }
+            .keyboard-grid { grid-template-columns: repeat(3, 1fr); }
+        }
     </style>
 </head>
 <body>
@@ -360,137 +378,137 @@
     <header>
         <div class="header-left">
             <a href="https://gugopro.com" class="btn-back-home">
-                <i class="fa-solid fa-house"></i> 返回 GugoPro
+                <i class="fa-solid fa-house"></i> 返回首頁
             </a>
-            <div class="logo-text">MJ Discard Calc V2</div>
+            <div class="logo-text">MJ Battle Table</div>
         </div>
-        <div class="header-right">
-            <div id="status-badge" style="font-size: 0.7rem; color: var(--text-dim);">台灣16張模式</div>
-        </div>
+        <div id="game-status" style="font-size: 0.7rem; color: var(--primary-neon);">台麻 16 張模式</div>
     </header>
 
     <div class="container">
-        <!-- Rule Selection -->
-        <div class="rule-selector">
-            <button class="rule-btn active" onclick="setMode(16)">台灣 16 張</button>
-            <button class="rule-btn" onclick="setMode(13)">日麻/廣東 13 張</button>
+        <!-- Mode Selector -->
+        <div class="rule-bar">
+            <div class="rule-selector">
+                <button class="rule-btn active" id="btn-16" onclick="changeMode(16)">台灣 16 張</button>
+                <button class="rule-btn" id="btn-13" onclick="changeMode(13)">日麻 13 張</button>
+            </div>
         </div>
 
-        <!-- Hand Display -->
-        <div class="section-card fade-in">
-            <div class="section-title">
-                <i class="fa-solid fa-hand-dots"></i> 當前手牌 (<span id="hand-count">0</span>/<span id="max-hand">17</span>)
+        <!-- 4-Player Battle Table -->
+        <div class="battle-table">
+            <!-- Top Player (Opponent) -->
+            <div class="player-zone zone-top" onclick="setTarget('top')">
+                <div class="player-label">對家 (TOP) <span id="count-top">0</span></div>
+                <div id="river-top" class="tile-list"></div>
             </div>
-            <div id="hand-display" class="tile-display-area">
-                <!-- Tiles will be inserted here -->
-                <div style="color: #444;">點擊下方鍵盤加入手牌</div>
+
+            <!-- Left Player (Opponent) -->
+            <div class="player-zone zone-left" onclick="setTarget('left')">
+                <div class="player-label">上家 (LEFT) <span id="count-left">0</span></div>
+                <div id="river-left" class="tile-list"></div>
             </div>
-            <div class="controls-row">
-                <button class="btn-action btn-reset" onclick="clearHand()">
-                    <i class="fa-solid fa-rotate-right"></i> 全部清空
+
+            <!-- Table Center (Probability) -->
+            <div class="table-center">
+                <div style="font-size: 0.6rem; color: var(--text-dim);">下巡摸牌進張率</div>
+                <div id="win-rate" style="font-size: 1.8rem; font-weight: 800; color: var(--primary-neon);">0.0%</div>
+                <div id="remain-total" style="font-size: 0.6rem; color: var(--accent-gold);">剩餘未知: 0 張</div>
+            </div>
+
+            <!-- Right Player (Opponent) -->
+            <div class="player-zone zone-right" onclick="setTarget('right')">
+                <div class="player-label">下家 (RIGHT) <span id="count-right">0</span></div>
+                <div id="river-right" class="tile-list"></div>
+            </div>
+
+            <!-- Bottom Player (Self) -->
+            <div class="player-zone zone-bottom active" onclick="setTarget('self')">
+                <div class="player-label">自家 (SELF) <span id="count-self">0</span>/<span id="max-self">17</span></div>
+                <div id="hand-self" class="tile-list"></div>
+            </div>
+        </div>
+
+        <!-- Keyboard Section -->
+        <div class="keyboard-section">
+            <div class="keyboard-header">
+                <div class="target-indicator" id="target-text">正在記錄：自家手牌</div>
+                <button onclick="clearTarget()" style="background:none; border:none; color:var(--error-red); cursor:pointer; font-size:0.8rem;">
+                    <i class="fa-solid fa-trash"></i> 清除對象牌
                 </button>
-                <button class="btn-action btn-calc" onclick="calculateDiscards()">
-                    <i class="fa-solid fa-wand-magic-sparkles"></i> 分析切牌
-                </button>
             </div>
-        </div>
-
-        <!-- Exposed Tiles Tracker -->
-        <div class="section-card fade-in">
-            <div class="section-title">
-                <i class="fa-solid fa-eye"></i> 海牌/露牌扣除區 (已見牌)
-            </div>
-            <div id="exposed-display" class="tile-display-area">
-                <div style="color: #444;">點擊鍵盤時切換為「已見」模式</div>
-            </div>
-            <div style="display: flex; justify-content: center; margin-top: 10px;">
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.9rem;">
-                    <input type="checkbox" id="input-mode-exposed" style="width: 18px; height: 18px; accent-color: var(--primary-neon);">
-                    切換為輸入「已見牌」
-                </label>
-            </div>
-        </div>
-
-        <!-- Tile Keyboard -->
-        <div class="section-card fade-in">
-            <div class="section-title"><i class="fa-solid fa-keyboard"></i> 麻將花色面板</div>
             <div class="keyboard-tabs">
-                <button class="tab-btn active" onclick="showSuit('man')">萬子</button>
-                <button class="tab-btn" onclick="showSuit('pin')">筒子</button>
-                <button class="tab-btn" onclick="showSuit('sou')">條子</button>
-                <button class="tab-btn" onclick="showSuit('honor')">字牌</button>
+                <button class="tab-btn active" onclick="switchSuit('man')">萬子</button>
+                <button class="tab-btn" onclick="switchSuit('pin')">筒子</button>
+                <button class="tab-btn" onclick="switchSuit('sou')">條子</button>
+                <button class="tab-btn" onclick="switchSuit('honor')">字牌</button>
             </div>
             <div id="keyboard-grid" class="keyboard-grid">
-                <!-- Keys will be dynamically generated -->
+                <!-- Tiles -->
             </div>
         </div>
 
-        <!-- Results Matrix -->
-        <div id="results-section" class="section-card fade-in" style="display: none;">
-            <div class="section-title"><i class="fa-solid fa-chart-simple"></i> 最佳切牌決策矩陣</div>
-            <div style="overflow-x: auto;">
+        <!-- Decision Matrix -->
+        <div id="matrix-section" class="results-card" style="display:none;">
+            <div style="font-family:'Outfit'; font-weight:700; margin-bottom:10px; color:var(--primary-neon);">
+                <i class="fa-solid fa-microchip"></i> 最佳切牌決策矩陣
+            </div>
+            <div style="overflow-x:auto;">
                 <table class="matrix-table">
                     <thead>
                         <tr>
                             <th>切牌</th>
                             <th>進張/聽牌</th>
-                            <th>真實剩餘</th>
-                            <th>效率</th>
+                            <th>剩餘</th>
+                            <th>機率</th>
                         </tr>
                     </thead>
-                    <tbody id="matrix-body">
-                        <!-- Results here -->
-                    </tbody>
+                    <tbody id="matrix-body"></tbody>
                 </table>
             </div>
         </div>
 
         <!-- Amazon Ad -->
-        <div class="amazon-ad-card">
-            <div class="amazon-ad-title"><i class="fa-brands fa-amazon"></i> 麻將與桌遊用品推薦</div>
-            <p style="font-size: 0.85rem; color: #ccc;">精選靜音麻將桌墊與高品質自動麻將機，提升您的牌局體驗。</p>
-            <div class="amazon-links">
-                <a href="https://www.amazon.com/s?k=mahjong+set+and+mat&tag=9908qq-20" target="_blank" class="amazon-btn">
-                    <i class="fa-solid fa-cart-shopping"></i> Amazon US
-                </a>
-                <a href="https://www.amazon.co.jp/s?k=麻雀パイ+麻雀マット&tag=gugopro-22" target="_blank" class="amazon-btn">
-                    <i class="fa-solid fa-cart-shopping"></i> Amazon JP
-                </a>
+        <div class="amazon-section">
+            <div class="amazon-title"><i class="fa-brands fa-amazon"></i> 麻將實戰必備推薦</div>
+            <div class="amazon-btns">
+                <a href="https://www.amazon.com/s?k=mahjong+set+and+mat&tag=9908qq-20" target="_blank" class="amazon-link">US Amazon</a>
+                <a href="https://www.amazon.co.jp/s?k=麻雀パイ+麻雀マット&tag=gugopro-22" target="_blank" class="amazon-link">JP Amazon</a>
             </div>
         </div>
 
         <!-- Ko-fi -->
-        <div class="kofi-container">
+        <div class="kofi-section">
             <a href="https://ko-fi.com/R1K123XRS9" target="_blank" rel="noopener" class="kofi-button" style="background:#72a4f2; color:#fff; padding:10px 18px; border-radius:8px; text-decoration:none; display:inline-flex; align-items:center; gap:8px; font-weight:bold;">
                 <i class="fa-solid fa-mug-hot"></i> Buy me a coffee
             </a>
         </div>
 
-        <!-- SEO Content -->
-        <div class="footer-content">
-            <h2>麻將進張與切牌策略深度教學</h2>
+        <!-- Footer Info -->
+        <div class="info-content">
+            <h2>為什麼必須記錄其餘三家的河牌？</h2>
+            <p>在麻將實戰中，資訊就是力量。許多玩家只專注於自己的手牌，卻忽略了場上已打出的「海牌」。透過記錄其餘三家的河牌與吃碰槓，您可以精確計算出每一張牌在牌堆中的<b>真實剩餘張數</b>。</p>
             
-            <h3>什麼是進張數與有效牌？</h3>
-            <p>有效牌（又稱進張）是指能讓手牌向「聽牌」或「胡牌」前進一步的牌。進張數越多，表示您聽牌的速度越快。在 V2 版本中，我們不僅計算種類，更透過<b>真實剩餘張數</b>計算出每一張切牌後的實際機率。</p>
-
-            <h3>如何利用扣除海牌避免死聽？</h3>
-            <p>新手常犯的錯誤是只看手牌結構，卻忽略了場上已經打出的牌（海牌）或對手碰出的露牌。如果某張進張牌在場上已經出現 4 張，那這就是「死聽」，永遠無法胡牌。本工具的<b>海牌扣除器</b>會自動過濾這些無效張數，給您最真實的數據。</p>
-
-            <h3>台灣 16 張與日麻 13 張切牌策略差異</h3>
-            <p>台灣麻將因為手牌多，搭子組合更靈活，通常優先保留「兩面搭子」並拆掉「邊張」或「孤張」。而日本麻將則更注重「役」的達成與防禦，進張計算在日麻中稱為「向聽數 (Shanten)」。本工具同時支援兩種算法，助您在不同規則下都能發揮最強實力。</p>
-
+            <h3>如何利用真實剩餘張數避免死聽與算牌？</h3>
+            <p>「死聽」是指您所聽的牌在場上已經出現了 4 張，這意味著除非對手放槍或您摸到花牌，否則永遠無法胡牌。本工具的<b>機率引擎</b>會即時比對全場已公開的牌，當您輸入手牌後，系統會自動排除所有死聽選項，並優先推薦進張率最高的切牌策略。</p>
+            
             <div class="disclaimer">
-                免責聲明：本工具計算結果僅供麻將牌技巧研究與機率統計評估參考，不保證勝率亦不鼓勵博弈行為。請理性娛樂，遵守當地法律法規。
+                免責聲明：本工具計算結果僅供麻將牌技巧研究與機率統計評估參考，不保證勝率亦不鼓勵博弈行為。
             </div>
         </div>
     </div>
 
     <script>
         // --- State ---
-        let gameMode = 16; // 16 or 13
-        let hand = [];
-        let exposed = [];
+        let mode = 16;
+        let target = 'self';
         let currentSuit = 'man';
+        
+        const state = {
+            self: [],
+            top: [],
+            left: [],
+            right: []
+        };
 
         const SUITS = {
             man: { label: '萬', color: 'man', tiles: [1,2,3,4,5,6,7,8,9] },
@@ -499,242 +517,220 @@
             honor: { label: '字', color: 'honor', tiles: ['東','南','西','北','中','發','白'] }
         };
 
-        const SUIT_ORDER = { 'man': 1, 'pin': 2, 'sou': 3, 'honor': 4 };
+        const TARGET_NAMES = {
+            self: '自家手牌',
+            top: '對家河牌',
+            left: '上家河牌',
+            right: '下家河牌'
+        };
 
         // --- Logic ---
-        function setMode(mode) {
-            gameMode = mode;
-            document.querySelectorAll('.rule-btn').forEach(btn => {
-                btn.classList.toggle('active', (mode === 16 && btn.innerText.includes('16')) || (mode === 13 && btn.innerText.includes('13')));
-            });
-            document.getElementById('status-badge').textContent = mode === 16 ? '台灣16張模式' : '日麻/廣東13張模式';
-            document.getElementById('max-hand').textContent = mode + 1;
-            clearHand();
+        function changeMode(m) {
+            mode = m;
+            document.getElementById('btn-16').classList.toggle('active', m === 16);
+            document.getElementById('btn-13').classList.toggle('active', m === 13);
+            document.getElementById('game-status').innerText = m === 16 ? '台麻 16 張模式' : '日麻 13 張模式';
+            document.getElementById('max-self').innerText = m + 1;
+            clearAll();
         }
 
-        function showSuit(suit) {
-            currentSuit = suit;
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.innerText.includes(SUITS[suit].label));
-            });
+        function setTarget(t) {
+            target = t;
+            document.querySelectorAll('.player-zone').forEach(z => z.classList.remove('active'));
+            document.querySelector(`.zone-${t}`).classList.add('active');
+            document.getElementById('target-text').innerText = `正在記錄：${TARGET_NAMES[t]}`;
             renderKeyboard();
         }
 
-        function getTileCount(suit, val) {
+        function switchSuit(s) {
+            currentSuit = s;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.innerText.includes(SUITS[s].label)));
+            renderKeyboard();
+        }
+
+        function getGlobalCount(suit, val) {
             let count = 0;
-            hand.forEach(t => { if(t.suit === suit && t.val === val) count++; });
-            exposed.forEach(t => { if(t.suit === suit && t.val === val) count++; });
+            ['self', 'top', 'left', 'right'].forEach(p => {
+                state[p].forEach(t => {
+                    if (t.suit === suit && t.val === val) count++;
+                });
+            });
             return count;
         }
 
         function addTile(suit, val) {
-            const isExposedMode = document.getElementById('input-mode-exposed').checked;
-            const totalCount = getTileCount(suit, val);
-            
-            if (totalCount >= 4) return;
-            
-            if (isExposedMode) {
-                exposed.push({ suit, val });
-            } else {
-                if (hand.length >= gameMode + 1) return;
-                hand.push({ suit, val });
-                sortHand();
+            const count = getGlobalCount(suit, val);
+            if (count >= 4) {
+                alert('該牌全桌已達 4 張上限！');
+                return;
             }
-            renderAll();
+
+            if (target === 'self' && state.self.length >= mode + 1) return;
+            
+            state[target].push({ suit, val });
+            if (target === 'self') sortSelf();
+            
+            updateUI();
         }
 
-        function removeHandTile(index) {
-            hand.splice(index, 1);
-            renderAll();
+        function removeTile(p, index) {
+            state[p].splice(index, 1);
+            updateUI();
         }
 
-        function removeExposedTile(index) {
-            exposed.splice(index, 1);
-            renderAll();
+        function clearTarget() {
+            state[target] = [];
+            updateUI();
         }
 
-        function sortHand() {
-            hand.sort((a, b) => {
-                if (SUIT_ORDER[a.suit] !== SUIT_ORDER[b.suit]) return SUIT_ORDER[a.suit] - SUIT_ORDER[b.suit];
-                const valA = typeof a.val === 'number' ? a.val : a.val.charCodeAt(0);
-                const valB = typeof b.val === 'number' ? b.val : b.val.charCodeAt(0);
-                return valA - valB;
+        function clearAll() {
+            state.self = [];
+            state.top = [];
+            state.left = [];
+            state.right = [];
+            updateUI();
+        }
+
+        function sortSelf() {
+            const order = { man: 1, pin: 2, sou: 3, honor: 4 };
+            state.self.sort((a, b) => {
+                if (order[a.suit] !== order[b.suit]) return order[a.suit] - order[b.suit];
+                const vA = typeof a.val === 'number' ? a.val : a.val.charCodeAt(0);
+                const vB = typeof b.val === 'number' ? b.val : b.val.charCodeAt(0);
+                return vA - vB;
             });
         }
 
-        function clearHand() {
-            hand = [];
-            exposed = [];
-            document.getElementById('results-section').style.display = 'none';
-            renderAll();
-        }
-
-        // --- Rendering ---
-        function renderAll() {
-            renderHand();
-            renderExposed();
+        // --- Probability Engine ---
+        function updateUI() {
+            renderZones();
             renderKeyboard();
-            document.getElementById('hand-count').textContent = hand.length;
+            
+            const totalVisible = state.self.length + state.top.length + state.left.length + state.right.length;
+            const totalTiles = mode === 16 ? 144 : 136;
+            const unknownCount = totalTiles - totalVisible;
+            document.getElementById('remain-total').innerText = `剩餘未知: ${unknownCount} 張`;
+
+            if (state.self.length >= mode) {
+                analyzeDiscards(unknownCount);
+            } else {
+                document.getElementById('matrix-section').style.display = 'none';
+                document.getElementById('win-rate').innerText = '0.0%';
+            }
         }
 
-        function renderHand() {
-            const container = document.getElementById('hand-display');
-            if (hand.length === 0) {
-                container.innerHTML = '<div style="color: #444;">點擊下方鍵盤加入手牌</div>';
-                return;
-            }
-            container.innerHTML = '';
-            hand.forEach((tile, index) => {
-                const el = document.createElement('div');
-                el.className = `mj-tile ${tile.suit}`;
-                el.innerHTML = `<span>${tile.val}</span><span class="tile-suit">${SUITS[tile.suit].label}</span>`;
-                el.onclick = () => removeHandTile(index);
-                container.appendChild(el);
-            });
-        }
-
-        function renderExposed() {
-            const container = document.getElementById('exposed-display');
-            if (exposed.length === 0) {
-                container.innerHTML = '<div style="color: #444;">點擊鍵盤時切換為「已見」模式</div>';
-                return;
-            }
-            container.innerHTML = '';
-            exposed.forEach((tile, index) => {
-                const el = document.createElement('div');
-                el.className = `mj-tile ${tile.suit} exposed`;
-                el.innerHTML = `<span>${tile.val}</span><span class="tile-suit">${SUITS[tile.suit].label}</span>`;
-                el.onclick = () => removeExposedTile(index);
-                container.appendChild(el);
+        function renderZones() {
+            ['self', 'top', 'left', 'right'].forEach(p => {
+                const container = document.getElementById(p === 'self' ? 'hand-self' : `river-${p}`);
+                const countEl = document.getElementById(`count-${p}`);
+                countEl.innerText = state[p].length;
+                container.innerHTML = '';
+                state[p].forEach((t, i) => {
+                    const el = document.createElement('div');
+                    el.className = `mini-tile ${t.suit}`;
+                    el.innerHTML = `<span>${t.val}</span>`;
+                    el.onclick = (e) => { e.stopPropagation(); removeTile(p, i); };
+                    container.appendChild(el);
+                });
             });
         }
 
         function renderKeyboard() {
             const grid = document.getElementById('keyboard-grid');
             grid.innerHTML = '';
-            const suitData = SUITS[currentSuit];
-            suitData.tiles.forEach(val => {
-                const count = getTileCount(currentSuit, val);
+            SUITS[currentSuit].tiles.forEach(val => {
+                const count = getGlobalCount(currentSuit, val);
                 const el = document.createElement('div');
-                el.className = `key-tile ${suitData.color} ${count >= 4 ? 'disabled' : ''}`;
-                el.innerHTML = `<span>${val}</span><span class="tile-suit" style="font-size:0.6rem">${suitData.label}</span>`;
+                el.className = `key-tile ${count >= 4 ? 'disabled' : ''}`;
+                el.innerHTML = `<span>${val}</span><span style="font-size:0.5rem; color:#888">${SUITS[currentSuit].label}</span>`;
                 if (count > 0) {
-                    const badge = document.createElement('div');
-                    badge.className = 'tile-count';
-                    badge.textContent = count;
-                    el.appendChild(badge);
+                    const b = document.createElement('div');
+                    b.className = 'tile-count';
+                    b.innerText = count;
+                    el.appendChild(b);
                 }
                 el.onclick = () => addTile(currentSuit, val);
                 grid.appendChild(el);
             });
         }
 
-        // --- Mahjong Engine (Simplified for Effective Tiles) ---
-        // Note: Full Shanten calculation is complex, here we use a heuristic for discard advice
-        function calculateDiscards() {
-            if (hand.length < gameMode) {
-                alert(`請至少輸入 ${gameMode} 張牌進行分析。`);
-                return;
-            }
+        function analyzeDiscards(unknownTotal) {
+            const matrixBody = document.getElementById('matrix-body');
+            const matrixSection = document.getElementById('matrix-section');
+            matrixBody.innerHTML = '';
             
+            if (state.self.length < mode) return;
+
             const results = [];
-            const uniqueHand = [];
+            const uniqueSelf = [];
             const seen = new Set();
-            hand.forEach(t => {
-                const key = `${t.suit}-${t.val}`;
-                if (!seen.has(key)) {
-                    uniqueHand.push(t);
-                    seen.add(key);
-                }
+            state.self.forEach(t => {
+                const k = `${t.suit}-${t.val}`;
+                if (!seen.has(k)) { uniqueSelf.push(t); seen.add(k); }
             });
 
-            uniqueHand.forEach(discardTile => {
-                // Try discarding this tile
-                const tempHand = [...hand];
-                const idx = tempHand.findIndex(t => t.suit === discardTile.suit && t.val === discardTile.val);
-                tempHand.splice(idx, 1);
-                
-                // Calculate waits (simplified)
+            uniqueSelf.forEach(discard => {
+                const tempHand = state.self.filter(t => t !== discard);
                 const waits = findWaits(tempHand);
-                let totalRemaining = 0;
+                let realRemains = 0;
                 waits.forEach(w => {
-                    const countInHand = tempHand.filter(t => t.suit === w.suit && t.val === w.val).length;
-                    const countInExposed = exposed.filter(t => t.suit === w.suit && t.val === w.val).length;
-                    totalRemaining += Math.max(0, 4 - countInHand - countInExposed);
+                    const globalCount = getGlobalCount(w.suit, w.val);
+                    realRemains += Math.max(0, 4 - globalCount);
                 });
 
                 results.push({
-                    discard: discardTile,
-                    waits: waits,
-                    count: totalRemaining
+                    discard,
+                    waits,
+                    remains: realRemains,
+                    prob: unknownTotal > 0 ? (realRemains / unknownTotal * 100).toFixed(1) : 0
                 });
             });
 
-            results.sort((a, b) => b.count - a.count);
-            renderResults(results);
+            results.sort((a, b) => b.remains - a.remains);
+            
+            if (results.length > 0) {
+                document.getElementById('win-rate').innerText = `${results[0].prob}%`;
+                matrixSection.style.display = 'block';
+                results.forEach((res, i) => {
+                    const tr = document.createElement('tr');
+                    tr.className = `matrix-row ${i === 0 ? 'best' : ''} ${res.remains === 0 ? 'dead' : ''}`;
+                    const waitHtml = res.waits.map(w => `<span class="wait-tag">${w.val}${SUITS[w.suit].label}</span>`).join('') || '無進張';
+                    tr.innerHTML = `
+                        <td><div class="mini-tile ${res.discard.suit}" style="width:28px; height:36px;">${res.discard.val}</div></td>
+                        <td>${waitHtml}</td>
+                        <td>${res.remains === 0 ? '⚠️ 死聽' : res.remains + '張'}</td>
+                        <td>${res.prob}%</td>
+                    `;
+                    matrixBody.appendChild(tr);
+                });
+            }
         }
 
-        function findWaits(currentHand) {
-            // Simplified logic: find tiles that could form a set or sequence
-            const possibleWaits = [];
-            const allPossibleTiles = [];
-            ['man', 'pin', 'sou'].forEach(s => [1,2,3,4,5,6,7,8,9].forEach(v => allPossibleTiles.push({suit:s, val:v})));
-            ['honor'].forEach(s => SUITS.honor.tiles.forEach(v => allPossibleTiles.push({suit:s, val:v})));
+        function findWaits(hand) {
+            const possible = [];
+            const all = [];
+            ['man', 'pin', 'sou'].forEach(s => [1,2,3,4,5,6,7,8,9].forEach(v => all.push({suit:s, val:v})));
+            SUITS.honor.tiles.forEach(v => all.push({suit:'honor', val:v}));
 
-            allPossibleTiles.forEach(tile => {
-                if (isEffective(currentHand, tile)) {
-                    possibleWaits.push(tile);
-                }
+            all.forEach(tile => {
+                if (isEffective(hand, tile)) possible.push(tile);
             });
-            return possibleWaits;
+            return possible;
         }
 
         function isEffective(hand, tile) {
-            // Check if adding 'tile' creates a new set, sequence, or pair
-            // For V2 we look for "Tanyao" or "Ready" improvements
             const count = hand.filter(t => t.suit === tile.suit && t.val === tile.val).length;
-            if (count >= 1) return true; // Pair or Set potential
-            
+            if (count >= 1) return true;
             if (tile.suit !== 'honor') {
-                const val = tile.val;
-                const hasPrev = hand.some(t => t.suit === tile.suit && t.val === val - 1);
-                const hasNext = hand.some(t => t.suit === tile.suit && t.val === val + 1);
-                const hasPrev2 = hand.some(t => t.suit === tile.suit && t.val === val - 2);
-                const hasNext2 = hand.some(t => t.suit === tile.suit && t.val === val + 2);
-                if (hasPrev || hasNext || (hasPrev2 && hasPrev) || (hasNext2 && hasNext)) return true;
+                const v = tile.val;
+                if (hand.some(t => t.suit === tile.suit && (t.val === v-1 || t.val === v+1))) return true;
+                if (hand.some(t => t.suit === tile.suit && (t.val === v-2 || t.val === v+2))) return true;
             }
             return false;
         }
 
-        function renderResults(results) {
-            const section = document.getElementById('results-section');
-            const body = document.getElementById('matrix-body');
-            section.style.display = 'block';
-            body.innerHTML = '';
-
-            results.forEach((res, index) => {
-                const row = document.createElement('tr');
-                row.className = `matrix-row ${index === 0 ? 'best' : ''}`;
-                
-                const waitHtml = res.waits.length > 0 
-                    ? res.waits.slice(0, 5).map(w => `<span class="wait-tile-small">${w.val}${SUITS[w.suit].label}</span>`).join('') + (res.waits.length > 5 ? '...' : '')
-                    : '<span style="color:#666">無顯著進張</span>';
-
-                row.innerHTML = `
-                    <td><div class="mj-tile ${res.discard.suit}" style="width:35px; height:45px; font-size:0.9rem;">${res.discard.val}</div></td>
-                    <td><div class="wait-tiles">${waitHtml}</div></td>
-                    <td><b style="color:${res.count > 0 ? 'var(--primary-neon)' : 'var(--error-red)'}">${res.count} 張</b></td>
-                    <td>${((res.count / 136) * 100).toFixed(1)}%</td>
-                `;
-                body.appendChild(row);
-            });
-            
-            section.scrollIntoView({ behavior: 'smooth' });
-        }
-
-        // Initialize
-        showSuit('man');
-        renderAll();
+        // Init
+        updateUI();
     </script>
 </body>
 </html>
