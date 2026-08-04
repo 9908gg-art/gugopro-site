@@ -3,19 +3,52 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>手遊抽卡期望值與保底模擬器 v3 | GugoPro</title>
-<meta name="description" content="終極實戰版手遊抽卡模擬器 v3：蒙特卡羅 5,000 次演算法，精確區分角色池與武器池機制，支援原神、崩壞星穹鐵道、鳴潮、明日方舟、蔚藍檔案、賽馬娘，首儲雙倍課金計算，一鍵複製戰報分享至社群。">
+<title>手遊抽卡期望值與保底模擬器 v4 | GugoPro</title>
+<meta name="description" content="終極實戰版手遊抽卡模擬器 v4：蒙特卡羅 5,000 次演算法，精確區分角色池與武器池機制，首儲雙倍課金計算，一鍵複製戰報，即時自動模擬，localStorage 記憶。">
 <meta name="keywords" content="抽卡計算器,保底模擬器,蒙特卡羅,原神抽卡,星穹鐵道抽卡,鳴潮抽卡,明日方舟抽卡,蔚藍檔案抽卡,賽馬娘抽卡,角色池,武器池,光錐池,Gacha Calculator,Pity System">
 <meta name="author" content="GugoPro">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://gugopro.com/tools/gaming/gacha-odds-calculator.html">
 
 <!-- Open Graph -->
-<meta property="og:title" content="手遊抽卡期望值與保底模擬器 v3 | GugoPro">
+<meta property="og:title" content="手遊抽卡期望值與保底模擬器 v4 | GugoPro">
 <meta property="og:description" content="蒙特卡羅 5,000 次抽卡模擬，精確區分角色池與武器池，首儲雙倍課金計算，一鍵複製戰報。">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://gugopro.com/tools/gaming/gacha-odds-calculator.html">
 <meta property="og:image" content="https://gugopro.com/assets/og-gacha.png">
+
+<!-- JSON-LD Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "手遊抽卡期望值與保底模擬器 v4",
+  "alternateName": "Gacha Odds & Pity Simulator v4",
+  "description": "蒙特卡羅 5,000 次抽卡模擬工具，支援原神、崩壞星穹鐵道、鳴潮、明日方舟、蔚藍檔案、賽馬娘等多款遊戲保底機制，精確計算累積機率與課金預算。",
+  "url": "https://gugopro.com/tools/gaming/gacha-odds-calculator.html",
+  "applicationCategory": "GameApplication",
+  "operatingSystem": "Web Browser",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "TWD"
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "GugoPro",
+    "url": "https://gugopro.com"
+  },
+  "inLanguage": "zh-Hant",
+  "isAccessibleForFree": true,
+  "featureList": [
+    "Monte Carlo Simulation",
+    "Character vs Weapon Pool Pity Tracking",
+    "Soft Pity & Hard Pity Calculator",
+    "First Top-up Double Bonus Estimator",
+    "One-click Battle Report Sharing"
+  ]
+}
+</script>
 
 <!-- Google Analytics 4 (GA4) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-GF1DYLWMKX"></script>
@@ -466,6 +499,16 @@ body::before {
   margin-top: 20px;
 }
 
+/* Custom rate row */
+.custom-rate-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(99,102,241,0.15);
+}
+
 /* Amazon cards */
 .amazon-grid {
   display: grid;
@@ -584,6 +627,7 @@ body::before {
   .chart-container { height: 250px; }
   .pool-selector { gap: 6px; }
   .pool-btn { padding: 8px 12px; font-size: 0.78rem; }
+  .custom-rate-row { grid-template-columns: 1fr; }
 }
 
 /* Loading shimmer */
@@ -605,7 +649,7 @@ body::before {
 
 <!-- Header -->
 <header class="site-header">
-  <a href="https://gugopro.com" class="btn-back-home">
+  <a href="https://gugopro.com" class="btn-back-home" aria-label="返回 GugoPro 首頁">
     <i class="fa-solid fa-house"></i> 返回 GugoPro 首頁
   </a>
   <div class="site-logo">GugoPro</div>
@@ -615,42 +659,42 @@ body::before {
 
   <!-- Hero -->
   <section class="hero">
-    <h1><i class="fa-solid fa-dice-d20"></i> 手遊抽卡期望值與保底模擬器 v3</h1>
-    <p class="subtitle">蒙特卡羅 5,000 次精準模擬 · 角色池/武器池切換 · 首儲雙倍 · 一鍵戰報</p>
+    <h1><i class="fa-solid fa-dice-d20"></i> 手遊抽卡期望值與保底模擬器 v4</h1>
+    <p class="subtitle">蒙特卡羅 5,000 次精準模擬 · 角色池/武器池切換 · 首儲雙倍 · 一鍵戰報 · 自動模擬</p>
   </section>
 
   <!-- 1. Game Preset -->
   <section class="card">
     <div class="card-title"><i class="fa-solid fa-gamepad"></i> 選擇遊戲模板</div>
     <div class="preset-grid" id="presetGrid">
-      <button class="preset-btn active" data-game="genshin" onclick="loadPreset('genshin')">
+      <button class="preset-btn active" data-game="genshin" onclick="loadPreset('genshin')" aria-label="選擇原神 / 崩壞星穹鐵道 / 鳴潮">
         <span class="emoji">✨</span> 原神 / 崩壞星鐵 / 鳴潮
       </button>
-      <button class="preset-btn" data-game="arknights" onclick="loadPreset('arknights')">
+      <button class="preset-btn" data-game="arknights" onclick="loadPreset('arknights')" aria-label="選擇明日方舟">
         <span class="emoji">⚔️</span> 明日方舟
       </button>
-      <button class="preset-btn" data-game="bluearchive" onclick="loadPreset('bluearchive')">
+      <button class="preset-btn" data-game="bluearchive" onclick="loadPreset('bluearchive')" aria-label="選擇蔚藍檔案 / 賽馬娘">
         <span class="emoji">☕</span> 蔚藍檔案 / 賽馬娘
       </button>
-      <button class="preset-btn" data-game="custom" onclick="loadPreset('custom')">
+      <button class="preset-btn" data-game="custom" onclick="loadPreset('custom')" aria-label="選擇自訂模式">
         <span class="emoji">⚙️</span> 自訂模式
       </button>
     </div>
 
-    <!-- Pool type selector (only for genshin-type games) -->
+    <!-- Pool type selector -->
     <div class="pool-selector" id="poolSelector">
-      <button class="pool-btn active" data-pool="character" onclick="selectPool('character')">
+      <button class="pool-btn active" data-pool="character" onclick="selectPool('character')" aria-label="選擇角色池">
         <i class="fa-solid fa-user"></i> 角色池
       </button>
-      <button class="pool-btn" data-pool="weapon" onclick="selectPool('weapon')">
+      <button class="pool-btn" data-pool="weapon" onclick="selectPool('weapon')" aria-label="選擇武器或光錐池">
         <i class="fa-solid fa-sword"></i> 武器 / 光錐池
       </button>
     </div>
 
     <div class="form-grid">
       <div class="form-group">
-        <label>目標數量 (命座 / R)</label>
-        <select id="targetCount">
+        <label for="targetCount">目標數量 (命座 / R)</label>
+        <select id="targetCount" aria-label="選擇目標命座數量">
           <option value="1">1 張 (C0 / R0)</option>
           <option value="2">2 張 (C1 / R1)</option>
           <option value="3">3 張 (C2 / R2)</option>
@@ -661,14 +705,14 @@ body::before {
         </select>
       </div>
       <div class="form-group">
-        <label>目前已抽次數 (水位)</label>
-        <input type="number" id="currentPulls" value="0" min="0" max="200" placeholder="0">
+        <label for="currentPulls">目前已抽次數 (水位)</label>
+        <input type="number" id="currentPulls" value="0" min="0" max="200" placeholder="0" aria-label="目前已抽次數水位">
       </div>
       <div class="form-group">
         <label>大保底狀態 (下次必中)</label>
         <div class="toggle-row">
           <label class="toggle-switch">
-            <input type="checkbox" id="isBigPity">
+            <input type="checkbox" id="isBigPity" aria-label="是否處於大保底狀態">
             <span class="toggle-slider"></span>
           </label>
           <span class="toggle-label">上次歪了，下次必中</span>
@@ -679,24 +723,24 @@ body::before {
     <!-- Custom fields -->
     <div class="custom-fields hidden" id="customFields">
       <div class="form-group">
-        <label>基礎機率 (%)</label>
-        <input type="number" id="baseRate" value="0.6" min="0.01" max="50" step="0.01">
+        <label for="baseRate">基礎機率 (%)</label>
+        <input type="number" id="baseRate" value="0.6" min="0.01" max="50" step="0.01" aria-label="自訂基礎機率百分比">
       </div>
       <div class="form-group">
-        <label>軟保底開始抽數</label>
-        <input type="number" id="softPityStart" value="74" min="0" max="300">
+        <label for="softPityStart">軟保底開始抽數</label>
+        <input type="number" id="softPityStart" value="74" min="0" max="300" aria-label="自訂軟保底開始抽數">
       </div>
       <div class="form-group">
-        <label>軟保底每抽加成 (%)</label>
-        <input type="number" id="softPityRate" value="6.0" min="0" max="100" step="0.1">
+        <label for="softPityRate">軟保底每抽加成 (%)</label>
+        <input type="number" id="softPityRate" value="6.0" min="0" max="100" step="0.1" aria-label="自訂軟保底每抽加成百分比">
       </div>
       <div class="form-group">
-        <label>硬保底上限 (抽)</label>
-        <input type="number" id="hardPity" value="90" min="1" max="500">
+        <label for="hardPity">硬保底上限 (抽)</label>
+        <input type="number" id="hardPity" value="90" min="1" max="500" aria-label="自訂硬保底上限抽數">
       </div>
       <div class="form-group">
-        <label>歪牌機率</label>
-        <select id="bigPityMode">
+        <label for="bigPityMode">歪牌機率</label>
+        <select id="bigPityMode" aria-label="選擇歪牌機制">
           <option value="5050">50/50 (歪了下次必中)</option>
           <option value="7525">75/25 (75% 歪，25% UP)</option>
           <option value="guaranteed">100% 保證 UP</option>
@@ -704,16 +748,17 @@ body::before {
         </select>
       </div>
       <div class="form-group">
-        <label>天井兌換數 (0=無)</label>
-        <input type="number" id="pityExchange" value="0" min="0" max="300" step="1">
+        <label for="pityExchange">天井兌換數 (0=無)</label>
+        <input type="number" id="pityExchange" value="0" min="0" max="300" step="1" aria-label="自訂天井兌換抽數">
       </div>
     </div>
   </section>
 
   <!-- Simulate button -->
-  <button class="btn-primary" id="simBtn" onclick="runSimulation()">
+  <button class="btn-primary" id="simBtn" onclick="runSimulation()" aria-describedby="simBtnDesc">
     <i class="fa-solid fa-bolt"></i> 開始蒙特卡羅模擬 (5,000 次)
   </button>
+  <p id="simBtnDesc" style="font-size:0.78rem;color:var(--text-muted);margin-top:6px;text-align:center;">參數變更後會自動模擬，也可手動點擊重新計算</p>
 
   <!-- Progress -->
   <div class="sim-progress" id="simProgress">
@@ -725,7 +770,7 @@ body::before {
   <div class="results-section" id="resultsSection">
 
     <!-- Share button -->
-    <button class="btn-share" id="shareBtn" onclick="copyShareCard()">
+    <button class="btn-share" id="shareBtn" onclick="copyShareCard()" aria-label="複製抽卡戰報至剪貼簿">
       <i class="fa-solid fa-clipboard"></i> 📋 複製戰報分析
     </button>
 
@@ -777,26 +822,38 @@ body::before {
       <div class="card-title"><i class="fa-solid fa-coins"></i> 原石 / 課金預算轉換計算器</div>
       <div class="form-grid">
         <div class="form-group">
-          <label>現有原石 / 水晶數量</label>
-          <input type="number" id="currentGems" value="0" min="0" placeholder="0">
+          <label for="currentGems">現有原石 / 水晶數量</label>
+          <input type="number" id="currentGems" value="0" min="0" placeholder="0" aria-label="現有原石或水晶數量">
         </div>
         <div class="form-group">
-          <label>已有抽卡券數量</label>
-          <input type="number" id="currentTickets" value="0" min="0" placeholder="0">
+          <label for="currentTickets">已有抽卡券數量</label>
+          <input type="number" id="currentTickets" value="0" min="0" placeholder="0" aria-label="已有抽卡券數量">
         </div>
         <div class="form-group">
-          <label>每抽所需原石</label>
-          <input type="number" id="gemsPerPull" value="160" min="1">
+          <label for="gemsPerPull">每抽所需原石</label>
+          <input type="number" id="gemsPerPull" value="160" min="1" aria-label="每抽所需原石數量">
         </div>
         <div class="form-group">
           <label>啟用首儲雙倍優惠</label>
           <div class="toggle-row">
             <label class="toggle-switch">
-              <input type="checkbox" id="firstDoubleBonus">
+              <input type="checkbox" id="firstDoubleBonus" aria-label="啟用首儲雙倍優惠">
               <span class="toggle-slider"></span>
             </label>
             <span class="toggle-label">首筆課金雙倍原石</span>
           </div>
+        </div>
+      </div>
+
+      <!-- Custom rate row -->
+      <div class="custom-rate-row">
+        <div class="form-group">
+          <label for="customRateTWD">自訂單價 (TWD/抽)</label>
+          <input type="number" id="customRateTWD" value="59" min="1" step="1" aria-label="自定每抽新台幣價格">
+        </div>
+        <div class="form-group">
+          <label for="customRateUSD">自訂單價 (USD/抽)</label>
+          <input type="number" id="customRateUSD" value="2" min="0.01" step="0.1" aria-label="自定每抽美金價格">
         </div>
       </div>
 
@@ -865,7 +922,7 @@ body::before {
         <li><strong>80% 安全線</strong>：80% 的玩家在此抽數內可達成目標，建議作為儲備基準。</li>
         <li><strong>95% 極限線</strong>：極端非酋情況，建議課金規劃的上限參考。</li>
       </ul>
-      <p>搭配下方的 <strong>首儲雙倍</strong>選項，你可以更精準地估算首次課金後實際可獲得的原石數量，讓預算規劃更貼近玩家實情。</p>
+      <p>搭配下方的 <strong>首儲雙倍</strong>選項與 <strong>自訂單價</strong>功能，你可以更精準地估算首次課金後實際可獲得的原石數量，並根據地區行情調整課金單價。</p>
     </div>
   </section>
 
@@ -952,12 +1009,13 @@ var currentPool = 'character';
 var chartInstance = null;
 var lastSimResults = null;
 var lastSimConfig = null;
+var simRunning = false;
 
 // ===== DEBOUNCE UTILITY =====
 var debounceTimers = {};
 function debounce(id, fn, delay) {
   if (debounceTimers[id]) { clearTimeout(debounceTimers[id]); }
-  debounceTimers[id] = setTimeout(fn, delay);
+  debounceTimers[id] = setTimeout(fn, delay || 200);
 }
 
 // ===== POOL SELECTOR =====
@@ -965,7 +1023,8 @@ function selectPool(pool) {
   currentPool = pool;
   var btns = document.querySelectorAll('.pool-btn');
   for (var i = 0; i < btns.length; i++) { btns[i].classList.remove('active'); }
-  document.querySelector('.pool-btn[data-pool="' + pool + '"]').classList.add('active');
+  var activeBtn = document.querySelector('.pool-btn[data-pool="' + pool + '"]');
+  if (activeBtn) { activeBtn.classList.add('active'); }
   loadPreset(currentGame);
 }
 
@@ -973,13 +1032,11 @@ function selectPool(pool) {
 function loadPreset(game) {
   currentGame = game;
 
-  // Update active preset button
   var presetBtns = document.querySelectorAll('.preset-btn');
   for (var i = 0; i < presetBtns.length; i++) { presetBtns[i].classList.remove('active'); }
   var activeBtn = document.querySelector('.preset-btn[data-game="' + game + '"]');
   if (activeBtn) { activeBtn.classList.add('active'); }
 
-  // Show/hide pool selector
   var poolSelector = document.getElementById('poolSelector');
   if (game === 'genshin') {
     poolSelector.style.display = 'flex';
@@ -987,7 +1044,6 @@ function loadPreset(game) {
     poolSelector.style.display = 'none';
   }
 
-  // Determine which config to use
   var key;
   if (game === 'genshin') {
     key = 'genshin_' + currentPool;
@@ -1011,6 +1067,9 @@ function loadPreset(game) {
     customFields.classList.add('hidden');
     document.getElementById('gemsPerPull').value = p.gemsPerPull;
   }
+
+  saveSettings();
+  triggerAutoSimulate();
 }
 
 // ===== GET CURRENT CONFIG =====
@@ -1048,8 +1107,8 @@ function getConfig() {
   };
 }
 
-// ===== SINGLE PULL =====
-function singlePull(pullNum, config, isBigPityActive) {
+// ===== SINGLE PULL (uses pityCounter not currentPulls) =====
+function singlePull(pityCounter, config, isBigPityActive) {
   var baseRate = config.baseRate;
   var softPityStart = config.softPityStart;
   var softPityRate = config.softPityRate;
@@ -1057,7 +1116,7 @@ function singlePull(pullNum, config, isBigPityActive) {
   var bigPityMode = config.bigPityMode;
 
   // If at hard pity, guaranteed hit
-  if (pullNum >= hardPity) {
+  if (pityCounter >= hardPity) {
     if (bigPityMode === '5050' && !isBigPityActive) {
       return { hit: true, isUp: Math.random() < 0.5 };
     } else if (bigPityMode === '7525' && !isBigPityActive) {
@@ -1066,12 +1125,12 @@ function singlePull(pullNum, config, isBigPityActive) {
     return { hit: true, isUp: true };
   }
 
-  // Calculate rate for this pull
+  // Calculate rate for this pull based on pityCounter (本輪保底內的抽數)
   var rate = baseRate / 100;
 
-  // Apply soft pity
-  if (softPityStart > 0 && pullNum >= softPityStart) {
-    var extraPulls = pullNum - softPityStart;
+  // Apply soft pity based on pityCounter
+  if (softPityStart > 0 && pityCounter >= softPityStart) {
+    var extraPulls = pityCounter - softPityStart;
     rate += (extraPulls + 1) * (softPityRate / 100);
   }
 
@@ -1099,14 +1158,16 @@ function singlePull(pullNum, config, isBigPityActive) {
 
 // ===== SIMULATE ONE RUN =====
 function simulateOneRun(config, targetCount, startPulls, isBigPity) {
-  var currentPulls = startPulls;
+  var totalPulls = startPulls; // 累計總抽數（用於計算已有抽數的抵扣）
   var hits = 0;
   var bigPityState = isBigPity;
   var hasExchange = config.pityExchange > 0;
+  var pityCounter = startPulls; // v4 修正：追蹤本輪保底內的連續抽數
   var exchangeCounter = 0;
 
   while (hits < targetCount) {
-    currentPulls++;
+    totalPulls++;
+    pityCounter++;
     exchangeCounter++;
 
     // Check exchange (天井)
@@ -1114,10 +1175,12 @@ function simulateOneRun(config, targetCount, startPulls, isBigPity) {
       hits++;
       exchangeCounter = 0;
       bigPityState = false;
+      pityCounter = 0; // 天井兌換後重置保底計數器
       continue;
     }
 
-    var result = singlePull(currentPulls, config, bigPityState);
+    // 傳入 pityCounter（本輪保底內抽數）而非 totalPulls
+    var result = singlePull(pityCounter, config, bigPityState);
 
     if (result.hit) {
       if (bigPityState || result.isUp) {
@@ -1125,23 +1188,28 @@ function simulateOneRun(config, targetCount, startPulls, isBigPity) {
         hits++;
         bigPityState = false;
         exchangeCounter = 0;
+        pityCounter = 0; // 命中後重置保底計數器
       } else {
         // Got off-banner (lost 50/50 or 75/25)
         bigPityState = true;
+        // 歪了不重置 pityCounter，因為保底繼續累加
       }
     }
   }
 
-  return currentPulls;
+  return totalPulls;
 }
 
 // ===== RUN FULL SIMULATION =====
 function runSimulation() {
+  if (simRunning) return;
+  simRunning = true;
+
   var config = getConfig();
   var targetCount = parseInt(document.getElementById('targetCount').value) || 1;
   var startPulls = parseInt(document.getElementById('currentPulls').value) || 0;
   var isBigPity = document.getElementById('isBigPity').checked;
-  var simCount = 5000; // v3: fixed at 5000 for mobile performance
+  var simCount = 5000;
 
   // UI updates
   var btn = document.getElementById('simBtn');
@@ -1179,7 +1247,8 @@ function runSimulation() {
 }
 
 function finishSimulation(results, targetCount, config) {
-  // Sort for percentile
+  simRunning = false;
+
   results.sort(function(a, b) { return a - b; });
 
   var len = results.length;
@@ -1218,6 +1287,7 @@ function finishSimulation(results, targetCount, config) {
   }
 
   // Store results for share
+  var startPulls = parseInt(document.getElementById('currentPulls').value) || 0;
   lastSimResults = { avg: avg, median: median, p80: p80, p95: p95, min: min, max: max };
   lastSimConfig = { config: config, targetCount: targetCount, startPulls: startPulls };
 
@@ -1235,9 +1305,6 @@ function finishSimulation(results, targetCount, config) {
   btn.disabled = false;
   btn.innerHTML = '<i class="fa-solid fa-bolt"></i> 重新模擬 (5,000 次)';
   document.getElementById('simProgress').classList.remove('visible');
-
-  // Scroll to results
-  document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ===== CURRENCY CONVERTER =====
@@ -1253,40 +1320,37 @@ function updateCurrency(results, targetCount, config) {
   var gemsPerPull = config.gemsPerPull;
   var firstDoubleBonus = document.getElementById('firstDoubleBonus').checked;
 
+  // v4: realistic pricing
+  // 原神實際單價: TWD $59/抽、USD $2/抽 (可自訂)
+  var rateTWD = parseFloat(document.getElementById('customRateTWD').value) || 59;
+  var rateUSD = parseFloat(document.getElementById('customRateUSD').value) || 2;
+
   var totalAvailablePulls = Math.floor(currentGems / gemsPerPull) + currentTickets;
   var neededPulls = Math.max(0, Math.ceil(avg) - totalAvailablePulls);
   var neededGems = neededPulls * gemsPerPull;
 
-  // Rough pricing estimates
-  // TWD: ~30 TWD per pull
-  var costTWD = neededPulls * 30;
-  // USD: ~$1.00 per pull
-  var costUSD = neededPulls * 1.0;
+  // First double bonus: ~40 extra pulls worth of primogems (6480 / 160 ≈ 40.5)
+  var bonusPulls = 40; // v4: 首儲雙倍額外約 40 抽
 
-  // First double bonus calculation
-  // Standard first top-up doubles the primogems from the first purchase
-  // Typical first purchase pack: 300 + 300 = 600 primogems (TWD 30 / USD 1)
-  // So the first TWD 30 gives 600 gems instead of 300
   if (firstDoubleBonus && neededPulls > 0) {
-    // First purchase gives double gems, effectively halving the cost for the first batch
-    var firstBonusGems = gemsPerPull; // Extra gems from first double
-    // Reduce needed pulls by the bonus amount
-    var bonusPulls = Math.floor(firstBonusGems / gemsPerPull);
     var adjustedPulls = Math.max(0, neededPulls - bonusPulls);
     var adjustedGems = adjustedPulls * gemsPerPull;
-    var adjustedCostTWD = adjustedPulls * 30;
-    var adjustedCostUSD = adjustedPulls * 1.0;
+    var adjustedCostTWD = adjustedPulls * rateTWD;
+    var adjustedCostUSD = adjustedPulls * rateUSD;
 
-    // Show with strikethrough style via update
     document.getElementById('resMissingPulls').textContent = adjustedPulls;
     document.getElementById('resMissingGems').textContent = adjustedGems.toLocaleString();
     document.getElementById('resCostTWD').textContent = '$' + adjustedCostTWD.toLocaleString();
     document.getElementById('resCostUSD').textContent = '$' + adjustedCostUSD.toFixed(0);
 
-    // Store first double info for share card
-    lastSimConfig.firstDoubleBonus = true;
-    lastSimConfig.bonusPulls = bonusPulls;
+    if (lastSimConfig) {
+      lastSimConfig.firstDoubleBonus = true;
+      lastSimConfig.bonusPulls = bonusPulls;
+    }
   } else {
+    var costTWD = neededPulls * rateTWD;
+    var costUSD = neededPulls * rateUSD;
+
     document.getElementById('resMissingPulls').textContent = neededPulls;
     document.getElementById('resMissingGems').textContent = neededGems.toLocaleString();
     document.getElementById('resCostTWD').textContent = '$' + costTWD.toLocaleString();
@@ -1309,11 +1373,8 @@ function copyShareCard() {
   var res = lastSimResults;
 
   var poolName = config.displayName || '';
-  var targetLabel = '';
   var targetSelect = document.getElementById('targetCount');
-  if (targetSelect) {
-    targetLabel = targetSelect.options[targetSelect.selectedIndex].text;
-  }
+  var targetLabel = targetSelect ? targetSelect.options[targetSelect.selectedIndex].text : '';
 
   var lines = [
     '【GugoPro 抽卡分析】',
@@ -1335,7 +1396,6 @@ function copyShareCard() {
 
   var text = lines.join('\n');
 
-  // Use Clipboard API
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(text).then(function() {
       showCopiedFeedback();
@@ -1433,6 +1493,153 @@ function drawChart(labels, data) {
         }
       }
     }
+  });
+}
+
+// ===== LOCALSTORAGE PERSISTENCE =====
+var STORAGE_KEY = 'gugopro_gacha_v4';
+
+function saveSettings() {
+  try {
+    var data = {
+      game: currentGame,
+      pool: currentPool,
+      targetCount: document.getElementById('targetCount').value,
+      currentPulls: document.getElementById('currentPulls').value,
+      isBigPity: document.getElementById('isBigPity').checked,
+      gemsPerPull: document.getElementById('gemsPerPull').value,
+      currentGems: document.getElementById('currentGems').value,
+      currentTickets: document.getElementById('currentTickets').value,
+      firstDoubleBonus: document.getElementById('firstDoubleBonus').checked,
+      rateTWD: document.getElementById('customRateTWD').value,
+      rateUSD: document.getElementById('customRateUSD').value
+    };
+    // Save custom fields if applicable
+    if (currentGame === 'custom') {
+      data.baseRate = document.getElementById('baseRate').value;
+      data.softPityStart = document.getElementById('softPityStart').value;
+      data.softPityRate = document.getElementById('softPityRate').value;
+      data.hardPity = document.getElementById('hardPity').value;
+      data.bigPityMode = document.getElementById('bigPityMode').value;
+      data.pityExchange = document.getElementById('pityExchange').value;
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch(e) {
+    // Silently fail if localStorage unavailable
+  }
+}
+
+function loadSettings() {
+  try {
+    var raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    var data = JSON.parse(raw);
+
+    if (data.game) { currentGame = data.game; }
+    if (data.pool) { currentPool = data.pool; }
+
+    // Apply preset
+    loadPreset(currentGame);
+
+    if (data.pool && currentGame === 'genshin') {
+      currentPool = data.pool;
+      var poolBtns = document.querySelectorAll('.pool-btn');
+      for (var i = 0; i < poolBtns.length; i++) { poolBtns[i].classList.remove('active'); }
+      var activePoolBtn = document.querySelector('.pool-btn[data-pool="' + data.pool + '"]');
+      if (activePoolBtn) { activePoolBtn.classList.add('active'); }
+    }
+
+    if (data.targetCount) { document.getElementById('targetCount').value = data.targetCount; }
+    if (data.currentPulls) { document.getElementById('currentPulls').value = data.currentPulls; }
+    if (data.isBigPity !== undefined) { document.getElementById('isBigPity').checked = data.isBigPity; }
+    if (data.gemsPerPull) { document.getElementById('gemsPerPull').value = data.gemsPerPull; }
+    if (data.currentGems) { document.getElementById('currentGems').value = data.currentGems; }
+    if (data.currentTickets) { document.getElementById('currentTickets').value = data.currentTickets; }
+    if (data.firstDoubleBonus !== undefined) { document.getElementById('firstDoubleBonus').checked = data.firstDoubleBonus; }
+    if (data.rateTWD) { document.getElementById('customRateTWD').value = data.rateTWD; }
+    if (data.rateUSD) { document.getElementById('customRateUSD').value = data.rateUSD; }
+
+    // Custom fields
+    if (currentGame === 'custom') {
+      if (data.baseRate) { document.getElementById('baseRate').value = data.baseRate; }
+      if (data.softPityStart) { document.getElementById('softPityStart').value = data.softPityStart; }
+      if (data.softPityRate) { document.getElementById('softPityRate').value = data.softPityRate; }
+      if (data.hardPity) { document.getElementById('hardPity').value = data.hardPity; }
+      if (data.bigPityMode) { document.getElementById('bigPityMode').value = data.bigPityMode; }
+      if (data.pityExchange) { document.getElementById('pityExchange').value = data.pityExchange; }
+    }
+
+    return true;
+  } catch(e) {
+    return false;
+  }
+}
+
+// ===== AUTO-SIMULATE ON CHANGE =====
+function triggerAutoSimulate() {
+  debounce('autosim', function() {
+    if (!simRunning) {
+      runSimulation();
+    }
+  }, 200);
+}
+
+function bindAutoSimEvents() {
+  // Preset buttons are handled by loadPreset() which calls triggerAutoSimulate()
+  // Pool buttons are handled by selectPool() which calls loadPreset()
+
+  // Form inputs with debounce
+  var fields = ['targetCount', 'currentPulls', 'isBigPity', 'gemsPerPull',
+                'currentGems', 'currentTickets', 'firstDoubleBonus',
+                'customRateTWD', 'customRateUSD'];
+  for (var i = 0; i < fields.length; i++) {
+    var el = document.getElementById(fields[i]);
+    if (el) {
+      if (el.type === 'checkbox') {
+        el.addEventListener('change', function() { saveSettings(); triggerAutoSimulate(); });
+      } else if (el.tagName === 'SELECT') {
+        el.addEventListener('change', function() { saveSettings(); triggerAutoSimulate(); });
+      } else {
+        el.addEventListener('input', function() { saveSettings(); triggerAutoSimulate(); });
+      }
+    }
+  }
+
+  // Custom fields
+  var customFields = ['baseRate', 'softPityStart', 'softPityRate', 'hardPity', 'bigPityMode', 'pityExchange'];
+  for (var j = 0; j < customFields.length; j++) {
+    var el2 = document.getElementById(customFields[j]);
+    if (el2) {
+      if (el2.tagName === 'SELECT') {
+        el2.addEventListener('change', function() { saveSettings(); triggerAutoSimulate(); });
+      } else {
+        el2.addEventListener('input', function() { saveSettings(); triggerAutoSimulate(); });
+      }
+    }
+  }
+}
+
+// ===== INIT =====
+function init() {
+  var loaded = loadSettings();
+  if (!loaded) {
+    loadPreset('genshin');
+  }
+  bindAutoSimEvents();
+
+  // Auto-simulate on first load
+  setTimeout(function() {
+    triggerAutoSimulate();
+  }, 500);
+}
+
+// Wait for DOM + Chart.js
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  // DOM already loaded, but Chart.js might still be loading (defer)
+  window.addEventListener('load', function() {
+    setTimeout(init, 300);
   });
 }
 </script>
