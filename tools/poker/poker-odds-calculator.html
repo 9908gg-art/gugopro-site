@@ -274,6 +274,12 @@
     }
     .btn-reset:hover { background: rgba(255,255,255,0.14); }
     .sim-progress { text-align: center; font-size: 0.88rem; color: var(--text-muted); min-height: 24px; }
+    .auto-calc-hint {
+        display: flex; align-items: center; justify-content: center; gap: 6px;
+        font-size: 0.8rem; color: var(--text-muted); margin-top: 10px;
+        padding: 6px 12px; border-radius: 6px;
+        background: rgba(0, 255, 136, 0.04); border: 1px solid rgba(0, 255, 136, 0.1);
+    }
 
     /* ---- Card Picker (Virtual Keyboard) ---- */
     .card-picker-wrapper {
@@ -291,6 +297,14 @@
         display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
     }
     .picker-header span { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; }
+    .picker-actions { display: flex; align-items: center; gap: 8px; }
+    .picker-clear-btn {
+        background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3);
+        color: #f87171; font-size: 0.78rem; font-weight: 600;
+        padding: 5px 12px; border-radius: 6px; cursor: pointer;
+        display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s ease;
+    }
+    .picker-clear-btn:hover { background: rgba(239, 68, 68, 0.25); }
     .picker-close {
         background: none; border: none; color: var(--text-muted); font-size: 1.2rem;
         cursor: pointer; padding: 4px 8px;
@@ -594,7 +608,7 @@
     <!-- Board Section — DOM-First -->
     <div class="section-card board-section">
         <div class="section-title" style="justify-content: center;"><i class="fa-solid fa-table-cards" style="color: var(--neon-green);"></i> 公共牌區 (Community Board)</div>
-        <p class="section-subtitle" style="text-align: center;">依序設定 Flop (翻牌)、Turn (轉牌)、River (河牌)，可只設定部分公共牌。</p>
+        <p class="section-subtitle" style="text-align: center;">依序設定 Flop (翻牌)、Turn (轉牌)、River (河牌)。可不設公共牌直接計算 Preflop 勝率。</p>
 
         <div class="board-row">
             <span class="board-label">Flop:</span>
@@ -617,6 +631,10 @@
         <div class="sim-controls">
             <button class="btn-calc" id="btn-calculate"><i class="fa-solid fa-calculator"></i> 開始模擬 (10,000 次)</button>
             <button class="btn-reset" id="btn-reset-all"><i class="fa-solid fa-rotate-left"></i> 重置全部</button>
+        </div>
+        <div class="auto-calc-hint" id="auto-calc-hint">
+            <i class="fa-solid fa-bolt" style="color: var(--neon-green);"></i>
+            <span>自動模式：當 2+ 位玩家各有 2 張手牌時，系統將自動計算勝率</span>
         </div>
         <div class="sim-progress" id="sim-progress"></div>
     </div>
@@ -733,7 +751,10 @@
 <div class="card-picker-wrapper" id="card-picker">
     <div class="picker-header">
         <span><i class="fa-solid fa-hand-pointer"></i> 選擇牌面 / 快速輸入 (如 As, Kh, 10d)</span>
-        <button class="picker-close" id="picker-close-btn"><i class="fa-solid fa-xmark"></i></button>
+        <div class="picker-actions">
+            <button class="picker-clear-btn" id="picker-clear-slot" title="清除目前選中的牌槽"><i class="fa-solid fa-eraser"></i> 清除此牌</button>
+            <button class="picker-close" id="picker-close-btn"><i class="fa-solid fa-xmark"></i></button>
+        </div>
     </div>
     <div class="card-picker-grid" id="picker-grid">
         <!-- Spades -->
@@ -990,6 +1011,36 @@ function closePicker() {
     activeSlot = null;
 }
 
+// ---- Clear Individual Card ----
+function clearSlotCard(type, idx, slotIdx) {
+    if (simRunning) return;
+    if (type === 'player') {
+        var old = players[idx].hole[slotIdx];
+        if (old) {
+            usedCards.delete(cardKey(old));
+            players[idx].hole[slotIdx] = null;
+            syncPlayerCards(idx);
+            syncPickerDisabled();
+            clearWinBars(idx);
+            tryAutoCalculate();
+        }
+    } else {
+        var oldB = board[idx];
+        if (oldB) {
+            usedCards.delete(cardKey(oldB));
+            board[idx] = null;
+            syncBoard();
+            syncPickerDisabled();
+            tryAutoCalculate();
+        }
+    }
+}
+
+function clearActiveSlotCard() {
+    if (!activeSlot) return;
+    clearSlotCard(activeSlot.type, activeSlot.idx, activeSlot.slotIdx);
+}
+
 // ---- Card Selection ----
 function selectCard(card) {
     if (!activeSlot || simRunning) return;
@@ -1031,6 +1082,22 @@ function selectCard(card) {
         }
     }
     syncPickerDisabled();
+    tryAutoCalculate();
+}
+
+// ---- Auto Calculate ----
+function tryAutoCalculate() {
+    var readyCount = 0;
+    for (var i = 0; i < numPlayers; i++) {
+        if (!players[i].folded && players[i].hole[0] && players[i].hole[1]) {
+            readyCount++;
+        }
+    }
+    if (readyCount >= 2) {
+        // Debounce: delay slightly to batch rapid card selections
+        clearTimeout(window._autoCalcTimer);
+        window._autoCalcTimer = setTimeout(function() { runSimulation(); }, 300);
+    }
 }
 
 function findNextEmptyPlayerSlot() {
@@ -1124,13 +1191,7 @@ function runSimulation() {
         return;
     }
 
-    var boardFilled = 0;
-    for (var b = 0; b < 5; b++) { if (board[b]) boardFilled++; }
-    if (boardFilled < 3) {
-        progEl.textContent = '\u26A0\uFE0F 請先設定至少 3 張 Flop 公共牌再進行模擬。';
-        lastRunDone = false;
-        return;
-    }
+    // No board card minimum — supports preflop, flop, turn, river simulation
 
     // Build remaining deck
     var usedSet = new Set(usedCards);
@@ -1405,6 +1466,32 @@ function init() {
 
     // Close picker
     $('picker-close-btn').addEventListener('click', closePicker);
+
+    // Clear slot button in picker
+    $('picker-clear-slot').addEventListener('click', clearActiveSlotCard);
+
+    // Right-click to clear card slots (desktop)
+    $('players-grid').addEventListener('contextmenu', function(e) {
+        var slotEl = e.target.closest('.card-slot');
+        if (slotEl) {
+            e.preventDefault();
+            var parts = slotEl.id.split('-');
+            var pIdx = parseInt(parts[1]);
+            var sIdx = parseInt(parts[2]);
+            clearSlotCard('player', pIdx, sIdx);
+        }
+    });
+    for (var bc = 0; bc < 5; bc++) {
+        (function(idx) {
+            var el = $('board-slot-' + idx);
+            if (el) {
+                el.addEventListener('contextmenu', function(e) {
+                    e.preventDefault();
+                    clearSlotCard('board', idx);
+                });
+            }
+        })(bc);
+    }
 
     // Card slot clicks (event delegation on grid)
     $('players-grid').addEventListener('click', function(e) {
