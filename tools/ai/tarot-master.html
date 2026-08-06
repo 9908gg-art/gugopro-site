@@ -323,6 +323,61 @@
     .chat-input-row { display: flex; gap: 10px; }
     .chat-input-row input { flex: 1; }
 
+    /* ========== HAPTIC & FLIP ENHANCEMENTS ========== */
+    .tarot-card.flipped .card-front-inner {
+        box-shadow: 0 0 30px rgba(255,215,0,0.4), 0 0 60px rgba(168,85,247,0.2);
+    }
+    .tarot-card.flipped {
+        transform: rotateY(180deg) translateY(-5px);
+    }
+    .card-glow { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 10px; pointer-events: none; }
+    .tarot-card.flipped .card-glow {
+        animation: glowPulse 1.5s ease-in-out;
+        background: radial-gradient(circle at center, rgba(255,215,0,0.3), transparent 70%);
+    }
+    @keyframes glowPulse {
+        0% { opacity: 0; transform: scale(0.8); }
+        50% { opacity: 1; transform: scale(1.15); }
+        100% { opacity: 0; transform: scale(1); }
+    }
+
+    /* ========== JOURNAL PANEL ========== */
+    .journal-section { margin-top: 24px; }
+    .journal-header {
+        display: flex; align-items: center; justify-content: space-between;
+        margin-bottom: 16px; flex-wrap: wrap; gap: 10px;
+    }
+    .journal-header .j-title {
+        font-family: 'Cinzel', 'Noto Sans TC', serif;
+        font-size: 1.2rem; font-weight: 700; color: var(--neon-gold);
+        display: flex; align-items: center; gap: 8px;
+    }
+    .journal-toggle {
+        background: rgba(255,215,0,0.10); color: var(--neon-gold);
+        border: 1px solid rgba(255,215,0,0.3);
+        padding: 8px 16px; border-radius: 20px; font-size: 0.82rem; font-weight: 600;
+        cursor: pointer; transition: all 0.2s ease;
+    }
+    .journal-toggle:hover { background: rgba(255,215,0,0.2); }
+    .journal-panel {
+        max-height: 0; overflow: hidden; transition: max-height 0.4s ease;
+    }
+    .journal-panel.open { max-height: 2000px; }
+    .journal-entry {
+        background: rgba(255,255,255,0.02);
+        border: 1px solid var(--border-card);
+        border-left: 3px solid var(--neon-gold);
+        border-radius: var(--radius-sm);
+        padding: 14px 16px; margin-bottom: 12px;
+    }
+    .journal-entry .je-date { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; }
+    .journal-entry .je-question { font-weight: 700; color: #fff; font-size: 0.92rem; margin-bottom: 6px; }
+    .journal-entry .je-cards { font-size: 0.82rem; color: var(--neon-gold); margin-bottom: 6px; }
+    .journal-entry .je-advice { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; }
+    .journal-empty {
+        text-align: center; padding: 30px; color: var(--text-muted); font-size: 0.9rem;
+    }
+
     /* ========== HISTORY ========== */
     .history-list { max-height: 400px; overflow-y: auto; }
     .history-item {
@@ -576,11 +631,11 @@
             </div>
             <div class="chat-area" id="chat-area" style="display:none;">
                 <h4 style="color: var(--neon-gold); font-family: 'Cinzel', serif; margin-bottom: 10px;">
-                    <i class="fa-solid fa-comments"></i> 繼續追問
+                    <i class="fa-solid fa-comments"></i> <span>向 AI 塔羅導師追問</span>
                 </h4>
                 <div class="chat-messages" id="chat-messages"></div>
                 <div class="chat-input-row">
-                    <input type="text" id="chat-input" placeholder="輸入你的追問..." onkeydown="if(event.key==='Enter')sendChat()">
+                    <input type="text" id="chat-input" placeholder="輸入你的追問（最多 3 次）..." onkeydown="if(event.key==='Enter')sendChat()">
                     <button class="btn-secondary" onclick="sendChat()" style="flex-shrink:0;">
                         <i class="fa-solid fa-paper-plane"></i>
                     </button>
@@ -592,7 +647,7 @@
         <div class="section-card" id="action-section" style="display:none;">
             <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;">
                 <button class="btn-secondary" onclick="copyReport()">
-                    <i class="fa-solid fa-copy"></i> 複製占卜報告
+                    <i class="fa-solid fa-copy"></i> <span>📋 複製占卜戰報</span>
                 </button>
                 <button class="btn-secondary" onclick="saveHistory()">
                     <i class="fa-solid fa-bookmark"></i> 儲存占卜紀錄
@@ -609,6 +664,20 @@
             <p class="section-subtitle">你過去的所有占卜紀錄，儲存在本地瀏覽器中。</p>
             <div class="history-list" id="history-list">
                 <!-- Filled by JS -->
+            </div>
+        </div>
+
+        <!-- Journal -->
+        <div class="section-card journal-section">
+            <div class="journal-header">
+                <div class="j-title"><i class="fa-solid fa-book-open"></i> <span>📖 歷史占卜日誌</span></div>
+                <button class="journal-toggle" onclick="toggleJournal()">
+                    <i class="fa-solid fa-chevron-down"></i> 展開日誌
+                </button>
+            </div>
+            <p class="section-subtitle">回顧你過去的所有占卜旅程。</p>
+            <div class="journal-panel" id="journal-panel">
+                <div class="journal-empty"><i class="fa-solid fa-book-open"></i> 尚無占卜日誌紀錄，完成占卜後將自動儲存。</div>
             </div>
         </div>
 
@@ -838,6 +907,78 @@ var SPREADS = {
 };
 
 /* =====================================================================
+   i18n DICTIONARY
+   ===================================================================== */
+var i18n = {
+  "zh-TW": {
+    selectSpread: '選擇牌陣',
+    spreadSubtitle: '根據你的問題選擇最適合的牌陣。',
+    yourQuestion: '你的問題',
+    questionSubtitle: '靜心專注，將你的問題清楚地寫下來。問題越具體，指引越精準。',
+    specificQuestion: '具體問題',
+    questionPlaceholder: '例如：我下個月的工作變動會帶來什麼結果？',
+    questionCategory: '問題類別',
+    startShuffle: '開始洗牌抽牌',
+    clickToFlip: '點擊每一張牌卡以翻開',
+    tableSubtitle: '從牌堆中點選所有卡片以揭曉你的命運。',
+    flippedProgress: '已翻開',
+    allFlipped: '所有牌卡已揭曉，正在召喚 AI 深度解牌...',
+    aiDeepReading: 'AI 深度解牌',
+    aiThinking: 'AI 正在深度解牌中，請稍候...',
+    followUpTitle: '向 AI 塔羅導師追問',
+    followUpPlaceholder: '輸入你的追問...',
+    copyReport: '複製占卜戰報',
+    saveRecord: '儲存占卜紀錄',
+    restartReading: '重新占卜',
+    historyTitle: '占卜紀錄',
+    historySubtitle: '你過去的所有占卜紀錄，儲存在本地瀏覽器中。',
+    noHistory: '尚無占卜紀錄。完成占卜後點擊「儲存占卜紀錄」即可保存。',
+    reversed: '逆位',
+    upright: '正位',
+    reportCopied: '占卜戰報已複製到剪貼簿！',
+    recordSaved: '占卜紀錄已儲存！',
+    journalTitle: '📖 歷史占卜日誌',
+    journalSubtitle: '回顧你過去的所有占卜旅程。',
+    followUpCountHint: '(追問次數：'
+  },
+  "en": {
+    selectSpread: 'Select Spread',
+    spreadSubtitle: 'Choose the best spread for your question.',
+    yourQuestion: 'Your Question',
+    questionSubtitle: 'Focus your mind and write your question clearly. The more specific, the more precise the guidance.',
+    specificQuestion: 'Specific Question',
+    questionPlaceholder: 'e.g. What will be the result of my job change next month?',
+    questionCategory: 'Question Category',
+    startShuffle: 'Shuffle & Draw Cards',
+    clickToFlip: 'Click each card to flip it',
+    tableSubtitle: 'Tap all cards to reveal your destiny.',
+    flippedProgress: 'Flipped',
+    allFlipped: 'All cards revealed. Summoning AI deep reading...',
+    aiDeepReading: 'AI Deep Reading',
+    aiThinking: 'AI is performing deep reading, please wait...',
+    followUpTitle: 'Ask the Tarot Master',
+    followUpPlaceholder: 'Enter your follow-up question...',
+    copyReport: 'Copy Reading Report',
+    saveRecord: 'Save Reading Record',
+    restartReading: 'New Reading',
+    historyTitle: 'Reading History',
+    historySubtitle: 'All your past reading records stored locally.',
+    noHistory: 'No readings yet. Complete a reading and click Save to keep a record.',
+    reversed: 'Reversed',
+    upright: 'Upright',
+    reportCopied: 'Reading report copied to clipboard!',
+    recordSaved: 'Reading record saved!',
+    journalTitle: '📖 Reading Journal',
+    journalSubtitle: 'Review your past tarot journeys.',
+    followUpCountHint: '(Follow-ups: '
+  }
+};
+
+// Current language (default zh-TW, can be switched later)
+var currentLang = 'zh-TW';
+function t(key) { return (i18n[currentLang] && i18n[currentLang][key]) || i18n['zh-TW'][key] || key; }
+
+/* =====================================================================
    STATE
    ===================================================================== */
 var state = {
@@ -849,7 +990,10 @@ var state = {
   geminiModel: 'gemini-2.5-flash',
   apiKey: '',
   chatContext: '',
-  isChatMode: false
+  isChatMode: false,
+  followUpCount: 0,
+  maxFollowUps: 3,
+  journalHistory: []
 };
 
 /* =====================================================================
@@ -859,6 +1003,7 @@ function init() {
   loadApiKey();
   fetchModel();
   loadHistory();
+  renderJournal();
   if (typeof gtag === 'function') {
     gtag('event', 'page_view', {'event_category': 'tool', 'page_title': 'tarot-master'});
   }
@@ -975,6 +1120,7 @@ window.startReading = function() {
 
     el.innerHTML =
       '<div class="card-back"><div class="card-back-pattern"></div></div>' +
+      '<div class="card-glow"></div>' +
       '<div class="card-front-inner"' + (d.reversed ? ' style="transform: rotateY(180deg) rotate(180deg);"' : '') + '>' +
         '<div class="cf-emoji">' + d.card.emoji + '</div>' +
         '<div class="cf-name">' + d.card.name + '</div>' +
@@ -1002,7 +1148,14 @@ function flipCard(idx) {
   var card = cards[idx];
   if (card.classList.contains('flipped')) return;
 
+  // Haptic: light tap when selecting card
+  if (navigator.vibrate) { navigator.vibrate(15); }
+
   card.classList.add('flipped');
+
+  // Haptic: rhythmic pattern when card is revealed
+  if (navigator.vibrate) { navigator.vibrate([30, 50, 30]); }
+
   state.flippedCount++;
 
   var spread = SPREADS[state.spread];
@@ -1084,6 +1237,13 @@ async function generateReading() {
     // Show chat area
     document.getElementById('chat-area').style.display = '';
 
+    // Reset follow-up counter
+    state.followUpCount = 0;
+    updateFollowUpHint();
+
+    // Auto-save to journal
+    autoSaveJournal();
+
     if (typeof gtag === 'function') {
       gtag('event', 'tarot_ai_reading', {
         'event_category': 'tarot',
@@ -1103,6 +1263,12 @@ async function generateReading() {
    CHAT FOLLOW-UP
    ===================================================================== */
 window.sendChat = function() {
+  // Check follow-up limit
+  if (state.followUpCount >= state.maxFollowUps) {
+    alert('追問次數已達上限（' + state.maxFollowUps + ' 次）。如需更多解答，請重新占卜。');
+    return;
+  }
+
   var input = document.getElementById('chat-input');
   var msg = input.value.trim();
   if (!msg) return;
@@ -1110,6 +1276,9 @@ window.sendChat = function() {
 
   var chatMessages = document.getElementById('chat-messages');
   chatMessages.innerHTML += '<div class="chat-msg user"><i class="fa-solid fa-user"></i> ' + escapeHtml(msg) + '</div>';
+
+  state.followUpCount++;
+  updateFollowUpHint();
 
   // AI request with context
   var prompt = state.chatContext + '\n\n【使用者追問】：' + msg + '\n\n請根據上述牌陣內容，回答使用者的追問。';
@@ -1149,32 +1318,29 @@ window.sendChat = function() {
 window.copyReport = function() {
   var spread = SPREADS[state.spread];
   var question = document.getElementById('question-input').value.trim();
-  var report = '【塔羅占卜報告】\n';
+  var report = '[GugoPro AI 塔羅分析]\n';
+  report += '問題：' + question + '\n';
   report += '牌陣：' + spread.name + '\n';
-  report += '問題：' + question + '\n\n';
 
-  state.drawn.forEach(function(d, i) {
+  var cardStr = state.drawn.map(function(d, i) {
     var pos = spread.positions[i] || '位置' + (i+1);
-    report += (i+1) + '. [' + pos + '] ' + d.card.name + ' (' + d.card.en + ')';
-    if (d.reversed) report += ' — 逆位';
-    else report += ' — 正位';
-    report += '\n   關鍵字：' + (d.reversed ? d.card.r : d.card.u) + '\n\n';
-  });
+    return pos + '：' + (d.reversed ? '逆位 ' : '正位 ') + d.card.name + ' (' + d.card.en + ')';
+  }).join(' | ');
+  report += '牌卡：' + cardStr + '\n';
 
-  var aiText = document.getElementById('ai-reading-box').innerText;
-  report += '【AI 解牌摘要】\n' + aiText;
+  var aiText = document.getElementById('ai-reading-box').innerText.substring(0, 600);
+  report += '導師建議：' + aiText;
 
   navigator.clipboard.writeText(report).then(function() {
-    alert('占卜報告已複製到剪貼簿！');
+    alert(t('reportCopied'));
   }).catch(function() {
-    // Fallback
     var ta = document.createElement('textarea');
     ta.value = report;
     document.body.appendChild(ta);
     ta.select();
     document.execCommand('copy');
     document.body.removeChild(ta);
-    alert('占卜報告已複製！');
+    alert(t('reportCopied'));
   });
 
   if (typeof gtag === 'function') {
@@ -1207,7 +1373,7 @@ window.saveHistory = function() {
   localStorage.setItem('tarot_history', JSON.stringify(history));
 
   loadHistory();
-  alert('占卜紀錄已儲存！');
+  alert(t('recordSaved'));
 };
 
 function loadHistory() {
@@ -1216,7 +1382,7 @@ function loadHistory() {
 
   var list = document.getElementById('history-list');
   if (!history.length) {
-    list.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding: 20px;">尚無占卜紀錄。完成占卜後點擊「儲存占卜紀錄」即可保存。</p>';
+    list.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding: 20px;">' + t('noHistory') + '</p>';
     return;
   }
 
@@ -1232,6 +1398,80 @@ function loadHistory() {
   });
   list.innerHTML = html;
 }
+
+/* =====================================================================
+   FOLLOW-UP HINT
+   ===================================================================== */
+function updateFollowUpHint() {
+  var chatArea = document.getElementById('chat-area');
+  var existingHint = document.getElementById('follow-up-hint');
+  if (existingHint) existingHint.remove();
+  var hint = document.createElement('div');
+  hint.id = 'follow-up-hint';
+  hint.style.cssText = 'font-size:0.75rem; color:var(--text-muted); margin-top:6px; text-align:right;';
+  hint.textContent = t('followUpCountHint') + state.followUpCount + '/' + state.maxFollowUps + ')';
+  chatArea.appendChild(hint);
+}
+
+/* =====================================================================
+   AUTO-SAVE JOURNAL
+   ===================================================================== */
+function autoSaveJournal() {
+  var spread = SPREADS[state.spread];
+  var question = document.getElementById('question-input').value.trim();
+  var aiText = document.getElementById('ai-reading-box').innerText.substring(0, 500);
+
+  var journalEntry = {
+    id: Date.now(),
+    date: new Date().toISOString(),
+    question: question,
+    spread: spread.name,
+    cards: state.drawn.map(function(d) {
+      return d.card.name + (d.reversed ? ' (' + t('reversed') + ')' : ' (' + t('upright') + ')');
+    }).join(' / '),
+    aiAdvice: aiText
+  };
+
+  var journal = [];
+  try { journal = JSON.parse(localStorage.getItem('tarot_journal_history') || '[]'); } catch(e) {}
+  journal.unshift(journalEntry);
+  if (journal.length > 50) journal = journal.slice(0, 50);
+  localStorage.setItem('tarot_journal_history', JSON.stringify(journal));
+
+  renderJournal();
+}
+
+function renderJournal() {
+  var journal = [];
+  try { journal = JSON.parse(localStorage.getItem('tarot_journal_history') || '[]'); } catch(e) {}
+
+  var panel = document.getElementById('journal-panel');
+  if (!journal.length) {
+    panel.innerHTML = '<div class="journal-empty"><i class="fa-solid fa-book-open"></i> 尚無占卜日誌紀錄，完成占卜後將自動儲存。</div>';
+    return;
+  }
+
+  var html = '';
+  journal.forEach(function(entry) {
+    var date = new Date(entry.date).toLocaleString('zh-TW');
+    html +=
+      '<div class="journal-entry">' +
+        '<div class="je-date"><i class="fa-solid fa-clock"></i> ' + date + '</div>' +
+        '<div class="je-question">' + escapeHtml(entry.question) + '</div>' +
+        '<div class="je-cards"><i class="fa-solid fa-layer-group"></i> 牌陣：' + escapeHtml(entry.spread) + ' | ' + escapeHtml(entry.cards) + '</div>' +
+        '<div class="je-advice">' + escapeHtml(entry.aiAdvice) + '</div>' +
+      '</div>';
+  });
+  panel.innerHTML = html;
+}
+
+window.toggleJournal = function() {
+  var panel = document.getElementById('journal-panel');
+  panel.classList.toggle('open');
+  if (panel.classList.contains('open')) {
+    renderJournal();
+  }
+};
 
 /* =====================================================================
    UTILS
