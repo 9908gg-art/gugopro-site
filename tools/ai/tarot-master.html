@@ -378,6 +378,83 @@
         text-align: center; padding: 30px; color: var(--text-muted); font-size: 0.9rem;
     }
 
+    /* ========== UNLOCK CARD (PRO MODE) ========== */
+    .unlock-card {
+        margin-top: 20px; padding: 24px;
+        background: linear-gradient(135deg, rgba(168,85,247,0.08), rgba(255,215,0,0.08));
+        border: 1px solid rgba(255,215,0,0.25);
+        border-radius: var(--radius-md);
+        text-align: center; position: relative; overflow: hidden;
+    }
+    .unlock-card::before {
+        content: '';
+        position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+        background: conic-gradient(from 0deg, transparent, rgba(255,215,0,0.1), transparent);
+        animation: unlockSpin 8s linear infinite;
+    }
+    @keyframes unlockSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .unlock-card > * { position: relative; z-index: 1; }
+    .unlock-card .unlock-title {
+        font-family: 'Cinzel', serif; font-size: 1.1rem; font-weight: 700;
+        color: var(--neon-gold); margin-bottom: 10px;
+    }
+    .unlock-card .unlock-subtitle { font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 16px; }
+    .unlock-benefits {
+        text-align: left; margin: 14px 0; padding: 0 10px;
+        display: flex; flex-direction: column; gap: 8px;
+    }
+    .unlock-benefit {
+        display: flex; align-items: flex-start; gap: 8px;
+        font-size: 0.85rem; color: var(--text-primary);
+    }
+    .unlock-benefit i { color: var(--neon-purple); margin-top: 3px; flex-shrink: 0; }
+    .btn-unlock {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: linear-gradient(135deg, #a855f7, #ffd700);
+        color: #000; padding: 12px 28px; border-radius: 30px;
+        font-size: 0.95rem; font-weight: 800;
+        border: none; cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 0 20px rgba(168,85,247,0.4), 0 0 40px rgba(255,215,0,0.2);
+    }
+    .btn-unlock:hover {
+        transform: translateY(-2px) scale(1.03);
+        box-shadow: 0 0 30px rgba(168,85,247,0.6), 0 0 60px rgba(255,215,0,0.3);
+    }
+
+    /* ========== BASIC READING (FREE MODE) ========== */
+    .basic-reading { margin-top: 16px; }
+    .basic-reading h4 {
+        font-family: 'Cinzel', serif; color: var(--neon-gold); margin-bottom: 12px;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .basic-reading .br-card {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid var(--border-card);
+        border-left: 3px solid var(--neon-purple);
+        border-radius: var(--radius-sm);
+        padding: 12px 16px; margin-bottom: 10px;
+    }
+    .basic-reading .br-position {
+        font-size: 0.78rem; color: var(--neon-gold); margin-bottom: 4px;
+    }
+    .basic-reading .br-card-name {
+        font-weight: 700; font-size: 0.95rem; color: #fff; margin-bottom: 2px;
+    }
+    .basic-reading .br-meaning {
+        font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;
+    }
+    .basic-reading .br-meaning .rev-tag {
+        display: inline-block; background: rgba(255,107,199,0.15);
+        color: var(--neon-pink); padding: 1px 8px; border-radius: 10px;
+        font-size: 0.75rem; font-weight: 600; margin-right: 6px;
+    }
+    .basic-reading .br-meaning .up-tag {
+        display: inline-block; background: rgba(168,85,247,0.15);
+        color: var(--neon-purple); padding: 1px 8px; border-radius: 10px;
+        font-size: 0.75rem; font-weight: 600; margin-right: 6px;
+    }
+
     /* ========== HISTORY ========== */
     .history-list { max-height: 400px; overflow-y: auto; }
     .history-item {
@@ -623,12 +700,35 @@
             </div>
         </div>
 
-        <!-- AI Reading -->
+        <!-- Reading Results (Basic + Unlock) -->
         <div class="section-card" id="ai-reading-section" style="display:none;">
-            <div class="section-title"><i class="fa-solid fa-robot" style="color: var(--neon-purple);"></i> AI 深度解牌</div>
-            <div class="ai-reading-box" id="ai-reading-box">
+            <div class="section-title"><i class="fa-solid fa-star-of-david" style="color: var(--neon-purple);"></i> 占卜結果</div>
+
+            <!-- Basic Reading (Free Mode - always shown) -->
+            <div class="basic-reading" id="basic-reading">
                 <!-- Filled by JS -->
             </div>
+
+            <!-- Unlock Card (Pro AI Mode) -->
+            <div class="unlock-card" id="unlock-card">
+                <div class="unlock-title">✨ 解鎖 Gemini AI 靈性導師</div>
+                <div class="unlock-subtitle">針對你個人問題的客製化深度解析</div>
+                <div class="unlock-benefits">
+                    <div class="unlock-benefit"><i class="fa-solid fa-robot"></i> 客製化交叉語境解答：結合具體疑問的全盤分析</div>
+                    <div class="unlock-benefit"><i class="fa-solid fa-comments"></i> 二次追問對話：解牌後可與 AI 導師進行 2~3 次深度對話</div>
+                    <div class="unlock-benefit"><i class="fa-solid fa-lightbulb"></i> 實體行動建議與靈性對策</div>
+                </div>
+                <button class="btn-unlock" onclick="unlockAIReading()">
+                    <i class="fa-solid fa-unlock-keyhole"></i> 解鎖 AI 深度解析
+                </button>
+            </div>
+
+            <!-- AI Reading (hidden until unlocked) -->
+            <div class="ai-reading-box" id="ai-reading-box" style="display:none; margin-top:16px;">
+                <!-- Filled by JS -->
+            </div>
+
+            <!-- Chat Area (hidden until unlocked) -->
             <div class="chat-area" id="chat-area" style="display:none;">
                 <h4 style="color: var(--neon-gold); font-family: 'Cinzel', serif; margin-bottom: 10px;">
                     <i class="fa-solid fa-comments"></i> <span>向 AI 塔羅導師追問</span>
@@ -1000,21 +1100,16 @@ var state = {
    INIT
    ===================================================================== */
 function init() {
-  loadApiKey();
+  // Freemium: NEVER show modal on page load. Load key silently if exists.
+  var stored = localStorage.getItem('tarot_api_key');
+  if (stored) {
+    state.apiKey = stored;
+  }
   fetchModel();
   loadHistory();
   renderJournal();
   if (typeof gtag === 'function') {
     gtag('event', 'page_view', {'event_category': 'tool', 'page_title': 'tarot-master'});
-  }
-}
-
-function loadApiKey() {
-  var stored = localStorage.getItem('tarot_api_key');
-  if (stored) {
-    state.apiKey = stored;
-  } else {
-    document.getElementById('api-modal').classList.add('show');
   }
 }
 
@@ -1024,6 +1119,9 @@ function saveModalApiKey() {
   state.apiKey = key;
   localStorage.setItem('tarot_api_key', key);
   document.getElementById('api-modal').classList.remove('show');
+
+  // After key saved, generate AI reading
+  generateReading();
 }
 
 async function fetchModel() {
@@ -1065,11 +1163,7 @@ window.startReading = function() {
   var question = document.getElementById('question-input').value.trim();
   if (!question) { alert('請先輸入你的問題。'); return; }
 
-  // Ensure API key
-  if (!state.apiKey) {
-    document.getElementById('api-modal').classList.add('show');
-    return;
-  }
+  // Freemium: no API key required to start reading
 
   var spread = SPREADS[state.spread];
   var count = spread.count;
@@ -1165,11 +1259,56 @@ function flipCard(idx) {
   // Check if all flipped
   if (state.flippedCount >= spread.count) {
     setTimeout(function() {
-      instructions.innerHTML = '<i class="fa-solid fa-wand-sparkles"></i> 所有牌卡已揭曉，正在召喚 AI 深度解牌...';
-      generateReading();
+      instructions.innerHTML = '<i class="fa-solid fa-wand-sparkles"></i> 所有牌卡已揭曉！';
+      showBasicReading();
+      // Show the reading section
+      document.getElementById('ai-reading-section').style.display = '';
+      document.getElementById('action-section').style.display = '';
     }, 800);
   }
 }
+
+/* =====================================================================
+   BASIC READING (FREE MODE)
+   ===================================================================== */
+function showBasicReading() {
+  var spread = SPREADS[state.spread];
+  var container = document.getElementById('basic-reading');
+  var html = '<h4><i class="fa-solid fa-book-open"></i> 牌義解析（經典韋特塔羅）</h4>';
+
+  state.drawn.forEach(function(d, i) {
+    var pos = spread.positions[i] || '位置 ' + (i+1);
+    var meaning = d.reversed ? d.card.r : d.card.u;
+    var tagClass = d.reversed ? 'rev-tag' : 'up-tag';
+    var tagText = d.reversed ? '逆位' : '正位';
+
+    html +=
+      '<div class="br-card">' +
+        '<div class="br-position"><i class="fa-solid fa-location-dot"></i> ' + pos + '</div>' +
+        '<div class="br-card-name">' + d.card.emoji + ' ' + d.card.name + ' (' + d.card.en + ')</div>' +
+        '<div class="br-meaning"><span class="' + tagClass + '">' + tagText + '</span> ' + meaning + '</div>' +
+      '</div>';
+  });
+
+  container.innerHTML = html;
+}
+
+/* =====================================================================
+   UNLOCK AI READING (PRO MODE)
+   ===================================================================== */
+window.unlockAIReading = function() {
+  if (state.apiKey) {
+    // Key already saved, generate reading directly
+    generateReading();
+  } else {
+    // Show modal to get API key
+    document.getElementById('api-modal').classList.add('show');
+  }
+
+  if (typeof gtag === 'function') {
+    gtag('event', 'tarot_unlock_ai', {'event_category': 'tarot'});
+  }
+};
 
 /* =====================================================================
    AI READING
@@ -1234,7 +1373,9 @@ async function generateReading() {
 
     readingBox.innerHTML = '<h3><i class="fa-solid fa-star" style="color: var(--neon-gold);"></i> AI 深度解牌結果</h3>' + escapeHtml(text);
 
-    // Show chat area
+    // Hide unlock card and show AI reading + chat
+    document.getElementById('unlock-card').style.display = 'none';
+    readingBox.style.display = '';
     document.getElementById('chat-area').style.display = '';
 
     // Reset follow-up counter
@@ -1328,8 +1469,19 @@ window.copyReport = function() {
   }).join(' | ');
   report += '牌卡：' + cardStr + '\n';
 
-  var aiText = document.getElementById('ai-reading-box').innerText.substring(0, 600);
-  report += '導師建議：' + aiText;
+  // Include AI text if available (unlocked), otherwise include basic meanings
+  var aiBox = document.getElementById('ai-reading-box');
+  if (aiBox && aiBox.style.display !== 'none' && aiBox.innerText) {
+    var aiText = aiBox.innerText.substring(0, 600);
+    report += '導師建議：' + aiText;
+  } else {
+    // Basic reading fallback
+    var basicCards = state.drawn.map(function(d, i) {
+      var pos = spread.positions[i] || '位置' + (i+1);
+      return pos + '：' + (d.reversed ? '逆位 ' : '正位 ') + d.card.name + ' — ' + (d.reversed ? d.card.r : d.card.u);
+    }).join(' | ');
+    report += '牌義摘要：' + basicCards;
+  }
 
   navigator.clipboard.writeText(report).then(function() {
     alert(t('reportCopied'));
@@ -1419,7 +1571,16 @@ function updateFollowUpHint() {
 function autoSaveJournal() {
   var spread = SPREADS[state.spread];
   var question = document.getElementById('question-input').value.trim();
-  var aiText = document.getElementById('ai-reading-box').innerText.substring(0, 500);
+  var aiBox = document.getElementById('ai-reading-box');
+  var aiText = '';
+  if (aiBox && aiBox.style.display !== 'none' && aiBox.innerText) {
+    aiText = aiBox.innerText.substring(0, 500);
+  } else {
+    aiText = state.drawn.map(function(d, i) {
+      var pos = spread.positions[i] || '位置' + (i+1);
+      return pos + '：' + (d.reversed ? '逆位' : '正位') + ' ' + d.card.name + ' — ' + (d.reversed ? d.card.r : d.card.u);
+    }).join(' | ');
+  }
 
   var journalEntry = {
     id: Date.now(),
