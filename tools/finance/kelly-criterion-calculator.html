@@ -490,6 +490,16 @@
     .footer-links a { color: var(--text-secondary); text-decoration: none; margin: 0 6px; font-weight: 500; }
     .footer-links a:hover { color: var(--color-cyan); }
 
+    /* ---- Validation Error Animation ---- */
+    .warning-card.validation-shake {
+        animation: shake 0.4s ease;
+    }
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        75% { transform: translateX(5px); }
+    }
+
     /* ---- Animations ---- */
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(-8px); }
@@ -553,6 +563,19 @@
 
     <!-- ===== MAIN TOOL ===== -->
     <div class="container tool-area">
+
+        <!-- Quick Start Guide -->
+        <div class="section-card" style="border-color: rgba(6,182,212,0.25); background: rgba(6,182,212,0.04);">
+            <div class="section-title"><i class="fa-solid fa-lightbulb" style="color: var(--neon-amber);"></i> 這個工具能幫你什麼？</div>
+            <p style="font-size:0.92rem; color:var(--text-secondary); line-height:1.8; margin-bottom:12px;">
+                凱利公式能根據你的<strong style="color:#fff;">勝率</strong>與<strong style="color:#fff;">盈虧比</strong>，精確計算出每次交易或下注應投入的<strong style="color:var(--neon-green);">最佳資金比例</strong>，避免過度冒險導致破產，也避免過度保守錯失獲利。
+            </p>
+            <div style="display:flex; flex-wrap:wrap; gap:10px; font-size:0.85rem;">
+                <span style="background:rgba(0,255,136,0.08); border:1px solid rgba(0,255,136,0.2); padding:6px 14px; border-radius:20px; color:var(--neon-green);"><i class="fa-solid fa-1"></i> 選擇情境或輸入參數</span>
+                <span style="background:rgba(0,212,255,0.08); border:1px solid rgba(0,212,255,0.2); padding:6px 14px; border-radius:20px; color:var(--neon-blue);"><i class="fa-solid fa-2"></i> 點擊計算</span>
+                <span style="background:rgba(168,85,247,0.08); border:1px solid rgba(168,85,247,0.2); padding:6px 14px; border-radius:20px; color:var(--neon-purple);"><i class="fa-solid fa-3"></i> 查看建議與模擬結果</span>
+            </div>
+        </div>
 
         <!-- Quick Scenario Presets (NEW) -->
         <div class="section-card preset-section">
@@ -865,6 +888,20 @@ var debouncedStressUpdate = debounce(function() {
 }, 200);
 
 /* ===================================================================
+   INLINE VALIDATION ERROR (replaces alert)
+   =================================================================== */
+function showValidationError(msg) {
+    var warnArea = document.getElementById('warning-area');
+    warnArea.innerHTML = '<div class="warning-card negative-ev">' +
+        '<span class="wc-icon"><i class="fa-solid fa-circle-exclamation"></i></span>' +
+        '<span><strong>' + msg + '</strong></span>' +
+    '</div>';
+    warnArea.style.display = '';
+    warnArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(function() { warnArea.style.display = 'none'; }, 5000);
+}
+
+/* ===================================================================
    COPY SUMMARY (NEW)
    =================================================================== */
 window.copyRiskSummary = function() {
@@ -1023,7 +1060,7 @@ window.runCalculation = function() {
         b = parseFloat(document.getElementById('g-odds').value);
         balance = parseFloat(document.getElementById('g-balance').value);
         if (!p || !b || !balance || p <= 0 || p >= 1 || b <= 0) {
-            alert('請輸入有效的勝率 (1-99%)、淨賠率 (>0) 與資金 (>0)。');
+            showValidationError('請輸入有效的勝率 (1-99%)、淨賠率 (>0) 與資金 (>0)。');
             return;
         }
         // f* = (bp - (1-p)) / b
@@ -1034,7 +1071,7 @@ window.runCalculation = function() {
         L = parseFloat(document.getElementById('t-losspct').value) / 100;
         balance = parseFloat(document.getElementById('t-balance').value);
         if (!p || !W || !L || !balance || p <= 0 || p >= 1 || W <= 0 || L <= 0) {
-            alert('請輸入有效的勝率 (1-99%)、停利% (>0)、停損% (>0) 與資金 (>0)。');
+            showValidationError('請輸入有效的勝率 (1-99%)、停利% (>0)、停損% (>0) 與資金 (>0)。');
             return;
         }
         // f* = p/L - (1-p)/W
@@ -1054,8 +1091,7 @@ window.runCalculation = function() {
         f = 0; // Never show negative percentage
     }
 
-    var fullF = lastCalc ? lastCalc.fullF : f;
-    if (fullF === undefined) fullF = f;
+    var fullF = f; // Always use freshly computed value
 
     // ---- LEVERAGE GUARD (NEW, trading mode only) ----
     if (currentMode === 'trading' && fullF > 1) {
@@ -1085,7 +1121,7 @@ window.runCalculation = function() {
 
     // Special -EV warning in results area
     var negEvWarning = '';
-    if (fullF <= 0) {
+    if (f <= 0 && ev <= 0) {
         negEvWarning = '<div class="warning-card negative-ev" style="margin-top:16px;">' +
             '<span class="wc-icon"><i class="fa-solid fa-skull-crossbones"></i></span>' +
             '<span><strong>⚠️ 負期望值（-EV）策略！數學證明長期下注必敗，請勿入場。</strong></span>' +
@@ -1101,11 +1137,13 @@ window.runCalculation = function() {
     document.getElementById('stress-test-section').style.display = '';
     document.getElementById('mc-section').style.display = '';
 
-    // Clear MC data when recalculating
-    if (lastCalc) lastCalc.lastMaxDD = undefined;
-
     // Scroll to results
     document.getElementById('results-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // Auto-run Monte Carlo with reduced sims for quick feedback
+    setTimeout(function() {
+        runMonteCarlo();
+    }, 300);
 
     if (typeof gtag === 'function') {
         gtag('event', 'kelly_calculation', {
@@ -1120,30 +1158,48 @@ function displayResults(f, ev, balance, negEvWarning) {
     var grid = document.getElementById('results-grid');
     var isPositive = f > 0;
     var pct = (f * 100).toFixed(2);
-    var betAmount = (balance * Math.max(0, f)).toFixed(0);
+    var halfPct = (f * 0.5 * 100).toFixed(2);
+    var halfBet = Math.round(balance * Math.max(0, f * 0.5));
+    var betAmount = Math.round(balance * Math.max(0, f));
     var color = isPositive ? 'rc-green' : 'rc-red';
     var sign = isPositive ? '+' : '';
 
-    grid.innerHTML = negEvWarning +
+    // Risk level determination
+    var riskLevel, riskColor, riskIcon;
+    if (f <= 0) { riskLevel = '不建議操作'; riskColor = 'rc-red'; riskIcon = 'fa-ban'; }
+    else if (f <= 0.05) { riskLevel = '保守穩健'; riskColor = 'rc-green'; riskIcon = 'fa-shield-halved'; }
+    else if (f <= 0.15) { riskLevel = '適中風險'; riskColor = 'rc-amber'; riskIcon = 'fa-gauge-simple'; }
+    else if (f <= 0.30) { riskLevel = '高風險'; riskColor = 'rc-amber'; riskIcon = 'fa-gauge-high'; }
+    else { riskLevel = '極高風險'; riskColor = 'rc-red'; riskIcon = 'fa-fire'; }
+
+    // Plain-language interpretation
+    var interpretation = '';
+    if (f <= 0) {
+        interpretation = '<div style="background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.2); border-radius:12px; padding:16px; margin-bottom:16px; font-size:0.9rem; color:#fca5a5; line-height:1.7;"><i class="fa-solid fa-circle-info"></i> <strong>白話解讀：</strong>這個策略的期望報酬為負，長期執行必然虧損。建議不要進場，或重新評估你的勝率與盈虧比。</div>';
+    } else {
+        interpretation = '<div style="background:rgba(6,182,212,0.06); border:1px solid rgba(6,182,212,0.2); border-radius:12px; padding:16px; margin-bottom:16px; font-size:0.9rem; color:var(--text-secondary); line-height:1.7;"><i class="fa-solid fa-circle-info" style="color:var(--neon-blue);"></i> <strong style="color:#fff;">白話解讀：</strong>每次交易或下注，建議最多投入總資金的 <strong style="color:var(--neon-green);">' + halfPct + '%（半凱利）</strong>，即約 <strong style="color:var(--neon-blue);">$' + halfBet.toLocaleString('en-US') + '</strong>。這是在最大化長期獲利與控制風險之間的最佳平衡點。</div>';
+    }
+
+    grid.innerHTML = negEvWarning + interpretation +
+        '<div class="result-card" style="border-color:rgba(0,255,136,0.2); background:rgba(0,255,136,0.04);">' +
+            '<div class="rc-label">⭐ 實戰建議（半凱利）</div>' +
+            '<div class="rc-value rc-green">' + halfPct + '%</div>' +
+            '<div class="rc-unit">建議投入 $' + halfBet.toLocaleString('en-US') + '</div>' +
+        '</div>' +
         '<div class="result-card">' +
             '<div class="rc-label">Full Kelly 比例 (f*)</div>' +
             '<div class="rc-value ' + color + '">' + sign + pct + '%</div>' +
-            '<div class="rc-unit">最佳下注佔比</div>' +
+            '<div class="rc-unit">理論最佳佔比</div>' +
         '</div>' +
         '<div class="result-card">' +
-            '<div class="rc-label">建議下注金額</div>' +
-            '<div class="rc-value rc-cyan">$' + betAmount + '</div>' +
-            '<div class="rc-unit">單次操作金額</div>' +
-        '</div>' +
-        '<div class="result-card">' +
-            '<div class="rc-label">期望值 (EV)</div>' +
+            '<div class="rc-label">期望報酬 (EV)</div>' +
             '<div class="rc-value ' + (ev > 0 ? 'rc-green' : 'rc-red') + '">' + sign + (ev * 100).toFixed(2) + '%</div>' +
             '<div class="rc-unit">每次操作期望報酬</div>' +
         '</div>' +
         '<div class="result-card">' +
-            '<div class="rc-label">資金佔比建議</div>' +
-            '<div class="rc-value rc-amber">' + (Math.max(0, f) * 100).toFixed(1) + '%</div>' +
-            '<div class="rc-unit">佔總資金比例</div>' +
+            '<div class="rc-label">風險等級</div>' +
+            '<div class="rc-value ' + riskColor + '"><i class="fa-solid ' + riskIcon + '"></i> ' + riskLevel + '</div>' +
+            '<div class="rc-unit">綜合風險評估</div>' +
         '</div>';
 }
 
@@ -1194,10 +1250,18 @@ function displayKellyMatrix(f, balance) {
 function displayStressTest() {
     var slider = document.getElementById('stress-slider');
     slider.value = 0;
-    // Remove old listener if any, attach debounced one
-    slider.removeEventListener('input', debouncedStressUpdate);
-    slider.addEventListener('input', debouncedStressUpdate);
+    // Update label immediately on input, debounce heavy calculation
+    slider.removeEventListener('input', handleStressSlider);
+    slider.addEventListener('input', handleStressSlider);
     updateStressTest();
+}
+
+function handleStressSlider() {
+    // Update label immediately for responsive feel
+    var drop = parseInt(document.getElementById('stress-slider').value);
+    document.getElementById('stress-value').textContent = '-' + drop + '%';
+    // Debounce the heavy calculation
+    debouncedStressUpdate();
 }
 
 function updateStressTest() {
@@ -1246,7 +1310,7 @@ function updateStressTest() {
    =================================================================== */
 window.runMonteCarlo = function() {
     if (!lastCalc) {
-        alert('請先完成凱利公式計算。');
+        showValidationError('請先完成凱利公式計算。');
         return;
     }
 
