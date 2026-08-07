@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>麻將四家實戰桌面與即時勝率計算器 V2.1 | GugoPro</title>
+    <title>麻將最佳切牌推薦導師 V3.0 | GugoPro</title>
     
     <!-- SEO Tags -->
-    <meta name="description" content="GugoPro 麻將實戰算牌工具 V2.1：高對比清晰牌面視覺，內建自動理牌演算法。支援四家桌面布局，即時記錄自家手牌與三家河牌、露牌，精確計算真實進張率。">
-    <meta name="keywords" content="麻將算牌, 高對比牌面, 自動理牌, 麻將勝率, 四家桌面, 進張率, 台灣16張, 日本麻將, 聽牌分析, 真實剩餘張數">
+    <meta name="description" content="GugoPro 麻將最佳切牌推薦導師 V3.0：主動決策引擎，高對比牌面視覺，自動理牌。支援四家桌面實戰記錄，精確計算真實剩餘張數與進張勝率，給予最科學的切牌建議。">
+    <meta name="keywords" content="麻將切牌推薦, 麻將算牌, 聽牌分析, 麻將勝率計算, 台灣16張, 日本麻將, 廣東麻將, 麻將教學, 算牌器, 麻將機率">
     
     <!-- Google Analytics 4 (GA4) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-GF1DYLWMKX"></script>
@@ -20,7 +20,7 @@
 
     <!-- Fonts & Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Noto+Sans+TC:wght@400;700&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
 
     <style>
         :root {
@@ -60,23 +60,22 @@
             background-color: var(--bg-dark);
             color: var(--text-main);
             min-height: 100vh;
-            background-image: 
-                radial-gradient(circle at 50% 50%, rgba(26, 71, 42, 0.2) 0%, transparent 70%);
+            background-image: radial-gradient(circle at 50% 50%, rgba(26, 71, 42, 0.2) 0%, transparent 70%);
             overflow-x: hidden;
         }
 
-        /* Navigation */
+        /* Header */
         header {
-            padding: 12px 20px;
-            background: rgba(10, 11, 16, 0.9);
+            padding: 15px 20px;
+            background: rgba(10, 11, 16, 0.95);
             border-bottom: 1px solid var(--glass-border);
             display: flex;
             justify-content: space-between;
             align-items: center;
             backdrop-filter: blur(10px);
+            z-index: 100;
         }
 
-        .header-left { display: flex; align-items: center; gap: 15px; }
         .btn-back-home {
             color: var(--text-main);
             text-decoration: none;
@@ -86,11 +85,10 @@
             gap: 8px;
             font-weight: 600;
         }
-        .btn-back-home:hover { color: var(--primary-neon); }
         .logo-text {
             font-family: 'Outfit', sans-serif;
-            font-weight: 700;
-            font-size: 1.1rem;
+            font-weight: 900;
+            font-size: 1.2rem;
             background: linear-gradient(45deg, var(--primary-neon), var(--accent-gold));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -99,39 +97,86 @@
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 15px;
+            padding: 20px;
         }
 
-        /* Rule Switch */
-        .rule-bar {
+        /* Best Discard Banner */
+        .advisor-banner {
+            display: none;
+            background: linear-gradient(135deg, rgba(0, 242, 255, 0.2) 0%, rgba(112, 0, 255, 0.2) 100%);
+            border: 2px solid var(--primary-neon);
+            border-radius: 24px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 0 30px rgba(0, 242, 255, 0.3);
+            text-align: center;
+            animation: pulse-border 2s infinite;
+        }
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 20px rgba(0, 242, 255, 0.2); }
+            50% { box-shadow: 0 0 40px rgba(0, 242, 255, 0.4); }
+            100% { box-shadow: 0 0 20px rgba(0, 242, 255, 0.2); }
+        }
+        .advisor-title {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--accent-gold);
+            margin-bottom: 15px;
             display: flex;
+            align-items: center;
             justify-content: center;
+            gap: 12px;
+        }
+        .best-tile-display {
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(0,0,0,0.3);
+            padding: 15px 30px;
+            border-radius: 20px;
             margin-bottom: 15px;
         }
+        .best-tile-name {
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: var(--text-main);
+        }
+        .advisor-stats {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .stat-item {
+            background: rgba(255,255,255,0.05);
+            padding: 8px 15px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+        }
+        .stat-val { color: var(--primary-neon); font-weight: 800; }
+
+        /* Rule Selector */
+        .rule-bar { display: flex; justify-content: center; margin-bottom: 20px; }
         .rule-selector {
             display: flex;
             background: var(--glass-bg);
             border: 1px solid var(--glass-border);
             border-radius: 20px;
-            padding: 3px;
+            padding: 4px;
         }
         .rule-btn {
-            padding: 6px 15px;
+            padding: 8px 20px;
             border: none;
             background: none;
             color: var(--text-dim);
             cursor: pointer;
-            font-weight: 600;
-            border-radius: 17px;
-            font-size: 0.8rem;
-            transition: all 0.3s;
+            font-weight: 800;
+            border-radius: 16px;
+            transition: 0.3s;
         }
-        .rule-btn.active {
-            background: var(--primary-neon);
-            color: #000;
-        }
+        .rule-btn.active { background: var(--primary-neon); color: #000; }
 
-        /* Battle Table Layout */
+        /* Battle Table */
         .battle-table {
             display: grid;
             grid-template-areas: 
@@ -139,359 +184,293 @@
                 "left center right"
                 ". bottom .";
             grid-template-columns: 1fr 2fr 1fr;
-            grid-template-rows: auto auto auto;
-            gap: 10px;
+            gap: 12px;
             background: var(--table-green);
-            border: 4px solid #3d2b1f;
-            border-radius: 30px;
-            padding: 15px;
-            box-shadow: inset 0 0 50px rgba(0,0,0,0.5), 0 10px 30px rgba(0,0,0,0.5);
-            margin-bottom: 20px;
-            position: relative;
+            border: 6px solid #3d2b1f;
+            border-radius: 40px;
+            padding: 20px;
+            box-shadow: inset 0 0 60px rgba(0,0,0,0.6), 0 15px 40px rgba(0,0,0,0.5);
+            margin-bottom: 25px;
         }
-
         .player-zone {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            padding: 10px;
-            border-radius: 15px;
-            background: rgba(0,0,0,0.2);
-            border: 1px solid rgba(255,255,255,0.05);
-            transition: all 0.3s;
+            background: rgba(0,0,0,0.25);
+            border: 2px solid rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 12px;
             cursor: pointer;
+            transition: 0.3s;
         }
-        .player-zone.active {
-            border-color: var(--primary-neon);
-            box-shadow: 0 0 15px rgba(0, 242, 255, 0.2);
-            background: rgba(0, 242, 255, 0.05);
-        }
-        .player-label {
-            font-size: 0.7rem;
-            font-weight: 700;
-            color: var(--text-dim);
-            text-transform: uppercase;
-            display: flex;
-            justify-content: space-between;
-        }
+        .player-zone.active { border-color: var(--primary-neon); background: rgba(0, 242, 255, 0.05); }
+        .player-label { font-size: 0.75rem; font-weight: 800; color: var(--text-dim); margin-bottom: 8px; display: flex; justify-content: space-between; }
         .player-zone.active .player-label { color: var(--primary-neon); }
 
         .zone-top { grid-area: top; }
         .zone-bottom { grid-area: bottom; }
         .zone-left { grid-area: left; }
         .zone-right { grid-area: right; }
-        .table-center { 
-            grid-area: center; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center;
-            text-align: center;
-        }
+        .table-center { grid-area: center; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
 
-        /* High-Contrast Tile Badge Styles */
-        .mini-tile {
-            width: 32px;
-            height: 42px;
-            border-radius: 4px;
+        /* High-Contrast Tiles */
+        .tile {
+            width: 38px;
+            height: 50px;
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 900;
-            font-size: 0.85rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            position: relative;
+            font-size: 1rem;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.4);
             border: 1px solid rgba(255,255,255,0.1);
+            user-select: none;
         }
+        .tile.man { background-color: var(--tile-man-bg); color: var(--tile-man-text); }
+        .tile.pin { background-color: var(--tile-pin-bg); color: var(--tile-pin-text); }
+        .tile.sou { background-color: var(--tile-sou-bg); color: var(--tile-sou-text); }
+        .tile.honor { background-color: var(--tile-honor-bg); color: var(--tile-honor-text); }
         
-        .mini-tile.man { background-color: var(--tile-man-bg); color: var(--tile-man-text); }
-        .mini-tile.pin { background-color: var(--tile-pin-bg); color: var(--tile-pin-text); }
-        .mini-tile.sou { background-color: var(--tile-sou-bg); color: var(--tile-sou-text); }
-        .mini-tile.honor { background-color: var(--tile-honor-bg); color: var(--tile-honor-text); }
-        
-        .zone-bottom .mini-tile { width: 40px; height: 52px; font-size: 1.1rem; }
+        .zone-bottom .tile { width: 45px; height: 60px; font-size: 1.2rem; }
+        .tile-list { display: flex; flex-wrap: wrap; gap: 6px; min-height: 50px; }
 
-        .tile-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-            min-height: 45px;
-        }
-
-        /* Keyboard Panel */
+        /* Keyboard */
         .keyboard-section {
             background: var(--glass-bg);
             border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 15px;
-            margin-bottom: 20px;
-            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 25px;
+            backdrop-filter: blur(15px);
         }
-        .keyboard-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-        .target-indicator {
-            font-size: 0.9rem;
-            font-weight: 700;
-            color: var(--primary-neon);
-        }
-        .keyboard-tabs {
-            display: flex;
-            gap: 5px;
-            margin-bottom: 10px;
-        }
+        .keyboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .keyboard-tabs { display: flex; gap: 8px; margin-bottom: 15px; }
         .tab-btn {
             flex: 1;
-            padding: 10px;
+            padding: 12px;
             background: rgba(255,255,255,0.05);
             border: 1px solid var(--glass-border);
             color: var(--text-dim);
-            border-radius: 8px;
+            border-radius: 12px;
             cursor: pointer;
-            font-size: 0.85rem;
-            font-weight: 600;
+            font-weight: 800;
+            font-size: 0.9rem;
         }
-        .tab-btn.active {
-            border-color: var(--primary-neon);
-            color: var(--primary-neon);
-            background: rgba(0, 242, 255, 0.1);
-        }
+        .tab-btn.active { border-color: var(--primary-neon); color: var(--primary-neon); background: rgba(0, 242, 255, 0.1); }
 
-        .keyboard-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 10px;
-            justify-items: center;
-        }
+        .keyboard-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
         .key-tile {
-            width: 60px;
-            height: 80px;
-            border-radius: 8px;
+            width: 100%;
+            aspect-ratio: 3/4;
+            border-radius: 10px;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
             font-weight: 900;
-            font-size: 1.3rem;
+            font-size: 1.4rem;
             cursor: pointer;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
             position: relative;
             border: 2px solid rgba(255,255,255,0.1);
-            transition: all 0.2s;
+            transition: 0.2s;
         }
-        .key-tile:active { transform: scale(0.95); }
+        .key-tile:active { transform: scale(0.92); }
+        .key-tile.man { background-color: var(--tile-man-bg); color: var(--tile-man-text); }
+        .key-tile.pin { background-color: var(--tile-pin-bg); color: var(--tile-pin-text); }
+        .key-tile.sou { background-color: var(--tile-sou-bg); color: var(--tile-sou-text); }
+        .key-tile.honor { background-color: var(--tile-honor-bg); color: var(--tile-honor-text); }
         
-        .key-tile.man { background-color: var(--tile-man-bg); color: var(--tile-man-text); border-color: #4A1A1A; }
-        .key-tile.pin { background-color: var(--tile-pin-bg); color: var(--tile-pin-text); border-color: #1A2A3A; }
-        .key-tile.sou { background-color: var(--tile-sou-bg); color: var(--tile-sou-text); border-color: #1A3A2A; }
-        .key-tile.honor { background-color: var(--tile-honor-bg); color: var(--tile-honor-text); border-color: #2A1A3A; }
-
-        .key-tile .tile-count {
+        .tile-count-badge {
             position: absolute;
-            top: -6px;
-            right: -6px;
+            top: -8px;
+            right: -8px;
             background: var(--accent-gold);
             color: #000;
-            width: 22px;
-            height: 22px;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             font-weight: 900;
             display: flex;
             align-items: center;
             justify-content: center;
             border: 2px solid var(--bg-dark);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
-        .key-tile.disabled { opacity: 0.2; cursor: not-allowed; filter: grayscale(1); pointer-events: none; }
+        .key-tile.disabled { opacity: 0.15; pointer-events: none; filter: grayscale(1); }
 
-        /* Decision Matrix */
-        .results-card {
+        /* Ranking Matrix */
+        .ranking-card {
             background: var(--glass-bg);
             border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 15px;
-            margin-bottom: 20px;
-        }
-        .matrix-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .matrix-table th, .matrix-table td {
-            padding: 12px 8px;
-            text-align: left;
-            border-bottom: 1px solid var(--glass-border);
-        }
-        .matrix-table th { color: var(--text-dim); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; }
-        .matrix-row.best { background: rgba(0, 242, 255, 0.08); border-left: 4px solid var(--primary-neon); }
-        .matrix-row.dead { color: var(--error-red); opacity: 0.6; }
-        
-        .wait-tag {
-            display: inline-block;
-            background: rgba(255,255,255,0.1);
-            padding: 3px 8px;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            margin-right: 4px;
-            margin-bottom: 4px;
-            font-weight: 700;
-        }
-        .wait-tag.man { color: var(--tile-man-text); border: 1px solid var(--tile-man-text); }
-        .wait-tag.pin { color: var(--tile-pin-text); border: 1px solid var(--tile-pin-text); }
-        .wait-tag.sou { color: var(--tile-sou-text); border: 1px solid var(--tile-sou-text); }
-        .wait-tag.honor { color: var(--tile-honor-text); border: 1px solid var(--tile-honor-text); }
-
-        /* Footer & Others */
-        .kofi-section { text-align: center; margin: 30px 0; }
-        .amazon-section {
-            background: linear-gradient(135deg, #232f3e 0%, #131921 100%);
-            border-radius: 20px;
+            border-radius: 24px;
             padding: 20px;
-            margin: 25px 0;
-            border: 1px solid #ff9900;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            margin-bottom: 25px;
         }
-        .amazon-title { color: #ff9900; font-weight: 800; font-size: 1rem; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
-        .amazon-btns { display: flex; gap: 12px; }
-        .amazon-link {
+        .matrix-table { width: 100%; border-collapse: collapse; }
+        .matrix-table th { padding: 15px 10px; text-align: left; color: var(--text-dim); font-size: 0.75rem; border-bottom: 2px solid var(--glass-border); }
+        .matrix-table td { padding: 15px 10px; border-bottom: 1px solid var(--glass-border); }
+        .matrix-row.best { background: rgba(0, 242, 255, 0.1); border-left: 5px solid var(--primary-neon); }
+        .matrix-row.dead { opacity: 0.5; color: var(--error-red); }
+        
+        .tag {
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 800;
+        }
+        .tag-best { background: var(--primary-neon); color: #000; }
+        .tag-safe { background: var(--success-green); color: #fff; }
+        .tag-warn { background: var(--accent-gold); color: #000; }
+        .tag-dead { background: var(--error-red); color: #fff; }
+
+        /* Footer Elements */
+        .amazon-card {
+            background: linear-gradient(135deg, #232f3e 0%, #131921 100%);
+            border: 1px solid #ff9900;
+            border-radius: 24px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        .amazon-title { color: #ff9900; font-weight: 900; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .amazon-links { display: flex; gap: 15px; }
+        .amazon-btn {
             flex: 1;
             background: #ff9900;
             color: #000;
-            padding: 10px;
+            padding: 12px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 900;
+            text-align: center;
+            transition: 0.3s;
+        }
+        .amazon-btn:hover { background: #ffb84d; transform: translateY(-3px); }
+
+        .kofi-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: #72a4f2;
+            color: #fff;
+            padding: 12px 25px;
             border-radius: 12px;
             text-decoration: none;
             font-weight: 800;
-            font-size: 0.9rem;
-            text-align: center;
-            transition: all 0.3s;
+            margin: 30px auto;
+            box-shadow: 0 5px 15px rgba(114, 164, 242, 0.4);
         }
-        .amazon-link:hover { background: #ffb84d; transform: translateY(-2px); }
 
-        .info-content {
-            padding: 25px;
+        .info-section {
             background: rgba(0,0,0,0.3);
-            border-radius: 20px;
+            border-radius: 24px;
+            padding: 30px;
             border: 1px solid var(--glass-border);
         }
-        .info-content h2 { color: var(--primary-neon); margin-bottom: 20px; font-size: 1.4rem; font-family: 'Outfit'; }
-        .info-content h3 { color: var(--accent-gold); margin: 20px 0 12px; font-size: 1.1rem; }
-        .info-content p, .info-content li { color: var(--text-dim); font-size: 0.95rem; line-height: 1.7; margin-bottom: 12px; }
+        .info-section h2 { color: var(--primary-neon); font-family: 'Outfit'; margin-bottom: 20px; }
+        .info-section p { color: var(--text-dim); line-height: 1.8; margin-bottom: 15px; }
 
-        .disclaimer {
-            font-size: 0.8rem;
-            color: #666;
-            margin-top: 30px;
-            border-top: 1px solid #333;
-            padding-top: 15px;
-            font-style: italic;
-        }
+        .disclaimer { font-size: 0.8rem; color: #555; margin-top: 40px; border-top: 1px solid #222; padding-top: 20px; }
 
-        /* Mobile specific adjustments */
-        @media (max-width: 600px) {
-            .battle-table {
-                grid-template-columns: 1fr 1.6fr 1fr;
-                padding: 10px;
-                gap: 6px;
-            }
-            .player-zone { padding: 6px; }
-            .mini-tile { width: 22px; height: 30px; font-size: 0.65rem; }
-            .zone-bottom .mini-tile { width: 28px; height: 38px; font-size: 0.85rem; }
+        /* Responsive */
+        @media (max-width: 768px) {
+            .battle-table { grid-template-columns: 1fr 1.5fr 1fr; padding: 12px; gap: 8px; }
+            .tile { width: 28px; height: 38px; font-size: 0.75rem; }
+            .zone-bottom .tile { width: 34px; height: 46px; font-size: 0.9rem; }
             .keyboard-grid { grid-template-columns: repeat(3, 1fr); }
-            .key-tile { width: 100%; height: 70px; font-size: 1.1rem; }
-            .tab-btn { padding: 8px 4px; font-size: 0.75rem; }
+            .key-tile { font-size: 1.2rem; }
+            .advisor-banner { padding: 15px; }
+            .best-tile-name { font-size: 1.8rem; }
+            .advisor-stats { gap: 10px; }
         }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="header-left">
-            <a href="https://gugopro.com" class="btn-back-home">
-                <i class="fa-solid fa-house"></i> 返回首頁
-            </a>
-            <div class="logo-text">MJ Analyzer V2.1</div>
-        </div>
-        <div id="game-status" style="font-size: 0.75rem; color: var(--primary-neon); font-weight: 700;">台麻 16 張模式</div>
+        <a href="https://gugopro.com" class="btn-back-home">
+            <i class="fa-solid fa-house"></i> 返回 GugoPro
+        </a>
+        <div class="logo-text">MJ ADVISOR V3.0</div>
     </header>
 
     <div class="container">
-        <!-- Mode Selector -->
-        <div class="rule-bar">
-            <div class="rule-selector">
-                <button class="rule-btn active" id="btn-16" onclick="changeMode(16)">台灣 16 張</button>
-                <button class="rule-btn" id="btn-13" onclick="changeMode(13)">日麻 13 張</button>
+        <!-- Advisor Banner -->
+        <div id="advisor-banner" class="advisor-banner">
+            <div class="advisor-title"><i class="fa-solid fa-lightbulb"></i> 最佳切牌決策推薦</div>
+            <div class="best-tile-display">
+                <div id="best-tile-icon" class="tile"></div>
+                <div id="best-tile-text" class="best-tile-name">--</div>
+            </div>
+            <div class="advisor-stats">
+                <div class="stat-item">聽牌進張：<span id="best-waits" class="stat-val">--</span></div>
+                <div class="stat-item">真實剩餘：<span id="best-remains" class="stat-val">0</span> 張</div>
+                <div class="stat-item">進張勝率：<span id="best-prob" class="stat-val">0.0</span>%</div>
             </div>
         </div>
 
-        <!-- 4-Player Battle Table -->
+        <!-- Mode Selector -->
+        <div class="rule-bar">
+            <div class="rule-selector">
+                <button id="btn-16" class="rule-btn active" onclick="setMode(16)">台灣 16 張</button>
+                <button id="btn-13" class="rule-btn" onclick="setMode(13)">日麻 13 張</button>
+            </div>
+        </div>
+
+        <!-- Table -->
         <div class="battle-table">
-            <!-- Top Player (Opponent) -->
             <div class="player-zone zone-top" onclick="setTarget('top')">
                 <div class="player-label">對家 (TOP) <span id="count-top">0</span></div>
                 <div id="river-top" class="tile-list"></div>
             </div>
-
-            <!-- Left Player (Opponent) -->
             <div class="player-zone zone-left" onclick="setTarget('left')">
                 <div class="player-label">上家 (LEFT) <span id="count-left">0</span></div>
                 <div id="river-left" class="tile-list"></div>
             </div>
-
-            <!-- Table Center (Probability) -->
             <div class="table-center">
-                <div style="font-size: 0.65rem; color: var(--text-dim); font-weight: 700; margin-bottom: 5px;">下巡進張率</div>
-                <div id="win-rate" style="font-size: 2.2rem; font-weight: 900; color: var(--primary-neon); text-shadow: 0 0 15px rgba(0,242,255,0.4);">0.0%</div>
-                <div id="remain-total" style="font-size: 0.7rem; color: var(--accent-gold); margin-top: 5px; font-weight: 600;">剩餘未知: 0 張</div>
+                <div style="font-size: 0.7rem; color: var(--text-dim); font-weight: 800; margin-bottom: 5px;">實時勝率分析</div>
+                <div id="main-prob" style="font-size: 2.5rem; font-weight: 900; color: var(--primary-neon); text-shadow: 0 0 20px rgba(0,242,255,0.4);">0.0%</div>
+                <div id="main-remains" style="font-size: 0.8rem; color: var(--accent-gold); margin-top: 5px; font-weight: 700;">剩餘未知: 0 張</div>
             </div>
-
-            <!-- Right Player (Opponent) -->
             <div class="player-zone zone-right" onclick="setTarget('right')">
                 <div class="player-label">下家 (RIGHT) <span id="count-right">0</span></div>
                 <div id="river-right" class="tile-list"></div>
             </div>
-
-            <!-- Bottom Player (Self) -->
             <div class="player-zone zone-bottom active" onclick="setTarget('self')">
-                <div class="player-label">自家 (SELF) <span id="count-self">0</span>/<span id="max-self">17</span></div>
+                <div class="player-label">自家 (SELF) <span id="count-self">0</span> / <span id="max-self">17</span></div>
                 <div id="hand-self" class="tile-list"></div>
             </div>
         </div>
 
-        <!-- Keyboard Section -->
+        <!-- Keyboard -->
         <div class="keyboard-section">
             <div class="keyboard-header">
-                <div class="target-indicator" id="target-text"><i class="fa-solid fa-crosshairs"></i> 正在記錄：自家手牌</div>
-                <button onclick="clearTarget()" style="background:none; border:none; color:var(--error-red); cursor:pointer; font-size:0.85rem; font-weight:700;">
-                    <i class="fa-solid fa-trash-can"></i> 清除對象
+                <div id="target-info" style="color: var(--primary-neon); font-weight: 800; font-size: 1rem;">
+                    <i class="fa-solid fa-bullseye"></i> 正在記錄：自家手牌
+                </div>
+                <button onclick="clearCurrentZone()" style="background:none; border:none; color:var(--error-red); cursor:pointer; font-weight:800; font-size:0.85rem;">
+                    <i class="fa-solid fa-trash"></i> 清空此區
                 </button>
             </div>
             <div class="keyboard-tabs">
-                <button class="tab-btn active" onclick="switchSuit('man')">萬子 (Characters)</button>
-                <button class="tab-btn" onclick="switchSuit('pin')">筒子 (Dots)</button>
-                <button class="tab-btn" onclick="switchSuit('sou')">條子 (Bamboo)</button>
-                <button class="tab-btn" onclick="switchSuit('honor')">字牌 (Honors)</button>
+                <button class="tab-btn active" onclick="switchSuit('man')">萬子</button>
+                <button class="tab-btn" onclick="switchSuit('pin')">筒子</button>
+                <button class="tab-btn" onclick="switchSuit('sou')">條子</button>
+                <button class="tab-btn" onclick="switchSuit('honor')">字牌</button>
             </div>
-            <div id="keyboard-grid" class="keyboard-grid">
-                <!-- Tiles -->
-            </div>
+            <div id="keyboard-grid" class="keyboard-grid"></div>
         </div>
 
-        <!-- Decision Matrix -->
-        <div id="matrix-section" class="results-card" style="display:none;">
-            <div style="font-family:'Outfit'; font-weight:800; margin-bottom:15px; color:var(--primary-neon); display:flex; align-items:center; gap:10px;">
-                <i class="fa-solid fa-bolt-lightning"></i> 最佳切牌決策矩陣 (Discard Matrix)
+        <!-- Ranking Matrix -->
+        <div id="matrix-card" class="ranking-card" style="display:none;">
+            <div style="font-family:'Outfit'; font-weight:900; color:var(--primary-neon); margin-bottom:20px; display:flex; align-items:center; gap:10px;">
+                <i class="fa-solid fa-list-ol"></i> 切牌決策評估矩陣 (Discard Ranking)
             </div>
             <div style="overflow-x:auto;">
                 <table class="matrix-table">
                     <thead>
                         <tr>
-                            <th>切牌</th>
-                            <th>進張/聽牌</th>
+                            <th>切出</th>
+                            <th>進張牌型</th>
                             <th>剩餘</th>
-                            <th>機率</th>
+                            <th>勝率</th>
+                            <th>評估</th>
                         </tr>
                     </thead>
                     <tbody id="matrix-body"></tbody>
@@ -499,41 +478,37 @@
             </div>
         </div>
 
-        <!-- Amazon Ad -->
-        <div class="amazon-section">
-            <div class="amazon-title"><i class="fa-brands fa-amazon"></i> 麻將實戰必備推薦書單與工具</div>
-            <div class="amazon-btns">
-                <a href="https://www.amazon.com/s?k=mahjong+set+and+mat&tag=9908qq-20" target="_blank" class="amazon-link">US Amazon</a>
-                <a href="https://www.amazon.co.jp/s?k=麻雀パイ+麻雀マット&tag=gugopro-22" target="_blank" class="amazon-link">JP Amazon</a>
+        <!-- Amazon -->
+        <div class="amazon-card">
+            <div class="amazon-title"><i class="fa-brands fa-amazon"></i> 麻將與桌遊用品推薦：高品質靜音麻將與墊</div>
+            <div class="amazon-links">
+                <a href="https://www.amazon.com/s?k=mahjong+set+and+mat&tag=9908qq-20" target="_blank" class="amazon-btn">US Amazon</a>
+                <a href="https://www.amazon.co.jp/s?k=麻雀パイ+麻雀マット&tag=gugopro-22" target="_blank" class="amazon-btn">JP Amazon</a>
             </div>
         </div>
 
         <!-- Ko-fi -->
-        <div class="kofi-section">
-            <a href="https://ko-fi.com/R1K123XRS9" target="_blank" rel="noopener" class="kofi-button" style="background:#72a4f2; color:#fff; padding:12px 20px; border-radius:10px; text-decoration:none; display:inline-flex; align-items:center; gap:10px; font-weight:bold; box-shadow: 0 4px 15px rgba(114, 164, 242, 0.3);">
+        <div style="text-align:center;">
+            <a href="https://ko-fi.com/R1K123XRS9" target="_blank" rel="noopener" class="kofi-btn">
                 <i class="fa-solid fa-mug-hot"></i> Buy me a coffee
             </a>
         </div>
 
-        <!-- Footer Info -->
-        <div class="info-content">
+        <!-- Info -->
+        <div class="info-section">
             <h2>如何利用真實剩餘張數避免死聽？</h2>
-            <p>在麻將算牌中，最致命的錯誤就是「死聽」——即所聽的牌在場上已經出現 4 張。本工具透過記錄四家棄牌與露牌，即時計算<b>真實剩餘張數 (Real Remaining Tiles)</b>，幫助您精確判斷每一手切牌的價值。</p>
-            
-            <h3>高對比視覺與自動理牌對牌局試算的作用</h3>
-            <p>在緊張的對局中，快速輸入與辨識是關鍵。V2.1 版本引入了<b>高對比清晰牌面標籤</b>，即便在光線不足或手機小螢幕上也能一眼辨識牌種。同時，內建的<b>自動理牌演算法 (Auto-Sorting Engine)</b> 會在每次操作後自動將手牌按順序歸類，模擬真實理牌習慣，讓您能更直覺地觀察搭子與面子的組合，做出最理性的切牌決策。</p>
-            
-            <div class="disclaimer">
-                免責聲明：本工具計算結果僅供麻將牌技巧研究與機率統計評估參考，不保證勝率亦不鼓勵博弈行為。
-            </div>
+            <p>在麻將實戰中，很多時候我們會因為「看起來很好聽」而切出錯誤的牌。MJ Advisor V3.0 透過追蹤四家棄牌與露牌，即時扣除全場已見張數，計算出真正的<b>「真實剩餘張數」</b>。當某張牌在場上已見 4 張時，系統會立即發出死聽警告，避免您陷入無法胡牌的死局。</p>
+            <h3>主動決策引擎的作用</h3>
+            <p>本工具不僅是被動計算機率，更是一個主動的導師。它會分析您手中的每一張牌，模擬打出後的聽牌路徑，並綜合全場數據給出最優解。高對比牌面與自動理牌功能，則確保您在緊張的對局中能以最快速度完成記錄，做出科學決策。</p>
+            <div class="disclaimer">免責聲明：本工具計算結果僅供麻將技巧研究與機率統計評估參考，不保證勝率亦不鼓勵博弈行為。</div>
         </div>
     </div>
 
     <script>
-        // --- State ---
+        // --- Core State ---
         let mode = 16;
-        let target = 'self';
-        let currentSuit = 'man';
+        let activeTarget = 'self';
+        let activeSuit = 'man';
         
         const state = {
             self: [],
@@ -543,44 +518,36 @@
         };
 
         const SUITS = {
-            man: { label: '萬', color: 'man', tiles: [1,2,3,4,5,6,7,8,9] },
-            pin: { label: '筒', color: 'pin', tiles: [1,2,3,4,5,6,7,8,9] },
-            sou: { label: '條', color: 'sou', tiles: [1,2,3,4,5,6,7,8,9] },
-            honor: { label: '字', color: 'honor', tiles: ['東','南','西','北','中','發','白'] }
+            man: { label: '萬', tiles: [1,2,3,4,5,6,7,8,9] },
+            pin: { label: '筒', tiles: [1,2,3,4,5,6,7,8,9] },
+            sou: { label: '條', tiles: [1,2,3,4,5,6,7,8,9] },
+            honor: { label: '字', tiles: ['東','南','西','北','中','發','白'] }
         };
 
         const HONOR_ORDER = ['東','南','西','北','中','發','白'];
-
-        const TARGET_NAMES = {
-            self: '自家手牌',
-            top: '對家河牌',
-            left: '上家河牌',
-            right: '下家河牌'
-        };
+        const TARGET_MAP = { self: '自家手牌', top: '對家河牌', left: '上家河牌', right: '下家河牌' };
 
         // --- Logic ---
-        function changeMode(m) {
+        function setMode(m) {
             mode = m;
             document.getElementById('btn-16').classList.toggle('active', m === 16);
             document.getElementById('btn-13').classList.toggle('active', m === 13);
-            document.getElementById('game-status').innerText = m === 16 ? '台麻 16 張模式' : '日麻 13 張模式';
             document.getElementById('max-self').innerText = m + 1;
-            clearAll();
+            resetAll();
         }
 
         function setTarget(t) {
-            target = t;
+            activeTarget = t;
             document.querySelectorAll('.player-zone').forEach(z => z.classList.remove('active'));
             document.querySelector(`.zone-${t}`).classList.add('active');
-            document.getElementById('target-text').innerHTML = `<i class="fa-solid fa-crosshairs"></i> 正在記錄：${TARGET_NAMES[t]}`;
+            document.getElementById('target-info').innerHTML = `<i class="fa-solid fa-bullseye"></i> 正在記錄：${TARGET_MAP[t]}`;
             renderKeyboard();
         }
 
         function switchSuit(s) {
-            currentSuit = s;
+            activeSuit = s;
             document.querySelectorAll('.tab-btn').forEach(b => {
-                const suitLabel = SUITS[s].label;
-                b.classList.toggle('active', b.innerText.includes(suitLabel));
+                b.classList.toggle('active', b.innerText.includes(SUITS[s].label));
             });
             renderKeyboard();
         }
@@ -588,90 +555,68 @@
         function getGlobalCount(suit, val) {
             let count = 0;
             ['self', 'top', 'left', 'right'].forEach(p => {
-                state[p].forEach(t => {
-                    if (t.suit === suit && t.val === val) count++;
-                });
+                state[p].forEach(t => { if (t.suit === suit && t.val === val) count++; });
             });
             return count;
         }
 
         function addTile(suit, val) {
-            const count = getGlobalCount(suit, val);
-            if (count >= 4) {
-                alert('該牌全桌已達 4 張上限！');
-                return;
-            }
-
-            if (target === 'self' && state.self.length >= mode + 1) return;
+            if (getGlobalCount(suit, val) >= 4) return alert('此牌全桌已達 4 張上限！');
+            if (activeTarget === 'self' && state.self.length >= mode + 1) return;
             
-            state[target].push({ suit, val });
-            if (target === 'self') sortSelf();
-            
+            state[activeTarget].push({ suit, val });
+            if (activeTarget === 'self') sortHand();
             updateUI();
         }
 
         function removeTile(p, index) {
             state[p].splice(index, 1);
-            if (p === 'self') sortSelf();
+            if (p === 'self') sortHand();
             updateUI();
         }
 
-        function clearTarget() {
-            state[target] = [];
-            updateUI();
-        }
+        function clearCurrentZone() { state[activeTarget] = []; updateUI(); }
+        function resetAll() { Object.keys(state).forEach(k => state[k] = []); updateUI(); }
 
-        function clearAll() {
-            state.self = [];
-            state.top = [];
-            state.left = [];
-            state.right = [];
-            updateUI();
-        }
-
-        // Auto-Sorting Engine
-        function sortSelf() {
-            const suitOrder = { man: 1, pin: 2, sou: 3, honor: 4 };
+        function sortHand() {
+            const suitWeights = { man: 1, pin: 2, sou: 3, honor: 4 };
             state.self.sort((a, b) => {
-                if (suitOrder[a.suit] !== suitOrder[b.suit]) return suitOrder[a.suit] - suitOrder[b.suit];
-                if (a.suit === 'honor') {
-                    return HONOR_ORDER.indexOf(a.val) - HONOR_ORDER.indexOf(b.val);
-                }
+                if (suitWeights[a.suit] !== suitWeights[b.suit]) return suitWeights[a.suit] - suitWeights[b.suit];
+                if (a.suit === 'honor') return HONOR_ORDER.indexOf(a.val) - HONOR_ORDER.indexOf(b.val);
                 return a.val - b.val;
             });
         }
 
-        // --- Probability Engine ---
+        // --- UI & Advisor Engine ---
         function updateUI() {
-            renderZones();
+            renderTable();
             renderKeyboard();
             
-            const totalVisible = state.self.length + state.top.length + state.left.length + state.right.length;
-            const totalTiles = mode === 16 ? 144 : 136;
-            const unknownCount = Math.max(0, totalTiles - totalVisible);
-            document.getElementById('remain-total').innerText = `剩餘未知: ${unknownCount} 張`;
+            const totalVisible = Object.values(state).reduce((acc, cur) => acc + cur.length, 0);
+            const totalDeck = mode === 16 ? 144 : 136;
+            const unknownCount = Math.max(0, totalDeck - totalVisible);
+            document.getElementById('main-remains').innerText = `剩餘未知: ${unknownCount} 張`;
 
             if (state.self.length >= mode) {
-                analyzeDiscards(unknownCount);
+                runAdvisor(unknownCount);
             } else {
-                document.getElementById('matrix-section').style.display = 'none';
-                document.getElementById('win-rate').innerText = '0.0%';
+                document.getElementById('advisor-banner').style.display = 'none';
+                document.getElementById('matrix-card').style.display = 'none';
+                document.getElementById('main-prob').innerText = '0.0%';
             }
         }
 
-        function renderZones() {
+        function renderTable() {
             ['self', 'top', 'left', 'right'].forEach(p => {
-                const container = document.getElementById(p === 'self' ? 'hand-self' : `river-${p}`);
-                const countEl = document.getElementById(`count-${p}`);
-                countEl.innerText = state[p].length;
-                container.innerHTML = '';
+                const list = document.getElementById(p === 'self' ? 'hand-self' : `river-${p}`);
+                document.getElementById(`count-${p}`).innerText = state[p].length;
+                list.innerHTML = '';
                 state[p].forEach((t, i) => {
                     const el = document.createElement('div');
-                    el.className = `mini-tile ${t.suit}`;
-                    const label = t.suit === 'honor' ? t.val : `${t.val}${SUITS[t.suit].label}`;
-                    el.innerHTML = `<span>${label}</span>`;
+                    el.className = `tile ${t.suit}`;
+                    el.innerText = t.suit === 'honor' ? t.val : `${t.val}${SUITS[t.suit].label}`;
                     el.onclick = (e) => { e.stopPropagation(); removeTile(p, i); };
-                    container.appendChild(el);
+                    list.appendChild(el);
                 });
             });
         }
@@ -679,95 +624,109 @@
         function renderKeyboard() {
             const grid = document.getElementById('keyboard-grid');
             grid.innerHTML = '';
-            SUITS[currentSuit].tiles.forEach(val => {
-                const count = getGlobalCount(currentSuit, val);
+            SUITS[activeSuit].tiles.forEach(val => {
+                const count = getGlobalCount(activeSuit, val);
                 const el = document.createElement('div');
-                el.className = `key-tile ${currentSuit} ${count >= 4 ? 'disabled' : ''}`;
-                const label = currentSuit === 'honor' ? val : `${val}${SUITS[currentSuit].label}`;
-                el.innerHTML = `<span>${label}</span>`;
+                el.className = `key-tile ${activeSuit} ${count >= 4 ? 'disabled' : ''}`;
+                el.innerText = activeSuit === 'honor' ? val : `${val}${SUITS[activeSuit].label}`;
                 if (count > 0) {
                     const b = document.createElement('div');
-                    b.className = 'tile-count';
+                    b.className = 'tile-count-badge';
                     b.innerText = count;
                     el.appendChild(b);
                 }
-                el.onclick = () => addTile(currentSuit, val);
+                el.onclick = () => addTile(activeSuit, val);
                 grid.appendChild(el);
             });
         }
 
-        function analyzeDiscards(unknownTotal) {
+        function runAdvisor(unknownTotal) {
+            const banner = document.getElementById('advisor-banner');
             const matrixBody = document.getElementById('matrix-body');
-            const matrixSection = document.getElementById('matrix-section');
+            const matrixCard = document.getElementById('matrix-card');
             matrixBody.innerHTML = '';
-            
-            if (state.self.length < mode) return;
 
-            const results = [];
-            const uniqueSelf = [];
+            const options = [];
             const seen = new Set();
-            state.self.forEach(t => {
+            const uniqueHand = state.self.filter(t => {
                 const k = `${t.suit}-${t.val}`;
-                if (!seen.has(k)) { uniqueSelf.push(t); seen.add(k); }
+                if (seen.has(k)) return false;
+                seen.add(k);
+                return true;
             });
 
-            uniqueSelf.forEach(discard => {
+            uniqueHand.forEach(discard => {
                 const tempHand = state.self.filter(t => t !== discard);
-                const waits = findWaits(tempHand);
-                let realRemains = 0;
+                const waits = getWaits(tempHand);
+                let remains = 0;
                 waits.forEach(w => {
-                    const globalCount = getGlobalCount(w.suit, w.val);
-                    realRemains += Math.max(0, 4 - globalCount);
+                    remains += Math.max(0, 4 - getGlobalCount(w.suit, w.val));
                 });
-
-                results.push({
+                options.push({
                     discard,
                     waits,
-                    remains: realRemains,
-                    prob: unknownTotal > 0 ? (realRemains / unknownTotal * 100).toFixed(1) : 0
+                    remains,
+                    prob: unknownTotal > 0 ? (remains / unknownTotal * 100).toFixed(1) : 0
                 });
             });
 
-            results.sort((a, b) => b.remains - a.remains);
-            
-            if (results.length > 0) {
-                document.getElementById('win-rate').innerText = `${results[0].prob}%`;
-                matrixSection.style.display = 'block';
-                results.forEach((res, i) => {
+            options.sort((a, b) => b.remains - a.remains);
+
+            if (options.length > 0) {
+                const best = options[0];
+                banner.style.display = 'block';
+                matrixCard.style.display = 'block';
+                document.getElementById('main-prob').innerText = `${best.prob}%`;
+                
+                // Update Banner
+                const icon = document.getElementById('best-tile-icon');
+                icon.className = `tile ${best.discard.suit}`;
+                icon.innerText = best.discard.suit === 'honor' ? best.discard.val : `${best.discard.val}${SUITS[best.discard.suit].label}`;
+                document.getElementById('best-tile-text').innerText = icon.innerText;
+                document.getElementById('best-waits').innerText = best.waits.map(w => w.suit === 'honor' ? w.val : `${w.val}${SUITS[w.suit].label}`).join(',') || '無';
+                document.getElementById('best-remains').innerText = best.remains;
+                document.getElementById('best-prob').innerText = best.prob;
+
+                // Update Matrix
+                options.forEach((opt, idx) => {
                     const tr = document.createElement('tr');
-                    tr.className = `matrix-row ${i === 0 ? 'best' : ''} ${res.remains === 0 ? 'dead' : ''}`;
-                    const waitHtml = res.waits.map(w => {
-                        const label = w.suit === 'honor' ? w.val : `${w.val}${SUITS[w.suit].label}`;
-                        return `<span class="wait-tag ${w.suit}">${label}</span>`;
-                    }).join('') || '<span style="color:#666">無進張</span>';
+                    tr.className = `matrix-row ${idx === 0 ? 'best' : ''} ${opt.remains === 0 ? 'dead' : ''}`;
                     
-                    const discardLabel = res.discard.suit === 'honor' ? res.discard.val : `${res.discard.val}${SUITS[res.discard.suit].label}`;
+                    let label = '<span class="tag tag-safe">安全次選</span>';
+                    if (idx === 0) label = '<span class="tag tag-best">🏆 最佳首選</span>';
+                    if (opt.prob < 5 && opt.remains > 0) label = '<span class="tag tag-warn">⚠️ 警告:極低</span>';
+                    if (opt.remains === 0) label = '<span class="tag tag-dead">⚠️ 死聽</span>';
+
+                    const waitTags = opt.waits.map(w => `<span class="tag" style="background:rgba(255,255,255,0.1); margin:2px;">${w.suit === 'honor' ? w.val : w.val + SUITS[w.suit].label}</span>`).join('') || '無';
+                    const discardName = opt.discard.suit === 'honor' ? opt.discard.val : `${opt.discard.val}${SUITS[opt.discard.suit].label}`;
+                    
                     tr.innerHTML = `
-                        <td><div class="mini-tile ${res.discard.suit}">${discardLabel}</div></td>
-                        <td>${waitHtml}</td>
-                        <td>${res.remains === 0 ? '<span style="color:var(--error-red); font-weight:900;">⚠️ 死聽</span>' : res.remains + '張'}</td>
-                        <td><span style="color:${i === 0 ? 'var(--primary-neon)' : 'inherit'}; font-weight:700;">${res.prob}%</span></td>
+                        <td><div class="tile ${opt.discard.suit}" style="width:30px; height:40px; font-size:0.8rem;">${discardName}</div></td>
+                        <td><div style="max-width:150px; display:flex; flex-wrap:wrap;">${waitTags}</div></td>
+                        <td style="font-weight:800;">${opt.remains} 張</td>
+                        <td style="color:var(--primary-neon); font-weight:800;">${opt.prob}%</td>
+                        <td>${label}</td>
                     `;
                     matrixBody.appendChild(tr);
                 });
             }
         }
 
-        function findWaits(hand) {
-            const possible = [];
-            const all = [];
-            ['man', 'pin', 'sou'].forEach(s => [1,2,3,4,5,6,7,8,9].forEach(v => all.push({suit:s, val:v})));
-            SUITS.honor.tiles.forEach(v => all.push({suit:'honor', val:v}));
+        function getWaits(hand) {
+            const waits = [];
+            const allTiles = [];
+            ['man', 'pin', 'sou'].forEach(s => [1,2,3,4,5,6,7,8,9].forEach(v => allTiles.push({suit:s, val:v})));
+            SUITS.honor.tiles.forEach(v => allTiles.push({suit:'honor', val:v}));
 
-            all.forEach(tile => {
-                if (isEffective(hand, tile)) possible.push(tile);
+            allTiles.forEach(tile => {
+                if (isEffective(hand, tile)) waits.push(tile);
             });
-            return possible;
+            return waits;
         }
 
         function isEffective(hand, tile) {
-            const count = hand.filter(t => t.suit === tile.suit && t.val === tile.val).length;
-            if (count >= 1) return true;
+            // Simple heuristic for "effective" tiles: matching or adjacent
+            if (hand.some(t => t.suit === tile.suit && t.val === tile.val)) return true;
             if (tile.suit !== 'honor') {
                 const v = tile.val;
                 if (hand.some(t => t.suit === tile.suit && (t.val === v-1 || t.val === v+1))) return true;
@@ -777,6 +736,7 @@
         }
 
         // Init
+        console.log("MJ Advisor V3.0 Engine Loaded.");
         updateUI();
     </script>
 </body>
