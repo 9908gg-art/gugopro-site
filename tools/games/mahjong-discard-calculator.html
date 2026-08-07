@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>麻將最佳切牌推薦導師 V3.0 | GugoPro</title>
+    <title>麻將最佳切牌推薦導師 V3.1 | GugoPro</title>
     
     <!-- SEO Tags -->
-    <meta name="description" content="GugoPro 麻將最佳切牌推薦導師 V3.0：主動決策引擎，高對比牌面視覺，自動理牌。支援四家桌面實戰記錄，精確計算真實剩餘張數與進張勝率，給予最科學的切牌建議。">
-    <meta name="keywords" content="麻將切牌推薦, 麻將算牌, 聽牌分析, 麻將勝率計算, 台灣16張, 日本麻將, 廣東麻將, 麻將教學, 算牌器, 麻將機率">
+    <meta name="description" content="GugoPro 麻將最佳切牌推薦導師 V3.1：內建正統麻將聽牌演算法、主動決策引擎、高對比牌面視覺與自動理牌。支援四家桌面實戰記錄，精確計算真實剩餘張數與進張勝率。">
+    <meta name="keywords" content="麻將切牌推薦, 麻將算牌, 聽牌分析, 聽牌演算法, 麻將勝率計算, 台灣16張, 日本麻將, 廣東麻將, 麻將教學, 算牌器">
     
     <!-- Google Analytics 4 (GA4) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-GF1DYLWMKX"></script>
@@ -387,7 +387,7 @@
         <a href="https://gugopro.com" class="btn-back-home">
             <i class="fa-solid fa-house"></i> 返回 GugoPro
         </a>
-        <div class="logo-text">MJ ADVISOR V3.0</div>
+        <div class="logo-text">MJ ADVISOR V3.1</div>
     </header>
 
     <div class="container">
@@ -497,9 +497,9 @@
         <!-- Info -->
         <div class="info-section">
             <h2>如何利用真實剩餘張數避免死聽？</h2>
-            <p>在麻將實戰中，很多時候我們會因為「看起來很好聽」而切出錯誤的牌。MJ Advisor V3.0 透過追蹤四家棄牌與露牌，即時扣除全場已見張數，計算出真正的<b>「真實剩餘張數」</b>。當某張牌在場上已見 4 張時，系統會立即發出死聽警告，避免您陷入無法胡牌的死局。</p>
-            <h3>主動決策引擎的作用</h3>
-            <p>本工具不僅是被動計算機率，更是一個主動的導師。它會分析您手中的每一張牌，模擬打出後的聽牌路徑，並綜合全場數據給出最優解。高對比牌面與自動理牌功能，則確保您在緊張的對局中能以最快速度完成記錄，做出科學決策。</p>
+            <p>在麻將實戰中，很多時候我們會因為「看起來很好聽」而切出錯誤的牌。MJ Advisor V3.1 內建正統麻將聽牌/胡牌判定演算法（正確解析順子、刻子與雀頭結構），透過追蹤四家棄牌與露牌，即時扣除全場已見張數，計算出真正的<b>「真實剩餘張數」</b>。</p>
+            <h3>正統演算法與主動決策引擎</h3>
+            <p>本工具採用嚴謹的遞迴拆解演算法模擬胡牌型態，能精準判定台麻 16 張（5面子+1雀頭）與日麻 13 張（4面子+1雀頭）的有效進張。高對比牌面與自動理牌功能，則確保您在緊張的對局中能以最快速度完成記錄，做出科學決策。</p>
             <div class="disclaimer">免責聲明：本工具計算結果僅供麻將技巧研究與機率統計評估參考，不保證勝率亦不鼓勵博弈行為。</div>
         </div>
     </div>
@@ -527,7 +527,7 @@
         const HONOR_ORDER = ['東','南','西','北','中','發','白'];
         const TARGET_MAP = { self: '自家手牌', top: '對家河牌', left: '上家河牌', right: '下家河牌' };
 
-        // --- Logic ---
+        // --- Logic & Rules ---
         function setMode(m) {
             mode = m;
             document.getElementById('btn-16').classList.toggle('active', m === 16);
@@ -585,6 +585,89 @@
                 if (a.suit === 'honor') return HONOR_ORDER.indexOf(a.val) - HONOR_ORDER.indexOf(b.val);
                 return a.val - b.val;
             });
+        }
+
+        // --- Authentic Mahjong Win Algorithm ---
+        function canFormMentsu(counts) {
+            const keys = Object.keys(counts);
+            if (keys.length === 0) return true;
+
+            // 尋找第一個有牌的 key
+            let firstKey = null;
+            for (const k of keys) {
+                if (counts[k] > 0) {
+                    firstKey = k;
+                    break;
+                }
+            }
+            if (!firstKey) return true;
+
+            const [suit, valStr] = firstKey.split('-');
+            const val = isNaN(valStr) ? valStr : Number(valStr);
+
+            // 1. 嘗試刻子 (3張相同的牌)
+            if (counts[firstKey] >= 3) {
+                const temp = {...counts};
+                temp[firstKey] -= 3;
+                if (temp[firstKey] === 0) delete temp[firstKey];
+                if (canFormMentsu(temp)) return true;
+            }
+
+            // 2. 嘗試順子 (僅限數牌 man, pin, sou 且 val 為數字 1-9)
+            if (suit !== 'honor' && typeof val === 'number' && val <= 7) {
+                const key2 = `${suit}-${val + 1}`;
+                const key3 = `${suit}-${val + 2}`;
+                if ((counts[key2] || 0) >= 1 && (counts[key3] || 0) >= 1) {
+                    const temp = {...counts};
+                    temp[firstKey] -= 1;
+                    if (temp[firstKey] === 0) delete temp[firstKey];
+                    temp[key2] -= 1;
+                    if (temp[key2] === 0) delete temp[key2];
+                    temp[key3] -= 1;
+                    if (temp[key3] === 0) delete temp[key3];
+                    if (canFormMentsu(temp)) return true;
+                }
+            }
+
+            return false;
+        }
+
+        function canWin(tiles) {
+            const counts = {};
+            tiles.forEach(t => {
+                const k = `${t.suit}-${t.val}`;
+                counts[k] = (counts[k] || 0) + 1;
+            });
+
+            const keys = Object.keys(counts);
+            for (const eyeKey of keys) {
+                if (counts[eyeKey] >= 2) {
+                    const temp = {...counts};
+                    temp[eyeKey] -= 2;
+                    if (temp[eyeKey] === 0) delete temp[eyeKey];
+                    if (canFormMentsu(temp)) return true;
+                }
+            }
+            return false;
+        }
+
+        function getWaits(hand) {
+            const waits = [];
+            const allTiles = [];
+            ['man', 'pin', 'sou'].forEach(s => [1,2,3,4,5,6,7,8,9].forEach(v => allTiles.push({suit:s, val:v})));
+            SUITS.honor.tiles.forEach(v => allTiles.push({suit:'honor', val:v}));
+
+            allTiles.forEach(tile => {
+                // 檢查加入此牌後是否胡牌
+                const testHand = [...hand, tile];
+                if (canWin(testHand)) {
+                    // 避免重複加入同種牌
+                    if (!waits.some(w => w.suit === tile.suit && w.val === tile.val)) {
+                        waits.push(tile);
+                    }
+                }
+            });
+            return waits;
         }
 
         // --- UI & Advisor Engine ---
@@ -712,31 +795,8 @@
             }
         }
 
-        function getWaits(hand) {
-            const waits = [];
-            const allTiles = [];
-            ['man', 'pin', 'sou'].forEach(s => [1,2,3,4,5,6,7,8,9].forEach(v => allTiles.push({suit:s, val:v})));
-            SUITS.honor.tiles.forEach(v => allTiles.push({suit:'honor', val:v}));
-
-            allTiles.forEach(tile => {
-                if (isEffective(hand, tile)) waits.push(tile);
-            });
-            return waits;
-        }
-
-        function isEffective(hand, tile) {
-            // Simple heuristic for "effective" tiles: matching or adjacent
-            if (hand.some(t => t.suit === tile.suit && t.val === tile.val)) return true;
-            if (tile.suit !== 'honor') {
-                const v = tile.val;
-                if (hand.some(t => t.suit === tile.suit && (t.val === v-1 || t.val === v+1))) return true;
-                if (hand.some(t => t.suit === tile.suit && (t.val === v-2 || t.val === v+2))) return true;
-            }
-            return false;
-        }
-
         // Init
-        console.log("MJ Advisor V3.0 Engine Loaded.");
+        console.log("MJ Advisor V3.1 Authentic Algorithm Loaded.");
         updateUI();
     </script>
 </body>
