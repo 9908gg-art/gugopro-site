@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>麻將最佳切牌推薦導師 V3.1 | GugoPro</title>
+    <title>麻將最佳切牌推薦導師 V3.2 | GugoPro</title>
     
     <!-- SEO Tags -->
-    <meta name="description" content="GugoPro 麻將最佳切牌推薦導師 V3.1：內建正統麻將聽牌演算法、主動決策引擎、高對比牌面視覺與自動理牌。支援四家桌面實戰記錄，精確計算真實剩餘張數與進張勝率。">
-    <meta name="keywords" content="麻將切牌推薦, 麻將算牌, 聽牌分析, 聽牌演算法, 麻將勝率計算, 台灣16張, 日本麻將, 廣東麻將, 麻將教學, 算牌器">
+    <meta name="description" content="GugoPro 麻將最佳切牌推薦導師 V3.2：內建正統麻將聽牌演算法、主動決策引擎、門前副露管理、懸浮極速河牌紀錄列與安牌安全指標。支援四家桌面實戰記錄，精確計算真實剩餘張數與進張勝率。">
+    <meta name="keywords" content="麻將切牌推薦, 麻將算牌, 聽牌分析, 麻將副露, 安牌指示, 麻將勝率計算, 台灣16張, 日本麻將, 廣東麻將, 算牌器">
     
     <!-- Google Analytics 4 (GA4) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-GF1DYLWMKX"></script>
@@ -62,6 +62,7 @@
             min-height: 100vh;
             background-image: radial-gradient(circle at 50% 50%, rgba(26, 71, 42, 0.2) 0%, transparent 70%);
             overflow-x: hidden;
+            padding-bottom: 90px; /* Space for floating bar */
         }
 
         /* Header */
@@ -230,7 +231,20 @@
         .tile.honor { background-color: var(--tile-honor-bg); color: var(--tile-honor-text); }
         
         .zone-bottom .tile { width: 45px; height: 60px; font-size: 1.2rem; }
-        .tile-list { display: flex; flex-wrap: wrap; gap: 6px; min-height: 50px; }
+        .tile-list { display: flex; flex-wrap: wrap; gap: 6px; min-height: 50px; align-items: center; }
+
+        /* Melds Area (Detail 1) */
+        .melds-section {
+            background: rgba(0,0,0,0.2);
+            border: 1px dashed rgba(255,255,255,0.15);
+            border-radius: 16px;
+            padding: 12px;
+            margin-top: 15px;
+        }
+        .melds-header { font-size: 0.8rem; font-weight: 800; color: var(--accent-gold); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .meld-group { display: flex; gap: 3px; background: rgba(0,0,0,0.4); padding: 4px 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); }
+        .meld-group .tile { width: 28px; height: 36px; font-size: 0.75rem; }
+        .btn-add-meld { background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--primary-neon); padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 800; cursor: pointer; }
 
         /* Keyboard */
         .keyboard-section {
@@ -295,6 +309,54 @@
         }
         .key-tile.disabled { opacity: 0.15; pointer-events: none; filter: grayscale(1); }
 
+        /* Floating Fast-Tap Bar (Detail 2 - Mobile Only) */
+        .fast-tap-bar {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(10, 11, 16, 0.95);
+            border-top: 2px solid var(--primary-neon);
+            padding: 10px 15px;
+            z-index: 1000;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.6);
+        }
+        .fast-tap-targets { display: flex; gap: 8px; margin-bottom: 8px; }
+        .ft-target-btn {
+            flex: 1;
+            padding: 6px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--text-dim);
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 800;
+            cursor: pointer;
+            text-align: center;
+        }
+        .ft-target-btn.active { background: var(--primary-neon); color: #000; border-color: var(--primary-neon); }
+        
+        .fast-tap-tiles { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+        .ft-tile {
+            min-width: 38px;
+            height: 48px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 0.9rem;
+            cursor: pointer;
+            flex-shrink: 0;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        @media (max-width: 768px) {
+            .fast-tap-bar { display: block; }
+        }
+
         /* Ranking Matrix */
         .ranking-card {
             background: var(--glass-bg);
@@ -319,6 +381,11 @@
         .tag-safe { background: var(--success-green); color: #fff; }
         .tag-warn { background: var(--accent-gold); color: #000; }
         .tag-dead { background: var(--error-red); color: #fff; }
+
+        /* Safety Indicators (Detail 3) */
+        .safety-safe { background: rgba(52, 199, 89, 0.2); color: #34c759; border: 1px solid #34c759; }
+        .safety-danger { background: rgba(255, 59, 48, 0.2); color: #ff3b30; border: 1px solid #ff3b30; }
+        .safety-normal { background: rgba(255, 204, 0, 0.2); color: #ffcc00; border: 1px solid #ffcc00; }
 
         /* Footer Elements */
         .amazon-card {
@@ -387,7 +454,7 @@
         <a href="https://gugopro.com" class="btn-back-home">
             <i class="fa-solid fa-house"></i> 返回 GugoPro
         </a>
-        <div class="logo-text">MJ ADVISOR V3.1</div>
+        <div class="logo-text">MJ ADVISOR V3.2</div>
     </header>
 
     <div class="container">
@@ -433,8 +500,17 @@
                 <div id="river-right" class="tile-list"></div>
             </div>
             <div class="player-zone zone-bottom active" onclick="setTarget('self')">
-                <div class="player-label">自家 (SELF) <span id="count-self">0</span> / <span id="max-self">17</span></div>
+                <div class="player-label">自家手牌 (SELF) <span id="count-self">0</span> / <span id="max-self">17</span></div>
                 <div id="hand-self" class="tile-list"></div>
+                
+                <!-- Detail 1: Melds Area -->
+                <div class="melds-section" onclick="event.stopPropagation()">
+                    <div class="melds-header">
+                        <span><i class="fa-solid fa-puzzle-piece"></i> 門前副露 (吃/碰/槓)</span>
+                        <button class="btn-add-meld" onclick="openMeldPrompt()"><i class="fa-solid fa-plus"></i> 新增副露</button>
+                    </div>
+                    <div id="melds-container" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+                </div>
             </div>
         </div>
 
@@ -460,7 +536,7 @@
         <!-- Ranking Matrix -->
         <div id="matrix-card" class="ranking-card" style="display:none;">
             <div style="font-family:'Outfit'; font-weight:900; color:var(--primary-neon); margin-bottom:20px; display:flex; align-items:center; gap:10px;">
-                <i class="fa-solid fa-list-ol"></i> 切牌決策評估矩陣 (Discard Ranking)
+                <i class="fa-solid fa-list-ol"></i> 切牌決策與防守安全矩陣 (Discard & Safety Matrix)
             </div>
             <div style="overflow-x:auto;">
                 <table class="matrix-table">
@@ -470,12 +546,24 @@
                             <th>進張牌型</th>
                             <th>剩餘</th>
                             <th>勝率</th>
+                            <th>安全等級</th>
                             <th>評估</th>
                         </tr>
                     </thead>
                     <tbody id="matrix-body"></tbody>
                 </table>
             </div>
+        </div>
+
+        <!-- Detail 2: Fast-Tap Floating Bar (Mobile) -->
+        <div class="fast-tap-bar">
+            <div class="fast-tap-targets">
+                <button id="ft-top" class="ft-target-btn" onclick="setFastTapTarget('top')">對家</button>
+                <button id="ft-left" class="ft-target-btn" onclick="setFastTapTarget('left')">上家</button>
+                <button id="ft-right" class="ft-target-btn" onclick="setFastTapTarget('right')">下家</button>
+                <button id="ft-self" class="ft-target-btn active" onclick="setFastTapTarget('self')">自家</button>
+            </div>
+            <div id="ft-tiles" class="fast-tap-tiles"></div>
         </div>
 
         <!-- Amazon -->
@@ -496,10 +584,8 @@
 
         <!-- Info -->
         <div class="info-section">
-            <h2>如何利用真實剩餘張數避免死聽？</h2>
-            <p>在麻將實戰中，很多時候我們會因為「看起來很好聽」而切出錯誤的牌。MJ Advisor V3.1 內建正統麻將聽牌/胡牌判定演算法（正確解析順子、刻子與雀頭結構），透過追蹤四家棄牌與露牌，即時扣除全場已見張數，計算出真正的<b>「真實剩餘張數」</b>。</p>
-            <h3>正統演算法與主動決策引擎</h3>
-            <p>本工具採用嚴謹的遞迴拆解演算法模擬胡牌型態，能精準判定台麻 16 張（5面子+1雀頭）與日麻 13 張（4面子+1雀頭）的有效進張。高對比牌面與自動理牌功能，則確保您在緊張的對局中能以最快速度完成記錄，做出科學決策。</p>
+            <h2>3大實戰細節：副露扣減、極速河牌與安牌指示</h2>
+            <p>MJ Advisor V3.2 全面升級實戰功能：支援<b>門前副露管理（吃碰槓自動扣減手牌上限）</b>、手機專屬<b>0.5秒極速河牌懸浮列</b>，以及在切牌決策矩陣中新增<b>安牌與潛在危險牌（生牌）安全指示</b>。讓您在牌桌上攻守兼備，精準避開放槍風險。</p>
             <div class="disclaimer">免責聲明：本工具計算結果僅供麻將技巧研究與機率統計評估參考，不保證勝率亦不鼓勵博弈行為。</div>
         </div>
     </div>
@@ -509,12 +595,14 @@
         let mode = 16;
         let activeTarget = 'self';
         let activeSuit = 'man';
+        let fastTapTarget = 'self';
         
         const state = {
             self: [],
             top: [],
             left: [],
-            right: []
+            right: [],
+            melds: [] // Detail 1: [{type: 'chi'/'pon'/'kong', tiles: [{suit, val}...]}]
         };
 
         const SUITS = {
@@ -527,13 +615,22 @@
         const HONOR_ORDER = ['東','南','西','北','中','發','白'];
         const TARGET_MAP = { self: '自家手牌', top: '對家河牌', left: '上家河牌', right: '下家河牌' };
 
-        // --- Logic & Rules ---
+        // --- Rules & Navigation ---
         function setMode(m) {
             mode = m;
             document.getElementById('btn-16').classList.toggle('active', m === 16);
             document.getElementById('btn-13').classList.toggle('active', m === 13);
-            document.getElementById('max-self').innerText = m + 1;
+            updateMaxHandLimit();
             resetAll();
+        }
+
+        function updateMaxHandLimit() {
+            let limit = mode + 1;
+            state.melds.forEach(m => {
+                if (m.type === 'kong') limit -= 3; // Kong net reduction is 3
+                else limit -= 3; // Chi / Pon reduction is 3
+            });
+            document.getElementById('max-self').innerText = Math.max(2, limit);
         }
 
         function setTarget(t) {
@@ -544,12 +641,19 @@
             renderKeyboard();
         }
 
+        function setFastTapTarget(t) {
+            fastTapTarget = t;
+            document.querySelectorAll('.ft-target-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`ft-${t}`).classList.add('active');
+        }
+
         function switchSuit(s) {
             activeSuit = s;
             document.querySelectorAll('.tab-btn').forEach(b => {
                 b.classList.toggle('active', b.innerText.includes(SUITS[s].label));
             });
             renderKeyboard();
+            renderFastTapTiles();
         }
 
         function getGlobalCount(suit, val) {
@@ -557,15 +661,29 @@
             ['self', 'top', 'left', 'right'].forEach(p => {
                 state[p].forEach(t => { if (t.suit === suit && t.val === val) count++; });
             });
+            state.melds.forEach(m => {
+                m.tiles.forEach(t => { if (t.suit === suit && t.val === val) count++; });
+            });
             return count;
         }
 
-        function addTile(suit, val) {
-            if (getGlobalCount(suit, val) >= 4) return alert('此牌全桌已達 4 張上限！');
-            if (activeTarget === 'self' && state.self.length >= mode + 1) return;
+        function addTile(suit, val, targetOverride = null) {
+            const target = targetOverride || activeTarget;
+            if (getGlobalCount(suit, val) >= 4) {
+                alert('此牌全桌已達 4 張上限！');
+                return;
+            }
+            if (target === 'self') {
+                let maxLimit = mode + 1;
+                state.melds.forEach(m => maxLimit -= 3);
+                if (state.self.length >= maxLimit) {
+                    alert('手牌已達當前副露扣減後的上限！');
+                    return;
+                }
+            }
             
-            state[activeTarget].push({ suit, val });
-            if (activeTarget === 'self') sortHand();
+            state[target].push({ suit, val });
+            if (target === 'self') sortHand();
             updateUI();
         }
 
@@ -576,7 +694,11 @@
         }
 
         function clearCurrentZone() { state[activeTarget] = []; updateUI(); }
-        function resetAll() { Object.keys(state).forEach(k => state[k] = []); updateUI(); }
+        function resetAll() { 
+            state.self = []; state.top = []; state.left = []; state.right = []; state.melds = [];
+            updateMaxHandLimit();
+            updateUI(); 
+        }
 
         function sortHand() {
             const suitWeights = { man: 1, pin: 2, sou: 3, honor: 4 };
@@ -587,25 +709,88 @@
             });
         }
 
+        // --- Detail 1: Melds Management ---
+        function openMeldPrompt() {
+            const typeInput = prompt("請輸入副露類型:\n1. chi (吃)\n2. pon (碰)\n3. kong (槓)", "pon");
+            if (!typeInput) return;
+            let type = 'pon';
+            if (typeInput.includes('chi') || typeInput.includes('1')) type = 'chi';
+            if (typeInput.includes('kong') || typeInput.includes('3')) type = 'kong';
+
+            const suitInput = prompt("請輸入花色 (man:萬, pin:筒, sou:條, honor:字):", "man");
+            if (!suitInput) return;
+            let suit = 'man';
+            if (suitInput.includes('pin') || suitInput.includes('筒')) suit = 'pin';
+            if (suitInput.includes('sou') || suitInput.includes('條')) suit = 'sou';
+            if (suitInput.includes('honor') || suitInput.includes('字')) suit = 'honor';
+
+            const valInput = prompt("請輸入起始數字或字牌 (例如 3 或 東):", "5");
+            if (!valInput) return;
+
+            let tiles = [];
+            if (type === 'chi' && suit !== 'honor') {
+                const v = parseInt(valInput);
+                tiles = [{suit, val: v}, {suit, val: v+1}, {suit, val: v+2}];
+            } else if (type === 'pon') {
+                const v = suit === 'honor' ? valInput : parseInt(valInput);
+                tiles = [{suit, val: v}, {suit, val: v}, {suit, val: v}];
+            } else if (type === 'kong') {
+                const v = suit === 'honor' ? valInput : parseInt(valInput);
+                tiles = [{suit, val: v}, {suit, val: v}, {suit, val: v}, {suit, val: v}];
+            }
+
+            // Check global count limit
+            for (let t of tiles) {
+                if (getGlobalCount(t.suit, t.val) + 1 > 4) {
+                    alert('新增副露失敗：該牌全桌總數將超過 4 張！');
+                    return;
+                }
+            }
+
+            state.melds.push({ type, tiles });
+            updateMaxHandLimit();
+            updateUI();
+        }
+
+        function removeMeld(index) {
+            state.melds.splice(index, 1);
+            updateMaxHandLimit();
+            updateUI();
+        }
+
+        // --- Detail 3: Safety Indicator Logic ---
+        function getSafetyLevel(tile) {
+            let seenCount = 0;
+            ['top', 'left', 'right'].forEach(p => {
+                state[p].forEach(t => {
+                    if (t.suit === tile.suit && t.val === tile.val) seenCount++;
+                });
+            });
+            state.melds.forEach(m => {
+                m.tiles.forEach(t => {
+                    if (t.suit === tile.suit && t.val === tile.val) seenCount++;
+                });
+            });
+
+            if (seenCount >= 3) return { label: '🟢 極安全', class: 'safety-safe' };
+            if (seenCount === 0) return { label: '⚠️ 生牌', class: 'safety-danger' };
+            return { label: '🟡 普通', class: 'safety-normal' };
+        }
+
         // --- Authentic Mahjong Win Algorithm ---
         function canFormMentsu(counts) {
             const keys = Object.keys(counts);
             if (keys.length === 0) return true;
 
-            // 尋找第一個有牌的 key
             let firstKey = null;
             for (const k of keys) {
-                if (counts[k] > 0) {
-                    firstKey = k;
-                    break;
-                }
+                if (counts[k] > 0) { firstKey = k; break; }
             }
             if (!firstKey) return true;
 
             const [suit, valStr] = firstKey.split('-');
             const val = isNaN(valStr) ? valStr : Number(valStr);
 
-            // 1. 嘗試刻子 (3張相同的牌)
             if (counts[firstKey] >= 3) {
                 const temp = {...counts};
                 temp[firstKey] -= 3;
@@ -613,22 +798,17 @@
                 if (canFormMentsu(temp)) return true;
             }
 
-            // 2. 嘗試順子 (僅限數牌 man, pin, sou 且 val 為數字 1-9)
             if (suit !== 'honor' && typeof val === 'number' && val <= 7) {
                 const key2 = `${suit}-${val + 1}`;
                 const key3 = `${suit}-${val + 2}`;
                 if ((counts[key2] || 0) >= 1 && (counts[key3] || 0) >= 1) {
                     const temp = {...counts};
-                    temp[firstKey] -= 1;
-                    if (temp[firstKey] === 0) delete temp[firstKey];
-                    temp[key2] -= 1;
-                    if (temp[key2] === 0) delete temp[key2];
-                    temp[key3] -= 1;
-                    if (temp[key3] === 0) delete temp[key3];
+                    temp[firstKey] -= 1; if (temp[firstKey] === 0) delete temp[firstKey];
+                    temp[key2] -= 1; if (temp[key2] === 0) delete temp[key2];
+                    temp[key3] -= 1; if (temp[key3] === 0) delete temp[key3];
                     if (canFormMentsu(temp)) return true;
                 }
             }
-
             return false;
         }
 
@@ -658,10 +838,8 @@
             SUITS.honor.tiles.forEach(v => allTiles.push({suit:'honor', val:v}));
 
             allTiles.forEach(tile => {
-                // 檢查加入此牌後是否胡牌
                 const testHand = [...hand, tile];
                 if (canWin(testHand)) {
-                    // 避免重複加入同種牌
                     if (!waits.some(w => w.suit === tile.suit && w.val === tile.val)) {
                         waits.push(tile);
                     }
@@ -674,13 +852,17 @@
         function updateUI() {
             renderTable();
             renderKeyboard();
+            renderFastTapTiles();
             
-            const totalVisible = Object.values(state).reduce((acc, cur) => acc + cur.length, 0);
+            const totalVisible = Object.values(state).reduce((acc, cur) => acc + cur.length, 0) + state.melds.reduce((acc, m) => acc + m.tiles.length, 0);
             const totalDeck = mode === 16 ? 144 : 136;
             const unknownCount = Math.max(0, totalDeck - totalVisible);
             document.getElementById('main-remains').innerText = `剩餘未知: ${unknownCount} 張`;
 
-            if (state.self.length >= mode) {
+            let maxLimit = mode + 1;
+            state.melds.forEach(m => maxLimit -= 3);
+
+            if (state.self.length >= maxLimit - 1) {
                 runAdvisor(unknownCount);
             } else {
                 document.getElementById('advisor-banner').style.display = 'none';
@@ -702,6 +884,23 @@
                     list.appendChild(el);
                 });
             });
+
+            // Render Melds
+            const meldsContainer = document.getElementById('melds-container');
+            meldsContainer.innerHTML = '';
+            state.melds.forEach((m, idx) => {
+                const group = document.createElement('div');
+                group.className = 'meld-group';
+                group.title = `點擊刪除此 ${m.type} 副露`;
+                group.onclick = () => removeMeld(idx);
+                m.tiles.forEach(t => {
+                    const tileEl = document.createElement('div');
+                    tileEl.className = `tile ${t.suit}`;
+                    tileEl.innerText = t.suit === 'honor' ? t.val : `${t.val}${SUITS[t.suit].label}`;
+                    group.appendChild(tileEl);
+                });
+                meldsContainer.appendChild(group);
+            });
         }
 
         function renderKeyboard() {
@@ -720,6 +919,18 @@
                 }
                 el.onclick = () => addTile(activeSuit, val);
                 grid.appendChild(el);
+            });
+        }
+
+        function renderFastTapTiles() {
+            const container = document.getElementById('ft-tiles');
+            container.innerHTML = '';
+            SUITS[activeSuit].tiles.forEach(val => {
+                const el = document.createElement('div');
+                el.className = `ft-tile ${activeSuit}`;
+                el.innerText = activeSuit === 'honor' ? val : `${val}${SUITS[activeSuit].label}`;
+                el.onclick = () => addTile(activeSuit, val, fastTapTarget);
+                container.appendChild(el);
             });
         }
 
@@ -745,10 +956,12 @@
                 waits.forEach(w => {
                     remains += Math.max(0, 4 - getGlobalCount(w.suit, w.val));
                 });
+                const safety = getSafetyLevel(discard);
                 options.push({
                     discard,
                     waits,
                     remains,
+                    safety,
                     prob: unknownTotal > 0 ? (remains / unknownTotal * 100).toFixed(1) : 0
                 });
             });
@@ -761,7 +974,6 @@
                 matrixCard.style.display = 'block';
                 document.getElementById('main-prob').innerText = `${best.prob}%`;
                 
-                // Update Banner
                 const icon = document.getElementById('best-tile-icon');
                 icon.className = `tile ${best.discard.suit}`;
                 icon.innerText = best.discard.suit === 'honor' ? best.discard.val : `${best.discard.val}${SUITS[best.discard.suit].label}`;
@@ -770,7 +982,6 @@
                 document.getElementById('best-remains').innerText = best.remains;
                 document.getElementById('best-prob').innerText = best.prob;
 
-                // Update Matrix
                 options.forEach((opt, idx) => {
                     const tr = document.createElement('tr');
                     tr.className = `matrix-row ${idx === 0 ? 'best' : ''} ${opt.remains === 0 ? 'dead' : ''}`;
@@ -788,6 +999,7 @@
                         <td><div style="max-width:150px; display:flex; flex-wrap:wrap;">${waitTags}</div></td>
                         <td style="font-weight:800;">${opt.remains} 張</td>
                         <td style="color:var(--primary-neon); font-weight:800;">${opt.prob}%</td>
+                        <td><span class="tag ${opt.safety.class}">${opt.safety.label}</span></td>
                         <td>${label}</td>
                     `;
                     matrixBody.appendChild(tr);
@@ -796,7 +1008,7 @@
         }
 
         // Init
-        console.log("MJ Advisor V3.1 Authentic Algorithm Loaded.");
+        console.log("MJ Advisor V3.2 Loaded with Melds, Fast-Tap Bar & Safety Indicators.");
         updateUI();
     </script>
 </body>
