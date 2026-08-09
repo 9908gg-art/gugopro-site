@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Amazon US Store | Product Search & Navigation | GugoPro</title>
-<meta name="description" content="GugoPro Amazon US Store: curated categories for gaming gear, mahjong & board games, trading & finance books, and tarot & crystals. One-click search with official affiliate links.">
-<meta name="keywords" content="Amazon US, amazon.com, gaming equipment, mahjong, trading books, tarot cards, gugopro">
+<meta name="description" content="GugoPro Amazon US Store — browse 18 official Amazon categories with dynamic subcategory search links. Gaming, home & kitchen, books, tarot & more, all with the official GugoPro affiliate tag.">
+<meta name="keywords" content="Amazon US, Amazon Store, GugoPro, affiliate, category directory">
 <meta name="author" content="GugoPro AI Team">
 
 <!-- Google Analytics 4 (GA4) -->
@@ -22,23 +22,23 @@
 
 <style>
   :root {
-    --us-primary: #00A8E1;
-    --us-secondary: #1A73A7;
-    --us-accent: #FF9900;
-    --bg-start: #0B1220;
-    --bg-end: #16263C;
+    --accent: #00A8E1;
+    --accent-2: #1A73A7;
+    --bg-start: #0B1B26;
+    --bg-end: #12293B;
     --card-bg: rgba(255, 255, 255, 0.06);
     --card-border: rgba(255, 255, 255, 0.12);
     --text-main: #F5F7FA;
     --text-muted: #9FB3C8;
+    --glow: rgba(0, 168, 225, 0.35);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
-    font-family: "Segoe UI", "Helvetica Neue", Arial, "Noto Sans", system-ui, -apple-system, sans-serif;
+    font-family: "Inter", "Segoe UI", "Noto Sans", system-ui, -apple-system, sans-serif;
     min-height: 100vh;
-    background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 55%, #0E3A5D 100%);
+    background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 55%, #0E2A3C 100%);
     color: var(--text-main);
     padding-bottom: 60px;
   }
@@ -70,112 +70,159 @@
   }
   .top-nav a:hover { background: rgba(255, 255, 255, 0.08); color: var(--text-main); }
   .top-nav a.active {
-    background: linear-gradient(135deg, var(--us-primary), var(--us-secondary));
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
     color: #fff;
-    box-shadow: 0 4px 14px rgba(0, 168, 225, 0.35);
+    box-shadow: 0 4px 14px var(--glow);
   }
 
   /* ===== Hero ===== */
-  .hero {
-    text-align: center;
-    padding: 48px 20px 24px;
-  }
+  .hero { text-align: center; padding: 52px 20px 10px; }
   .hero h1 {
-    font-size: clamp(26px, 4vw, 40px);
-    background: linear-gradient(135deg, #7EE2FA, var(--us-primary), var(--us-accent));
+    font-size: clamp(26px, 4.5vw, 42px);
+    background: linear-gradient(135deg, #7FD4F0, var(--accent));
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
     margin-bottom: 12px;
   }
-  .hero p { color: var(--text-muted); max-width: 680px; margin: 0 auto; line-height: 1.7; }
+  .hero p { color: var(--text-muted); max-width: 680px; margin: 0 auto; line-height: 1.75; font-size: 15px; }
 
-  .kofi-wrap { margin-top: 20px; }
+  .kofi-wrap { margin-top: 22px; }
+  .kofi-button {
+    background: #72a4f2; color: #fff; padding: 10px 18px; border-radius: 8px;
+    text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-weight: bold; font-size: 14px;
+  }
 
-  /* ===== Grid ===== */
-  .container { max-width: 1080px; margin: 0 auto; padding: 8px 20px 0; }
+  /* ===== Live Search Box ===== */
+  .search-wrap {
+    max-width: 640px;
+    margin: 32px auto 0;
+    display: flex;
+    gap: 10px;
+    padding: 0 16px;
+  }
+  .search-wrap input {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 13px 18px;
+    color: var(--text-main);
+    font-size: 15px;
+    outline: none;
+    transition: border 0.25s ease, box-shadow 0.25s ease;
+  }
+  .search-wrap input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--glow);
+  }
+  .search-wrap button {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 13px 22px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s ease, filter 0.2s ease;
+  }
+  .search-wrap button:hover { transform: translateY(-2px); filter: brightness(1.1); }
+
+  /* ===== Category Grid ===== */
+  .container { max-width: 1280px; margin: 0 auto; padding: 36px 18px 0; }
+
+  .grid-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 18px;
+  }
+  .grid-title span { color: var(--accent); }
 
   .category-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 22px;
-    margin-top: 28px;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 18px;
   }
 
-  /* ===== Category Card ===== */
   .category-card {
     background: var(--card-bg);
     border: 1px solid var(--card-border);
-    border-radius: 18px;
-    padding: 26px 24px 20px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    border-radius: 16px;
+    padding: 18px 18px 16px;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
   .category-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 16px 40px rgba(0, 168, 225, 0.2);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
   }
-  .category-card .card-head {
+
+  .category-card .card-header {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
     cursor: pointer;
     user-select: none;
   }
-  .category-card .icon-circle {
-    width: 52px;
-    height: 52px;
-    flex-shrink: 0;
-    border-radius: 14px;
-    background: linear-gradient(135deg, var(--us-primary), var(--us-secondary));
+  .category-card .card-header:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 8px; }
+
+  .cat-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 22px;
+    font-size: 18px;
     color: #fff;
-    box-shadow: 0 6px 16px rgba(0, 168, 225, 0.3);
+    flex-shrink: 0;
   }
-  .category-card .card-title { font-size: 19px; font-weight: 700; }
-  .category-card .toggle-icon {
+  .cat-title { font-size: 15px; font-weight: 700; line-height: 1.35; }
+  .cat-count { display: block; font-size: 11.5px; color: var(--text-muted); margin-top: 3px; }
+  .cat-toggle {
     margin-left: auto;
     color: var(--text-muted);
-    transition: transform 0.3s ease;
+    font-size: 14px;
+    transition: transform 0.25s ease;
   }
-  .category-card.open .toggle-icon { transform: rotate(180deg); }
+  .category-card.expanded .cat-toggle { transform: rotate(180deg); }
 
   .subcategory-list {
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.4s ease;
-    margin-top: 0;
+    transition: max-height 0.35s ease;
   }
-  .category-card.open .subcategory-list { max-height: 500px; margin-top: 18px; }
+  .category-card.expanded .subcategory-list { max-height: 420px; }
 
-  .sub-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+  .subcategory-list a {
+    display: block;
+    margin-top: 10px;
+    padding: 9px 12px;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
-    padding: 12px 14px;
-    margin-top: 10px;
-    color: var(--text-main);
+    border-radius: 10px;
+    color: var(--text-muted);
+    font-size: 13px;
     text-decoration: none;
-    font-size: 14.5px;
-    transition: all 0.25s ease;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-  .sub-item:hover {
-    background: linear-gradient(135deg, rgba(0, 168, 225, 0.18), rgba(255, 153, 0, 0.12));
+  .subcategory-list a:hover {
+    background: rgba(0, 168, 225, 0.12);
     border-color: rgba(0, 168, 225, 0.4);
-    transform: translateX(4px);
+    color: var(--text-main);
+    transform: translateX(3px);
   }
-  .sub-item i { color: var(--us-accent); }
+  .subcategory-list a i { margin-right: 8px; color: var(--accent); }
 
   .loading, .error {
     text-align: center;
     color: var(--text-muted);
-    padding: 60px 20px;
+    padding: 70px 20px;
     font-size: 15px;
   }
   .error i { color: #E16A6A; margin-right: 8px; }
@@ -184,15 +231,17 @@
     text-align: center;
     color: var(--text-muted);
     font-size: 12.5px;
-    margin-top: 56px;
+    margin-top: 64px;
     padding: 0 20px;
   }
-  footer a { color: var(--us-primary); text-decoration: none; }
+  footer a { color: var(--accent); text-decoration: none; }
   footer a:hover { text-decoration: underline; }
 
-  @media (max-width: 560px) {
+  @media (max-width: 760px) {
     .top-nav { justify-content: flex-start; }
     .top-nav a { font-size: 13px; padding: 7px 11px; }
+    .category-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+    .cat-title { font-size: 13.5px; }
   }
 </style>
 </head>
@@ -203,22 +252,30 @@
   <a href="./index.html" class="active"><i class="fa-solid fa-flag-usa"></i> 🇺🇸 Amazon US Store</a>
   <a href="../amazon-jp/index.html"><i class="fa-solid fa-torii-gate"></i> 🇯🇵 Amazon JP ストア</a>
   <a href="https://gugopro.com"><i class="fa-solid fa-house"></i> Return to GugoPro Home</a>
-  <a href="../store/"><i class="fa-solid fa-door-open"></i> Return to Store Portal</a>
+  <a href="../shop/"><i class="fa-solid fa-door-open"></i> Return to Store Portal</a>
 </nav>
 
 <!-- Hero -->
 <header class="hero">
   <h1><i class="fa-solid fa-cart-shopping"></i> Amazon US Store</h1>
-  <p>Browse our curated categories — gaming gear, mahjong & board games, trading & finance books, and tarot & crystals. Tap any sub-category to search Amazon.com instantly with GugoPro official affiliate links.</p>
+  <p>Browse our curated directory of <strong>18 official Amazon categories</strong> — from electronics & gaming gear to home appliances, trading books, tarot decks and beyond. Tap any category to reveal subcategories, then search Amazon.com instantly with GugoPro official affiliate links.</p>
   <div class="kofi-wrap">
-    <a href="https://ko-fi.com/R1K123XRS9" target="_blank" rel="noopener" class="kofi-button" style="background:#72a4f2; color:#fff; padding:10px 18px; border-radius:8px; text-decoration:none; display:inline-flex; align-items:center; gap:8px; font-weight:bold;"><i class="fa-solid fa-mug-hot"></i> Buy me a coffee</a>
+    <a href="https://ko-fi.com/R1K123XRS9" target="_blank" rel="noopener" class="kofi-button"><i class="fa-solid fa-mug-hot"></i> Buy me a coffee</a>
   </div>
 </header>
 
-<!-- Category Cards Container -->
+<!-- Live Search Box -->
+<div class="search-wrap" role="search">
+  <label for="us-search" style="position:absolute;width:1px;height:1px;overflow:hidden;">Search Amazon US</label>
+  <input id="us-search" type="text" placeholder="Search Amazon US... (e.g. gaming phone cooling fan)" aria-label="Search Amazon US">
+  <button id="us-search-btn" type="button" aria-label="Search"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+</div>
+
+<!-- 18-Category Grid -->
 <main class="container">
+  <p class="grid-title"><span><i class="fa-solid fa-th-large"></i></span> 18 Full Categories Directory <span id="cat-counter"></span></p>
   <div id="category-grid" class="category-grid">
-    <p class="loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading categories...</p>
+    <p class="loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading category directory...</p>
   </div>
 </main>
 
@@ -229,63 +286,76 @@
 <script>
 (function () {
   var grid = document.getElementById('category-grid');
-  var AFFILIATE_TAG = '9908qq-20';
+  var counter = document.getElementById('cat-counter');
+  var searchInput = document.getElementById('us-search');
+  var searchBtn = document.getElementById('us-search-btn');
+  var DOMAIN = 'https://www.amazon.com/s?k=';
+  var TAG = '&tag=9908qq-20';
 
   function renderError() {
-    grid.innerHTML = '<p class="error"><i class="fa-solid fa-triangle-exclamation"></i>Failed to load categories. Please try again later.</p>';
+    grid.innerHTML = '<p class="error"><i class="fa-solid fa-triangle-exclamation"></i>Category directory failed to load. Please refresh and try again.</p>';
   }
 
-  function buildSubcard(sub) {
-    var url = 'https://www.amazon.com/s?k=' + encodeURIComponent(sub.keywords) + '&tag=' + AFFILIATE_TAG;
-    var a = document.createElement('a');
-    a.className = 'sub-item';
-    a.href = url;
-    a.target = '_blank';
-    a.rel = 'noopener';
-    a.setAttribute('aria-label', sub.name + ' - Search on Amazon US');
-    a.innerHTML = '<i class="fa-solid fa-arrow-up-right-from-square"></i><span>' + sub.name + '</span>';
-    return a;
+  function runSearch() {
+    var q = (searchInput.value || '').trim();
+    if (!q) { searchInput.focus(); return; }
+    gtag('event', 'amazon_us_search', { keyword: q });
+    window.open(DOMAIN + encodeURIComponent(q) + TAG, '_blank', 'noopener');
   }
 
-  function buildCategoryCard(cat) {
+  searchBtn.addEventListener('click', runSearch);
+  searchInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); runSearch(); }
+  });
+
+  function buildCard(cat) {
     var card = document.createElement('div');
     card.className = 'category-card';
 
-    var head = document.createElement('div');
-    head.className = 'card-head';
-    head.setAttribute('role', 'button');
-    head.setAttribute('tabindex', '0');
-    head.setAttribute('aria-expanded', 'false');
-    head.setAttribute('aria-controls', 'sublist-' + cat.id);
-    head.innerHTML =
-      '<div class="icon-circle"><i class="fa-solid ' + cat.icon + '"></i></div>' +
-      '<div><div class="card-title">' + cat.name + '</div></div>' +
-      '<i class="fa-solid fa-chevron-down toggle-icon"></i>';
+    var header = document.createElement('div');
+    header.className = 'card-header';
+    header.setAttribute('role', 'button');
+    header.setAttribute('aria-expanded', 'false');
+    header.setAttribute('tabindex', '0');
+    header.innerHTML =
+      '<div class="cat-icon"><i class="fa-solid ' + cat.icon + '"></i></div>' +
+      '<div>' +
+        '<div class="cat-title">' + cat.name + '</div>' +
+        '<span class="cat-count">' + cat.subcategories.length + ' subcategories</span>' +
+      '</div>' +
+      '<i class="fa-solid fa-chevron-down cat-toggle"></i>';
+
+    header.addEventListener('click', function () { toggleCard(card); });
+    header.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleCard(card); }
+    });
 
     var list = document.createElement('div');
     list.className = 'subcategory-list';
-    list.id = 'sublist-' + cat.id;
-    cat.subcategories.forEach(function (sub) { list.appendChild(buildSubcard(sub)); });
-
-    var expanded = false;
-    function toggle() {
-      expanded = !expanded;
-      card.classList.toggle('open', expanded);
-      head.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-    }
-    head.addEventListener('click', toggle);
-    head.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+    cat.subcategories.forEach(function (sub) {
+      var a = document.createElement('a');
+      a.href = DOMAIN + encodeURIComponent(sub.keywords) + TAG;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.title = sub.name + ' — Search on Amazon US';
+      a.innerHTML = '<i class="fa-solid fa-arrow-up-right-from-square"></i>' + sub.name;
+      list.appendChild(a);
     });
 
-    card.appendChild(head);
+    card.appendChild(header);
     card.appendChild(list);
     return card;
   }
 
+  function toggleCard(card) {
+    var expanded = card.classList.toggle('expanded');
+    card.querySelector('.card-header').setAttribute('aria-expanded', String(expanded));
+  }
+
   function render(categories) {
     grid.innerHTML = '';
-    categories.forEach(function (cat) { grid.appendChild(buildCategoryCard(cat)); });
+    counter.textContent = '(' + categories.length + ' categories)';
+    categories.forEach(function (cat) { grid.appendChild(buildCard(cat)); });
   }
 
   fetch('../data/amazon-categories.json', { cache: 'no-store' })
