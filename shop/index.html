@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GugoPro Shop Portal | 亞馬遜商城總入口</title>
-<meta name="description" content="GugoPro 亞馬遜商城總門戶：18 大官方全品類，選擇前往美國亞馬遜專區（Amazon US Store）或日本亞馬遜專區（Amazon JP ストア），精選電競設備、生活家電、棋牌周邊、投資書單與塔羅水晶好物。">
+<meta name="description" content="GugoPro 亞馬遜商城總門戶：10 大品類部門・36 類精選子分類，選擇前往美國亞馬遜專區（Amazon US Store）或日本亞馬遜專區（Amazon JP ストア），精選電競設備、生活家電、棋牌周邊、投資書單與塔羅水晶好物。">
 <meta name="keywords" content="GugoPro, Shop Portal, Amazon US, Amazon JP, 商城入口, 18 大分類, gugopro.com">
 <meta name="author" content="GugoPro AI Team">
 
@@ -272,9 +272,9 @@
   <h1><i class="fa-solid fa-store"></i> 亞馬遜商城總入口</h1>
   <p>歡迎來到 GugoPro 商城！整合 Amazon 官方 18 大全品類 — 從 3C 電腦、電競設備、生活家電、棋牌博弈、投資書單到塔羅水晶與寵物用品，請選擇您要前往的亞馬遜地區門市，即可一鍵搜尋精選好物。</p>
   <div class="hero-stats">
-    <div><strong>18</strong><span>大官方全品類</span></div>
+    <div><strong>10</strong><span>大品類部門</span></div>
     <div><strong>2</strong><span>地區門市（美・日）</span></div>
-    <div><strong>85+</strong><span>精選子分類</span></div>
+    <div><strong>100+</strong><span>精選搜尋項目</span></div>
   </div>
   <div class="kofi-wrap">
     <a href="https://ko-fi.com/R1K123XRS9" target="_blank" rel="noopener" class="kofi-button"><i class="fa-solid fa-mug-hot"></i> Buy me a coffee</a>
@@ -329,7 +329,7 @@
 
   function render(categories) {
     grid.innerHTML = '';
-    var total = categories.us_categories.reduce(function (sum, c) { return sum + c.subcategories.length; }, 0);
+    var total = categories.us_categories.reduce(function (sum, d) { return sum + d.categories.reduce(function (s, c) { return s + c.leaf_items.length; }, 0); }, 0);
     var us = {
       cls: 'us',
       href: '../amazon-us/index.html',
@@ -350,11 +350,11 @@
       hints: [],
       btnText: '進入日本門市'
     };
-    us.hints = categories.us_categories.map(function (c) { return c.name; }).slice(0, 8);
-    jp.hints = categories.jp_categories.map(function (c) { return c.name; }).slice(0, 8);
+    us.hints = categories.us_categories.map(function (d) { return d.department_name; }).slice(0, 8);
+    jp.hints = categories.jp_categories.map(function (d) { return d.department_name; }).slice(0, 8);
     grid.appendChild(buildPortalCard(us));
     grid.appendChild(buildPortalCard(jp));
-    gtag('event', 'shop_portal_loaded', { us_count: total });
+    gtag('event', 'shop_portal_loaded', { total_items: total });
   }
 
   fetch('../data/amazon-categories.json', { cache: 'no-store' })

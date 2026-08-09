@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Amazon US Store | Product Search & Navigation | GugoPro</title>
-<meta name="description" content="GugoPro Amazon US Store — browse 18 official Amazon categories with dynamic subcategory search links. Gaming, home & kitchen, books, tarot & more, all with the official GugoPro affiliate tag.">
+<title>Amazon US Store | Product Search &amp; Navigation | GugoPro</title>
+<meta name="description" content="GugoPro Amazon US Store — deep 4-tier product taxonomy with Amazon-native filters: star rating, sorting, and custom price range. All links carry the official GugoPro affiliate tag.">
 <meta name="keywords" content="Amazon US, Amazon Store, GugoPro, affiliate, category directory">
 <meta name="author" content="GugoPro AI Team">
 
@@ -74,9 +74,10 @@
     color: #fff;
     box-shadow: 0 4px 14px var(--glow);
   }
+  .top-nav .kofi { margin-left: auto; background: #72a4f2; color: #fff; }
 
   /* ===== Hero ===== */
-  .hero { text-align: center; padding: 52px 20px 10px; }
+  .hero { text-align: center; padding: 46px 20px 14px; }
   .hero h1 {
     font-size: clamp(26px, 4.5vw, 42px);
     background: linear-gradient(135deg, #7FD4F0, var(--accent));
@@ -85,53 +86,85 @@
     color: transparent;
     margin-bottom: 12px;
   }
-  .hero p { color: var(--text-muted); max-width: 680px; margin: 0 auto; line-height: 1.75; font-size: 15px; }
+  .hero p { color: var(--text-muted); max-width: 740px; margin: 0 auto; line-height: 1.75; font-size: 15px; }
 
-  .kofi-wrap { margin-top: 22px; }
-  .kofi-button {
-    background: #72a4f2; color: #fff; padding: 10px 18px; border-radius: 8px;
-    text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-weight: bold; font-size: 14px;
-  }
-
-  /* ===== Live Search Box ===== */
-  .search-wrap {
-    max-width: 640px;
-    margin: 32px auto 0;
+  /* ===== Filter Control Toolbar ===== */
+  .filterbar {
+    max-width: 1200px;
+    margin: 26px auto 0;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 16px 18px;
     display: flex;
-    gap: 10px;
-    padding: 0 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-end;
   }
-  .search-wrap input {
-    flex: 1;
+  .fg { display: flex; flex-direction: column; gap: 6px; }
+  .fg label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    font-weight: 700;
+  }
+  .fg label i { margin-right: 5px; color: var(--accent); }
+  .filterbar input[type="text"] {
+    min-width: 280px;
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid var(--card-border);
     border-radius: 12px;
-    padding: 13px 18px;
+    padding: 12px 16px;
     color: var(--text-main);
-    font-size: 15px;
+    font-size: 14.5px;
     outline: none;
     transition: border 0.25s ease, box-shadow 0.25s ease;
   }
-  .search-wrap input:focus {
+  .filterbar input[type="text"]:focus {
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--glow);
   }
-  .search-wrap button {
+  .filterbar select {
+    background: #0E2A3C;
+    color: var(--text-main);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 14px;
+    outline: none;
+    cursor: pointer;
+  }
+  .filterbar select:focus { border-color: var(--accent); }
+  .filterbar input[type="number"] {
+    width: 118px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    color: var(--text-main);
+    font-size: 14px;
+    outline: none;
+  }
+  .filterbar input[type="number"]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--glow); }
+  .btn-search {
     background: linear-gradient(135deg, var(--accent), var(--accent-2));
     color: #fff;
     border: none;
     border-radius: 12px;
-    padding: 13px 22px;
-    font-size: 15px;
+    padding: 12px 20px;
+    font-size: 14px;
     font-weight: 700;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     transition: transform 0.2s ease, filter 0.2s ease;
   }
-  .search-wrap button:hover { transform: translateY(-2px); filter: brightness(1.1); }
+  .btn-search:hover { transform: translateY(-2px); filter: brightness(1.1); }
 
-  /* ===== Category Grid ===== */
-  .container { max-width: 1280px; margin: 0 auto; padding: 36px 18px 0; }
-
+  /* ===== Section Heading ===== */
+  .container { max-width: 1280px; margin: 0 auto; padding: 34px 18px 0; }
   .grid-title {
     font-size: 18px;
     font-weight: 700;
@@ -140,34 +173,31 @@
   }
   .grid-title span { color: var(--accent); }
 
-  .category-grid {
+  /* ===== Tier 1: Departments ===== */
+  .dept-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 18px;
+    gap: 16px;
   }
-
-  .category-card {
+  .dept-card {
     background: var(--card-bg);
     border: 1px solid var(--card-border);
+    border-left: 4px solid var(--accent);
     border-radius: 16px;
-    padding: 18px 18px 16px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    overflow: hidden;
   }
-  .category-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
-  }
-
-  .category-card .card-header {
+  .dept-head {
     display: flex;
     align-items: center;
     gap: 12px;
+    padding: 15px 16px;
     cursor: pointer;
     user-select: none;
+    transition: background 0.2s ease;
   }
-  .category-card .card-header:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 8px; }
-
-  .cat-icon {
+  .dept-head:hover { background: rgba(255, 255, 255, 0.05); }
+  .dept-head:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .dept-icon {
     width: 42px;
     height: 42px;
     border-radius: 12px;
@@ -179,45 +209,78 @@
     color: #fff;
     flex-shrink: 0;
   }
-  .cat-title { font-size: 15px; font-weight: 700; line-height: 1.35; }
-  .cat-count { display: block; font-size: 11.5px; color: var(--text-muted); margin-top: 3px; }
-  .cat-toggle {
-    margin-left: auto;
+  .dept-title { flex: 1; }
+  .dept-title .nm { font-size: 15px; font-weight: 700; line-height: 1.35; }
+  .dept-title .sub { display: block; font-size: 11.5px; color: var(--text-muted); margin-top: 3px; }
+  .dept-toggle {
     color: var(--text-muted);
     font-size: 14px;
     transition: transform 0.25s ease;
   }
-  .category-card.expanded .cat-toggle { transform: rotate(180deg); }
+  .dept-card.expanded .dept-toggle { transform: rotate(180deg); }
 
-  .subcategory-list {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.35s ease;
+  .dept-body { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
+  .dept-card.expanded .dept-body { max-height: 2400px; }
+  .dept-inner { padding: 0 16px 14px; }
+
+  /* ===== Tier 2: Categories ===== */
+  .cat-box { border: 1px solid var(--card-border); border-radius: 12px; margin-top: 10px; overflow: hidden; }
+  .cat-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 11px 14px;
+    background: rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s ease;
   }
-  .category-card.expanded .subcategory-list { max-height: 420px; }
+  .cat-head:hover { background: rgba(0, 168, 225, 0.12); }
+  .cat-head:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .cat-head .n { font-size: 13.5px; font-weight: 600; color: var(--text-main); }
+  .cat-head .n small { color: var(--text-muted); font-weight: 400; margin-left: 6px; }
+  .cat-head i { color: var(--text-muted); font-size: 12px; transition: transform 0.25s ease; }
+  .cat-box.expanded > .cat-head i { transform: rotate(90deg); }
 
-  .subcategory-list a {
+  .leaf-grid {
+    padding: 10px 12px 12px;
+    background: rgba(0, 0, 0, 0.22);
+    display: none;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 8px;
+  }
+  .cat-box.expanded > .leaf-grid { display: grid; }
+
+  .leaf-item {
     display: block;
-    margin-top: 10px;
     padding: 9px 12px;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 10px;
-    color: var(--text-muted);
-    font-size: 13px;
-    text-decoration: none;
+    cursor: pointer;
     transition: all 0.2s ease;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
-  .subcategory-list a:hover {
+  .leaf-item:hover {
     background: rgba(0, 168, 225, 0.12);
     border-color: rgba(0, 168, 225, 0.4);
-    color: var(--text-main);
     transform: translateX(3px);
   }
-  .subcategory-list a i { margin-right: 8px; color: var(--accent); }
+  .leaf-item:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .leaf-item .ln {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-main);
+    line-height: 1.35;
+  }
+  .leaf-item .ln i { margin-right: 7px; color: var(--accent); font-size: 12px; }
+  .leaf-item .kw {
+    display: block;
+    margin-top: 4px;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    word-break: break-word;
+  }
 
   .loading, .error {
     text-align: center;
@@ -237,11 +300,17 @@
   footer a { color: var(--accent); text-decoration: none; }
   footer a:hover { text-decoration: underline; }
 
+  @media (max-width: 900px) {
+    .filterbar input[type="text"] { min-width: 100%; }
+    .filterbar select, .filterbar input[type="number"] { flex: 1; min-width: 110px; }
+    .btn-search { width: 100%; justify-content: center; }
+  }
   @media (max-width: 760px) {
     .top-nav { justify-content: flex-start; }
     .top-nav a { font-size: 13px; padding: 7px 11px; }
-    .category-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
-    .cat-title { font-size: 13.5px; }
+    .top-nav .kofi { margin-left: auto; }
+    .dept-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+    .dept-title .nm { font-size: 13.5px; }
   }
 </style>
 </head>
@@ -249,113 +318,206 @@
 
 <!-- Top Navigation -->
 <nav class="top-nav" aria-label="Store Navigation">
-  <a href="./index.html" class="active"><i class="fa-solid fa-flag-usa"></i> 🇺🇸 Amazon US Store</a>
-  <a href="../amazon-jp/index.html"><i class="fa-solid fa-torii-gate"></i> 🇯🇵 Amazon JP ストア</a>
+  <a href="./index.html" class="active"><i class="fa-solid fa-flag-usa"></i> Amazon US Store</a>
+  <a href="../amazon-jp/index.html"><i class="fa-solid fa-torii-gate"></i> Amazon JP ストア</a>
   <a href="https://gugopro.com"><i class="fa-solid fa-house"></i> Return to GugoPro Home</a>
   <a href="../shop/"><i class="fa-solid fa-door-open"></i> Return to Store Portal</a>
+  <a href="https://ko-fi.com/R1K123XRS9" target="_blank" rel="noopener" class="kofi"><i class="fa-solid fa-mug-hot"></i> Buy me a coffee</a>
 </nav>
 
 <!-- Hero -->
 <header class="hero">
   <h1><i class="fa-solid fa-cart-shopping"></i> Amazon US Store</h1>
-  <p>Browse our curated directory of <strong>18 official Amazon categories</strong> — from electronics & gaming gear to home appliances, trading books, tarot decks and beyond. Tap any category to reveal subcategories, then search Amazon.com instantly with GugoPro official affiliate links.</p>
-  <div class="kofi-wrap">
-    <a href="https://ko-fi.com/R1K123XRS9" target="_blank" rel="noopener" class="kofi-button"><i class="fa-solid fa-mug-hot"></i> Buy me a coffee</a>
-  </div>
+  <p>Browse our deep <strong>4-tier product taxonomy</strong> — departments, categories, and hand-picked leaf items. Use the native filter toolbar to apply <strong>star ratings, price sorting, and custom price ranges</strong> to any search. One click opens Amazon.com with the official GugoPro affiliate link.</p>
 </header>
 
-<!-- Live Search Box -->
-<div class="search-wrap" role="search">
-  <label for="us-search" style="position:absolute;width:1px;height:1px;overflow:hidden;">Search Amazon US</label>
-  <input id="us-search" type="text" placeholder="Search Amazon US... (e.g. gaming phone cooling fan)" aria-label="Search Amazon US">
-  <button id="us-search-btn" type="button" aria-label="Search"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+<!-- Filter Control Toolbar -->
+<div class="filterbar" role="search" aria-label="Amazon US search filters">
+  <div class="fg" style="flex: 2; min-width: 230px;">
+    <label for="us-search"><i class="fa-solid fa-magnifying-glass"></i>Keyword Search</label>
+    <input id="us-search" type="text" placeholder="Search Amazon US... (e.g. gaming phone cooler)">
+  </div>
+  <div class="fg">
+    <label for="us-rating"><i class="fa-solid fa-star"></i>Star Rating</label>
+    <select id="us-rating">
+      <option value="">All Stars</option>
+      <option value="p_72:1249150011">4 Stars &amp; Up</option>
+    </select>
+  </div>
+  <div class="fg" style="flex: 1.4; min-width: 160px;">
+    <label for="us-sort"><i class="fa-solid fa-arrow-down-short-wide"></i>Sort By</label>
+    <select id="us-sort">
+      <option value="relevanceblender">Featured</option>
+      <option value="price-asc-rank">Price: Low to High</option>
+      <option value="price-desc-rank">Price: High to Low</option>
+      <option value="review-rank">Avg. Customer Review</option>
+      <option value="date-desc-rank">Newest Arrivals</option>
+      <option value="exact-aware-popularity-rank">Best Sellers</option>
+    </select>
+  </div>
+  <div class="fg">
+    <label for="us-low"><i class="fa-solid fa-dollar-sign"></i>Min Price ($)</label>
+    <input id="us-low" type="number" min="0" step="1" placeholder="0">
+  </div>
+  <div class="fg">
+    <label for="us-high"><i class="fa-solid fa-dollar-sign"></i>Max Price ($)</label>
+    <input id="us-high" type="number" min="0" step="1" placeholder="Max">
+  </div>
+  <button id="us-search-btn" type="button" class="btn-search" aria-label="Search Amazon US"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
 </div>
 
-<!-- 18-Category Grid -->
+<!-- 4-Tier Product Taxonomy Tree -->
 <main class="container">
-  <p class="grid-title"><span><i class="fa-solid fa-th-large"></i></span> 18 Full Categories Directory <span id="cat-counter"></span></p>
-  <div id="category-grid" class="category-grid">
-    <p class="loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading category directory...</p>
+  <p class="grid-title"><span><i class="fa-solid fa-diagram-project"></i></span> Product Taxonomy Tree <span id="cat-counter"></span></p>
+  <div id="dept-grid" class="dept-grid">
+    <p class="loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading product taxonomy tree...</p>
   </div>
 </main>
 
 <footer>
-  <p>GugoPro (gugopro.com) Amazon US Store · Product search powered by Amazon.com; some links contain the official affiliate tag (tag=9908qq-20).</p>
+  <p>GugoPro (gugopro.com) Amazon US Store · Product search powered by Amazon.com; links contain the official affiliate tag (tag=9908qq-20).</p>
 </footer>
 
 <script>
 (function () {
-  var grid = document.getElementById('category-grid');
+  var grid = document.getElementById('dept-grid');
   var counter = document.getElementById('cat-counter');
   var searchInput = document.getElementById('us-search');
   var searchBtn = document.getElementById('us-search-btn');
-  var DOMAIN = 'https://www.amazon.com/s?k=';
-  var TAG = '&tag=9908qq-20';
+  var ratingSel = document.getElementById('us-rating');
+  var sortSel = document.getElementById('us-sort');
+  var lowInput = document.getElementById('us-low');
+  var highInput = document.getElementById('us-high');
+  var DOMAIN = 'https://www.amazon.com/s';
+  var TAG = '9908qq-20';
 
-  function renderError() {
-    grid.innerHTML = '<p class="error"><i class="fa-solid fa-triangle-exclamation"></i>Category directory failed to load. Please refresh and try again.</p>';
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (m) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+    });
   }
 
-  function runSearch() {
-    var q = (searchInput.value || '').trim();
-    if (!q) { searchInput.focus(); return; }
-    gtag('event', 'amazon_us_search', { keyword: q });
-    window.open(DOMAIN + encodeURIComponent(q) + TAG, '_blank', 'noopener');
+  function buildSearchUrl(keywords) {
+    var q = (keywords || searchInput.value || '').trim();
+    if (!q) { return null; }
+    var params = new URLSearchParams();
+    params.set('k', q);
+    params.set('s', sortSel.value);
+    if (ratingSel.value) { params.set('rh', ratingSel.value); }
+    if (lowInput.value !== '' && !isNaN(parseFloat(lowInput.value))) { params.set('low-price', lowInput.value); }
+    if (highInput.value !== '' && !isNaN(parseFloat(highInput.value))) { params.set('high-price', highInput.value); }
+    params.set('tag', TAG);
+    return DOMAIN + '?' + params.toString();
   }
 
-  searchBtn.addEventListener('click', runSearch);
+  function doSearch(keywords) {
+    var url = buildSearchUrl(keywords);
+    if (!url) { searchInput.focus(); return; }
+    gtag('event', 'amazon_us_search', { keyword: keywords || (searchInput.value || '').trim() });
+    window.open(url, '_blank', 'noopener');
+  }
+
+  searchBtn.addEventListener('click', function () { doSearch(null); });
   searchInput.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') { e.preventDefault(); runSearch(); }
+    if (e.key === 'Enter') { e.preventDefault(); doSearch(null); }
   });
 
-  function buildCard(cat) {
+  function toggleDept(card) {
+    var expanded = card.classList.toggle('expanded');
+    card.querySelector('.dept-head').setAttribute('aria-expanded', String(expanded));
+  }
+
+  function toggleCat(box) {
+    var expanded = box.classList.toggle('expanded');
+    box.querySelector('.cat-head').setAttribute('aria-expanded', String(expanded));
+  }
+
+  function buildDept(dept) {
     var card = document.createElement('div');
-    card.className = 'category-card';
+    card.className = 'dept-card';
 
-    var header = document.createElement('div');
-    header.className = 'card-header';
-    header.setAttribute('role', 'button');
-    header.setAttribute('aria-expanded', 'false');
-    header.setAttribute('tabindex', '0');
-    header.innerHTML =
-      '<div class="cat-icon"><i class="fa-solid ' + cat.icon + '"></i></div>' +
-      '<div>' +
-        '<div class="cat-title">' + cat.name + '</div>' +
-        '<span class="cat-count">' + cat.subcategories.length + ' subcategories</span>' +
+    var nCats = dept.categories.length;
+    var nItems = 0;
+    dept.categories.forEach(function (c) { nItems += c.leaf_items.length; });
+
+    var head = document.createElement('div');
+    head.className = 'dept-head';
+    head.setAttribute('role', 'button');
+    head.setAttribute('aria-expanded', 'false');
+    head.setAttribute('tabindex', '0');
+    head.innerHTML =
+      '<div class="dept-icon"><i class="fa-solid ' + dept.icon + '"></i></div>' +
+      '<div class="dept-title">' +
+        '<div class="nm">' + esc(dept.department_name) + '</div>' +
+        '<span class="sub">' + nCats + ' categories · ' + nItems + ' products</span>' +
       '</div>' +
-      '<i class="fa-solid fa-chevron-down cat-toggle"></i>';
-
-    header.addEventListener('click', function () { toggleCard(card); });
-    header.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleCard(card); }
+      '<i class="fa-solid fa-chevron-down dept-toggle"></i>';
+    head.addEventListener('click', function () { toggleDept(card); });
+    head.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleDept(card); }
     });
 
-    var list = document.createElement('div');
-    list.className = 'subcategory-list';
-    cat.subcategories.forEach(function (sub) {
-      var a = document.createElement('a');
-      a.href = DOMAIN + encodeURIComponent(sub.keywords) + TAG;
-      a.target = '_blank';
-      a.rel = 'noopener';
-      a.title = sub.name + ' — Search on Amazon US';
-      a.innerHTML = '<i class="fa-solid fa-arrow-up-right-from-square"></i>' + sub.name;
-      list.appendChild(a);
+    var inner = document.createElement('div');
+    inner.className = 'dept-inner';
+    dept.categories.forEach(function (cat) {
+      var box = document.createElement('div');
+      box.className = 'cat-box';
+      var ch = document.createElement('div');
+      ch.className = 'cat-head';
+      ch.setAttribute('role', 'button');
+      ch.setAttribute('tabindex', '0');
+      ch.innerHTML =
+        '<span class="n">' + esc(cat.name) + '<small>(' + cat.leaf_items.length + ' products)</small></span>' +
+        '<i class="fa-solid fa-caret-right"></i>';
+      ch.addEventListener('click', function () { toggleCat(box); });
+      ch.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleCat(box); }
+      });
+      var lg = document.createElement('div');
+      lg.className = 'leaf-grid';
+      cat.leaf_items.forEach(function (leaf) {
+        var item = document.createElement('span');
+        item.className = 'leaf-item';
+        item.setAttribute('role', 'button');
+        item.setAttribute('tabindex', '0');
+        item.title = leaf.name + ' — search on Amazon US with current filters';
+        item.innerHTML =
+          '<span class="ln"><i class="fa-solid fa-arrow-up-right-from-square"></i>' + esc(leaf.name) + '</span>' +
+          '<span class="kw">' + esc(leaf.keywords) + '</span>';
+        item.addEventListener('click', function () { doSearch(leaf.keywords); });
+        item.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); doSearch(leaf.keywords); }
+        });
+        lg.appendChild(item);
+      });
+      box.appendChild(ch);
+      box.appendChild(lg);
+      inner.appendChild(box);
     });
 
-    card.appendChild(header);
-    card.appendChild(list);
+    var body = document.createElement('div');
+    body.className = 'dept-body';
+    body.appendChild(inner);
+
+    card.appendChild(head);
+    card.appendChild(body);
     return card;
   }
 
-  function toggleCard(card) {
-    var expanded = card.classList.toggle('expanded');
-    card.querySelector('.card-header').setAttribute('aria-expanded', String(expanded));
+  function render(data) {
+    var depts = data.us_categories;
+    var nCats = 0, nItems = 0;
+    grid.innerHTML = '';
+    depts.forEach(function (dept) {
+      nCats += dept.categories.length;
+      dept.categories.forEach(function (c) { nItems += c.leaf_items.length; });
+      grid.appendChild(buildDept(dept));
+    });
+    counter.textContent = '(' + depts.length + ' departments · ' + nCats + ' categories · ' + nItems + ' products)';
   }
 
-  function render(categories) {
-    grid.innerHTML = '';
-    counter.textContent = '(' + categories.length + ' categories)';
-    categories.forEach(function (cat) { grid.appendChild(buildCard(cat)); });
+  function renderError() {
+    grid.innerHTML = '<p class="error"><i class="fa-solid fa-triangle-exclamation"></i>Product taxonomy tree failed to load. Please refresh and try again.</p>';
   }
 
   fetch('../data/amazon-categories.json', { cache: 'no-store' })
@@ -363,7 +525,7 @@
       if (!res.ok) { throw new Error('HTTP ' + res.status); }
       return res.json();
     })
-    .then(function (data) { render(data.us_categories); })
+    .then(render)
     .catch(renderError);
 })();
 </script>
