@@ -652,6 +652,35 @@
     });
   }
 
+  /* ---------- Hard-code safety guards (Tier 1/2 must never carry Amazon URLs) ---------- */
+  function markInSite(el) {
+    el.setAttribute('data-no-external', '1');
+  }
+  function assertNoAmazonIn(el, ctx) {
+    var html = el.outerHTML || '';
+    if (/https?:\/\/www\.amazon\.co?\.jp/.test(html)) {
+      throw new Error('[GugoPro] Amazon URL detected inside ' + ctx + ' — Tier 1/2 elements are forbidden to carry Amazon links');
+    }
+  }
+  /* Unified in-site expand API required by spec: openSubPanel(categoryId). Tier 2 cards
+     enter through this function, stay inside GugoPro, and expand their leaf tiles
+     in an accordion sub-panel; they never open Amazon. */
+  window.openSubPanel = function (categoryId) {
+    goCat(categoryId);
+  };
+  /* Global capture-phase interception: any element marked data-no-external is allowed
+     to trigger in-site expand only; block the default if it would navigate to Amazon. */
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest('[data-no-external]');
+    if (!el) { return; }
+    if (el.href && /https?:\/\/www\.amazon\.co?\.jp/.test(el.href)) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      console.warn('[GugoPro] Blocked forbidden Amazon navigation from Tier 1/2 element');
+    }
+  }, true);
+
   /* ---------- Navigation ---------- */
   function goRoot() {
     currentDeptId = null;
@@ -735,6 +764,7 @@
     head.setAttribute('role', 'button');
     head.setAttribute('aria-expanded', 'false');
     head.setAttribute('tabindex', '0');
+    markInSite(head);
     head.innerHTML =
       '<div class="dept-icon"><i class="fa-solid ' + dept.icon + '"></i></div>' +
       '<div class="dept-title">' +
@@ -742,6 +772,7 @@
         '<span class="sub">' + nCats + ' categories · ' + nItems + ' products</span>' +
       '</div>' +
       '<i class="fa-solid fa-chevron-down dept-toggle"></i>';
+    assertNoAmazonIn(head, 'dept-head');
     head.addEventListener('click', function () { toggleDept(card); });
     head.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleDept(card); }
@@ -756,9 +787,11 @@
       ch.className = 'cat-head';
       ch.setAttribute('role', 'button');
       ch.setAttribute('tabindex', '0');
+      markInSite(ch);
       ch.innerHTML =
         '<span class="n">' + esc(cat.name) + '<small>(' + cat.leaf_items.length + ' products)</small></span>' +
         '<i class="fa-solid fa-caret-right"></i>';
+      assertNoAmazonIn(ch, 'cat-head');
       ch.addEventListener('click', function () {
         box.classList.toggle('expanded');
         ch.querySelector('i').style.transform = box.classList.contains('expanded') ? 'rotate(90deg)' : '';
@@ -818,11 +851,13 @@
       card.className = 'cat-card';
       card.setAttribute('role', 'button');
       card.setAttribute('tabindex', '0');
+      markInSite(card);
       var kw = cat.leaf_items.map(function (l) { return l.keywords; }).join('; ');
       card.innerHTML =
         '<div class="cat-name">' + esc(cat.name) + '</div>' +
         '<div class="cat-desc">' + cat.leaf_items.length + ' hand-picked product lines: ' + esc(cat.leaf_items.slice(0, 3).map(function (l) { return l.name; }).join(' · ')) + '</div>' +
         '<span class="enter"><i class="fa-solid fa-arrow-right"></i> Enter Category</span>';
+      assertNoAmazonIn(card, 'cat-card');
       card.addEventListener('click', function () { goCat(cat.id); });
       card.addEventListener('keydown', function (e) {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goCat(cat.id); }
