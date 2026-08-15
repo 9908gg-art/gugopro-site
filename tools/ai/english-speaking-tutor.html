@@ -897,7 +897,7 @@
         let currentModel = null;
         let modelQueue = [];
         let lastRequest = null;
-        const REQUEST_TIMEOUT_MS = 8000;
+        const REQUEST_TIMEOUT_MS = 10000;
         const CIRCUIT_COOLDOWN_MS = 3 * 60 * 1000;
         const MODEL_DISCOVERY_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
         const CIRCUIT_STATE_KEY = 'gugopro_ai_circuit_breaker_v1';
@@ -1323,10 +1323,6 @@
 
             const apiKey = localStorage.getItem('gemini_api_key')?.trim();
             if (!apiKey) { checkApiKey(); return; }
-            if (!currentModel || modelQueue.length === 0) {
-                await fetchLatestModel();
-                if (!currentModel) { showError('❌ 尚未取得可用模型，請檢查網路連線或稍後重試。'); return; }
-            }
 
             const myLang = request.myLang || document.getElementById('my-lang').value;
             const targetLang = request.targetLang || document.getElementById('target-lang').value;
@@ -1335,16 +1331,23 @@
             lastRequest = { content, myLang, targetLang, inputLang, msgId };
             if (!retryRequest) textInput.value = '';
 
+            // Render immediately so network/model discovery cannot make the send button appear unresponsive.
             if (!document.querySelector(`[data-id="${msgId}"]`)) {
                 addMessageToUI('user', content, '正在處理...', null, msgId);
             } else {
                 const existingMsg = document.querySelector(`[data-id="${msgId}"]`);
-                existingMsg.querySelector('.msg-learning').textContent = '正在處理...';
-                existingMsg.querySelector('.msg-my').textContent = '';
+                existingMsg.querySelector('.msg-learning').textContent = content;
+                existingMsg.querySelector('.msg-my').textContent = '正在處理...';
             }
             scrollToBottom();
 
+            const sendButton = document.getElementById('btn-send');
+            sendButton.setAttribute('aria-busy', 'true');
             try {
+                if (!currentModel || modelQueue.length === 0) {
+                    await fetchLatestModel();
+                    if (!currentModel) throw Object.assign(new Error('NO_ACTIVE_MODELS'), { status: 503 });
+                }
                 const response = await callGemini(content, myLang, targetLang, inputLang, apiKey);
                 const userMsgEl = document.querySelector(`[data-id="${msgId}"]`);
                 if (userMsgEl) {
@@ -1364,6 +1367,9 @@
             } catch (err) {
                 console.error('API Error:', err);
                 showError(getUserFacingError(err));
+            } finally {
+                sendButton.removeAttribute('aria-busy');
+                sendButton.classList.remove('loading');
             }
         }
 
@@ -1441,7 +1447,15 @@
                     } else {
                         headers.Authorization = `Bearer ${node.key}`;
                         url = node.endpoint;
-                        body = { model: localStorage.getItem(node.modelStorage) || node.defaultModel, messages: [{ role: 'user', content: prompt }], response_format: { type: 'json_object' } };
+                        const messages = [
+                            { role: 'system', content: 'You are a friendly language tutor. Return only a valid JSON object with user_learning, user_my, correction, tutor_learning, and tutor_my.' },
+                            ...room.messages.slice(-16).map(message => ({
+                                role: message.role === 'user' ? 'user' : 'assistant',
+                                content: `${message.learning || ''}${message.my ? ` (${message.my})` : ''}`
+                            })),
+                            { role: 'user', content: prompt }
+                        ];
+                        body = { model: localStorage.getItem(node.modelStorage) || node.defaultModel, messages, response_format: { type: 'json_object' } };
                     }
                     const res = await fetchWithTimeout(url, { method: 'POST', headers, body: JSON.stringify(body) });
                     if (!res.ok) {
@@ -1603,7 +1617,7 @@
         function getUserFacingError(error) {
             const failures = error.failures || [error];
             if (failures.some(item => item.code === 'TIMEOUT')) {
-                return '伺服器回應逾時（超過 8 秒），請檢查網路連線或稍後重試。';
+                return '伺服器回應逾時（超過 10 秒），請檢查網路連線或稍後重試。';
             }
             if (failures.some(item => item.status === 500 || item.status === 503)) {
                 return '錯誤代碼 503：目前 AI 伺服器集群高度忙碌或 API 配額已耗盡。';
@@ -1618,8 +1632,13 @@
             if (lastRequest) sendMessage(lastRequest);
             else fetchLatestModel();
         };
-        document.getElementById('btn-send').onclick = sendMessage;
-        document.getElementById('user-text').onkeypress = (e) => { if(e.key === 'Enter') sendMessage(); };
+        document.getElementById('btn-send').addEventListener('click', sendMessage);
+        document.getElementById('user-text').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.isComposing) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
     </script>
 </body>
 </html>
