@@ -774,7 +774,7 @@
             <div class="input-wrapper">
                 <div id="error-panel" class="error-panel">
                     <span id="error-msg"></span>
-                    <button id="btn-retry-model" class="btn-tool" style="background:#fff; color:#000; padding:4px 12px; font-size:0.8rem; border-radius:6px; margin-left:10px; font-weight:bold;">🔄 重試</button>
+                    <button id="btn-retry-model" class="btn-tool" style="background:#fff; color:#000; padding:4px 12px; font-size:0.8rem; border-radius:6px; margin-left:10px; font-weight:bold;">一鍵重新送出</button>
                 </div>
 
                 <div class="input-options">
@@ -894,6 +894,11 @@
         let availableModels = [];
         let currentModelIndex = 0;
         let currentModel = null;
+        let modelQueue = [];
+        let lastRequest = null;
+        const REQUEST_TIMEOUT_MS = 8000;
+        const MODEL_DISCOVERY_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
+        const MODEL_CATALOG_URL = 'https://quota.gugopro.com/gemini_rate_limits.json';
         let recognition = null;
         let isRecording = false;
         let inputMode = 'target'; // 'target' or 'my'
@@ -962,21 +967,76 @@
             return 'zh-TW';
         }
 
-        async function fetchLatestModel() {
+        async function fetchWithTimeout(url, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
             try {
-                const res = await fetch('https://quota.gugopro.com/gemini_rate_limits.json');
-                if (!res.ok) throw new Error("Fetch Failed");
-                const data = await res.json();
-                availableModels = data.models.filter(m => m.is_free_tier && m.is_rest_compatible && m.capabilities.includes("text_generation"));
-                if (availableModels.length > 0) {
-                    currentModelIndex = 0;
-                    currentModel = availableModels[currentModelIndex].api_name;
-                    console.log(`Current Model: ${currentModel} (Updated: ${data.last_updated_date})`);
-                    hideError();
-                } else { throw new Error("No models"); }
-            } catch (e) {
-                console.error("❌ 無法取得模型資料", e);
-                showError("❌ 無法取得模型資料，請檢查網路連線。");
+                return await fetch(url, { ...options, signal: controller.signal });
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    const timeoutError = new Error('REQUEST_TIMEOUT');
+                    timeoutError.code = 'TIMEOUT';
+                    throw timeoutError;
+                }
+                throw error;
+            } finally {
+                clearTimeout(timeoutId);
+            }
+        }
+
+        function normaliseModel(model) {
+            const apiName = model.api_name || model.name?.replace(/^models\//, '');
+            if (!apiName) return null;
+            const methods = model.supportedGenerationMethods || model.capabilities || [];
+            const canGenerate = methods.length === 0 || methods.includes('generateContent') || methods.includes('text_generation');
+            return canGenerate ? {
+                api_name: apiName,
+                latency_ms: Number(model.latency_ms || model.response_time_ms || model.avg_latency_ms || Number.MAX_SAFE_INTEGER),
+                priority: Number(model.priority || Number.MAX_SAFE_INTEGER)
+            } : null;
+        }
+
+        async function fetchLatestModel() {
+            const apiKey = localStorage.getItem('gemini_api_key')?.trim();
+            try {
+                let discovered = [];
+                if (apiKey) {
+                    try {
+                        const discoveryUrl = `${MODEL_DISCOVERY_URL}?key=${encodeURIComponent(apiKey)}`;
+                        const res = await fetchWithTimeout(discoveryUrl);
+                        if (!res.ok) throw new Error(`MODEL_DISCOVERY_${res.status}`);
+                        const data = await res.json();
+                        discovered = (data.models || []).map(normaliseModel).filter(Boolean);
+                    } catch (discoveryError) {
+                        console.warn('動態模型端點暫時無法使用，改讀取動態模型目錄。', discoveryError);
+                    }
+                }
+
+                // The catalog remains a dynamic fallback for first launch or providers that hide model metadata.
+                if (discovered.length === 0) {
+                    const res = await fetchWithTimeout(MODEL_CATALOG_URL);
+                    if (!res.ok) throw new Error('MODEL_CATALOG_ERROR');
+                    const data = await res.json();
+                    discovered = (data.models || [])
+                        .filter(model => model.is_free_tier && model.is_rest_compatible && (!model.capabilities || model.capabilities.includes('text_generation')))
+                        .map(normaliseModel).filter(Boolean);
+                }
+
+                modelQueue = discovered
+                    .filter((model, index, models) => models.findIndex(item => item.api_name === model.api_name) === index)
+                    .sort((a, b) => (a.latency_ms - b.latency_ms) || (a.priority - b.priority));
+                availableModels = modelQueue;
+                currentModelIndex = 0;
+                currentModel = modelQueue[0]?.api_name || null;
+                if (!currentModel) throw new Error('NO_ACTIVE_MODELS');
+                hideError();
+                console.log(`Loaded ${modelQueue.length} active models; primary model selected dynamically.`);
+            } catch (error) {
+                console.error('❌ 無法取得動態模型資料', error);
+                availableModels = [];
+                modelQueue = [];
+                currentModel = null;
+                showError('❌ 無法取得模型資料，請檢查網路連線或稍後重試。');
             }
         }
 
@@ -1247,52 +1307,55 @@
         }
 
         // --- Chat Logic ---
-        async function sendMessage() {
-            if (!currentModel) { showError("❌ 尚未取得模型，請重試。"); return; }
+        async function sendMessage(retryRequest = null) {
+            const request = retryRequest || lastRequest || {};
             const textInput = document.getElementById('user-text');
-            const content = textInput.value.trim();
+            const content = (retryRequest ? retryRequest.content : textInput.value).trim();
             if (!content) return;
 
             const apiKey = localStorage.getItem('gemini_api_key')?.trim();
             if (!apiKey) { checkApiKey(); return; }
+            if (!currentModel || modelQueue.length === 0) {
+                await fetchLatestModel();
+                if (!currentModel) { showError('❌ 尚未取得可用模型，請檢查網路連線或稍後重試。'); return; }
+            }
 
-            textInput.value = '';
-            const myLang = document.getElementById('my-lang').value;
-            const targetLang = document.getElementById('target-lang').value;
-            const inputLang = inputMode === 'target' ? targetLang : myLang;
+            const myLang = request.myLang || document.getElementById('my-lang').value;
+            const targetLang = request.targetLang || document.getElementById('target-lang').value;
+            const inputLang = request.inputLang || (inputMode === 'target' ? targetLang : myLang);
+            const msgId = retryRequest?.msgId || lastRequest?.msgId || 'msg-' + Date.now();
+            lastRequest = { content, myLang, targetLang, inputLang, msgId };
+            if (!retryRequest) textInput.value = '';
 
-            const msgId = 'msg-' + Date.now();
-            addMessageToUI('user', content, "正在處理...", null, msgId); 
+            if (!document.querySelector(`[data-id="${msgId}"]`)) {
+                addMessageToUI('user', content, '正在處理...', null, msgId);
+            } else {
+                const existingMsg = document.querySelector(`[data-id="${msgId}"]`);
+                existingMsg.querySelector('.msg-learning').textContent = '正在處理...';
+                existingMsg.querySelector('.msg-my').textContent = '';
+            }
             scrollToBottom();
 
             try {
                 const response = await callGemini(content, myLang, targetLang, inputLang, apiKey);
-                
                 const userMsgEl = document.querySelector(`[data-id="${msgId}"]`);
                 if (userMsgEl) {
                     userMsgEl.querySelector('.msg-learning').textContent = response.user_learning;
                     userMsgEl.querySelector('.msg-my').textContent = response.user_my;
                 }
-                
+
                 const room = chatRooms.find(r => r.id === activeRoomId);
                 room.messages.push({ id: msgId, role: 'user', learning: response.user_learning, my: response.user_my });
-
                 const tutorId = 'tutor-' + Date.now();
                 addMessageToUI('tutor', response.tutor_learning, response.tutor_my, response.correction, tutorId);
                 room.messages.push({ id: tutorId, role: 'tutor', learning: response.tutor_learning, my: response.tutor_my, correction: response.correction });
-
                 speak(response.tutor_learning, targetLang);
                 saveRoomsToLocal();
+                hideError();
                 scrollToBottom();
             } catch (err) {
-                console.error("API Error:", err);
-                if (err.status === 429 && currentModelIndex < availableModels.length - 1) {
-                    currentModelIndex++;
-                    currentModel = availableModels[currentModelIndex].api_name;
-                    console.log(`Switching to backup model: ${currentModel}`);
-                    return sendMessage();
-                }
-                showError(`❌ 錯誤: ${err.status || '連線失敗'}`);
+                console.error('API Error:', err);
+                showError(getUserFacingError(err));
             }
         }
 
@@ -1301,21 +1364,20 @@
             const targetLang = LANG_NAMES[targetLangCode];
             const inputLang = LANG_NAMES[inputLangCode];
             const room = chatRooms.find(r => r.id === activeRoomId);
-            const historyContext = room.messages.slice(-10).map(h => `${h.role === 'user' ? 'Student' : 'Tutor'}: ${h.learning} (${h.my})`).join('\n');
-
+            const historyContext = room.messages.slice(-16).map(h => `${h.role === 'user' ? 'Student' : 'Tutor'}: ${h.learning} (${h.my})`).join('\n');
             const prompt = `You are a friendly language tutor. The student's native language is ${myLang} and they are learning ${targetLang}.
             The student just sent a message in ${inputLang}.
-            
+
             System Instructions:
             - Support situational practice. Roleplay if requested.
             - If student makes mistakes in ${targetLang}, provide a brief, gentle correction at the end.
             - Correction format: "💡 更自然的說法：..." or "⚠️ 小提醒：...".
-            
+
             Recent Context:
             ${historyContext}
-            
+
             Student Input: "${userInput}"
-            
+
             Return ONLY a raw JSON object:
             {
               "user_learning": "${targetLang} version of student input",
@@ -1325,17 +1387,37 @@
               "tutor_my": "Your reply in ${myLang}"
             }`;
 
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${apiKey}`;
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-            });
-
-            if (!res.ok) { const error = new Error("API_ERROR"); error.status = res.status; throw error; }
-            const data = await res.json();
-            const rawText = data.candidates[0].content.parts[0].text;
-            return JSON.parse(rawText.replace(/```json|```/g, '').trim());
+            const failures = [];
+            for (let index = 0; index < modelQueue.length; index++) {
+                const model = modelQueue[index];
+                currentModelIndex = index;
+                currentModel = model.api_name;
+                try {
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model.api_name)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+                    const res = await fetchWithTimeout(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                    });
+                    if (!res.ok) {
+                        const error = new Error('API_ERROR');
+                        error.status = res.status;
+                        throw error;
+                    }
+                    const data = await res.json();
+                    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (!rawText) throw new Error('EMPTY_RESPONSE');
+                    return JSON.parse(rawText.replace(/```json|```/g, '').trim());
+                } catch (error) {
+                    const retryable = error.code === 'TIMEOUT' || [429, 500, 503].includes(error.status);
+                    failures.push(error);
+                    if (!retryable || index === modelQueue.length - 1) break;
+                    showSwitchNotice();
+                }
+            }
+            const finalError = failures[failures.length - 1] || new Error('NO_ACTIVE_MODELS');
+            finalError.failures = failures;
+            throw finalError;
         }
 
         function addMessageToUI(role, learning, my, correction, id) {
@@ -1447,9 +1529,45 @@
         };
 
         // --- Helpers ---
-        function showError(msg) { const p = document.getElementById('error-panel'); document.getElementById('error-msg').textContent = msg; p.style.display = 'block'; }
+        function showError(msg) {
+            const p = document.getElementById('error-panel');
+            document.getElementById('error-msg').textContent = msg;
+            p.style.display = 'block';
+        }
+
         function hideError() { document.getElementById('error-panel').style.display = 'none'; }
-        document.getElementById('btn-retry-model').onclick = fetchLatestModel;
+
+        function showSwitchNotice() {
+            let notice = document.getElementById('model-switch-notice');
+            if (!notice) {
+                notice = document.createElement('div');
+                notice.id = 'model-switch-notice';
+                notice.style.cssText = 'position:fixed;top:78px;left:50%;transform:translateX(-50%);z-index:1000;background:rgba(0,0,0,.82);color:#fff;border:1px solid var(--primary-neon);border-radius:10px;padding:9px 14px;font-size:.82rem;text-align:center;box-shadow:0 4px 18px rgba(0,0,0,.3);';
+                document.body.appendChild(notice);
+            }
+            notice.textContent = '主線路回應較慢，已自動為您切換至備援連線...';
+            clearTimeout(showSwitchNotice.timer);
+            showSwitchNotice.timer = setTimeout(() => notice.remove(), 3000);
+        }
+
+        function getUserFacingError(error) {
+            const failures = error.failures || [error];
+            if (failures.some(item => item.code === 'TIMEOUT')) {
+                return '伺服器回應逾時（超過 8 秒），請檢查網路連線或稍後重試。';
+            }
+            if (failures.some(item => item.status === 429)) {
+                return '當前使用人數較多，已達請求頻率限制，請稍等 10 秒後再試。';
+            }
+            if (failures.some(item => item.status === 500 || item.status === 503)) {
+                return 'AI 模型服務端暫時維護中，系統已嘗試所有備援線路均無回應。';
+            }
+            return 'AI 導師連線失敗，系統已嘗試所有可用模型，請檢查網路連線或稍後重試。';
+        }
+
+        document.getElementById('btn-retry-model').onclick = () => {
+            if (lastRequest) sendMessage(lastRequest);
+            else fetchLatestModel();
+        };
         document.getElementById('btn-send').onclick = sendMessage;
         document.getElementById('user-text').onkeypress = (e) => { if(e.key === 'Enter') sendMessage(); };
     </script>
