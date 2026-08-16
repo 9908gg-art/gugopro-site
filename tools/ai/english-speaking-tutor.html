@@ -907,6 +907,8 @@
             { id: 'groq', label: 'Groq 備援線路', type: 'openai', endpoint: 'https://api.groq.com/openai/v1/chat/completions', keyStorage: 'groq_api_key', modelStorage: 'groq_model', defaultModel: 'llama-3.1-8b-instant' }
         ];
         const MODEL_CATALOG_URL = 'https://quota.gugopro.com/gemini_rate_limits.json';
+        // Known-good fallback models that are confirmed to exist on Google's Gemini API
+        const FALLBACK_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
         let recognition = null;
         let isRecording = false;
         let inputMode = 'target'; // 'target' or 'my'
@@ -1022,13 +1024,26 @@
 
                 // The catalog remains a dynamic fallback for first launch or providers that hide model metadata.
                 if (discovered.length === 0) {
-                    const res = await fetchWithTimeout(MODEL_CATALOG_URL);
-                    if (!res.ok) throw new Error('MODEL_CATALOG_ERROR');
-                    const data = await res.json();
-                    discovered = (data.models || [])
-                        .filter(model => model.is_free_tier && model.is_rest_compatible && (!model.capabilities || model.capabilities.includes('text_generation')))
-                        .map(normaliseModel).filter(Boolean);
+                    try {
+                        const res = await fetchWithTimeout(MODEL_CATALOG_URL);
+                        if (res.ok) {
+                            const data = await res.json();
+                            discovered = (data.models || [])
+                                .filter(model => model.is_free_tier && model.is_rest_compatible && (!model.capabilities || model.capabilities.includes('text_generation')))
+                                .map(normaliseModel).filter(Boolean);
+                        }
+                    } catch (catalogError) {
+                        console.warn('模型目錄暫時無法使用，使用內建備援模型。', catalogError);
+                    }
                 }
+
+                // Always ensure known-good fallback models are included at the end of the queue
+                const discoveredNames = new Set(discovered.map(m => m.api_name));
+                FALLBACK_MODELS.forEach(name => {
+                    if (!discoveredNames.has(name)) {
+                        discovered.push({ api_name: name, latency_ms: Number.MAX_SAFE_INTEGER - 1, priority: 999 });
+                    }
+                });
 
                 modelQueue = discovered
                     .filter((model, index, models) => models.findIndex(item => item.api_name === model.api_name) === index)
@@ -1040,11 +1055,13 @@
                 hideError();
                 console.log(`Loaded ${modelQueue.length} active models; primary model selected dynamically.`);
             } catch (error) {
-                console.error('❌ 無法取得動態模型資料', error);
-                availableModels = [];
-                modelQueue = [];
-                currentModel = null;
-                showError('❌ 無法取得模型資料，請檢查網路連線或稍後重試。');
+                console.error('❌ 無法取得動態模型資料，使用內建備援模型', error);
+                // Even if everything fails, use hardcoded known-good models
+                modelQueue = FALLBACK_MODELS.map(name => ({ api_name: name, latency_ms: 1000, priority: 1 }));
+                availableModels = modelQueue;
+                currentModelIndex = 0;
+                currentModel = modelQueue[0].api_name;
+                hideError();
             }
         }
 
@@ -1429,26 +1446,58 @@
             const configuredNodes = getProviderPool();
             const geminiKeys = getKeyPool(PROVIDER_CONFIGS[0]);
             if (apiKey && !geminiKeys.includes(apiKey)) configuredNodes.unshift({ ...PROVIDER_CONFIGS[0], key: apiKey, keyIndex: -1, nodeId: 'gemini:request' });
+
+            // If no OpenRouter/Groq keys configured, ensure at least the user's Gemini key is used
+            if (configuredNodes.length === 0 && apiKey) {
+                configuredNodes.push({ ...PROVIDER_CONFIGS[0], key: apiKey, keyIndex: 0, nodeId: 'gemini:0' });
+            }
             if (configuredNodes.length === 0) {
                 const error = new Error('NO_CONFIGURED_PROVIDER_KEYS');
                 error.status = 503;
                 throw error;
             }
 
+            // Build a list of models to try for Gemini nodes (iterate through queue + fallbacks)
+            const modelsToTry = [...modelQueue.map(m => m.api_name), ...FALLBACK_MODELS]
+                .filter((name, idx, arr) => arr.indexOf(name) === idx);
+
             for (const node of configuredNodes) {
-                try {
-                    let url;
-                    let body;
-                    const headers = { 'Content-Type': 'application/json' };
-                    if (node.type === 'gemini') {
-                        const model = modelQueue[0]?.api_name || currentModel;
-                        if (!model) throw Object.assign(new Error('NO_ACTIVE_MODELS'), { status: 503 });
-                        currentModel = model;
-                        url = `${node.endpoint}/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(node.key)}`;
-                        body = { contents: [{ parts: [{ text: prompt }] }] };
-                    } else {
-                        headers.Authorization = `Bearer ${node.key}`;
-                        url = node.endpoint;
+                if (node.type === 'gemini') {
+                    // For Gemini nodes, try multiple models sequentially
+                    for (const model of modelsToTry) {
+                        try {
+                            const headers = { 'Content-Type': 'application/json' };
+                            const url = `${node.endpoint}/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(node.key)}`;
+                            const body = { contents: [{ parts: [{ text: prompt }] }] };
+                            const res = await fetchWithTimeout(url, { method: 'POST', headers, body: JSON.stringify(body) });
+                            if (!res.ok) {
+                                const error = Object.assign(new Error('API_ERROR'), { status: res.status });
+                                throw error;
+                            }
+                            const data = await res.json();
+                            const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                            const parsed = JSON.parse(rawText.replace(/```json|```/g, '').trim());
+                            currentModel = model;
+                            clearCircuit(node.nodeId);
+                            return parsed;
+                        } catch (error) {
+                            failures.push(error);
+                            // For 404 (model not found), try next model immediately without circuit break
+                            if (error.status === 404) continue;
+                            // For rate limit / server errors, show notice and try next model
+                            if ([429, 500, 503].includes(error.status) || error.code === 'TIMEOUT') {
+                                showSwitchNotice(error.status || 'TIMEOUT');
+                            }
+                            continue;
+                        }
+                    }
+                    // All models failed for this Gemini node
+                    markRetryableFailure(node, failures[failures.length - 1] || { status: 503 });
+                } else {
+                    // OpenRouter / Groq fallback
+                    try {
+                        const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${node.key}` };
+                        const url = node.endpoint;
                         const messages = [
                             { role: 'system', content: 'You are a friendly language tutor. Return only a valid JSON object with user_learning, user_my, correction, tutor_learning, and tutor_my.' },
                             ...room.messages.slice(-16).map(message => ({
@@ -1457,21 +1506,21 @@
                             })),
                             { role: 'user', content: prompt }
                         ];
-                        body = { model: localStorage.getItem(node.modelStorage) || node.defaultModel, messages, response_format: { type: 'json_object' } };
+                        const body = { model: localStorage.getItem(node.modelStorage) || node.defaultModel, messages, response_format: { type: 'json_object' } };
+                        const res = await fetchWithTimeout(url, { method: 'POST', headers, body: JSON.stringify(body) });
+                        if (!res.ok) {
+                            const error = Object.assign(new Error('API_ERROR'), { status: res.status });
+                            throw error;
+                        }
+                        const data = await res.json();
+                        const parsed = extractOpenAIJson(data);
+                        clearCircuit(node.nodeId);
+                        return parsed;
+                    } catch (error) {
+                        markRetryableFailure(node, error);
+                        failures.push(error);
+                        if ([429, 500, 503].includes(error.status) || error.code === 'TIMEOUT') showSwitchNotice(error.status || 'TIMEOUT');
                     }
-                    const res = await fetchWithTimeout(url, { method: 'POST', headers, body: JSON.stringify(body) });
-                    if (!res.ok) {
-                        const error = Object.assign(new Error('API_ERROR'), { status: res.status });
-                        throw error;
-                    }
-                    const data = await res.json();
-                    const parsed = node.type === 'gemini' ? JSON.parse(data.candidates?.[0]?.content?.parts?.[0]?.text?.replace(/```json|```/g, '').trim() || '') : extractOpenAIJson(data);
-                    clearCircuit(node.nodeId);
-                    return parsed;
-                } catch (error) {
-                    markRetryableFailure(node, error);
-                    failures.push(error);
-                    if ([429, 500, 503].includes(error.status) || error.code === 'TIMEOUT') showSwitchNotice(error.status || 'TIMEOUT');
                 }
             }
             const finalError = failures[failures.length - 1] || Object.assign(new Error('NO_ACTIVE_MODELS'), { status: 503 });
