@@ -774,7 +774,8 @@
             <div class="input-wrapper">
                 <div id="error-panel" class="error-panel">
                     <span id="error-msg"></span>
-                    <button id="btn-retry-model" class="btn-tool" style="background:#fff; color:#000; padding:4px 12px; font-size:0.8rem; border-radius:6px; margin-left:10px; font-weight:bold;">🔄 重試</button>
+                    <div id="error-diagnostic" style="display:none; margin-top:8px; font-weight:400; line-height:1.5;"></div>
+                    <button id="btn-retry-model" class="btn-tool" style="background:#fff; color:#000; padding:4px 12px; font-size:0.8rem; border-radius:6px; margin-left:10px; font-weight:bold;">🔄 重新連接 AI 導師</button>
                 </div>
 
                 <div class="input-options">
@@ -894,6 +895,18 @@
         let availableModels = [];
         let currentModelIndex = 0;
         let currentModel = null;
+        let modelQueue = [];
+        let lastRequest = null;
+        const REQUEST_TIMEOUT_MS = 10000;
+        const CIRCUIT_COOLDOWN_MS = 3 * 60 * 1000;
+        const MODEL_DISCOVERY_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
+        const CIRCUIT_STATE_KEY = 'gugopro_ai_circuit_breaker_v1';
+        const PROVIDER_CONFIGS = [
+            { id: 'gemini', label: 'Gemini 主線路', type: 'gemini', endpoint: 'https://generativelanguage.googleapis.com/v1beta/models', keyStorage: 'gemini_api_key' },
+            { id: 'openrouter', label: 'OpenRouter 備援線路', type: 'openai', endpoint: 'https://openrouter.ai/api/v1/chat/completions', keyStorage: 'openrouter_api_key', modelStorage: 'openrouter_model', defaultModel: 'openrouter/auto' },
+            { id: 'groq', label: 'Groq 備援線路', type: 'openai', endpoint: 'https://api.groq.com/openai/v1/chat/completions', keyStorage: 'groq_api_key', modelStorage: 'groq_model', defaultModel: 'llama-3.1-8b-instant' }
+        ];
+        const MODEL_CATALOG_URL = 'https://quota.gugopro.com/gemini_rate_limits.json';
         let recognition = null;
         let isRecording = false;
         let inputMode = 'target'; // 'target' or 'my'
@@ -962,21 +975,76 @@
             return 'zh-TW';
         }
 
-        async function fetchLatestModel() {
+        async function fetchWithTimeout(url, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
             try {
-                const res = await fetch('https://quota.gugopro.com/gemini_rate_limits.json');
-                if (!res.ok) throw new Error("Fetch Failed");
-                const data = await res.json();
-                availableModels = data.models.filter(m => m.is_free_tier && m.is_rest_compatible && m.capabilities.includes("text_generation"));
-                if (availableModels.length > 0) {
-                    currentModelIndex = 0;
-                    currentModel = availableModels[currentModelIndex].api_name;
-                    console.log(`Current Model: ${currentModel} (Updated: ${data.last_updated_date})`);
-                    hideError();
-                } else { throw new Error("No models"); }
-            } catch (e) {
-                console.error("❌ 無法取得模型資料", e);
-                showError("❌ 無法取得模型資料，請檢查網路連線。");
+                return await fetch(url, { ...options, signal: controller.signal });
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    const timeoutError = new Error('REQUEST_TIMEOUT');
+                    timeoutError.code = 'TIMEOUT';
+                    throw timeoutError;
+                }
+                throw error;
+            } finally {
+                clearTimeout(timeoutId);
+            }
+        }
+
+        function normaliseModel(model) {
+            const apiName = model.api_name || model.name?.replace(/^models\//, '');
+            if (!apiName) return null;
+            const methods = model.supportedGenerationMethods || model.capabilities || [];
+            const canGenerate = methods.length === 0 || methods.includes('generateContent') || methods.includes('text_generation');
+            return canGenerate ? {
+                api_name: apiName,
+                latency_ms: Number(model.latency_ms || model.response_time_ms || model.avg_latency_ms || Number.MAX_SAFE_INTEGER),
+                priority: Number(model.priority || Number.MAX_SAFE_INTEGER)
+            } : null;
+        }
+
+        async function fetchLatestModel() {
+            const apiKey = (localStorage.getItem('gemini_api_key') || '').split(/[\n,;]+/).map(key => key.trim()).filter(Boolean)[0];
+            try {
+                let discovered = [];
+                if (apiKey) {
+                    try {
+                        const discoveryUrl = `${MODEL_DISCOVERY_URL}?key=${encodeURIComponent(apiKey)}`;
+                        const res = await fetchWithTimeout(discoveryUrl);
+                        if (!res.ok) throw new Error(`MODEL_DISCOVERY_${res.status}`);
+                        const data = await res.json();
+                        discovered = (data.models || []).map(normaliseModel).filter(Boolean);
+                    } catch (discoveryError) {
+                        console.warn('動態模型端點暫時無法使用，改讀取動態模型目錄。', discoveryError);
+                    }
+                }
+
+                // The catalog remains a dynamic fallback for first launch or providers that hide model metadata.
+                if (discovered.length === 0) {
+                    const res = await fetchWithTimeout(MODEL_CATALOG_URL);
+                    if (!res.ok) throw new Error('MODEL_CATALOG_ERROR');
+                    const data = await res.json();
+                    discovered = (data.models || [])
+                        .filter(model => model.is_free_tier && model.is_rest_compatible && (!model.capabilities || model.capabilities.includes('text_generation')))
+                        .map(normaliseModel).filter(Boolean);
+                }
+
+                modelQueue = discovered
+                    .filter((model, index, models) => models.findIndex(item => item.api_name === model.api_name) === index)
+                    .sort((a, b) => (a.latency_ms - b.latency_ms) || (a.priority - b.priority));
+                availableModels = modelQueue;
+                currentModelIndex = 0;
+                currentModel = modelQueue[0]?.api_name || null;
+                if (!currentModel) throw new Error('NO_ACTIVE_MODELS');
+                hideError();
+                console.log(`Loaded ${modelQueue.length} active models; primary model selected dynamically.`);
+            } catch (error) {
+                console.error('❌ 無法取得動態模型資料', error);
+                availableModels = [];
+                modelQueue = [];
+                currentModel = null;
+                showError('❌ 無法取得模型資料，請檢查網路連線或稍後重試。');
             }
         }
 
@@ -1247,53 +1315,104 @@
         }
 
         // --- Chat Logic ---
-        async function sendMessage() {
-            if (!currentModel) { showError("❌ 尚未取得模型，請重試。"); return; }
+        async function sendMessage(retryRequest = null) {
+            const request = retryRequest || lastRequest || {};
             const textInput = document.getElementById('user-text');
-            const content = textInput.value.trim();
+            const content = (retryRequest ? retryRequest.content : textInput.value).trim();
             if (!content) return;
 
             const apiKey = localStorage.getItem('gemini_api_key')?.trim();
             if (!apiKey) { checkApiKey(); return; }
 
-            textInput.value = '';
-            const myLang = document.getElementById('my-lang').value;
-            const targetLang = document.getElementById('target-lang').value;
-            const inputLang = inputMode === 'target' ? targetLang : myLang;
+            const myLang = request.myLang || document.getElementById('my-lang').value;
+            const targetLang = request.targetLang || document.getElementById('target-lang').value;
+            const inputLang = request.inputLang || (inputMode === 'target' ? targetLang : myLang);
+            const msgId = retryRequest?.msgId || lastRequest?.msgId || 'msg-' + Date.now();
+            lastRequest = { content, myLang, targetLang, inputLang, msgId };
+            if (!retryRequest) textInput.value = '';
 
-            const msgId = 'msg-' + Date.now();
-            addMessageToUI('user', content, "正在處理...", null, msgId); 
+            // Render immediately so network/model discovery cannot make the send button appear unresponsive.
+            if (!document.querySelector(`[data-id="${msgId}"]`)) {
+                addMessageToUI('user', content, '正在處理...', null, msgId);
+            } else {
+                const existingMsg = document.querySelector(`[data-id="${msgId}"]`);
+                existingMsg.querySelector('.msg-learning').textContent = content;
+                existingMsg.querySelector('.msg-my').textContent = '正在處理...';
+            }
             scrollToBottom();
 
+            const sendButton = document.getElementById('btn-send');
+            sendButton.setAttribute('aria-busy', 'true');
             try {
+                if (!currentModel || modelQueue.length === 0) {
+                    await fetchLatestModel();
+                    if (!currentModel) throw Object.assign(new Error('NO_ACTIVE_MODELS'), { status: 503 });
+                }
                 const response = await callGemini(content, myLang, targetLang, inputLang, apiKey);
-                
                 const userMsgEl = document.querySelector(`[data-id="${msgId}"]`);
                 if (userMsgEl) {
                     userMsgEl.querySelector('.msg-learning').textContent = response.user_learning;
                     userMsgEl.querySelector('.msg-my').textContent = response.user_my;
                 }
-                
+
                 const room = chatRooms.find(r => r.id === activeRoomId);
                 room.messages.push({ id: msgId, role: 'user', learning: response.user_learning, my: response.user_my });
-
                 const tutorId = 'tutor-' + Date.now();
                 addMessageToUI('tutor', response.tutor_learning, response.tutor_my, response.correction, tutorId);
                 room.messages.push({ id: tutorId, role: 'tutor', learning: response.tutor_learning, my: response.tutor_my, correction: response.correction });
-
                 speak(response.tutor_learning, targetLang);
                 saveRoomsToLocal();
+                hideError();
                 scrollToBottom();
             } catch (err) {
-                console.error("API Error:", err);
-                if (err.status === 429 && currentModelIndex < availableModels.length - 1) {
-                    currentModelIndex++;
-                    currentModel = availableModels[currentModelIndex].api_name;
-                    console.log(`Switching to backup model: ${currentModel}`);
-                    return sendMessage();
-                }
-                showError(`❌ 錯誤: ${err.status || '連線失敗'}`);
+                console.error('API Error:', err);
+                showError(getUserFacingError(err));
+            } finally {
+                sendButton.removeAttribute('aria-busy');
+                sendButton.classList.remove('loading');
             }
+        }
+
+        function readCircuitState() {
+            try { return JSON.parse(localStorage.getItem(CIRCUIT_STATE_KEY) || '{}'); } catch (_) { return {}; }
+        }
+
+        function isCircuitOpen(nodeId) {
+            const state = readCircuitState();
+            return Number(state[nodeId] || 0) > Date.now();
+        }
+
+        function tripCircuit(nodeId) {
+            const state = readCircuitState();
+            state[nodeId] = Date.now() + CIRCUIT_COOLDOWN_MS;
+            localStorage.setItem(CIRCUIT_STATE_KEY, JSON.stringify(state));
+        }
+
+        function clearCircuit(nodeId) {
+            const state = readCircuitState();
+            delete state[nodeId];
+            localStorage.setItem(CIRCUIT_STATE_KEY, JSON.stringify(state));
+        }
+
+        function getKeyPool(provider) {
+            const raw = localStorage.getItem(provider.keyStorage) || '';
+            return raw.split(/[\n,;]+/).map(key => key.trim()).filter(Boolean);
+        }
+
+        function getProviderPool() {
+            return PROVIDER_CONFIGS.flatMap(provider => getKeyPool(provider).map((key, keyIndex) => ({
+                ...provider, key, keyIndex, nodeId: `${provider.id}:${keyIndex}`
+            }))).filter(node => !isCircuitOpen(node.nodeId));
+        }
+
+        function markRetryableFailure(node, error) {
+            if ([429, 500, 503].includes(error.status) || error.code === 'TIMEOUT') tripCircuit(node.nodeId);
+        }
+
+        function extractOpenAIJson(data) {
+            const rawText = data.choices?.[0]?.message?.content;
+            if (!rawText) throw new Error('EMPTY_RESPONSE');
+            return JSON.parse(rawText.replace(/```json|```/g, '').trim());
         }
 
         async function callGemini(userInput, myLangCode, targetLangCode, inputLangCode, apiKey) {
@@ -1301,41 +1420,61 @@
             const targetLang = LANG_NAMES[targetLangCode];
             const inputLang = LANG_NAMES[inputLangCode];
             const room = chatRooms.find(r => r.id === activeRoomId);
-            const historyContext = room.messages.slice(-10).map(h => `${h.role === 'user' ? 'Student' : 'Tutor'}: ${h.learning} (${h.my})`).join('\n');
+            const historyContext = room.messages.slice(-16).map(h => `${h.role === 'user' ? 'Student' : 'Tutor'}: ${h.learning} (${h.my})`).join('\\n');
+            const prompt = `You are a friendly language tutor. The student's native language is ${myLang} and they are learning ${targetLang}.\nThe student just sent a message in ${inputLang}.\n\nSystem Instructions:\n- Support situational practice. Roleplay if requested.\n- If student makes mistakes in ${targetLang}, provide a brief, gentle correction at the end.\n- Correction format: "💡 更自然的說法：..." or "⚠️ 小提醒：...".\n\nRecent Context:\n${historyContext}\n\nStudent Input: "${userInput}"\n\nReturn ONLY a raw JSON object:\n{\n  "user_learning": "${targetLang} version of student input",\n  "user_my": "${myLang} version of student input",\n  "correction": "Correction or tip if needed, else null",\n  "tutor_learning": "Your reply in ${targetLang}",\n  "tutor_my": "Your reply in ${myLang}"\n}`;
 
-            const prompt = `You are a friendly language tutor. The student's native language is ${myLang} and they are learning ${targetLang}.
-            The student just sent a message in ${inputLang}.
-            
-            System Instructions:
-            - Support situational practice. Roleplay if requested.
-            - If student makes mistakes in ${targetLang}, provide a brief, gentle correction at the end.
-            - Correction format: "💡 更自然的說法：..." or "⚠️ 小提醒：...".
-            
-            Recent Context:
-            ${historyContext}
-            
-            Student Input: "${userInput}"
-            
-            Return ONLY a raw JSON object:
-            {
-              "user_learning": "${targetLang} version of student input",
-              "user_my": "${myLang} version of student input",
-              "correction": "Correction or tip if needed, else null",
-              "tutor_learning": "Your reply in ${targetLang}",
-              "tutor_my": "Your reply in ${myLang}"
-            }`;
+            const failures = [];
+            const configuredNodes = getProviderPool();
+            const geminiKeys = getKeyPool(PROVIDER_CONFIGS[0]);
+            if (apiKey && !geminiKeys.includes(apiKey)) configuredNodes.unshift({ ...PROVIDER_CONFIGS[0], key: apiKey, keyIndex: -1, nodeId: 'gemini:request' });
+            if (configuredNodes.length === 0) {
+                const error = new Error('NO_CONFIGURED_PROVIDER_KEYS');
+                error.status = 503;
+                throw error;
+            }
 
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${apiKey}`;
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-            });
-
-            if (!res.ok) { const error = new Error("API_ERROR"); error.status = res.status; throw error; }
-            const data = await res.json();
-            const rawText = data.candidates[0].content.parts[0].text;
-            return JSON.parse(rawText.replace(/```json|```/g, '').trim());
+            for (const node of configuredNodes) {
+                try {
+                    let url;
+                    let body;
+                    const headers = { 'Content-Type': 'application/json' };
+                    if (node.type === 'gemini') {
+                        const model = modelQueue[0]?.api_name || currentModel;
+                        if (!model) throw Object.assign(new Error('NO_ACTIVE_MODELS'), { status: 503 });
+                        currentModel = model;
+                        url = `${node.endpoint}/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(node.key)}`;
+                        body = { contents: [{ parts: [{ text: prompt }] }] };
+                    } else {
+                        headers.Authorization = `Bearer ${node.key}`;
+                        url = node.endpoint;
+                        const messages = [
+                            { role: 'system', content: 'You are a friendly language tutor. Return only a valid JSON object with user_learning, user_my, correction, tutor_learning, and tutor_my.' },
+                            ...room.messages.slice(-16).map(message => ({
+                                role: message.role === 'user' ? 'user' : 'assistant',
+                                content: `${message.learning || ''}${message.my ? ` (${message.my})` : ''}`
+                            })),
+                            { role: 'user', content: prompt }
+                        ];
+                        body = { model: localStorage.getItem(node.modelStorage) || node.defaultModel, messages, response_format: { type: 'json_object' } };
+                    }
+                    const res = await fetchWithTimeout(url, { method: 'POST', headers, body: JSON.stringify(body) });
+                    if (!res.ok) {
+                        const error = Object.assign(new Error('API_ERROR'), { status: res.status });
+                        throw error;
+                    }
+                    const data = await res.json();
+                    const parsed = node.type === 'gemini' ? JSON.parse(data.candidates?.[0]?.content?.parts?.[0]?.text?.replace(/```json|```/g, '').trim() || '') : extractOpenAIJson(data);
+                    clearCircuit(node.nodeId);
+                    return parsed;
+                } catch (error) {
+                    markRetryableFailure(node, error);
+                    failures.push(error);
+                    if ([429, 500, 503].includes(error.status) || error.code === 'TIMEOUT') showSwitchNotice(error.status || 'TIMEOUT');
+                }
+            }
+            const finalError = failures[failures.length - 1] || Object.assign(new Error('NO_ACTIVE_MODELS'), { status: 503 });
+            finalError.failures = failures;
+            throw finalError;
         }
 
         function addMessageToUI(role, learning, my, correction, id) {
@@ -1447,11 +1586,59 @@
         };
 
         // --- Helpers ---
-        function showError(msg) { const p = document.getElementById('error-panel'); document.getElementById('error-msg').textContent = msg; p.style.display = 'block'; }
-        function hideError() { document.getElementById('error-panel').style.display = 'none'; }
-        document.getElementById('btn-retry-model').onclick = fetchLatestModel;
-        document.getElementById('btn-send').onclick = sendMessage;
-        document.getElementById('user-text').onkeypress = (e) => { if(e.key === 'Enter') sendMessage(); };
+        function showError(msg) {
+            const p = document.getElementById('error-panel');
+            const diagnostic = document.getElementById('error-diagnostic');
+            const isServiceUnavailable = msg.includes('錯誤代碼 503') || msg.includes('伺服器集群');
+            document.getElementById('error-msg').textContent = msg;
+            diagnostic.textContent = isServiceUnavailable ? '原因：錯誤代碼 503：目前 AI 伺服器集群高度忙碌或 API 配額已耗盡。\n方案：系統已嘗試 3 組備用線路均無回應，請等待 1 分鐘後點擊下方按鈕重試。' : '';
+            diagnostic.style.display = isServiceUnavailable ? 'block' : 'none';
+            p.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('error-panel').style.display = 'none';
+            document.getElementById('error-diagnostic').style.display = 'none';
+        }
+
+        function showSwitchNotice(status) {
+            let notice = document.getElementById('model-switch-notice');
+            if (!notice) {
+                notice = document.createElement('div');
+                notice.id = 'model-switch-notice';
+                notice.style.cssText = 'position:fixed;top:78px;left:50%;transform:translateX(-50%);z-index:1000;background:rgba(0,0,0,.82);color:#fff;border:1px solid var(--primary-neon);border-radius:10px;padding:9px 14px;font-size:.82rem;text-align:center;box-shadow:0 4px 18px rgba(0,0,0,.3);';
+                document.body.appendChild(notice);
+            }
+            notice.textContent = status === 503 ? '主要 API 線路忙碌 (503)，已自動為您切換至備援線路...' : '主線路回應較慢，已自動為您切換至備援線路...';
+            clearTimeout(showSwitchNotice.timer);
+            showSwitchNotice.timer = setTimeout(() => notice.remove(), 3000);
+        }
+
+        function getUserFacingError(error) {
+            const failures = error.failures || [error];
+            if (failures.some(item => item.code === 'TIMEOUT')) {
+                return '伺服器回應逾時（超過 10 秒），請檢查網路連線或稍後重試。';
+            }
+            if (failures.some(item => item.status === 500 || item.status === 503)) {
+                return '錯誤代碼 503：目前 AI 伺服器集群高度忙碌或 API 配額已耗盡。';
+            }
+            if (failures.some(item => item.status === 429)) {
+                return '當前使用人數較多，已達請求頻率限制，請稍等 10 秒後再試。';
+            }
+            return 'AI 導師連線失敗，系統已嘗試所有可用模型，請檢查網路連線或稍後重試。';
+        }
+
+        document.getElementById('btn-retry-model').onclick = () => {
+            if (lastRequest) sendMessage(lastRequest);
+            else fetchLatestModel();
+        };
+        document.getElementById('btn-send').addEventListener('click', sendMessage);
+        document.getElementById('user-text').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.isComposing) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
     </script>
 </body>
 </html>
