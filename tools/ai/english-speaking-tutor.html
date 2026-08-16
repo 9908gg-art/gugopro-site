@@ -1316,6 +1316,8 @@
 
         // --- Chat Logic ---
         async function sendMessage(retryRequest = null) {
+            // Guard: only accept retryRequest if it has a .content property (not a DOM Event)
+            if (retryRequest && !retryRequest.content) retryRequest = null;
             const request = retryRequest || lastRequest || {};
             const textInput = document.getElementById('user-text');
             const content = (retryRequest ? retryRequest.content : textInput.value).trim();
@@ -1632,7 +1634,7 @@
             if (lastRequest) sendMessage(lastRequest);
             else fetchLatestModel();
         };
-        document.getElementById('btn-send').addEventListener('click', sendMessage);
+        document.getElementById('btn-send').addEventListener('click', () => sendMessage());
         document.getElementById('user-text').addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.isComposing) {
                 e.preventDefault();
