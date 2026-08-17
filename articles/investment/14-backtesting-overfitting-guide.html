@@ -95,13 +95,85 @@
         .footer { margin-top: 60px; text-align: center; color: var(--text-muted); font-size: 0.9rem; }
         .internal-link { color: var(--color-blue); text-decoration: none; font-weight: 600; }
         .internal-link:hover { text-decoration: underline; }
+    
+        /* FAQ Section Styles */
+        .faq-section {
+            margin: 40px 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: 16px;
+            padding: 30px;
+        }
+        .faq-title {
+            font-size: 1.5rem;
+            color: #ffffff;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-left: 4px solid var(--color-blue);
+            padding-left: 12px;
+        }
+        .faq-item {
+            margin-bottom: 20px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .faq-item:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+        .faq-question {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #38bdf8;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .faq-question i {
+            margin-top: 4px;
+            font-size: 1rem;
+        }
+        .faq-answer {
+            font-size: 0.96rem;
+            line-height: 1.8;
+            color: var(--text-secondary);
+            padding-left: 26px;
+        }
+        .btn-back-home {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(56, 189, 248, 0.1);
+            color: #38bdf8;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            padding: 6px 14px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        .btn-back-home:hover {
+            background: rgba(56, 189, 248, 0.2);
+            transform: translateY(-2px);
+        }
+
     </style>
 </head>
 <body>
     <header class="main-header">
-        <div class="container header-container">
-            <a href="/" class="brand-logo"><i class="fa-solid fa-rocket"></i> GugoPro</a>
-            <a href="/articles/investment/" class="btn-back"><i class="fa-solid fa-arrow-left"></i> 返回投資教學目錄</a>
+        <div class="container header-container" style="display: flex; justify-content: space-between; align-items: center;">
+            <a href="https://gugopro.com" class="brand-logo" style="font-size: 1.4rem; font-weight: 800; color: #fff; text-decoration: none; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-rocket" style="color: #38bdf8;"></i> GugoPro</a>
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <a href="/articles/investment/" class="btn-back" style="color: #94a3b8; text-decoration: none; font-size: 0.9rem;"><i class="fa-solid fa-list-ul"></i> 專題目錄</a>
+                <a href="https://gugopro.com" class="btn-back-home">
+                    <i class="fa-solid fa-house"></i> 返回首頁
+                </a>
+            </div>
         </div>
     </header>
 
@@ -165,6 +237,22 @@
             <p>在建立穩健的量化系統後，精準的資金控管更是長存市場的關鍵。建議搭配站內的 <a href="/tools/finance/kelly-criterion-calculator.html" class="internal-link">凱利公式計算器</a>，科學化管理每次進場的資金比例。</p>
         </section>
 
+        <section class="faq-section">
+    <h2 class="faq-title"><i class="fa-solid fa-circle-question"></i> 常見問答 FAQ</h2>
+    <div class="faq-item">
+        <div class="faq-question"><i class="fa-solid fa-q"></i> 什麼是「樣本內 (In-Sample)」與「樣本外 (Out-of-Sample)」回測？</div>
+        <div class="faq-answer">樣本內數據（In-Sample）是用於訓練、參數優化與策略構建的歷史區間；而樣本外數據（Out-of-Sample）則是策略開發過程中「完全封存未接觸」的獨立時間區間。如果一個策略在樣本內表現極佳，但在樣本外測試時績效大幅衰退，說明該策略純屬「記憶歷史雜訊」的過度擬合產物。</div>
+    </div>
+    <div class="faq-item">
+        <div class="faq-question"><i class="fa-solid fa-q"></i> 什麼是前進分析 (Walk-Forward Analysis)？為何它是量化業界標準？</div>
+        <div class="faq-answer">Walk-Forward 分析模擬了真實世界的實盤交易過程：在滾動的滾動窗口中（如用前 2 年數據優化參數），將最佳參數應用於緊接著的未來 6 個月進行樣本外檢驗，隨後窗口向前滾動重複此流程。它能動態檢驗策略在市場體制轉換（如牛市切換為熊市）時的適應能力，大幅提高實盤存活率。</div>
+    </div>
+    <div class="faq-item">
+        <div class="faq-question"><i class="fa-solid fa-q"></i> 實盤上線後，策略最大回撤達到什麼標準必須強制停機？</div>
+        <div class="faq-answer">業界普遍採用「最大回撤容忍倍數」作為熔斷標準：當實盤最大回撤超過歷史回測最大 MDD 的 1.5 倍，或策略遭遇連續虧損次數超過理論泊松分佈 99% 信賴區間時，必須立即強制停機。這通常代表底層市場微觀結構已發生質變，繼續運行將面臨破產風險。</div>
+    </div>
+</section>
+
         <div class="analysis-box">
             <div class="analysis-card">
                 <h3 class="pros">優點與適用對象</h3>
@@ -185,8 +273,16 @@
             </a>
         </div>
 
-        <footer class="footer">
-            <p>&copy; 2026 GugoPro Academy. All rights reserved.</p>
+        <footer class="footer" style="margin-top: 50px; text-align: center; color: #64748b; font-size: 0.88rem; padding: 25px 0; border-top: 1px solid rgba(255, 255, 255, 0.05);">
+            <p style="margin-bottom: 12px;">&copy; 2026 GugoPro Academy. All rights reserved. 跨國智能財經教育與量化分析專題。</p>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; color: #94a3b8;">
+                <a href="https://gugopro.com" style="color: #94a3b8; text-decoration: none;">首頁</a> |
+                <a href="https://gugopro.com/about.html" style="color: #94a3b8; text-decoration: none;">關於我們</a> |
+                <a href="https://gugopro.com/disclaimer.html" style="color: #94a3b8; text-decoration: none;">免責聲明</a> |
+                <a href="https://gugopro.com/privacy.html" style="color: #94a3b8; text-decoration: none;">隱私權政策</a> |
+                <a href="https://gugopro.com/terms.html" style="color: #94a3b8; text-decoration: none;">服務條款</a> |
+                <a href="https://gugopro.com/contact.html" style="color: #94a3b8; text-decoration: none;">聯絡我們</a>
+            </div>
         </footer>
     </main>
 </body>

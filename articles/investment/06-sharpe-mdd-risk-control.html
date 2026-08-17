@@ -97,13 +97,85 @@
         
         .internal-link { color: var(--color-blue); text-decoration: none; font-weight: 600; }
         .internal-link:hover { text-decoration: underline; }
+    
+        /* FAQ Section Styles */
+        .faq-section {
+            margin: 40px 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: 16px;
+            padding: 30px;
+        }
+        .faq-title {
+            font-size: 1.5rem;
+            color: #ffffff;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-left: 4px solid var(--color-blue);
+            padding-left: 12px;
+        }
+        .faq-item {
+            margin-bottom: 20px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .faq-item:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+        .faq-question {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #38bdf8;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .faq-question i {
+            margin-top: 4px;
+            font-size: 1rem;
+        }
+        .faq-answer {
+            font-size: 0.96rem;
+            line-height: 1.8;
+            color: var(--text-secondary);
+            padding-left: 26px;
+        }
+        .btn-back-home {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(56, 189, 248, 0.1);
+            color: #38bdf8;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            padding: 6px 14px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        .btn-back-home:hover {
+            background: rgba(56, 189, 248, 0.2);
+            transform: translateY(-2px);
+        }
+
     </style>
 </head>
 <body>
     <header class="main-header">
-        <div class="container header-container">
-            <a href="/" class="brand-logo"><i class="fa-solid fa-rocket"></i> GugoPro</a>
-            <a href="/articles/investment/" class="btn-back"><i class="fa-solid fa-arrow-left"></i> 返回投資教學目錄</a>
+        <div class="container header-container" style="display: flex; justify-content: space-between; align-items: center;">
+            <a href="https://gugopro.com" class="brand-logo" style="font-size: 1.4rem; font-weight: 800; color: #fff; text-decoration: none; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-rocket" style="color: #38bdf8;"></i> GugoPro</a>
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <a href="/articles/investment/" class="btn-back" style="color: #94a3b8; text-decoration: none; font-size: 0.9rem;"><i class="fa-solid fa-list-ul"></i> 專題目錄</a>
+                <a href="https://gugopro.com" class="btn-back-home">
+                    <i class="fa-solid fa-house"></i> 返回首頁
+                </a>
+            </div>
         </div>
     </header>
 
@@ -168,6 +240,22 @@
             <p>強烈建議在任何交易前，使用站內的 <a href="/tools/finance/kelly-criterion-calculator.html" class="internal-link">凱利公式計算器</a> 進行壓力測試與部位試算，這是區分職業與業餘投資者的關鍵。</p>
         </section>
 
+        <section class="faq-section">
+    <h2 class="faq-title"><i class="fa-solid fa-circle-question"></i> 常見問答 FAQ</h2>
+    <div class="faq-item">
+        <div class="faq-question"><i class="fa-solid fa-q"></i> 夏普值 (Sharpe Ratio) 達到多少算是一個優秀的投資策略？</div>
+        <div class="faq-answer">一般而言，在年化週期下：夏普值 > 1.0 被視為優良策略；夏普值 > 1.5 屬於頂尖水準；夏普值 > 2.0 則極為罕見且通常伴隨極嚴格的量化風控或對沖架構。S&P 500 指數的長期歷史夏普值約落在 0.5~0.7 左右。</div>
+    </div>
+    <div class="faq-item">
+        <div class="faq-question"><i class="fa-solid fa-q"></i> 如何根據歷史最大回撤 (MDD) 設定帳戶停損機制？</div>
+        <div class="faq-answer">任何量化策略在實盤運作時，實際面臨的最大回撤通常會超越歷史回測值（回測可能存在過度擬合）。業界常見風控準則為：將實盤警示線設定為歷史最大 MDD 的 1.2 倍，若突破 1.5 倍歷史 MDD 則必須強制將策略部位減半或暫停交易進行歸因覆盤。</div>
+    </div>
+    <div class="faq-item">
+        <div class="faq-question"><i class="fa-solid fa-q"></i> 為什麼實戰中不建議直接使用 100% 完整凱利公式 (Full Kelly)？</div>
+        <div class="faq-answer">全額凱利公式是建立在「精確已知勝率與賠率」的理論假設下，其波動性極大，回撤幅度可能超過 50%~80%。實戰交易員普遍採用「半凱利 (Half Kelly)」或「四分之一凱利 (Fractional Kelly)」，在犧牲極小長期幾何增長率的前提下，大幅平滑權益曲線並降低破產風險。</div>
+    </div>
+</section>
+
         <div class="analysis-box">
             <div class="analysis-card">
                 <h3 class="pros">優點與適用對象</h3>
@@ -188,8 +276,16 @@
             </a>
         </div>
 
-        <footer class="footer">
-            <p>&copy; 2026 GugoPro Academy. All rights reserved.</p>
+        <footer class="footer" style="margin-top: 50px; text-align: center; color: #64748b; font-size: 0.88rem; padding: 25px 0; border-top: 1px solid rgba(255, 255, 255, 0.05);">
+            <p style="margin-bottom: 12px;">&copy; 2026 GugoPro Academy. All rights reserved. 跨國智能財經教育與量化分析專題。</p>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; color: #94a3b8;">
+                <a href="https://gugopro.com" style="color: #94a3b8; text-decoration: none;">首頁</a> |
+                <a href="https://gugopro.com/about.html" style="color: #94a3b8; text-decoration: none;">關於我們</a> |
+                <a href="https://gugopro.com/disclaimer.html" style="color: #94a3b8; text-decoration: none;">免責聲明</a> |
+                <a href="https://gugopro.com/privacy.html" style="color: #94a3b8; text-decoration: none;">隱私權政策</a> |
+                <a href="https://gugopro.com/terms.html" style="color: #94a3b8; text-decoration: none;">服務條款</a> |
+                <a href="https://gugopro.com/contact.html" style="color: #94a3b8; text-decoration: none;">聯絡我們</a>
+            </div>
         </footer>
     </main>
 </body>

@@ -3,197 +3,613 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>德州撲克勝率與底池賠率計算器 | GugoPro</title>
-    <meta name="description" content="GugoPro 德州撲克勝率與底池賠率計算器，4色牌職業級UI、底池賠率EV決策矩陣、Outs補牌分析、2~9人隨機牌範圍、20000次蒙特卡羅模擬。">
-    <meta name="keywords" content="德州撲克勝率計算器, 底池賠率, Pot Odds, EV決策, Outs補牌數, 4色牌, Monte Carlo, Texas Holdem Odds Calculator">
+    <title>德州撲克即時勝率計算器 | GugoPro</title>
+    <meta name="description" content="GugoPro 德州撲克即時勝率計算器，支援 2~6 人桌，Monte Carlo 模擬 10,000 次，即時計算 Win% 與 Tie%。純前端極速載入，支援手機響應式佈局。">
+    <meta name="keywords" content="德州撲克勝率計算器, Texas Hold'em Odds Calculator, 撲克 Equity, 蒙地卡羅模擬, Monte Carlo, Flop Turn River, 撲克策略">
     <meta name="author" content="GugoPro AI Team">
-    <link rel="canonical" href="https://gugopro.com/tools/games/poker-odds-calculator.html">
+    <link rel="canonical" href="https://gugopro.com/tools/poker/poker-odds-calculator.html">
+
+    <!-- Open Graph -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://gugopro.com/tools/games/poker-odds-calculator.html">
-    <meta property="og:title" content="德州撲克勝率與底池賠率計算器 | GugoPro">
-    <meta property="og:description" content="4色牌職業級UI、底池賠率EV決策、Outs補牌分析、2~9人隨機牌、20000次蒙特卡羅模擬。">
+    <meta property="og:url" content="https://gugopro.com/tools/poker/poker-odds-calculator.html">
+    <meta property="og:title" content="德州撲克即時勝率計算器 | GugoPro">
+    <meta property="og:description" content="支援 2~6 人桌，Monte Carlo 模擬 10,000 次即時計算 Win% 與 Tie%，純前端極速載入。">
+
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- GA4 Tracking Code -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-GF1DYLWMKX"></script>
-    <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-GF1DYLWMKX');</script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-GF1DYLWMKX');
+    </script>
+
     <style>
-    :root{--bg-dark:#090d16;--bg-card:rgba(15,23,42,0.75);--border-card:rgba(255,255,255,0.08);--text-primary:#f8fafc;--text-secondary:#cbd5e1;--text-muted:#94a3b8;--color-blue:#3b82f6;--color-emerald:#10b981;--color-amber:#f59e0b;--color-purple:#a855f7;--color-red:#ef4444;--radius-lg:16px;--radius-md:12px;--radius-sm:8px;--radius-xs:6px;--neon-green:#00ff88;--neon-blue:#00d4ff;--glass-blur:blur(20px);--spade:#1A1A1A;--heart:#E53935;--diamond:#1E88E5;--club:#43A047}
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    html{scroll-behavior:smooth}
-    body{background-color:var(--bg-dark);color:var(--text-primary);font-family:'Inter','Noto Sans TC',-apple-system,sans-serif;line-height:1.6;overflow-x:hidden;background-image:radial-gradient(ellipse at 10% 20%,rgba(59,130,246,0.10) 0%,transparent 50%),radial-gradient(ellipse at 90% 80%,rgba(168,85,247,0.08) 0%,transparent 50%);background-attachment:fixed}
-    .container{max-width:1280px;margin:0 auto;padding:0 20px}
-    .main-header{position:sticky;top:0;z-index:100;background:rgba(9,13,22,0.92);backdrop-filter:var(--glass-blur);border-bottom:1px solid var(--border-card);padding:12px 0}
-    .header-container{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
-    .brand-box{display:flex;align-items:center;gap:12px}
-    .brand-logo{display:flex;align-items:center;gap:8px;font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:800;color:#fff}
-    .brand-icon{color:var(--color-blue);font-size:1.3rem}
-    .brand-tagline{font-size:0.82rem;color:var(--text-muted);border-left:1px solid rgba(255,255,255,0.15);padding-left:10px}
-    .btn-back-home{display:inline-flex;align-items:center;gap:6px;background:rgba(59,130,246,0.12);color:#60a5fa;border:1px solid rgba(59,130,246,0.3);padding:8px 18px;border-radius:24px;font-size:0.88rem;font-weight:700;text-decoration:none;transition:all 0.25s ease}
-    .btn-back-home:hover{background:rgba(59,130,246,0.25);transform:translateY(-1px)}
-    .hero-section{padding:30px 0 20px;text-align:center}
-    .hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(0,255,136,0.10);color:var(--neon-green);border:1px solid rgba(0,255,136,0.25);padding:6px 16px;border-radius:30px;font-size:0.82rem;font-weight:700;letter-spacing:0.5px;margin-bottom:12px}
-    .hero-title{font-family:'Outfit','Noto Sans TC',sans-serif;font-size:2.2rem;font-weight:800;line-height:1.2;margin-bottom:8px}
-    .gradient-text{background:linear-gradient(135deg,var(--neon-green) 0%,var(--neon-blue) 50%,#b44aff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-    .hero-subtitle{font-size:0.95rem;color:var(--text-secondary);max-width:750px;margin:0 auto}
-    .section-card{background:var(--bg-card);border:1px solid var(--border-card);border-radius:var(--radius-lg);padding:20px;margin-bottom:20px;backdrop-filter:var(--glass-blur)}
-    .section-title{font-family:'Outfit','Noto Sans TC',sans-serif;font-size:1.15rem;font-weight:800;color:#fff;display:flex;align-items:center;gap:8px;margin-bottom:4px}
-    .section-subtitle{font-size:0.85rem;color:var(--text-muted);margin-bottom:14px}
-    .player-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
-    .player-count-display{background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.25);border-radius:var(--radius-sm);padding:6px 14px;font-weight:700;font-size:0.9rem}
-    .btn-player{width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:#fff;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s ease}
-    .btn-player:hover:not(:disabled){background:rgba(59,130,246,0.25);border-color:var(--color-blue)}
-    .btn-player:disabled{opacity:0.3;cursor:not-allowed}
-    .players-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:12px}
-    .player-card{background:rgba(255,255,255,0.03);border:1px solid var(--border-card);border-radius:var(--radius-md);padding:12px;transition:all 0.3s ease;position:relative}
-    .player-card.is-folded{opacity:0.4;filter:grayscale(80%)}
-    .player-card.is-winner{border-color:var(--neon-green);box-shadow:0 0 20px rgba(0,255,136,0.2)}
-    .player-card.is-hidden{display:none}
-    .player-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-    .player-name{font-weight:700;font-size:0.85rem;display:flex;align-items:center;gap:6px}
-    .player-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--color-blue),var(--color-purple));display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:800;color:#fff}
-    .player-card.is-folded .player-avatar{background:linear-gradient(135deg,#555,#777)}
-    .player-actions{display:flex;align-items:center;gap:6px}
-    .fold-toggle{display:flex;align-items:center;gap:4px;cursor:pointer;font-size:0.72rem;color:var(--text-muted);user-select:none}
-    .fold-toggle .toggle-track{width:34px;height:18px;border-radius:9px;background:rgba(255,255,255,0.12);position:relative;transition:background 0.25s ease}
-    .fold-toggle .toggle-track::after{content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:#fff;top:2px;left:2px;transition:transform 0.25s ease}
-    .fold-toggle.is-active .toggle-track{background:var(--color-red)}
-    .fold-toggle.is-active .toggle-track::after{transform:translateX(16px)}
-    .random-toggle{display:flex;align-items:center;gap:4px;cursor:pointer;font-size:0.72rem;color:var(--text-muted);user-select:none;padding:3px 8px;border-radius:4px;border:1px solid rgba(255,255,255,0.1);transition:all 0.2s}
-    .random-toggle.is-active{background:rgba(168,85,247,0.15);border-color:rgba(168,85,247,0.4);color:var(--color-purple)}
-    .card-slots{display:flex;gap:6px;margin-bottom:8px}
-    .card-slot{width:44px;height:60px;border:2px dashed rgba(255,255,255,0.15);border-radius:var(--radius-xs);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s ease;font-family:'Outfit',sans-serif;font-weight:700;font-size:1rem;position:relative;background:rgba(0,0,0,0.2)}
-    .card-slot.is-active{border-color:var(--neon-blue);box-shadow:0 0 12px rgba(0,212,255,0.3)}
-    .card-slot.is-filled{border-style:solid;background:rgba(255,255,255,0.06)}
-    .card-slot.is-random{border-style:dotted;border-color:var(--color-purple);background:rgba(168,85,247,0.08)}
-    .card-slot .slot-label{font-size:0.55rem;color:var(--text-muted)}
-    .card-slot .slot-value{font-size:0.9rem;line-height:1}
-    .suit-spades{color:#e2e8f0}.suit-hearts{color:var(--heart)}.suit-diamonds{color:var(--diamond)}.suit-clubs{color:var(--club)}
-    .win-bar-container{margin-top:6px}
-    .win-bar-label{display:flex;justify-content:space-between;font-size:0.72rem;margin-bottom:2px}
-    .win-bar-label span:first-child{color:var(--text-muted)}
-    .win-bar-label span:last-child{font-weight:700}
-    .win-bar-track{width:100%;height:7px;border-radius:4px;background:rgba(255,255,255,0.06);overflow:hidden;margin-bottom:4px}
-    .win-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--color-blue),var(--neon-green));transition:width 0.5s ease;width:0%}
-    .win-bar-fill.tie-bar{background:linear-gradient(90deg,var(--color-amber),#fbbf24)}
-    .board-section{text-align:center}
-    .board-row{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
-    .board-label{font-size:0.78rem;font-weight:700;color:var(--text-muted);min-width:50px;text-align:right}
-    .board-card-slot{width:48px;height:66px;border:2px dashed rgba(255,255,255,0.15);border-radius:var(--radius-xs);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s ease;font-family:'Outfit',sans-serif;font-weight:700;font-size:1.1rem;position:relative;background:rgba(0,0,0,0.25)}
-    .board-card-slot.is-active{border-color:var(--neon-green);box-shadow:0 0 14px rgba(0,255,136,0.25)}
-    .board-card-slot.is-filled{border-style:solid}
-    .sim-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:8px}
-    .btn-calc{background:linear-gradient(135deg,var(--neon-green),#00cc6a);color:#000;font-weight:800;font-size:0.95rem;padding:10px 28px;border-radius:30px;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 4px 20px rgba(0,255,136,0.3);transition:all 0.25s ease}
-    .btn-calc:hover{transform:translateY(-2px);box-shadow:0 6px 28px rgba(0,255,136,0.45)}
-    .btn-calc:disabled{opacity:0.5;cursor:not-allowed;transform:none}
-    .btn-reset{background:rgba(255,255,255,0.08);color:var(--text-secondary);border:1px solid rgba(255,255,255,0.15);border-radius:30px;padding:10px 20px;font-weight:700;font-size:0.9rem;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all 0.2s ease}
-    .btn-reset:hover{background:rgba(255,255,255,0.14)}
-    .sim-progress{text-align:center;font-size:0.85rem;color:var(--text-muted);min-height:22px;margin-top:6px}
-    /* Pot Odds Section */
-    .pot-odds-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px}
-    .pot-input-group{display:flex;flex-direction:column;gap:4px}
-    .pot-input-group label{font-size:0.75rem;color:var(--text-muted);font-weight:600}
-    .pot-input-group input{background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.12);border-radius:var(--radius-xs);padding:8px 10px;color:#fff;font-size:0.9rem;font-weight:600;width:100%;outline:none;transition:border-color 0.2s}
-    .pot-input-group input:focus{border-color:var(--color-blue)}
-    .ev-result{padding:14px;border-radius:var(--radius-md);text-align:center;font-weight:700;font-size:0.9rem;margin-top:10px;transition:all 0.3s}
-    .ev-result.positive{background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.3);color:var(--neon-green)}
-    .ev-result.negative{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:#f87171}
-    .ev-result.neutral{background:rgba(255,255,255,0.04);border:1px solid var(--border-card);color:var(--text-muted)}
-    /* Outs Section */
-    .outs-panel{padding:12px;border-radius:var(--radius-md);background:rgba(0,0,0,0.2);border:1px solid var(--border-card);margin-top:10px}
-    .outs-title{font-size:0.85rem;font-weight:700;color:var(--neon-blue);margin-bottom:8px;display:flex;align-items:center;gap:6px}
-    .outs-item{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.82rem}
-    .outs-item:last-child{border-bottom:none}
-    .outs-type{color:var(--text-secondary)}
-    .outs-count{font-weight:700;color:var(--neon-green)}
-    .outs-prob{color:var(--color-amber);font-weight:600;font-size:0.78rem}
-    /* Card Picker */
-    .card-picker-wrapper{position:fixed;bottom:0;left:0;right:0;z-index:90;background:rgba(9,13,22,0.97);backdrop-filter:var(--glass-blur);border-top:1px solid var(--border-card);padding:10px 12px 14px;transform:translateY(100%);transition:transform 0.3s ease;max-height:52vh;overflow-y:auto}
-    .card-picker-wrapper.is-visible{transform:translateY(0)}
-    .picker-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-    .picker-header span{font-size:0.82rem;color:var(--text-muted);font-weight:600}
-    .picker-actions{display:flex;align-items:center;gap:8px}
-    .picker-clear-btn{background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#f87171;font-size:0.75rem;font-weight:600;padding:4px 10px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:all 0.2s}
-    .picker-clear-btn:hover{background:rgba(239,68,68,0.25)}
-    .picker-close{background:none;border:none;color:var(--text-muted);font-size:1.2rem;cursor:pointer;padding:4px 8px}
-    .picker-close:hover{color:#fff}
-    .card-picker-grid{display:grid;grid-template-columns:repeat(13,1fr);gap:3px}
-    .picker-card{aspect-ratio:0.7;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-family:'Outfit',sans-serif;font-weight:700;font-size:clamp(0.55rem,2vw,0.8rem);background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);transition:all 0.15s ease}
-    .picker-card:hover:not(.is-disabled){transform:scale(1.08);border-color:var(--neon-blue);background:rgba(0,212,255,0.12)}
-    .picker-card.is-disabled{opacity:0.15;cursor:not-allowed;pointer-events:none}
-    .picker-card.suit-spades .pk-suit{color:var(--spade);text-shadow:0 0 2px rgba(255,255,255,0.5)}
-    .picker-card.suit-hearts .pk-suit{color:var(--heart)}
-    .picker-card.suit-diamonds .pk-suit{color:var(--diamond)}
-    .picker-card.suit-clubs .pk-suit{color:var(--club)}
-    .picker-card.suit-spades .pk-rank{color:#e2e8f0}
-    .picker-card.suit-hearts .pk-rank{color:var(--heart)}
-    .picker-card.suit-diamonds .pk-rank{color:var(--diamond)}
-    .picker-card.suit-clubs .pk-rank{color:var(--club)}
-    .pk-rank{line-height:1}.pk-suit{font-size:0.75em;line-height:1;margin-top:1px}
-    body.picker-open{padding-bottom:280px}
-    /* Affiliate */
-    .affiliate-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
-    .affiliate-card{background:rgba(255,255,255,0.03);border:1px solid var(--border-card);border-radius:var(--radius-md);padding:18px;text-align:center;transition:all 0.25s ease}
-    .affiliate-card:hover{transform:translateY(-3px);border-color:rgba(245,158,11,0.4)}
-    .affiliate-card .af-icon{font-size:1.8rem;color:var(--color-amber);margin-bottom:8px}
-    .affiliate-card h4{font-size:0.95rem;font-weight:700;color:#fff;margin-bottom:4px}
-    .affiliate-card p{font-size:0.82rem;color:var(--text-secondary);margin-bottom:12px}
-    .btn-affiliate{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;font-weight:700;font-size:0.85rem;padding:9px 20px;border-radius:24px;border:none;text-decoration:none;transition:all 0.2s ease;box-shadow:0 4px 14px rgba(245,158,11,0.3)}
-    .btn-affiliate:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(245,158,11,0.45)}
-    .kofi-section{text-align:center;padding:16px 0}
-    .kofi-section h3{font-size:1.05rem;font-weight:700;color:#fff;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px}
-    .seo-section{padding:24px 0}
-    .seo-section h2{font-family:'Outfit','Noto Sans TC',sans-serif;font-size:1.4rem;font-weight:800;color:#fff;margin-bottom:14px;display:flex;align-items:center;gap:8px}
-    .seo-section h3{font-size:1.05rem;font-weight:700;color:#e2e8f0;margin:14px 0 6px}
-    .seo-section p{font-size:0.88rem;color:var(--text-secondary);margin-bottom:8px;line-height:1.7}
-    .seo-section ul{margin:6px 0 10px 20px;color:var(--text-secondary)}
-    .seo-section li{margin-bottom:5px;font-size:0.86rem}
-    .seo-section .term{font-weight:700;color:var(--neon-green)}
-    .disclaimer-box{background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-md);padding:16px 18px;margin-top:18px}
-    .disclaimer-box h3{color:var(--color-red);font-size:0.95rem;margin-bottom:6px}
-    .disclaimer-box p{font-size:0.84rem;color:var(--text-muted);line-height:1.7}
-    .main-footer{border-top:1px solid var(--border-card);background:rgba(9,13,22,0.95);padding:20px 0;text-align:center;font-size:0.82rem;color:var(--text-muted)}
-    .footer-links a{color:var(--text-secondary);text-decoration:none;margin:0 6px;font-weight:500}
-    .footer-links a:hover{color:var(--color-blue)}
-    @media(max-width:768px){.brand-tagline{display:none}.header-container{justify-content:center}.hero-title{font-size:1.6rem}.players-grid{grid-template-columns:1fr}.card-picker-grid{grid-template-columns:repeat(7,1fr);gap:2px}body.picker-open{padding-bottom:340px}.board-card-slot{width:42px;height:58px}.card-slot{width:40px;height:54px}.pot-odds-grid{grid-template-columns:1fr 1fr}.affiliate-grid{grid-template-columns:1fr}}
-    @media(max-width:480px){.card-picker-grid{grid-template-columns:repeat(7,1fr)}body.picker-open{padding-bottom:380px}.pot-odds-grid{grid-template-columns:1fr}}
+    /* ========== ROOT VARIABLES ========== */
+    :root {
+        --bg-dark: #090d16;
+        --bg-card: rgba(15, 23, 42, 0.75);
+        --bg-card-hover: rgba(20, 30, 55, 0.85);
+        --border-card: rgba(255, 255, 255, 0.08);
+        --border-glow: rgba(59, 130, 246, 0.4);
+        --text-primary: #f8fafc;
+        --text-secondary: #cbd5e1;
+        --text-muted: #94a3b8;
+        --color-blue: #3b82f6;
+        --color-emerald: #10b981;
+        --color-amber: #f59e0b;
+        --color-purple: #a855f7;
+        --color-red: #ef4444;
+        --color-pink: #ec4899;
+        --radius-lg: 16px;
+        --radius-md: 12px;
+        --radius-sm: 8px;
+        --radius-xs: 6px;
+        --neon-green: #00ff88;
+        --neon-blue: #00d4ff;
+        --neon-purple: #b44aff;
+        --glass-blur: blur(20px);
+    }
+
+    /* ========== RESET & BASE ========== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+        background-color: var(--bg-dark);
+        color: var(--text-primary);
+        font-family: 'Inter', 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
+        line-height: 1.6;
+        overflow-x: hidden;
+        background-image:
+            radial-gradient(ellipse at 10% 20%, rgba(59, 130, 246, 0.10) 0%, transparent 50%),
+            radial-gradient(ellipse at 90% 80%, rgba(168, 85, 247, 0.08) 0%, transparent 50%);
+        background-attachment: fixed;
+    }
+    .container { max-width: 1280px; margin: 0 auto; padding: 0 20px; }
+
+    /* ========== HEADER ========== */
+    .main-header {
+        position: sticky; top: 0; z-index: 100;
+        background: rgba(9, 13, 22, 0.92);
+        backdrop-filter: var(--glass-blur);
+        -webkit-backdrop-filter: var(--glass-blur);
+        border-bottom: 1px solid var(--border-card);
+        padding: 12px 0;
+    }
+    .header-container { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+    .brand-box { display: flex; align-items: center; gap: 12px; }
+    .brand-logo { display: flex; align-items: center; gap: 8px; font-family: 'Outfit', sans-serif; font-size: 1.4rem; font-weight: 800; color: #fff; }
+    .brand-icon { color: var(--color-blue); font-size: 1.3rem; }
+    .brand-tagline { font-size: 0.82rem; color: var(--text-muted); border-left: 1px solid rgba(255,255,255,0.15); padding-left: 10px; }
+    .btn-back-home {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: rgba(59, 130, 246, 0.12); color: #60a5fa;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        padding: 8px 18px; border-radius: 24px;
+        font-size: 0.88rem; font-weight: 700;
+        text-decoration: none; transition: all 0.25s ease;
+    }
+    .btn-back-home:hover { background: rgba(59, 130, 246, 0.25); transform: translateY(-1px); }
+
+    /* ========== HERO ========== */
+    .hero-section { padding: 40px 0 24px 0; text-align: center; }
+    .hero-badge {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: rgba(0, 255, 136, 0.10); color: var(--neon-green);
+        border: 1px solid rgba(0, 255, 136, 0.25);
+        padding: 6px 16px; border-radius: 30px;
+        font-size: 0.82rem; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 16px;
+    }
+    .hero-title {
+        font-family: 'Outfit', 'Noto Sans TC', sans-serif;
+        font-size: 2.4rem; font-weight: 800; line-height: 1.2; margin-bottom: 10px;
+    }
+    .gradient-text {
+        background: linear-gradient(135deg, var(--neon-green) 0%, var(--neon-blue) 50%, var(--neon-purple) 100%);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero-subtitle { font-size: 1rem; color: var(--text-secondary); max-width: 700px; margin: 0 auto 20px auto; }
+
+    /* ========== MAIN TOOL AREA ========== */
+    .tool-area { padding-bottom: 40px; }
+
+    /* ---- Section Card ---- */
+    .section-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-card);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+        margin-bottom: 24px;
+        backdrop-filter: var(--glass-blur);
+    }
+    .section-title {
+        font-family: 'Outfit', 'Noto Sans TC', sans-serif;
+        font-size: 1.25rem; font-weight: 800; color: #fff;
+        display: flex; align-items: center; gap: 10px; margin-bottom: 4px;
+    }
+    .section-subtitle { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 16px; }
+
+    /* ---- Player Controls ---- */
+    .player-controls {
+        display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px;
+    }
+    .player-count-display {
+        background: rgba(59, 130, 246, 0.12); border: 1px solid rgba(59, 130, 246, 0.25);
+        border-radius: var(--radius-sm); padding: 6px 14px; font-weight: 700; font-size: 0.9rem;
+    }
+    .btn-player {
+        width: 36px; height: 36px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.15);
+        background: rgba(255,255,255,0.06); color: #fff; font-size: 1.1rem;
+        cursor: pointer; display: flex; align-items: center; justify-content: center;
+        transition: all 0.2s ease;
+    }
+    .btn-player:hover:not(:disabled) { background: rgba(59, 130, 246, 0.25); border-color: var(--color-blue); }
+    .btn-player:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    /* ---- Player Cards Grid ---- */
+    .players-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 14px; margin-top: 14px;
+    }
+    .player-card {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid var(--border-card);
+        border-radius: var(--radius-md);
+        padding: 14px; transition: all 0.3s ease; position: relative;
+    }
+    .player-card.is-folded { opacity: 0.45; filter: grayscale(80%); }
+    .player-card.is-winner { border-color: var(--neon-green); box-shadow: 0 0 20px rgba(0,255,136,0.2); }
+    .player-card.is-hidden { display: none; }
+    .player-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .player-name { font-weight: 700; font-size: 0.92rem; display: flex; align-items: center; gap: 6px; }
+    .player-avatar {
+        width: 32px; height: 32px; border-radius: 50%;
+        background: linear-gradient(135deg, var(--color-blue), var(--color-purple));
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.85rem; font-weight: 800; color: #fff;
+    }
+    .player-card.is-folded .player-avatar { background: linear-gradient(135deg, #555, #777); }
+
+    /* Fold Toggle */
+    .fold-toggle {
+        display: flex; align-items: center; gap: 6px; cursor: pointer;
+        font-size: 0.8rem; color: var(--text-muted); user-select: none;
+    }
+    .fold-toggle .toggle-track {
+        width: 38px; height: 20px; border-radius: 10px;
+        background: rgba(255,255,255,0.12); position: relative; transition: background 0.25s ease;
+    }
+    .fold-toggle .toggle-track::after {
+        content: ''; position: absolute; width: 16px; height: 16px; border-radius: 50%;
+        background: #fff; top: 2px; left: 2px; transition: transform 0.25s ease;
+    }
+    .fold-toggle.is-active .toggle-track { background: var(--color-red); }
+    .fold-toggle.is-active .toggle-track::after { transform: translateX(18px); }
+    .fold-toggle.is-active { color: var(--color-red); }
+
+    /* Card Slots */
+    .card-slots { display: flex; gap: 8px; margin-bottom: 10px; }
+    .card-slot {
+        width: 48px; height: 66px;
+        border: 2px dashed rgba(255,255,255,0.15);
+        border-radius: var(--radius-xs);
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        cursor: pointer; transition: all 0.2s ease;
+        font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 1.1rem;
+        position: relative; background: rgba(0,0,0,0.2);
+    }
+    .card-slot.is-active { border-color: var(--neon-blue); box-shadow: 0 0 12px rgba(0,212,255,0.3); }
+    .card-slot.is-filled { border-style: solid; }
+    .card-slot .card-rank { font-size: 1.05rem; line-height: 1; }
+    .card-slot .card-suit { font-size: 0.9rem; line-height: 1; margin-top: 2px; }
+    .card-slot .slot-label { font-size: 0.6rem; color: var(--text-muted); position: absolute; bottom: 2px; }
+    .card-slot .slot-value { font-size: 0.95rem; line-height: 1; }
+
+    /* Suit colors */
+    .suit-spades, .suit-clubs { color: #e2e8f0; }
+    .suit-hearts, .suit-diamonds { color: #ff4444; }
+
+    /* Win Bar */
+    .win-bar-container { margin-top: 8px; }
+    .win-bar-label { display: flex; justify-content: space-between; font-size: 0.78rem; margin-bottom: 3px; }
+    .win-bar-label span:first-child { color: var(--text-muted); }
+    .win-bar-label span:last-child { font-weight: 700; }
+    .win-bar-track {
+        width: 100%; height: 8px; border-radius: 4px;
+        background: rgba(255,255,255,0.06); overflow: hidden;
+    }
+    .win-bar-fill {
+        height: 100%; border-radius: 4px;
+        background: linear-gradient(90deg, var(--color-blue), var(--neon-green));
+        transition: width 0.5s ease; width: 0%;
+    }
+    .win-bar-fill.tie-bar {
+        background: linear-gradient(90deg, var(--color-amber), #fbbf24);
+    }
+
+    /* ---- Board Section ---- */
+    .board-section { text-align: center; }
+    .board-row { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+    .board-label {
+        font-size: 0.82rem; font-weight: 700; color: var(--text-muted);
+        min-width: 55px; text-align: right;
+    }
+    .board-card-slot {
+        width: 52px; height: 72px;
+        border: 2px dashed rgba(255,255,255,0.15);
+        border-radius: var(--radius-xs);
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        cursor: pointer; transition: all 0.2s ease;
+        font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 1.15rem;
+        position: relative; background: rgba(0,0,0,0.25);
+    }
+    .board-card-slot.is-active { border-color: var(--neon-green); box-shadow: 0 0 14px rgba(0,255,136,0.25); }
+    .board-card-slot.is-filled { border-style: solid; }
+    .board-card-slot .card-rank { font-size: 1.1rem; line-height: 1; }
+    .board-card-slot .card-suit { font-size: 0.95rem; line-height: 1; margin-top: 2px; }
+
+    /* ---- Sim Controls ---- */
+    .sim-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center; margin-bottom: 10px; }
+    .btn-calc {
+        background: linear-gradient(135deg, var(--neon-green), #00cc6a);
+        color: #000; font-weight: 800; font-size: 1rem;
+        padding: 12px 32px; border-radius: 30px; border: none; cursor: pointer;
+        display: inline-flex; align-items: center; gap: 8px;
+        box-shadow: 0 6px 24px rgba(0,255,136,0.3);
+        transition: all 0.25s ease;
+    }
+    .btn-calc:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,255,136,0.45); }
+    .btn-calc:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .btn-reset {
+        background: rgba(255,255,255,0.08); color: var(--text-secondary);
+        border: 1px solid rgba(255,255,255,0.15); border-radius: 30px;
+        padding: 12px 24px; font-weight: 700; font-size: 0.95rem; cursor: pointer;
+        display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s ease;
+    }
+    .btn-reset:hover { background: rgba(255,255,255,0.14); }
+    .sim-progress { text-align: center; font-size: 0.88rem; color: var(--text-muted); min-height: 24px; }
+    .auto-calc-hint {
+        display: flex; align-items: center; justify-content: center; gap: 6px;
+        font-size: 0.8rem; color: var(--text-muted); margin-top: 10px;
+        padding: 6px 12px; border-radius: 6px;
+        background: rgba(0, 255, 136, 0.04); border: 1px solid rgba(0, 255, 136, 0.1);
+    }
+
+    /* ---- Card Picker (Virtual Keyboard) ---- */
+    .card-picker-wrapper {
+        position: fixed; bottom: 0; left: 0; right: 0; z-index: 90;
+        background: rgba(9, 13, 22, 0.97);
+        backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+        border-top: 1px solid var(--border-card);
+        padding: 10px 12px 14px;
+        transform: translateY(100%);
+        transition: transform 0.3s ease;
+        max-height: 52vh; overflow-y: auto;
+    }
+    .card-picker-wrapper.is-visible { transform: translateY(0); }
+    .picker-header {
+        display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
+    }
+    .picker-header span { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; }
+    .picker-actions { display: flex; align-items: center; gap: 8px; }
+    .picker-clear-btn {
+        background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3);
+        color: #f87171; font-size: 0.78rem; font-weight: 600;
+        padding: 5px 12px; border-radius: 6px; cursor: pointer;
+        display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s ease;
+    }
+    .picker-clear-btn:hover { background: rgba(239, 68, 68, 0.25); }
+    .picker-close {
+        background: none; border: none; color: var(--text-muted); font-size: 1.2rem;
+        cursor: pointer; padding: 4px 8px;
+    }
+    .picker-close:hover { color: #fff; }
+    .card-picker-grid {
+        display: grid;
+        grid-template-columns: repeat(13, 1fr);
+        gap: 4px;
+    }
+    .picker-card {
+        aspect-ratio: 0.7;
+        border-radius: 4px;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        cursor: pointer; font-family: 'Outfit', sans-serif; font-weight: 700;
+        font-size: clamp(0.6rem, 2.2vw, 0.85rem);
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.1);
+        transition: all 0.15s ease;
+        position: relative;
+    }
+    .picker-card:hover:not(.is-disabled) { background: rgba(0,212,255,0.15); border-color: var(--neon-blue); transform: scale(1.05); }
+    .picker-card.is-disabled { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
+    .picker-card .pk-rank { line-height: 1; }
+    .picker-card .pk-suit { font-size: 0.75em; line-height: 1; margin-top: 1px; }
+
+    /* Body padding for picker */
+    body.picker-open { padding-bottom: 280px; }
+
+    /* ---- Affiliate Cards ---- */
+    .affiliate-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+    .affiliate-card {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid var(--border-card);
+        border-radius: var(--radius-md);
+        padding: 20px; text-align: center;
+        transition: all 0.25s ease;
+    }
+    .affiliate-card:hover { transform: translateY(-3px); border-color: rgba(245,158,11,0.4); }
+    .affiliate-card .af-icon { font-size: 2rem; color: var(--color-amber); margin-bottom: 10px; }
+    .affiliate-card h4 { font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 6px; }
+    .affiliate-card p { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 14px; }
+    .btn-affiliate {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: #000; font-weight: 700; font-size: 0.88rem;
+        padding: 10px 22px; border-radius: 24px; border: none;
+        text-decoration: none; transition: all 0.2s ease;
+        box-shadow: 0 4px 16px rgba(245,158,11,0.3);
+    }
+    .btn-affiliate:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(245,158,11,0.45); }
+
+    /* ---- Ko-fi Widget ---- */
+    .kofi-section { text-align: center; padding: 20px 0; }
+    .kofi-section h3 { font-size: 1.15rem; font-weight: 700; color: #fff; margin-bottom: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    #kofi-widget-container { display: inline-block; }
+
+    /* ---- Footer SEO Section ---- */
+    .seo-section { padding: 30px 0; }
+    .seo-section h2 {
+        font-family: 'Outfit', 'Noto Sans TC', sans-serif;
+        font-size: 1.5rem; font-weight: 800; color: #fff;
+        margin-bottom: 16px; display: flex; align-items: center; gap: 10px;
+    }
+    .seo-section h3 { font-size: 1.1rem; font-weight: 700; color: #e2e8f0; margin: 16px 0 8px; }
+    .seo-section p { font-size: 0.92rem; color: var(--text-secondary); margin-bottom: 10px; line-height: 1.7; }
+    .seo-section ul { margin: 8px 0 12px 20px; color: var(--text-secondary); }
+    .seo-section li { margin-bottom: 6px; font-size: 0.9rem; }
+    .seo-section .term { font-weight: 700; color: var(--neon-green); }
+
+    .disclaimer-box {
+        background: rgba(239, 68, 68, 0.06);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        border-radius: var(--radius-md);
+        padding: 18px 20px; margin-top: 20px;
+    }
+    .disclaimer-box h3 { color: var(--color-red); font-size: 1rem; margin-bottom: 8px; }
+    .disclaimer-box p { font-size: 0.88rem; color: var(--text-muted); line-height: 1.7; }
+
+    /* ---- Footer ---- */
+    .main-footer {
+        border-top: 1px solid var(--border-card);
+        background: rgba(9, 13, 22, 0.95);
+        padding: 24px 0; text-align: center; font-size: 0.85rem; color: var(--text-muted);
+    }
+    .footer-links a { color: var(--text-secondary); text-decoration: none; margin: 0 6px; font-weight: 500; }
+    .footer-links a:hover { color: var(--color-blue); }
+
+    /* ========== RESPONSIVE ========== */
+    @media (max-width: 768px) {
+        .brand-tagline { display: none; }
+        .header-container { justify-content: center; }
+        .hero-title { font-size: 1.7rem; }
+        .hero-subtitle { font-size: 0.9rem; }
+        .players-grid { grid-template-columns: 1fr; }
+        .card-picker-grid { grid-template-columns: repeat(7, 1fr); gap: 3px; }
+        .picker-card { font-size: 0.7rem; }
+        body.picker-open { padding-bottom: 340px; }
+        .board-card-slot { width: 44px; height: 62px; }
+        .board-label { font-size: 0.75rem; min-width: 45px; }
+        .card-slot { width: 42px; height: 58px; }
+        .affiliate-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 480px) {
+        .card-picker-grid { grid-template-columns: repeat(6, 1fr); }
+        body.picker-open { padding-bottom: 380px; }
+    }
     </style>
 </head>
 <body>
-<!-- HEADER -->
+
+<!-- ===== HEADER ===== -->
 <header class="main-header">
     <div class="container header-container">
         <div class="brand-box">
-            <div class="brand-logo"><i class="fa-solid fa-rocket brand-icon"></i><span>GugoPro</span></div>
+            <div class="brand-logo">
+                <i class="fa-solid fa-rocket brand-icon"></i>
+                <span class="brand-name">GugoPro</span>
+            </div>
             <span class="brand-tagline">跨國智能 AI 工具與內容大軍總入口網</span>
         </div>
         <a href="https://gugopro.com" class="btn-back-home"><i class="fa-solid fa-house"></i> 返回 GugoPro 首頁</a>
     </div>
 </header>
-<!-- HERO -->
+
+<!-- ===== HERO ===== -->
 <section class="hero-section">
-    <div class="container">
-        <div class="hero-badge"><i class="fa-solid fa-bolt"></i> POKER EQUITY & POT ODDS CALCULATOR</div>
-        <h1 class="hero-title">德州撲克勝率與底池賠率計算器 <span class="gradient-text">Pro Edition</span></h1>
-        <p class="hero-subtitle">4色牌職業級UI・底池賠率EV決策矩陣・Outs補牌分析・2~9人隨機牌範圍・20,000次蒙特卡羅模擬</p>
+    <div class="container hero-content">
+        <div class="hero-badge"><i class="fa-solid fa-bolt"></i> POKER EQUITY CALCULATOR</div>
+        <h1 class="hero-title">德州撲克即時勝率計算器 <span class="gradient-text">Texas Hold'em Odds Calculator</span></h1>
+        <p class="hero-subtitle">
+            支援 2~6 人桌，Monte Carlo 模擬 10,000 次即時運算 Win% 與 Tie%，100% 純前端極速載入，手機端完美響應式。
+        </p>
     </div>
 </section>
-<!-- MAIN TOOL -->
-<div class="container" id="tool-area">
+
+<!-- ===== MAIN TOOL ===== -->
+<div class="container tool-area">
+
     <!-- Player Section -->
     <div class="section-card">
-        <div class="section-title"><i class="fa-solid fa-users" style="color:var(--color-blue)"></i> 玩家設定 (2~9人)</div>
-        <p class="section-subtitle">調整玩家人數，為每位玩家設定手牌或切換為「隨機牌」模式。右鍵/長按牌槽可清除單張牌。</p>
+        <div class="section-title"><i class="fa-solid fa-users" style="color: var(--color-blue);"></i> 玩家設定 (Player Setup)</div>
+        <p class="section-subtitle">調整玩家人數 (2~6 人)，為每位玩家設定 2 張手牌，可隨時切換 Fold 棄牌狀態。</p>
+
         <div class="player-controls">
             <button class="btn-player" id="btn-remove-player" disabled><i class="fa-solid fa-minus"></i></button>
             <span class="player-count-display" id="player-count-display">2 位玩家</span>
             <button class="btn-player" id="btn-add-player"><i class="fa-solid fa-plus"></i></button>
         </div>
-        <div class="players-grid" id="players-grid"></div>
+
+        <!-- PLAYER CARDS — DOM-First: all 6 cards in HTML, JS toggles visibility -->
+        <div class="players-grid" id="players-grid">
+
+            <!-- Player 1 -->
+            <div class="player-card" id="player-card-0">
+                <div class="player-header">
+                    <div class="player-name">
+                        <div class="player-avatar">P1</div>
+                        玩家 1
+                    </div>
+                    <div class="fold-toggle" id="fold-0">
+                        <span>Fold</span>
+                        <div class="toggle-track"></div>
+                    </div>
+                </div>
+                <div class="card-slots">
+                    <div class="card-slot" id="slot-0-0"><span class="slot-label">C1</span></div>
+                    <div class="card-slot" id="slot-0-1"><span class="slot-label">C2</span></div>
+                </div>
+                <div class="win-bar-container">
+                    <div class="win-bar-label"><span>Win%</span><span id="winpct-0">—</span></div>
+                    <div class="win-bar-track"><div class="win-bar-fill" id="winfill-0"></div></div>
+                    <div class="win-bar-label"><span>Tie%</span><span id="tiepct-0">—</span></div>
+                    <div class="win-bar-track"><div class="win-bar-fill tie-bar" id="tiefill-0"></div></div>
+                </div>
+            </div>
+
+            <!-- Player 2 -->
+            <div class="player-card" id="player-card-1">
+                <div class="player-header">
+                    <div class="player-name">
+                        <div class="player-avatar">P2</div>
+                        玩家 2
+                    </div>
+                    <div class="fold-toggle" id="fold-1">
+                        <span>Fold</span>
+                        <div class="toggle-track"></div>
+                    </div>
+                </div>
+                <div class="card-slots">
+                    <div class="card-slot" id="slot-1-0"><span class="slot-label">C1</span></div>
+                    <div class="card-slot" id="slot-1-1"><span class="slot-label">C2</span></div>
+                </div>
+                <div class="win-bar-container">
+                    <div class="win-bar-label"><span>Win%</span><span id="winpct-1">—</span></div>
+                    <div class="win-bar-track"><div class="win-bar-fill" id="winfill-1"></div></div>
+                    <div class="win-bar-label"><span>Tie%</span><span id="tiepct-1">—</span></div>
+                    <div class="win-bar-track"><div class="win-bar-fill tie-bar" id="tiefill-1"></div></div>
+                </div>
+            </div>
+
+            <!-- Player 3 (hidden by default) -->
+            <div class="player-card is-hidden" id="player-card-2">
+                <div class="player-header">
+                    <div class="player-name">
+                        <div class="player-avatar">P3</div>
+                        玩家 3
+                    </div>
+                    <div class="fold-toggle" id="fold-2">
+                        <span>Fold</span>
+                        <div class="toggle-track"></div>
+                    </div>
+                </div>
+                <div class="card-slots">
+                    <div class="card-slot" id="slot-2-0"><span class="slot-label">C1</span></div>
+                    <div class="card-slot" id="slot-2-1"><span class="slot-label">C2</span></div>
+                </div>
+                <div class="win-bar-container">
+                    <div class="win-bar-label"><span>Win%</span><span id="winpct-2">—</span></div>
+                    <div class="win-bar-track"><div class="win-bar-fill" id="winfill-2"></div></div>
+                    <div class="win-bar-label"><span>Tie%</span><span id="tiepct-2">—</span></div>
+                    <div class="win-bar-track"><div class="win-bar-fill tie-bar" id="tiefill-2"></div></div>
+                </div>
+            </div>
+
+            <!-- Player 4 (hidden) -->
+            <div class="player-card is-hidden" id="player-card-3">
+                <div class="player-header">
+                    <div class="player-name">
+                        <div class="player-avatar">P4</div>
+                        玩家 4
+                    </div>
+                    <div class="fold-toggle" id="fold-3">
+                        <span>Fold</span>
+                        <div class="toggle-track"></div>
+                    </div>
+                </div>
+                <div class="card-slots">
+                    <div class="card-slot" id="slot-3-0"><span class="slot-label">C1</span></div>
+                    <div class="card-slot" id="slot-3-1"><span class="slot-label">C2</span></div>
+                </div>
+                <div class="win-bar-container">
+                    <div class="win-bar-label"><span>Win%</span><span id="winpct-3">—</span></div>
+                    <div class="win-bar-track"><div class="win-bar-fill" id="winfill-3"></div></div>
+                    <div class="win-bar-label"><span>Tie%</span><span id="tiepct-3">—</span></div>
+                    <div class="win-bar-track"><div class="win-bar-fill tie-bar" id="tiefill-3"></div></div>
+                </div>
+            </div>
+
+            <!-- Player 5 (hidden) -->
+            <div class="player-card is-hidden" id="player-card-4">
+                <div class="player-header">
+                    <div class="player-name">
+                        <div class="player-avatar">P5</div>
+                        玩家 5
+                    </div>
+                    <div class="fold-toggle" id="fold-4">
+                        <span>Fold</span>
+                        <div class="toggle-track"></div>
+                    </div>
+                </div>
+                <div class="card-slots">
+                    <div class="card-slot" id="slot-4-0"><span class="slot-label">C1</span></div>
+                    <div class="card-slot" id="slot-4-1"><span class="slot-label">C2</span></div>
+                </div>
+                <div class="win-bar-container">
+                    <div class="win-bar-label"><span>Win%</span><span id="winpct-4">—</span></div>
+                    <div class="win-bar-track"><div class="win-bar-fill" id="winfill-4"></div></div>
+                    <div class="win-bar-label"><span>Tie%</span><span id="tiepct-4">—</span></div>
+                    <div class="win-bar-track"><div class="win-bar-fill tie-bar" id="tiefill-4"></div></div>
+                </div>
+            </div>
+
+            <!-- Player 6 (hidden) -->
+            <div class="player-card is-hidden" id="player-card-5">
+                <div class="player-header">
+                    <div class="player-name">
+                        <div class="player-avatar">P6</div>
+                        玩家 6
+                    </div>
+                    <div class="fold-toggle" id="fold-5">
+                        <span>Fold</span>
+                        <div class="toggle-track"></div>
+                    </div>
+                </div>
+                <div class="card-slots">
+                    <div class="card-slot" id="slot-5-0"><span class="slot-label">C1</span></div>
+                    <div class="card-slot" id="slot-5-1"><span class="slot-label">C2</span></div>
+                </div>
+                <div class="win-bar-container">
+                    <div class="win-bar-label"><span>Win%</span><span id="winpct-5">—</span></div>
+                    <div class="win-bar-track"><div class="win-bar-fill" id="winfill-5"></div></div>
+                    <div class="win-bar-label"><span>Tie%</span><span id="tiepct-5">—</span></div>
+                    <div class="win-bar-track"><div class="win-bar-fill tie-bar" id="tiefill-5"></div></div>
+                </div>
+            </div>
+
+        </div>
     </div>
-    <!-- Board Section -->
+
+    <!-- Board Section — DOM-First -->
     <div class="section-card board-section">
-        <div class="section-title" style="justify-content:center"><i class="fa-solid fa-layer-group" style="color:var(--neon-green)"></i> 公共牌區 (Community Board)</div>
-        <p class="section-subtitle" style="text-align:center">可不設公共牌直接計算 Preflop 勝率，或設定 Flop/Turn/River。</p>
+        <div class="section-title" style="justify-content: center;"><i class="fa-solid fa-table-cards" style="color: var(--neon-green);"></i> 公共牌區 (Community Board)</div>
+        <p class="section-subtitle" style="text-align: center;">依序設定 Flop (翻牌)、Turn (轉牌)、River (河牌)。可不設公共牌直接計算 Preflop 勝率。</p>
+
         <div class="board-row">
             <span class="board-label">Flop:</span>
             <div class="board-card-slot" id="board-slot-0"><span class="slot-label">F1</span></div>
@@ -208,716 +624,929 @@
             <span class="board-label">River:</span>
             <div class="board-card-slot" id="board-slot-4"><span class="slot-label">R</span></div>
         </div>
-        <!-- Outs Panel -->
-        <div class="outs-panel" id="outs-panel" style="display:none">
-            <div class="outs-title"><i class="fa-solid fa-bullseye"></i> 聽牌與補牌數分析 (Hero - 玩家1)</div>
-            <div id="outs-content"></div>
-        </div>
     </div>
+
     <!-- Simulation Controls -->
-    <div class="section-card" style="text-align:center">
+    <div class="section-card" style="text-align: center;">
         <div class="sim-controls">
-            <button class="btn-calc" id="btn-calculate"><i class="fa-solid fa-calculator"></i> 模擬 20,000 次</button>
+            <button class="btn-calc" id="btn-calculate"><i class="fa-solid fa-calculator"></i> 開始模擬 (10,000 次)</button>
             <button class="btn-reset" id="btn-reset-all"><i class="fa-solid fa-rotate-left"></i> 重置全部</button>
+        </div>
+        <div class="auto-calc-hint" id="auto-calc-hint">
+            <i class="fa-solid fa-bolt" style="color: var(--neon-green);"></i>
+            <span>自動模式：當 2+ 位玩家各有 2 張手牌時，系統將自動計算勝率</span>
         </div>
         <div class="sim-progress" id="sim-progress"></div>
     </div>
-    <!-- Pot Odds & EV Section -->
+
+    <!-- Affiliate Cards -->
     <div class="section-card">
-        <div class="section-title"><i class="fa-solid fa-scale-balanced" style="color:var(--color-amber)"></i> 底池賠率與 EV 決策矩陣</div>
-        <p class="section-subtitle">輸入底池與下注金額，系統自動計算所需最小勝率並判斷 +EV / -EV 決策。</p>
-        <div class="pot-odds-grid">
-            <div class="pot-input-group">
-                <label>當前底池 ($)</label>
-                <input type="number" id="pot-size" placeholder="100" min="0" step="1">
-            </div>
-            <div class="pot-input-group">
-                <label>對手下注 ($)</label>
-                <input type="number" id="opponent-bet" placeholder="50" min="0" step="1">
-            </div>
-            <div class="pot-input-group">
-                <label>我的跟注 ($)</label>
-                <input type="number" id="call-amount" placeholder="50" min="0" step="1">
-            </div>
-        </div>
-        <div class="ev-result neutral" id="ev-result">請輸入底池金額並完成勝率計算，系統將自動判斷 EV 決策。</div>
-    </div>
-    <!-- Affiliate -->
-    <div class="section-card">
-        <div class="section-title"><i class="fa-brands fa-amazon" style="color:var(--color-amber)"></i> 撲克與桌遊用品推薦</div>
-        <p class="section-subtitle">精選防水籌碼套裝與專業撲克桌墊，直達 Amazon 全球館。</p>
+        <div class="section-title"><i class="fa-brands fa-amazon" style="color: var(--color-amber);"></i> 精選撲克書籍與專業裝備</div>
+        <p class="section-subtitle">想提升撲克實力？搜尋精選戰術書籍與專業裝備，直達 Amazon 全球館。</p>
         <div class="affiliate-grid">
             <div class="affiliate-card">
-                <div class="af-icon"><i class="fa-solid fa-coins"></i></div>
-                <h4>美國 Amazon 精選</h4>
-                <p>Poker Chip Set & Mat — 專業籌碼套裝與桌墊</p>
-                <a href="https://www.amazon.com/s?k=poker+chip+set+and+poker+mat&tag=9908qq-20" target="_blank" rel="noopener" class="btn-affiliate"><i class="fa-brands fa-amazon"></i> 前往美國 Amazon</a>
+                <div class="af-icon"><i class="fa-solid fa-book-open"></i></div>
+                <h4>美國 Amazon 精選書單</h4>
+                <p>Poker Books &amp; Cards — 搜尋暢銷撲克策略書籍與專業撲克牌。</p>
+                <a href="https://www.amazon.com/s?k=poker+books+and+cards&tag=9908qq-20" target="_blank" rel="noopener" class="btn-affiliate">
+                    <i class="fa-brands fa-amazon"></i> 前往美國 Amazon 搜尋
+                </a>
             </div>
             <div class="affiliate-card">
                 <div class="af-icon"><i class="fa-solid fa-torii-gate"></i></div>
-                <h4>日本 Amazon 精選</h4>
-                <p>ポーカーチップ＋ポーカーマット — 日本直送</p>
-                <a href="https://www.amazon.co.jp/s?k=ポーカーチップ+ポーカーマット&tag=gugopro-22" target="_blank" rel="noopener" class="btn-affiliate"><i class="fa-brands fa-amazon"></i> 前往日本 Amazon</a>
+                <h4>日本 Amazon 精選好物</h4>
+                <p>ポーカー本・グッズ — 搜尋日本亞馬遜撲克相關書籍與周邊商品。</p>
+                <a href="https://www.amazon.co.jp/s?k=ポーカー+本+グッズ&tag=gugopro-22" target="_blank" rel="noopener" class="btn-affiliate">
+                    <i class="fa-brands fa-amazon"></i> 前往日本 Amazon 搜尋
+                </a>
             </div>
         </div>
     </div>
-    <!-- Ko-fi -->
+
+    <!-- Ko-fi Donation — Pure Static HTML (no external JS) -->
     <div class="section-card kofi-section">
-        <h3><i class="fa-solid fa-mug-hot" style="color:#72a4f2"></i> 贊助開發者</h3>
-        <a href="https://ko-fi.com/R1K123XRS9" target="_blank" rel="noopener" style="background:#72a4f2;color:#fff;padding:11px 20px;border-radius:10px;text-decoration:none;display:inline-flex;align-items:center;gap:8px;font-weight:bold;font-size:0.95rem;box-shadow:0 4px 14px rgba(114,164,242,0.3)"><i class="fa-solid fa-mug-hot"></i> Buy me a coffee</a>
+        <h3><i class="fa-solid fa-mug-hot" style="color: #72a4f2;"></i> 贊助開發者 (Support Us)</h3>
+        <a href="https://ko-fi.com/R1K123XRS9" target="_blank" rel="noopener" class="kofi-button" style="background:#72a4f2; color:#fff; padding:12px 22px; border-radius:10px; text-decoration:none; display:inline-flex; align-items:center; gap:10px; font-weight:bold; font-size:1rem; transition:all 0.2s ease; box-shadow:0 4px 15px rgba(114,164,242,0.3);">
+            <i class="fa-solid fa-mug-hot"></i> Buy me a coffee
+        </a>
     </div>
+
 </div>
-<!-- SEO Section -->
+
+<!-- ===== SEO Footer ===== -->
 <div class="container seo-section">
     <div class="section-card">
-        <h2><i class="fa-solid fa-graduation-cap" style="color:var(--neon-green)"></i> 德州撲克勝率與底池賠率完整教學</h2>
-        <h3>什麼是底池賠率 (Pot Odds) 與 +EV 跟注？</h3>
-        <p>底池賠率是德州撲克中最重要的數學概念之一。它表示當前底池總額與你需要跟注金額的比率。當你的「實際勝率」大於「所需最小勝率」時，跟注就是一個正期望值 (+EV) 的決策，長期下來會為你帶來利潤。</p>
-        <p>計算公式：<strong>所需最小勝率 = 跟注金額 ÷ (底池 + 對手下注 + 跟注金額)</strong>。例如底池 100，對手下注 50，你需跟注 50，則所需最小勝率 = 50 / (100+50+50) = 25%。若你的手牌勝率超過 25%，跟注就是 +EV。</p>
-        <h3>如何利用 Outs 補牌數計算成牌率？</h3>
-        <p>Outs（補牌數）是指牌堆中能讓你的手牌改善為最強牌型的剩餘牌張數。常見的 Outs 數量：</p>
+        <h2><i class="fa-solid fa-book-open" style="color: var(--neon-green);"></i> 如何使用德州撲克勝率計算器？</h2>
+        <p>
+            本工具是一款專為德州撲克 (Texas Hold'em) 玩家設計的高階勝率運算引擎，採用蒙地卡羅模擬法 (Monte Carlo Simulation)
+            在背景執行 10,000 次隨機模擬，即時計算每位玩家的 Win% (勝率) 與 Tie% (和局率)。以下是完整的操作教學：
+        </p>
+
+        <h3>步驟一：設定玩家人數 (2~6 人)</h3>
+        <p>
+            使用左上角的 <strong>＋</strong> 與 <strong>－</strong> 按鈕，動態調整同桌玩家數量。預設為 2 位玩家，
+            最多支援 6 人桌 (6-Max)。每位玩家會自動分配一個彩色頭像與編號。
+        </p>
+
+        <h3>步驟二：選擇手牌與公共牌 (Card Picker)</h3>
+        <p>
+            點擊任意一位玩家的手牌卡槽 (Card Slot)，螢幕底部會彈出 <strong>52 張牌虛擬鍵盤</strong> (Card Picker)。
+            鍵盤依花色分組平鋪：♠ 黑桃、♥ 紅心、♦ 方塊、♣ 草花，每組 13 張牌。
+            點擊牌面即可自動填入，並自動跳格到下一個空卡槽。
+        </p>
+        <p>
+            <strong>鍵盤快捷輸入 (電腦端)</strong>：您也可直接按鍵盤字元快速填牌。例如輸入 <code>As</code> 代表黑桃 A，
+            <code>Kh</code> 代表紅心 K，<code>10d</code> 代表方塊 10。公共牌區同樣支援快捷輸入。
+        </p>
+
+        <h3>步驟三：處理玩家棄牌 (Fold)</h3>
+        <p>
+            若某位玩家在翻牌前或翻牌圈棄牌 (Fold)，點擊該玩家卡片右側的 <strong>Fold 開關</strong>。
+            開啟後，該玩家頭像與卡片會變為灰階，計算引擎將自動排除棄牌玩家，僅針對剩餘玩家重新運算勝率。
+        </p>
+
+        <h3>步驟四：解讀蒙地卡羅勝率結果</h3>
+        <p>
+            點擊「開始模擬」按鈕後，引擎將在毫秒間完成 10,000 次隨機發牌模擬。每位玩家的結果以 <strong>進度條 (Win Bar)</strong>
+            呈現，包含 Win% (勝率) 與 Tie% (和局率)。勝率最高的玩家會以綠色霓虹光框高亮標示。
+        </p>
+
+        <h3>常見德州撲克專有名詞</h3>
         <ul>
-            <li><span class="term">同花聽牌 (Flush Draw)</span>：9 張 Outs，Turn 成牌率約 19.1%，River 約 19.6%</li>
-            <li><span class="term">雙頭順子聽牌 (OESD)</span>：8 張 Outs，Turn 成牌率約 17.0%</li>
-            <li><span class="term">卡順聽牌 (Gutshot)</span>：4 張 Outs，Turn 成牌率約 8.5%</li>
-            <li><span class="term">同花+順子組合聽牌</span>：最多 15 張 Outs，Turn 成牌率約 31.9%</li>
+            <li><span class="term">Equity (股權/勝率)</span>：指在特定局面下，某位玩家最終贏得彩池的數學機率。通常以百分比表示。</li>
+            <li><span class="term">Flop (翻牌)</span>：發牌後公開的前 3 張公共牌，是德州撲克第一個下注回合的依據。</li>
+            <li><span class="term">Turn (轉牌)</span>：Flop 之後發出的第 4 張公共牌，代表第二個下注回合。</li>
+            <li><span class="term">River (河牌)</span>：Turn 之後發出的第 5 張（最後一張）公共牌，代表最終下注回合。</li>
+            <li><span class="term">Monte Carlo Simulation (蒙地卡羅模擬)</span>：一種透過大量隨機抽樣來估算數學結果的計算方法。
+                本工具每次模擬隨機分配剩餘牌堆中的公共牌，以統計方式逼近真實勝率。</li>
+            <li><span class="term">Pot Odds (彩池賠率)</span>：當前彩池總額與玩家跟注金額的比率，用於判斷跟注是否為正 EV (期望值) 決策。</li>
         </ul>
-        <p>快速估算法（2/4 法則）：Flop 到 River 的成牌率 ≈ Outs × 4%；Turn 到 River ≈ Outs × 2%。</p>
-        <h3>4 色牌 (4-Color Deck) 的優勢</h3>
-        <p>職業線上撲克平台（如 PokerStars、GGPoker）普遍提供 4 色牌選項，將傳統的黑紅雙色改為黑桃黑色、紅心紅色、方塊藍色、梅花綠色，大幅降低花色辨識錯誤率，特別適合手機小螢幕與多桌操作。</p>
-        <h3>蒙特卡羅模擬 (Monte Carlo Simulation) 原理</h3>
-        <p>本工具採用 20,000 次蒙特卡羅隨機模擬，透過大量隨機抽樣逼近真實勝率。Pre-flop 與 Flop 階段使用隨機模擬，Turn 與 River 階段（剩餘未知牌較少時）自動切換為精確枚舉計算，確保結果精準度。</p>
     </div>
+
+    <!-- Disclaimer -->
     <div class="disclaimer-box">
-        <h3><i class="fa-solid fa-triangle-exclamation"></i> 使用條款與免責聲明</h3>
-        <p>本工具計算結果僅供德州撲克棋牌技巧研究與數學機率統計評估，不保證獲利亦不鼓勵任何非法博弈行為。使用者若因違反第三方平台服務條款或當地法律，本站概不負責。</p>
+        <h3><i class="fa-solid fa-triangle-exclamation"></i> 使用條款與免責聲明 (Disclaimer)</h3>
+        <p>
+            本工具僅供撲克策略研究、勝率數學模擬與賽後復盤教學使用。請勿將本工具用於任何現場賭場或線上真錢平台之即時遊戲輔助。
+            使用者若因違反第三方平台服務條款或當地法律，本站概不負責。本工具不提供任何投資、博彩或法律建議。
+            使用者應自行承擔使用本工具的一切風險與後果。
+        </p>
     </div>
 </div>
-<!-- FOOTER -->
+
+<!-- ===== FOOTER ===== -->
 <footer class="main-footer">
     <div class="container">
-        <p>&copy; 2026 GugoPro (gugopro.com). All rights reserved.</p>
+        <p>© 2026 GugoPro (gugopro.com). All rights reserved. 跨國智能 Web 工具與財經籌碼矩陣。</p>
         <div class="footer-links">
             <a href="https://gugopro.com">gugopro.com</a> |
+            <a href="https://shop-ja.gugopro.com" target="_blank">shop-ja.gugopro.com</a> |
+            <a href="https://tarot.gugopro.com" target="_blank">tarot.gugopro.com</a> |
             <a href="https://ko-fi.com/R1K123XRS9" target="_blank" rel="noopener">贊助與支持</a>
         </div>
     </div>
 </footer>
-<!-- CARD PICKER -->
+
+<!-- ===== CARD PICKER (Virtual Keyboard) — DOM-First ===== -->
 <div class="card-picker-wrapper" id="card-picker">
     <div class="picker-header">
-        <span><i class="fa-solid fa-hand-pointer"></i> 4色牌選擇器 (快捷: As, Kh, 10d, 7c)</span>
+        <span><i class="fa-solid fa-hand-pointer"></i> 選擇牌面 / 快速輸入 (如 As, Kh, 10d)</span>
         <div class="picker-actions">
-            <button class="picker-clear-btn" id="picker-clear-slot"><i class="fa-solid fa-eraser"></i> 清除此牌</button>
+            <button class="picker-clear-btn" id="picker-clear-slot" title="清除目前選中的牌槽"><i class="fa-solid fa-eraser"></i> 清除此牌</button>
             <button class="picker-close" id="picker-close-btn"><i class="fa-solid fa-xmark"></i></button>
         </div>
     </div>
-    <div class="card-picker-grid" id="picker-grid"></div>
+    <div class="card-picker-grid" id="picker-grid">
+        <!-- Spades -->
+        <div class="picker-card suit-spades" data-card="As"><span class="pk-rank">A</span><span class="pk-suit">♠</span></div>
+        <div class="picker-card suit-spades" data-card="2s"><span class="pk-rank">2</span><span class="pk-suit">♠</span></div>
+        <div class="picker-card suit-spades" data-card="3s"><span class="pk-rank">3</span><span class="pk-suit">♠</span></div>
+        <div class="picker-card suit-spades" data-card="4s"><span class="pk-rank">4</span><span class="pk-suit">♠</span></div>
+        <div class="picker-card suit-spades" data-card="5s"><span class="pk-rank">5</span><span class="pk-suit">♠</span></div>
+        <div class="picker-card suit-spades" data-card="6s"><span class="pk-rank">6</span><span class="pk-suit">♠</span></div>
+        <div class="picker-card suit-spades" data-card="7s"><span class="pk-rank">7</span><span class="pk-suit">♠</span></div>
+        <div class="picker-card suit-spades" data-card="8s"><span class="pk-rank">8</span><span class="pk-suit">♠</span></div>
+        <div class="picker-card suit-spades" data-card="9s"><span class="pk-rank">9</span><span class="pk-suit">♠</span></div>
+        <div class="picker-card suit-spades" data-card="10s"><span class="pk-rank">10</span><span class="pk-suit">♠</span></div>
+        <div class="picker-card suit-spades" data-card="Js"><span class="pk-rank">J</span><span class="pk-suit">♠</span></div>
+        <div class="picker-card suit-spades" data-card="Qs"><span class="pk-rank">Q</span><span class="pk-suit">♠</span></div>
+        <div class="picker-card suit-spades" data-card="Ks"><span class="pk-rank">K</span><span class="pk-suit">♠</span></div>
+        <!-- Hearts -->
+        <div class="picker-card suit-hearts" data-card="Ah"><span class="pk-rank">A</span><span class="pk-suit">♥</span></div>
+        <div class="picker-card suit-hearts" data-card="2h"><span class="pk-rank">2</span><span class="pk-suit">♥</span></div>
+        <div class="picker-card suit-hearts" data-card="3h"><span class="pk-rank">3</span><span class="pk-suit">♥</span></div>
+        <div class="picker-card suit-hearts" data-card="4h"><span class="pk-rank">4</span><span class="pk-suit">♥</span></div>
+        <div class="picker-card suit-hearts" data-card="5h"><span class="pk-rank">5</span><span class="pk-suit">♥</span></div>
+        <div class="picker-card suit-hearts" data-card="6h"><span class="pk-rank">6</span><span class="pk-suit">♥</span></div>
+        <div class="picker-card suit-hearts" data-card="7h"><span class="pk-rank">7</span><span class="pk-suit">♥</span></div>
+        <div class="picker-card suit-hearts" data-card="8h"><span class="pk-rank">8</span><span class="pk-suit">♥</span></div>
+        <div class="picker-card suit-hearts" data-card="9h"><span class="pk-rank">9</span><span class="pk-suit">♥</span></div>
+        <div class="picker-card suit-hearts" data-card="10h"><span class="pk-rank">10</span><span class="pk-suit">♥</span></div>
+        <div class="picker-card suit-hearts" data-card="Jh"><span class="pk-rank">J</span><span class="pk-suit">♥</span></div>
+        <div class="picker-card suit-hearts" data-card="Qh"><span class="pk-rank">Q</span><span class="pk-suit">♥</span></div>
+        <div class="picker-card suit-hearts" data-card="Kh"><span class="pk-rank">K</span><span class="pk-suit">♥</span></div>
+        <!-- Diamonds -->
+        <div class="picker-card suit-diamonds" data-card="Ad"><span class="pk-rank">A</span><span class="pk-suit">♦</span></div>
+        <div class="picker-card suit-diamonds" data-card="2d"><span class="pk-rank">2</span><span class="pk-suit">♦</span></div>
+        <div class="picker-card suit-diamonds" data-card="3d"><span class="pk-rank">3</span><span class="pk-suit">♦</span></div>
+        <div class="picker-card suit-diamonds" data-card="4d"><span class="pk-rank">4</span><span class="pk-suit">♦</span></div>
+        <div class="picker-card suit-diamonds" data-card="5d"><span class="pk-rank">5</span><span class="pk-suit">♦</span></div>
+        <div class="picker-card suit-diamonds" data-card="6d"><span class="pk-rank">6</span><span class="pk-suit">♦</span></div>
+        <div class="picker-card suit-diamonds" data-card="7d"><span class="pk-rank">7</span><span class="pk-suit">♦</span></div>
+        <div class="picker-card suit-diamonds" data-card="8d"><span class="pk-rank">8</span><span class="pk-suit">♦</span></div>
+        <div class="picker-card suit-diamonds" data-card="9d"><span class="pk-rank">9</span><span class="pk-suit">♦</span></div>
+        <div class="picker-card suit-diamonds" data-card="10d"><span class="pk-rank">10</span><span class="pk-suit">♦</span></div>
+        <div class="picker-card suit-diamonds" data-card="Jd"><span class="pk-rank">J</span><span class="pk-suit">♦</span></div>
+        <div class="picker-card suit-diamonds" data-card="Qd"><span class="pk-rank">Q</span><span class="pk-suit">♦</span></div>
+        <div class="picker-card suit-diamonds" data-card="Kd"><span class="pk-rank">K</span><span class="pk-suit">♦</span></div>
+        <!-- Clubs -->
+        <div class="picker-card suit-clubs" data-card="Ac"><span class="pk-rank">A</span><span class="pk-suit">♣</span></div>
+        <div class="picker-card suit-clubs" data-card="2c"><span class="pk-rank">2</span><span class="pk-suit">♣</span></div>
+        <div class="picker-card suit-clubs" data-card="3c"><span class="pk-rank">3</span><span class="pk-suit">♣</span></div>
+        <div class="picker-card suit-clubs" data-card="4c"><span class="pk-rank">4</span><span class="pk-suit">♣</span></div>
+        <div class="picker-card suit-clubs" data-card="5c"><span class="pk-rank">5</span><span class="pk-suit">♣</span></div>
+        <div class="picker-card suit-clubs" data-card="6c"><span class="pk-rank">6</span><span class="pk-suit">♣</span></div>
+        <div class="picker-card suit-clubs" data-card="7c"><span class="pk-rank">7</span><span class="pk-suit">♣</span></div>
+        <div class="picker-card suit-clubs" data-card="8c"><span class="pk-rank">8</span><span class="pk-suit">♣</span></div>
+        <div class="picker-card suit-clubs" data-card="9c"><span class="pk-rank">9</span><span class="pk-suit">♣</span></div>
+        <div class="picker-card suit-clubs" data-card="10c"><span class="pk-rank">10</span><span class="pk-suit">♣</span></div>
+        <div class="picker-card suit-clubs" data-card="Jc"><span class="pk-rank">J</span><span class="pk-suit">♣</span></div>
+        <div class="picker-card suit-clubs" data-card="Qc"><span class="pk-rank">Q</span><span class="pk-suit">♣</span></div>
+        <div class="picker-card suit-clubs" data-card="Kc"><span class="pk-rank">K</span><span class="pk-suit">♣</span></div>
+    </div>
 </div>
+
+<!-- Ko-fi: Static HTML button only, no external JS (Widget_2.js uses document.write which destroys DOM) -->
+
 <script>
-(function(){'use strict';
-var RANKS=['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
-var SUITS=['spades','hearts','diamonds','clubs'];
-var SUIT_SYM={spades:'\u2660',hearts:'\u2665',diamonds:'\u2666',clubs:'\u2663'};
-var SUIT_SHORT={spades:'s',hearts:'h',diamonds:'d',clubs:'c'};
-var SIM_ITERATIONS=20000;
-var MAX_PLAYERS=9;
-var MIN_PLAYERS=2;
-var numPlayers=2;
-var players=[];
-var board=[null,null,null,null,null];
-var activeSlot=null;
-var usedCards=new Set();
-var simRunning=false;
-var lastHeroWin=null;
-var kbBuffer='';
-function $(id){return document.getElementById(id)}
-function $$(sel){return document.querySelectorAll(sel)}
-function cardKey(c){return c.rank+c.suit[0]}
-function suitClass(suit){return 'suit-'+suit}
+(function() {
+'use strict';
 
-// Build picker grid (4-color deck)
-function buildPickerGrid(){
-    var grid=$('picker-grid');
-    var html='';
-    SUITS.forEach(function(suit){
-        RANKS.forEach(function(rank){
-            var key=rank+SUIT_SHORT[suit];
-            html+='<div class="picker-card suit-'+suit+'" data-card="'+key+'"><span class="pk-rank">'+rank+'</span><span class="pk-suit">'+SUIT_SYM[suit]+'</span></div>';
-        });
-    });
-    grid.innerHTML=html;
-}
+/* ===================================================================
+   POKER ODDS CALCULATOR — DOM-First Architecture
+   All HTML structure exists in DOM. JS only updates state + classes.
+   =================================================================== */
 
-// Build player cards HTML
-function buildPlayersHTML(){
-    var grid=$('players-grid');
-    var html='';
-    for(var i=0;i<MAX_PLAYERS;i++){
-        var hidden=i>=numPlayers?' is-hidden':'';
-        html+='<div class="player-card'+hidden+'" id="player-card-'+i+'">';
-        html+='<div class="player-header"><div class="player-name"><div class="player-avatar">P'+(i+1)+'</div>玩家 '+(i+1)+(i===0?' (Hero)':'')+'</div>';
-        html+='<div class="player-actions">';
-        if(i>0) html+='<div class="random-toggle" id="random-'+i+'" title="隨機牌範圍"><i class="fa-solid fa-shuffle"></i> Random</div>';
-        html+='<div class="fold-toggle" id="fold-'+i+'"><span>Fold</span><div class="toggle-track"></div></div>';
-        html+='</div></div>';
-        html+='<div class="card-slots">';
-        html+='<div class="card-slot" id="slot-'+i+'-0"><span class="slot-label">C1</span></div>';
-        html+='<div class="card-slot" id="slot-'+i+'-1"><span class="slot-label">C2</span></div>';
-        html+='</div>';
-        html+='<div class="win-bar-container">';
-        html+='<div class="win-bar-label"><span>Win%</span><span id="winpct-'+i+'">—</span></div>';
-        html+='<div class="win-bar-track"><div class="win-bar-fill" id="winfill-'+i+'"></div></div>';
-        html+='<div class="win-bar-label"><span>Tie%</span><span id="tiepct-'+i+'">—</span></div>';
-        html+='<div class="win-bar-track"><div class="win-bar-fill tie-bar" id="tiefill-'+i+'"></div></div>';
-        html+='</div></div>';
+// ---- Constants ----
+var RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+var SUITS = ['spades','hearts','diamonds','clubs'];
+var SUIT_SYMBOLS = { spades: '\u2660', hearts: '\u2665', diamonds: '\u2666', clubs: '\u2663' };
+var SUIT_SHORT = { spades: 's', hearts: 'h', diamonds: 'd', clubs: 'c' };
+var SIM_ITERATIONS = 10000;
+var MAX_PLAYERS = 6;
+var MIN_PLAYERS = 2;
+
+// ---- State ----
+var numPlayers = 2;
+var players = [];  // [{ hole: [card|null, card|null], folded: false }]
+var board = [null, null, null, null, null];
+var activeSlot = null;  // { type:'player'|'board', idx:0-5, slotIdx:0-1 }
+var usedCards = new Set();
+var simRunning = false;
+var lastRunDone = false;
+var kbBuffer = '';
+
+// ---- Helpers ----
+function $(id) { return document.getElementById(id); }
+function $$(sel) { return document.querySelectorAll(sel); }
+
+function cardKey(card) { return card.rank + card.suit[0]; }
+
+function parseCardInput(input) {
+    input = input.trim();
+    if (input.length < 2) return null;
+    var rankStr, suitLetter;
+    if (input.length === 3 && input.substring(0, 2) === '10') {
+        rankStr = '10';
+        suitLetter = input[2].toLowerCase();
+    } else if (input.length === 2) {
+        rankStr = input[0].toUpperCase();
+        suitLetter = input[1].toLowerCase();
+    } else {
+        return null;
     }
-    grid.innerHTML=html;
+    if (RANKS.indexOf(rankStr) === -1) return null;
+    var suitMap = { s: 'spades', h: 'hearts', d: 'diamonds', c: 'clubs' };
+    var suit = suitMap[suitLetter];
+    if (!suit) return null;
+    return { rank: rankStr, suit: suit };
 }
 
-function initState(){
-    players=[];
-    for(var i=0;i<MAX_PLAYERS;i++){
-        players.push({hole:[null,null],folded:false,random:false});
+// ---- State Init ----
+function initState() {
+    for (var i = 0; i < MAX_PLAYERS; i++) {
+        players.push({ hole: [null, null], folded: false });
     }
 }
 
-function syncPlayerVisibility(){
-    for(var i=0;i<MAX_PLAYERS;i++){
-        var el=$('player-card-'+i);
-        if(!el)continue;
-        if(i<numPlayers)el.classList.remove('is-hidden');
-        else el.classList.add('is-hidden');
+// ---- Sync DOM from State ----
+function syncPlayerVisibility() {
+    for (var i = 0; i < MAX_PLAYERS; i++) {
+        var el = $('player-card-' + i);
+        if (!el) continue;
+        if (i < numPlayers) {
+            el.classList.remove('is-hidden');
+        } else {
+            el.classList.add('is-hidden');
+        }
     }
 }
-function syncCount(){
-    $('player-count-display').textContent=numPlayers+' 位玩家';
-    $('btn-add-player').disabled=numPlayers>=MAX_PLAYERS;
-    $('btn-remove-player').disabled=numPlayers<=MIN_PLAYERS;
+
+function syncPlayerFolded(idx) {
+    var card = $('player-card-' + idx);
+    var fold = $('fold-' + idx);
+    if (!card || !fold) return;
+    if (players[idx].folded) {
+        card.classList.add('is-folded');
+        fold.classList.add('is-active');
+    } else {
+        card.classList.remove('is-folded');
+        fold.classList.remove('is-active');
+    }
 }
-function syncPlayerCards(idx){
-    var p=players[idx];
-    for(var s=0;s<2;s++){
-        var slot=$('slot-'+idx+'-'+s);
-        if(!slot)continue;
-        if(p.random){
-            slot.classList.add('is-random');
+
+function syncPlayerCards(idx) {
+    var p = players[idx];
+    for (var s = 0; s < 2; s++) {
+        var slot = $('slot-' + idx + '-' + s);
+        if (!slot) continue;
+        var c = p.hole[s];
+        if (c) {
+            var suitCls = 'suit-' + c.suit;
+            slot.classList.add('is-filled');
+            slot.innerHTML = '<span class="slot-value ' + suitCls + '">' +
+                c.rank + ' ' + SUIT_SYMBOLS[c.suit] + '</span>';
+        } else {
             slot.classList.remove('is-filled');
-            slot.innerHTML='<span class="slot-label" style="color:var(--color-purple)">?</span>';
-        }else{
-            slot.classList.remove('is-random');
-            var c=p.hole[s];
-            if(c){
-                slot.classList.add('is-filled');
-                slot.innerHTML='<span class="slot-value '+suitClass(c.suit)+'">'+c.rank+' '+SUIT_SYM[c.suit]+'</span>';
-            }else{
-                slot.classList.remove('is-filled');
-                slot.innerHTML='<span class="slot-label">C'+(s+1)+'</span>';
-            }
+            slot.innerHTML = '<span class="slot-label">C' + (s + 1) + '</span>';
         }
     }
 }
-function syncPlayerFolded(idx){
-    var card=$('player-card-'+idx);
-    var fold=$('fold-'+idx);
-    if(!card||!fold)return;
-    if(players[idx].folded){card.classList.add('is-folded');fold.classList.add('is-active')}
-    else{card.classList.remove('is-folded');fold.classList.remove('is-active')}
-}
-function syncRandomToggle(idx){
-    var el=$('random-'+idx);
-    if(!el)return;
-    if(players[idx].random)el.classList.add('is-active');
-    else el.classList.remove('is-active');
-}
-function syncBoard(){
-    var labels=['F1','F2','F3','T','R'];
-    for(var i=0;i<5;i++){
-        var el=$('board-slot-'+i);
-        if(!el)continue;
-        var c=board[i];
-        if(c){
-            el.classList.add('is-filled');
-            el.innerHTML='<span class="slot-value '+suitClass(c.suit)+'">'+c.rank+' '+SUIT_SYM[c.suit]+'</span>';
-        }else{
-            el.classList.remove('is-filled');
-            el.innerHTML='<span class="slot-label">'+labels[i]+'</span>';
-        }
-    }
-}
-function syncPickerDisabled(){
-    var cards=$$('.picker-card');
-    for(var i=0;i<cards.length;i++){
-        var key=cards[i].getAttribute('data-card');
-        if(usedCards.has(key))cards[i].classList.add('is-disabled');
-        else cards[i].classList.remove('is-disabled');
-    }
-}
-function clearWinBars(idx){
-    var w=$('winpct-'+idx),t=$('tiepct-'+idx),wf=$('winfill-'+idx),tf=$('tiefill-'+idx);
-    if(w)w.textContent='—';if(t)t.textContent='—';
-    if(wf)wf.style.width='0%';if(tf)tf.style.width='0%';
-    var card=$('player-card-'+idx);if(card)card.classList.remove('is-winner');
-}
-function clearAllWinBars(){for(var i=0;i<MAX_PLAYERS;i++)clearWinBars(i)}
-function clearActiveSlots(){var a=$$('.card-slot.is-active,.board-card-slot.is-active');for(var i=0;i<a.length;i++)a[i].classList.remove('is-active')}
 
-// Slot activation
-function activateSlot(type,idx,slotIdx){
-    if(simRunning)return;
-    if(slotIdx===undefined)slotIdx=0;
-    if(type==='player'&&players[idx].random)return;
-    activeSlot={type:type,idx:idx,slotIdx:slotIdx};
+function syncBoard() {
+    for (var i = 0; i < 5; i++) {
+        var el = $('board-slot-' + i);
+        if (!el) continue;
+        var c = board[i];
+        if (c) {
+            var suitCls = 'suit-' + c.suit;
+            el.classList.add('is-filled');
+            el.innerHTML = '<span class="slot-value ' + suitCls + '">' +
+                c.rank + ' ' + SUIT_SYMBOLS[c.suit] + '</span>';
+        } else {
+            el.classList.remove('is-filled');
+            var labels = ['F1','F2','F3','T','R'];
+            el.innerHTML = '<span class="slot-label">' + labels[i] + '</span>';
+        }
+    }
+}
+
+function syncCount() {
+    $('player-count-display').textContent = numPlayers + ' 位玩家';
+    $('btn-add-player').disabled = numPlayers >= MAX_PLAYERS;
+    $('btn-remove-player').disabled = numPlayers <= MIN_PLAYERS;
+}
+
+function syncPickerDisabled() {
+    var cards = $$('.picker-card');
+    for (var i = 0; i < cards.length; i++) {
+        var key = cards[i].getAttribute('data-card');
+        if (usedCards.has(key)) {
+            cards[i].classList.add('is-disabled');
+        } else {
+            cards[i].classList.remove('is-disabled');
+        }
+    }
+}
+
+function clearActiveSlots() {
+    var actives = $$('.card-slot.is-active, .board-card-slot.is-active');
+    for (var i = 0; i < actives.length; i++) {
+        actives[i].classList.remove('is-active');
+    }
+}
+
+function clearWinBars(idx) {
+    var w = $('winpct-' + idx);
+    var t = $('tiepct-' + idx);
+    var wf = $('winfill-' + idx);
+    var tf = $('tiefill-' + idx);
+    if (w) w.textContent = '—';
+    if (t) t.textContent = '—';
+    if (wf) wf.style.width = '0%';
+    if (tf) tf.style.width = '0%';
+}
+
+function clearAllWinBars() {
+    for (var i = 0; i < MAX_PLAYERS; i++) clearWinBars(i);
+}
+
+// ---- Slot Activation ----
+function activateSlot(type, idx, slotIdx) {
+    if (simRunning) return;
+    if (slotIdx === undefined) slotIdx = 0;
+    activeSlot = { type: type, idx: idx, slotIdx: slotIdx };
     clearActiveSlots();
-    if(type==='player'){var el=$('slot-'+idx+'-'+slotIdx);if(el)el.classList.add('is-active')}
-    else{var bel=$('board-slot-'+idx);if(bel)bel.classList.add('is-active')}
+
+    if (type === 'player') {
+        var el = $('slot-' + idx + '-' + slotIdx);
+        if (el) el.classList.add('is-active');
+    } else {
+        var bel = $('board-slot-' + idx);
+        if (bel) bel.classList.add('is-active');
+    }
     openPicker();
 }
-function openPicker(){$('card-picker').classList.add('is-visible');document.body.classList.add('picker-open');syncPickerDisabled()}
-function closePicker(){$('card-picker').classList.remove('is-visible');document.body.classList.remove('picker-open');clearActiveSlots();activeSlot=null}
 
-// Card selection
-function selectCard(card){
-    if(!activeSlot||simRunning)return;
-    var key=cardKey(card);
-    if(usedCards.has(key))return;
-    if(activeSlot.type==='player'){
-        var old=players[activeSlot.idx].hole[activeSlot.slotIdx];
-        if(old)usedCards.delete(cardKey(old));
-        players[activeSlot.idx].hole[activeSlot.slotIdx]=card;
-    }else{
-        var oldB=board[activeSlot.idx];
-        if(oldB)usedCards.delete(cardKey(oldB));
-        board[activeSlot.idx]=card;
+function openPicker() {
+    $('card-picker').classList.add('is-visible');
+    document.body.classList.add('picker-open');
+    syncPickerDisabled();
+}
+
+function closePicker() {
+    $('card-picker').classList.remove('is-visible');
+    document.body.classList.remove('picker-open');
+    clearActiveSlots();
+    activeSlot = null;
+}
+
+// ---- Clear Individual Card ----
+function clearSlotCard(type, idx, slotIdx) {
+    if (simRunning) return;
+    if (type === 'player') {
+        var old = players[idx].hole[slotIdx];
+        if (old) {
+            usedCards.delete(cardKey(old));
+            players[idx].hole[slotIdx] = null;
+            syncPlayerCards(idx);
+            syncPickerDisabled();
+            clearWinBars(idx);
+            tryAutoCalculate();
+        }
+    } else {
+        var oldB = board[idx];
+        if (oldB) {
+            usedCards.delete(cardKey(oldB));
+            board[idx] = null;
+            syncBoard();
+            syncPickerDisabled();
+            tryAutoCalculate();
+        }
+    }
+}
+
+function clearActiveSlotCard() {
+    if (!activeSlot) return;
+    clearSlotCard(activeSlot.type, activeSlot.idx, activeSlot.slotIdx);
+}
+
+// ---- Card Selection ----
+function selectCard(card) {
+    if (!activeSlot || simRunning) return;
+    var key = cardKey(card);
+    if (usedCards.has(key)) return;
+
+    // Remove old card
+    if (activeSlot.type === 'player') {
+        var old = players[activeSlot.idx].hole[activeSlot.slotIdx];
+        if (old) usedCards.delete(cardKey(old));
+        players[activeSlot.idx].hole[activeSlot.slotIdx] = card;
+    } else {
+        var oldB = board[activeSlot.idx];
+        if (oldB) usedCards.delete(cardKey(oldB));
+        board[activeSlot.idx] = card;
     }
     usedCards.add(key);
-    if(activeSlot.type==='player'){
+
+    if (activeSlot.type === 'player') {
         syncPlayerCards(activeSlot.idx);
-        var next=null;
-        if(activeSlot.slotIdx===0)next={type:'player',idx:activeSlot.idx,slotIdx:1};
-        else next=findNextEmpty();
-        if(next)activateSlot(next.type,next.idx,next.slotIdx);
-        else closePicker();
-    }else{
+        var nextSlot = null;
+        if (activeSlot.slotIdx === 0) {
+            nextSlot = { type: 'player', idx: activeSlot.idx, slotIdx: 1 };
+        } else {
+            nextSlot = findNextEmptyPlayerSlot();
+        }
+        if (nextSlot) {
+            activateSlot(nextSlot.type, nextSlot.idx, nextSlot.slotIdx);
+        } else {
+            closePicker();
+        }
+    } else {
         syncBoard();
-        var nb=findNextEmptyBoard();
-        if(nb!==null)activateSlot('board',nb);
-        else closePicker();
+        var nextBoard = findNextEmptyBoard();
+        if (nextBoard !== null) {
+            activateSlot('board', nextBoard);
+        } else {
+            closePicker();
+        }
     }
     syncPickerDisabled();
-    analyzeOuts();
-    tryAutoCalc();
+    tryAutoCalculate();
 }
-function findNextEmpty(){
-    for(var i=0;i<numPlayers;i++){
-        if(players[i].random||players[i].folded)continue;
-        for(var j=0;j<2;j++){if(!players[i].hole[j])return{type:'player',idx:i,slotIdx:j}}
+
+// ---- Auto Calculate ----
+function tryAutoCalculate() {
+    var readyCount = 0;
+    for (var i = 0; i < numPlayers; i++) {
+        if (!players[i].folded && players[i].hole[0] && players[i].hole[1]) {
+            readyCount++;
+        }
+    }
+    if (readyCount >= 2) {
+        // Debounce: delay slightly to batch rapid card selections
+        clearTimeout(window._autoCalcTimer);
+        window._autoCalcTimer = setTimeout(function() { runSimulation(); }, 300);
+    }
+}
+
+function findNextEmptyPlayerSlot() {
+    for (var i = 0; i < numPlayers; i++) {
+        for (var j = 0; j < 2; j++) {
+            if (!players[i].hole[j]) return { type: 'player', idx: i, slotIdx: j };
+        }
     }
     return null;
 }
-function findNextEmptyBoard(){for(var i=0;i<5;i++){if(!board[i])return i}return null}
 
-// Clear card
-function clearSlotCard(type,idx,slotIdx){
-    if(simRunning)return;
-    if(type==='player'){
-        var old=players[idx].hole[slotIdx];
-        if(old){usedCards.delete(cardKey(old));players[idx].hole[slotIdx]=null;syncPlayerCards(idx);syncPickerDisabled();analyzeOuts()}
-    }else{
-        var oldB=board[idx];
-        if(oldB){usedCards.delete(cardKey(oldB));board[idx]=null;syncBoard();syncPickerDisabled();analyzeOuts()}
+function findNextEmptyBoard() {
+    for (var i = 0; i < 5; i++) {
+        if (!board[i]) return i;
     }
+    return null;
 }
 
-// Player management
-function addPlayer(){
-    if(numPlayers>=MAX_PLAYERS||simRunning)return;
-    numPlayers++;syncPlayerVisibility();syncCount();
-}
-function removePlayer(){
-    if(numPlayers<=MIN_PLAYERS||simRunning)return;
-    var last=numPlayers-1;
-    players[last].hole.forEach(function(c){if(c)usedCards.delete(cardKey(c))});
-    players[last].folded=false;players[last].random=false;players[last].hole=[null,null];
-    clearWinBars(last);syncPlayerCards(last);syncPlayerFolded(last);syncRandomToggle(last);
-    numPlayers--;syncPlayerVisibility();syncCount();syncPickerDisabled();
-}
-function toggleFold(idx){
-    if(simRunning)return;
-    players[idx].folded=!players[idx].folded;
-    syncPlayerFolded(idx);tryAutoCalc();
-}
-function toggleRandom(idx){
-    if(simRunning||idx===0)return;
-    players[idx].random=!players[idx].random;
-    if(players[idx].random){
-        players[idx].hole.forEach(function(c){if(c)usedCards.delete(cardKey(c))});
-        players[idx].hole=[null,null];
-    }
-    syncRandomToggle(idx);syncPlayerCards(idx);syncPickerDisabled();tryAutoCalc();
+// ---- Player Add / Remove ----
+function addPlayer() {
+    if (numPlayers >= MAX_PLAYERS || simRunning) return;
+    numPlayers++;
+    syncPlayerVisibility();
+    syncCount();
 }
 
-// Auto calculate
-var _autoTimer=null;
-function tryAutoCalc(){
-    var ready=0;
-    for(var i=0;i<numPlayers;i++){
-        if(players[i].folded)continue;
-        if(players[i].random){ready++;continue}
-        if(players[i].hole[0]&&players[i].hole[1])ready++;
-    }
-    if(ready>=2){
-        clearTimeout(_autoTimer);
-        _autoTimer=setTimeout(runSimulation,350);
-    }
-}
-
-// Outs Analyzer
-function analyzeOuts(){
-    var panel=$('outs-panel');
-    var content=$('outs-content');
-    var boardCount=0;for(var i=0;i<5;i++)if(board[i])boardCount++;
-    if(boardCount<3||!players[0].hole[0]||!players[0].hole[1]||players[0].folded){
-        panel.style.display='none';return;
-    }
-    panel.style.display='block';
-    var heroCards=[players[0].hole[0],players[0].hole[1]];
-    var boardCards=[];for(var b=0;b<5;b++)if(board[b])boardCards.push(board[b]);
-    var allCards=heroCards.concat(boardCards);
-    var remaining=52-usedCards.size;
-    var outs=[];
-    // Check flush draw
-    var suitCounts={spades:0,hearts:0,diamonds:0,clubs:0};
-    allCards.forEach(function(c){suitCounts[c.suit]++});
-    for(var s in suitCounts){
-        if(suitCounts[s]===4){outs.push({type:'同花聽牌 (Flush Draw)',count:13-4,desc:'9張同花Outs'});break}
-    }
-    // Check straight draw
-    var rankVals=allCards.map(function(c){return RANKS.indexOf(c.rank)+2});
-    if(rankVals.indexOf(14)===-1&&rankVals.indexOf(2)!==-1){}// A as 1
-    var unique=Array.from(new Set(rankVals)).sort(function(a,b){return a-b});
-    // Add Ace as 1 if present
-    if(unique.indexOf(14)!==-1)unique.unshift(1);
-    var maxConsec=0,gaps=[];
-    for(var si=0;si<=unique.length-4;si++){
-        var window5=unique.slice(si,si+5);
-        if(window5.length>=4){
-            var span=window5[window5.length-1]-window5[0];
-            var cnt=window5.length;
-            if(span===4&&cnt===4){maxConsec=Math.max(maxConsec,8);break}// OESD
-            if(span===4&&cnt===3){gaps.push(4)}// gutshot possible
-            if(span===3&&cnt===4){maxConsec=Math.max(maxConsec,8)}
-        }
-    }
-    // Simplified OESD detection
-    for(var wi=0;wi<=unique.length-4;wi++){
-        var seg=unique.slice(wi,wi+5);
-        if(seg.length>=4){
-            var diff=seg[seg.length-1]-seg[0];
-            if(diff===3&&seg.length===4){maxConsec=Math.max(maxConsec,8);break}
-        }
-    }
-    if(maxConsec>=8&&outs.filter(function(o){return o.type.indexOf('順子')!==-1}).length===0){
-        outs.push({type:'雙頭順子聽牌 (OESD)',count:8,desc:'8張順子Outs'});
-    }else{
-        // Check gutshot
-        for(var gi=0;gi<=unique.length-4;gi++){
-            var gseg=unique.slice(gi,Math.min(gi+5,unique.length));
-            if(gseg.length>=4){
-                var gdiff=gseg[gseg.length-1]-gseg[0];
-                if(gdiff===4&&gseg.length===4){
-                    outs.push({type:'卡順聽牌 (Gutshot)',count:4,desc:'4張順子Outs'});break;
-                }
-            }
-        }
-    }
-    // Check overcards
-    if(boardCards.length>=3){
-        var boardMax=Math.max.apply(null,boardCards.map(function(c){return RANKS.indexOf(c.rank)+2}));
-        var heroHighs=heroCards.filter(function(c){return RANKS.indexOf(c.rank)+2>boardMax});
-        if(heroHighs.length>0&&outs.length===0){
-            outs.push({type:'高牌超越 (Overcards)',count:heroHighs.length*3,desc:heroHighs.length*3+'張高牌Outs'});
-        }
-    }
-    if(outs.length===0){
-        content.innerHTML='<div class="outs-item"><span class="outs-type">目前無明顯聽牌</span><span class="outs-count">—</span></div>';
-        return;
-    }
-    var html='';
-    outs.forEach(function(o){
-        var turnProb=(o.count/(remaining||47)*100).toFixed(1);
-        var riverProb=(o.count/((remaining-1)||46)*100).toFixed(1);
-        html+='<div class="outs-item"><span class="outs-type">'+o.type+'</span><span class="outs-count">'+o.count+' Outs</span><span class="outs-prob">Turn '+turnProb+'% / River '+riverProb+'%</span></div>';
+function removePlayer() {
+    if (numPlayers <= MIN_PLAYERS || simRunning) return;
+    var lastIdx = numPlayers - 1;
+    // Clear cards from usedCards
+    players[lastIdx].hole.forEach(function(c) {
+        if (c) usedCards.delete(cardKey(c));
     });
-    content.innerHTML=html;
+    players[lastIdx].folded = false;
+    players[lastIdx].hole = [null, null];
+    clearWinBars(lastIdx);
+    syncPlayerCards(lastIdx);
+    syncPlayerFolded(lastIdx);
+    numPlayers--;
+    syncPlayerVisibility();
+    syncCount();
+    syncPickerDisabled();
+    if (lastRunDone) runSimulation();
 }
 
-// Pot Odds & EV
-function updateEV(){
-    var pot=parseFloat($('pot-size').value)||0;
-    var bet=parseFloat($('opponent-bet').value)||0;
-    var call=parseFloat($('call-amount').value)||0;
-    var evEl=$('ev-result');
-    if(call<=0||pot+bet+call<=0){
-        evEl.className='ev-result neutral';
-        evEl.textContent='請輸入底池金額並完成勝率計算，系統將自動判斷 EV 決策。';
-        return;
-    }
-    var reqEquity=call/(pot+bet+call)*100;
-    var heroEquity=lastHeroWin;
-    if(heroEquity===null){
-        evEl.className='ev-result neutral';
-        evEl.textContent='所需最小勝率：'+reqEquity.toFixed(1)+'% — 請先完成勝率模擬以判斷 EV。';
-        return;
-    }
-    var evValue=(heroEquity/100)*(pot+bet)-((100-heroEquity)/100)*call;
-    if(heroEquity>=reqEquity){
-        evEl.className='ev-result positive';
-        evEl.innerHTML='🟢 <strong>+EV 跟注獲利 (Profitable Call)</strong><br>Hero 勝率 '+heroEquity.toFixed(1)+'% ≥ 所需 '+reqEquity.toFixed(1)+'%<br>每次跟注期望值：+$'+evValue.toFixed(1);
-    }else{
-        evEl.className='ev-result negative';
-        evEl.innerHTML='🔴 <strong>-EV 長期虧損，建議棄牌 (Fold)</strong><br>Hero 勝率 '+heroEquity.toFixed(1)+'% < 所需 '+reqEquity.toFixed(1)+'%<br>每次跟注期望值：$'+evValue.toFixed(1);
-    }
+function toggleFold(idx) {
+    if (simRunning) return;
+    players[idx].folded = !players[idx].folded;
+    syncPlayerFolded(idx);
+    if (lastRunDone) runSimulation();
 }
 
-// Monte Carlo Engine
-function runSimulation(){
-    if(simRunning)return;
-    var activePlayers=[];
-    for(var i=0;i<numPlayers;i++){
-        if(players[i].folded)continue;
-        if(players[i].random){activePlayers.push({idx:i,hole:null,random:true})}
-        else if(players[i].hole[0]&&players[i].hole[1]){activePlayers.push({idx:i,hole:[players[i].hole[0],players[i].hole[1]],random:false})}
-    }
-    var progEl=$('sim-progress');
-    if(activePlayers.length<2){progEl.textContent='⚠️ 至少需要 2 位非棄牌玩家（各需 2 張手牌或設為隨機牌）。';return}
-    var usedSet=new Set(usedCards);
-    var deck=[];
-    SUITS.forEach(function(suit){RANKS.forEach(function(rank){var k=rank+SUIT_SHORT[suit];if(!usedSet.has(k))deck.push({rank:rank,suit:suit})})});
-    function shuffle(arr){for(var i=arr.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var tmp=arr[i];arr[i]=arr[j];arr[j]=tmp}return arr}
-    simRunning=true;$('btn-calculate').disabled=true;
-    clearAllWinBars();
-    var boardBase=board.slice();
-    var boardUnknown=0;for(var b=0;b<5;b++)if(!boardBase[b])boardUnknown++;
-    // Decide: enumerate or Monte Carlo
-    var useEnum=boardUnknown<=2&&activePlayers.every(function(p){return!p.random});
-    var totalIter=useEnum?0:SIM_ITERATIONS;
-    var totalWins=new Array(activePlayers.length).fill(0);
-    var totalTies=new Array(activePlayers.length).fill(0);
-    var completed=0;
-    progEl.textContent=useEnum?'精確枚舉計算中...':'模擬中... 0 / '+SIM_ITERATIONS;
-    function runChunk(){
-        var chunkSize=useEnum?99999:2500;
-        var end=useEnum?1:Math.min(completed+chunkSize,SIM_ITERATIONS);
-        if(useEnum){
-            // Enumerate remaining board cards
-            var unknownIdxs=[];for(var bi=0;bi<5;bi++)if(!boardBase[bi])unknownIdxs.push(bi);
-            var enumDeck=deck.slice();
-            function enumerate(depth,startIdx,cb2){
-                if(depth===unknownIdxs.length){cb2();return}
-                for(var ei=startIdx;ei<enumDeck.length;ei++){
-                    boardBase[unknownIdxs[depth]]=enumDeck[ei];
-                    var saved=enumDeck.splice(ei,1)[0];
-                    enumerate(depth+1,ei,cb2);
-                    enumDeck.splice(ei,0,saved);
-                    boardBase[unknownIdxs[depth]]=null;
-                }
+// ---- Keyboard Input ----
+function setupKeyboard() {
+    document.addEventListener('keydown', function(e) {
+        if (!activeSlot || simRunning) return;
+        if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+        if (e.key.length !== 1) return;
+
+        kbBuffer += e.key;
+        var parsed = parseCardInput(kbBuffer);
+        if (parsed) {
+            if (!usedCards.has(cardKey(parsed))) {
+                selectCard(parsed);
             }
-            var enumCount=0;
-            enumerate(0,0,function(){
-                enumCount++;
-                var scores=evaluateAll(boardBase.slice(),activePlayers.map(function(p){return p.hole}));
-                var best=-1,winners=[];
-                for(var p2=0;p2<activePlayers.length;p2++){if(scores[p2]>best){best=scores[p2];winners=[p2]}else if(scores[p2]===best)winners.push(p2)}
-                if(winners.length===1)totalWins[winners[0]]++;
-                else for(var w=0;w<winners.length;w++)totalTies[winners[w]]++;
-            });
-            totalIter=enumCount;
-            displayResults(activePlayers,totalWins,totalTies,totalIter);
-            finish();
-        }else{
-            for(var iter=completed;iter<end;iter++){
-                var wd=deck.slice();shuffle(wd);var di=0;
-                var cb=boardBase.slice();
-                for(var b3=0;b3<5;b3++){if(!cb[b3])cb[b3]=wd[di++]}
-                var hands=[];
-                for(var p=0;p<activePlayers.length;p++){
-                    if(activePlayers[p].random){hands.push([wd[di++],wd[di++]])}
-                    else{hands.push(activePlayers[p].hole)}
-                }
-                var scores=evaluateAll(cb,hands);
-                var best=-1,winners=[];
-                for(var p2=0;p2<activePlayers.length;p2++){if(scores[p2]>best){best=scores[p2];winners=[p2]}else if(scores[p2]===best)winners.push(p2)}
-                if(winners.length===1)totalWins[winners[0]]++;
-                else for(var w=0;w<winners.length;w++)totalTies[winners[w]]++;
-            }
-            completed=end;
-            progEl.textContent='模擬中... '+completed+' / '+SIM_ITERATIONS;
-            if(completed<SIM_ITERATIONS){setTimeout(runChunk,0)}
-            else{displayResults(activePlayers,totalWins,totalTies,SIM_ITERATIONS);finish()}
+            kbBuffer = '';
+        } else if (kbBuffer.length > 3) {
+            kbBuffer = kbBuffer.slice(-3);
+        }
+    });
+    document.addEventListener('click', function() { kbBuffer = ''; });
+}
+
+// ---- Monte Carlo Engine ----
+function runSimulation() {
+    if (simRunning) return;
+
+    // Collect active players
+    var activePlayers = [];
+    for (var i = 0; i < numPlayers; i++) {
+        if (!players[i].folded && players[i].hole[0] && players[i].hole[1]) {
+            activePlayers.push({ idx: i, hole: [players[i].hole[0], players[i].hole[1]] });
         }
     }
-    function finish(){
-        $('btn-calculate').disabled=false;simRunning=false;
-        progEl.textContent='✅ '+(useEnum?'精確枚舉':'模擬')+'完成！共 '+totalIter.toLocaleString()+' 次迭代。';
+
+    var progEl = $('sim-progress');
+
+    if (activePlayers.length < 2) {
+        progEl.textContent = '\u26A0\uFE0F 至少需要 2 位非棄牌玩家，且每位需設定 2 張手牌。';
+        lastRunDone = false;
+        return;
     }
-    setTimeout(runChunk,30);
-}
-function displayResults(activePlayers,wins,ties,total){
-    $$('.player-card').forEach(function(c){c.classList.remove('is-winner')});
-    var maxWin=-1;
-    for(var i=0;i<activePlayers.length;i++){
-        var winPct=parseFloat((wins[i]/total*100).toFixed(1));
-        var tiePct=parseFloat((ties[i]/total*100).toFixed(1));
-        var pIdx=activePlayers[i].idx;
-        var wEl=$('winpct-'+pIdx),tEl=$('tiepct-'+pIdx),wF=$('winfill-'+pIdx),tF=$('tiefill-'+pIdx);
-        if(wEl)wEl.textContent=winPct+'%';if(tEl)tEl.textContent=tiePct+'%';
-        if(wF){wF.style.width=winPct+'%';wF.style.background=winPct>=60?'linear-gradient(90deg,#00ff88,#00cc6a)':winPct>=40?'linear-gradient(90deg,#3b82f6,#60a5fa)':'linear-gradient(90deg,#f59e0b,#fbbf24)'}
-        if(tF)tF.style.width=tiePct+'%';
-        if(winPct>maxWin)maxWin=winPct;
-        if(pIdx===0)lastHeroWin=winPct;
+
+    // No board card minimum — supports preflop, flop, turn, river simulation
+
+    // Build remaining deck
+    var usedSet = new Set(usedCards);
+    var deck = [];
+    SUITS.forEach(function(suit) {
+        RANKS.forEach(function(rank) {
+            var k = rank + suit[0];
+            if (!usedSet.has(k)) deck.push({ rank: rank, suit: suit });
+        });
+    });
+
+    // Fisher-Yates shuffle
+    function shuffle(arr) {
+        for (var i = arr.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+        }
+        return arr;
     }
-    for(var ri=0;ri<activePlayers.length;ri++){
-        var wp=parseFloat((wins[ri]/total*100).toFixed(1));
-        if(wp===maxWin){var ce=$('player-card-'+activePlayers[ri].idx);if(ce)ce.classList.add('is-winner')}
+
+    simRunning = true;
+    $('btn-calculate').disabled = true;
+    clearAllWinBars();
+    $$('.player-card').forEach(function(c) { c.classList.remove('is-winner'); });
+
+    var chunkSize = 2000;
+    var totalWins = new Array(activePlayers.length).fill(0);
+    var totalTies = new Array(activePlayers.length).fill(0);
+    var completed = 0;
+
+    // Pre-compute board base
+    var boardBase = [null, null, null, null, null];
+    for (var b2 = 0; b2 < 5; b2++) { if (board[b2]) boardBase[b2] = board[b2]; }
+
+    progEl.textContent = '\u6B63\u5728\u6A21\u64EC\u4E2D... 0 / ' + SIM_ITERATIONS;
+
+    function runChunk() {
+        var end = Math.min(completed + chunkSize, SIM_ITERATIONS);
+        for (var iter = completed; iter < end; iter++) {
+            var workingDeck = deck.slice();
+            shuffle(workingDeck);
+
+            var cb = boardBase.slice();
+            var deckIdx = 0;
+            for (var b3 = 0; b3 < 5; b3++) {
+                if (!cb[b3]) cb[b3] = workingDeck[deckIdx++];
+            }
+
+            var handCards = [];
+            for (var p = 0; p < activePlayers.length; p++) {
+                handCards.push([activePlayers[p].hole[0], activePlayers[p].hole[1]]);
+            }
+
+            var scores = evaluateAll(cb, handCards);
+            var bestScore = -1;
+            var winners = [];
+            for (var p2 = 0; p2 < activePlayers.length; p2++) {
+                if (scores[p2] > bestScore) {
+                    bestScore = scores[p2];
+                    winners = [p2];
+                } else if (scores[p2] === bestScore) {
+                    winners.push(p2);
+                }
+            }
+
+            if (winners.length === 1) {
+                totalWins[winners[0]]++;
+            } else {
+                for (var w = 0; w < winners.length; w++) totalTies[winners[w]]++;
+            }
+        }
+
+        completed = end;
+        progEl.textContent = '\u6B63\u5728\u6A21\u64EC\u4E2D... ' + completed + ' / ' + SIM_ITERATIONS;
+
+        if (completed < SIM_ITERATIONS) {
+            setTimeout(runChunk, 0);
+        } else {
+            displayResults(activePlayers, totalWins, totalTies);
+            $('btn-calculate').disabled = false;
+            simRunning = false;
+            progEl.textContent = '\u2705 \u6A21\u64EC\u5B8C\u6210\uFF01\u5171 ' + SIM_ITERATIONS.toLocaleString() + ' \u6B21\u8FED\u4EE3\u3002';
+            lastRunDone = true;
+        }
     }
-    updateEV();
+
+    setTimeout(runChunk, 50);
 }
 
-// Hand Evaluator
-function evaluateAll(boardCards,hands){return hands.map(function(h){return scoreHand(boardCards.concat(h))})}
-function scoreHand(cards){
-    var rankVals=cards.map(function(c){return RANKS.indexOf(c.rank)+2});
-    var suitArr=cards.map(function(c){return c.suit});
-    var best=-1;var combos=getCombos5of7();
-    for(var i=0;i<combos.length;i++){
-        var c=combos[i];
-        var fr=[rankVals[c[0]],rankVals[c[1]],rankVals[c[2]],rankVals[c[3]],rankVals[c[4]]];
-        var fs=[suitArr[c[0]],suitArr[c[1]],suitArr[c[2]],suitArr[c[3]],suitArr[c[4]]];
-        var s=scoreToNum(eval5(fr,fs));if(s>best)best=s;
+function displayResults(activePlayers, wins, ties) {
+    $$('.player-card').forEach(function(c) { c.classList.remove('is-winner'); });
+
+    var results = [];
+    for (var i = 0; i < activePlayers.length; i++) {
+        var winPct = parseFloat((wins[i] / SIM_ITERATIONS * 100).toFixed(1));
+        var tiePct = parseFloat((ties[i] / SIM_ITERATIONS * 100).toFixed(1));
+        results.push({ pIdx: activePlayers[i].idx, winPct: winPct, tiePct: tiePct });
     }
-    return best;
+
+    var maxWin = -1;
+    for (var r = 0; r < results.length; r++) {
+        if (results[r].winPct > maxWin) maxWin = results[r].winPct;
+    }
+
+    for (var ri = 0; ri < results.length; ri++) {
+        var r = results[ri];
+        var pIdx = r.pIdx;
+        var winEl = $('winpct-' + pIdx);
+        var tieEl = $('tiepct-' + pIdx);
+        var winFill = $('winfill-' + pIdx);
+        var tieFill = $('tiefill-' + pIdx);
+
+        if (winEl) winEl.textContent = r.winPct + '%';
+        if (tieEl) tieEl.textContent = r.tiePct + '%';
+        if (winFill) winFill.style.width = r.winPct + '%';
+        if (tieFill) tieFill.style.width = r.tiePct + '%';
+
+        if (winFill) {
+            if (r.winPct >= 60) {
+                winFill.style.background = 'linear-gradient(90deg, #00ff88, #00cc6a)';
+            } else if (r.winPct >= 40) {
+                winFill.style.background = 'linear-gradient(90deg, #3b82f6, #60a5fa)';
+            } else {
+                winFill.style.background = 'linear-gradient(90deg, #f59e0b, #fbbf24)';
+            }
+        }
+
+        if (r.winPct === maxWin) {
+            var cardEl = $('player-card-' + pIdx);
+            if (cardEl) cardEl.classList.add('is-winner');
+        }
+    }
 }
-function eval5(ranks,suits){
-    ranks=ranks.slice().sort(function(a,b){return b-a});
-    var isFlush=suits.every(function(s){return s===suits[0]});
-    var str=isStraight(ranks);
-    var rc={};ranks.forEach(function(r){rc[r]=(rc[r]||0)+1});
-    var counts=Object.values(rc).sort(function(a,b){return b-a});
-    if(isFlush&&str)return[9,str];
-    if(counts[0]===4){var four=ranks.find(function(r){return rc[r]===4});var k=ranks.find(function(r){return rc[r]===1});return[8,four,k]}
-    if(counts[0]===3&&counts[1]===2){var three=ranks.find(function(r){return rc[r]===3});var pair=ranks.find(function(r){return rc[r]===2});return[7,three,pair]}
-    if(isFlush)return[6].concat(ranks);
-    if(str)return[5,str];
-    if(counts[0]===3){var t2=ranks.find(function(r){return rc[r]===3});var ks=ranks.filter(function(r){return rc[r]===1}).sort(function(a,b){return b-a});return[4,t2,ks[0],ks[1]]}
-    if(counts[0]===2&&counts[1]===2){var ps=Array.from(new Set(ranks.filter(function(r){return rc[r]===2}))).sort(function(a,b){return b-a});var k2=ranks.find(function(r){return rc[r]===1});return[3,ps[0],ps[1],k2]}
-    if(counts[0]===2){var p2=ranks.find(function(r){return rc[r]===2});var ks2=ranks.filter(function(r){return rc[r]===1}).sort(function(a,b){return b-a});return[2,p2,ks2[0],ks2[1],ks2[2]]}
-    return[1].concat(ranks);
+
+// ---- Hand Evaluator ----
+function evaluateAll(boardCards, hands) {
+    return hands.map(function(h) { return scoreHand(boardCards.concat(h)); });
 }
-function isStraight(ranks){
-    var u=Array.from(new Set(ranks)).sort(function(a,b){return b-a});
-    if(u.length<5)return false;
-    for(var i=0;i<=u.length-5;i++){if(u[i]-u[i+4]===4)return u[i]}
-    if(u.indexOf(14)!==-1&&u.indexOf(5)!==-1&&u.indexOf(4)!==-1&&u.indexOf(3)!==-1&&u.indexOf(2)!==-1)return 5;
+
+function scoreHand(cards) {
+    var rankVals = cards.map(function(c) { return RANKS.indexOf(c.rank) + 2; });
+    var suitArr = cards.map(function(c) { return c.suit; });
+
+    var bestScore = -1;
+    var combos = genCombos5of7();
+
+    for (var i = 0; i < combos.length; i++) {
+        var combo = combos[i];
+        var fiveRanks = [rankVals[combo[0]], rankVals[combo[1]], rankVals[combo[2]], rankVals[combo[3]], rankVals[combo[4]]];
+        var fiveSuits = [suitArr[combo[0]], suitArr[combo[1]], suitArr[combo[2]], suitArr[combo[3]], suitArr[combo[4]]];
+        var score = evaluate5Card(fiveRanks, fiveSuits);
+        var scoreVal = scoreToNum(score);
+        if (scoreVal > bestScore) bestScore = scoreVal;
+    }
+    return bestScore;
+}
+
+function evaluate5Card(ranks, suits) {
+    ranks = ranks.slice().sort(function(a, b) { return b - a; });
+    var isFlush = suits.every(function(s) { return s === suits[0]; });
+    var straightInfo = isStraightCheck(ranks);
+    var rankCounts = {};
+    ranks.forEach(function(r) { rankCounts[r] = (rankCounts[r] || 0) + 1; });
+    var counts = Object.values(rankCounts).sort(function(a, b) { return b - a; });
+
+    if (isFlush && straightInfo) return [9, straightInfo[0]];
+    if (counts[0] === 4) {
+        var four = ranks.filter(function(r) { return rankCounts[r] === 4; })[0];
+        var kicker = ranks.find(function(r) { return rankCounts[r] === 1; });
+        return [8, four, kicker];
+    }
+    if (counts[0] === 3 && counts[1] === 2) {
+        var three = ranks.filter(function(r) { return rankCounts[r] === 3; })[0];
+        var pair = ranks.filter(function(r) { return rankCounts[r] === 2; })[0];
+        return [7, three, pair];
+    }
+    if (isFlush) return [6].concat(ranks);
+    if (straightInfo) return [5, straightInfo[0]];
+    if (counts[0] === 3) {
+        var three2 = ranks.filter(function(r) { return rankCounts[r] === 3; })[0];
+        var kickers = ranks.filter(function(r) { return rankCounts[r] === 1; }).sort(function(a, b) { return b - a; });
+        return [4, three2, kickers[0], kickers[1]];
+    }
+    if (counts[0] === 2 && counts[1] === 2) {
+        var pairs = ranks.filter(function(r) { return rankCounts[r] === 2; });
+        var uniquePairs = Array.from(new Set(pairs)).sort(function(a, b) { return b - a; });
+        var kicker2 = ranks.find(function(r) { return rankCounts[r] === 1; });
+        return [3, uniquePairs[0], uniquePairs[1], kicker2];
+    }
+    if (counts[0] === 2) {
+        var pair2 = ranks.filter(function(r) { return rankCounts[r] === 2; })[0];
+        var kickers2 = ranks.filter(function(r) { return rankCounts[r] === 1; }).sort(function(a, b) { return b - a; });
+        return [2, pair2, kickers2[0], kickers2[1], kickers2[2]];
+    }
+    return [1].concat(ranks);
+}
+
+function isStraightCheck(ranks) {
+    var unique = Array.from(new Set(ranks)).sort(function(a, b) { return b - a; });
+    if (unique.length < 5) return false;
+    for (var i = 0; i <= unique.length - 5; i++) {
+        if (unique[i] - unique[i + 4] === 4) return [unique[i]];
+    }
+    if (unique.indexOf(14) !== -1 && unique.indexOf(5) !== -1 && unique.indexOf(4) !== -1 && unique.indexOf(3) !== -1 && unique.indexOf(2) !== -1) {
+        return [5];
+    }
     return false;
 }
-function scoreToNum(s){var v=s[0];for(var i=1;i<s.length;i++)v=v*15+s[i];return v}
-var _c5of7=null;
-function getCombos5of7(){
-    if(_c5of7)return _c5of7;var r=[];
-    function g(st,c){if(c.length===5){r.push(c.slice());return}for(var i=st;i<7;i++){c.push(i);g(i+1,c);c.pop()}}
-    g(0,[]);_c5of7=r;return r;
+
+function scoreToNum(score) {
+    var val = score[0];
+    for (var i = 1; i < score.length; i++) val = val * 15 + score[i];
+    return val;
 }
 
-// Reset
-function resetAll(){
-    if(simRunning)return;
-    for(var i=0;i<MAX_PLAYERS;i++){
-        players[i].hole=[null,null];players[i].folded=false;players[i].random=false;
-        syncPlayerCards(i);syncPlayerFolded(i);syncRandomToggle(i);clearWinBars(i);
+var _combos5of7 = null;
+function genCombos5of7() {
+    if (_combos5of7) return _combos5of7;
+    var result = [];
+    function gen(start, combo) {
+        if (combo.length === 5) { result.push(combo.slice()); return; }
+        for (var i = start; i < 7; i++) { combo.push(i); gen(i + 1, combo); combo.pop(); }
     }
-    board=[null,null,null,null,null];usedCards.clear();lastHeroWin=null;
-    $('sim-progress').textContent='';
-    syncBoard();syncPickerDisabled();closePicker();analyzeOuts();
-    $('ev-result').className='ev-result neutral';
-    $('ev-result').textContent='請輸入底池金額並完成勝率計算，系統將自動判斷 EV 決策。';
+    gen(0, []);
+    _combos5of7 = result;
+    return result;
 }
 
-// Keyboard input
-function setupKeyboard(){
-    document.addEventListener('keydown',function(e){
-        if(!activeSlot||simRunning)return;
-        if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'))return;
-        if(e.key.length!==1)return;
-        kbBuffer+=e.key;
-        var parsed=parseCardInput(kbBuffer);
-        if(parsed){if(!usedCards.has(cardKey(parsed)))selectCard(parsed);kbBuffer=''}
-        else if(kbBuffer.length>3)kbBuffer=kbBuffer.slice(-3);
-    });
-}
-function parseCardInput(input){
-    input=input.trim();if(input.length<2)return null;
-    var rankStr,suitLetter;
-    if(input.length===3&&input.substring(0,2)==='10'){rankStr='10';suitLetter=input[2].toLowerCase()}
-    else if(input.length===2){rankStr=input[0].toUpperCase();suitLetter=input[1].toLowerCase()}
-    else return null;
-    if(RANKS.indexOf(rankStr)===-1)return null;
-    var sm={s:'spades',h:'hearts',d:'diamonds',c:'clubs'};
-    return sm[suitLetter]?{rank:rankStr,suit:sm[suitLetter]}:null;
+// ---- Reset ----
+function resetAll() {
+    if (simRunning) return;
+    for (var i = 0; i < MAX_PLAYERS; i++) {
+        players[i].hole = [null, null];
+        players[i].folded = false;
+        syncPlayerCards(i);
+        syncPlayerFolded(i);
+        clearWinBars(i);
+        var cardEl = $('player-card-' + i);
+        if (cardEl) cardEl.classList.remove('is-winner');
+    }
+    board = [null, null, null, null, null];
+    usedCards.clear();
+    lastRunDone = false;
+    $('sim-progress').textContent = '';
+    syncBoard();
+    syncPickerDisabled();
+    closePicker();
 }
 
-// Init
-function init(){
-    initState();buildPickerGrid();buildPlayersHTML();
-    syncPlayerVisibility();syncCount();syncBoard();
-    for(var i=0;i<MAX_PLAYERS;i++){syncPlayerCards(i);syncPlayerFolded(i)}
-    // Event bindings
-    $('btn-add-player').addEventListener('click',addPlayer);
-    $('btn-remove-player').addEventListener('click',removePlayer);
-    $('btn-calculate').addEventListener('click',runSimulation);
-    $('btn-reset-all').addEventListener('click',resetAll);
-    $('picker-close-btn').addEventListener('click',closePicker);
-    $('picker-clear-slot').addEventListener('click',function(){if(activeSlot)clearSlotCard(activeSlot.type,activeSlot.idx,activeSlot.slotIdx)});
-    // Player grid delegation
-    $('players-grid').addEventListener('click',function(e){
-        var foldEl=e.target.closest('.fold-toggle');
-        if(foldEl){toggleFold(parseInt(foldEl.id.replace('fold-','')));return}
-        var randEl=e.target.closest('.random-toggle');
-        if(randEl){toggleRandom(parseInt(randEl.id.replace('random-','')));return}
-        var slotEl=e.target.closest('.card-slot');
-        if(slotEl){var parts=slotEl.id.split('-');activateSlot('player',parseInt(parts[1]),parseInt(parts[2]))}
-    });
-    $('players-grid').addEventListener('contextmenu',function(e){
-        var slotEl=e.target.closest('.card-slot');
-        if(slotEl){e.preventDefault();var parts=slotEl.id.split('-');clearSlotCard('player',parseInt(parts[1]),parseInt(parts[2]))}
-    });
-    // Board clicks
-    for(var b=0;b<5;b++){(function(idx){
-        var el=$('board-slot-'+idx);
-        if(el){
-            el.addEventListener('click',function(){activateSlot('board',idx)});
-            el.addEventListener('contextmenu',function(e){e.preventDefault();clearSlotCard('board',idx)});
+// ---- Init ----
+function init() {
+    initState();
+
+    // Sync all DOM from initial state
+    syncPlayerVisibility();
+    for (var i = 0; i < MAX_PLAYERS; i++) {
+        syncPlayerCards(i);
+        syncPlayerFolded(i);
+    }
+    syncBoard();
+    syncCount();
+    syncPickerDisabled();
+
+    // Bind all event listeners
+    // Add / Remove
+    $('btn-add-player').addEventListener('click', addPlayer);
+    $('btn-remove-player').addEventListener('click', removePlayer);
+
+    // Calculate / Reset
+    $('btn-calculate').addEventListener('click', runSimulation);
+    $('btn-reset-all').addEventListener('click', resetAll);
+
+    // Close picker
+    $('picker-close-btn').addEventListener('click', closePicker);
+
+    // Clear slot button in picker
+    $('picker-clear-slot').addEventListener('click', clearActiveSlotCard);
+
+    // Right-click to clear card slots (desktop)
+    $('players-grid').addEventListener('contextmenu', function(e) {
+        var slotEl = e.target.closest('.card-slot');
+        if (slotEl) {
+            e.preventDefault();
+            var parts = slotEl.id.split('-');
+            var pIdx = parseInt(parts[1]);
+            var sIdx = parseInt(parts[2]);
+            clearSlotCard('player', pIdx, sIdx);
         }
-    })(b)}
-    // Picker clicks
-    $('picker-grid').addEventListener('click',function(e){
-        var card=e.target.closest('.picker-card');
-        if(!card||card.classList.contains('is-disabled'))return;
-        var key=card.getAttribute('data-card');
-        var rank=key.substring(0,key.length-1);
-        var sl=key[key.length-1];
-        var sm={s:'spades',h:'hearts',d:'diamonds',c:'clubs'};
-        selectCard({rank:rank,suit:sm[sl]});
     });
-    // Pot odds inputs
-    ['pot-size','opponent-bet','call-amount'].forEach(function(id){
-        $(id).addEventListener('input',updateEV);
+    for (var bc = 0; bc < 5; bc++) {
+        (function(idx) {
+            var el = $('board-slot-' + idx);
+            if (el) {
+                el.addEventListener('contextmenu', function(e) {
+                    e.preventDefault();
+                    clearSlotCard('board', idx);
+                });
+            }
+        })(bc);
+    }
+
+    // Card slot clicks (event delegation on grid)
+    $('players-grid').addEventListener('click', function(e) {
+        var foldEl = e.target.closest('.fold-toggle');
+        if (foldEl) {
+            var idx = parseInt(foldEl.id.replace('fold-', ''));
+            toggleFold(idx);
+            return;
+        }
+        var slotEl = e.target.closest('.card-slot');
+        if (slotEl) {
+            var parts = slotEl.id.split('-');
+            var pIdx = parseInt(parts[1]);
+            var sIdx = parseInt(parts[2]);
+            activateSlot('player', pIdx, sIdx);
+        }
     });
+
+    // Board slot clicks
+    for (var b = 0; b < 5; b++) {
+        (function(idx) {
+            var el = $('board-slot-' + idx);
+            if (el) {
+                el.addEventListener('click', function() { activateSlot('board', idx); });
+            }
+        })(b);
+    }
+
+    // Picker card clicks (event delegation)
+    $('picker-grid').addEventListener('click', function(e) {
+        var card = e.target.closest('.picker-card');
+        if (!card || card.classList.contains('is-disabled')) return;
+        var key = card.getAttribute('data-card');
+        var rank = key.substring(0, key.length - 1);
+        var suitLetter = key[key.length - 1];
+        var suitMap = { s: 'spades', h: 'hearts', d: 'diamonds', c: 'clubs' };
+        selectCard({ rank: rank, suit: suitMap[suitLetter] });
+    });
+
+    // Keyboard
     setupKeyboard();
+
+    // Ko-fi: Static HTML button only — no JS initialization needed
 }
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);
-else setTimeout(init,0);
+
+// ---- Start safely ----
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    // DOM already ready (e.g., script loaded after DOM parsed)
+    setTimeout(init, 0);
+}
+
 })();
 </script>
+
 </body>
 </html>
