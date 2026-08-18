@@ -583,6 +583,9 @@
                 <div class="brand-tagline">AI Mystic Tools</div>
             </div>
             <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <button onclick="openApiKeyModal()" class="btn-back-home" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border-color: rgba(168, 85, 247, 0.4); cursor: pointer;">
+                    <i class="fa-solid fa-gear"></i> <span id="nav-key-status">API 設定</span>
+                </button>
                 <a href="https://tarot.gugopro.com" target="_blank" class="btn-back-home" style="background: rgba(255, 215, 0, 0.1); color: var(--neon-gold); border-color: rgba(255, 215, 0, 0.35);">
                     <i class="fa-solid fa-moon"></i> 基礎版塔羅牌
                 </a>
@@ -600,9 +603,22 @@
             <h1 class="hero-title">
                 <span class="gradient-text">AI 塔羅大師</span>
             </h1>
-            <p class="he        <!-- API Key Modal -->
+            <p class="hero-subtitle">
+                完整 78 張韋特塔羅牌、5 大專業牌陣、3D 翻牌動畫、Gemini AI 深度交叉解牌。
+                靜心抽牌，讓 AI 為你揭開命運的指引。
+            </p>
+        </div>
+    </section>
+
+    <!-- ===== MAIN TOOL ===== -->
+    <div class="container tool-area">
+
+        <!-- API Key Modal -->
         <div class="modal-overlay" id="api-modal">
             <div class="modal-content">
+                <div style="display:flex; justify-content:flex-end; margin-bottom:-10px;">
+                    <button onclick="closeApiKeyModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+                </div>
                 <h3 style="font-family: 'Cinzel', 'Noto Sans TC', serif; color: var(--neon-gold); font-size: 1.22rem; line-height: 1.4; margin-bottom: 12px;">
                     <i class="fa-solid fa-key" style="color: var(--neon-gold);"></i> 🔑 啟動 AI 服務需要免費的 Gemini API Key
                 </h3>
@@ -612,14 +628,23 @@
                 <a href="https://gugopro.com/tools/tutorials/how-to-get-gemini-api-key.html" target="_blank" rel="noopener" class="btn-secondary" style="margin-bottom: 16px; display: inline-flex; width: 100%; justify-content: center; text-decoration: none; padding: 10px;">
                     <i class="fa-solid fa-book-open"></i> 💡 還沒有 Key？點此查看 10 秒免費取得教學
                 </a>
+                <div id="modal-key-status-box" style="display:none; background: rgba(0,0,0,0.35); border: 1px solid rgba(168,85,247,0.3); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 14px; text-align:left;">
+                    <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 4px;">當前已綁定金鑰 (已遮罩加密)：</div>
+                    <div style="font-family: monospace; font-size: 0.95rem; color: #38bdf8;" id="modal-masked-key-display">AIzaSy••••••••</div>
+                </div>
                 <div style="margin-top: 10px;">
                     <div class="input-group" style="text-align:left;">
-                        <label><i class="fa-solid fa-lock"></i> 輸入您的 Gemini API Key</label>
+                        <label id="modal-input-label"><i class="fa-solid fa-lock"></i> 輸入您的 Gemini API Key</label>
                         <input type="password" id="modal-api-key" placeholder="貼上您的 Gemini API Key (以 AIzaSy 開頭)" autocomplete="off">
                     </div>
-                    <button class="btn-primary" style="margin-top: 14px;" onclick="saveModalApiKey()">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i> 儲存並開始使用
-                    </button>
+                    <div style="display:flex; gap:10px; margin-top:14px;">
+                        <button class="btn-primary" style="flex:1; margin-top:0;" onclick="saveModalApiKey()">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> 儲存並開始使用
+                        </button>
+                        <button id="btn-clear-key" class="btn-secondary" style="display:none; padding:10px 16px; border-color:rgba(239,68,68,0.4); color:#f87171;" onclick="clearApiKey()">
+                            <i class="fa-solid fa-trash-can"></i> 清除金鑰
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1222,17 +1247,117 @@ window.onPresetQuestionSelect = function() {
 };
 
 /* =====================================================================
+   API KEY SECURITY & OBFUSCATION MODULE
+   ===================================================================== */
+function encodeApiKey(key) {
+  if (!key) return '';
+  try {
+    return 'obf_' + btoa(encodeURIComponent(key));
+  } catch(e) {
+    return key;
+  }
+}
+
+function decodeApiKey(raw) {
+  if (!raw) return '';
+  if (raw.indexOf('obf_') === 0) {
+    try {
+      return decodeURIComponent(atob(raw.slice(4)));
+    } catch(e) {
+      return raw.slice(4);
+    }
+  }
+  return raw; // Backward-compatible with plain text
+}
+
+function maskApiKey(key) {
+  if (!key) return '';
+  if (key.length <= 10) return '••••••••';
+  return key.slice(0, 6) + '••••••••' + key.slice(-4);
+}
+
+function getGlobalApiKey() {
+  var raw = localStorage.getItem('gugopro_gemini_api_key') || localStorage.getItem('gemini_api_key') || localStorage.getItem('tarot_api_key') || '';
+  var decoded = decodeApiKey(raw.trim());
+  if (decoded && raw.indexOf('obf_') !== 0) {
+    setGlobalApiKey(decoded);
+  }
+  return decoded;
+}
+
+function setGlobalApiKey(key) {
+  if (!key) {
+    localStorage.removeItem('gugopro_gemini_api_key');
+    localStorage.removeItem('gemini_api_key');
+    localStorage.removeItem('tarot_api_key');
+    state.apiKey = '';
+    updateKeyUI();
+    return;
+  }
+  var obf = encodeApiKey(key.trim());
+  localStorage.setItem('gugopro_gemini_api_key', obf);
+  localStorage.setItem('gemini_api_key', obf);
+  localStorage.setItem('tarot_api_key', obf);
+  state.apiKey = key.trim();
+  updateKeyUI();
+}
+
+function updateKeyUI() {
+  var key = getGlobalApiKey();
+  var navStatus = document.getElementById('nav-key-status');
+  var statusBox = document.getElementById('modal-key-status-box');
+  var maskedDisplay = document.getElementById('modal-masked-key-display');
+  var clearBtn = document.getElementById('btn-clear-key');
+  var inputLabel = document.getElementById('modal-input-label');
+  
+  if (navStatus) {
+    navStatus.textContent = key ? 'API 已連線 ⚙️' : 'API 設定 ⚙️';
+  }
+  if (key) {
+    if (statusBox) statusBox.style.display = '';
+    if (maskedDisplay) maskedDisplay.textContent = maskApiKey(key);
+    if (clearBtn) clearBtn.style.display = '';
+    if (inputLabel) inputLabel.innerHTML = '<i class="fa-solid fa-pen-to-square"></i> 更換 Gemini API Key';
+  } else {
+    if (statusBox) statusBox.style.display = 'none';
+    if (clearBtn) clearBtn.style.display = 'none';
+    if (inputLabel) inputLabel.innerHTML = '<i class="fa-solid fa-lock"></i> 輸入您的 Gemini API Key';
+  }
+}
+
+window.openApiKeyModal = function() {
+  updateKeyUI();
+  var input = document.getElementById('modal-api-key');
+  if (input) input.value = '';
+  var modal = document.getElementById('api-modal');
+  if (modal) modal.classList.add('show');
+};
+
+window.closeApiKeyModal = function() {
+  var modal = document.getElementById('api-modal');
+  if (modal) modal.classList.remove('show');
+};
+
+window.clearApiKey = function() {
+  if (confirm('確定要清除已儲存的 API Key 嗎？')) {
+    setGlobalApiKey('');
+    var input = document.getElementById('modal-api-key');
+    if (input) input.value = '';
+    updateKeyUI();
+    alert('已成功清除 API Key。');
+  }
+};
+
+/* =====================================================================
    INIT
    ===================================================================== */
 function init() {
-  // 全站統一 API Key 共享讀取 (gugopro_gemini_api_key + 相容舊版鍵名)
-  var stored = localStorage.getItem('gugopro_gemini_api_key') || localStorage.getItem('tarot_api_key') || localStorage.getItem('gemini_api_key');
-  if (stored && stored.trim()) {
-    state.apiKey = stored.trim();
-    localStorage.setItem('gugopro_gemini_api_key', state.apiKey);
-    var modalInput = document.getElementById('modal-api-key');
-    if (modalInput) modalInput.value = state.apiKey;
+  // 全站統一 API Key 混淆讀取
+  var key = getGlobalApiKey();
+  if (key) {
+    state.apiKey = key;
   }
+  updateKeyUI();
 
   // 初始化常見問題下拉選單
   var catSelect = document.getElementById('category-select');
@@ -1251,18 +1376,19 @@ function init() {
 function saveModalApiKey() {
   var modalInput = document.getElementById('modal-api-key');
   var key = (modalInput ? modalInput.value : '').trim();
-  if (!key) { alert('請輸入 Gemini API Key。'); return; }
-  
-  state.apiKey = key;
-  localStorage.setItem('gugopro_gemini_api_key', key);
-  localStorage.setItem('tarot_api_key', key);
-  localStorage.setItem('gemini_api_key', key);
-  
-  var modal = document.getElementById('api-modal');
-  if (modal) modal.classList.remove('show');
+  if (!key && !getGlobalApiKey()) {
+    alert('請輸入有效的 Gemini API Key。');
+    return;
+  }
+  if (key) {
+    setGlobalApiKey(key);
+  }
+  closeApiKeyModal();
 
-  // After key saved, generate AI reading
-  generateReading();
+  if (state.pendingUnlock) {
+    state.pendingUnlock = false;
+    generateReading();
+  }
 }
 
 async function fetchModel() {
@@ -1438,12 +1564,13 @@ function showBasicReading() {
    UNLOCK AI READING (PRO MODE)
    ===================================================================== */
 window.unlockAIReading = function() {
-  if (state.apiKey) {
-    // Key already saved, generate reading directly
+  var key = getGlobalApiKey();
+  if (key) {
+    state.apiKey = key;
     generateReading();
   } else {
-    // Show modal to get API key
-    document.getElementById('api-modal').classList.add('show');
+    state.pendingUnlock = true;
+    openApiKeyModal();
   }
 
   if (typeof gtag === 'function') {
@@ -1455,6 +1582,14 @@ window.unlockAIReading = function() {
    AI READING
    ===================================================================== */
 async function generateReading() {
+  var key = getGlobalApiKey();
+  if (!key) {
+    state.pendingUnlock = true;
+    openApiKeyModal();
+    return;
+  }
+  state.apiKey = key;
+
   var spread = SPREADS[state.spread];
   var question = document.getElementById('question-input').value.trim();
   var category = document.getElementById('category-select').value;
@@ -1512,6 +1647,13 @@ async function generateReading() {
       })
     });
 
+    if (resp.status === 400 || resp.status === 401 || resp.status === 403) {
+      setGlobalApiKey('');
+      alert('⚠️ 您設定的 Gemini API Key 已失效或輸入有誤，請重新設定。');
+      openApiKeyModal();
+      throw new Error('API Key 無效或已過期 (HTTP ' + resp.status + ')');
+    }
+
     if (!resp.ok) {
       throw new Error('API Error: ' + resp.status);
     }
@@ -1547,7 +1689,7 @@ async function generateReading() {
     readingBox.innerHTML =
       '<h3><i class="fa-solid fa-circle-exclamation" style="color: var(--color-red, #ef4444);"></i> AI 解牌失敗</h3>' +
       '<p>錯誤：' + escapeHtml(e.message) + '</p>' +
-      '<p style="margin-top:10px;">請確認 API Key 是否正確，或<a href="https://gugopro.com/tools/tutorials/how-to-get-gemini-api-key.html" target="_blank" rel="noopener" style="color:var(--neon-gold);">查看如何取得 API Key</a>。</p>';
+      '<p style="margin-top:10px;">請確認 API Key 是否正確，或<a href="javascript:void(0)" onclick="openApiKeyModal()" style="color:var(--neon-gold); font-weight:bold;">點此重新設定 API Key</a>。</p>';
   }
 }
 
@@ -1555,6 +1697,13 @@ async function generateReading() {
    CHAT FOLLOW-UP
    ===================================================================== */
 window.sendChat = function() {
+  var key = getGlobalApiKey();
+  if (!key) {
+    openApiKeyModal();
+    return;
+  }
+  state.apiKey = key;
+
   // Check follow-up limit
   if (state.followUpCount >= state.maxFollowUps) {
     alert('追問次數已達上限（' + state.maxFollowUps + ' 次）。如需更多解答，請重新占卜。');
@@ -1589,6 +1738,12 @@ window.sendChat = function() {
       generationConfig: { temperature: 0.8, maxOutputTokens: 2048 }
     })
   }).then(function(resp) {
+    if (resp.status === 400 || resp.status === 401 || resp.status === 403) {
+      setGlobalApiKey('');
+      alert('⚠️ 您設定的 Gemini API Key 已失效或輸入有誤，請重新設定。');
+      openApiKeyModal();
+      throw new Error('API Key 無效或已過期');
+    }
     return resp.json();
   }).then(function(data) {
     var text = '';

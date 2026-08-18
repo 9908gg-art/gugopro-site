@@ -843,17 +843,29 @@
     <!-- Modals -->
     <div id="modal-api" class="modal-overlay">
         <div class="modal-content">
+            <div style="display:flex; justify-content:flex-end; margin-bottom:-10px;">
+                <button onclick="document.getElementById('modal-api').style.display='none'" style="background:none; border:none; color:var(--text-dim); font-size:1.2rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
             <h3 class="modal-h3"><i class="fa-solid fa-key" style="color: var(--primary-neon);"></i> 🔑 啟動 AI 服務需要免費的 Gemini API Key</h3>
             <p class="modal-p">本工具由 Google Gemini 官方模型驅動，安全免費、無需信用卡、全站自動共享。</p>
             <a href="https://gugopro.com/tools/tutorials/how-to-get-gemini-api-key.html" target="_blank" class="btn-full btn-tool" style="background:rgba(0, 242, 255, 0.1); border: 1px solid rgba(0, 242, 255, 0.3); color:#00f2ff; text-decoration:none; margin-bottom:14px; display:inline-flex; align-items:center; justify-content:center; gap:6px;">
                 💡 還沒有 Key？點此查看 10 秒免費取得教學
             </a>
+            <div id="tutor-key-status-box" style="display:none; background: rgba(0,0,0,0.35); border: 1px solid rgba(0,242,255,0.3); border-radius: 8px; padding: 12px; margin-bottom: 14px; text-align:left;">
+                <div style="font-size: 0.82rem; color: var(--text-dim); margin-bottom: 4px;">當前已綁定金鑰 (已遮罩加密)：</div>
+                <div style="font-family: monospace; font-size: 0.95rem; color: #38bdf8;" id="tutor-masked-key-display">AIzaSy••••••••</div>
+            </div>
             <div class="api-input-group">
                 <input type="password" id="api-key-input" placeholder="貼上您的 Gemini API Key (以 AIzaSy 開頭)" autocomplete="off">
             </div>
-            <button id="btn-save-key" class="btn-full btn-send" style="margin-top: 10px;">
-                <i class="fa-solid fa-check"></i> 儲存並開始使用
-            </button>
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <button id="btn-save-key" class="btn-full btn-send" style="flex:1; margin-top:0;">
+                    <i class="fa-solid fa-check"></i> 儲存並開始使用
+                </button>
+                <button id="btn-clear-tutor-key" class="btn-tool" style="display:none; padding:10px 16px; border-color:rgba(239,68,68,0.4); color:#f87171;" onclick="clearTutorApiKey()">
+                    <i class="fa-solid fa-trash-can"></i> 清除金鑰
+                </button>
+            </div>
         </div>
     </div>
 
@@ -1008,13 +1020,75 @@
             } : null;
         }
 
-        function getGlobalApiKey() {
-            const key = (localStorage.getItem('gugopro_gemini_api_key') || localStorage.getItem('gemini_api_key') || localStorage.getItem('tarot_api_key') || '').trim();
-            if (key && !localStorage.getItem('gugopro_gemini_api_key')) {
-                localStorage.setItem('gugopro_gemini_api_key', key);
-            }
-            return key;
+        /* =====================================================================
+           API KEY SECURITY & OBFUSCATION MODULE
+           ===================================================================== */
+        function encodeApiKey(key) {
+            if (!key) return '';
+            try { return 'obf_' + btoa(encodeURIComponent(key)); } catch(e) { return key; }
         }
+
+        function decodeApiKey(raw) {
+            if (!raw) return '';
+            if (raw.indexOf('obf_') === 0) {
+                try { return decodeURIComponent(atob(raw.slice(4))); } catch(e) { return raw.slice(4); }
+            }
+            return raw;
+        }
+
+        function maskApiKey(key) {
+            if (!key) return '';
+            if (key.length <= 10) return '••••••••';
+            return key.slice(0, 6) + '••••••••' + key.slice(-4);
+        }
+
+        function getGlobalApiKey() {
+            const raw = (localStorage.getItem('gugopro_gemini_api_key') || localStorage.getItem('gemini_api_key') || localStorage.getItem('tarot_api_key') || '').trim();
+            const decoded = decodeApiKey(raw);
+            if (decoded && raw.indexOf('obf_') !== 0) {
+                setGlobalApiKey(decoded);
+            }
+            return decoded;
+        }
+
+        function setGlobalApiKey(key) {
+            if (!key) {
+                localStorage.removeItem('gugopro_gemini_api_key');
+                localStorage.removeItem('gemini_api_key');
+                localStorage.removeItem('tarot_api_key');
+                updateTutorKeyUI();
+                return;
+            }
+            const obf = encodeApiKey(key.trim());
+            localStorage.setItem('gugopro_gemini_api_key', obf);
+            localStorage.setItem('gemini_api_key', obf);
+            localStorage.setItem('tarot_api_key', obf);
+            updateTutorKeyUI();
+        }
+
+        function updateTutorKeyUI() {
+            const key = getGlobalApiKey();
+            const statusBox = document.getElementById('tutor-key-status-box');
+            const maskedDisplay = document.getElementById('tutor-masked-key-display');
+            const clearBtn = document.getElementById('btn-clear-tutor-key');
+            if (key) {
+                if (statusBox) statusBox.style.display = '';
+                if (maskedDisplay) maskedDisplay.textContent = maskApiKey(key);
+                if (clearBtn) clearBtn.style.display = '';
+            } else {
+                if (statusBox) statusBox.style.display = 'none';
+                if (clearBtn) clearBtn.style.display = 'none';
+            }
+        }
+
+        window.clearTutorApiKey = function() {
+            if (confirm('確定要清除已儲存的 API Key 嗎？')) {
+                setGlobalApiKey('');
+                document.getElementById('api-key-input').value = '';
+                updateTutorKeyUI();
+                alert('已成功清除 API Key。');
+            }
+        };
 
         async function fetchLatestModel() {
             const apiKey = getGlobalApiKey().split(/[\n,;]+/).map(key => key.trim()).filter(Boolean)[0];
@@ -1075,12 +1149,17 @@
             }
         }
 
-        function checkApiKey() {
+        function checkApiKey(customMsg = null) {
+            updateTutorKeyUI();
             const key = getGlobalApiKey();
-            if (!key) {
+            if (!key || customMsg) {
+                document.getElementById('api-key-input').value = '';
                 document.getElementById('modal-api').style.display = 'flex';
+                if (customMsg) {
+                    alert(customMsg);
+                }
             } else {
-                document.getElementById('api-key-input').value = key;
+                document.getElementById('api-key-input').value = '';
             }
         }
 
@@ -1228,7 +1307,8 @@
         overlay.onclick = closeMenu;
 
         document.getElementById('btn-config').onclick = () => {
-            document.getElementById('api-key-input').value = getGlobalApiKey();
+            updateTutorKeyUI();
+            document.getElementById('api-key-input').value = '';
             document.getElementById('modal-api').style.display = 'flex';
             closeMenu();
         };
@@ -1236,12 +1316,14 @@
         document.getElementById('btn-save-key').onclick = () => {
             const key = document.getElementById('api-key-input').value.trim();
             if (key) {
-                localStorage.setItem('gugopro_gemini_api_key', key);
-                localStorage.setItem('gemini_api_key', key);
-                localStorage.setItem('tarot_api_key', key);
+                setGlobalApiKey(key);
                 document.getElementById('modal-api').style.display = 'none';
                 hideError();
                 fetchLatestModel();
+            } else if (getGlobalApiKey()) {
+                document.getElementById('modal-api').style.display = 'none';
+            } else {
+                alert('請輸入有效的 Gemini API Key。');
             }
         };
 
@@ -1507,6 +1589,11 @@
                             return parsed;
                         } catch (error) {
                             failures.push(error);
+                            if (error.status === 400 || error.status === 401 || error.status === 403) {
+                                setGlobalApiKey('');
+                                checkApiKey('⚠️ 您設定的 Gemini API Key 已失效或輸入有誤，請重新設定。');
+                                throw error;
+                            }
                             // For 404 (model not found), try next model immediately without circuit break
                             if (error.status === 404) continue;
                             // For rate limit / server errors, show notice and try next model
