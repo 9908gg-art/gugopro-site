@@ -843,31 +843,17 @@
             <button class="btn-primary" id="btn-shuffle" onclick="startReading()">
                 <i class="fa-solid fa-shuffle"></i> 開始洗牌抽牌
             </button>
-        </div>id fa-tag"></i> 問題類別</label>
-                <select id="category-select">
-                    <option value="general">綜合 / 一般運勢</option>
-                    <option value="love">愛情 / 感情</option>
-                    <option value="career">事業 / 工作</option>
-                    <option value="finance">財務 / 金錢</option>
-                    <option value="health">健康 / 身心</option>
-                    <option value="decision">決策 / 選擇</option>
-                    <option value="spiritual">靈性 / 自我成長</option>
-                </select>
-            </div>
-            <button class="btn-primary" id="btn-shuffle" onclick="startReading()">
-                <i class="fa-solid fa-shuffle"></i> 開始洗牌抽牌
-            </button>
         </div>
 
         <!-- Card Table -->
         <div class="section-card" id="card-table-section" style="display:none;">
-            <div class="section-title"><i class="fa-solid fa-hand-pointer" style="color: var(--neon-gold);"></i> 點擊卡片翻牌</div>
-            <p class="section-subtitle" id="table-subtitle">從牌堆中點選所有卡片以揭曉你的命運。</p>
+            <div class="section-title"><i class="fa-solid fa-wand-magic-sparkles" style="color: var(--neon-gold);"></i> 塔羅牌陣自動揭曉</div>
+            <p class="section-subtitle" id="table-subtitle">系統正在洗牌並自動為您連續翻牌揭曉命運牌面...</p>
             <div class="card-table" id="card-table">
                 <!-- Cards injected by JS -->
             </div>
             <div class="card-instructions" id="card-instructions">
-                <i class="fa-solid fa-hand-point-up"></i> 點擊每一張牌卡以翻開
+                <i class="fa-solid fa-wand-sparkles" style="color:var(--neon-gold);"></i> 正在為您連續翻牌揭示中...
             </div>
         </div>
 
@@ -1599,24 +1585,22 @@ window.startReading = function() {
   table.innerHTML = '';
 
   var instructions = document.getElementById('card-instructions');
-  instructions.innerHTML = '<i class="fa-solid fa-hand-point-up" style="color:var(--neon-gold);"></i> ✨ 請靜心默念問題，依序點擊翻開下方每張牌卡 (已翻開 ' + state.flippedCount + '/' + count + ' 張)';
+  instructions.innerHTML = '<i class="fa-solid fa-wand-sparkles" style="color:var(--neon-gold);"></i> ✨ 牌陣生成中，正在為您連續自動翻牌揭曉...';
 
   var subtitle = document.getElementById('table-subtitle');
-  subtitle.textContent = '請保持專注與直覺，點選所有 ' + count + ' 張牌卡以揭曉牌陣。';
+  subtitle.textContent = '命運牌陣已就位，系統將依序自動翻開所有 ' + count + ' 張牌卡。';
 
-  // Create cards with staggered animation
+  // Create cards with staggered dealing animation
   for (var idx = 0; idx < count; idx++) {
     var d = state.drawn[idx];
     var el = document.createElement('div');
     el.className = 'tarot-card dealing';
-    el.style.animationDelay = (idx * 0.15) + 's';
+    el.style.animationDelay = (idx * 0.12) + 's';
+    el.style.cursor = 'default';
     el.dataset.idx = idx;
-    el.onclick = (function(index) {
-      return function() { flipCard(index); };
-    })(idx);
 
     var posLabel = spread.positions[idx] || '';
-    var revLabel = d.reversed ? '<div class="cf-reversed">逆位</div>' : '';
+    var revLabel = d.reversed ? '<div class="cf-reversed">逆位</div>' : '<div class="cf-reversed" style="color:var(--neon-gold);">正位</div>';
 
     el.innerHTML =
       '<div class="card-back"><div class="card-back-pattern"></div></div>' +
@@ -1636,6 +1620,9 @@ window.startReading = function() {
     tableSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, 100);
 
+  // Trigger Automatic Sequential Reveal Flow
+  autoRevealCards(count, spread);
+
   if (typeof gtag === 'function') {
     gtag('event', 'tarot_spread_selected', {
       'event_category': 'tarot',
@@ -1646,42 +1633,44 @@ window.startReading = function() {
 };
 
 /* =====================================================================
-   FLIP CARD
+   AUTO-REVEAL FLOW (全自動連續翻牌揭曉)
    ===================================================================== */
-function flipCard(idx) {
+function autoRevealCards(count, spread) {
   var cards = document.querySelectorAll('.tarot-card');
-  var card = cards[idx];
-  if (card.classList.contains('flipped')) return;
-
-  // Haptic: light tap when selecting card
-  if (navigator.vibrate) { navigator.vibrate(15); }
-
-  card.classList.add('flipped');
-
-  // Haptic: rhythmic pattern when card is revealed
-  if (navigator.vibrate) { navigator.vibrate([30, 50, 30]); }
-
-  state.flippedCount++;
-
-  var spread = SPREADS[state.spread];
   var instructions = document.getElementById('card-instructions');
-  instructions.innerHTML = '<i class="fa-solid fa-hand-point-up" style="color:var(--neon-gold);"></i> 依序翻牌中：已翻開 ' + state.flippedCount + '/' + spread.count + ' 張牌';
 
-  // Check if all flipped
-  if (state.flippedCount >= spread.count) {
-    setTimeout(function() {
-      instructions.innerHTML = '<i class="fa-solid fa-wand-sparkles" style="color:var(--neon-gold);"></i> ✨ 所有牌卡已完整揭曉！為您呈現經典牌義與深度解析...';
-      showBasicReading();
-      // Show the reading section
-      var readingSec = document.getElementById('ai-reading-section');
-      readingSec.style.display = '';
-      document.getElementById('action-section').style.display = '';
-      
-      // Auto smooth scroll to reading section so user isn't lost
+  for (var i = 0; i < count; i++) {
+    (function(index) {
+      var delay = (index * 380) + 400; // 依序每 380ms 翻開一張
       setTimeout(function() {
-        readingSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 350);
-    }, 600);
+        if (cards[index]) {
+          cards[index].classList.add('flipped');
+          if (navigator.vibrate) { navigator.vibrate([20, 30]); }
+          state.flippedCount = index + 1;
+          if (instructions) {
+            instructions.innerHTML = '<i class="fa-solid fa-wand-sparkles" style="color:var(--neon-gold);"></i> 正在連續揭曉牌面 (' + state.flippedCount + '/' + count + ')...';
+          }
+        }
+
+        // 當最後一張翻開完畢
+        if (index === count - 1) {
+          setTimeout(function() {
+            if (instructions) {
+              instructions.innerHTML = '<i class="fa-solid fa-wand-sparkles" style="color:var(--neon-gold);"></i> ✨ 牌陣已全數自動揭曉！為您呈現經典牌義與深度解析...';
+            }
+            showBasicReading();
+            var readingSec = document.getElementById('ai-reading-section');
+            readingSec.style.display = '';
+            document.getElementById('action-section').style.display = '';
+            
+            // 自動平滑滾動至解牌內容區塊
+            setTimeout(function() {
+              readingSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 450);
+          }, 500);
+        }
+      }, delay);
+    })(i);
   }
 }
 
