@@ -357,13 +357,6 @@
         font-size: 0.8rem;
         color: var(--text-muted);
     }
-    .btn-unlock.loading {
-        opacity: 0.75;
-        cursor: not-allowed;
-        pointer-events: none;
-        background: linear-gradient(135deg, #6b21a8, #9a3412);
-        box-shadow: none;
-    }
     .ai-reading-box {
         background: rgba(168, 85, 247, 0.05);
         border: 1px solid rgba(168, 85, 247, 0.25);
@@ -497,49 +490,7 @@
         text-align: center; padding: 30px; color: var(--text-muted); font-size: 0.9rem;
     }
 
-    /* ========== UNLOCK CARD (PRO MODE) ========== */
-    .unlock-card {
-        margin-top: 20px; padding: 24px;
-        background: linear-gradient(135deg, rgba(168,85,247,0.08), rgba(255,215,0,0.08));
-        border: 1px solid rgba(255,215,0,0.25);
-        border-radius: var(--radius-md);
-        text-align: center; position: relative; overflow: hidden;
-    }
-    .unlock-card::before {
-        content: '';
-        position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-        background: conic-gradient(from 0deg, transparent, rgba(255,215,0,0.1), transparent);
-        animation: unlockSpin 8s linear infinite;
-    }
-    @keyframes unlockSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    .unlock-card > * { position: relative; z-index: 1; }
-    .unlock-card .unlock-title {
-        font-family: 'Cinzel', serif; font-size: 1.1rem; font-weight: 700;
-        color: var(--neon-gold); margin-bottom: 10px;
-    }
-    .unlock-card .unlock-subtitle { font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 16px; }
-    .unlock-benefits {
-        text-align: left; margin: 14px 0; padding: 0 10px;
-        display: flex; flex-direction: column; gap: 8px;
-    }
-    .unlock-benefit {
-        display: flex; align-items: flex-start; gap: 8px;
-        font-size: 0.85rem; color: var(--text-primary);
-    }
-    .unlock-benefit i { color: var(--neon-purple); margin-top: 3px; flex-shrink: 0; }
-    .btn-unlock {
-        display: inline-flex; align-items: center; gap: 8px;
-        background: linear-gradient(135deg, #a855f7, #ffd700);
-        color: #000; padding: 12px 28px; border-radius: 30px;
-        font-size: 0.95rem; font-weight: 800;
-        border: none; cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 0 20px rgba(168,85,247,0.4), 0 0 40px rgba(255,215,0,0.2);
-    }
-    .btn-unlock:hover {
-        transform: translateY(-2px) scale(1.03);
-        box-shadow: 0 0 30px rgba(168,85,247,0.6), 0 0 60px rgba(255,215,0,0.3);
-    }
+
 
     /* ========== BASIC READING (FREE MODE) ========== */
     .basic-reading { margin-top: 16px; }
@@ -857,27 +808,13 @@
             </div>
         </div>
 
-        <!-- Reading Results (Basic + Unlock) -->
+        <!-- Reading Results (Basic + AI Auto Generation) -->
         <div class="section-card" id="ai-reading-section" style="display:none;">
             <div class="section-title"><i class="fa-solid fa-star-of-david" style="color: var(--neon-purple);"></i> 占卜結果</div>
 
             <!-- Basic Reading (Free Mode - always shown) -->
             <div class="basic-reading" id="basic-reading">
                 <!-- Filled by JS -->
-            </div>
-
-            <!-- Unlock Card (Pro AI Mode) -->
-            <div class="unlock-card" id="unlock-card">
-                <div class="unlock-title">✨ 解鎖 Gemini AI 靈性導師</div>
-                <div class="unlock-subtitle">針對你個人問題的客製化深度全盤交叉分析</div>
-                <div class="unlock-benefits">
-                    <div class="unlock-benefit"><i class="fa-solid fa-robot"></i> 客製化交叉語境解答：結合具體疑問的全盤分析</div>
-                    <div class="unlock-benefit"><i class="fa-solid fa-comments"></i> 二次追問對話：解牌後可與 AI 導師進行 2~3 次深度對話</div>
-                    <div class="unlock-benefit"><i class="fa-solid fa-lightbulb"></i> 實體行動建議與靈性對策</div>
-                </div>
-                <button class="btn-unlock" onclick="unlockAIReading()">
-                    <i class="fa-solid fa-unlock-keyhole"></i> 立即解鎖 AI 深度解析
-                </button>
             </div>
 
             <!-- Loading Indicator Card (shown during AI generation) -->
@@ -1503,9 +1440,9 @@ function saveModalApiKey() {
   }
   closeApiKeyModal();
 
-  if (state.pendingUnlock) {
-    state.pendingUnlock = false;
-    generateReading();
+  if (state.pendingStart) {
+    state.pendingStart = false;
+    startReading();
   }
 }
 
@@ -1542,13 +1479,21 @@ window.selectSpread = function(spread) {
 };
 
 /* =====================================================================
-   START READING
+   START READING (洗牌 -> 自動連續翻牌 -> 自動 AI 深度解牌)
    ===================================================================== */
 window.startReading = function() {
   var question = document.getElementById('question-input').value.trim();
   if (!question) { alert('請先輸入你的問題。'); return; }
 
-  // Freemium: no API key required to start reading
+  // 檢查全站 API Key 配置，未配置時彈出設定視窗攔截
+  var key = getGlobalApiKey();
+  if (!key) {
+    state.pendingStart = true;
+    openApiKeyModal();
+    return;
+  }
+  state.apiKey = key;
+
   var spread = SPREADS[state.spread];
   var count = spread.count;
 
@@ -1570,8 +1515,6 @@ window.startReading = function() {
   document.getElementById('action-section').style.display = 'none';
   var loadingCard = document.getElementById('ai-loading-container');
   if (loadingCard) loadingCard.style.display = 'none';
-  var unlockCard = document.getElementById('unlock-card');
-  if (unlockCard) unlockCard.style.display = '';
   var readingBox = document.getElementById('ai-reading-box');
   if (readingBox) readingBox.style.display = 'none';
   var chatArea = document.getElementById('chat-area');
@@ -1620,7 +1563,7 @@ window.startReading = function() {
     tableSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, 100);
 
-  // Trigger Automatic Sequential Reveal Flow
+  // Trigger Automatic Sequential Reveal Flow & Auto-AI Reading
   autoRevealCards(count, spread);
 
   if (typeof gtag === 'function') {
@@ -1633,7 +1576,7 @@ window.startReading = function() {
 };
 
 /* =====================================================================
-   AUTO-REVEAL FLOW (全自動連續翻牌揭曉)
+   AUTO-REVEAL FLOW (全自動連續翻牌揭曉 -> 自動觸發 AI 解盤)
    ===================================================================== */
 function autoRevealCards(count, spread) {
   var cards = document.querySelectorAll('.tarot-card');
@@ -1652,11 +1595,11 @@ function autoRevealCards(count, spread) {
           }
         }
 
-        // 當最後一張翻開完畢
+        // 當最後一張翻開完畢，立即自動調用 AI 解牌
         if (index === count - 1) {
           setTimeout(function() {
             if (instructions) {
-              instructions.innerHTML = '<i class="fa-solid fa-wand-sparkles" style="color:var(--neon-gold);"></i> ✨ 牌陣已全數自動揭曉！為您呈現經典牌義與深度解析...';
+              instructions.innerHTML = '<i class="fa-solid fa-wand-sparkles" style="color:var(--neon-gold);"></i> ✨ 牌陣已全數自動揭曉！AI 靈性導師正為您深度解析中...';
             }
             showBasicReading();
             var readingSec = document.getElementById('ai-reading-section');
@@ -1666,8 +1609,11 @@ function autoRevealCards(count, spread) {
             // 自動平滑滾動至解牌內容區塊
             setTimeout(function() {
               readingSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 450);
-          }, 500);
+            }, 300);
+
+            // 自動觸發 Gemini API 深度解析 (零二次阻斷)
+            generateReading();
+          }, 450);
         }
       }, delay);
     })(i);
@@ -1771,30 +1717,12 @@ function renderTarotReport(rawText) {
 }
 
 /* =====================================================================
-   UNLOCK AI READING (PRO MODE)
-   ===================================================================== */
-window.unlockAIReading = function() {
-  var key = getGlobalApiKey();
-  if (key) {
-    state.apiKey = key;
-    generateReading();
-  } else {
-    state.pendingUnlock = true;
-    openApiKeyModal();
-  }
-
-  if (typeof gtag === 'function') {
-    gtag('event', 'tarot_unlock_ai', {'event_category': 'tarot'});
-  }
-};
-
-/* =====================================================================
-   AI READING
+   AI READING (GEMINI API 深度解析)
    ===================================================================== */
 async function generateReading() {
   var key = getGlobalApiKey();
   if (!key) {
-    state.pendingUnlock = true;
+    state.pendingStart = true;
     openApiKeyModal();
     return;
   }
@@ -1815,27 +1743,15 @@ async function generateReading() {
     spiritual: '靈性成長'
   };
 
-  // Instant visual feedback on unlock button
-  var btnUnlock = document.querySelector('.btn-unlock');
-  if (btnUnlock) {
-    btnUnlock.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 🔮 AI 深度解牌推演中...';
-    btnUnlock.classList.add('loading');
-    btnUnlock.disabled = true;
-  }
-
-  // Show active multi-step loading card & scroll to it
+  // Show active multi-step loading card
   var loadingCard = document.getElementById('ai-loading-container');
   var readingBox = document.getElementById('ai-reading-box');
-  var unlockCard = document.getElementById('unlock-card');
   var stepTitle = document.getElementById('ai-loading-step-title');
   var stepSub = document.getElementById('ai-loading-step-sub');
   var progressFill = document.getElementById('ai-progress-bar-fill');
 
   if (loadingCard) {
     loadingCard.style.display = '';
-    setTimeout(function() {
-      loadingCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 50);
   }
   if (readingBox) readingBox.style.display = 'none';
 
@@ -1899,11 +1815,6 @@ async function generateReading() {
 
     if (resp.status === 400 || resp.status === 401 || resp.status === 403) {
       setGlobalApiKey('');
-      if (btnUnlock) {
-        btnUnlock.innerHTML = '<i class="fa-solid fa-unlock-keyhole"></i> 立即解鎖 AI 深度解析';
-        btnUnlock.classList.remove('loading');
-        btnUnlock.disabled = false;
-      }
       if (loadingCard) loadingCard.style.display = 'none';
       alert('⚠️ 您設定的 Gemini API Key 已失效或輸入有誤，請重新設定。');
       openApiKeyModal();
@@ -1924,7 +1835,6 @@ async function generateReading() {
 
     setTimeout(function() {
       if (loadingCard) loadingCard.style.display = 'none';
-      if (unlockCard) unlockCard.style.display = 'none';
 
       readingBox.innerHTML = renderTarotReport(text);
       readingBox.style.display = '';
@@ -1952,16 +1862,13 @@ async function generateReading() {
     clearTimeout(stepTimer1);
     clearTimeout(stepTimer2);
     if (loadingCard) loadingCard.style.display = 'none';
-    if (unlockCard) unlockCard.style.display = '';
-    if (btnUnlock) {
-      btnUnlock.innerHTML = '<i class="fa-solid fa-rotate-right"></i> 重新嘗試解鎖 AI 深度解析';
-      btnUnlock.classList.remove('loading');
-      btnUnlock.disabled = false;
-    }
     readingBox.innerHTML =
       '<h3><i class="fa-solid fa-circle-exclamation" style="color: var(--color-red, #ef4444);"></i> AI 解牌失敗</h3>' +
       '<p>錯誤原因：' + escapeHtml(e.message) + '</p>' +
-      '<p style="margin-top:10px;">請確認網路連線與 API Key，或<a href="javascript:void(0)" onclick="openApiKeyModal()" style="color:var(--neon-gold); font-weight:bold;">點此檢查 API Key 設定</a>。</p>';
+      '<div style="margin-top:14px; display:flex; gap:10px;">' +
+        '<button class="btn-primary" onclick="generateReading()" style="padding:8px 18px; font-size:0.9rem;"><i class="fa-solid fa-rotate-right"></i> 重新產生 AI 解讀</button>' +
+        '<button class="btn-secondary" onclick="openApiKeyModal()" style="padding:8px 18px; font-size:0.9rem;"><i class="fa-solid fa-gear"></i> 檢查 API Key</button>' +
+      '</div>';
     readingBox.style.display = '';
   }
 }
