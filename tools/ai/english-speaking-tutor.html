@@ -843,15 +843,17 @@
     <!-- Modals -->
     <div id="modal-api" class="modal-overlay">
         <div class="modal-content">
-            <h3 class="modal-h3">設定您的 API Key</h3>
-            <p class="modal-p">本工具使用 Google Gemini AI。請輸入您的 API Key 以開始對話。</p>
-            <a href="https://gugopro.com/tools/tutorials/how-to-get-gemini-api-key.html" target="_blank" class="btn-full btn-tool" style="background:rgba(255,255,255,0.1); color:#fff; text-decoration:none;">
-                👉 還沒有 API Key？點此觀看教學
+            <h3 class="modal-h3"><i class="fa-solid fa-key" style="color: var(--primary-neon);"></i> 🔑 啟動 AI 服務需要免費的 Gemini API Key</h3>
+            <p class="modal-p">本工具由 Google Gemini 官方模型驅動，安全免費、無需信用卡、全站自動共享。</p>
+            <a href="https://gugopro.com/tools/tutorials/how-to-get-gemini-api-key.html" target="_blank" class="btn-full btn-tool" style="background:rgba(0, 242, 255, 0.1); border: 1px solid rgba(0, 242, 255, 0.3); color:#00f2ff; text-decoration:none; margin-bottom:14px; display:inline-flex; align-items:center; justify-content:center; gap:6px;">
+                💡 還沒有 Key？點此查看 10 秒免費取得教學
             </a>
             <div class="api-input-group">
-                <input type="password" id="api-key-input" placeholder="貼上您的 Gemini API Key">
+                <input type="password" id="api-key-input" placeholder="貼上您的 Gemini API Key (以 AIzaSy 開頭)" autocomplete="off">
             </div>
-            <button id="btn-save-key" class="btn-full btn-send">儲存並開始</button>
+            <button id="btn-save-key" class="btn-full btn-send" style="margin-top: 10px;">
+                <i class="fa-solid fa-check"></i> 儲存並開始使用
+            </button>
         </div>
     </div>
 
@@ -1006,8 +1008,16 @@
             } : null;
         }
 
+        function getGlobalApiKey() {
+            const key = (localStorage.getItem('gugopro_gemini_api_key') || localStorage.getItem('gemini_api_key') || localStorage.getItem('tarot_api_key') || '').trim();
+            if (key && !localStorage.getItem('gugopro_gemini_api_key')) {
+                localStorage.setItem('gugopro_gemini_api_key', key);
+            }
+            return key;
+        }
+
         async function fetchLatestModel() {
-            const apiKey = (localStorage.getItem('gemini_api_key') || '').split(/[\n,;]+/).map(key => key.trim()).filter(Boolean)[0];
+            const apiKey = getGlobalApiKey().split(/[\n,;]+/).map(key => key.trim()).filter(Boolean)[0];
             try {
                 let discovered = [];
                 if (apiKey) {
@@ -1066,8 +1076,11 @@
         }
 
         function checkApiKey() {
-            if (!localStorage.getItem('gemini_api_key')) {
+            const key = getGlobalApiKey();
+            if (!key) {
                 document.getElementById('modal-api').style.display = 'flex';
+            } else {
+                document.getElementById('api-key-input').value = key;
             }
         }
 
@@ -1215,14 +1228,21 @@
         overlay.onclick = closeMenu;
 
         document.getElementById('btn-config').onclick = () => {
-            document.getElementById('api-key-input').value = localStorage.getItem('gemini_api_key') || '';
+            document.getElementById('api-key-input').value = getGlobalApiKey();
             document.getElementById('modal-api').style.display = 'flex';
             closeMenu();
         };
 
         document.getElementById('btn-save-key').onclick = () => {
             const key = document.getElementById('api-key-input').value.trim();
-            if (key) { localStorage.setItem('gemini_api_key', key); document.getElementById('modal-api').style.display = 'none'; hideError(); }
+            if (key) {
+                localStorage.setItem('gugopro_gemini_api_key', key);
+                localStorage.setItem('gemini_api_key', key);
+                localStorage.setItem('tarot_api_key', key);
+                document.getElementById('modal-api').style.display = 'none';
+                hideError();
+                fetchLatestModel();
+            }
         };
 
         // --- Room Advanced Operations ---
@@ -1340,7 +1360,7 @@
             const content = (retryRequest ? retryRequest.content : textInput.value).trim();
             if (!content) return;
 
-            const apiKey = localStorage.getItem('gemini_api_key')?.trim();
+            const apiKey = getGlobalApiKey();
             if (!apiKey) { checkApiKey(); return; }
 
             const myLang = request.myLang || document.getElementById('my-lang').value;
@@ -1414,7 +1434,12 @@
         }
 
         function getKeyPool(provider) {
-            const raw = localStorage.getItem(provider.keyStorage) || '';
+            let raw = '';
+            if (provider.id === 'gemini') {
+                raw = getGlobalApiKey();
+            } else {
+                raw = localStorage.getItem(provider.keyStorage) || '';
+            }
             return raw.split(/[\n,;]+/).map(key => key.trim()).filter(Boolean);
         }
 

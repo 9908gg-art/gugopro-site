@@ -600,31 +600,25 @@
             <h1 class="hero-title">
                 <span class="gradient-text">AI 塔羅大師</span>
             </h1>
-            <p class="hero-subtitle">
-                完整 78 張韋特塔羅牌、5 大專業牌陣、3D 翻牌動畫、Gemini AI 深度交叉解牌。
-                靜心抽牌，讓 AI 為你揭開命運的指引。
-            </p>
-        </div>
-    </section>
-
-    <!-- ===== MAIN TOOL ===== -->
-    <div class="container tool-area">
-
-        <!-- API Key Modal -->
+            <p class="he        <!-- API Key Modal -->
         <div class="modal-overlay" id="api-modal">
             <div class="modal-content">
-                <h3><i class="fa-solid fa-key" style="color: var(--neon-gold);"></i> 需要設定 Gemini API Key</h3>
-                <p>請先取得免費的 Google Gemini API Key，即可使用 AI 深度解牌功能。</p>
-                <a href="https://gugopro.com/tools/tutorials/how-to-get-gemini-api-key.html" target="_blank" rel="noopener" class="btn-secondary" style="margin-bottom: 14px;">
-                    <i class="fa-solid fa-book-open"></i> 查看如何取得 API Key
+                <h3 style="font-family: 'Cinzel', 'Noto Sans TC', serif; color: var(--neon-gold); font-size: 1.22rem; line-height: 1.4; margin-bottom: 12px;">
+                    <i class="fa-solid fa-key" style="color: var(--neon-gold);"></i> 🔑 啟動 AI 服務需要免費的 Gemini API Key
+                </h3>
+                <p style="color: var(--text-secondary); margin-bottom: 16px; font-size: 0.92rem; line-height: 1.6;">
+                    本服務採用 Google 官方 Gemini 模型進行深度交叉解牌。完全免費、無需信用卡、全站自動共享。
+                </p>
+                <a href="https://gugopro.com/tools/tutorials/how-to-get-gemini-api-key.html" target="_blank" rel="noopener" class="btn-secondary" style="margin-bottom: 16px; display: inline-flex; width: 100%; justify-content: center; text-decoration: none; padding: 10px;">
+                    <i class="fa-solid fa-book-open"></i> 💡 還沒有 Key？點此查看 10 秒免費取得教學
                 </a>
-                <div style="margin-top: 16px;">
+                <div style="margin-top: 10px;">
                     <div class="input-group" style="text-align:left;">
-                        <label>輸入您的 Gemini API Key</label>
-                        <input type="password" id="modal-api-key" placeholder="AIzaSy...">
+                        <label><i class="fa-solid fa-lock"></i> 輸入您的 Gemini API Key</label>
+                        <input type="password" id="modal-api-key" placeholder="貼上您的 Gemini API Key (以 AIzaSy 開頭)" autocomplete="off">
                     </div>
-                    <button class="btn-primary" style="margin-top: 12px;" onclick="saveModalApiKey()">
-                        <i class="fa-solid fa-lock"></i> 儲存並開始占卜
+                    <button class="btn-primary" style="margin-top: 14px;" onclick="saveModalApiKey()">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> 儲存並開始使用
                     </button>
                 </div>
             </div>
@@ -671,13 +665,41 @@
         <!-- Question Input -->
         <div class="section-card">
             <div class="section-title"><i class="fa-solid fa-pen-fancy" style="color: var(--neon-gold);"></i> 你的問題</div>
-            <p class="section-subtitle">靜心專注，將你的問題清楚地寫下來。問題越具體，指引越精準。</p>
-            <div class="input-group">
-                <label><i class="fa-solid fa-circle-question"></i> 具體問題</label>
-                <input type="text" id="question-input" placeholder="例如：我下個月的工作變動會帶來什麼結果？">
+            <p class="section-subtitle">靜心專注，可從下方選單快速選擇常見問題，或直接輸入你心中最想解開的疑惑。</p>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-bottom: 14px;">
+                <div class="input-group">
+                    <label><i class="fa-solid fa-tag"></i> 1. 選擇問題類別</label>
+                    <select id="category-select" onchange="onCategoryChange()">
+                        <option value="love">💖 愛情 / 感情復合與桃花</option>
+                        <option value="career">💼 事業 / 工作轉職與發展</option>
+                        <option value="finance">💰 財務 / 投資與正偏財運</option>
+                        <option value="decision">⚖️ 決策 / 二選一與人生抉擇</option>
+                        <option value="interpersonal">🤝 人際 / 職場社交與家庭關係</option>
+                        <option value="study">🎓 學業 / 考試與技能進修</option>
+                        <option value="health">🌿 身心 / 健康與情緒療癒</option>
+                        <option value="spiritual">🔮 靈性 / 人生迷惘與自我成長</option>
+                        <option value="general">🌌 綜合 / 近期整體運勢</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label><i class="fa-solid fa-list-check"></i> 2. 快速選擇常問問題 (點擊自動帶入)</label>
+                    <select id="preset-question-select" onchange="onPresetQuestionSelect()">
+                        <!-- Dynamically populated by JS -->
+                    </select>
+                </div>
             </div>
-            <div class="input-group" style="margin-top: 12px;">
-                <label><i class="fa-solid fa-tag"></i> 問題類別</label>
+
+            <div class="input-group">
+                <label><i class="fa-solid fa-circle-question"></i> 3. 具體問題內容 (可手動修改或自訂輸入)</label>
+                <input type="text" id="question-input" placeholder="例如：我和目前的對象未來三個月的感情發展與走向如何？" autocomplete="off">
+            </div>
+
+            <button class="btn-primary" id="btn-shuffle" onclick="startReading()">
+                <i class="fa-solid fa-shuffle"></i> 開始洗牌抽牌
+            </button>
+        </div>id fa-tag"></i> 問題類別</label>
                 <select id="category-select">
                     <option value="general">綜合 / 一般運勢</option>
                     <option value="love">愛情 / 感情</option>
@@ -1102,14 +1124,122 @@ var state = {
 };
 
 /* =====================================================================
+   PRESET QUESTIONS BY CATEGORY
+   ===================================================================== */
+var PRESET_QUESTIONS = {
+  love: [
+    "我和目前的對象未來三個月的感情發展與走向如何？",
+    "我和前任還有復合的機會嗎？對方現在對我是什麼想法？",
+    "我的下一段正緣桃花什麼時候會出現？對方有什麼特徵？",
+    "目前曖昧中的對象對我是真心的嗎？我們有可能在一起嗎？",
+    "我們這段關係目前的盲點與最大阻礙是什麼？該如何突破？",
+    "我該繼續堅持這段感情，還是選擇放下停損？"
+  ],
+  career: [
+    "我近期適合換工作或轉職跳槽嗎？新機會發展如何？",
+    "目前這份工作未來的升遷與薪資發展潛力如何？",
+    "如果我選擇創業或開展副業，未來的成功機率與挑戰是什麼？",
+    "我在職場上該如何改善與主管/同事的關係與合作？",
+    "我目前的職業瓶頸是什麼？我該培養什麼核心競爭力？",
+    "面對兩個工作機會（A vs B），哪一個更適合我的長期發展？"
+  ],
+  finance: [
+    "我未來半年的整體財運走勢與主要收入來源如何？",
+    "我目前看好的這項投資/理財計畫風險與回報如何？",
+    "我近期是否有偏財運或意外之財的機會？",
+    "如何改善我目前的財務壓力或漏財狀況？",
+    "未來三個月在金錢規劃上需要特別注意什麼陷阱或風險？"
+  ],
+  decision: [
+    "在選項 A 與選項 B 之間，哪一個選擇對我最有利？",
+    "如果我選擇出國/搬家/換新環境，會為我帶來什麼轉機？",
+    "如果我決定結束目前的合作或合夥，會有什麼後續影響？",
+    "面對這個艱難的抉擇，我內心最真實的聲音與盲點是什麼？",
+    "現在是採取行動的最佳時機，還是應該先靜觀其變？"
+  ],
+  interpersonal: [
+    "我和特定朋友/合夥人之間的關係未來會如何發展？",
+    "職場中有小人暗中作梗嗎？我該如何保護自己與化解？",
+    "我該如何改善與家人或伴侶長輩之間的緊張關係？",
+    "如何在社交圈中建立更深層、真誠且有支持性的人脈？"
+  ],
+  study: [
+    "我即將面臨的考試/證照/面試運勢與結果如何？",
+    "在目前的學業或專業進修中，我該如何突破瓶頸提升效率？",
+    "我適合選擇哪一個科系/留學方向或專業領域深造？",
+    "如何克服備考期間的焦慮與分心，達到最佳發揮？"
+  ],
+  health: [
+    "我近期的身心能量狀態如何？有哪些潛在的疲勞壓力？",
+    "我該如何調整生活節奏，讓身心獲得深層的放鬆與修復？",
+    "這段時間情緒起伏較大的深層原因是什麼？如何自我療癒？"
+  ],
+  spiritual: [
+    "我目前正處於人生的哪一個靈魂課題與成長階段？",
+    "宇宙/守護靈想在現階段傳遞給我最重要的指引是什麼？",
+    "如何喚醒我內在的潛能，找到真正有熱情的人生使命？",
+    "這段低潮期帶給我的禮物與智慧是什麼？"
+  ],
+  general: [
+    "我未來一個月/一季的整體綜合運勢與核心關鍵事件是什麼？",
+    "此時此刻我最需要關注並付諸行動的事項是什麼？",
+    "近期生活中可能出現什麼意外的驚喜或轉機？",
+    "我該如何打破現狀的停滯感，迎來全新的好運流動？"
+  ]
+};
+
+function populatePresetQuestions(category) {
+  var select = document.getElementById('preset-question-select');
+  if (!select) return;
+  select.innerHTML = '';
+
+  var defaultOpt = document.createElement('option');
+  defaultOpt.value = '';
+  defaultOpt.textContent = '✨ 點此選擇常見問題快速帶入... (或於下方自行輸入)';
+  select.appendChild(defaultOpt);
+
+  var list = PRESET_QUESTIONS[category] || PRESET_QUESTIONS['general'] || [];
+  list.forEach(function(q) {
+    var opt = document.createElement('option');
+    opt.value = q;
+    opt.textContent = q;
+    select.appendChild(opt);
+  });
+}
+
+window.onCategoryChange = function() {
+  var cat = document.getElementById('category-select').value;
+  populatePresetQuestions(cat);
+};
+
+window.onPresetQuestionSelect = function() {
+  var select = document.getElementById('preset-question-select');
+  if (select && select.value) {
+    var qInput = document.getElementById('question-input');
+    qInput.value = select.value;
+    qInput.focus();
+  }
+};
+
+/* =====================================================================
    INIT
    ===================================================================== */
 function init() {
-  // Freemium: NEVER show modal on page load. Load key silently if exists.
-  var stored = localStorage.getItem('tarot_api_key');
-  if (stored) {
-    state.apiKey = stored;
+  // 全站統一 API Key 共享讀取 (gugopro_gemini_api_key + 相容舊版鍵名)
+  var stored = localStorage.getItem('gugopro_gemini_api_key') || localStorage.getItem('tarot_api_key') || localStorage.getItem('gemini_api_key');
+  if (stored && stored.trim()) {
+    state.apiKey = stored.trim();
+    localStorage.setItem('gugopro_gemini_api_key', state.apiKey);
+    var modalInput = document.getElementById('modal-api-key');
+    if (modalInput) modalInput.value = state.apiKey;
   }
+
+  // 初始化常見問題下拉選單
+  var catSelect = document.getElementById('category-select');
+  if (catSelect) {
+    populatePresetQuestions(catSelect.value);
+  }
+
   fetchModel();
   loadHistory();
   renderJournal();
@@ -1119,11 +1249,17 @@ function init() {
 }
 
 function saveModalApiKey() {
-  var key = document.getElementById('modal-api-key').value.trim();
-  if (!key) { alert('請輸入 API Key。'); return; }
+  var modalInput = document.getElementById('modal-api-key');
+  var key = (modalInput ? modalInput.value : '').trim();
+  if (!key) { alert('請輸入 Gemini API Key。'); return; }
+  
   state.apiKey = key;
+  localStorage.setItem('gugopro_gemini_api_key', key);
   localStorage.setItem('tarot_api_key', key);
-  document.getElementById('api-modal').classList.remove('show');
+  localStorage.setItem('gemini_api_key', key);
+  
+  var modal = document.getElementById('api-modal');
+  if (modal) modal.classList.remove('show');
 
   // After key saved, generate AI reading
   generateReading();
@@ -1322,7 +1458,17 @@ async function generateReading() {
   var spread = SPREADS[state.spread];
   var question = document.getElementById('question-input').value.trim();
   var category = document.getElementById('category-select').value;
-  var categoryNames = {general:'綜合運勢',love:'愛情感情',career:'事業工作',finance:'財務金錢',health:'健康身心',decision:'決策選擇',spiritual:'靈性成長'};
+  var categoryNames = {
+    general: '綜合運勢',
+    love: '愛情感情',
+    career: '事業工作',
+    finance: '財務金錢',
+    health: '健康身心',
+    decision: '決策選擇',
+    interpersonal: '人際關係',
+    study: '學業進修',
+    spiritual: '靈性成長'
+  };
 
   // Build prompt
   var cardDescriptions = state.drawn.map(function(d, i) {
