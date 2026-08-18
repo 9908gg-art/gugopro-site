@@ -283,18 +283,136 @@
         font-size: 0.88rem; color: var(--text-muted);
     }
 
-    /* ========== AI READING ========== */
+    /* ========== AI READING & PROGRESS CARD ========== */
+    .ai-loading-container {
+        background: linear-gradient(135deg, rgba(168,85,247,0.12), rgba(255,215,0,0.08));
+        border: 1px solid rgba(168,85,247,0.35);
+        border-radius: var(--radius-md);
+        padding: 30px 24px;
+        margin-top: 20px;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3), inset 0 0 20px rgba(168,85,247,0.1);
+        animation: fadeIn 0.4s ease-out;
+    }
+    .ai-loading-orb-wrapper {
+        position: relative;
+        width: 70px;
+        height: 70px;
+        margin: 0 auto 16px auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .ai-loading-orb {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 30% 30%, #ffd700, #a855f7, #3b82f6);
+        box-shadow: 0 0 25px rgba(168,85,247,0.8), 0 0 45px rgba(255,215,0,0.4);
+        animation: orbFloat 2s ease-in-out infinite alternate, orbPulse 3s infinite;
+    }
+    @keyframes orbFloat {
+        0% { transform: translateY(0px) scale(0.95); }
+        100% { transform: translateY(-8px) scale(1.05); }
+    }
+    @keyframes orbPulse {
+        0%, 100% { filter: hue-rotate(0deg); }
+        50% { filter: hue-rotate(45deg); }
+    }
+    .ai-loading-title {
+        font-family: 'Cinzel', serif;
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: var(--neon-gold);
+        margin-bottom: 8px;
+        min-height: 28px;
+        transition: all 0.3s ease;
+    }
+    .ai-loading-subtitle {
+        font-size: 0.88rem;
+        color: var(--text-secondary);
+        margin-bottom: 18px;
+        min-height: 22px;
+    }
+    .ai-progress-bar-bg {
+        width: 100%;
+        max-width: 360px;
+        height: 8px;
+        background: rgba(255,255,255,0.08);
+        border-radius: 20px;
+        margin: 0 auto 14px auto;
+        overflow: hidden;
+        position: relative;
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+    .ai-progress-bar-fill {
+        height: 100%;
+        width: 25%;
+        background: linear-gradient(90deg, var(--neon-purple), var(--neon-gold), #38bdf8);
+        border-radius: 20px;
+        transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 0 12px rgba(255,215,0,0.6);
+    }
+    .ai-loading-hint {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+    }
+    .btn-unlock.loading {
+        opacity: 0.75;
+        cursor: not-allowed;
+        pointer-events: none;
+        background: linear-gradient(135deg, #6b21a8, #9a3412);
+        box-shadow: none;
+    }
     .ai-reading-box {
         background: rgba(168, 85, 247, 0.05);
-        border: 1px solid rgba(168, 85, 247, 0.2);
+        border: 1px solid rgba(168, 85, 247, 0.25);
         border-radius: var(--radius-md);
-        padding: 24px; margin-top: 20px;
-        white-space: pre-wrap; line-height: 1.9;
+        padding: 26px; margin-top: 20px;
+        line-height: 1.9;
         font-size: 0.95rem; color: var(--text-secondary);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.3);
     }
     .ai-reading-box h3 {
         font-family: 'Cinzel', serif;
-        color: var(--neon-gold); font-size: 1.1rem; margin-bottom: 14px;
+        color: var(--neon-gold); font-size: 1.25rem; margin-bottom: 18px;
+        display: flex; align-items: center; gap: 8px;
+        border-bottom: 1px solid rgba(255,215,0,0.25);
+        padding-bottom: 10px;
+    }
+    .tarot-report-section {
+        background: rgba(255,255,255,0.025);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-left: 3px solid var(--neon-gold);
+        border-radius: 10px;
+        padding: 16px 20px;
+        margin: 16px 0;
+    }
+    .tarot-report-section.purple-theme {
+        border-left-color: var(--neon-purple);
+    }
+    .tarot-report-section.blue-theme {
+        border-left-color: #38bdf8;
+    }
+    .tarot-report-section h4 {
+        color: var(--neon-gold);
+        font-size: 1.08rem;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: 'Cinzel', serif;
+    }
+    .tarot-report-section p {
+        margin-bottom: 10px;
+        line-height: 1.8;
+    }
+    .tarot-report-section ul, .tarot-report-section ol {
+        margin: 8px 0 8px 20px;
+    }
+    .tarot-report-section li {
+        margin-bottom: 6px;
+        line-height: 1.7;
     }
     .ai-loading {
         display: flex; align-items: center; gap: 10px;
@@ -310,16 +428,17 @@
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* Chat area */
-    .chat-area { margin-top: 16px; }
+    .chat-area { margin-top: 20px; }
     .chat-messages {
-        max-height: 300px; overflow-y: auto;
-        background: rgba(0,0,0,0.2);
+        max-height: 350px; overflow-y: auto;
+        background: rgba(0,0,0,0.25);
+        border: 1px solid var(--border-card);
         border-radius: var(--radius-sm);
-        padding: 14px; margin-bottom: 12px;
+        padding: 16px; margin-bottom: 12px;
     }
-    .chat-msg { margin-bottom: 12px; padding: 10px 14px; border-radius: var(--radius-sm); font-size: 0.9rem; line-height: 1.7; }
-    .chat-msg.user { background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.2); }
-    .chat-msg.ai { background: rgba(168,85,247,0.10); border: 1px solid rgba(168,85,247,0.15); white-space: pre-wrap; }
+    .chat-msg { margin-bottom: 12px; padding: 12px 16px; border-radius: var(--radius-sm); font-size: 0.92rem; line-height: 1.8; }
+    .chat-msg.user { background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.25); }
+    .chat-msg.ai { background: rgba(168,85,247,0.10); border: 1px solid rgba(168,85,247,0.2); }
     .chat-input-row { display: flex; gap: 10px; }
     .chat-input-row input { flex: 1; }
 
@@ -764,15 +883,28 @@
             <!-- Unlock Card (Pro AI Mode) -->
             <div class="unlock-card" id="unlock-card">
                 <div class="unlock-title">✨ 解鎖 Gemini AI 靈性導師</div>
-                <div class="unlock-subtitle">針對你個人問題的客製化深度解析</div>
+                <div class="unlock-subtitle">針對你個人問題的客製化深度全盤交叉分析</div>
                 <div class="unlock-benefits">
                     <div class="unlock-benefit"><i class="fa-solid fa-robot"></i> 客製化交叉語境解答：結合具體疑問的全盤分析</div>
                     <div class="unlock-benefit"><i class="fa-solid fa-comments"></i> 二次追問對話：解牌後可與 AI 導師進行 2~3 次深度對話</div>
                     <div class="unlock-benefit"><i class="fa-solid fa-lightbulb"></i> 實體行動建議與靈性對策</div>
                 </div>
                 <button class="btn-unlock" onclick="unlockAIReading()">
-                    <i class="fa-solid fa-unlock-keyhole"></i> 解鎖 AI 深度解析
+                    <i class="fa-solid fa-unlock-keyhole"></i> 立即解鎖 AI 深度解析
                 </button>
+            </div>
+
+            <!-- Loading Indicator Card (shown during AI generation) -->
+            <div class="ai-loading-container" id="ai-loading-container" style="display:none;">
+                <div class="ai-loading-orb-wrapper">
+                    <div class="ai-loading-orb"></div>
+                </div>
+                <div class="ai-loading-title" id="ai-loading-step-title">🔮 正在連結宇宙星象與 Gemini AI 靈性導師...</div>
+                <div class="ai-loading-subtitle" id="ai-loading-step-sub">深度交織牌陣能量場域，為您解鎖命運指引</div>
+                <div class="ai-progress-bar-bg">
+                    <div class="ai-progress-bar-fill" id="ai-progress-bar-fill"></div>
+                </div>
+                <div class="ai-loading-hint">⚡ 正在進行深度交叉推演，約需 3~6 秒，請保持靜心...</div>
             </div>
 
             <!-- AI Reading (hidden until unlocked) -->
@@ -1431,7 +1563,6 @@ window.startReading = function() {
   if (!question) { alert('請先輸入你的問題。'); return; }
 
   // Freemium: no API key required to start reading
-
   var spread = SPREADS[state.spread];
   var count = spread.count;
 
@@ -1448,9 +1579,17 @@ window.startReading = function() {
   state.flipped = 0;
   state.flippedCount = 0;
 
-  // Hide action sections
+  // Hide action sections and reset loading state
   document.getElementById('ai-reading-section').style.display = 'none';
   document.getElementById('action-section').style.display = 'none';
+  var loadingCard = document.getElementById('ai-loading-container');
+  if (loadingCard) loadingCard.style.display = 'none';
+  var unlockCard = document.getElementById('unlock-card');
+  if (unlockCard) unlockCard.style.display = '';
+  var readingBox = document.getElementById('ai-reading-box');
+  if (readingBox) readingBox.style.display = 'none';
+  var chatArea = document.getElementById('chat-area');
+  if (chatArea) chatArea.style.display = 'none';
 
   // Show card table
   var tableSection = document.getElementById('card-table-section');
@@ -1460,10 +1599,10 @@ window.startReading = function() {
   table.innerHTML = '';
 
   var instructions = document.getElementById('card-instructions');
-  instructions.innerHTML = '<i class="fa-solid fa-hand-point-up"></i> 點擊每一張牌卡以翻開 (' + state.flippedCount + '/' + count + ')';
+  instructions.innerHTML = '<i class="fa-solid fa-hand-point-up" style="color:var(--neon-gold);"></i> ✨ 請靜心默念問題，依序點擊翻開下方每張牌卡 (已翻開 ' + state.flippedCount + '/' + count + ' 張)';
 
   var subtitle = document.getElementById('table-subtitle');
-  subtitle.textContent = '請靜心點擊所有 ' + count + ' 張牌卡，揭曉你的命運。';
+  subtitle.textContent = '請保持專注與直覺，點選所有 ' + count + ' 張牌卡以揭曉牌陣。';
 
   // Create cards with staggered animation
   for (var idx = 0; idx < count; idx++) {
@@ -1491,6 +1630,11 @@ window.startReading = function() {
 
     table.appendChild(el);
   }
+
+  // Smooth scroll to card table
+  setTimeout(function() {
+    tableSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
 
   if (typeof gtag === 'function') {
     gtag('event', 'tarot_spread_selected', {
@@ -1521,17 +1665,23 @@ function flipCard(idx) {
 
   var spread = SPREADS[state.spread];
   var instructions = document.getElementById('card-instructions');
-  instructions.innerHTML = '<i class="fa-solid fa-hand-point-up"></i> 已翻開 ' + state.flippedCount + '/' + spread.count + ' 張牌';
+  instructions.innerHTML = '<i class="fa-solid fa-hand-point-up" style="color:var(--neon-gold);"></i> 依序翻牌中：已翻開 ' + state.flippedCount + '/' + spread.count + ' 張牌';
 
   // Check if all flipped
   if (state.flippedCount >= spread.count) {
     setTimeout(function() {
-      instructions.innerHTML = '<i class="fa-solid fa-wand-sparkles"></i> 所有牌卡已揭曉！';
+      instructions.innerHTML = '<i class="fa-solid fa-wand-sparkles" style="color:var(--neon-gold);"></i> ✨ 所有牌卡已完整揭曉！為您呈現經典牌義與深度解析...';
       showBasicReading();
       // Show the reading section
-      document.getElementById('ai-reading-section').style.display = '';
+      var readingSec = document.getElementById('ai-reading-section');
+      readingSec.style.display = '';
       document.getElementById('action-section').style.display = '';
-    }, 800);
+      
+      // Auto smooth scroll to reading section so user isn't lost
+      setTimeout(function() {
+        readingSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 350);
+    }, 600);
   }
 }
 
@@ -1541,7 +1691,7 @@ function flipCard(idx) {
 function showBasicReading() {
   var spread = SPREADS[state.spread];
   var container = document.getElementById('basic-reading');
-  var html = '<h4><i class="fa-solid fa-book-open"></i> 牌義解析（經典韋特塔羅）</h4>';
+  var html = '<h4><i class="fa-solid fa-book-open"></i> 基礎牌義速覽（經典韋特塔羅）</h4>';
 
   state.drawn.forEach(function(d, i) {
     var pos = spread.positions[i] || '位置 ' + (i+1);
@@ -1558,6 +1708,77 @@ function showBasicReading() {
   });
 
   container.innerHTML = html;
+}
+
+/* =====================================================================
+   TAROT REPORT FORMATTER (MARKDOWN TO STRUCTURED HTML)
+   ===================================================================== */
+function renderTarotReport(rawText) {
+  if (!rawText) return '<p>尚無解讀內容。</p>';
+  var escaped = escapeHtml(rawText);
+  // Parse bold **text**
+  escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong style="color:var(--neon-gold); font-weight:700;">$1</strong>');
+  
+  var lines = escaped.split('\n');
+  var html = '<h3><i class="fa-solid fa-wand-magic-sparkles" style="color: var(--neon-gold);"></i> ✨ AI 靈性導師深度解牌報告</h3>';
+  var inSection = false;
+  var currentSectionContent = '';
+  var currentSectionTheme = '';
+  var currentSectionTitle = '';
+
+  function flushSection() {
+    if (inSection && currentSectionTitle) {
+      html += '<div class="tarot-report-section ' + currentSectionTheme + '">' +
+                '<h4>' + currentSectionTitle + '</h4>' +
+                currentSectionContent +
+              '</div>';
+      currentSectionContent = '';
+      currentSectionTitle = '';
+      inSection = false;
+    }
+  }
+
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i].trim();
+    if (!line) {
+      if (inSection && currentSectionContent) currentSectionContent += '<br>';
+      continue;
+    }
+
+    if (line.match(/^(🌟|#|一[、. ]).*?(能量概述|整體能量)/i) || (line.indexOf('整體能量') !== -1 && line.length < 35)) {
+      flushSection();
+      inSection = true;
+      currentSectionTheme = 'purple-theme';
+      currentSectionTitle = line.replace(/^[#* ]+/, '');
+      continue;
+    } else if (line.match(/^(🔍|#|二[、. ]).*?(深度剖析|牌卡剖析|各位置)/i) || (line.indexOf('深度剖析') !== -1 && line.length < 35)) {
+      flushSection();
+      inSection = true;
+      currentSectionTheme = '';
+      currentSectionTitle = line.replace(/^[#* ]+/, '');
+      continue;
+    } else if (line.match(/^(💡|#|三[、. ]).*?(行動建議|具體建議|實體行動)/i) || (line.indexOf('行動建議') !== -1 && line.length < 35)) {
+      flushSection();
+      inSection = true;
+      currentSectionTheme = 'blue-theme';
+      currentSectionTitle = line.replace(/^[#* ]+/, '');
+      continue;
+    }
+
+    if (inSection) {
+      if (line.startsWith('* ') || line.startsWith('- ') || line.startsWith('• ')) {
+        currentSectionContent += '<div style="display:flex; gap:8px; margin:4px 0;"><span style="color:var(--neon-gold);">✦</span><span>' + line.substring(2) + '</span></div>';
+      } else if (line.match(/^\d+\.\s/)) {
+        currentSectionContent += '<div style="margin:6px 0; padding-left:4px;">' + line + '</div>';
+      } else {
+        currentSectionContent += '<p style="margin-bottom:8px;">' + line + '</p>';
+      }
+    } else {
+      html += '<p style="margin-bottom:10px;">' + line + '</p>';
+    }
+  }
+  flushSection();
+  return html;
 }
 
 /* =====================================================================
@@ -1605,6 +1826,46 @@ async function generateReading() {
     spiritual: '靈性成長'
   };
 
+  // Instant visual feedback on unlock button
+  var btnUnlock = document.querySelector('.btn-unlock');
+  if (btnUnlock) {
+    btnUnlock.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 🔮 AI 深度解牌推演中...';
+    btnUnlock.classList.add('loading');
+    btnUnlock.disabled = true;
+  }
+
+  // Show active multi-step loading card & scroll to it
+  var loadingCard = document.getElementById('ai-loading-container');
+  var readingBox = document.getElementById('ai-reading-box');
+  var unlockCard = document.getElementById('unlock-card');
+  var stepTitle = document.getElementById('ai-loading-step-title');
+  var stepSub = document.getElementById('ai-loading-step-sub');
+  var progressFill = document.getElementById('ai-progress-bar-fill');
+
+  if (loadingCard) {
+    loadingCard.style.display = '';
+    setTimeout(function() {
+      loadingCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 50);
+  }
+  if (readingBox) readingBox.style.display = 'none';
+
+  if (progressFill) progressFill.style.width = '20%';
+  if (stepTitle) stepTitle.textContent = '🔮 正在連結宇宙星象與 Gemini AI 靈性導師...';
+  if (stepSub) stepSub.textContent = '建立靈性通道，啟動深度多維矩陣解析';
+
+  var stepTimer1 = setTimeout(function() {
+    if (progressFill) progressFill.style.width = '55%';
+    if (stepTitle) stepTitle.textContent = '🌌 正在深度解構 ' + spread.name + ' 牌陣能量與正逆位意涵...';
+    if (stepSub) stepSub.textContent = '結合您的問題「' + question + '」進行全方位交叉推演';
+  }, 1400);
+
+  var stepTimer2 = setTimeout(function() {
+    if (progressFill) progressFill.style.width = '85%';
+    if (stepTitle) stepTitle.textContent = '✨ 正在為您生成客製化行動建議與靈性對策...';
+    if (stepSub) stepSub.textContent = '提煉核心指引，為下一步決策提供清晰藍圖';
+  }, 3200);
+
   // Build prompt
   var cardDescriptions = state.drawn.map(function(d, i) {
     var pos = spread.positions[i] || '位置' + (i+1);
@@ -1630,9 +1891,6 @@ async function generateReading() {
   state.chatContext = prompt + '\n\n【牌陣與結果摘要】\n' + cardDescriptions;
   state.isChatMode = false;
 
-  var readingBox = document.getElementById('ai-reading-box');
-  readingBox.innerHTML = '<div class="ai-loading"><div class="spinner"></div> AI 正在深度解牌中，請稍候...</div>';
-
   document.getElementById('ai-reading-section').style.display = '';
   document.getElementById('action-section').style.display = '';
 
@@ -1647,8 +1905,17 @@ async function generateReading() {
       })
     });
 
+    clearTimeout(stepTimer1);
+    clearTimeout(stepTimer2);
+
     if (resp.status === 400 || resp.status === 401 || resp.status === 403) {
       setGlobalApiKey('');
+      if (btnUnlock) {
+        btnUnlock.innerHTML = '<i class="fa-solid fa-unlock-keyhole"></i> 立即解鎖 AI 深度解析';
+        btnUnlock.classList.remove('loading');
+        btnUnlock.disabled = false;
+      }
+      if (loadingCard) loadingCard.style.display = 'none';
       alert('⚠️ 您設定的 Gemini API Key 已失效或輸入有誤，請重新設定。');
       openApiKeyModal();
       throw new Error('API Key 無效或已過期 (HTTP ' + resp.status + ')');
@@ -1664,19 +1931,26 @@ async function generateReading() {
       text = data.candidates[0].content.parts.map(function(p) { return p.text || ''; }).join('');
     }
 
-    readingBox.innerHTML = '<h3><i class="fa-solid fa-star" style="color: var(--neon-gold);"></i> AI 深度解牌結果</h3>' + escapeHtml(text);
+    if (progressFill) progressFill.style.width = '100%';
 
-    // Hide unlock card and show AI reading + chat
-    document.getElementById('unlock-card').style.display = 'none';
-    readingBox.style.display = '';
-    document.getElementById('chat-area').style.display = '';
+    setTimeout(function() {
+      if (loadingCard) loadingCard.style.display = 'none';
+      if (unlockCard) unlockCard.style.display = 'none';
 
-    // Reset follow-up counter
-    state.followUpCount = 0;
-    updateFollowUpHint();
+      readingBox.innerHTML = renderTarotReport(text);
+      readingBox.style.display = '';
+      document.getElementById('chat-area').style.display = '';
 
-    // Auto-save to journal
-    autoSaveJournal();
+      // Smooth scroll to the top of AI reading report
+      readingBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      // Reset follow-up counter
+      state.followUpCount = 0;
+      updateFollowUpHint();
+
+      // Auto-save to journal
+      autoSaveJournal();
+    }, 400);
 
     if (typeof gtag === 'function') {
       gtag('event', 'tarot_ai_reading', {
@@ -1686,10 +1960,20 @@ async function generateReading() {
       });
     }
   } catch(e) {
+    clearTimeout(stepTimer1);
+    clearTimeout(stepTimer2);
+    if (loadingCard) loadingCard.style.display = 'none';
+    if (unlockCard) unlockCard.style.display = '';
+    if (btnUnlock) {
+      btnUnlock.innerHTML = '<i class="fa-solid fa-rotate-right"></i> 重新嘗試解鎖 AI 深度解析';
+      btnUnlock.classList.remove('loading');
+      btnUnlock.disabled = false;
+    }
     readingBox.innerHTML =
       '<h3><i class="fa-solid fa-circle-exclamation" style="color: var(--color-red, #ef4444);"></i> AI 解牌失敗</h3>' +
-      '<p>錯誤：' + escapeHtml(e.message) + '</p>' +
-      '<p style="margin-top:10px;">請確認 API Key 是否正確，或<a href="javascript:void(0)" onclick="openApiKeyModal()" style="color:var(--neon-gold); font-weight:bold;">點此重新設定 API Key</a>。</p>';
+      '<p>錯誤原因：' + escapeHtml(e.message) + '</p>' +
+      '<p style="margin-top:10px;">請確認網路連線與 API Key，或<a href="javascript:void(0)" onclick="openApiKeyModal()" style="color:var(--neon-gold); font-weight:bold;">點此檢查 API Key 設定</a>。</p>';
+    readingBox.style.display = '';
   }
 }
 
