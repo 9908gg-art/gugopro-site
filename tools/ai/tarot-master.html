@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 塔羅大師 | GugoPro</title>
-    <meta name="description" content="專業 AI 塔羅占卜大師：完整 78 張韋特塔羅牌、5 大專業牌陣、3D 翻牌動畫、Gemini AI 深度交叉解牌、占卜紀錄管理。">
-    <meta name="keywords" content="塔羅牌, 塔羅占卜, Tarot Reading, 韋特塔羅, 牌陣, 凱爾特十字, 時間流, AI 解牌, Gemini, 占卜">
+    <title>AI 塔羅大師 | 全對話式靈性占卜師 | GugoPro</title>
+    <meta name="description" content="全對話式 AI 塔羅占卜師：完整 78 張韋特牌、3D 翻牌動畫、語音/文字雙模態輸入、Gemini AI 多輪深度對話解牌與行動建議。">
+    <meta name="keywords" content="塔羅牌, AI 塔羅, 塔羅占卜, 韋特塔羅, 占卜對話, 語音占卜, Gemini AI, 時間流牌陣, 每日指引, GugoPro">
     <meta name="author" content="GugoPro AI Team">
     <link rel="canonical" href="https://gugopro.com/tools/ai/tarot-master.html">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://gugopro.com/tools/ai/tarot-master.html">
-    <meta property="og:title" content="AI 塔羅大師 | GugoPro">
-    <meta property="og:description" content="專業 AI 塔羅占卜大師：78 張韋特牌、5 大專業牌陣、Gemini AI 深度交叉解牌。">
+    <meta property="og:title" content="AI 塔羅大師 | 全對話式靈性占卜師 | GugoPro">
+    <meta property="og:description" content="全對話式 AI 塔羅占卜師：完整 78 張韋特牌、對話內嵌 3D 抽牌、語音輸入與無限輪次深度追問。">
 
     <!-- Google Fonts: Outfit, Inter, Noto Sans TC, Cinzel -->
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
@@ -32,13 +32,17 @@
     :root {
         --bg-dark: #0a0a14;
         --bg-card: rgba(18, 12, 36, 0.82);
-        --border-card: rgba(168, 85, 247, 0.15);
+        --bg-chat-ai: rgba(26, 18, 48, 0.75);
+        --bg-chat-user: linear-gradient(135deg, rgba(168, 85, 247, 0.25), rgba(99, 102, 241, 0.3));
+        --border-card: rgba(168, 85, 247, 0.18);
+        --border-gold: rgba(255, 215, 0, 0.3);
         --text-primary: #f0e6ff;
         --text-secondary: #c4b5d4;
         --text-muted: #8b7fa0;
         --neon-purple: #b44aff;
         --neon-gold: #ffd700;
         --neon-pink: #ff6ec7;
+        --accent-blue: #38bdf8;
         --accent-purple: #a855f7;
         --accent-indigo: #6366f1;
         --glass-blur: blur(20px);
@@ -56,932 +60,597 @@
         line-height: 1.6;
         overflow-x: hidden;
         background-image:
-            radial-gradient(ellipse at 15% 10%, rgba(168, 85, 247, 0.10) 0%, transparent 50%),
-            radial-gradient(ellipse at 85% 90%, rgba(255, 215, 0, 0.06) 0%, transparent 50%),
-            radial-gradient(ellipse at 50% 50%, rgba(99, 102, 241, 0.04) 0%, transparent 60%);
+            radial-gradient(ellipse at 15% 10%, rgba(168, 85, 247, 0.12) 0%, transparent 50%),
+            radial-gradient(ellipse at 85% 90%, rgba(255, 215, 0, 0.08) 0%, transparent 50%),
+            radial-gradient(ellipse at 50% 50%, rgba(99, 102, 241, 0.05) 0%, transparent 60%);
         background-attachment: fixed;
         min-height: 100vh;
+        display: flex;
+        flex-direction: column;
     }
-    .container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
 
     /* ========== HEADER ========== */
     .main-header {
         position: sticky; top: 0; z-index: 100;
         background: rgba(10, 10, 20, 0.92);
         backdrop-filter: var(--glass-blur);
+        -webkit-backdrop-filter: var(--glass-blur);
         border-bottom: 1px solid var(--border-card);
-        padding: 12px 0;
+        padding: 10px 0;
     }
-    .header-container { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
-    .brand-box { display: flex; align-items: center; gap: 12px; }
-    .brand-logo { display: flex; align-items: center; gap: 8px; font-family: 'Cinzel', 'Outfit', serif; font-size: 1.4rem; font-weight: 700; color: #fff; }
-    .brand-icon { color: var(--neon-purple); font-size: 1.3rem; }
-    .brand-tagline { font-size: 0.82rem; color: var(--text-muted); border-left: 1px solid rgba(255,255,255,0.12); padding-left: 10px; }
-    .btn-back-home {
+    .header-container {
+        max-width: 1000px; margin: 0 auto; padding: 0 16px;
+        display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+    }
+    .brand-box { display: flex; align-items: center; gap: 10px; }
+    .brand-logo { display: flex; align-items: center; gap: 8px; font-family: 'Cinzel', 'Outfit', serif; font-size: 1.25rem; font-weight: 700; color: #fff; text-decoration: none; }
+    .brand-icon { color: var(--neon-purple); font-size: 1.2rem; }
+    .brand-tagline { font-size: 0.78rem; color: var(--text-muted); border-left: 1px solid rgba(255,255,255,0.12); padding-left: 8px; }
+    .header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .btn-nav-tool {
         display: inline-flex; align-items: center; gap: 6px;
-        background: rgba(168, 85, 247, 0.12); color: #c084fc;
-        border: 1px solid rgba(168, 85, 247, 0.3);
-        padding: 8px 18px; border-radius: 24px;
-        font-size: 0.88rem; font-weight: 700;
-        text-decoration: none; transition: all 0.25s ease;
+        background: rgba(255, 255, 255, 0.05); color: #cbd5e1;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        padding: 6px 12px; border-radius: 20px;
+        font-size: 0.82rem; font-weight: 600;
+        text-decoration: none; cursor: pointer; transition: all 0.2s ease;
     }
-    .btn-back-home:hover { background: rgba(168, 85, 247, 0.25); transform: translateY(-1px); }
+    .btn-nav-tool:hover { background: rgba(168, 85, 247, 0.2); color: #fff; border-color: rgba(168, 85, 247, 0.4); }
 
-    /* ========== HERO ========== */
-    .hero-section { padding: 40px 0 24px 0; text-align: center; }
-    .hero-badge {
-        display: inline-flex; align-items: center; gap: 6px;
-        background: rgba(168, 85, 247, 0.10); color: var(--neon-purple);
-        border: 1px solid rgba(168, 85, 247, 0.25);
-        padding: 6px 16px; border-radius: 30px;
-        font-size: 0.82rem; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 16px;
+    /* ========== MAIN CHAT CONTAINER ========== */
+    .chat-app-wrapper {
+        flex: 1;
+        max-width: 1000px;
+        width: 100%;
+        margin: 0 auto;
+        padding: 16px 16px 140px 16px;
+        display: flex;
+        flex-direction: column;
     }
-    .hero-title {
-        font-family: 'Cinzel', 'Noto Sans TC', serif;
-        font-size: 2.4rem; font-weight: 900; line-height: 1.2; margin-bottom: 10px;
-    }
-    .gradient-text {
-        background: linear-gradient(135deg, var(--neon-purple) 0%, var(--neon-gold) 50%, var(--neon-pink) 100%);
-        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    }
-    .hero-subtitle { font-size: 1rem; color: var(--text-secondary); max-width: 720px; margin: 0 auto; }
 
-    /* ========== TOOL AREA ========== */
-    .tool-area { padding-bottom: 40px; }
-    .section-card {
-        background: var(--bg-card);
+    /* ========== TOP CONTROLS (SPREADS & QUICK CHIPS) ========== */
+    .top-control-bar {
+        background: rgba(18, 12, 36, 0.75);
         border: 1px solid var(--border-card);
         border-radius: var(--radius-lg);
-        padding: 28px;
-        margin-bottom: 24px;
+        padding: 14px 16px;
+        margin-bottom: 16px;
         backdrop-filter: var(--glass-blur);
+        -webkit-backdrop-filter: var(--glass-blur);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
     }
-    .section-title {
-        font-family: 'Cinzel', 'Noto Sans TC', serif;
-        font-size: 1.2rem; font-weight: 700; color: #fff;
-        display: flex; align-items: center; gap: 10px; margin-bottom: 4px;
+    .control-row-label {
+        font-size: 0.78rem; font-weight: 700; color: var(--neon-gold);
+        display: flex; align-items: center; gap: 6px; margin-bottom: 8px;
+        font-family: 'Cinzel', serif;
     }
-    .section-subtitle { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 20px; }
+    .spread-chips-row {
+        display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px;
+        scrollbar-width: thin; scrollbar-color: rgba(168,85,247,0.3) transparent;
+    }
+    .spread-chips-row::-webkit-scrollbar { height: 4px; }
+    .spread-chips-row::-webkit-scrollbar-thumb { background: rgba(168,85,247,0.3); border-radius: 4px; }
 
-    /* ========== SPREAD SELECTOR ========== */
-    .spread-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
-    .spread-card {
-        background: rgba(255,255,255,0.03);
-        border: 1px solid var(--border-card);
-        border-radius: var(--radius-md);
-        padding: 16px; cursor: pointer;
-        text-align: center; transition: all 0.25s ease;
+    .spread-chip {
+        flex-shrink: 0;
+        display: inline-flex; align-items: center; gap: 6px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: var(--text-secondary);
+        padding: 6px 14px; border-radius: 20px;
+        font-size: 0.82rem; font-weight: 600;
+        cursor: pointer; transition: all 0.2s ease;
     }
-    .spread-card:hover { border-color: rgba(168,85,247,0.4); }
-    .spread-card.active {
-        border-color: var(--neon-purple);
+    .spread-chip:hover { border-color: var(--neon-purple); color: #fff; background: rgba(168,85,247,0.1); }
+    .spread-chip.active {
+        background: linear-gradient(135deg, rgba(168, 85, 247, 0.25), rgba(255, 215, 0, 0.15));
+        border-color: var(--neon-gold); color: #fff;
+        box-shadow: 0 0 12px rgba(255, 215, 0, 0.25);
+    }
+
+    .topic-chips-row {
+        display: flex; gap: 6px; overflow-x: auto; margin-top: 10px; padding-top: 8px;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+        scrollbar-width: thin; scrollbar-color: rgba(168,85,247,0.3) transparent;
+    }
+    .topic-chips-row::-webkit-scrollbar { height: 4px; }
+    .topic-chips-row::-webkit-scrollbar-thumb { background: rgba(168,85,247,0.3); border-radius: 4px; }
+
+    .topic-chip {
+        flex-shrink: 0;
+        display: inline-flex; align-items: center; gap: 5px;
         background: rgba(168, 85, 247, 0.08);
-        box-shadow: 0 0 20px rgba(168,85,247,0.15);
+        border: 1px solid rgba(168, 85, 247, 0.2);
+        color: #d8b4fe; padding: 4px 12px; border-radius: 16px;
+        font-size: 0.78rem; font-weight: 500;
+        cursor: pointer; transition: all 0.2s ease;
     }
-    .spread-card .sc-icon { font-size: 1.6rem; margin-bottom: 8px; }
-    .spread-card .sc-name { font-weight: 700; font-size: 0.9rem; color: #fff; margin-bottom: 2px; }
-    .spread-card .sc-desc { font-size: 0.75rem; color: var(--text-muted); }
-    .spread-card .sc-count { font-size: 0.72rem; color: var(--neon-gold); margin-top: 4px; }
+    .topic-chip:hover {
+        background: rgba(168, 85, 247, 0.25);
+        color: #fff; border-color: var(--neon-purple);
+        transform: translateY(-1px);
+    }
 
-    /* ========== QUESTION INPUT ========== */
-    .question-area { margin-top: 20px; }
-    .input-group { position: relative; }
-    .input-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
-    .input-group input, .input-group textarea, .input-group select {
-        width: 100%;
-        background: rgba(0,0,0,0.3);
-        border: 1px solid rgba(255,255,255,0.12);
-        border-radius: var(--radius-sm);
-        padding: 12px 14px;
+    /* ========== CHAT FEED & MESSAGE BUBBLES ========== */
+    .chat-feed {
+        display: flex; flex-direction: column; gap: 18px;
+        min-height: 200px;
+    }
+    .message-item {
+        display: flex; gap: 12px; max-width: 92%;
+        animation: messageFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes messageFadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .message-item.ai { align-self: flex-start; }
+    .message-item.user { align-self: flex-end; flex-direction: row-reverse; }
+
+    .msg-avatar {
+        width: 38px; height: 38px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0; font-size: 1.15rem;
+    }
+    .message-item.ai .msg-avatar {
+        background: radial-gradient(circle at 30% 30%, #ffd700, #a855f7, #6366f1);
+        box-shadow: 0 0 15px rgba(168, 85, 247, 0.5);
+    }
+    .message-item.user .msg-avatar {
+        background: linear-gradient(135deg, #6366f1, #38bdf8);
+    }
+
+    .msg-body {
+        background: var(--bg-chat-ai);
+        border: 1px solid var(--border-card);
+        border-radius: 16px;
+        padding: 16px 20px;
         color: var(--text-primary);
-        font-size: 0.95rem;
-        font-family: 'Inter', sans-serif;
-        transition: border-color 0.2s ease;
+        font-size: 0.94rem;
+        line-height: 1.75;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        backdrop-filter: var(--glass-blur);
+        -webkit-backdrop-filter: var(--glass-blur);
+        word-break: break-word;
     }
-    .input-group input:focus, .input-group textarea:focus, .input-group select:focus {
-        outline: none; border-color: var(--neon-purple);
-        box-shadow: 0 0 10px rgba(168,85,247,0.15);
-    }
-    .input-group textarea { min-height: 80px; resize: vertical; }
-    .input-group select option { background: #1a1030; }
-
-    /* ========== BUTTONS ========== */
-    .btn-primary {
-        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-        background: linear-gradient(135deg, var(--accent-purple), var(--accent-indigo));
-        color: #fff; font-weight: 800; font-size: 1rem;
-        padding: 14px 36px; border-radius: 30px; border: none; cursor: pointer;
-        box-shadow: 0 6px 24px rgba(168,85,247,0.3);
-        transition: all 0.25s ease; width: 100%; margin-top: 16px;
-    }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(168,85,247,0.45); }
-    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-    .btn-secondary {
-        display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-        background: rgba(255,215,0,0.10); color: var(--neon-gold);
-        border: 1px solid rgba(255,215,0,0.3);
-        padding: 10px 20px; border-radius: 24px; font-size: 0.88rem; font-weight: 700;
-        cursor: pointer; transition: all 0.2s ease; text-decoration: none;
-    }
-    .btn-secondary:hover { background: rgba(255,215,0,0.2); }
-
-    /* ========== CARD TABLE AREA ========== */
-    .card-table {
-        display: flex; justify-content: center; align-items: flex-end;
-        min-height: 220px; perspective: 1000px;
-        padding: 20px 0; position: relative;
-        overflow-x: auto;
+    .message-item.ai .msg-body { border-top-left-radius: 4px; }
+    .message-item.user .msg-body {
+        background: var(--bg-chat-user);
+        border-color: rgba(99, 102, 241, 0.35);
+        border-top-right-radius: 4px;
+        color: #fff;
     }
 
-    /* Tarot Card 3D */
+    /* ========== IN-CHAT 3D CARD SPREAD COMPONENT ========== */
+    .inchat-spread-box {
+        margin: 16px 0;
+        background: rgba(10, 8, 22, 0.85);
+        border: 1px solid var(--border-gold);
+        border-radius: var(--radius-md);
+        padding: 18px 14px;
+        text-align: center;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.4), inset 0 0 20px rgba(168,85,247,0.08);
+    }
+    .inchat-spread-header {
+        font-family: 'Cinzel', serif; font-size: 1rem; font-weight: 700;
+        color: var(--neon-gold); margin-bottom: 12px;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .inchat-card-row {
+        display: flex; justify-content: center; gap: 10px;
+        flex-wrap: wrap; margin: 14px 0; perspective: 1000px;
+    }
+
+    /* 3D Tarot Card */
     .tarot-card {
-        width: 100px; height: 170px;
+        width: 84px; height: 140px;
         position: relative;
         transform-style: preserve-3d;
         transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-        cursor: pointer;
-        margin: 0 6px;
+        user-select: none;
         flex-shrink: 0;
     }
-    .tarot-card.dealing {
-        animation: dealIn 0.5s ease-out forwards;
-    }
-    .tarot-card.flipped {
-        transform: rotateY(180deg);
-    }
-    .tarot-card.reversed .card-front-inner {
-        transform: rotateY(180deg) rotate(180deg);
-    }
-    .tarot-card:hover:not(.flipped) {
-        transform: translateY(-8px);
-    }
-    .tarot-card:hover.flipped {
-        transform: rotateY(180deg) translateY(-8px);
-    }
-
-    @keyframes dealIn {
-        0% { opacity: 0; transform: translateY(-60px) scale(0.8) rotateY(0deg); }
-        100% { opacity: 1; transform: translateY(0) scale(1) rotateY(0deg); }
-    }
-
-    .card-back, .card-front {
+    .tarot-card.flipped { transform: rotateY(180deg) translateY(-4px); }
+    .card-back, .card-front-inner {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        border-radius: 10px;
-        backface-visibility: hidden;
-        display: flex; flex-direction: column;
-        align-items: center; justify-content: center;
+        border-radius: 10px; backface-visibility: hidden; -webkit-backface-visibility: hidden;
     }
     .card-back {
-        background: linear-gradient(135deg, #1a0a3e, #2d1b69);
-        border: 2px solid rgba(168, 85, 247, 0.4);
-        box-shadow: 0 4px 20px rgba(168,85,247,0.2);
-    }
-    .card-back::after {
-        content: '✦';
-        font-size: 2rem;
-        color: var(--neon-gold);
-        text-shadow: 0 0 10px rgba(255,215,0,0.5);
-    }
-    .card-back-pattern {
-        position: absolute; top: 8px; left: 8px; right: 8px; bottom: 8px;
-        border: 1px solid rgba(168,85,247,0.2);
-        border-radius: 6px;
+        background: linear-gradient(135deg, #1e113a, #0b0618);
+        border: 2px solid #a855f7;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.5), inset 0 0 10px rgba(168,85,247,0.3);
         display: flex; align-items: center; justify-content: center;
     }
-
+    .card-back-pattern {
+        width: 70%; height: 75%;
+        border: 1px dashed rgba(255,215,0,0.4);
+        border-radius: 6px;
+        background: radial-gradient(circle, rgba(255,215,0,0.15) 15%, transparent 60%);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.1rem; color: var(--neon-gold);
+    }
     .card-front-inner {
-        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        backface-visibility: hidden;
+        background: linear-gradient(145deg, #18102e, #0e0a1f);
+        border: 2px solid #ffd700;
         transform: rotateY(180deg);
-        border-radius: 10px;
-        background: linear-gradient(135deg, #0f0a20, #1a0f35);
-        border: 2px solid var(--neon-gold);
-        box-shadow: 0 0 20px rgba(255,215,0,0.15);
-        overflow: hidden;
+        display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+        padding: 8px 4px;
+        box-shadow: 0 4px 16px rgba(255,215,0,0.3), inset 0 0 10px rgba(255,215,0,0.15);
     }
-    .card-front-inner .cf-emoji {
-        font-size: 2rem; margin-bottom: 4px;
+    .cf-emoji { font-size: 1.5rem; margin-top: 2px; }
+    .cf-name { font-size: 0.72rem; font-weight: 800; color: #fff; text-align: center; line-height: 1.2; }
+    .cf-position { font-size: 0.62rem; color: var(--accent-blue); text-align: center; }
+    .cf-tag {
+        font-size: 0.62rem; font-weight: 700; padding: 1px 6px; border-radius: 8px;
     }
-    .card-front-inner .cf-name {
-        font-family: 'Cinzel', serif;
-        font-size: 0.55rem; font-weight: 700; color: var(--neon-gold);
-        text-align: center; padding: 0 6px;
-        line-height: 1.2;
+    .cf-tag.upright { background: rgba(255,215,0,0.18); color: var(--neon-gold); }
+    .cf-tag.reversed { background: rgba(239,68,68,0.22); color: #f87171; }
+
+    .btn-start-deal {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: linear-gradient(135deg, var(--neon-purple), var(--accent-indigo));
+        color: #fff; padding: 10px 24px; border-radius: 25px;
+        font-size: 0.92rem; font-weight: 700; border: none; cursor: pointer;
+        transition: all 0.25s ease;
+        box-shadow: 0 0 18px rgba(168, 85, 247, 0.4);
     }
-    .card-front-inner .cf-position {
-        font-size: 0.5rem; color: var(--text-muted);
-        margin-top: 3px; text-align: center;
+    .btn-start-deal:hover {
+        transform: translateY(-2px) scale(1.03);
+        box-shadow: 0 0 25px rgba(168, 85, 247, 0.6);
     }
-    .card-front-inner .cf-reversed {
-        font-size: 0.5rem; color: var(--neon-pink);
-        margin-top: 2px; font-weight: 700;
+    .btn-start-deal:disabled {
+        opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none;
     }
 
-    /* Card table instructions */
-    .card-instructions {
-        text-align: center; margin-top: 12px;
-        font-size: 0.88rem; color: var(--text-muted);
-    }
-
-    /* ========== AI READING & PROGRESS CARD ========== */
-    .ai-loading-container {
-        background: linear-gradient(135deg, rgba(168,85,247,0.12), rgba(255,215,0,0.08));
-        border: 1px solid rgba(168,85,247,0.35);
+    /* ========== PROGRESS & REPORT SECTIONS ========== */
+    .ai-inline-loading {
+        margin: 12px 0; padding: 16px;
+        background: rgba(168,85,247,0.08);
+        border: 1px solid rgba(168,85,247,0.25);
         border-radius: var(--radius-md);
-        padding: 30px 24px;
-        margin-top: 20px;
         text-align: center;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3), inset 0 0 20px rgba(168,85,247,0.1);
-        animation: fadeIn 0.4s ease-out;
     }
-    .ai-loading-orb-wrapper {
-        position: relative;
-        width: 70px;
-        height: 70px;
-        margin: 0 auto 16px auto;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .ai-loading-orb {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
+    .ai-orb-mini {
+        width: 36px; height: 36px; border-radius: 50%;
         background: radial-gradient(circle at 30% 30%, #ffd700, #a855f7, #3b82f6);
-        box-shadow: 0 0 25px rgba(168,85,247,0.8), 0 0 45px rgba(255,215,0,0.4);
-        animation: orbFloat 2s ease-in-out infinite alternate, orbPulse 3s infinite;
+        box-shadow: 0 0 18px rgba(168,85,247,0.7);
+        margin: 0 auto 10px auto;
+        animation: orbFloat 2s ease-in-out infinite alternate;
     }
     @keyframes orbFloat {
         0% { transform: translateY(0px) scale(0.95); }
-        100% { transform: translateY(-8px) scale(1.05); }
+        100% { transform: translateY(-5px) scale(1.05); }
     }
-    @keyframes orbPulse {
-        0%, 100% { filter: hue-rotate(0deg); }
-        50% { filter: hue-rotate(45deg); }
+    .ai-inline-progress-bg {
+        width: 100%; max-width: 280px; height: 6px;
+        background: rgba(255,255,255,0.08); border-radius: 10px;
+        margin: 8px auto; overflow: hidden;
     }
-    .ai-loading-title {
-        font-family: 'Cinzel', serif;
-        font-size: 1.15rem;
-        font-weight: 700;
-        color: var(--neon-gold);
-        margin-bottom: 8px;
-        min-height: 28px;
-        transition: all 0.3s ease;
+    .ai-inline-progress-fill {
+        height: 100%; width: 25%;
+        background: linear-gradient(90deg, var(--neon-purple), var(--neon-gold), var(--accent-blue));
+        border-radius: 10px; transition: width 0.5s ease;
     }
-    .ai-loading-subtitle {
-        font-size: 0.88rem;
-        color: var(--text-secondary);
-        margin-bottom: 18px;
-        min-height: 22px;
-    }
-    .ai-progress-bar-bg {
-        width: 100%;
-        max-width: 360px;
-        height: 8px;
-        background: rgba(255,255,255,0.08);
-        border-radius: 20px;
-        margin: 0 auto 14px auto;
-        overflow: hidden;
-        position: relative;
-        border: 1px solid rgba(255,255,255,0.1);
-    }
-    .ai-progress-bar-fill {
-        height: 100%;
-        width: 25%;
-        background: linear-gradient(90deg, var(--neon-purple), var(--neon-gold), #38bdf8);
-        border-radius: 20px;
-        transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 0 12px rgba(255,215,0,0.6);
-    }
-    .ai-loading-hint {
-        font-size: 0.8rem;
-        color: var(--text-muted);
-    }
-    .ai-reading-box {
-        background: rgba(168, 85, 247, 0.05);
-        border: 1px solid rgba(168, 85, 247, 0.25);
-        border-radius: var(--radius-md);
-        padding: 26px; margin-top: 20px;
-        line-height: 1.9;
-        font-size: 0.95rem; color: var(--text-secondary);
-        box-shadow: 0 8px 30px rgba(0,0,0,0.3);
-    }
-    .ai-reading-box h3 {
-        font-family: 'Cinzel', serif;
-        color: var(--neon-gold); font-size: 1.25rem; margin-bottom: 18px;
-        display: flex; align-items: center; gap: 8px;
-        border-bottom: 1px solid rgba(255,215,0,0.25);
-        padding-bottom: 10px;
-    }
+
     .tarot-report-section {
         background: rgba(255,255,255,0.025);
-        border: 1px solid rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.08);
         border-left: 3px solid var(--neon-gold);
         border-radius: 10px;
-        padding: 16px 20px;
-        margin: 16px 0;
+        padding: 14px 16px;
+        margin: 12px 0;
     }
-    .tarot-report-section.purple-theme {
-        border-left-color: var(--neon-purple);
-    }
-    .tarot-report-section.blue-theme {
-        border-left-color: #38bdf8;
-    }
+    .tarot-report-section.purple-theme { border-left-color: var(--neon-purple); }
+    .tarot-report-section.blue-theme { border-left-color: var(--accent-blue); }
     .tarot-report-section h4 {
-        color: var(--neon-gold);
-        font-size: 1.08rem;
-        margin-bottom: 10px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-family: 'Cinzel', serif;
+        color: var(--neon-gold); font-size: 1rem; margin-bottom: 8px;
+        display: flex; align-items: center; gap: 8px; font-family: 'Cinzel', serif;
     }
-    .tarot-report-section p {
-        margin-bottom: 10px;
-        line-height: 1.8;
-    }
-    .tarot-report-section ul, .tarot-report-section ol {
-        margin: 8px 0 8px 20px;
-    }
-    .tarot-report-section li {
-        margin-bottom: 6px;
-        line-height: 1.7;
-    }
-    .ai-loading {
-        display: flex; align-items: center; gap: 10px;
-        color: var(--neon-purple); font-weight: 600;
-    }
-    .ai-loading .spinner {
-        width: 24px; height: 24px;
-        border: 3px solid rgba(168,85,247,0.2);
-        border-top-color: var(--neon-purple);
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .tarot-report-section p { margin-bottom: 8px; line-height: 1.75; }
 
-    /* Chat area */
-    .chat-area { margin-top: 20px; }
-    .chat-messages {
-        max-height: 350px; overflow-y: auto;
-        background: rgba(0,0,0,0.25);
-        border: 1px solid var(--border-card);
-        border-radius: var(--radius-sm);
-        padding: 16px; margin-bottom: 12px;
+    .inchat-action-bar {
+        display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px;
+        padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.08);
     }
-    .chat-msg { margin-bottom: 12px; padding: 12px 16px; border-radius: var(--radius-sm); font-size: 0.92rem; line-height: 1.8; }
-    .chat-msg.user { background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.25); }
-    .chat-msg.ai { background: rgba(168,85,247,0.10); border: 1px solid rgba(168,85,247,0.2); }
-    .chat-input-row { display: flex; gap: 10px; }
-    .chat-input-row input { flex: 1; }
-
-    /* ========== HAPTIC & FLIP ENHANCEMENTS ========== */
-    .tarot-card.flipped .card-front-inner {
-        box-shadow: 0 0 30px rgba(255,215,0,0.4), 0 0 60px rgba(168,85,247,0.2);
-    }
-    .tarot-card.flipped {
-        transform: rotateY(180deg) translateY(-5px);
-    }
-    .card-glow { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 10px; pointer-events: none; }
-    .tarot-card.flipped .card-glow {
-        animation: glowPulse 1.5s ease-in-out;
-        background: radial-gradient(circle at center, rgba(255,215,0,0.3), transparent 70%);
-    }
-    @keyframes glowPulse {
-        0% { opacity: 0; transform: scale(0.8); }
-        50% { opacity: 1; transform: scale(1.15); }
-        100% { opacity: 0; transform: scale(1); }
-    }
-
-    /* ========== JOURNAL PANEL ========== */
-    .journal-section { margin-top: 24px; }
-    .journal-header {
-        display: flex; align-items: center; justify-content: space-between;
-        margin-bottom: 16px; flex-wrap: wrap; gap: 10px;
-    }
-    .journal-header .j-title {
-        font-family: 'Cinzel', 'Noto Sans TC', serif;
-        font-size: 1.2rem; font-weight: 700; color: var(--neon-gold);
-        display: flex; align-items: center; gap: 8px;
-    }
-    .journal-toggle {
-        background: rgba(255,215,0,0.10); color: var(--neon-gold);
-        border: 1px solid rgba(255,215,0,0.3);
-        padding: 8px 16px; border-radius: 20px; font-size: 0.82rem; font-weight: 600;
-        cursor: pointer; transition: all 0.2s ease;
-    }
-    .journal-toggle:hover { background: rgba(255,215,0,0.2); }
-    .journal-panel {
-        max-height: 0; overflow: hidden; transition: max-height 0.4s ease;
-    }
-    .journal-panel.open { max-height: 2000px; }
-    .journal-entry {
-        background: rgba(255,255,255,0.02);
-        border: 1px solid var(--border-card);
-        border-left: 3px solid var(--neon-gold);
-        border-radius: var(--radius-sm);
-        padding: 14px 16px; margin-bottom: 12px;
-    }
-    .journal-entry .je-date { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; }
-    .journal-entry .je-question { font-weight: 700; color: #fff; font-size: 0.92rem; margin-bottom: 6px; }
-    .journal-entry .je-cards { font-size: 0.82rem; color: var(--neon-gold); margin-bottom: 6px; }
-    .journal-entry .je-advice { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; }
-    .journal-empty {
-        text-align: center; padding: 30px; color: var(--text-muted); font-size: 0.9rem;
-    }
-
-
-
-    /* ========== BASIC READING (FREE MODE) ========== */
-    .basic-reading { margin-top: 16px; }
-    .basic-reading h4 {
-        font-family: 'Cinzel', serif; color: var(--neon-gold); margin-bottom: 12px;
-        display: flex; align-items: center; gap: 8px;
-    }
-    .basic-reading .br-card {
-        background: rgba(255,255,255,0.03);
-        border: 1px solid var(--border-card);
-        border-left: 3px solid var(--neon-purple);
-        border-radius: var(--radius-sm);
-        padding: 12px 16px; margin-bottom: 10px;
-    }
-    .basic-reading .br-position {
-        font-size: 0.78rem; color: var(--neon-gold); margin-bottom: 4px;
-    }
-    .basic-reading .br-card-name {
-        font-weight: 700; font-size: 0.95rem; color: #fff; margin-bottom: 2px;
-    }
-    .basic-reading .br-meaning {
-        font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;
-    }
-    .basic-reading .br-meaning .rev-tag {
-        display: inline-block; background: rgba(255,107,199,0.15);
-        color: var(--neon-pink); padding: 1px 8px; border-radius: 10px;
-        font-size: 0.75rem; font-weight: 600; margin-right: 6px;
-    }
-    .basic-reading .br-meaning .up-tag {
-        display: inline-block; background: rgba(168,85,247,0.15);
-        color: var(--neon-purple); padding: 1px 8px; border-radius: 10px;
-        font-size: 0.75rem; font-weight: 600; margin-right: 6px;
-    }
-
-    /* ========== HISTORY ========== */
-    .history-list { max-height: 400px; overflow-y: auto; }
-    .history-item {
-        background: rgba(255,255,255,0.03);
-        border: 1px solid var(--border-card);
-        border-radius: var(--radius-sm);
-        padding: 14px; margin-bottom: 10px;
-    }
-    .history-item .hi-question { font-weight: 700; color: #fff; margin-bottom: 4px; }
-    .history-item .hi-meta { font-size: 0.78rem; color: var(--text-muted); }
-    .history-item .hi-summary { font-size: 0.85rem; color: var(--text-secondary); margin-top: 6px; }
-
-    /* ========== AFFILIATE ========== */
-    .affiliate-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
-    .affiliate-card {
-        background: rgba(255,255,255,0.03);
-        border: 1px solid var(--border-card);
-        border-radius: var(--radius-md);
-        padding: 20px; text-align: center; transition: all 0.25s ease;
-    }
-    .affiliate-card:hover { transform: translateY(-3px); border-color: rgba(255,215,0,0.4); }
-    .affiliate-card .af-icon { font-size: 2rem; color: var(--neon-gold); margin-bottom: 10px; }
-    .affiliate-card h4 { font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 6px; }
-    .affiliate-card p { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 14px; }
-    .btn-affiliate {
+    .btn-chip-action {
         display: inline-flex; align-items: center; gap: 6px;
-        background: linear-gradient(135deg, #f59e0b, #d97706);
-        color: #000; font-weight: 700; font-size: 0.88rem;
-        padding: 10px 22px; border-radius: 24px; border: none;
-        text-decoration: none; transition: all 0.2s ease;
-        box-shadow: 0 4px 16px rgba(245,158,11,0.3);
+        background: rgba(255,255,255,0.05); color: var(--text-secondary);
+        border: 1px solid rgba(255,255,255,0.12);
+        padding: 4px 12px; border-radius: 14px;
+        font-size: 0.78rem; font-weight: 600; cursor: pointer;
+        transition: all 0.2s ease;
     }
-    .btn-affiliate:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(245,158,11,0.45); }
+    .btn-chip-action:hover { background: rgba(168,85,247,0.2); color:#fff; border-color:var(--neon-purple); }
 
-    /* ========== HELP / SEO ========== */
-    .help-item {
-        background: rgba(255,255,255,0.02);
-        border: 1px solid var(--border-card);
-        border-radius: var(--radius-md);
-        padding: 20px; margin-bottom: 14px;
+    /* ========== BOTTOM DUAL-MODAL INPUT BAR ========== */
+    .bottom-chat-bar {
+        position: fixed; bottom: 0; left: 0; right: 0;
+        background: rgba(10, 10, 20, 0.94);
+        backdrop-filter: var(--glass-blur);
+        -webkit-backdrop-filter: var(--glass-blur);
+        border-top: 1px solid var(--border-card);
+        padding: 12px 16px; z-index: 90;
     }
-    .help-item h2 {
-        font-family: 'Cinzel', 'Noto Sans TC', serif;
-        font-size: 1.05rem; font-weight: 700; color: var(--neon-purple);
-        margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+    .chat-bar-container {
+        max-width: 1000px; margin: 0 auto;
+        display: flex; align-items: flex-end; gap: 10px;
     }
-    .help-item p { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.8; }
-
-    /* ========== DISCLAIMER ========== */
-    .disclaimer-box {
-        background: rgba(239, 68, 68, 0.06);
-        border: 1px solid rgba(239, 68, 68, 0.2);
-        border-radius: var(--radius-md);
-        padding: 18px 20px; margin-top: 20px;
+    .input-wrapper {
+        flex: 1; position: relative;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(168, 85, 247, 0.3);
+        border-radius: 24px; padding: 6px 16px;
+        display: flex; align-items: center; gap: 10px;
+        transition: all 0.2s ease;
     }
-    .disclaimer-box h3 { color: var(--color-red, #ef4444); font-size: 1rem; margin-bottom: 8px; }
-    .disclaimer-box p { font-size: 0.88rem; color: var(--text-muted); line-height: 1.7; }
+    .input-wrapper:focus-within {
+        border-color: var(--neon-purple);
+        box-shadow: 0 0 15px rgba(168, 85, 247, 0.25);
+    }
+    .chat-textarea {
+        flex: 1; background: transparent; border: none; outline: none;
+        color: #fff; font-size: 0.95rem; line-height: 1.5;
+        resize: none; max-height: 120px; min-height: 24px;
+        font-family: inherit; padding: 4px 0;
+    }
+    .chat-textarea::placeholder { color: var(--text-muted); }
 
-    /* ========== KO-FI ========== */
-    .kofi-section { text-align: center; padding: 20px 0; }
-    .kofi-section h3 { font-size: 1.15rem; font-weight: 700; color: #fff; margin-bottom: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    /* Mic Button */
+    .btn-mic {
+        background: transparent; border: none; outline: none;
+        color: var(--text-muted); font-size: 1.15rem; cursor: pointer;
+        width: 36px; height: 36px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        transition: all 0.2s ease; flex-shrink: 0;
+    }
+    .btn-mic:hover { color: var(--neon-purple); background: rgba(168,85,247,0.12); }
+    .btn-mic.recording {
+        color: #ef4444; background: rgba(239, 68, 68, 0.2);
+        animation: micPulse 1.2s infinite;
+    }
+    @keyframes micPulse {
+        0%, 100% { transform: scale(1); box-shadow: 0 0 0 rgba(239,68,68,0.4); }
+        50% { transform: scale(1.1); box-shadow: 0 0 14px rgba(239,68,68,0.7); }
+    }
 
-    /* ========== MODAL ========== */
+    /* Send Button */
+    .btn-send-msg {
+        background: linear-gradient(135deg, var(--neon-purple), var(--accent-indigo));
+        color: #fff; border: none; outline: none;
+        width: 42px; height: 42px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; transition: all 0.2s ease;
+        box-shadow: 0 0 14px rgba(168,85,247,0.4); flex-shrink: 0;
+    }
+    .btn-send-msg:hover { transform: translateY(-2px); box-shadow: 0 0 20px rgba(168,85,247,0.6); }
+    .btn-send-msg:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    /* Voice Status Bar */
+    .voice-status-indicator {
+        position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+        background: rgba(15, 10, 30, 0.95);
+        border: 1px solid #ef4444; color: #fca5a5;
+        padding: 8px 20px; border-radius: 20px;
+        font-size: 0.85rem; font-weight: 600;
+        display: none; align-items: center; gap: 8px; z-index: 100;
+        box-shadow: 0 4px 20px rgba(239,68,68,0.3);
+    }
+
+    /* ========== MODALS (API SETTINGS & JOURNAL) ========== */
     .modal-overlay {
         display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(0,0,0,0.7); z-index: 1000;
+        background: rgba(0, 0, 0, 0.75); z-index: 300;
         align-items: center; justify-content: center;
-        backdrop-filter: blur(8px);
+        backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+        padding: 20px;
     }
     .modal-overlay.show { display: flex; }
     .modal-content {
-        background: var(--bg-card);
-        border: 1px solid var(--neon-purple);
-        border-radius: var(--radius-lg);
-        padding: 32px; max-width: 480px; width: 90%;
-        text-align: center;
+        background: #0f0a1c; border: 1px solid rgba(168, 85, 247, 0.35);
+        border-radius: var(--radius-lg); padding: 26px;
+        max-width: 480px; width: 100%; max-height: 85vh; overflow-y: auto;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
     }
-    .modal-content h3 { font-family: 'Cinzel', serif; color: var(--neon-gold); font-size: 1.2rem; margin-bottom: 14px; }
-    .modal-content p { color: var(--text-secondary); margin-bottom: 20px; font-size: 0.95rem; }
-
-    /* ========== FOOTER ========== */
-    .main-footer {
-        border-top: 1px solid var(--border-card);
-        background: rgba(10, 10, 20, 0.95);
-        padding: 24px 0; text-align: center; font-size: 0.85rem; color: var(--text-muted);
+    .modal-header {
+        display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;
     }
-    .footer-links a { color: var(--text-secondary); text-decoration: none; margin: 0 6px; font-weight: 500; }
-    .footer-links a:hover { color: var(--neon-purple); }
+    .modal-title { font-family: 'Cinzel', serif; font-size: 1.1rem; font-weight: 700; color: #fff; }
+    .btn-modal-close { background: none; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; }
+    .btn-modal-close:hover { color: #fff; }
 
-    /* ========== RESPONSIVE ========== */
-    @media (max-width: 768px) {
+    .journal-list { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+    .journal-card-item {
+        background: rgba(255,255,255,0.03); border: 1px solid var(--border-card);
+        border-radius: var(--radius-sm); padding: 12px; border-left: 3px solid var(--neon-gold);
+    }
+    .j-time { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; }
+    .j-q { font-size: 0.88rem; font-weight: 700; color: #fff; margin-bottom: 4px; }
+    .j-cards { font-size: 0.8rem; color: var(--neon-gold); }
+
+    /* Toast */
+    .toast-msg {
+        position: fixed; top: 70px; left: 50%; transform: translateX(-50%);
+        background: var(--neon-purple); color: #fff;
+        padding: 8px 20px; border-radius: 20px;
+        font-size: 0.85rem; font-weight: 700; z-index: 400;
+        display: none; box-shadow: 0 4px 20px rgba(168,85,247,0.5);
+    }
+
+    @media (max-width: 600px) {
+        .tarot-card { width: 68px; height: 115px; }
+        .cf-emoji { font-size: 1.2rem; }
+        .cf-name { font-size: 0.65rem; }
+        .message-item { max-width: 98%; }
         .brand-tagline { display: none; }
-        .header-container { justify-content: center; }
-        .hero-title { font-size: 1.7rem; }
-        .hero-subtitle { font-size: 0.9rem; }
-        .spread-grid { grid-template-columns: repeat(2, 1fr); }
-        .affiliate-grid { grid-template-columns: 1fr; }
-        .tarot-card { width: 76px; height: 130px; margin: 0 3px; }
-        .card-back::after { font-size: 1.4rem; }
-        .card-front-inner .cf-emoji { font-size: 1.4rem; }
-        .card-front-inner .cf-name { font-size: 0.45rem; }
-        .card-front-inner .cf-position { font-size: 0.4rem; }
-        .card-front-inner .cf-reversed { font-size: 0.4rem; }
-        .card-table { min-height: 180px; }
-    }
-    @media (max-width: 480px) {
-        .hero-title { font-size: 1.4rem; }
-        .section-card { padding: 18px; }
-        .spread-grid { grid-template-columns: 1fr; }
-        .tarot-card { width: 62px; height: 106px; margin: 0 2px; }
-        .card-back::after { font-size: 1.1rem; }
-        .card-front-inner .cf-emoji { font-size: 1.1rem; }
     }
     </style>
 </head>
 <body>
 
-    <!-- ===== HEADER ===== -->
+    <!-- Header -->
     <header class="main-header">
-        <div class="container header-container">
+        <div class="header-container">
             <div class="brand-box">
-                <div class="brand-logo">
-                    <i class="brand-icon fa-solid fa-star-of-david"></i>
-                    GugoPro
-                </div>
-                <div class="brand-tagline">AI Mystic Tools</div>
+                <a href="https://gugopro.com" class="brand-logo">
+                    <i class="fa-solid fa-wand-magic-sparkles brand-icon"></i>
+                    <span>GugoPro AI</span>
+                </a>
+                <span class="brand-tagline">全對話式靈性塔羅大師</span>
             </div>
-            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                <button onclick="openApiKeyModal()" class="btn-back-home" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border-color: rgba(168, 85, 247, 0.4); cursor: pointer;">
+            <div class="header-actions">
+                <a href="https://gugopro.com" class="btn-nav-tool">
+                    <i class="fa-solid fa-house"></i> 首頁
+                </a>
+                <a href="https://tarot.gugopro.com" target="_blank" class="btn-nav-tool" style="color: var(--neon-gold); border-color: rgba(255,215,0,0.3);">
+                    <i class="fa-solid fa-star"></i> 基礎版占卜
+                </a>
+                <button class="btn-nav-tool" onclick="openJournalModal()">
+                    <i class="fa-solid fa-book-open"></i> 占卜日誌
+                </button>
+                <button class="btn-nav-tool" onclick="openApiKeyModal()" style="color: #38bdf8; border-color: rgba(56,189,248,0.3);">
                     <i class="fa-solid fa-gear"></i> <span id="nav-key-status">API 設定</span>
                 </button>
-                <a href="https://tarot.gugopro.com" target="_blank" class="btn-back-home" style="background: rgba(255, 215, 0, 0.1); color: var(--neon-gold); border-color: rgba(255, 215, 0, 0.35);">
-                    <i class="fa-solid fa-moon"></i> 基礎版塔羅牌
-                </a>
-                <a href="https://gugopro.com" class="btn-back-home">
-                    <i class="fa-solid fa-house"></i> 返回 GugoPro 首頁
-                </a>
             </div>
         </div>
     </header>
 
-    <!-- ===== HERO ===== -->
-    <section class="hero-section">
-        <div class="container">
-            <div class="hero-badge"><i class="fa-solid fa-wand-sparkles"></i> AI-Powered Tarot Reading</div>
-            <h1 class="hero-title">
-                <span class="gradient-text">AI 塔羅大師</span>
-            </h1>
-            <p class="hero-subtitle">
-                完整 78 張韋特塔羅牌、5 大專業牌陣、3D 翻牌動畫、Gemini AI 深度交叉解牌。
-                靜心抽牌，讓 AI 為你揭開命運的指引。
-            </p>
-        </div>
-    </section>
-
-    <!-- ===== MAIN TOOL ===== -->
-    <div class="container tool-area">
-
-        <!-- API Key Modal -->
-        <div class="modal-overlay" id="api-modal">
-            <div class="modal-content">
-                <div style="display:flex; justify-content:flex-end; margin-bottom:-10px;">
-                    <button onclick="closeApiKeyModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+    <!-- Main Chat App Wrapper -->
+    <div class="chat-app-wrapper">
+        
+        <!-- Top Control Bar (Spread Switcher + Quick Chips) -->
+        <div class="top-control-bar">
+            <div class="control-row-label">
+                <i class="fa-solid fa-layer-group"></i> 1. 選擇占卜牌陣模式
+            </div>
+            <div class="spread-chips-row" id="spread-chips-container">
+                <div class="spread-chip active" data-spread="timeline" onclick="selectSpread('timeline')">
+                    <span>🌟 時間流三牌陣</span> <small>(3張 - 過去/現在/未來)</small>
                 </div>
-                <h3 style="font-family: 'Cinzel', 'Noto Sans TC', serif; color: var(--neon-gold); font-size: 1.22rem; line-height: 1.4; margin-bottom: 12px;">
-                    <i class="fa-solid fa-key" style="color: var(--neon-gold);"></i> 🔑 啟動 AI 服務需要免費的 Gemini API Key
-                </h3>
-                <p style="color: var(--text-secondary); margin-bottom: 16px; font-size: 0.92rem; line-height: 1.6;">
-                    本服務採用 Google 官方 Gemini 模型進行深度交叉解牌。完全免費、無需信用卡、全站自動共享。
-                </p>
-                <a href="https://gugopro.com/tools/tutorials/how-to-get-gemini-api-key.html" target="_blank" rel="noopener" class="btn-secondary" style="margin-bottom: 16px; display: inline-flex; width: 100%; justify-content: center; text-decoration: none; padding: 10px;">
-                    <i class="fa-solid fa-book-open"></i> 💡 還沒有 Key？點此查看 10 秒免費取得教學
-                </a>
-                <div id="modal-key-status-box" style="display:none; background: rgba(0,0,0,0.35); border: 1px solid rgba(168,85,247,0.3); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 14px; text-align:left;">
-                    <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 4px;">當前已綁定金鑰 (已遮罩加密)：</div>
-                    <div style="font-family: monospace; font-size: 0.95rem; color: #38bdf8;" id="modal-masked-key-display">AIzaSy••••••••</div>
+                <div class="spread-chip" data-spread="daily" onclick="selectSpread('daily')">
+                    <span>🔮 單張直斷</span> <small>(1張 - 每日指引/是非題)</small>
                 </div>
-                <div style="margin-top: 10px;">
-                    <div class="input-group" style="text-align:left;">
-                        <label id="modal-input-label"><i class="fa-solid fa-lock"></i> 輸入您的 Gemini API Key</label>
-                        <input type="password" id="modal-api-key" placeholder="貼上您的 Gemini API Key (以 AIzaSy 開頭)" autocomplete="off">
-                    </div>
-                    <div style="display:flex; gap:10px; margin-top:14px;">
-                        <button class="btn-primary" style="flex:1; margin-top:0;" onclick="saveModalApiKey()">
-                            <i class="fa-solid fa-wand-magic-sparkles"></i> 儲存並開始使用
-                        </button>
-                        <button id="btn-clear-key" class="btn-secondary" style="display:none; padding:10px 16px; border-color:rgba(239,68,68,0.4); color:#f87171;" onclick="clearApiKey()">
-                            <i class="fa-solid fa-trash-can"></i> 清除金鑰
-                        </button>
-                    </div>
+                <div class="spread-chip" data-spread="choice" onclick="selectSpread('choice')">
+                    <span>⚖️ 二選一抉擇</span> <small>(3張 - 現狀/選項A/選項B)</small>
+                </div>
+                <div class="spread-chip" data-spread="love" onclick="selectSpread('love')">
+                    <span>💕 感情關係</span> <small>(4張 - 我/對方/障礙/發展)</small>
+                </div>
+                <div class="spread-chip" data-spread="celtic" onclick="selectSpread('celtic')">
+                    <span>🔯 凱爾特十字</span> <small>(10張 - 深度全盤命運)</small>
                 </div>
             </div>
-        </div>
 
-        <!-- Spread Selection -->
-        <div class="section-card">
-            <div class="section-title"><i class="fa-solid fa-spa" style="color: var(--neon-purple);"></i> 選擇牌陣</div>
-            <p class="section-subtitle">根據你的問題選擇最適合的牌陣。</p>
-            <div class="spread-grid" id="spread-grid">
-                <div class="spread-card active" data-spread="daily" onclick="selectSpread('daily')">
-                    <div class="sc-icon">🔮</div>
-                    <div class="sc-name">每日運勢與靈性指引</div>
-                    <div class="sc-desc">今日核心能量</div>
-                    <div class="sc-count">1 張牌</div>
+            <div class="topic-chips-row">
+                <span style="font-size:0.75rem; color:var(--text-muted); align-self:center; margin-right:4px;">熱門主題：</span>
+                <div class="topic-chip" onclick="quickAsk('我想占卜我和目前的對象未來三個月的感情發展與走向如何？')">
+                    ❤️ 感情發展
                 </div>
-                <div class="spread-card" data-spread="timeline" onclick="selectSpread('timeline')">
-                    <div class="sc-icon">⏳</div>
-                    <div class="sc-name">時間流牌陣</div>
-                    <div class="sc-desc">過去 / 現在 / 未來</div>
-                    <div class="sc-count">3 張牌</div>
+                <div class="topic-chip" onclick="quickAsk('我想了解我目前的工作狀態與接下來轉職換工作的吉凶契機？')">
+                    💼 工作轉職
                 </div>
-                <div class="spread-card" data-spread="choice" onclick="selectSpread('choice')">
-                    <div class="sc-icon">⚖️</div>
-                    <div class="sc-name">二選一抉擇牌陣</div>
-                    <div class="sc-desc">A 與 B 的選擇分析</div>
-                    <div class="sc-count">5 張牌</div>
+                <div class="topic-chip" onclick="quickAsk('我目前面臨二選一的人生決策，如何選擇最符合我的長遠利益？')">
+                    ⚖️ 二選一抉擇
                 </div>
-                <div class="spread-card" data-spread="love" onclick="selectSpread('love')">
-                    <div class="sc-icon">💖</div>
-                    <div class="sc-name">感情關係牌陣</div>
-                    <div class="sc-desc">雙方想法與未來發展</div>
-                    <div class="sc-count">4 張牌</div>
+                <div class="topic-chip" onclick="quickAsk('請給我今日的整體能量提示、潛在挑戰與專屬行動指引？')">
+                    🔮 今日指引
                 </div>
-                <div class="spread-card" data-spread="celtic" onclick="selectSpread('celtic')">
-                    <div class="sc-icon">🔯</div>
-                    <div class="sc-name">凱爾特十字牌陣</div>
-                    <div class="sc-desc">深度全盤命運解析</div>
-                    <div class="sc-count">10 張牌</div>
+                <div class="topic-chip" onclick="quickAsk('我想了解我近期的財務狀況與投資/正偏財運勢走向？')">
+                    💰 投資財運
+                </div>
+                <div class="topic-chip" onclick="quickAsk('我想知道如何改善目前的職場人際關係與化解小人障礙？')">
+                    🤝 職場人際
+                </div>
+                <div class="topic-chip" onclick="quickAsk('我想了解近期考試與進修學習的能量狀態與準備建議？')">
+                    🎓 學業考試
                 </div>
             </div>
         </div>
 
-        <!-- Question Input -->
-        <div class="section-card">
-            <div class="section-title"><i class="fa-solid fa-pen-fancy" style="color: var(--neon-gold);"></i> 你的問題</div>
-            <p class="section-subtitle">靜心專注，可從下方選單快速選擇常見問題，或直接輸入你心中最想解開的疑惑。</p>
-            
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-bottom: 14px;">
-                <div class="input-group">
-                    <label><i class="fa-solid fa-tag"></i> 1. 選擇問題類別</label>
-                    <select id="category-select" onchange="onCategoryChange()">
-                        <option value="love">💖 愛情 / 感情復合與桃花</option>
-                        <option value="career">💼 事業 / 工作轉職與發展</option>
-                        <option value="finance">💰 財務 / 投資與正偏財運</option>
-                        <option value="decision">⚖️ 決策 / 二選一與人生抉擇</option>
-                        <option value="interpersonal">🤝 人際 / 職場社交與家庭關係</option>
-                        <option value="study">🎓 學業 / 考試與技能進修</option>
-                        <option value="health">🌿 身心 / 健康與情緒療癒</option>
-                        <option value="spiritual">🔮 靈性 / 人生迷惘與自我成長</option>
-                        <option value="general">🌌 綜合 / 近期整體運勢</option>
-                    </select>
-                </div>
-
-                <div class="input-group">
-                    <label><i class="fa-solid fa-list-check"></i> 2. 快速選擇常問問題 (點擊自動帶入)</label>
-                    <select id="preset-question-select" onchange="onPresetQuestionSelect()">
-                        <!-- Dynamically populated by JS -->
-                    </select>
+        <!-- Chat Feed -->
+        <div class="chat-feed" id="chat-feed">
+            <!-- Initial AI Greeting Message -->
+            <div class="message-item ai">
+                <div class="msg-avatar">🔮</div>
+                <div class="msg-body">
+                    <p><strong>你好，我是你的專屬 AI 靈性塔羅導師。</strong></p>
+                    <p style="margin-top:6px; color:var(--text-secondary);">
+                        無論是感情迷惘、職涯抉擇、財務走勢或人生十字路口，請在下方輸入你的具體疑惑，或點選上方的主題標籤。我將為你擺開韋特命運牌陣，給予你最深層的心靈洞見與實踐指引。✨
+                    </p>
                 </div>
             </div>
-
-            <div class="input-group">
-                <label><i class="fa-solid fa-circle-question"></i> 3. 具體問題內容 (可手動修改或自訂輸入)</label>
-                <input type="text" id="question-input" placeholder="例如：我和目前的對象未來三個月的感情發展與走向如何？" autocomplete="off">
-            </div>
-
-            <button class="btn-primary" id="btn-shuffle" onclick="startReading()">
-                <i class="fa-solid fa-shuffle"></i> 開始洗牌抽牌
-            </button>
-        </div>
-
-        <!-- Card Table -->
-        <div class="section-card" id="card-table-section" style="display:none;">
-            <div class="section-title"><i class="fa-solid fa-wand-magic-sparkles" style="color: var(--neon-gold);"></i> 塔羅牌陣自動揭曉</div>
-            <p class="section-subtitle" id="table-subtitle">系統正在洗牌並自動為您連續翻牌揭曉命運牌面...</p>
-            <div class="card-table" id="card-table">
-                <!-- Cards injected by JS -->
-            </div>
-            <div class="card-instructions" id="card-instructions">
-                <i class="fa-solid fa-wand-sparkles" style="color:var(--neon-gold);"></i> 正在為您連續翻牌揭示中...
-            </div>
-        </div>
-
-        <!-- Reading Results (Basic + AI Auto Generation) -->
-        <div class="section-card" id="ai-reading-section" style="display:none;">
-            <div class="section-title"><i class="fa-solid fa-star-of-david" style="color: var(--neon-purple);"></i> 占卜結果</div>
-
-            <!-- Basic Reading (Free Mode - always shown) -->
-            <div class="basic-reading" id="basic-reading">
-                <!-- Filled by JS -->
-            </div>
-
-            <!-- Loading Indicator Card (shown during AI generation) -->
-            <div class="ai-loading-container" id="ai-loading-container" style="display:none;">
-                <div class="ai-loading-orb-wrapper">
-                    <div class="ai-loading-orb"></div>
-                </div>
-                <div class="ai-loading-title" id="ai-loading-step-title">🔮 正在連結宇宙星象與 Gemini AI 靈性導師...</div>
-                <div class="ai-loading-subtitle" id="ai-loading-step-sub">深度交織牌陣能量場域，為您解鎖命運指引</div>
-                <div class="ai-progress-bar-bg">
-                    <div class="ai-progress-bar-fill" id="ai-progress-bar-fill"></div>
-                </div>
-                <div class="ai-loading-hint">⚡ 正在進行深度交叉推演，約需 3~6 秒，請保持靜心...</div>
-            </div>
-
-            <!-- AI Reading (hidden until unlocked) -->
-            <div class="ai-reading-box" id="ai-reading-box" style="display:none; margin-top:16px;">
-                <!-- Filled by JS -->
-            </div>
-
-            <!-- Chat Area (hidden until unlocked) -->
-            <div class="chat-area" id="chat-area" style="display:none;">
-                <h4 style="color: var(--neon-gold); font-family: 'Cinzel', serif; margin-bottom: 10px;">
-                    <i class="fa-solid fa-comments"></i> <span>向 AI 塔羅導師追問</span>
-                </h4>
-                <div class="chat-messages" id="chat-messages"></div>
-                <div class="chat-input-row">
-                    <input type="text" id="chat-input" placeholder="輸入你的追問（最多 3 次）..." onkeydown="if(event.key==='Enter')sendChat()">
-                    <button class="btn-secondary" onclick="sendChat()" style="flex-shrink:0;">
-                        <i class="fa-solid fa-paper-plane"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="section-card" id="action-section" style="display:none;">
-            <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;">
-                <button class="btn-secondary" onclick="copyReport()">
-                    <i class="fa-solid fa-copy"></i> <span>📋 複製占卜戰報</span>
-                </button>
-                <button class="btn-secondary" onclick="saveHistory()">
-                    <i class="fa-solid fa-bookmark"></i> 儲存占卜紀錄
-                </button>
-                <button class="btn-secondary" onclick="location.reload()">
-                    <i class="fa-solid fa-rotate"></i> 重新占卜
-                </button>
-            </div>
-        </div>
-
-        <!-- History -->
-        <div class="section-card">
-            <div class="section-title"><i class="fa-solid fa-clock-rotate-left" style="color: var(--neon-purple);"></i> 占卜紀錄</div>
-            <p class="section-subtitle">你過去的所有占卜紀錄，儲存在本地瀏覽器中。</p>
-            <div class="history-list" id="history-list">
-                <!-- Filled by JS -->
-            </div>
-        </div>
-
-        <!-- Journal -->
-        <div class="section-card journal-section">
-            <div class="journal-header">
-                <div class="j-title"><i class="fa-solid fa-book-open"></i> <span>📖 歷史占卜日誌</span></div>
-                <button class="journal-toggle" onclick="toggleJournal()">
-                    <i class="fa-solid fa-chevron-down"></i> 展開日誌
-                </button>
-            </div>
-            <p class="section-subtitle">回顧你過去的所有占卜旅程。</p>
-            <div class="journal-panel" id="journal-panel">
-                <div class="journal-empty"><i class="fa-solid fa-book-open"></i> 尚無占卜日誌紀錄，完成占卜後將自動儲存。</div>
-            </div>
-        </div>
-
-        <!-- Affiliate -->
-        <div class="section-card">
-            <div class="section-title"><i class="fa-brands fa-amazon" style="color: var(--neon-gold);"></i> 塔羅牌與水晶靈性用品：精選經典韋特塔羅牌、占卜桌布與天然水晶</div>
-            <p class="section-subtitle">想親自體驗塔羅占卜？搜尋精選韋特塔羅牌與天然水晶，直達 Amazon 全球館。</p>
-            <div class="affiliate-grid">
-                <div class="affiliate-card">
-                    <div class="af-icon"><i class="fa-solid fa-gem"></i></div>
-                    <h4>美國 Amazon 精選好物</h4>
-                    <p>Tarot Cards Deck and Crystals — 搜尋韋特塔羅牌與天然水晶。</p>
-                    <a href="https://www.amazon.com/s?k=tarot+cards+deck+and+crystals&tag=9908qq-20" target="_blank" rel="noopener" class="btn-affiliate">
-                        <i class="fa-brands fa-amazon"></i> 前往美國 Amazon 搜尋
-                    </a>
-                </div>
-                <div class="affiliate-card">
-                    <div class="af-icon"><i class="fa-solid fa-torii-gate"></i></div>
-                    <h4>日本 Amazon 精選好物</h4>
-                    <p>タロットカード・天然石 — 搜尋日本亞馬遜塔羅牌與天然石。</p>
-                    <a href="https://www.amazon.co.jp/s?k=タロットカード+天然石&tag=gugopro-22" target="_blank" rel="noopener" class="btn-affiliate">
-                        <i class="fa-brands fa-amazon"></i> 前往日本 Amazon 搜尋
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <!-- SEO Help -->
-        <div class="section-card">
-            <div class="section-title"><i class="fa-solid fa-graduation-cap" style="color: var(--neon-purple);"></i> 塔羅占卜操作教學</div>
-            <p class="section-subtitle">了解塔羅占卜的基本知識與技巧。</p>
-
-            <div class="help-item">
-                <h2><i class="fa-solid fa-om"></i> 如何靜心並向塔羅牌提出精準問題</h2>
-                <p>
-                    占卜前的靜心是關鍵步驟。先深呼吸三次，將注意力集中在你真正想問的問題上。
-                    好的塔羅問題應該具備三個特質：<strong>具體</strong>（不要問「我的未來會怎樣」）、<strong>開放式</strong>（避免是非題）、<strong>聚焦當下</strong>。
-                    例如：「我目前這份工作在未來三個月中會面臨什麼挑戰，我該如何應對？」
-                    這樣的問題能引導塔羅給出更具體、更有用的指引。
-                </p>
-            </div>
-
-            <div class="help-item">
-                <h2><i class="fa-solid fa-arrows-rotate"></i> 正位與逆位牌義有何差別</h2>
-                <p>
-                    每張塔羅牌都有正位與逆位兩種面向。<strong>正位</strong>代表牌義的直接展現，
-                    能量以正面、外向的方式流動。<strong>逆位</strong>（倒立）則代表能量的內化、
-                    延遲、過度或不足。例如「力量」正位代表內在勇氣與耐心，逆位則可能暗示
-                    自我懷疑或過度控制。逆位並非一定是「壞」的，它更多是指能量的阻塞或需要調整的方向。
-                    本工具每張牌抽中時有 50% 機率為正位、50% 機率為逆位，提供最完整的解牌體驗。
-                </p>
-            </div>
-
-            <div class="help-item">
-                <h2><i class="fa-solid fa-diagram-project"></i> 什麼是時間流與二選一牌陣</h2>
-                <p>
-                    <strong>時間流牌陣</strong>（3 張）是最經典的牌陣之一：左為過去原因、中為現在狀態、右為未來趨勢。
-                    它幫助你理解事件的發展脈絡，而非單純預測結果。
-                    <strong>二選一牌陣</strong>（5 張）專為抉擇設計：第一張為當前困境，
-                    第二、三張分別為選擇 A 與 B 的後果，第四、五張為對應的建議。
-                    塔羅不會替你做決定，而是揭示每個選擇背後的能量與潛在結果，幫助你做出更清醒的選擇。
-                    <strong>凱爾特十字牌陣</strong>（10 張）則是最全面的全盤解析牌陣，
-                    涵蓋現況、挑戰、潛意識、過去基礎、最佳結果等多個面向。
-                </p>
-            </div>
-        </div>
-
-        <!-- Disclaimer -->
-        <div class="disclaimer-box">
-            <h3><i class="fa-solid fa-triangle-exclamation"></i> 免責聲明</h3>
-            <p>
-                本工具占卜與 AI 解牌結果僅供心理探索、自我覺察與娛樂參考，不構成任何醫療、法律或財務建議。
-                塔羅牌是一種自我反思工具，最終的決定權始終在你手中。請理性看待占卜結果，
-                如有心理或健康問題，請尋求專業人士協助。
-            </p>
-        </div>
-
-        <!-- Ko-fi -->
-        <div id="kofi-section-anchor" class="section-card kofi-section">
-            <h3><i class="fa-solid fa-mug-hot" style="color: #72a4f2;"></i> 贊助開發者 (Powered by Ko-fi)</h3>
-            <a href="https://ko-fi.com/R1K123XRS9" target="_blank" rel="noopener" style="background:#72a4f2; color:#fff; padding:10px 18px; border-radius:8px; text-decoration:none; display:inline-flex; align-items:center; gap:8px; font-weight:bold;">
-                <i class="fa-solid fa-mug-hot"></i> Buy me a coffee
-            </a>
         </div>
 
     </div>
 
-    <!-- ===== FOOTER ===== -->
-    <footer class="main-footer">
-        <div class="container">
-            <div class="footer-links">
-                <a href="https://gugopro.com">首頁</a>
-                <a href="https://gugopro.com/tools/">工具目錄</a>
+    <!-- Voice Recording Status Indicator -->
+    <div class="voice-status-indicator" id="voice-indicator">
+        <i class="fa-solid fa-microphone-lines fa-fade"></i>
+        <span>正在聆聽您的問題中，說完請再次點擊麥克風...</span>
+    </div>
+
+    <!-- Bottom Floating Input Bar -->
+    <div class="bottom-chat-bar">
+        <div class="chat-bar-container">
+            <div class="input-wrapper">
+                <button class="btn-mic" id="btn-voice" onclick="toggleVoiceInput()" title="語音輸入問題">
+                    <i class="fa-solid fa-microphone"></i>
+                </button>
+                <textarea id="chat-user-input" class="chat-textarea" placeholder="輸入你想探索的問題，或點擊上方主題標籤... (Enter 發送)" rows="1" onkeydown="handleInputKeydown(event)"></textarea>
             </div>
-            <p style="margin-top:8px;">&copy; 2026 GugoPro. All rights reserved.</p>
+            <button class="btn-send-msg" id="btn-send" onclick="submitUserQuestion()" title="發送問題">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
         </div>
-    </footer>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast-msg" id="toast-msg">已複製到剪貼簿</div>
+
+    <!-- Modals -->
+    <!-- API Settings Modal -->
+    <div id="modal-api" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fa-solid fa-key" style="color:var(--neon-purple);"></i> 🔑 Gemini API Key 設定</div>
+                <button class="btn-modal-close" onclick="closeApiKeyModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p style="font-size:0.88rem; color:var(--text-secondary); margin-bottom:14px;">
+                本工具由 Google Gemini 官方模型驅動，安全免費、無需信用卡、全站自動共享。
+            </p>
+            <a href="https://gugopro.com/tools/tutorials/how-to-get-gemini-api-key.html" target="_blank" style="display:inline-flex; align-items:center; justify-content:center; gap:6px; width:100%; background:rgba(0, 242, 255, 0.1); border:1px solid rgba(0, 242, 255, 0.3); color:#00f2ff; text-decoration:none; padding:10px; border-radius:8px; font-size:0.88rem; font-weight:700; margin-bottom:14px;">
+                💡 還沒有 Key？點此查看 10 秒免費取得教學
+            </a>
+            <div id="modal-key-status-box" style="display:none; background:rgba(0,0,0,0.35); border:1px solid rgba(0,242,255,0.3); border-radius:8px; padding:10px 14px; margin-bottom:14px;">
+                <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:4px;">當前已綁定金鑰 (已遮罩加密)：</div>
+                <div style="font-family:monospace; font-size:0.92rem; color:#38bdf8;" id="modal-masked-key-display">AIzaSy••••••••</div>
+            </div>
+            <div style="margin-bottom:14px;">
+                <input type="password" id="modal-api-key" placeholder="貼上您的 Gemini API Key (以 AIzaSy 開頭)" style="width:100%; padding:12px; background:rgba(0,0,0,0.4); border:1px solid var(--border-card); border-radius:8px; color:#fff; font-size:0.9rem; outline:none;" autocomplete="off">
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button onclick="saveApiKeyFromModal()" style="flex:1; padding:12px; background:linear-gradient(135deg, var(--neon-purple), var(--accent-indigo)); color:#fff; border:none; border-radius:8px; font-weight:700; cursor:pointer;">
+                    <i class="fa-solid fa-check"></i> 儲存並開始使用
+                </button>
+                <button id="btn-modal-clear-key" onclick="clearApiKey()" style="display:none; padding:12px 16px; background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.4); color:#f87171; border-radius:8px; font-weight:700; cursor:pointer;">
+                    <i class="fa-solid fa-trash-can"></i> 清除
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Journal Modal -->
+    <div id="modal-journal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fa-solid fa-book-open" style="color:var(--neon-gold);"></i> 📖 歷史占卜日誌</div>
+                <button class="btn-modal-close" onclick="closeJournalModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p style="font-size:0.82rem; color:var(--text-muted);">回顧你過去在本地瀏覽器中的占卜旅程。</p>
+            <div class="journal-list" id="journal-items-container">
+                <div style="text-align:center; padding:20px; color:var(--text-muted); font-size:0.88rem;">尚無占卜日誌紀錄，完成占卜後將自動儲存。</div>
+            </div>
+        </div>
+    </div>
 
 <script>
 (function(){
@@ -1008,9 +677,9 @@ var DECK = [
   {n:13,name:'死神',en:'Death',emoji:'💀',u:'結束、轉變、重生、放下過去',r:'抗拒改變、停滯、恐懼新開始'},
   {n:14,name:'節制',en:'Temperance',emoji:'🕊️',u:'平衡、耐心、中庸、調和',r:'極端、失衡、缺乏耐心'},
   {n:15,name:'惡魔',en:'The Devil',emoji:'😈',u:'束縛、慾望、物質執著、陰影',r:'解脫、打破束縛、覺醒'},
-  {n:16,name:'塔',en:'The Tower',emoji:'⚡',u:'突然的改變、 разрушение、真相揭露',r:'逃避災難、延遲的改變、內在心碎'},
-  {n:17,name:'星星',en:'The Star',emoji:'⭐',u:'希望、靈感、寧靜、信念',r:'失去信念、絕望、 disconnected'},
-  {n:18,name:'月亮',en:'The Moon',emoji:'🌕',u:'幻覺、潛意識、恐懼、不確定',r:'恐懼散去、真相浮現、 clarity'},
+  {n:16,name:'塔',en:'The Tower',emoji:'⚡',u:'突然的改變、打破幻覺、真相揭露',r:'逃避災難、延遲的改變、內在心碎'},
+  {n:17,name:'星星',en:'The Star',emoji:'⭐',u:'希望、靈感、寧靜、信念',r:'失去信念、絕望、孤寂迷惘'},
+  {n:18,name:'月亮',en:'The Moon',emoji:'🌕',u:'幻覺、潛意識、恐懼、不確定',r:'恐懼散去、真相浮現、撥雲見日'},
   {n:19,name:'太陽',en:'The Sun',emoji:'☀️',u:'快樂、成功、活力、光明',r:'暫時受阻、過度樂觀、內在陰影'},
   {n:20,name:'審判',en:'Judgement',emoji:'📯',u:'重生、呼喚、覺醒、原諒',r:'自我批判、逃避呼喚、未解決的過去'},
   {n:21,name:'世界',en:'The World',emoji:'🌍',u:'完成、成就、整合、圓滿',r:'未完成、缺乏閉合、延遲的成功'},
@@ -1038,45 +707,45 @@ var DECK = [
   {n:39,name:'聖杯四',en:'Four of Cups',emoji:'😐',u:'冷漠、不滿、忽視機會',r:'重新振作、接受新機會、覺醒'},
   {n:40,name:'聖杯五',en:'Five of Cups',emoji:'😢',u:'失落、悲傷、聚焦失去',r:'走出悲傷、接受現實、向前看'},
   {n:41,name:'聖杯六',en:'Six of Cups',emoji:'🧸',u:'懷舊、童年、回憶、純真',r:'活在過去、無法放下、過度理想化'},
-  {n:42,name:'聖杯七',en:'Seven of Cups',emoji:'🌈',u:'幻想、選擇過多、白日夢',r:'現實感、做出選擇、打破幻象'},
-  {n:43,name:'聖杯八',en:'Eight of Cups',emoji:'🚶',u:'離開、尋求更深意義、放下',r:'害怕離開、猶豫、回頭'},
-  {n:44,name:'聖杯九',en:'Nine of Cups',emoji:'😊',u:'滿足、願望成真、感恩',r:'不滿、物質主義、空洞的滿足'},
-  {n:45,name:'聖杯十',en:'Ten of Cups',emoji:'🌈',u:'家庭幸福、情感圓滿、和諧',r:'家庭衝突、理想破滅、不完美'},
-  {n:46,name:'聖杯侍者',en:'Page of Cups',emoji:'🐟',u:'創意訊息、情感新開始、直覺',r:'情緒化、不成熟、幻想過度'},
-  {n:47,name:'聖杯騎士',en:'Knight of Cups',emoji:'🏰',u:'浪漫、追求夢想、情感邀約',r:'不切實際、情緒操控、優柔寡斷'},
-  {n:48,name:'聖杯皇后',en:'Queen of Cups',emoji:'🧝',u:'同理心、直覺、情感成熟',r:'情緒過度、依賴、情感封閉'},
-  {n:49,name:'聖杯國王',en:'King of Cups',emoji:'🧙',u:'情感智慧、平靜、慈悲',r:'情緒操控、冷漠、壓抑情感'},
+  {n:42,name:'聖杯七',en:'Seven of Cups',emoji:'💭',u:'幻想、選擇過多、白日夢',r:'看清現實、做出決定、腳踏實地'},
+  {n:43,name:'聖杯八',en:'Eight of Cups',emoji:'🚶',u:'轉身離開、尋求更高意義',r:'害怕未知、停滯不前、逃避'},
+  {n:44,name:'聖杯九',en:'Nine of Cups',emoji:'🌟',u:'願望成真、滿足、感恩',r:'過度放縱、自滿、物質主義'},
+  {n:45,name:'聖杯十',en:'Ten of Cups',emoji:'🌈',u:'家庭幸福、情感圓滿、和平',r:'家庭衝突、關係破裂、孤立'},
+  {n:46,name:'聖杯侍者',en:'Page of Cups',emoji:'🐟',u:'直覺訊息、創造力、溫柔',r:'情緒不成熟、逃避現實、脆弱'},
+  {n:47,name:'聖杯騎士',en:'Knight of Cups',emoji:'🕊️',u:'浪漫、追求理想、邀請',r:'情緒化、過度理想化、不切實際'},
+  {n:48,name:'聖杯皇后',en:'Queen of Cups',emoji:'🧜‍♀️',u:'同理心、直覺、滋養情感',r:'過度依賴、情緒操控、自怨自艾'},
+  {n:49,name:'聖杯國王',en:'King of Cups',emoji:'👑',u:'情緒成熟、智慧、平衡',r:'情緒失控、冷酷、壓抑'},
 
   // ---- 14 Swords 寶劍 ----
-  {n:50,name:'寶劍王牌',en:'Ace of Swords',emoji:'⚔️',u:'清晰、真理、突破、新思維',r:'困惑、殘忍的真相、思維混亂'},
-  {n:51,name:'寶劍二',en:'Two of Swords',emoji:'🗡️',u:'僵局、逃避選擇、內心的平靜',r:'做出決定、打破僵局、資訊揭露'},
-  {n:52,name:'寶劍三',en:'Three of Swords',emoji:'💔',u:'心碎、悲傷、分離、痛苦',r:'癒合、原諒、走出傷痛'},
-  {n:53,name:'寶劍四',en:'Four of Swords',emoji:'🛌',u:'休息、恢復、冥想、獨處',r:'焦躁、無法休息、過度思慮'},
-  {n:54,name:'寶劍五',en:'Five of Swords',emoji:'🥷',u:'衝突、勝利但有代價、自尊',r:'放下爭執、承認錯誤、和解'},
-  {n:55,name:'寶劍六',en:'Six of Swords',emoji:'⛵',u:'過渡、離開痛苦、前往平靜',r:'無法離開、被困住、拒絕改變'},
-  {n:56,name:'寶劍七',en:'Seven of Swords',emoji:'🦊',u:'策略、欺騙、偷偷行動',r:'揭露真相、面對後果、誠實'},
-  {n:57,name:'寶劍八',en:'Eight of Swords',emoji:'🔗',u:'受困、無力感、自我限制',r:'看見出路、打破限制、自由'},
-  {n:58,name:'寶劍九',en:'Nine of Swords',emoji:'😰',u:'焦慮、噩夢、擔憂、恐懼',r:'焦慮減輕、面對恐懼、希望'},
-  {n:59,name:'寶劍十',en:'Ten of Swords',emoji:'🗡️',u:'結束、底谷、徹底摧毀',r:'復原開始、最壞已過、重生'},
-  {n:60,name:'寶劍侍者',en:'Page of Swords',emoji:'🔍',u:'好奇心、新想法、機警',r:'八卦、散播謠言、不成熟的計畫'},
-  {n:61,name:'寶劍騎士',en:'Knight of Swords',emoji:'🏇',u:'迅速行動、直接、雄心',r:'魯莽、衝動、缺乏計畫'},
-  {n:62,name:'寶劍皇后',en:'Queen of Swords',emoji:'❄️',u:'獨立、清晰判斷、直接',r:'冷酷、批判性過強、情感封閉'},
-  {n:63,name:'寶劍國王',en:'King of Swords',emoji:'👨‍⚖️',u:'公正、邏輯、權威、清晰',r:'專制、冷酷、濫用權力'},
+  {n:50,name:'寶劍王牌',en:'Ace of Swords',emoji:'🗡️',u:'清晰思考、突破、真相、新想法',r:'思緒混亂、殘酷言語、錯誤判斷'},
+  {n:51,name:'寶劍二',en:'Two of Swords',emoji:'🙈',u:'猶豫不決、逃避選擇、僵局',r:'打破僵局、看清真相、做出抉擇'},
+  {n:52,name:'寶劍三',en:'Three of Swords',emoji:'💔',u:'心痛、悲傷、失落、背叛',r:'療癒傷痛、原諒、走出陰霾'},
+  {n:53,name:'寶劍四',en:'Four of Swords',emoji:'🛌',u:'休息、恢復、冥想、暫停',r:'過度勞累、孤立、被迫休息'},
+  {n:54,name:'寶劍五',en:'Five of Swords',emoji:'⚔️',u:'衝突、代價昂貴的勝利、自私',r:'放下執念、和解、吸取教訓'},
+  {n:55,name:'寶劍六',en:'Six of Swords',emoji:'🛶',u:'過渡期、遠離困境、療癒旅程',r:'無法放下、被困在過去、顛簸'},
+  {n:56,name:'寶劍七',en:'Seven of Swords',emoji:'🦊',u:'策略、隱密行動、小心被騙',r:'坦誠面對、良心不安、秘密被揭'},
+  {n:57,name:'寶劍八',en:'Eight of Swords',emoji:'⛓️',u:'受困感、自我設限、無助',r:'看清出口、自我解放、克服恐懼'},
+  {n:58,name:'寶劍九',en:'Nine of Swords',emoji:'😱',u:'焦慮、失眠、惡夢、自責',r:'走出焦慮、尋求幫助、希望重燃'},
+  {n:59,name:'寶劍十',en:'Ten of Swords',emoji:'🌅',u:'谷底、痛苦結束、黎明前夕',r:'重生、慢慢復原、抗拒結束'},
+  {n:60,name:'寶劍侍者',en:'Page of Swords',emoji:'🦅',u:'好奇心、敏銳觀察、新消息',r:'輕率發言、八卦、缺乏準備'},
+  {n:61,name:'寶劍騎士',en:'Knight of Swords',emoji:'⚡',u:'果斷、勇敢前進、直率',r:'衝動魯莽、傷人言語、不計後果'},
+  {n:62,name:'寶劍皇后',en:'Queen of Swords',emoji:'❄️',u:'獨立、理智清晰、洞察力',r:'冷酷無情、過度批判、孤傲'},
+  {n:63,name:'寶劍國王',en:'King of Swords',emoji:'⚖️',u:'權威、理智分析、公正判斷',r:'專制霸道、缺乏同理心、苛刻'},
 
   // ---- 14 Pentacles 錢幣 ----
-  {n:64,name:'錢幣王牌',en:'Ace of Pentacles',emoji:'🪙',u:'新財務機會、物質開始、繁榮',r:'錯失機會、財務延遲、貪婪'},
-  {n:65,name:'錢幣二',en:'Two of Pentacles',emoji:'🎭',u:'平衡、管理、適應變化',r:'失衡、超載、無法應對'},
-  {n:66,name:'錢幣三',en:'Three of Pentacles',emoji:'🏗️',u:'團隊合作、技藝、專業',r:'缺乏合作、品質下降、平庸'},
-  {n:67,name:'錢幣四',en:'Four of Pentacles',emoji:'🔒',u:'安全、保守、囤積、穩定',r:'放手、慷慨、放下控制'},
-  {n:68,name:'錢幣五',en:'Five of Pentacles',emoji:'🏚️',u:'匱乏、困難、孤立、匱乏',r:'走出困境、找到幫助、恢復'},
-  {n:69,name:'錢幣六',en:'Six of Pentacles',emoji:'🤝',u:'慷慨、給予與接收、平衡',r:'不平等、施捨心態、債務'},
-  {n:70,name:'錢幣七',en:'Seven of Pentacles',emoji:'🌿',u:'耐心等待、評估進展、投資',r:'不耐煩、成果不足、浪費'},
-  {n:71,name:'錢幣八',en:'Eight of Pentacles',emoji:'⚒️',u:'精進、專注、技藝磨練',r:'偷工減料、缺乏熱情、平庸'},
-  {n:72,name:'錢幣九',en:'Nine of Pentacles',emoji:'🦚',u:'獨立、自足、豐盛、優雅',r:'依賴他人、過度消費、空虛'},
-  {n:73,name:'錢幣十',en:'Ten of Pentacles',emoji:'🏛️',u:'家族遺產、長期穩定、繁榮',r:'家族衝突、財務損失、基礎不穩'},
-  {n:74,name:'錢幣侍者',en:'Page of Pentacles',emoji:'🌾',u:'學習、新技能、實用計畫',r:'拖延、缺乏承諾、短視'},
-  {n:75,name:'錢幣騎士',en:'Knight of Pentacles',emoji:'🐢',u:'勤奮、可靠、穩步前進',r:'停滯、過於保守、缺乏動力'},
-  {n:76,name:'錢幣皇后',en:'Queen of Pentacles',emoji:'👩‍🌾',u:'實用、照顧、豐饒、溫暖',r:'過度付出、忽視自己、物質主義'},
+  {n:64,name:'錢幣王牌',en:'Ace of Pentacles',emoji:'🪙',u:'新財富機會、物質豐盛、穩定',r:'錯失良機、財務風險、短視'},
+  {n:65,name:'錢幣二',en:'Two of Pentacles',emoji:'🤹',u:'平衡多重責任、靈活應變',r:'財務失衡、壓力過大、混亂'},
+  {n:66,name:'錢幣三',en:'Three of Pentacles',emoji:'🏛️',u:'團隊合作、專業技能、認可',r:'缺乏合作、技能不足、摩擦'},
+  {n:67,name:'錢幣四',en:'Four of Pentacles',emoji:'🔒',u:'守成、物質安全、保守執著',r:'過度吝嗇、恐懼失去、固步自封'},
+  {n:68,name:'錢幣五',en:'Five of Pentacles',emoji:'🏚️',u:'物質困境、孤立無援、匱乏感',r:'困境改善、走出陰霾、得到援助'},
+  {n:69,name:'錢幣六',en:'Six of Pentacles',emoji:'🤝',u:'慷慨分享、施與受、慈善',r:'不平等的給予、利用他人、債務'},
+  {n:70,name:'錢幣七',en:'Seven of Pentacles',emoji:'🌾',u:'耐心等待、評估成果、長期投資',r:'焦躁不安、缺乏耐心、回報不如預期'},
+  {n:71,name:'錢幣八',en:'Eight of Pentacles',emoji:'🔨',u:'專注工藝、勤勉精進、細節',r:'敷衍了事、缺乏熱情、完美主義'},
+  {n:72,name:'錢幣九',en:'Nine of Pentacles',emoji:'🍇',u:'自給自足、享受成果、優雅獨立',r:'過度依賴、財務焦慮、空虛'},
+  {n:73,name:'錢幣十',en:'Ten of Pentacles',emoji:'🏰',u:'家族傳承、長期繁榮、安全感',r:'家族紛爭、財務損失、缺乏基礎'},
+  {n:74,name:'錢幣侍者',en:'Page of Pentacles',emoji:'📖',u:'認真學習、務實起步、機會',r:'缺乏專注、拖延、缺乏規劃'},
+  {n:75,name:'錢幣騎士',en:'Knight of Pentacles',emoji:'🐂',u:'勤勉可靠、責任心、步步為營',r:'固執死板、過度保守、缺乏動力'},
+  {n:76,name:'錢幣皇后',en:'Queen of Pentacles',emoji:'🌻',u:'溫暖滋養、務實管理、繁榮',r:'物質焦慮、疏於照顧自我、控制'},
   {n:77,name:'錢幣國王',en:'King of Pentacles',emoji:'🤴',u:'成功、穩定、財富、務實',r:'貪婪、固執、過度物質導向'}
 ];
 
@@ -1084,221 +753,47 @@ var DECK = [
    SPREAD DEFINITIONS
    ===================================================================== */
 var SPREADS = {
-  daily: {
-    name: '每日運勢與靈性指引',
-    count: 1,
-    positions: ['今日核心能量']
-  },
   timeline: {
-    name: '時間流牌陣',
+    name: '時間流三牌陣',
     count: 3,
-    positions: ['過去 / 原因', '現在 / 狀態', '未來 / 趨勢']
+    positions: ['過去 / 因由', '現在 / 狀態', '未來 / 趨勢']
+  },
+  daily: {
+    name: '單張直斷 / 每日指引',
+    count: 1,
+    positions: ['今日核心能量 / 是非直斷']
   },
   choice: {
     name: '二選一抉擇牌陣',
-    count: 5,
-    positions: ['當前困境', '選擇 A 的後果', '選擇 B 的後果', '選擇 A 的建議', '選擇 B 的建議']
+    count: 3,
+    positions: ['當前困境與現狀', '選擇 A 的發展後果', '選擇 B 的發展後果']
   },
   love: {
-    name: '感情關係牌陣',
+    name: '感情關係深度牌陣',
     count: 4,
-    positions: ['我的真實想法', '對方的真實想法', '兩人當前障礙', '未來關係發展']
+    positions: ['我的真實心態', '對方的真實心態', '兩人當前阻礙', '未來關係走向']
   },
   celtic: {
-    name: '凱爾特十字牌陣',
+    name: '凱爾特十字深度牌陣',
     count: 10,
-    positions: ['現況 / 核心主題', '挑戰 / 阻礙', '潛意識 / 底層動機', '過去 / 近期基礎',
-                '最佳可能結果', '近期未來', '你的態度與能量', '外在環境影響',
-                '希望與恐懼', '最終結果']
+    positions: ['現況 / 核心主題', '挑戰 / 阻礙', '潛意識動機', '過去基礎',
+                '最佳結果', '近期未來', '自身態度', '外在環境',
+                '希望與恐懼', '最終預測']
   }
 };
 
 /* =====================================================================
-   i18n DICTIONARY
-   ===================================================================== */
-var i18n = {
-  "zh-TW": {
-    selectSpread: '選擇牌陣',
-    spreadSubtitle: '根據你的問題選擇最適合的牌陣。',
-    yourQuestion: '你的問題',
-    questionSubtitle: '靜心專注，將你的問題清楚地寫下來。問題越具體，指引越精準。',
-    specificQuestion: '具體問題',
-    questionPlaceholder: '例如：我下個月的工作變動會帶來什麼結果？',
-    questionCategory: '問題類別',
-    startShuffle: '開始洗牌抽牌',
-    clickToFlip: '點擊每一張牌卡以翻開',
-    tableSubtitle: '從牌堆中點選所有卡片以揭曉你的命運。',
-    flippedProgress: '已翻開',
-    allFlipped: '所有牌卡已揭曉，正在召喚 AI 深度解牌...',
-    aiDeepReading: 'AI 深度解牌',
-    aiThinking: 'AI 正在深度解牌中，請稍候...',
-    followUpTitle: '向 AI 塔羅導師追問',
-    followUpPlaceholder: '輸入你的追問...',
-    copyReport: '複製占卜戰報',
-    saveRecord: '儲存占卜紀錄',
-    restartReading: '重新占卜',
-    historyTitle: '占卜紀錄',
-    historySubtitle: '你過去的所有占卜紀錄，儲存在本地瀏覽器中。',
-    noHistory: '尚無占卜紀錄。完成占卜後點擊「儲存占卜紀錄」即可保存。',
-    reversed: '逆位',
-    upright: '正位',
-    reportCopied: '占卜戰報已複製到剪貼簿！',
-    recordSaved: '占卜紀錄已儲存！',
-    journalTitle: '📖 歷史占卜日誌',
-    journalSubtitle: '回顧你過去的所有占卜旅程。',
-    followUpCountHint: '(追問次數：'
-  },
-  "en": {
-    selectSpread: 'Select Spread',
-    spreadSubtitle: 'Choose the best spread for your question.',
-    yourQuestion: 'Your Question',
-    questionSubtitle: 'Focus your mind and write your question clearly. The more specific, the more precise the guidance.',
-    specificQuestion: 'Specific Question',
-    questionPlaceholder: 'e.g. What will be the result of my job change next month?',
-    questionCategory: 'Question Category',
-    startShuffle: 'Shuffle & Draw Cards',
-    clickToFlip: 'Click each card to flip it',
-    tableSubtitle: 'Tap all cards to reveal your destiny.',
-    flippedProgress: 'Flipped',
-    allFlipped: 'All cards revealed. Summoning AI deep reading...',
-    aiDeepReading: 'AI Deep Reading',
-    aiThinking: 'AI is performing deep reading, please wait...',
-    followUpTitle: 'Ask the Tarot Master',
-    followUpPlaceholder: 'Enter your follow-up question...',
-    copyReport: 'Copy Reading Report',
-    saveRecord: 'Save Reading Record',
-    restartReading: 'New Reading',
-    historyTitle: 'Reading History',
-    historySubtitle: 'All your past reading records stored locally.',
-    noHistory: 'No readings yet. Complete a reading and click Save to keep a record.',
-    reversed: 'Reversed',
-    upright: 'Upright',
-    reportCopied: 'Reading report copied to clipboard!',
-    recordSaved: 'Reading record saved!',
-    journalTitle: '📖 Reading Journal',
-    journalSubtitle: 'Review your past tarot journeys.',
-    followUpCountHint: '(Follow-ups: '
-  }
-};
-
-// Current language (default zh-TW, can be switched later)
-var currentLang = 'zh-TW';
-function t(key) { return (i18n[currentLang] && i18n[currentLang][key]) || i18n['zh-TW'][key] || key; }
-
-/* =====================================================================
-   STATE
+   APP STATE & CONVERSATIONAL HISTORY
    ===================================================================== */
 var state = {
-  spread: 'daily',
-  cards: [],
-  drawn: [],
-  flipped: 0,
-  flippedCount: 0,
-  geminiModel: 'gemini-2.5-flash',
+  selectedSpread: 'timeline',
   apiKey: '',
-  chatContext: '',
-  isChatMode: false,
-  followUpCount: 0,
-  maxFollowUps: 3,
-  journalHistory: []
-};
-
-/* =====================================================================
-   PRESET QUESTIONS BY CATEGORY
-   ===================================================================== */
-var PRESET_QUESTIONS = {
-  love: [
-    "我和目前的對象未來三個月的感情發展與走向如何？",
-    "我和前任還有復合的機會嗎？對方現在對我是什麼想法？",
-    "我的下一段正緣桃花什麼時候會出現？對方有什麼特徵？",
-    "目前曖昧中的對象對我是真心的嗎？我們有可能在一起嗎？",
-    "我們這段關係目前的盲點與最大阻礙是什麼？該如何突破？",
-    "我該繼續堅持這段感情，還是選擇放下停損？"
-  ],
-  career: [
-    "我近期適合換工作或轉職跳槽嗎？新機會發展如何？",
-    "目前這份工作未來的升遷與薪資發展潛力如何？",
-    "如果我選擇創業或開展副業，未來的成功機率與挑戰是什麼？",
-    "我在職場上該如何改善與主管/同事的關係與合作？",
-    "我目前的職業瓶頸是什麼？我該培養什麼核心競爭力？",
-    "面對兩個工作機會（A vs B），哪一個更適合我的長期發展？"
-  ],
-  finance: [
-    "我未來半年的整體財運走勢與主要收入來源如何？",
-    "我目前看好的這項投資/理財計畫風險與回報如何？",
-    "我近期是否有偏財運或意外之財的機會？",
-    "如何改善我目前的財務壓力或漏財狀況？",
-    "未來三個月在金錢規劃上需要特別注意什麼陷阱或風險？"
-  ],
-  decision: [
-    "在選項 A 與選項 B 之間，哪一個選擇對我最有利？",
-    "如果我選擇出國/搬家/換新環境，會為我帶來什麼轉機？",
-    "如果我決定結束目前的合作或合夥，會有什麼後續影響？",
-    "面對這個艱難的抉擇，我內心最真實的聲音與盲點是什麼？",
-    "現在是採取行動的最佳時機，還是應該先靜觀其變？"
-  ],
-  interpersonal: [
-    "我和特定朋友/合夥人之間的關係未來會如何發展？",
-    "職場中有小人暗中作梗嗎？我該如何保護自己與化解？",
-    "我該如何改善與家人或伴侶長輩之間的緊張關係？",
-    "如何在社交圈中建立更深層、真誠且有支持性的人脈？"
-  ],
-  study: [
-    "我即將面臨的考試/證照/面試運勢與結果如何？",
-    "在目前的學業或專業進修中，我該如何突破瓶頸提升效率？",
-    "我適合選擇哪一個科系/留學方向或專業領域深造？",
-    "如何克服備考期間的焦慮與分心，達到最佳發揮？"
-  ],
-  health: [
-    "我近期的身心能量狀態如何？有哪些潛在的疲勞壓力？",
-    "我該如何調整生活節奏，讓身心獲得深層的放鬆與修復？",
-    "這段時間情緒起伏較大的深層原因是什麼？如何自我療癒？"
-  ],
-  spiritual: [
-    "我目前正處於人生的哪一個靈魂課題與成長階段？",
-    "宇宙/守護靈想在現階段傳遞給我最重要的指引是什麼？",
-    "如何喚醒我內在的潛能，找到真正有熱情的人生使命？",
-    "這段低潮期帶給我的禮物與智慧是什麼？"
-  ],
-  general: [
-    "我未來一個月/一季的整體綜合運勢與核心關鍵事件是什麼？",
-    "此時此刻我最需要關注並付諸行動的事項是什麼？",
-    "近期生活中可能出現什麼意外的驚喜或轉機？",
-    "我該如何打破現狀的停滯感，迎來全新的好運流動？"
-  ]
-};
-
-function populatePresetQuestions(category) {
-  var select = document.getElementById('preset-question-select');
-  if (!select) return;
-  select.innerHTML = '';
-
-  var defaultOpt = document.createElement('option');
-  defaultOpt.value = '';
-  defaultOpt.textContent = '✨ 點此選擇常見問題快速帶入... (或於下方自行輸入)';
-  select.appendChild(defaultOpt);
-
-  var list = PRESET_QUESTIONS[category] || PRESET_QUESTIONS['general'] || [];
-  list.forEach(function(q) {
-    var opt = document.createElement('option');
-    opt.value = q;
-    opt.textContent = q;
-    select.appendChild(opt);
-  });
-}
-
-window.onCategoryChange = function() {
-  var cat = document.getElementById('category-select').value;
-  populatePresetQuestions(cat);
-};
-
-window.onPresetQuestionSelect = function() {
-  var select = document.getElementById('preset-question-select');
-  if (select && select.value) {
-    var qInput = document.getElementById('question-input');
-    qInput.value = select.value;
-    qInput.focus();
-  }
+  geminiModel: 'gemini-2.5-flash',
+  chatHistory: [],
+  isProcessing: false,
+  pendingStart: false,
+  speechRecognition: null,
+  isRecordingVoice: false
 };
 
 /* =====================================================================
@@ -1306,23 +801,15 @@ window.onPresetQuestionSelect = function() {
    ===================================================================== */
 function encodeApiKey(key) {
   if (!key) return '';
-  try {
-    return 'obf_' + btoa(encodeURIComponent(key));
-  } catch(e) {
-    return key;
-  }
+  try { return 'obf_' + btoa(encodeURIComponent(key)); } catch(e) { return key; }
 }
 
 function decodeApiKey(raw) {
   if (!raw) return '';
   if (raw.indexOf('obf_') === 0) {
-    try {
-      return decodeURIComponent(atob(raw.slice(4)));
-    } catch(e) {
-      return raw.slice(4);
-    }
+    try { return decodeURIComponent(atob(raw.slice(4))); } catch(e) { return raw.slice(4); }
   }
-  return raw; // Backward-compatible with plain text
+  return raw;
 }
 
 function maskApiKey(key) {
@@ -1332,8 +819,8 @@ function maskApiKey(key) {
 }
 
 function getGlobalApiKey() {
-  var raw = localStorage.getItem('gugopro_gemini_api_key') || localStorage.getItem('gemini_api_key') || localStorage.getItem('tarot_api_key') || '';
-  var decoded = decodeApiKey(raw.trim());
+  var raw = (localStorage.getItem('gugopro_gemini_api_key') || localStorage.getItem('gemini_api_key') || localStorage.getItem('tarot_api_key') || '').trim();
+  var decoded = decodeApiKey(raw);
   if (decoded && raw.indexOf('obf_') !== 0) {
     setGlobalApiKey(decoded);
   }
@@ -1345,7 +832,6 @@ function setGlobalApiKey(key) {
     localStorage.removeItem('gugopro_gemini_api_key');
     localStorage.removeItem('gemini_api_key');
     localStorage.removeItem('tarot_api_key');
-    state.apiKey = '';
     updateKeyUI();
     return;
   }
@@ -1353,7 +839,6 @@ function setGlobalApiKey(key) {
   localStorage.setItem('gugopro_gemini_api_key', obf);
   localStorage.setItem('gemini_api_key', obf);
   localStorage.setItem('tarot_api_key', obf);
-  state.apiKey = key.trim();
   updateKeyUI();
 }
 
@@ -1362,9 +847,8 @@ function updateKeyUI() {
   var navStatus = document.getElementById('nav-key-status');
   var statusBox = document.getElementById('modal-key-status-box');
   var maskedDisplay = document.getElementById('modal-masked-key-display');
-  var clearBtn = document.getElementById('btn-clear-key');
-  var inputLabel = document.getElementById('modal-input-label');
-  
+  var clearBtn = document.getElementById('btn-modal-clear-key');
+
   if (navStatus) {
     navStatus.textContent = key ? 'API 已連線 ⚙️' : 'API 設定 ⚙️';
   }
@@ -1372,11 +856,9 @@ function updateKeyUI() {
     if (statusBox) statusBox.style.display = '';
     if (maskedDisplay) maskedDisplay.textContent = maskApiKey(key);
     if (clearBtn) clearBtn.style.display = '';
-    if (inputLabel) inputLabel.innerHTML = '<i class="fa-solid fa-pen-to-square"></i> 更換 Gemini API Key';
   } else {
     if (statusBox) statusBox.style.display = 'none';
     if (clearBtn) clearBtn.style.display = 'none';
-    if (inputLabel) inputLabel.innerHTML = '<i class="fa-solid fa-lock"></i> 輸入您的 Gemini API Key';
   }
 }
 
@@ -1384,12 +866,12 @@ window.openApiKeyModal = function() {
   updateKeyUI();
   var input = document.getElementById('modal-api-key');
   if (input) input.value = '';
-  var modal = document.getElementById('api-modal');
+  var modal = document.getElementById('modal-api');
   if (modal) modal.classList.add('show');
 };
 
 window.closeApiKeyModal = function() {
-  var modal = document.getElementById('api-modal');
+  var modal = document.getElementById('modal-api');
   if (modal) modal.classList.remove('show');
 };
 
@@ -1403,32 +885,7 @@ window.clearApiKey = function() {
   }
 };
 
-/* =====================================================================
-   INIT
-   ===================================================================== */
-function init() {
-  // 全站統一 API Key 混淆讀取
-  var key = getGlobalApiKey();
-  if (key) {
-    state.apiKey = key;
-  }
-  updateKeyUI();
-
-  // 初始化常見問題下拉選單
-  var catSelect = document.getElementById('category-select');
-  if (catSelect) {
-    populatePresetQuestions(catSelect.value);
-  }
-
-  fetchModel();
-  loadHistory();
-  renderJournal();
-  if (typeof gtag === 'function') {
-    gtag('event', 'page_view', {'event_category': 'tool', 'page_title': 'tarot-master'});
-  }
-}
-
-function saveModalApiKey() {
+window.saveApiKeyFromModal = function() {
   var modalInput = document.getElementById('modal-api-key');
   var key = (modalInput ? modalInput.value : '').trim();
   if (!key && !getGlobalApiKey()) {
@@ -1442,220 +899,63 @@ function saveModalApiKey() {
 
   if (state.pendingStart) {
     state.pendingStart = false;
-    startReading();
+    submitUserQuestion();
   }
-}
-
-async function fetchModel() {
-  try {
-    var resp = await fetch('https://quota.gugopro.com/', {method:'GET', cache:'no-store'});
-    if (resp.ok) {
-      var data = await resp.json();
-      // Try to find a free gemini model
-      if (data && data.models) {
-        var models = Array.isArray(data.models) ? data.models : [];
-        var freeGemini = models.find(function(m) {
-          return (m.id || '').toLowerCase().includes('gemini') &&
-                 !(m.id || '').toLowerCase().includes('1.5') &&
-                 !(m.id || '').toLowerCase().includes('gemini-pro');
-        });
-        if (freeGemini) {
-          state.geminiModel = freeGemini.id;
-        }
-      }
-    }
-  } catch(e) {
-    // Keep default gemini-2.5-flash
-  }
-}
-
-/* =====================================================================
-   SPREAD SELECTION
-   ===================================================================== */
-window.selectSpread = function(spread) {
-  state.spread = spread;
-  document.querySelectorAll('.spread-card').forEach(function(c) { c.classList.remove('active'); });
-  document.querySelector('.spread-card[data-spread="' + spread + '"]').classList.add('active');
 };
 
 /* =====================================================================
-   START READING (洗牌 -> 自動連續翻牌 -> 自動 AI 深度解牌)
+   SPREAD SELECTION & TOP CHIPS
    ===================================================================== */
-window.startReading = function() {
-  var question = document.getElementById('question-input').value.trim();
-  if (!question) { alert('請先輸入你的問題。'); return; }
-
-  // 檢查全站 API Key 配置，未配置時彈出設定視窗攔截
-  var key = getGlobalApiKey();
-  if (!key) {
-    state.pendingStart = true;
-    openApiKeyModal();
-    return;
-  }
-  state.apiKey = key;
-
-  var spread = SPREADS[state.spread];
-  var count = spread.count;
-
-  // Shuffle and draw
-  var deck = DECK.slice();
-  for (var i = deck.length - 1; i > 0; i--) {
-    var j = Math.floor(Math.random() * (i + 1));
-    var tmp = deck[i]; deck[i] = deck[j]; deck[j] = tmp;
-  }
-  state.cards = deck.slice(0, count);
-  state.drawn = state.cards.map(function(c) {
-    return { card: c, reversed: Math.random() < 0.5, position: '' };
+window.selectSpread = function(spreadKey) {
+  if (!SPREADS[spreadKey]) return;
+  state.selectedSpread = spreadKey;
+  document.querySelectorAll('.spread-chip').forEach(function(chip) {
+    chip.classList.toggle('active', chip.getAttribute('data-spread') === spreadKey);
   });
-  state.flipped = 0;
-  state.flippedCount = 0;
+  showToast('已切換牌陣：' + SPREADS[spreadKey].name);
+};
 
-  // Hide action sections and reset loading state
-  document.getElementById('ai-reading-section').style.display = 'none';
-  document.getElementById('action-section').style.display = 'none';
-  var loadingCard = document.getElementById('ai-loading-container');
-  if (loadingCard) loadingCard.style.display = 'none';
-  var readingBox = document.getElementById('ai-reading-box');
-  if (readingBox) readingBox.style.display = 'none';
-  var chatArea = document.getElementById('chat-area');
-  if (chatArea) chatArea.style.display = 'none';
-
-  // Show card table
-  var tableSection = document.getElementById('card-table-section');
-  tableSection.style.display = '';
-
-  var table = document.getElementById('card-table');
-  table.innerHTML = '';
-
-  var instructions = document.getElementById('card-instructions');
-  instructions.innerHTML = '<i class="fa-solid fa-wand-sparkles" style="color:var(--neon-gold);"></i> ✨ 牌陣生成中，正在為您連續自動翻牌揭曉...';
-
-  var subtitle = document.getElementById('table-subtitle');
-  subtitle.textContent = '命運牌陣已就位，系統將依序自動翻開所有 ' + count + ' 張牌卡。';
-
-  // Create cards with staggered dealing animation
-  for (var idx = 0; idx < count; idx++) {
-    var d = state.drawn[idx];
-    var el = document.createElement('div');
-    el.className = 'tarot-card dealing';
-    el.style.animationDelay = (idx * 0.12) + 's';
-    el.style.cursor = 'default';
-    el.dataset.idx = idx;
-
-    var posLabel = spread.positions[idx] || '';
-    var revLabel = d.reversed ? '<div class="cf-reversed">逆位</div>' : '<div class="cf-reversed" style="color:var(--neon-gold);">正位</div>';
-
-    el.innerHTML =
-      '<div class="card-back"><div class="card-back-pattern"></div></div>' +
-      '<div class="card-glow"></div>' +
-      '<div class="card-front-inner"' + (d.reversed ? ' style="transform: rotateY(180deg) rotate(180deg);"' : '') + '>' +
-        '<div class="cf-emoji">' + d.card.emoji + '</div>' +
-        '<div class="cf-name">' + d.card.name + '</div>' +
-        '<div class="cf-position">' + posLabel + '</div>' +
-        revLabel +
-      '</div>';
-
-    table.appendChild(el);
+window.quickAsk = function(questionText) {
+  var input = document.getElementById('chat-user-input');
+  if (input) {
+    input.value = questionText;
+    submitUserQuestion();
   }
+};
 
-  // Smooth scroll to card table
+/* =====================================================================
+   CHAT FEED RENDERING HELPERS
+   ===================================================================== */
+function appendMessage(role, htmlContent) {
+  var chatFeed = document.getElementById('chat-feed');
+  var msgDiv = document.createElement('div');
+  msgDiv.className = 'message-item ' + (role === 'user' ? 'user' : 'ai');
+
+  var avatar = role === 'user' ? '<i class="fa-solid fa-user"></i>' : '🔮';
+  msgDiv.innerHTML = '<div class="msg-avatar">' + avatar + '</div><div class="msg-body">' + htmlContent + '</div>';
+
+  chatFeed.appendChild(msgDiv);
   setTimeout(function() {
-    tableSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, 100);
+    msgDiv.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, 50);
 
-  // Trigger Automatic Sequential Reveal Flow & Auto-AI Reading
-  autoRevealCards(count, spread);
-
-  if (typeof gtag === 'function') {
-    gtag('event', 'tarot_spread_selected', {
-      'event_category': 'tarot',
-      'event_label': state.spread,
-      'value': count
-    });
-  }
-};
-
-/* =====================================================================
-   AUTO-REVEAL FLOW (全自動連續翻牌揭曉 -> 自動觸發 AI 解盤)
-   ===================================================================== */
-function autoRevealCards(count, spread) {
-  var cards = document.querySelectorAll('.tarot-card');
-  var instructions = document.getElementById('card-instructions');
-
-  for (var i = 0; i < count; i++) {
-    (function(index) {
-      var delay = (index * 380) + 400; // 依序每 380ms 翻開一張
-      setTimeout(function() {
-        if (cards[index]) {
-          cards[index].classList.add('flipped');
-          if (navigator.vibrate) { navigator.vibrate([20, 30]); }
-          state.flippedCount = index + 1;
-          if (instructions) {
-            instructions.innerHTML = '<i class="fa-solid fa-wand-sparkles" style="color:var(--neon-gold);"></i> 正在連續揭曉牌面 (' + state.flippedCount + '/' + count + ')...';
-          }
-        }
-
-        // 當最後一張翻開完畢，立即自動調用 AI 解牌
-        if (index === count - 1) {
-          setTimeout(function() {
-            if (instructions) {
-              instructions.innerHTML = '<i class="fa-solid fa-wand-sparkles" style="color:var(--neon-gold);"></i> ✨ 牌陣已全數自動揭曉！AI 靈性導師正為您深度解析中...';
-            }
-            showBasicReading();
-            var readingSec = document.getElementById('ai-reading-section');
-            readingSec.style.display = '';
-            document.getElementById('action-section').style.display = '';
-            
-            // 自動平滑滾動至解牌內容區塊
-            setTimeout(function() {
-              readingSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 300);
-
-            // 自動觸發 Gemini API 深度解析 (零二次阻斷)
-            generateReading();
-          }, 450);
-        }
-      }, delay);
-    })(i);
-  }
+  return msgDiv;
 }
 
-/* =====================================================================
-   BASIC READING (FREE MODE)
-   ===================================================================== */
-function showBasicReading() {
-  var spread = SPREADS[state.spread];
-  var container = document.getElementById('basic-reading');
-  var html = '<h4><i class="fa-solid fa-book-open"></i> 基礎牌義速覽（經典韋特塔羅）</h4>';
-
-  state.drawn.forEach(function(d, i) {
-    var pos = spread.positions[i] || '位置 ' + (i+1);
-    var meaning = d.reversed ? d.card.r : d.card.u;
-    var tagClass = d.reversed ? 'rev-tag' : 'up-tag';
-    var tagText = d.reversed ? '逆位' : '正位';
-
-    html +=
-      '<div class="br-card">' +
-        '<div class="br-position"><i class="fa-solid fa-location-dot"></i> ' + pos + '</div>' +
-        '<div class="br-card-name">' + d.card.emoji + ' ' + d.card.name + ' (' + d.card.en + ')</div>' +
-        '<div class="br-meaning"><span class="' + tagClass + '">' + tagText + '</span> ' + meaning + '</div>' +
-      '</div>';
-  });
-
-  container.innerHTML = html;
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-/* =====================================================================
-   TAROT REPORT FORMATTER (MARKDOWN TO STRUCTURED HTML)
-   ===================================================================== */
 function renderTarotReport(rawText) {
   if (!rawText) return '<p>尚無解讀內容。</p>';
   var escaped = escapeHtml(rawText);
-  // Parse bold **text**
+  // Bold formatting
   escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong style="color:var(--neon-gold); font-weight:700;">$1</strong>');
-  
-  var lines = escaped.split('\n');
-  var html = '<h3><i class="fa-solid fa-wand-magic-sparkles" style="color: var(--neon-gold);"></i> ✨ AI 靈性導師深度解牌報告</h3>';
+
+  var lines = escaped.split('
+');
+  var html = '<div style="margin-top:8px;">';
   var inSection = false;
   var currentSectionContent = '';
   var currentSectionTheme = '';
@@ -1713,13 +1013,25 @@ function renderTarotReport(rawText) {
     }
   }
   flushSection();
+  html += '</div>';
   return html;
 }
 
 /* =====================================================================
-   AI READING (GEMINI API 深度解析)
+   MAIN CONVERSATIONAL WORKFLOW
    ===================================================================== */
-async function generateReading() {
+window.handleInputKeydown = function(event) {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    submitUserQuestion();
+  }
+};
+
+window.submitUserQuestion = function() {
+  var input = document.getElementById('chat-user-input');
+  var question = (input ? input.value : '').trim();
+  if (!question) return;
+
   var key = getGlobalApiKey();
   if (!key) {
     state.pendingStart = true;
@@ -1728,409 +1040,478 @@ async function generateReading() {
   }
   state.apiKey = key;
 
-  var spread = SPREADS[state.spread];
-  var question = document.getElementById('question-input').value.trim();
-  var category = document.getElementById('category-select').value;
-  var categoryNames = {
-    general: '綜合運勢',
-    love: '愛情感情',
-    career: '事業工作',
-    finance: '財務金錢',
-    health: '健康身心',
-    decision: '決策選擇',
-    interpersonal: '人際關係',
-    study: '學業進修',
-    spiritual: '靈性成長'
-  };
+  // Clear input
+  input.value = '';
+  input.style.height = 'auto';
 
-  // Show active multi-step loading card
-  var loadingCard = document.getElementById('ai-loading-container');
-  var readingBox = document.getElementById('ai-reading-box');
-  var stepTitle = document.getElementById('ai-loading-step-title');
-  var stepSub = document.getElementById('ai-loading-step-sub');
-  var progressFill = document.getElementById('ai-progress-bar-fill');
+  // 1. Render User Message
+  appendMessage('user', escapeHtml(question));
 
-  if (loadingCard) {
-    loadingCard.style.display = '';
+  // Check if this is an initial reading in the session or a follow-up
+  if (state.chatHistory.length === 0) {
+    // Initial Reading: create in-chat 3D Card Spread component
+    handleInitialReadingFlow(question);
+  } else {
+    // Multi-turn Follow-up conversation
+    handleFollowUpFlow(question);
   }
-  if (readingBox) readingBox.style.display = 'none';
+};
 
-  if (progressFill) progressFill.style.width = '20%';
-  if (stepTitle) stepTitle.textContent = '🔮 正在連結宇宙星象與 Gemini AI 靈性導師...';
-  if (stepSub) stepSub.textContent = '建立靈性通道，啟動深度多維矩陣解析';
+/* =====================================================================
+   FLOW A: INITIAL READING WITH IN-CHAT 3D CARD SPREAD
+   ===================================================================== */
+function handleInitialReadingFlow(question) {
+  var spread = SPREADS[state.selectedSpread];
+  var count = spread.count;
 
-  var stepTimer1 = setTimeout(function() {
-    if (progressFill) progressFill.style.width = '55%';
-    if (stepTitle) stepTitle.textContent = '🌌 正在深度解構 ' + spread.name + ' 牌陣能量與正逆位意涵...';
-    if (stepSub) stepSub.textContent = '結合您的問題「' + question + '」進行全方位交叉推演';
-  }, 1400);
+  // Shuffle 78 Deck
+  var deck = DECK.slice();
+  for (var i = deck.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = deck[i]; deck[i] = deck[j]; deck[j] = tmp;
+  }
+  var drawnCards = deck.slice(0, count).map(function(c, idx) {
+    return {
+      card: c,
+      reversed: Math.random() < 0.35,
+      position: spread.positions[idx] || ('位置 ' + (idx + 1))
+    };
+  });
 
-  var stepTimer2 = setTimeout(function() {
-    if (progressFill) progressFill.style.width = '85%';
-    if (stepTitle) stepTitle.textContent = '✨ 正在為您生成客製化行動建議與靈性對策...';
-    if (stepSub) stepSub.textContent = '提煉核心指引，為下一步決策提供清晰藍圖';
-  }, 3200);
+  // Render AI Response Message with Embedded Spread
+  var instanceId = 'spread_' + Date.now();
+  var cardHtml = '';
+  for (var idx = 0; idx < count; idx++) {
+    var d = drawnCards[idx];
+    var revClass = d.reversed ? 'reversed' : 'upright';
+    var revText = d.reversed ? '逆位' : '正位';
+    cardHtml +=
+      '<div class="tarot-card" id="' + instanceId + '_card_' + idx + '">' +
+        '<div class="card-back"><div class="card-back-pattern">✦</div></div>' +
+        '<div class="card-front-inner"' + (d.reversed ? ' style="transform: rotateY(180deg) rotate(180deg);"' : '') + '>' +
+          '<div class="cf-emoji">' + d.card.emoji + '</div>' +
+          '<div class="cf-name">' + d.card.name + '</div>' +
+          '<div class="cf-position">' + d.position.split(' ')[0] + '</div>' +
+          '<span class="cf-tag ' + revClass + '">' + revText + '</span>' +
+        '</div>' +
+      '</div>';
+  }
 
-  // Build prompt
-  var cardDescriptions = state.drawn.map(function(d, i) {
-    var pos = spread.positions[i] || '位置' + (i+1);
+  var aiMsgHtml =
+    '<p>我已感知到你對<strong>「' + escapeHtml(question) + '」</strong>的探索之念。牌陣<strong>【' + spread.name + '】</strong>已就位，請閉上雙眼靜心調頻，點擊下方按鈕開始為你洗牌並揭示牌面。</p>' +
+    '<div class="inchat-spread-box" id="' + instanceId + '_box">' +
+      '<div class="inchat-spread-header"><i class="fa-solid fa-wand-magic-sparkles"></i> ' + spread.name + '（' + count + ' 張牌）</div>' +
+      '<div class="inchat-card-row">' + cardHtml + '</div>' +
+      '<div id="' + instanceId + '_action_container">' +
+        '<button class="btn-start-deal" id="' + instanceId + '_btn" onclick="executeInChatDeal('' + instanceId + '')">' +
+          '<i class="fa-solid fa-shuffle"></i> 🔮 靜心默念・開始洗牌抽牌' +
+        '</button>' +
+      '</div>' +
+      '<div class="ai-inline-loading" id="' + instanceId + '_loading" style="display:none;">' +
+        '<div class="ai-orb-mini"></div>' +
+        '<div id="' + instanceId + '_status_text" style="font-size:0.88rem; font-weight:700; color:var(--neon-gold);">🔮 正在連結宇宙星象與 Gemini AI 靈性導師...</div>' +
+        '<div class="ai-inline-progress-bg"><div class="ai-inline-progress-fill" id="' + instanceId + '_pfill"></div></div>' +
+        '<div style="font-size:0.78rem; color:var(--text-muted);">正在進行深度交叉推演，約需 3~5 秒...</div>' +
+      '</div>' +
+      '<div id="' + instanceId + '_result_box" style="text-align:left; display:none;"></div>' +
+    '</div>';
+
+  var aiMsgElement = appendMessage('ai', aiMsgHtml);
+
+  // Store active context for this reading
+  state.currentReading = {
+    instanceId: instanceId,
+    question: question,
+    spread: spread,
+    drawnCards: drawnCards,
+    msgElement: aiMsgElement
+  };
+}
+
+/* =====================================================================
+   AUTO FLIP & GEMINI API CALL FOR IN-CHAT SPREAD
+   ===================================================================== */
+window.executeInChatDeal = async function(instanceId) {
+  var reading = state.currentReading;
+  if (!reading || reading.instanceId !== instanceId) return;
+
+  var btn = document.getElementById(instanceId + '_btn');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 正在洗牌與連續翻牌中...';
+  }
+
+  var count = reading.drawnCards.length;
+  // 1. Sequential 3D Flip
+  for (var i = 0; i < count; i++) {
+    (function(idx) {
+      setTimeout(function() {
+        var cardEl = document.getElementById(instanceId + '_card_' + idx);
+        if (cardEl) {
+          cardEl.classList.add('flipped');
+          if (navigator.vibrate) { navigator.vibrate([15, 25]); }
+        }
+      }, (idx * 350) + 300);
+    })(i);
+  }
+
+  // 2. Trigger Gemini API after flipping
+  setTimeout(function() {
+    var actionContainer = document.getElementById(instanceId + '_action_container');
+    if (actionContainer) actionContainer.style.display = 'none';
+
+    var loadingDiv = document.getElementById(instanceId + '_loading');
+    var statusText = document.getElementById(instanceId + '_status_text');
+    var pfill = document.getElementById(instanceId + '_pfill');
+
+    if (loadingDiv) loadingDiv.style.display = 'block';
+    if (pfill) pfill.style.width = '30%';
+
+    var timer1 = setTimeout(function() {
+      if (pfill) pfill.style.width = '65%';
+      if (statusText) statusText.textContent = '🌌 正在深度解構 ' + reading.spread.name + ' 牌陣能量與正逆位意涵...';
+    }, 1400);
+
+    var timer2 = setTimeout(function() {
+      if (pfill) pfill.style.width = '85%';
+      if (statusText) statusText.textContent = '✨ 正在為您的問題提煉客製化行動建議與靈性指引...';
+    }, 3000);
+
+    fetchGeminiReading(reading, timer1, timer2);
+  }, (count * 350) + 500);
+};
+
+async function fetchGeminiReading(reading, timer1, timer2) {
+  var instanceId = reading.instanceId;
+  var cardDescriptions = reading.drawnCards.map(function(d, i) {
     var orientation = d.reversed ? '逆位 (Reversed)' : '正位 (Upright)';
-    var meaning = d.reversed ? d.card.r : d.card.u;
-    return '位置 ' + (i+1) + ' [' + pos + ']：' + d.card.name + ' (' + d.card.en + ') — ' + orientation + ' — 關鍵字：' + meaning;
-  }).join('\n');
+    return '[' + d.position + ']：' + d.card.name + ' (' + d.card.en + ') — ' + orientation + ' — 核心關鍵字：' + (d.reversed ? d.card.r : d.card.u);
+  }).join('
+');
 
-  var prompt =
-    '你是一位擁有 20 年經驗的專業塔羅占卜師，精通韋特塔羅牌的深度解讀。請根據以下牌陣進行全面且深入的交叉解牌分析。\n\n' +
-    '【問題】：' + question + '\n' +
-    '【問題類別】：' + (categoryNames[category] || category) + '\n' +
-    '【牌陣】：' + spread.name + '（' + spread.count + ' 張牌）\n\n' +
-    '【牌卡詳情】：\n' + cardDescriptions + '\n\n' +
-    '請按照以下三個部分進行深度解讀：\n\n' +
-    '🌟 一、牌陣整體能量概述\n' +
-    '分析整體牌陣的能量流動、大阿卡納與小阿卡納的比例、主要元素（火水風土）的分布，以及這些如何反映問卜者的整體狀態。\n\n' +
-    '🔍 二、各位置牌卡深度剖析\n' +
-    '逐一分析每個位置的牌卡意義，特別注意正位與逆位的細微差異。解釋每張牌在該位置上的獨特含義，以及牌與牌之間的互動關係。\n\n' +
-    '💡 三、針對問題的實體行動建議\n' +
-    '根據牌陣的整體訊息，提供 3-5 條具體、可執行的行動建議。建議應具建設性、鼓勵性，幫助問卜者做出更好的決策。';
+  var systemPrompt =
+    '你是一位擁有 20 年豐富經驗的專業塔羅心靈導師，精通韋特塔羅牌的象徵學與深度心理學。請根據問卜者的具體問題與抽出的牌陣，進行客觀、溫暖、深刻且具體可行的交叉解牌。
 
-  state.chatContext = prompt + '\n\n【牌陣與結果摘要】\n' + cardDescriptions;
-  state.isChatMode = false;
+' +
+    '【問卜者問題】：' + reading.question + '
+' +
+    '【牌陣】：' + reading.spread.name + ' (' + reading.drawnCards.length + ' 張牌)
 
-  document.getElementById('ai-reading-section').style.display = '';
-  document.getElementById('action-section').style.display = '';
+' +
+    '【牌卡詳情】：
+' + cardDescriptions + '
+
+' +
+    '請按照以下三個部分進行結構化深度解讀：
+' +
+    '🌟 一、整體能量概述 (分析整體牌陣能量流向與關鍵轉折點)
+' +
+    '🔍 二、各位置牌卡深度剖析 (針對各位置意義、正逆位細節與牌間互動展開解讀)
+' +
+    '💡 三、實體行動建議與靈性對策 (提供 3-4 條清晰、具建設性且可落地的具體指引)';
 
   try {
     var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + state.geminiModel + ':generateContent?key=' + encodeURIComponent(state.apiKey);
     var resp = await fetch(url, {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.8, maxOutputTokens: 4096 }
+        contents: [{ role: 'user', parts: [{ text: systemPrompt }] }],
+        generationConfig: { temperature: 0.75, maxOutputTokens: 4096 }
       })
     });
 
-    clearTimeout(stepTimer1);
-    clearTimeout(stepTimer2);
+    clearTimeout(timer1);
+    clearTimeout(timer2);
 
-    if (resp.status === 400 || resp.status === 401 || resp.status === 403) {
-      setGlobalApiKey('');
-      if (loadingCard) loadingCard.style.display = 'none';
-      alert('⚠️ 您設定的 Gemini API Key 已失效或輸入有誤，請重新設定。');
-      openApiKeyModal();
-      throw new Error('API Key 無效或已過期 (HTTP ' + resp.status + ')');
-    }
-
-    if (!resp.ok) {
-      throw new Error('API Error: ' + resp.status);
-    }
-
-    var data = await resp.json();
-    var text = '';
-    if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
-      text = data.candidates[0].content.parts.map(function(p) { return p.text || ''; }).join('');
-    }
-
-    if (progressFill) progressFill.style.width = '100%';
-
-    setTimeout(function() {
-      if (loadingCard) loadingCard.style.display = 'none';
-
-      readingBox.innerHTML = renderTarotReport(text);
-      readingBox.style.display = '';
-      document.getElementById('chat-area').style.display = '';
-
-      // Smooth scroll to the top of AI reading report
-      readingBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-      // Reset follow-up counter
-      state.followUpCount = 0;
-      updateFollowUpHint();
-
-      // Auto-save to journal
-      autoSaveJournal();
-    }, 400);
-
-    if (typeof gtag === 'function') {
-      gtag('event', 'tarot_ai_reading', {
-        'event_category': 'tarot',
-        'event_label': state.spread,
-        'value': spread.count
-      });
-    }
-  } catch(e) {
-    clearTimeout(stepTimer1);
-    clearTimeout(stepTimer2);
-    if (loadingCard) loadingCard.style.display = 'none';
-    readingBox.innerHTML =
-      '<h3><i class="fa-solid fa-circle-exclamation" style="color: var(--color-red, #ef4444);"></i> AI 解牌失敗</h3>' +
-      '<p>錯誤原因：' + escapeHtml(e.message) + '</p>' +
-      '<div style="margin-top:14px; display:flex; gap:10px;">' +
-        '<button class="btn-primary" onclick="generateReading()" style="padding:8px 18px; font-size:0.9rem;"><i class="fa-solid fa-rotate-right"></i> 重新產生 AI 解讀</button>' +
-        '<button class="btn-secondary" onclick="openApiKeyModal()" style="padding:8px 18px; font-size:0.9rem;"><i class="fa-solid fa-gear"></i> 檢查 API Key</button>' +
-      '</div>';
-    readingBox.style.display = '';
-  }
-}
-
-/* =====================================================================
-   CHAT FOLLOW-UP
-   ===================================================================== */
-window.sendChat = function() {
-  var key = getGlobalApiKey();
-  if (!key) {
-    openApiKeyModal();
-    return;
-  }
-  state.apiKey = key;
-
-  // Check follow-up limit
-  if (state.followUpCount >= state.maxFollowUps) {
-    alert('追問次數已達上限（' + state.maxFollowUps + ' 次）。如需更多解答，請重新占卜。');
-    return;
-  }
-
-  var input = document.getElementById('chat-input');
-  var msg = input.value.trim();
-  if (!msg) return;
-  input.value = '';
-
-  var chatMessages = document.getElementById('chat-messages');
-  chatMessages.innerHTML += '<div class="chat-msg user"><i class="fa-solid fa-user"></i> ' + escapeHtml(msg) + '</div>';
-
-  state.followUpCount++;
-  updateFollowUpHint();
-
-  // AI request with context
-  var prompt = state.chatContext + '\n\n【使用者追問】：' + msg + '\n\n請根據上述牌陣內容，回答使用者的追問。';
-
-  var aiDiv = document.createElement('div');
-  aiDiv.className = 'chat-msg ai ai-loading';
-  aiDiv.innerHTML = '<div class="spinner"></div> AI 思考中...';
-  chatMessages.appendChild(aiDiv);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-
-  fetch('https://generativelanguage.googleapis.com/v1beta/models/' + state.geminiModel + ':generateContent?key=' + encodeURIComponent(state.apiKey), {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.8, maxOutputTokens: 2048 }
-    })
-  }).then(function(resp) {
     if (resp.status === 400 || resp.status === 401 || resp.status === 403) {
       setGlobalApiKey('');
       alert('⚠️ 您設定的 Gemini API Key 已失效或輸入有誤，請重新設定。');
       openApiKeyModal();
       throw new Error('API Key 無效或已過期');
     }
-    return resp.json();
-  }).then(function(data) {
-    var text = '';
-    if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
-      text = data.candidates[0].content.parts.map(function(p) { return p.text || ''; }).join('');
+
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+
+    var data = await resp.json();
+    var responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || '無法取得解讀內容。';
+
+    // Store in conversational history for multi-turn follow-ups!
+    state.chatHistory.push({ role: 'user', content: reading.question });
+    state.chatHistory.push({ role: 'model', content: responseText, cards: cardDescriptions });
+
+    // Render results into in-chat component
+    var loadingDiv = document.getElementById(instanceId + '_loading');
+    if (loadingDiv) loadingDiv.style.display = 'none';
+
+    var resultBox = document.getElementById(instanceId + '_result_box');
+    if (resultBox) {
+      var actionButtons =
+        '<div class="inchat-action-bar">' +
+          '<button class="btn-chip-action" onclick="copyReportText()"><i class="fa-solid fa-copy"></i> 複製解牌戰報</button>' +
+          '<button class="btn-chip-action" onclick="saveToJournal()"><i class="fa-solid fa-bookmark"></i> 儲存至日誌</button>' +
+          '<button class="btn-chip-action" onclick="focusChatInput()"><i class="fa-solid fa-comments"></i> 繼續向導師追問</button>' +
+        '</div>';
+
+      resultBox.innerHTML = renderTarotReport(responseText) + actionButtons;
+      resultBox.style.display = 'block';
+      
+      setTimeout(function() {
+        resultBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 200);
     }
-    aiDiv.className = 'chat-msg ai';
-    aiDiv.innerHTML = '<i class="fa-solid fa-robot" style="color: var(--neon-purple);"></i> ' + escapeHtml(text);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  }).catch(function(e) {
-    aiDiv.className = 'chat-msg ai';
-    aiDiv.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> 請求失敗：' + escapeHtml(e.message);
+
+    // Auto-save to local journal
+    autoSaveJournalEntry(reading, responseText);
+
+    if (typeof gtag === 'function') {
+      gtag('event', 'tarot_conversational_reading', {
+        'event_category': 'tarot',
+        'event_label': reading.spread.name
+      });
+    }
+  } catch(e) {
+    clearTimeout(timer1);
+    clearTimeout(timer2);
+    var loadingDiv = document.getElementById(instanceId + '_loading');
+    if (loadingDiv) loadingDiv.style.display = 'none';
+    var resultBox = document.getElementById(instanceId + '_result_box');
+    if (resultBox) {
+      resultBox.innerHTML =
+        '<div style="padding:14px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:8px; color:#fca5a5;">' +
+          '<p><strong>❌ AI 解牌發生問題：</strong> ' + escapeHtml(e.message) + '</p>' +
+          '<button onclick="executeInChatDeal('' + instanceId + '')" class="btn-start-deal" style="margin-top:10px; padding:6px 16px; font-size:0.82rem;"><i class="fa-solid fa-rotate-right"></i> 重新嘗試</button>' +
+        '</div>';
+      resultBox.style.display = 'block';
+    }
+  }
+}
+
+/* =====================================================================
+   FLOW B: MULTI-TURN CONVERSATIONAL FOLLOW-UP
+   ===================================================================== */
+async function handleFollowUpFlow(question) {
+  var loadingMsg = appendMessage('ai', '<div style="display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-spinner fa-spin" style="color:var(--neon-purple);"></i> AI 靈性導師正在連結先前牌陣為您思考解答...</div>');
+
+  // Build multi-turn context
+  var contents = [];
+  state.chatHistory.forEach(function(turn) {
+    contents.push({
+      role: turn.role === 'user' ? 'user' : 'model',
+      parts: [{ text: turn.content }]
+    });
   });
+
+  var followUpPrompt =
+    '【使用者進一步追問】：' + question + '
+
+' +
+    '請作為擁有 20 年經驗的專業塔羅心靈導師，緊密結合我們先前抽出的牌面寓意與整體對話脈絡，給予使用者深入、具同理心且精闢實用的解答。';
+
+  contents.push({ role: 'user', parts: [{ text: followUpPrompt }] });
+
+  try {
+    var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + state.geminiModel + ':generateContent?key=' + encodeURIComponent(state.apiKey);
+    var resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: contents,
+        generationConfig: { temperature: 0.75, maxOutputTokens: 2048 }
+      })
+    });
+
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+
+    var data = await resp.json();
+    var responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || '無法取得追問解答。';
+
+    state.chatHistory.push({ role: 'user', content: question });
+    state.chatHistory.push({ role: 'model', content: responseText });
+
+    var msgBody = loadingMsg.querySelector('.msg-body');
+    if (msgBody) {
+      msgBody.innerHTML = renderTarotReport(responseText);
+    }
+  } catch(e) {
+    var msgBody = loadingMsg.querySelector('.msg-body');
+    if (msgBody) {
+      msgBody.innerHTML = '<p style="color:#fca5a5;"><i class="fa-solid fa-triangle-exclamation"></i> 抱歉，回答追問時發生錯誤：' + escapeHtml(e.message) + '</p>';
+    }
+  }
+}
+
+/* =====================================================================
+   WEB SPEECH API - VOICE INPUT MODULE
+   ===================================================================== */
+window.toggleVoiceInput = function() {
+  var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    alert('您的瀏覽器不支援 Web Speech API 語音輸入，請使用鍵盤輸入問題。');
+    return;
+  }
+
+  var btn = document.getElementById('btn-voice');
+  var indicator = document.getElementById('voice-indicator');
+  var input = document.getElementById('chat-user-input');
+
+  if (state.isRecordingVoice && state.speechRecognition) {
+    state.speechRecognition.stop();
+    return;
+  }
+
+  try {
+    var recognition = new SpeechRecognition();
+    recognition.lang = 'zh-TW';
+    recognition.continuous = false;
+    recognition.interimResults = true;
+
+    recognition.onstart = function() {
+      state.isRecordingVoice = true;
+      if (btn) btn.classList.add('recording');
+      if (indicator) indicator.style.display = 'flex';
+    };
+
+    recognition.onresult = function(event) {
+      var transcript = '';
+      for (var i = event.resultIndex; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript;
+      }
+      if (input) input.value = transcript;
+    };
+
+    recognition.onerror = function(event) {
+      console.warn('語音辨識錯誤:', event.error);
+      stopVoiceUI();
+      if (event.error === 'not-allowed') {
+        alert('請允許瀏覽器麥克風權限以進行語音輸入。');
+      }
+    };
+
+    recognition.onend = function() {
+      stopVoiceUI();
+    };
+
+    state.speechRecognition = recognition;
+    recognition.start();
+  } catch(err) {
+    console.error('啟動語音辨識失敗:', err);
+    stopVoiceUI();
+  }
+};
+
+function stopVoiceUI() {
+  state.isRecordingVoice = false;
+  var btn = document.getElementById('btn-voice');
+  var indicator = document.getElementById('voice-indicator');
+  if (btn) btn.classList.remove('recording');
+  if (indicator) indicator.style.display = 'none';
+}
+
+window.focusChatInput = function() {
+  var input = document.getElementById('chat-user-input');
+  if (input) {
+    input.focus();
+    input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
 };
 
 /* =====================================================================
-   COPY REPORT
+   JOURNAL & HISTORY MANAGEMENT
    ===================================================================== */
-window.copyReport = function() {
-  var spread = SPREADS[state.spread];
-  var question = document.getElementById('question-input').value.trim();
-  var report = '[GugoPro AI 塔羅分析]\n';
-  report += '問題：' + question + '\n';
-  report += '牌陣：' + spread.name + '\n';
-
-  var cardStr = state.drawn.map(function(d, i) {
-    var pos = spread.positions[i] || '位置' + (i+1);
-    return pos + '：' + (d.reversed ? '逆位 ' : '正位 ') + d.card.name + ' (' + d.card.en + ')';
-  }).join(' | ');
-  report += '牌卡：' + cardStr + '\n';
-
-  // Include AI text if available (unlocked), otherwise include basic meanings
-  var aiBox = document.getElementById('ai-reading-box');
-  if (aiBox && aiBox.style.display !== 'none' && aiBox.innerText) {
-    var aiText = aiBox.innerText.substring(0, 600);
-    report += '導師建議：' + aiText;
-  } else {
-    // Basic reading fallback
-    var basicCards = state.drawn.map(function(d, i) {
-      var pos = spread.positions[i] || '位置' + (i+1);
-      return pos + '：' + (d.reversed ? '逆位 ' : '正位 ') + d.card.name + ' — ' + (d.reversed ? d.card.r : d.card.u);
-    }).join(' | ');
-    report += '牌義摘要：' + basicCards;
-  }
-
-  navigator.clipboard.writeText(report).then(function() {
-    alert(t('reportCopied'));
-  }).catch(function() {
-    var ta = document.createElement('textarea');
-    ta.value = report;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
-    alert(t('reportCopied'));
-  });
-
-  if (typeof gtag === 'function') {
-    gtag('event', 'tarot_copy_report', {'event_category': 'tarot'});
-  }
-};
-
-/* =====================================================================
-   HISTORY
-   ===================================================================== */
-window.saveHistory = function() {
-  var spread = SPREADS[state.spread];
-  var question = document.getElementById('question-input').value.trim();
-  var aiText = document.getElementById('ai-reading-box').innerText.substring(0, 300);
+function autoSaveJournalEntry(reading, reportText) {
+  var cardSummary = reading.drawnCards.map(function(d) {
+    return d.card.name + (d.reversed ? '(逆)' : '(正)');
+  }).join('、');
 
   var entry = {
-    date: new Date().toISOString(),
-    question: question,
-    spread: spread.name,
-    cards: state.drawn.map(function(d) {
-      return d.card.name + (d.reversed ? ' (逆位)' : '');
-    }).join(', '),
-    summary: aiText
-  };
-
-  var history = [];
-  try { history = JSON.parse(localStorage.getItem('tarot_history') || '[]'); } catch(e) {}
-  history.unshift(entry);
-  if (history.length > 30) history = history.slice(0, 30);
-  localStorage.setItem('tarot_history', JSON.stringify(history));
-
-  loadHistory();
-  alert(t('recordSaved'));
-};
-
-function loadHistory() {
-  var history = [];
-  try { history = JSON.parse(localStorage.getItem('tarot_history') || '[]'); } catch(e) {}
-
-  var list = document.getElementById('history-list');
-  if (!history.length) {
-    list.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding: 20px;">' + t('noHistory') + '</p>';
-    return;
-  }
-
-  var html = '';
-  history.forEach(function(entry) {
-    var date = new Date(entry.date).toLocaleString('zh-TW');
-    html +=
-      '<div class="history-item">' +
-        '<div class="hi-question">' + escapeHtml(entry.question) + '</div>' +
-        '<div class="hi-meta"><i class="fa-solid fa-clock"></i> ' + date + ' | ' + escapeHtml(entry.spread) + ' | ' + escapeHtml(entry.cards) + '</div>' +
-        '<div class="hi-summary">' + escapeHtml(entry.summary) + '...</div>' +
-      '</div>';
-  });
-  list.innerHTML = html;
-}
-
-/* =====================================================================
-   FOLLOW-UP HINT
-   ===================================================================== */
-function updateFollowUpHint() {
-  var chatArea = document.getElementById('chat-area');
-  var existingHint = document.getElementById('follow-up-hint');
-  if (existingHint) existingHint.remove();
-  var hint = document.createElement('div');
-  hint.id = 'follow-up-hint';
-  hint.style.cssText = 'font-size:0.75rem; color:var(--text-muted); margin-top:6px; text-align:right;';
-  hint.textContent = t('followUpCountHint') + state.followUpCount + '/' + state.maxFollowUps + ')';
-  chatArea.appendChild(hint);
-}
-
-/* =====================================================================
-   AUTO-SAVE JOURNAL
-   ===================================================================== */
-function autoSaveJournal() {
-  var spread = SPREADS[state.spread];
-  var question = document.getElementById('question-input').value.trim();
-  var aiBox = document.getElementById('ai-reading-box');
-  var aiText = '';
-  if (aiBox && aiBox.style.display !== 'none' && aiBox.innerText) {
-    aiText = aiBox.innerText.substring(0, 500);
-  } else {
-    aiText = state.drawn.map(function(d, i) {
-      var pos = spread.positions[i] || '位置' + (i+1);
-      return pos + '：' + (d.reversed ? '逆位' : '正位') + ' ' + d.card.name + ' — ' + (d.reversed ? d.card.r : d.card.u);
-    }).join(' | ');
-  }
-
-  var journalEntry = {
     id: Date.now(),
-    date: new Date().toISOString(),
-    question: question,
-    spread: spread.name,
-    cards: state.drawn.map(function(d) {
-      return d.card.name + (d.reversed ? ' (' + t('reversed') + ')' : ' (' + t('upright') + ')');
-    }).join(' / '),
-    aiAdvice: aiText
+    date: new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' }),
+    spreadName: reading.spread.name,
+    question: reading.question,
+    cards: cardSummary,
+    report: reportText.substring(0, 150) + '...'
   };
 
   var journal = [];
   try { journal = JSON.parse(localStorage.getItem('tarot_journal_history') || '[]'); } catch(e) {}
-  journal.unshift(journalEntry);
+  journal.unshift(entry);
   if (journal.length > 50) journal = journal.slice(0, 50);
   localStorage.setItem('tarot_journal_history', JSON.stringify(journal));
-
-  renderJournal();
 }
 
-function renderJournal() {
+window.openJournalModal = function() {
   var journal = [];
   try { journal = JSON.parse(localStorage.getItem('tarot_journal_history') || '[]'); } catch(e) {}
+  var container = document.getElementById('journal-items-container');
+  if (!container) return;
 
-  var panel = document.getElementById('journal-panel');
   if (!journal.length) {
-    panel.innerHTML = '<div class="journal-empty"><i class="fa-solid fa-book-open"></i> 尚無占卜日誌紀錄，完成占卜後將自動儲存。</div>';
-    return;
+    container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-muted); font-size:0.88rem;">尚無占卜日誌紀錄，完成占卜後將自動儲存。</div>';
+  } else {
+    var html = '';
+    journal.forEach(function(entry) {
+      html +=
+        '<div class="journal-card-item">' +
+          '<div class="j-time"><i class="fa-regular fa-clock"></i> ' + escapeHtml(entry.date) + ' • ' + escapeHtml(entry.spreadName) + '</div>' +
+          '<div class="j-q">❓ ' + escapeHtml(entry.question) + '</div>' +
+          '<div class="j-cards">🃏 牌面：' + escapeHtml(entry.cards) + '</div>' +
+        '</div>';
+    });
+    container.innerHTML = html;
   }
 
-  var html = '';
-  journal.forEach(function(entry) {
-    var date = new Date(entry.date).toLocaleString('zh-TW');
-    html +=
-      '<div class="journal-entry">' +
-        '<div class="je-date"><i class="fa-solid fa-clock"></i> ' + date + '</div>' +
-        '<div class="je-question">' + escapeHtml(entry.question) + '</div>' +
-        '<div class="je-cards"><i class="fa-solid fa-layer-group"></i> 牌陣：' + escapeHtml(entry.spread) + ' | ' + escapeHtml(entry.cards) + '</div>' +
-        '<div class="je-advice">' + escapeHtml(entry.aiAdvice) + '</div>' +
-      '</div>';
-  });
-  panel.innerHTML = html;
-}
+  var modal = document.getElementById('modal-journal');
+  if (modal) modal.classList.add('show');
+};
 
-window.toggleJournal = function() {
-  var panel = document.getElementById('journal-panel');
-  panel.classList.toggle('open');
-  if (panel.classList.contains('open')) {
-    renderJournal();
+window.closeJournalModal = function() {
+  var modal = document.getElementById('modal-journal');
+  if (modal) modal.classList.remove('show');
+};
+
+window.saveToJournal = function() {
+  showToast('已成功儲存至本地占卜日誌 📖');
+};
+
+window.copyReportText = function() {
+  var reading = state.currentReading;
+  if (!reading) return;
+  var summary = '【GugoPro AI 塔羅占卜戰報】
+問題：' + reading.question + '
+牌陣：' + reading.spread.name + '
+' +
+    reading.drawnCards.map(function(d) { return d.position + ': ' + d.card.name + (d.reversed ? '(逆位)' : '(正位)'); }).join('
+') +
+    '
+
+占卜網址：https://gugopro.com/tools/ai/tarot-master.html';
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(summary).then(function() {
+      showToast('已複製占卜戰報至剪貼簿 📋');
+    });
+  } else {
+    showToast('已複製 📋');
   }
 };
 
-/* =====================================================================
-   UTILS
-   ===================================================================== */
-function escapeHtml(str) {
-  var div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
+function showToast(text) {
+  var toast = document.getElementById('toast-msg');
+  if (!toast) return;
+  toast.textContent = text;
+  toast.style.display = 'block';
+  setTimeout(function() { toast.style.display = 'none'; }, 2400);
 }
 
-// Init
-init();
+/* =====================================================================
+   INITIALIZATION
+   ===================================================================== */
+function init() {
+  updateKeyUI();
+}
+
+document.addEventListener('DOMContentLoaded', init);
 
 })();
 </script>
