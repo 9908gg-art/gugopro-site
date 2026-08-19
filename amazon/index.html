@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Amazon 跨境選品與分類導流引擎 | GugoPro (美站 & 日站雙市場)</title>
-<meta name="description" content="GugoPro Amazon 雙市場跨境選品引擎：支援 🇺🇸 美國站 (amazon.com) 與 🇯🇵 日本站 (amazon.co.jp) 一鍵切換、多層級精準分類導流、雙語屬性標籤、獨立分潤 Tag 記憶。">
+<meta name="description" content="GugoPro Amazon 雙市場跨境選品引擎：支援 🇺🇸 美國站 (amazon.com) 與 🇯🇵 日本站 (amazon.co.jp) 一鍵切換、12 大核心品類精準分類導流、雙語屬性標籤。">
 <meta name="keywords" content="Amazon, Amazon US, Amazon JP, 亞馬遜選品, 日本亞馬遜, 美國亞馬遜, 分潤導流, GugoPro">
 <meta name="author" content="GugoPro AI Team">
 
@@ -67,7 +67,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    background: rgba(10, 15, 25, 0.85);
+    background: rgba(10, 15, 25, 0.88);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
     border-bottom: 1px solid var(--border-card);
@@ -79,7 +79,8 @@
   .brand-group {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
+    flex-wrap: wrap;
   }
   .brand-link {
     color: #fff;
@@ -95,7 +96,7 @@
   /* Market Switcher Selector */
   .market-switcher {
     display: inline-flex;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.45);
     border: 1px solid var(--border-card);
     border-radius: 30px;
     padding: 3px;
@@ -135,7 +136,7 @@
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid var(--border-card);
     color: var(--text-primary);
-    padding: 6px 12px;
+    padding: 6px 14px;
     border-radius: 20px;
     font-size: 0.82rem;
     font-weight: 600;
@@ -460,28 +461,6 @@
     white-space: nowrap;
   }
 
-  /* Modal for Tag Settings */
-  .modal-overlay {
-    display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0, 0, 0, 0.75); z-index: 200;
-    align-items: center; justify-content: center;
-    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-    padding: 20px;
-  }
-  .modal-overlay.show { display: flex; }
-  .modal-box {
-    background: #0f1c26; border: 1px solid var(--border-card);
-    border-radius: 16px; padding: 24px; max-width: 480px; width: 100%;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-  }
-  body.theme-jp .modal-box { background: #1C0A15; }
-  .modal-header {
-    display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;
-  }
-  .modal-title { font-size: 1.1rem; font-weight: 700; color: #fff; }
-  .modal-close { background: none; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; }
-  .modal-close:hover { color: #fff; }
-
   @media (max-width: 768px) {
     .filter-box { flex-direction: column; align-items: stretch; }
     .btn-do-search { justify-content: center; }
@@ -512,11 +491,8 @@
 
     <div class="nav-right-tools">
       <a href="https://gugopro.com" class="btn-nav-action">
-        <i class="fa-solid fa-house"></i> 首頁
+        <i class="fa-solid fa-house"></i> GugoPro 首頁
       </a>
-      <button class="btn-nav-action" onclick="openTagModal()">
-        <i class="fa-solid fa-tag"></i> <span id="nav-tag-display">Tag: gugopro-20</span>
-      </button>
     </div>
   </header>
 
@@ -524,7 +500,7 @@
   <section class="hero-section">
     <h1 class="hero-title" id="hero-title">Amazon 🇺🇸 跨國選品與分類導流引擎</h1>
     <p class="hero-desc" id="hero-desc">
-      站內多層級精選目錄瀏覽，點擊任何品類或搜尋將直接跳轉官方亞馬遜站點，並自動帶入最新官方分潤推廣標籤。
+      站內多層級精選目錄瀏覽，點擊任何品類或搜尋將直接跳轉 Amazon 官方站點。
     </p>
   </section>
 
@@ -586,7 +562,7 @@
     <div class="section-header">
       <div class="section-title">
         <i class="fa-solid fa-layer-group"></i>
-        <span id="category-section-title">精選部門與分類目錄</span>
+        <span id="category-section-title">12 大核心品類目錄</span>
       </div>
       <div class="section-count" id="category-summary-count">載入中...</div>
     </div>
@@ -594,33 +570,19 @@
     <div class="dept-grid" id="dept-grid"></div>
   </main>
 
-  <!-- Tag Settings Modal -->
-  <div class="modal-overlay" id="modal-tag">
-    <div class="modal-box">
-      <div class="modal-header">
-        <div class="modal-title"><i class="fa-solid fa-tag" style="color:var(--accent);"></i> 設定分潤推廣標籤 (Affiliate Tag)</div>
-        <button class="modal-close" onclick="closeTagModal()"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <p style="font-size:0.86rem; color:var(--text-muted); margin-bottom:14px;">
-        您可以自訂當前市場 (<span id="modal-market-name">美國站</span>) 的專屬 Amazon Associate Tag。系統會自動獨立記憶於瀏覽器中。
-      </p>
-      <div style="margin-bottom:14px;">
-        <input type="text" id="modal-input-tag" placeholder="輸入分潤 Tag (例如: gugopro-20)" style="width:100%; padding:10px 14px; background:rgba(0,0,0,0.4); border:1px solid var(--border-card); border-radius:8px; color:#fff; font-size:0.95rem; outline:none;">
-      </div>
-      <div style="display:flex; gap:10px;">
-        <button onclick="saveTagFromModal()" style="flex:1; padding:10px; background:linear-gradient(135deg, var(--accent), #0077A3); color:#fff; border:none; border-radius:8px; font-weight:700; cursor:pointer;">
-          儲存標籤
-        </button>
-        <button onclick="resetDefaultTag()" style="padding:10px 14px; background:rgba(255,255,255,0.08); border:1px solid var(--border-card); color:#fff; border-radius:8px; font-weight:600; cursor:pointer;">
-          重設預設
-        </button>
-      </div>
-    </div>
-  </div>
-
 <script>
 (function() {
   'use strict';
+
+  /* Silent Affiliate Tags */
+  var US_TAG = 'gugopro-20';
+  var JP_TAG = 'gugoprojp-22';
+
+  /* Embedded In-Memory Fallback Datasets for Instant 0ms Load */
+  var EMBEDDED_DATA = {
+    us: {"market": "us", "country_name": "United States (美國)", "currency": "USD ($)", "base_url": "https://www.amazon.com/s", "affiliate_tag": "gugopro-20", "tag_storage_key": "gugopro_amazon_us_tag", "categories": [{"id": "electronics_audio", "department_name": "Electronics & Audio", "icon": "fa-headphones", "categories": [{"id": "headphones-speakers", "name": "Headphones & Portable Speakers", "leaf_items": [{"name": "Active Noise Cancelling Over-Ear Headphones", "keywords": "active noise cancelling headphones over ear wireless"}, {"name": "True Wireless Noise Cancelling Earbuds", "keywords": "true wireless earbuds active noise cancelling"}, {"name": "Waterproof Bluetooth Outdoor Speakers", "keywords": "portable waterproof bluetooth speaker ipx7"}, {"name": "Dolby Atmos TV Soundbars with Subwoofer", "keywords": "dolby atmos sound bar with subwoofer wireless"}]}, {"id": "cameras-photography", "name": "Cameras & Photography", "leaf_items": [{"name": "4K Vlogging Mirrorless Cameras", "keywords": "4k vlogging mirrorless digital camera"}, {"name": "4K Action Cameras with Waterproof Case", "keywords": "4k action camera waterproof helmet mount"}, {"name": "3-Axis Handheld Smartphone Gimbals", "keywords": "3 axis smartphone gimbal stabilizer for video"}, {"name": "Professional Carbon Fiber Camera Tripods", "keywords": "carbon fiber camera tripod with ball head"}]}, {"id": "tv-projectors", "name": "TV, Projectors & Home Theater", "leaf_items": [{"name": "Smart 4K Mini LED & OLED TVs", "keywords": "smart 4k oled tv 120hz hdr"}, {"name": "1080p/4K Portable Home Theater Projectors", "keywords": "portable 4k home theater movie projector wifi bluetooth"}, {"name": "4K Streaming Media Players & Sticks", "keywords": "4k streaming stick media player dolby vision"}]}, {"id": "wearable-technology", "name": "Smartwatches & Wearables", "leaf_items": [{"name": "GPS Smartwatches with Heart Rate & SpO2", "keywords": "gps smartwatch fitness tracker heart rate spo2"}, {"name": "Smart Health & Sleep Tracking Rings", "keywords": "smart health ring sleep tracking heart rate"}, {"name": "Bone Conduction Open-Ear Sport Headphones", "keywords": "bone conduction open ear sport headphones bluetooth"}]}, {"id": "mobile-phone-accessories", "name": "Cell Phone Accessories", "leaf_items": [{"name": "MagSafe Magnetic Wireless Power Banks", "keywords": "magsafe power bank wireless portable charger 10000mah"}, {"name": "GaN 65W/100W USB-C Fast Wall Chargers", "keywords": "gan fast charger 65w 100w multi port usb c"}, {"name": "Magnetic Semiconductor Phone Coolers", "keywords": "magnetic phone cooler semiconductor rgb"}, {"name": "Military-Grade Shockproof Phone Cases", "keywords": "heavy duty shockproof military grade phone case"}]}]}, {"id": "computers_accessories", "department_name": "Computers & Office Accessories", "icon": "fa-laptop", "categories": [{"id": "laptops-desktops", "name": "Laptops & Mini PCs", "leaf_items": [{"name": "Ultra-Thin Lightweight Laptops", "keywords": "ultrabook lightweight thin laptop intel core"}, {"name": "High-Performance RTX Gaming Laptops", "keywords": "gaming laptop rtx high refresh rate"}, {"name": "Compact Mini Desktop PCs (Ryzen / Intel)", "keywords": "mini pc desktop computer ryzen intel dual 4k"}]}, {"id": "keyboards-mice", "name": "Keyboards, Mice & Input Devices", "leaf_items": [{"name": "Hot-Swappable Mechanical Keyboards", "keywords": "hot swappable rgb mechanical keyboard wireless"}, {"name": "Ergonomic Vertical Wireless Mice", "keywords": "ergonomic vertical wireless mouse rechargeable"}, {"name": "Ultra-Lightweight Honeycomb Gaming Mice", "keywords": "ultra lightweight wireless gaming mouse sensor"}]}, {"id": "monitors-displays", "name": "Monitors & Screen Bars", "leaf_items": [{"name": "27-inch 4K IPS Ergonomic Monitors", "keywords": "27 inch 4k uhd ips monitor usb c hdr"}, {"name": "High Refresh Rate 144Hz+ Gaming Monitors", "keywords": "gaming monitor 144hz 165hz 1ms fast ips"}, {"name": "Monitor Screen Light Bars with Auto-Dimming", "keywords": "computer monitor light bar screen bar auto dimming"}]}, {"id": "storage-docks", "name": "Storage, SSDs & USB-C Docks", "leaf_items": [{"name": "High-Speed NVMe M.2 External SSDs", "keywords": "portable nvme m2 external ssd high speed 2000mbps"}, {"name": "12-in-1 Dual Display USB-C Docking Stations", "keywords": "usb c docking station dual 4k hdmi 100w pd"}, {"name": "High-Endurance MicroSDXC Cards (U3 / V30)", "keywords": "microsdxc memory card 256gb 512gb v30 a2"}]}]}, {"id": "home_kitchen", "department_name": "Smart Appliances & Kitchen", "icon": "fa-mug-hot", "categories": [{"id": "robot-vacuums-cleaning", "name": "Smart Floor Cleaning", "leaf_items": [{"name": "Robot Vacuum & Mop Combos with Self-Empty", "keywords": "robot vacuum and mop combo self emptying lidar"}, {"name": "Cordless Lightweight Stick Vacuums", "keywords": "cordless stick vacuum cleaner rechargeable lightweight"}, {"name": "Handheld Upholstery & Carpet Spot Cleaners", "keywords": "portable carpet and upholstery spot cleaner"}]}, {"id": "air-purifiers-climate", "name": "Air Purifiers & Climate Control", "leaf_items": [{"name": "True HEPA Air Purifiers for Large Rooms", "keywords": "air purifier for home large room true hepa filter"}, {"name": "Smart Ultrasonic Cool & Warm Mist Humidifiers", "keywords": "ultrasonic cool and warm mist humidifier smart app"}, {"name": "Bladeless Tower Fans & Space Heaters", "keywords": "bladeless tower fan and space heater combo"}]}, {"id": "coffee-espresso", "name": "Coffee & Espresso Machines", "leaf_items": [{"name": "Automatic Espresso Machines with Milk Frother", "keywords": "espresso machine 20 bar with milk frother steam wand"}, {"name": "Precision Conical Burr Coffee Grinders", "keywords": "conical burr coffee grinder electric precision"}, {"name": "Gooseneck Temperature-Control Pour-Over Kettles", "keywords": "electric gooseneck kettle variable temperature control"}]}, {"id": "cooking-airfryers", "name": "Air Fryers, Ovens & Cookware", "leaf_items": [{"name": "Digital Air Fryer Toaster Ovens with Window", "keywords": "air fryer toaster oven combo with viewing window"}, {"name": "Precision Sous Vide Immersion Circulators", "keywords": "sous vide cooker immersion circulator 1000w"}, {"name": "Japanese Damascus Steel Chef Knives", "keywords": "japanese damascus steel chef knife 8 inch"}]}]}, {"id": "clothing_shoes_jewelry", "department_name": "Clothing, Shoes & Jewelry", "icon": "fa-shirt", "categories": [{"id": "men-fashion", "name": "Men's Apparel & Activewear", "leaf_items": [{"name": "Moisture-Wicking Athletic Running Shirts", "keywords": "mens quick dry moisture wicking athletic t shirts"}, {"name": "Water-Resistant Outdoor Softshell Jackets", "keywords": "mens waterproof softshell hooded jacket fleece lined"}, {"name": "Stretch Slim-Fit Chino Pants", "keywords": "mens slim fit stretch lightweight chino pants"}]}, {"id": "women-fashion", "name": "Women's Apparel & Loungewear", "leaf_items": [{"name": "High-Waisted Yoga Leggings with Pockets", "keywords": "womens high waisted yoga pants leggings with pockets"}, {"name": "Packable Lightweight Down Puffer Jackets", "keywords": "womens packable lightweight down jacket water resistant"}, {"name": "Casual Soft Knit Lounge Pajama Sets", "keywords": "womens soft knit loungewear 2 piece pajama set"}]}, {"id": "footwear-running", "name": "Running Shoes & Footwear", "leaf_items": [{"name": "Cushioned Road Running Shoes", "keywords": "road running shoes lightweight cushioned breathable"}, {"name": "Waterproof Hiking & Trail Running Boots", "keywords": "waterproof hiking boots trail walking shoes"}, {"name": "Orthotic Arch Support Recovery Slides", "keywords": "orthotic arch support recovery slide sandals"}]}, {"id": "bags-watches", "name": "Backpacks, Watches & Jewelry", "leaf_items": [{"name": "Anti-Theft Laptop Travel Backpacks with USB", "keywords": "anti theft laptop travel backpack water resistant with usb"}, {"name": "Automatic Stainless Steel Men's Wristwatches", "keywords": "mens automatic mechanical stainless steel wrist watch"}, {"name": "Sterling Silver Minimalist Necklaces & Rings", "keywords": "925 sterling silver minimalist pendant necklace"}]}]}, {"id": "beauty_personal_care", "department_name": "Beauty & Personal Care", "icon": "fa-spa", "categories": [{"id": "facial-skincare", "name": "Facial Skincare & Serums", "leaf_items": [{"name": "Vitamin C + Hyaluronic Acid Brightening Serums", "keywords": "vitamin c serum with hyaluronic acid for face anti aging"}, {"name": "Gentle Hydrating Facial Cleansers", "keywords": "hydrating facial cleanser gentle for sensitive skin"}, {"name": "Korean Centella & Snail Mucin Moisturizers", "keywords": "korean skincare snail mucin cream moisturizing"}]}, {"id": "haircare-styling", "name": "Hair Care, Dryers & Styling", "leaf_items": [{"name": "High-Speed Ionic Brushless Motor Hair Dryers", "keywords": "high speed ionic hair dryer negative ion fast drying"}, {"name": "Ceramic Tourmaline Rotating Curling Irons", "keywords": "ceramic tourmaline curling iron wand auto shut off"}, {"name": "Keratin Argan Oil Deep Conditioning Hair Masks", "keywords": "argan oil hair mask deep conditioning treatment"}]}, {"id": "oral-grooming", "name": "Oral Care & Men's Grooming", "leaf_items": [{"name": "Sonic Electric Toothbrushes with Travel Case", "keywords": "sonic electric toothbrush with wireless charging travel case"}, {"name": "Cordless Water Dental Flossers", "keywords": "cordless water dental flosser portable rechargeable"}, {"name": "Waterproof Foil & Rotary Men's Electric Shavers", "keywords": "electric shaver for men wet dry foil razor waterproof"}]}]}, {"id": "sports_outdoors", "department_name": "Sports, Fitness & Outdoors", "icon": "fa-person-running", "categories": [{"id": "camping-hiking", "name": "Camping, Hiking & Tents", "leaf_items": [{"name": "Lightweight Waterproof Pop-Up Camping Tents", "keywords": "lightweight waterproof camping tent 2 4 person"}, {"name": "Ultralight Inflatable Sleeping Pads", "keywords": "ultralight inflatable camping sleeping pad compact"}, {"name": "Compact Portable Camp Stoves & Cookware", "keywords": "portable backpacking camping stove burner cookware"}]}, {"id": "home-gym-fitness", "name": "Home Gym & Strength Training", "leaf_items": [{"name": "Adjustable Quick-Select Dumbbell Sets", "keywords": "adjustable dumbbells set compact quick select"}, {"name": "Heavy-Duty Resistance Loop Bands Set", "keywords": "heavy duty pull up resistance bands set with handles"}, {"name": "Under-Desk Walking Pad Treadmills", "keywords": "under desk walking pad treadmill flat foldable"}]}, {"id": "cycling-water-sports", "name": "Cycling & Water Sports", "leaf_items": [{"name": "Rechargeable High-Lumen Bike Light Sets", "keywords": "rechargeable led bike light set front headlight taillight"}, {"name": "Inflatable Stand Up Paddle Boards (iSUP)", "keywords": "inflatable stand up paddle board isup with paddle pump"}]}]}, {"id": "automotive_motorcycle", "department_name": "Automotive & Motorcycle Gear", "icon": "fa-car", "categories": [{"id": "dashcams-electronics", "name": "Dash Cams & Electronics", "leaf_items": [{"name": "4K Front and Rear Dual Dash Cams with GPS", "keywords": "4k front and rear dual dash cam with wifi gps night vision"}, {"name": "Wireless Apple CarPlay & Android Auto Adapters", "keywords": "wireless carplay android auto adapter dongle plug and play"}, {"name": "MagSafe 15W Fast Wireless Car Charger Mounts", "keywords": "magsafe wireless car charger mount air vent"}]}, {"id": "emergency-maintenance", "name": "Emergency Jump Starters & Maintenance", "leaf_items": [{"name": "Portable Car Jump Starter Power Banks 2000A+", "keywords": "portable car battery jump starter power bank 12v"}, {"name": "Cordless Digital Tire Inflator Air Compressors", "keywords": "cordless tire inflator portable air compressor auto shut off"}, {"name": "OBD2 Bluetooth Engine Diagnostic Code Readers", "keywords": "obd2 bluetooth scanner car code reader diagnostic tool"}]}]}, {"id": "baby_toys_games", "department_name": "Baby, Toys & Board Games", "icon": "fa-baby", "categories": [{"id": "baby-gear", "name": "Baby Strollers, Seats & Care", "leaf_items": [{"name": "Compact Lightweight Airplane-Cabin Strollers", "keywords": "compact lightweight baby stroller airplane cabin approved"}, {"name": "All-in-One Convertible Baby Car Seats", "keywords": "convertible all in one car seat rear forward facing"}, {"name": "Baby Food Makers, Steamers & Puree Blenders", "keywords": "baby food maker steamer blender all in one"}]}, {"id": "educational-toys-lego", "name": "STEM Toys, LEGO & Board Games", "leaf_items": [{"name": "Magnetic Building Blocks & STEM Tiles", "keywords": "magnetic building blocks tiles educational stem toys"}, {"name": "LEGO Architecture & Iconic Model Sets", "keywords": "lego architecture building kit collectible model set"}, {"name": "Classic Strategy & Family Party Board Games", "keywords": "strategy family board game party card game"}]}]}, {"id": "health_household", "department_name": "Health, Wellness & Massage", "icon": "fa-heart-pulse", "categories": [{"id": "massage-therapy", "name": "Massage Guns & Pain Relief", "leaf_items": [{"name": "Deep Tissue Percussion Muscle Massage Guns", "keywords": "deep tissue percussion massage gun quiet handheld"}, {"name": "Shiatsu Heated Neck & Shoulder Massagers", "keywords": "shiatsu neck and back massager with heat"}, {"name": "Air Compression Leg & Foot Massagers", "keywords": "air compression leg foot massager for circulation"}]}, {"id": "vitamins-supplements", "name": "Vitamins, Supplements & Sleep", "leaf_items": [{"name": "Triple Strength Omega-3 Fish Oil 2000mg", "keywords": "triple strength omega 3 fish oil epa dha burpless"}, {"name": "Magnesium Glycinate for Muscle & Sleep Support", "keywords": "magnesium glycinate capsules sleep muscle relaxation"}, {"name": "White Noise Sound Machines for Sleeping", "keywords": "white noise sound machine for sleeping baby adult"}]}]}, {"id": "grocery_gourmet_food", "department_name": "Grocery & Gourmet Specialty Food", "icon": "fa-utensils", "categories": [{"id": "specialty-snacks", "name": "Gourmet Snacks & Chocolates", "leaf_items": [{"name": "Artisan Dark Chocolate Truffle Gift Boxes", "keywords": "artisan gourmet dark chocolate truffles gift box"}, {"name": "Organic Roasted Mixed Nuts & Trail Mixes", "keywords": "organic roasted mixed nuts unsalted almonds cashews"}, {"name": "Healthy Low-Carb Protein Snack Bars", "keywords": "low sugar high protein bars healthy snack"}]}, {"id": "coffee-tea-beverages", "name": "Specialty Coffee, Matcha & Teas", "leaf_items": [{"name": "Organic Ceremonial Grade Japanese Matcha", "keywords": "organic ceremonial grade matcha green tea powder"}, {"name": "Single-Origin Whole Bean Arabica Coffee", "keywords": "single origin whole bean arabica coffee medium roast"}, {"name": "Organic Herbal Chamomile & Lavender Teas", "keywords": "organic chamomile lavender herbal tea bags caffeine free"}]}]}, {"id": "pet_supplies", "department_name": "Pet Supplies for Dogs & Cats", "icon": "fa-paw", "categories": [{"id": "cat-care", "name": "Cat Feeders, Trees & Toys", "leaf_items": [{"name": "Automatic Timed Cat Feeders with WiFi App", "keywords": "automatic cat feeder with wifi smart app control"}, {"name": "Stainless Steel Cat Water Fountains with Filters", "keywords": "stainless steel cat water fountain ultra quiet filter"}, {"name": "Multi-Level Cat Trees with Scratching Posts", "keywords": "multi level cat tree tower with scratching posts"}]}, {"id": "dog-gear", "name": "Dog Beds, Harnesses & Care", "leaf_items": [{"name": "Orthopedic Memory Foam Dog Beds", "keywords": "orthopedic memory foam dog bed waterproof washable"}, {"name": "No-Pull Reflective Dog Harnesses with Leash", "keywords": "no pull dog harness with handle reflective breathable"}, {"name": "Low Noise Dog Grooming Clippers & Vacuum", "keywords": "dog grooming clippers vacuum kit low noise"}]}]}, {"id": "tools_home_improvement", "department_name": "Tools & Smart Home Improvement", "icon": "fa-screwdriver-wrench", "categories": [{"id": "power-tools", "name": "Cordless Power Tools & Sets", "leaf_items": [{"name": "20V Cordless Brushless Drill & Driver Kit", "keywords": "20v cordless drill driver kit brushless battery charger"}, {"name": "Precision Screwdriver Sets for Electronics Repair", "keywords": "precision screwdriver set for electronics phone repair"}, {"name": "Laser Measure Tools with Digital Backlit Display", "keywords": "laser measure digital distance meter rechargeable"}]}, {"id": "smart-hardware-lighting", "name": "Smart Locks & LED Lighting", "leaf_items": [{"name": "Fingerprint Keyless Smart Front Door Deadbolts", "keywords": "smart door lock fingerprint keyless entry deadbolt wifi"}, {"name": "RGBIC Smart LED Strip Lights with App Control", "keywords": "rgbic smart led strip lights music sync app control"}, {"name": "Heavy-Duty Garage Storage Shelving Units", "keywords": "heavy duty garage storage shelving unit 5 tier adjustable"}]}]}]},
+    jp: {"market": "jp", "country_name": "Japan (日本)", "currency": "JPY (円)", "base_url": "https://www.amazon.co.jp/s", "affiliate_tag": "gugoprojp-22", "tag_storage_key": "gugopro_amazon_jp_tag", "categories": [{"id": "electronics_audio", "department_name": "電子 3C 與影音 (家電＆カメラ・オーディオ)", "icon": "fa-headphones", "categories": [{"id": "earphones-headphones", "name": "耳機音響與藍牙喇叭 (イヤホン・ヘッドホン・スピーカー)", "leaf_items": [{"name": "主動降噪無線耳機 (ノイズキャンセリング ヘッドホン)", "keywords": "ノイズキャンセリング ワイヤレス ヘッドホン ハイレゾ"}, {"name": "真無線降噪藍牙耳機 (完全ワイヤレスイヤホン)", "keywords": "ノイズキャンセリング 完全ワイヤレスイヤホン"}, {"name": "骨傳導運動防水耳機 (骨伝導イヤホン スポーツ防水)", "keywords": "骨伝導 イヤホン スポーツ 防水"}, {"name": "電視/電腦 Soundbar 音響 (サウンドバー スピーカー)", "keywords": "サウンドバー テレビ PC スピーカー Bluetooth"}]}, {"id": "cameras-photography", "name": "相機攝影與空拍錄影 (デジタルカメラ・Vlog機材)", "leaf_items": [{"name": "4K Vlog 微單眼數位相機 (4K Vlog ミラーレス一眼)", "keywords": "Vlog カメラ 4K ミラーレス デジタルカメラ"}, {"name": "4K 防水運動攝影機 (アクションカメラ 防水 4K)", "keywords": "アクションカメラ 4K 防水 手ぶれ補正"}, {"name": "手機三軸防手震穩定器 (スマホ用ジンバル スタビライザー)", "keywords": "スマホ ジンバル スタビライザー 3軸"}]}, {"id": "tv-projectors", "name": "電視投影與影音串流 (テレビ・プロジェクター)", "leaf_items": [{"name": "家庭劇院高畫質投影機 (ホームプロジェクター 4K/1080P)", "keywords": "プロジェクター 小型 家庭用 自動台形補正 WiFi"}, {"name": "4K 電視電視棒 (4K ストリーミングメディア端末)", "keywords": "Fire TV Stick 4K ストリーミング"}]}, {"id": "wearables-smartwatches", "name": "智慧手錶與穿戴裝置 (スマートウォッチ・ウェアラブル)", "leaf_items": [{"name": "GPS 運動健康智慧手錶 (GPS スマートウォッチ 心拍計)", "keywords": "スマートウォッチ GPS 血中酸素 防水 心拍数"}, {"name": "智慧健康睡眠指環 (スマートリング 睡眠測定)", "keywords": "スマートリング 健康管理 睡眠計測 防水"}]}, {"id": "sumaho-accessories", "name": "手機配件與快充 (スマホアクセサリ・充電器)", "leaf_items": [{"name": "手機半導體磁吸散熱器 (ペルチェ素子 冷却ファン)", "keywords": "スマホ 冷却ファン ペルチェ素子 磁気"}, {"name": "MagSafe 磁吸無線行動電源 (MagSafe モバイルバッテリー)", "keywords": "MagSafe モバイルバッテリー ワイヤレス 10000mAh"}, {"name": "GaN 氮化鎵 65W/100W 快充頭 (GaN 急速充電器)", "keywords": "GaN 急速充電器 65W 100W USB-C"}, {"name": "軍規防摔防撞手機殼 (耐衝撃スマホケース)", "keywords": "スマホケース 耐衝撃 米軍MIL規格"}]}]}, {"id": "computers_accessories", "department_name": "電腦周邊與辦公 (パソコン・周辺機器＆オフィス)", "icon": "fa-laptop", "categories": [{"id": "laptops-mini-pc", "name": "筆記型電腦與迷你主機 (ノートパソコン・ミニPC)", "leaf_items": [{"name": "輕薄長續航筆記型電腦 (軽量薄型ノートパソコン)", "keywords": "ノートパソコン 軽量 薄型 長時間バッテリー"}, {"name": "高效能電競筆電 (ゲーミングノートPC RTX)", "keywords": "ゲーミングノートPC RTX 高リフレッシュレート"}, {"name": "AMD/Intel 迷你桌上型電腦 (高性能ミニPC)", "keywords": "ミニPC 小型デスクトップ Ryzen Intel"}]}, {"id": "keyboards-mice", "name": "機械鍵盤與人體工學滑鼠 (キーボード・マウス)", "leaf_items": [{"name": "熱插拔 RGB 機械式鍵盤 (メカニカルキーボード)", "keywords": "メカニカルキーボード ホットスワップ RGB 無線"}, {"name": "人體工學垂直靜音滑鼠 (エルゴノミクス垂直マウス)", "keywords": "エルゴノミクス マウス ワイヤレス 垂直 静音"}, {"name": "超輕量無線電競滑鼠 (超軽量ゲーミングマウス)", "keywords": "超軽量 ワイヤレス ゲーミングマウス"}]}, {"id": "monitors-screenbars", "name": "外接螢幕與螢幕掛燈 (PCモニター・スクリーンバー)", "leaf_items": [{"name": "27吋 4K IPS 廣色域螢幕 (27インチ 4K ディスプレイ)", "keywords": "PCモニター 27インチ 4K IPS Type-C"}, {"name": "144Hz+ 電競曲面螢幕 (ゲーミングモニター 144Hz)", "keywords": "ゲーミングモニター 144Hz 1ms IPS"}, {"name": "護眼螢幕掛燈 (モニターライト スクリーンバー)", "keywords": "モニターライト スクリーンバー 自動調光"}]}, {"id": "storage-docks", "name": "SSD 硬碟與多功能擴充塢 (外付けSSD・ドッキングステーション)", "leaf_items": [{"name": "高速外接 NVMe M.2 SSD (高速外付けポータブルSSD)", "keywords": "外付けSSD NVMe ポータブル 高速転送"}, {"name": "USB-C 10合1 多功能擴充塢 (USB-C ドッキングステーション)", "keywords": "USB-C ドッキングステーション マルチポート 4K HDMI"}]}]}, {"id": "home_kitchen", "department_name": "智慧家電與廚房 (生活家電＆キッチン用品)", "icon": "fa-mug-hot", "categories": [{"id": "robot-vacuums-cleaning", "name": "掃地機器人與吸塵器 (ロボット掃除機・コードレス掃除機)", "leaf_items": [{"name": "自動集塵拖地掃地機器人 (水拭き自動ゴミ収集ロボット掃除機)", "keywords": "ロボット掃除機 水拭き 自動ゴミ収集 マッピング"}, {"name": "輕量強效無線吸塵器 (軽量コードレススティック掃除機)", "keywords": "コードレス掃除機 スティッククリーナー 強力吸引"}, {"name": "雙拍打溫風除塵蟎吸塵器 (ふとんクリーナー温風乾燥)", "keywords": "布団クリーナー ダニ ちりセンサー 温風"}]}, {"id": "air-purifiers-climate", "name": "空氣清淨機與加濕器 (空気清浄機・加湿器)", "leaf_items": [{"name": "負離子加濕空氣清淨機 (加湿空気清浄機 プラズマクラスター)", "keywords": "加湿空気清浄機 プラズマクラスター ナノイー"}, {"name": "超音波溫冷水氧加濕器 (ハイブリッド加湿器 卓上大容量)", "keywords": "ハイブリッド加湿器 超音波 加熱式 大容量"}, {"name": "無葉片冷暖冷風扇 (羽根なし冷暖兼用タワーファン)", "keywords": "タワーファン 羽根なし セラミックファンヒーター"}]}, {"id": "kitchen-appliances", "name": "日本電鍋與咖啡機 (人気炊飯器・全自動コーヒーメーカー)", "leaf_items": [{"name": "IH 壓力厚釜電子鍋 (IH極め炊き炊飯器)", "keywords": "炊飯器 圧力IH 象印 タイガー 炎舞炊き"}, {"name": "全自動研磨義式咖啡機 (全自動コーヒーメーカー エスプレッソ)", "keywords": "デロンギ 全自動コーヒーメーカー エスプレッソ"}, {"name": "溫度調節細口手沖快煮壺 (温度調節電気ドリップケトル)", "keywords": "電気ケトル 温度調節 ドリップ コーヒー"}]}, {"id": "cookware-knives", "name": "氣炸烤箱與日本名刀 (ノンフライオーブン・高級料理包丁)", "leaf_items": [{"name": "氣炸多功能微波烤箱 (ノンフライオーブントースター)", "keywords": "ノンフライオーブン コンベクション トースター"}, {"name": "大馬士革鋼頂級三德包丁 (ダマスカス鋼プロ三徳包丁)", "keywords": "包丁 ダマスカス 三徳包丁 燕三条 牛刀"}, {"name": "不銹鋼真空超輕保溫杯 (ステンレスマグボトル)", "keywords": "サーモス 象印 水筒 真空断熱マグボトル"}]}]}, {"id": "clothing_shoes_jewelry", "department_name": "服飾、鞋包與飾品 (服＆ファッション小物・シューズ)", "icon": "fa-shirt", "categories": [{"id": "men-fashion", "name": "男士服飾與機能外套 (メンズファッション・アウター)", "leaf_items": [{"name": "防潑水輕量機能登山外套 (撥水マウンテンパーカー 防風)", "keywords": "マウンテンパーカー メンズ 撥水 防風 透湿"}, {"name": "快乾排汗彈性運動衫 (吸汗速乾ドライTシャツ)", "keywords": "メンズ スポーツ Tシャツ 速乾 ドライ"}, {"name": "免燙抗皺彈性休閒九分褲 (テーパードスラックス)", "keywords": "メンズ スラックス テーパード ストレッチ 形状記憶"}]}, {"id": "women-fashion", "name": "女士服飾與居家休閒 (レディースファッション・ルームウェア)", "leaf_items": [{"name": "高腰提臀親膚瑜伽褲 (ハイウエストヨガレギンス)", "keywords": "ヨガパンツ レギンス ハイウエスト 美脚 ポケット付き"}, {"name": "超輕量收納羽絨保暖外套 (ウルトラライトダウンジャケット)", "keywords": "ウルトラライトダウン レディース 軽量 防寒"}, {"name": "日系純棉親膚居家睡衣組 (やわらかコットンルームウェア)", "keywords": "パジャマ レディース 綿100% 長袖 ルームウェア"}]}, {"id": "running-shoes", "name": "運動跑鞋與休閒步履 (ランニングシューズ・スニーカー)", "leaf_items": [{"name": "超輕量避震慢跑鞋 (軽量クッションランニングシューズ)", "keywords": "ランニングシューズ 軽量 クッション 通気性"}, {"name": "GORE-TEX 防水越野健行鞋 (防水トレッキングシューズ)", "keywords": "ゴアテックス トレッキングシューズ 防水 登山靴"}, {"name": "人體工學足弓減壓拖鞋 (リカバリーサンダル 疲労軽減)", "keywords": "リカバリーサンダル アーチサポート 衝撃吸収"}]}, {"id": "bags-watches", "name": "商務後背包與日系手錶 (ビジネスリュック・腕時計)", "leaf_items": [{"name": "大容量防盜防潑水商務後背包 (ビジネスリュック 拡張機能)", "keywords": "ビジネスリュック 大容量 撥水 USBポート PC収納"}, {"name": "日本太陽能電波腕錶 (ソーラー電波腕時計)", "keywords": "セイコー シチズン ソーラー電波 腕時計"}]}]}, {"id": "beauty_personal_care", "department_name": "美妝保養與個人護理 (ビューティー＆ヘルスケア)", "icon": "fa-spa", "categories": [{"id": "skincare-serums", "name": "日本藥妝臉部保養與精華 (スキンケア・美容液)", "leaf_items": [{"name": "高純度維他命 C 亮白精華液 (高濃度ビタミンC美容液)", "keywords": "ビタミンC 美容液 メラノCC 導入液 毛穴ケア"}, {"name": "積雪草修護抗敏保濕霜 (CICAシカクリーム 保湿)", "keywords": "シカクリーム 保湿 敏感肌 スキンケア"}, {"name": "高保濕胺基酸潔顏慕斯 (アミノ酸フェイスウォッシュ泡洗顔)", "keywords": "泡洗顔 アミノ酸 保湿 敏感肌 洗顔料"}]}, {"id": "haircare-styling", "name": "負離子吹風機與美髮造型 (ナノケアドライヤー・ヘアアイロン)", "leaf_items": [{"name": "高浸透奈米負離子吹風機 (ナノケア高浸透ドライヤー)", "keywords": "ヘアドライヤー ナノケア 速乾 大風量 マイナスイオン"}, {"name": "陶瓷溫控直捲兩用美髮離子夾 (2WAYヘアアイロン 温度調節)", "keywords": "ヘアアイロン 2way ストレート カール マイナスイオン"}, {"name": "沙龍級深層修護髮膜 (サロン用補修ヘアトリートメント)", "keywords": "ヘアマスク フィーノ トリートメント 集中補修"}]}, {"id": "oral-shaving", "name": "音波電動牙刷與男士修容 (音波電動歯ブラシ・メンズシェーバー)", "leaf_items": [{"name": "音波震動電動牙刷 (音波振動電動歯ブラシ)", "keywords": "音波電動歯ブラシ パナソニック ドルツ 防水"}, {"name": "脈衝水洗便攜沖牙機 (口腔洗浄器 ジェットウォッシャー)", "keywords": "口腔洗浄機 ジェットウォッシャー 防水 携帯用"}, {"name": "日本 5 刀頭乾濕兩用電鬍刀 (5枚刃リニアメンズシェーバー)", "keywords": "メンズシェーバー 5枚刃 ラムダッシュ お風呂剃り"}]}]}, {"id": "sports_outdoors", "department_name": "運動、健身與戶外露營 (スポーツ＆アウトドア)", "icon": "fa-person-running", "categories": [{"id": "camping-gear", "name": "露營帳篷與戶外炊具 (キャンプテント・アウトドアギア)", "leaf_items": [{"name": "一鍵秒開雙層防水露營帳篷 (ワンタッチテント 耐水圧)", "keywords": "ワンタッチテント 2-4人用 耐水圧 サンシェード"}, {"name": "超輕量航太鋁合金露營折疊椅 (アウトドア軽量チェア)", "keywords": "アウトドアチェア ヘリノックスタイプ 折りたたみ 超軽量"}, {"name": "多功能防風露營卡式爐 (防風カセットコンロ タフまる)", "keywords": "カセットコンロ イワタニ タフまる 防風 キャンプ"}]}, {"id": "home-fitness", "name": "居家健身與重訓器材 (トレーニング器具・ダンベル)", "leaf_items": [{"name": "快速可調重鋼製啞鈴組 (可変式アジャスタブルダンベル)", "keywords": "可変式ダンベル アジャスタブル 筋トレ 省スペース"}, {"name": "靜音摺疊健走跑步機 (折りたたみ静音ウォーキングマシン)", "keywords": "ウォーキングマシン 静音 ルームランナー 折りたたみ"}, {"name": "加厚防滑高密度瑜伽墊 (高密度NBRヨガマット 厚手)", "keywords": "ヨガマット 厚手 10mm 滑り止め トレーニングマット"}]}, {"id": "cycling-sports", "name": "自行車周邊與戶外運動 (サイクル用品・アウトドアスポーツ)", "leaf_items": [{"name": "高流明防水自行車前後車燈 (高輝度LED自転車ライト 防水)", "keywords": "自転車ライト 高輝度 USB充電式 防水 テールライト"}, {"name": "站立式充氣充氣槳板 (インフレータブルSUPパドルボード)", "keywords": "スタンドアップパドルボード SUP インフレータブル"}]}]}, {"id": "automotive_motorcycle", "department_name": "汽車用品與機車周邊 (車＆バイク・カーエレクトロニクス)", "icon": "fa-car", "categories": [{"id": "dashcams-electronics", "name": "4K 行車記錄器與車用導航 (ドライブレコーダー・カーナビ)", "leaf_items": [{"name": "前後雙鏡頭 4K 夜視行車記錄器 (前後2カメラ4Kドライブレコーダー)", "keywords": "ドライブレコーダー 前後 4K SONYセンサー GPS 暗視"}, {"name": "無線 CarPlay 車載轉接器 (ワイヤレスCarPlayアダプター)", "keywords": "CarPlay ワイヤレスアダプター Android Auto ドングル"}, {"name": "車用磁吸 MagSafe 15W 快充支架 (車載マグネット充電ホルダー)", "keywords": "車載ホルダー MagSafe ワイヤレス充電 エアコン吹き出し口"}]}, {"id": "maintenance-cleaning", "name": "車用救車電源與洗車清潔 (ジャンプスターター・洗車用品)", "leaf_items": [{"name": "多功能應急救車行動電源 (大容量ジャンプスターター 12V)", "keywords": "ジャンプスターター 12V車用 モバイルバッテリー"}, {"name": "無線充電式數位輪胎打氣機 (コードレス電動エアコンプレッサー)", "keywords": "電動空気入れ 自動車 自転車 充電式 自動停止"}, {"name": "頂級高泡洗車精與超細纖維吸水布 (高発泡カーシャンプー・クロス)", "keywords": "洗車シャンプー コーティング施工車対応 マイクロファイバータオル"}]}]}, {"id": "baby_toys_games", "department_name": "母嬰用品與玩具遊戲 (ベビー＆マタニティ・おもちゃ)", "icon": "fa-baby", "categories": [{"id": "baby-strollers-care", "name": "嬰兒推車、安全汽座與護理 (ベビーカー・チャイルドシート)", "leaf_items": [{"name": "超輕量單手秒收可登機推車 (超軽量コンパクトベビーカー)", "keywords": "ベビーカー 軽量 コンパクト 折りたたみ ワンタッチ 機内持ち込み"}, {"name": "ISOFIX 360度旋轉型兒童安全座椅 (ISOFIX 回転式チャイルドシート)", "keywords": "チャイルドシート 回転式 ISOFIX 新生児"}, {"name": "多功能嬰兒副食品調理機 (離乳食ブレンダー 調理セット)", "keywords": "離乳食メーカー ブレンダー 蒸し調理 離乳食セット"}]}, {"id": "educational-toys-games", "name": "益智積木、樂高與派對桌遊 (知育玩具・ブロック・ボードゲーム)", "leaf_items": [{"name": "STEM 磁力片積木組合 (知育玩具 マグネットブロック)", "keywords": "マグネットブロック 磁石ブロック 知育玩具 STEM"}, {"name": "經典樂高建築收藏模型 (レゴ アーキテクチャー・コレクター)", "keywords": "レゴ LEGO 大人向け アーキテクチャー"}, {"name": "日本流行派對休閒桌遊 (人気ボードゲーム・パーティーゲーム)", "keywords": "ボードゲーム パーティーゲーム 日本語版"}]}]}, {"id": "health_household", "department_name": "健康保健與家庭護理 (ドラッグストア・マッサージ)", "icon": "fa-heart-pulse", "categories": [{"id": "massage-relaxation", "name": "筋膜按摩槍與肩頸舒緩 (マッサージガン・温熱マッサージャー)", "leaf_items": [{"name": "深層筋膜震動筋膜槍 (ドクターエアタイプ筋膜リリースガン)", "keywords": "マッサージガン 筋膜リリース 静音 軽量 ハンディ"}, {"name": "溫熱指壓頸部按摩枕 (コードレス首肩温熱マッサージャー)", "keywords": "ネックマッサージャー 首 肩 温熱 EMS"}, {"name": "氣壓式腿部循環按摩靴 (エアフットマッサージャー)", "keywords": "フットマッサージャー エアマッサージ 足先 ふくらはぎ 疲労回復"}]}, {"id": "supplements-daily", "name": "營養保健與助眠好物 (サプリメント・睡眠サポート)", "leaf_items": [{"name": "高濃度日本深海魚油 EPA/DHA (高純度オメガ3サプリメント)", "keywords": "DHA EPA サプリメント 国産 オメガ3"}, {"name": "甘胺酸鎂舒壓助眠膠囊 (グリシン＆マグネシウム睡眠サプリ)", "keywords": "睡眠サプリ グリシン GABA テアニン"}, {"name": "除菌消臭家庭清潔噴霧 (除菌消臭スプレー・ファブリックケア)", "keywords": "ファブリーズ 除菌 消臭スプレー 詰め替え"}]}]}, {"id": "grocery_gourmet_food", "department_name": "日本特色食品與咖啡茶飲 (食品＆飲料・お菓子・お茶)", "icon": "fa-utensils", "categories": [{"id": "japanese-snacks", "name": "日本熱銷零食甜點與禮盒 (人気日本銘菓・スイーツギフト)", "leaf_items": [{"name": "北海道風味夾心餅乾禮盒 (北海道ラングドシャ・銘菓ギフト)", "keywords": "ギフト お菓子 ラングドシャ クッキー 詰め合わせ"}, {"name": "無添加香濃堅果綜合包 (無塩無添加ミックスナッツ)", "keywords": "ミックスナッツ 無塩 素焼き アーモンド くるみ"}, {"name": "低卡高蛋白健康威化棒 (プロテインバー 低糖質)", "keywords": "プロテインバー 低糖質 たんぱく質 おやつ"}]}, {"id": "tea-coffee-beverages", "name": "宇治抹茶、手沖咖啡與日本茶 (宇治抹茶・ドリップコーヒー・日本茶)", "leaf_items": [{"name": "京都宇治無添加有機抹茶粉 (京都宇治抹茶パウダー 有機)", "keywords": "宇治抹茶 パウダー 無添加 有機 オーガニック"}, {"name": "單品濾掛式精品咖啡包 (職人ドリップコーヒーギフト)", "keywords": "ドリップコーヒー 詰め合わせ ギフト 深煎り"}, {"name": "靜岡特選深蒸煎茶茶包 (静岡深蒸し煎茶ティーバッグ)", "keywords": "日本茶 煎茶 静岡茶 ティーバッグ 国産"}]}]}, {"id": "pet_supplies", "department_name": "寵物用品 (ペット用品・フード＆ケア)", "icon": "fa-paw", "categories": [{"id": "cat-supplies", "name": "貓咪飼料零食與自動設備 (キャットフード・自動給餌器)", "leaf_items": [{"name": "日本熱銷 CIAO 肉泥點心 (CIAOちゅ〜る 猫用おやつ)", "keywords": "いなば チャオ ちゅ〜る 猫 おやつ"}, {"name": "WiFi 遠端智慧自動餵食器 (自動給餌器 スマホ連動 カメラ付き)", "keywords": "自動給餌器 猫 犬 スマホ アプリ タイマー"}, {"name": "超靜音循環過濾活水機 (ペット用自動給水器 静音フィルター)", "keywords": "ペット 給水器 自動 循環式 軟水化フィルター"}]}, {"id": "dog-supplies", "name": "狗狗胸背帶、睡墊與修毛器 (ドッグハーネス・ペットベッド)", "leaf_items": [{"name": "高彈力支撐減壓狗睡床 (高反発ペットベッド 洗える)", "keywords": "ペットベッド 犬 高反発 洗える クッション"}, {"name": "防暴衝透氣減壓胸背帶 (犬用ハーネス 抜けない 反射材)", "keywords": "犬 ハーネス 引っ張り防止 通気性 胴輪"}, {"name": "低噪音寵物電動吸毛理毛機 (ペット用バリカン 掃除機一体型)", "keywords": "ペット用バリカン 吸引式 グルーミングキット 低騒音"}]}]}, {"id": "tools_home_improvement", "department_name": "工具與居家修繕 (DIY・工具・ガーデン)", "icon": "fa-screwdriver-wrench", "categories": [{"id": "power-tools", "name": "電動工具與精密維修組 (電動インパクトドライバー・工具セット)", "leaf_items": [{"name": "18V 強力無刷充電式衝擊起子機 (18V充電式インパクトドライバー)", "keywords": "インパクトドライバー 充電式 18V ブラシレス"}, {"name": "精密電子修繕螺絲起子套組 (精密ドライバーセット 特殊ネジ対応)", "keywords": "精密ドライバーセット iPhone PC 修理 スマホ"}, {"name": "高精度雷射測距儀 (高精度レーザー距離計 自動計算)", "keywords": "レーザー距離計 小型 充電式 面積 体積 測定"}]}, {"id": "smart-locks-lighting", "name": "智慧門鎖與 LED 照明 (スマートロック・LEDシーリングライト)", "leaf_items": [{"name": "指紋感應免鑰匙智慧電子鎖 (スマートロック 指紋認証 WiFi)", "keywords": "スマートロック 指紋認証 後付け 暗証番号"}, {"name": "無段調光調色 LED 吸頂燈 (LEDシーリングライト 調光調色)", "keywords": "LED シーリングライト 8畳 12畳 調光調色 リモコン"}, {"name": "重型多層可調式收納鐵架 (スチールラック 防サビ 多段)", "keywords": "スチールラック メタルラック 耐荷重 収納棚"}]}]}]}
+  };
 
   /* Market Configs */
   var MARKETS = {
@@ -629,16 +591,29 @@
       name: '美國站 (amazon.com)',
       countryName: 'United States',
       baseUrl: 'https://www.amazon.com/s',
-      defaultTag: 'gugopro-20',
-      storageKey: 'gugopro_amazon_us_tag',
-      dataPath: '../data/us/categories_tree.json',
-      facetsPaths: ['../data/us/facets/electronics.json', '../data/us/facets/computers.json', '../data/us/facets/home_kitchen.json', '../data/us/facets/sports_outdoors.json'],
+      tag: US_TAG,
+      dataPaths: [
+        '/data/us/categories_tree.json',
+        '/amazon/data/us/categories_tree.json',
+        '../data/us/categories_tree.json',
+        'data/us/categories_tree.json'
+      ],
+      facetsPaths: [
+        '/data/us/facets/electronics.json',
+        '/data/us/facets/computers.json',
+        '/data/us/facets/home_kitchen.json',
+        '/data/us/facets/sports_outdoors.json',
+        '/amazon/data/us/facets/electronics.json',
+        '/amazon/data/us/facets/computers.json',
+        '/amazon/data/us/facets/home_kitchen.json',
+        '/amazon/data/us/facets/sports_outdoors.json'
+      ],
       currency: 'USD ($)',
       themeClass: '',
       rhRating: 'p_72:1248879011',
       labels: {
         heroTitle: 'Amazon 🇺🇸 跨國選品與分類導流引擎',
-        heroDesc: '站內多層級精選目錄瀏覽，點擊任何品類或搜尋將直接跳轉 Amazon.com，並自動帶入官方分潤推廣標籤。',
+        heroDesc: '站內 12 大核心分類目錄瀏覽，點擊任何品類或搜尋將直接跳轉 Amazon.com。',
         searchPlaceholder: '輸入搜尋關鍵字 (如: noise cancelling earbuds)...',
         btnSearch: '前往 Amazon US 搜尋'
       }
@@ -648,10 +623,23 @@
       name: '日本站 (amazon.co.jp)',
       countryName: 'Japan (日本)',
       baseUrl: 'https://www.amazon.co.jp/s',
-      defaultTag: 'gugoprojp-22',
-      storageKey: 'gugopro_amazon_jp_tag',
-      dataPath: '../data/jp/categories_tree.json',
-      facetsPaths: ['../data/jp/facets/electronics.json', '../data/jp/facets/computers.json', '../data/jp/facets/home_kitchen.json', '../data/jp/facets/sports_outdoors.json'],
+      tag: JP_TAG,
+      dataPaths: [
+        '/data/jp/categories_tree.json',
+        '/amazon/data/jp/categories_tree.json',
+        '../data/jp/categories_tree.json',
+        'data/jp/categories_tree.json'
+      ],
+      facetsPaths: [
+        '/data/jp/facets/electronics.json',
+        '/data/jp/facets/computers.json',
+        '/data/jp/facets/home_kitchen.json',
+        '/data/jp/facets/sports_outdoors.json',
+        '/amazon/data/jp/facets/electronics.json',
+        '/amazon/data/jp/facets/computers.json',
+        '/amazon/data/jp/facets/home_kitchen.json',
+        '/amazon/data/jp/facets/sports_outdoors.json'
+      ],
       currency: 'JPY (円)',
       themeClass: 'theme-jp',
       rhRating: 'p_72:p_72%2F1248879011',
@@ -666,7 +654,6 @@
 
   /* App State */
   var currentMarket = 'us';
-  var currentTreeData = null;
 
   function initMarketFromUrl() {
     var params = new URLSearchParams(window.location.search);
@@ -680,32 +667,11 @@
     }
   }
 
-  function getActiveTag() {
-    var conf = MARKETS[currentMarket];
-    return localStorage.getItem(conf.storageKey) || conf.defaultTag;
-  }
-
-  function setActiveTag(tag) {
-    var conf = MARKETS[currentMarket];
-    if (!tag) {
-      localStorage.removeItem(conf.storageKey);
-    } else {
-      localStorage.setItem(conf.storageKey, tag.trim());
-    }
-    updateNavTag();
-  }
-
-  function updateNavTag() {
-    var tag = getActiveTag();
-    var navEl = document.getElementById('nav-tag-display');
-    if (navEl) navEl.textContent = 'Tag: ' + tag;
-  }
-
   function buildAmazonSearchUrl(keyword, options) {
     var conf = MARKETS[currentMarket];
-    var tag = getActiveTag();
+    var tag = currentMarket === 'jp' ? JP_TAG : US_TAG;
     var url = new URL(conf.baseUrl);
-    url.searchParams.set('k', keyword.trim());
+    url.searchParams.set('k', (keyword || '').trim());
     url.searchParams.set('tag', tag);
 
     options = options || {};
@@ -713,8 +679,8 @@
     if (options.rh) url.searchParams.set('rh', options.rh);
 
     // Price range filters
-    var low = options.low || document.getElementById('input-price-low').value;
-    var high = options.high || document.getElementById('input-price-high').value;
+    var low = options.low || (document.getElementById('input-price-low') ? document.getElementById('input-price-low').value : '');
+    var high = options.high || (document.getElementById('input-price-high') ? document.getElementById('input-price-high').value : '');
     if (low && !isNaN(Number(low))) url.searchParams.set('low-price', Math.round(Number(low)));
     if (high && !isNaN(Number(high))) url.searchParams.set('high-price', Math.round(Number(high)));
 
@@ -726,7 +692,7 @@
       var input = document.getElementById('input-keyword');
       keyword = input ? input.value : '';
     }
-    if (!keyword.trim()) return;
+    if (!keyword || !keyword.trim()) return;
 
     var targetUrl = buildAmazonSearchUrl(keyword, options);
     window.open(targetUrl, '_blank', 'noopener,noreferrer');
@@ -771,54 +737,79 @@
     document.getElementById('input-price-low').placeholder = 'Min (' + conf.currency.split(' ')[0] + ')';
     document.getElementById('input-price-high').placeholder = 'Max (' + conf.currency.split(' ')[0] + ')';
 
-    updateNavTag();
     loadMarketData();
   };
 
-  function loadMarketData() {
-    var conf = MARKETS[currentMarket];
-    var deptGrid = document.getElementById('dept-grid');
-    var countSummary = document.getElementById('category-summary-count');
-    
-    deptGrid.innerHTML = '<div style="text-align:center; padding:30px; color:var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> 載入 ' + conf.name + ' 精選品類資料庫...</div>';
-
-    fetch(conf.dataPath, { cache: 'no-store' })
-      .then(function(res) {
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.json();
-      })
-      .then(function(data) {
-        currentTreeData = data;
-        renderTree(data);
-        if (conf.facetsPath) {
-          loadFacets(conf.facetsPath);
-        } else {
-          document.getElementById('facets-container').innerHTML = '';
+  async function fetchJsonFirstValid(paths) {
+    for (var i = 0; i < paths.length; i++) {
+      try {
+        var res = await fetch(paths[i], { cache: 'no-store' });
+        if (res.ok) {
+          var data = await res.json();
+          if (data) return data;
         }
-      })
-      .catch(function(err) {
-        deptGrid.innerHTML = '<div style="padding:20px; color:#fca5a5; background:rgba(239,68,68,0.1); border-radius:10px;">❌ 載入資料庫失敗：' + err.message + '</div>';
-      });
+      } catch(e) {}
+    }
+    return null;
   }
 
-  function loadFacets(facetsPath) {
-    fetch(facetsPath, { cache: 'no-store' })
-      .then(function(res) { return res.ok ? res.json() : null; })
-      .then(function(data) {
+  async function loadMarketData() {
+    var conf = MARKETS[currentMarket];
+    
+    // 1. Instant fallback rendering (0ms delay)
+    if (EMBEDDED_DATA[currentMarket]) {
+      renderTree(EMBEDDED_DATA[currentMarket]);
+    }
+
+    // 2. Fetch fresh JSON in background
+    try {
+      var data = await fetchJsonFirstValid(conf.dataPaths);
+      if (data && data.categories) {
+        renderTree(data);
+      }
+    } catch(e) {}
+
+    // 3. Load Facet chips
+    loadFacets(conf.facetsPaths || []);
+  }
+
+  function loadFacets(facetsPaths) {
+    var container = document.getElementById('facets-container');
+    if (!facetsPaths || facetsPaths.length === 0) {
+      if (container) container.innerHTML = '';
+      return;
+    }
+
+    var promises = facetsPaths.map(function(p) {
+      return fetch(p, { cache: 'no-store' })
+        .then(function(res) { return res.ok ? res.json() : null; })
+        .catch(function() { return null; });
+    });
+
+    Promise.all(promises).then(function(results) {
+      if (!container) return;
+      var html = '<span class="facet-title"><i class="fa-solid fa-tags"></i> 熱門規格標籤：</span>';
+      var foundAny = false;
+      var seenLabels = new Set();
+
+      results.forEach(function(data) {
         if (!data || !data.facet_groups) return;
-        var container = document.getElementById('facets-container');
-        var html = '<span class="facet-title"><i class="fa-solid fa-tags"></i> 快速規格標籤：</span>';
-        
         data.facet_groups.forEach(function(group) {
-          group.facets.forEach(function(f) {
-            html += '<span class="facet-pill" onclick="applyFacetSearch(\'' + (f.search_query || f.label_jp) + '\')">' +
-                      (f.label_tw || f.label_jp) +
+          (group.facets || []).forEach(function(f) {
+            var displayLabel = f.label_tw || f.label || f.label_jp;
+            if (seenLabels.has(displayLabel)) return;
+            seenLabels.add(displayLabel);
+            foundAny = true;
+            var query = (f.search_query || f.label_jp || f.label || '').replace(/'/g, "\\'");
+            html += '<span class="facet-pill" onclick="applyFacetSearch(\'' + query + '\')">' +
+                      displayLabel +
                     '</span>';
           });
         });
-        container.innerHTML = html;
-      })
-      .catch(function(){});
+      }));
+
+      container.innerHTML = foundAny ? html : '';
+    });
   }
 
   window.applyFacetSearch = function(query) {
@@ -876,38 +867,37 @@
       deptGrid.appendChild(deptCard);
     });
 
-    countSummary.textContent = '(' + categories.length + ' 部門 · ' + nCats + ' 分類 · ' + nItems + ' 精選品項)';
+    countSummary.textContent = '(' + categories.length + ' 大品類 · ' + nCats + ' 子分類 · ' + nItems + ' 精選爆品)';
   }
 
-  /* Tag Modal Functions */
-  window.openTagModal = function() {
-    var conf = MARKETS[currentMarket];
-    document.getElementById('modal-market-name').textContent = conf.name;
-    document.getElementById('modal-input-tag').value = getActiveTag();
-    document.getElementById('modal-tag').classList.add('show');
-  };
+  /* Initialize Event Listeners */
+  function initEvents() {
+    var searchInput = document.getElementById('input-keyword');
+    if (searchInput) {
+      searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.isComposing) {
+          e.preventDefault();
+          handleCustomSearch();
+        }
+      });
+    }
 
-  window.closeTagModal = function() {
-    document.getElementById('modal-tag').classList.remove('show');
-  };
+    var searchBtn = document.getElementById('btn-search-amazon');
+    if (searchBtn) {
+      searchBtn.addEventListener('click', function() {
+        handleCustomSearch();
+      });
+    }
+  }
 
-  window.saveTagFromModal = function() {
-    var val = document.getElementById('modal-input-tag').value;
-    setActiveTag(val);
-    closeTagModal();
-    alert('已成功更新 ' + MARKETS[currentMarket].name + ' 的分潤標籤！');
-  };
-
-  window.resetDefaultTag = function() {
-    var conf = MARKETS[currentMarket];
-    setActiveTag(conf.defaultTag);
-    document.getElementById('modal-input-tag').value = conf.defaultTag;
-    alert('已重設為預設標籤：' + conf.defaultTag);
-  };
-
-  /* Initialize */
+  /* Run Init */
   initMarketFromUrl();
   switchMarket(currentMarket);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initEvents);
+  } else {
+    initEvents();
+  }
 
 })();
 </script>
