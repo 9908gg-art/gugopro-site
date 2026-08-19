@@ -788,12 +788,172 @@ var SPREADS = {
 var state = {
   selectedSpread: 'timeline',
   apiKey: '',
-  geminiModel: 'gemini-2.5-flash',
+  geminiModel: 'gemini-2.0-flash',
   chatHistory: [],
   isProcessing: false,
   speechRecognition: null,
   isRecordingVoice: false
 };
+
+/* =====================================================================
+   DYNAMIC GEMINI MODEL DISCOVERY & MULTI-MODEL FALLBACK ENGINE
+   ===================================================================== */
+var discoveredModels = null;
+var lastModelFetchTime = 0;
+
+var DEFAULT_FALLBACK_MODELS = [
+  'gemini-2.0-flash',
+  'gemini-1.5-flash',
+  'gemini-1.5-flash-8b',
+  'gemini-1.5-pro'
+];
+
+async function getAvailableGeminiModels(apiKey) {
+  var now = Date.now();
+  if (discoveredModels && (now - lastModelFetchTime < 300000)) {
+    return discoveredModels;
+  }
+
+  var models = [];
+  if (apiKey) {
+    try {
+      var resp = await fetch('https://generativelanguage.googleapis.com/v1beta/models?key=' + encodeURIComponent(apiKey), { method: 'GET' });
+      if (resp.ok) {
+        var data = await resp.json();
+        if (data && Array.isArray(data.models)) {
+          var valid = data.models
+            .filter(function(m) {
+              return Array.isArray(m.supportedGenerationMethods) &&
+                     m.supportedGenerationMethods.includes('generateContent');
+            })
+            .map(function(m) {
+              return (m.name || '').replace(/^models\//, '');
+            })
+            .filter(function(name) {
+              return name.startsWith('gemini-') && !name.includes('embedding') && !name.includes('vision') && !name.includes('aqa');
+            });
+
+          if (valid.length > 0) {
+            valid.sort(function(a, b) {
+              var aFlash = a.includes('flash') ? 0 : 1;
+              var bFlash = b.includes('flash') ? 0 : 1;
+              if (aFlash !== bFlash) return aFlash - bFlash;
+              return b.localeCompare(a);
+            });
+            models = valid;
+            console.log('✅ 動態取得 Google 官方可用 Gemini 模型清單：', models);
+          }
+        }
+      }
+    } catch(e) {
+      console.warn('動態獲取 Google Gemini 模型清單失敗，將使用內建支援模型清單：', e);
+    }
+  }
+
+  DEFAULT_FALLBACK_MODELS.forEach(function(m) {
+    if (!models.includes(m)) {
+      models.push(m);
+    }
+  });
+
+  discoveredModels = models;
+  lastModelFetchTime = now;
+  return discoveredModels;
+}
+
+async function callGeminiWithRetry(apiKey, prompt, generationConfig) {
+  var candidateModels = await getAvailableGeminiModels(apiKey);
+  var lastError = null;
+
+  for (var i = 0; i < candidateModels.length; i++) {
+    var model = candidateModels[i];
+    var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(apiKey);
+    try {
+      var resp = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          generationConfig: generationConfig || { temperature: 0.75, maxOutputTokens: 4096 }
+        })
+      });
+
+      if (resp.status === 400 || resp.status === 401 || resp.status === 403) {
+        setGlobalApiKey('');
+        alert('⚠️ 您設定的 Gemini API Key 已失效或輸入有誤，請重新設定。');
+        openApiKeyModal();
+        throw new Error('API Key 無效或已過期 (HTTP ' + resp.status + ')');
+      }
+
+      if (!resp.ok) {
+        var errBody = await resp.text().catch(function(){ return ''; });
+        console.warn('模型 ' + model + ' 回傳 HTTP ' + resp.status + '，自動切換至下一個備用模型...', errBody);
+        lastError = new Error('HTTP ' + resp.status + ' (' + model + ')');
+        continue;
+      }
+
+      var data = await resp.json();
+      var text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (text) {
+        state.geminiModel = model;
+        return text;
+      }
+    } catch(err) {
+      if (err.message && err.message.includes('API Key 無效')) throw err;
+      console.warn('呼叫模型 ' + model + ' 發生異常：', err);
+      lastError = err;
+    }
+  }
+
+  throw lastError || new Error('所有可用 Gemini 模型呼叫皆失敗，請檢查網路或稍後重試。');
+}
+
+async function callGeminiMultiTurnWithRetry(apiKey, contents, generationConfig) {
+  var candidateModels = await getAvailableGeminiModels(apiKey);
+  var lastError = null;
+
+  for (var i = 0; i < candidateModels.length; i++) {
+    var model = candidateModels[i];
+    var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(apiKey);
+    try {
+      var resp = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: contents,
+          generationConfig: generationConfig || { temperature: 0.75, maxOutputTokens: 2048 }
+        })
+      });
+
+      if (resp.status === 400 || resp.status === 401 || resp.status === 403) {
+        setGlobalApiKey('');
+        alert('⚠️ 您設定的 Gemini API Key 已失效或輸入有誤，請重新設定。');
+        openApiKeyModal();
+        throw new Error('API Key 無效或已過期 (HTTP ' + resp.status + ')');
+      }
+
+      if (!resp.ok) {
+        var errBody = await resp.text().catch(function(){ return ''; });
+        console.warn('追問時模型 ' + model + ' 回傳 HTTP ' + resp.status + '，自動切換至下一個備用模型...', errBody);
+        lastError = new Error('HTTP ' + resp.status + ' (' + model + ')');
+        continue;
+      }
+
+      var data = await resp.json();
+      var text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (text) {
+        state.geminiModel = model;
+        return text;
+      }
+    } catch(err) {
+      if (err.message && err.message.includes('API Key 無效')) throw err;
+      console.warn('追問呼叫模型 ' + model + ' 發生異常：', err);
+      lastError = err;
+    }
+  }
+
+  throw lastError || new Error('所有可用 Gemini 模型呼叫皆失敗，請檢查網路或稍後重試。');
+}
 
 var lastRequest = null;
 
@@ -1201,30 +1361,10 @@ async function fetchGeminiReading(reading, timer1, timer2) {
 
   try {
     var apiKey = getGlobalApiKey();
-    var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + state.geminiModel + ':generateContent?key=' + encodeURIComponent(apiKey);
-    var resp = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ text: systemPrompt }] }],
-        generationConfig: { temperature: 0.75, maxOutputTokens: 4096 }
-      })
-    });
+    var responseText = await callGeminiWithRetry(apiKey, systemPrompt, { temperature: 0.75, maxOutputTokens: 4096 });
 
     clearTimeout(timer1);
     clearTimeout(timer2);
-
-    if (resp.status === 400 || resp.status === 401 || resp.status === 403) {
-      setGlobalApiKey('');
-      alert('⚠️ 您設定的 Gemini API Key 已失效或輸入有誤，請重新設定。');
-      openApiKeyModal();
-      throw new Error('API Key 無效或已過期');
-    }
-
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-
-    var data = await resp.json();
-    var responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || '無法取得解讀內容。';
 
     // Store in conversational history for multi-turn follow-ups!
     state.chatHistory.push({ role: 'user', content: reading.question });
@@ -1298,20 +1438,7 @@ async function handleFollowUpFlow(question) {
 
   try {
     var apiKey = getGlobalApiKey();
-    var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + state.geminiModel + ':generateContent?key=' + encodeURIComponent(apiKey);
-    var resp = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: contents,
-        generationConfig: { temperature: 0.75, maxOutputTokens: 2048 }
-      })
-    });
-
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-
-    var data = await resp.json();
-    var responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || '無法取得追問解答。';
+    var responseText = await callGeminiMultiTurnWithRetry(apiKey, contents, { temperature: 0.75, maxOutputTokens: 2048 });
 
     state.chatHistory.push({ role: 'user', content: question });
     state.chatHistory.push({ role: 'model', content: responseText });
