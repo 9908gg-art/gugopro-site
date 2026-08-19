@@ -595,9 +595,9 @@
                 <button class="btn-mic" id="btn-voice" onclick="toggleVoiceInput()" title="語音輸入問題">
                     <i class="fa-solid fa-microphone"></i>
                 </button>
-                <textarea id="chat-user-input" class="chat-textarea" placeholder="輸入你想探索的問題，或點擊上方主題標籤... (Enter 發送)" rows="1" onkeydown="handleInputKeydown(event)"></textarea>
+                <textarea id="chat-user-input" class="chat-textarea" placeholder="輸入你想探索的問題，或點擊上方主題標籤... (Enter 發送)" rows="1"></textarea>
             </div>
-            <button class="btn-send-msg" id="btn-send" onclick="submitUserQuestion()" title="發送問題">
+            <button class="btn-send-msg" id="btn-send" title="發送問題">
                 <i class="fa-solid fa-paper-plane"></i>
             </button>
         </div>
@@ -791,10 +791,11 @@ var state = {
   geminiModel: 'gemini-2.5-flash',
   chatHistory: [],
   isProcessing: false,
-  pendingStart: false,
   speechRecognition: null,
   isRecordingVoice: false
 };
+
+var lastRequest = null;
 
 /* =====================================================================
    API KEY SECURITY & OBFUSCATION MODULE
@@ -897,9 +898,10 @@ window.saveApiKeyFromModal = function() {
   }
   closeApiKeyModal();
 
-  if (state.pendingStart) {
-    state.pendingStart = false;
-    submitUserQuestion();
+  if (lastRequest) {
+    var req = lastRequest;
+    lastRequest = null;
+    sendMessage(req);
   }
 };
 
@@ -919,8 +921,8 @@ window.quickAsk = function(questionText) {
   var input = document.getElementById('chat-user-input');
   if (input) {
     input.value = questionText;
-    submitUserQuestion();
   }
+  sendMessage(questionText);
 };
 
 /* =====================================================================
@@ -935,11 +937,14 @@ function appendMessage(role, htmlContent) {
   msgDiv.innerHTML = '<div class="msg-avatar">' + avatar + '</div><div class="msg-body">' + htmlContent + '</div>';
 
   chatFeed.appendChild(msgDiv);
-  setTimeout(function() {
-    msgDiv.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  }, 50);
-
+  scrollToBottom();
   return msgDiv;
+}
+
+function scrollToBottom() {
+  setTimeout(function() {
+    window.scrollTo({ top: document.body.scrollHeight || document.documentElement.scrollHeight, behavior: 'smooth' });
+  }, 60);
 }
 
 function escapeHtml(str) {
@@ -953,8 +958,7 @@ function renderTarotReport(rawText) {
   // Bold formatting
   escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong style="color:var(--neon-gold); font-weight:700;">$1</strong>');
 
-  var lines = escaped.split('
-');
+  var lines = escaped.split('\n');
   var html = '<div style="margin-top:8px;">';
   var inSection = false;
   var currentSectionContent = '';
@@ -1018,43 +1022,40 @@ function renderTarotReport(rawText) {
 }
 
 /* =====================================================================
-   MAIN CONVERSATIONAL WORKFLOW
+   MAIN CONVERSATIONAL WORKFLOW (Direct aligned with AI Tutor)
    ===================================================================== */
-window.handleInputKeydown = function(event) {
-  if (event.key === 'Enter' && !event.shiftKey) {
-    event.preventDefault();
-    submitUserQuestion();
-  }
-};
-
-window.submitUserQuestion = function() {
-  var input = document.getElementById('chat-user-input');
-  var question = (input ? input.value : '').trim();
+async function sendMessage(retryRequest = null) {
+  var textInput = document.getElementById('chat-user-input');
+  var question = (typeof retryRequest === 'string' ? retryRequest : (textInput ? textInput.value : '')).trim();
   if (!question) return;
 
-  var key = getGlobalApiKey();
-  if (!key) {
-    state.pendingStart = true;
+  var apiKey = getGlobalApiKey();
+  if (!apiKey) {
+    lastRequest = question;
     openApiKeyModal();
     return;
   }
-  state.apiKey = key;
+  lastRequest = null;
 
-  // Clear input
-  input.value = '';
-  input.style.height = 'auto';
+  if (textInput && typeof retryRequest !== 'string') {
+    textInput.value = '';
+    textInput.style.height = 'auto';
+  }
 
-  // 1. Render User Message
+  // 1. Render User Message immediately
   appendMessage('user', escapeHtml(question));
 
-  // Check if this is an initial reading in the session or a follow-up
+  // 2. Initial Reading Spread vs Multi-turn Follow-up
   if (state.chatHistory.length === 0) {
-    // Initial Reading: create in-chat 3D Card Spread component
     handleInitialReadingFlow(question);
   } else {
-    // Multi-turn Follow-up conversation
     handleFollowUpFlow(question);
   }
+}
+
+// Window export for backwards compat
+window.submitUserQuestion = function() {
+  sendMessage();
 };
 
 /* =====================================================================
@@ -1103,7 +1104,7 @@ function handleInitialReadingFlow(question) {
       '<div class="inchat-spread-header"><i class="fa-solid fa-wand-magic-sparkles"></i> ' + spread.name + '（' + count + ' 張牌）</div>' +
       '<div class="inchat-card-row">' + cardHtml + '</div>' +
       '<div id="' + instanceId + '_action_container">' +
-        '<button class="btn-start-deal" id="' + instanceId + '_btn" onclick="executeInChatDeal('' + instanceId + '')">' +
+        '<button class="btn-start-deal" id="' + instanceId + '_btn" onclick="executeInChatDeal(\'' + instanceId + '\')">' +
           '<i class="fa-solid fa-shuffle"></i> 🔮 靜心默念・開始洗牌抽牌' +
         '</button>' +
       '</div>' +
@@ -1186,32 +1187,21 @@ async function fetchGeminiReading(reading, timer1, timer2) {
   var cardDescriptions = reading.drawnCards.map(function(d, i) {
     var orientation = d.reversed ? '逆位 (Reversed)' : '正位 (Upright)';
     return '[' + d.position + ']：' + d.card.name + ' (' + d.card.en + ') — ' + orientation + ' — 核心關鍵字：' + (d.reversed ? d.card.r : d.card.u);
-  }).join('
-');
+  }).join('\n');
 
   var systemPrompt =
-    '你是一位擁有 20 年豐富經驗的專業塔羅心靈導師，精通韋特塔羅牌的象徵學與深度心理學。請根據問卜者的具體問題與抽出的牌陣，進行客觀、溫暖、深刻且具體可行的交叉解牌。
-
-' +
-    '【問卜者問題】：' + reading.question + '
-' +
-    '【牌陣】：' + reading.spread.name + ' (' + reading.drawnCards.length + ' 張牌)
-
-' +
-    '【牌卡詳情】：
-' + cardDescriptions + '
-
-' +
-    '請按照以下三個部分進行結構化深度解讀：
-' +
-    '🌟 一、整體能量概述 (分析整體牌陣能量流向與關鍵轉折點)
-' +
-    '🔍 二、各位置牌卡深度剖析 (針對各位置意義、正逆位細節與牌間互動展開解讀)
-' +
+    '你是一位擁有 20 年豐富經驗的專業塔羅心靈導師，精通韋特塔羅牌的象徵學與深度心理學。請根據問卜者的具體問題與抽出的牌陣，進行客觀、溫暖、深刻且具體可行的交叉解牌。\n\n' +
+    '【問卜者問題】：' + reading.question + '\n' +
+    '【牌陣】：' + reading.spread.name + ' (' + reading.drawnCards.length + ' 張牌)\n\n' +
+    '【牌卡詳情】：\n' + cardDescriptions + '\n\n' +
+    '請按照以下三個部分進行結構化深度解讀：\n' +
+    '🌟 一、整體能量概述 (分析整體牌陣能量流向與關鍵轉折點)\n' +
+    '🔍 二、各位置牌卡深度剖析 (針對各位置意義、正逆位細節與牌間互動展開解讀)\n' +
     '💡 三、實體行動建議與靈性對策 (提供 3-4 條清晰、具建設性且可落地的具體指引)';
 
   try {
-    var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + state.geminiModel + ':generateContent?key=' + encodeURIComponent(state.apiKey);
+    var apiKey = getGlobalApiKey();
+    var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + state.geminiModel + ':generateContent?key=' + encodeURIComponent(apiKey);
     var resp = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1256,9 +1246,7 @@ async function fetchGeminiReading(reading, timer1, timer2) {
       resultBox.innerHTML = renderTarotReport(responseText) + actionButtons;
       resultBox.style.display = 'block';
       
-      setTimeout(function() {
-        resultBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 200);
+      scrollToBottom();
     }
 
     // Auto-save to local journal
@@ -1280,7 +1268,7 @@ async function fetchGeminiReading(reading, timer1, timer2) {
       resultBox.innerHTML =
         '<div style="padding:14px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:8px; color:#fca5a5;">' +
           '<p><strong>❌ AI 解牌發生問題：</strong> ' + escapeHtml(e.message) + '</p>' +
-          '<button onclick="executeInChatDeal('' + instanceId + '')" class="btn-start-deal" style="margin-top:10px; padding:6px 16px; font-size:0.82rem;"><i class="fa-solid fa-rotate-right"></i> 重新嘗試</button>' +
+          '<button onclick="executeInChatDeal(\'' + instanceId + '\')" class="btn-start-deal" style="margin-top:10px; padding:6px 16px; font-size:0.82rem;"><i class="fa-solid fa-rotate-right"></i> 重新嘗試</button>' +
         '</div>';
       resultBox.style.display = 'block';
     }
@@ -1303,15 +1291,14 @@ async function handleFollowUpFlow(question) {
   });
 
   var followUpPrompt =
-    '【使用者進一步追問】：' + question + '
-
-' +
+    '【使用者進一步追問】：' + question + '\n\n' +
     '請作為擁有 20 年經驗的專業塔羅心靈導師，緊密結合我們先前抽出的牌面寓意與整體對話脈絡，給予使用者深入、具同理心且精闢實用的解答。';
 
   contents.push({ role: 'user', parts: [{ text: followUpPrompt }] });
 
   try {
-    var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + state.geminiModel + ':generateContent?key=' + encodeURIComponent(state.apiKey);
+    var apiKey = getGlobalApiKey();
+    var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + state.geminiModel + ':generateContent?key=' + encodeURIComponent(apiKey);
     var resp = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1333,11 +1320,13 @@ async function handleFollowUpFlow(question) {
     if (msgBody) {
       msgBody.innerHTML = renderTarotReport(responseText);
     }
+    scrollToBottom();
   } catch(e) {
     var msgBody = loadingMsg.querySelector('.msg-body');
     if (msgBody) {
       msgBody.innerHTML = '<p style="color:#fca5a5;"><i class="fa-solid fa-triangle-exclamation"></i> 抱歉，回答追問時發生錯誤：' + escapeHtml(e.message) + '</p>';
     }
+    scrollToBottom();
   }
 }
 
@@ -1477,15 +1466,9 @@ window.saveToJournal = function() {
 window.copyReportText = function() {
   var reading = state.currentReading;
   if (!reading) return;
-  var summary = '【GugoPro AI 塔羅占卜戰報】
-問題：' + reading.question + '
-牌陣：' + reading.spread.name + '
-' +
-    reading.drawnCards.map(function(d) { return d.position + ': ' + d.card.name + (d.reversed ? '(逆位)' : '(正位)'); }).join('
-') +
-    '
-
-占卜網址：https://gugopro.com/tools/ai/tarot-master.html';
+  var summary = '【GugoPro AI 塔羅占卜戰報】\n問題：' + reading.question + '\n牌陣：' + reading.spread.name + '\n' +
+    reading.drawnCards.map(function(d) { return d.position + ': ' + d.card.name + (d.reversed ? '(逆位)' : '(正位)'); }).join('\n') +
+    '\n\n占卜網址：https://gugopro.com/tools/ai/tarot-master.html';
 
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(summary).then(function() {
@@ -1505,13 +1488,40 @@ function showToast(text) {
 }
 
 /* =====================================================================
-   INITIALIZATION
+   INITIALIZATION & DIRECT EVENT LISTENER BINDINGS (AI Tutor Pattern)
    ===================================================================== */
 function init() {
   updateKeyUI();
+
+  // Explicit event listener bindings exactly like AI Tutor
+  var sendBtn = document.getElementById('btn-send');
+  if (sendBtn) {
+    sendBtn.addEventListener('click', function() {
+      sendMessage();
+    });
+  }
+
+  var chatInput = document.getElementById('chat-user-input');
+  if (chatInput) {
+    chatInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    chatInput.addEventListener('input', function() {
+      chatInput.style.height = 'auto';
+      chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
+    });
+  }
 }
 
-document.addEventListener('DOMContentLoaded', init);
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
 
 })();
 </script>
