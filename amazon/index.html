@@ -140,14 +140,36 @@ body.theme-jp .facet-chip.selected {
 }
 
 .facet-preview-bar {
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.65);
   border: 1px solid rgba(255, 215, 0, 0.35);
   border-radius: 12px;
   padding: 12px 14px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   margin-top: 4px;
+}
+.btn-facet-jump-alt {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-card);
+  color: var(--text-primary);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.btn-facet-jump-alt:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: var(--gold);
+  color: #fff;
+  transform: translateY(-1px);
 }
 .facet-kw-info {
   display: flex;
@@ -533,9 +555,10 @@ function getSelectedFilters() {
 }
 
 /* ===== BUILD AMAZON URL ===== */
-function buildAmazonUrl(keyword, extraTags) {
-  var conf = MARKETS[currentMarket];
-  var tag = currentMarket === 'jp' ? JP_TAG : US_TAG;
+function buildAmazonUrl(keyword, extraTags, targetMarketKey) {
+  var mk = targetMarketKey || currentMarket;
+  var conf = MARKETS[mk] || MARKETS.us;
+  var tag = mk === 'jp' ? JP_TAG : US_TAG;
   var fullKeyword = keyword || '';
   if (extraTags && extraTags.length > 0) {
     fullKeyword = (fullKeyword + ' ' + extraTags.join(' ')).trim();
@@ -595,19 +618,30 @@ function renderAiFacetCard(aiData, msgId, defaultKeyword) {
            '</div>';
   }).join('');
 
+  var isJp = currentMarket === 'jp';
+  var primaryBtnLabel = isJp ? '🇯🇵 前往 Amazon JP (日本站)' : '🇺🇸 前往 Amazon US (美國站)';
+  var altMarket = isJp ? 'us' : 'jp';
+  var altBtnLabel = isJp ? '🇺🇸 同步比價美國站' : '🇯🇵 同步比價日本站';
+
   var html =
     '<div class="ai-facet-card" id="card-' + msgId + '">' +
-      '<p class="facet-quick-guide">' + escapeHtml(aiData.quickGuide || '已為您鎖定商品類別，請選擇規格標籤進行組合：') + '</p>' +
+      '<p class="facet-quick-guide">' + escapeHtml(aiData.quickGuide || '已為您鎖定商品類別，請點選規格標籤進行組合：') + '</p>' +
       '<div class="facet-groups-container">' + groupsHtml + '</div>' +
       '<div class="facet-preview-bar">' +
         '<div class="facet-kw-info">' +
           '<span class="kw-label">目前組合檢索詞：</span>' +
           '<span class="kw-value" id="kw-preview-' + msgId + '">' + escapeHtml(baseKw) + '</span>' +
         '</div>' +
-        '<button onclick="openAmazonTarget(\'' + msgId + '\', \'' + escapeAttr(baseKw) + '\')" class="btn-facet-jump">' +
-          '<span>前往 Amazon 開啟精準結果</span> ' +
-          '<i class="fa-solid fa-arrow-up-right-from-square"></i>' +
-        '</button>' +
+        '<div style="display:flex; gap:8px; flex-wrap:wrap;">' +
+          '<button onclick="openAmazonTarget(\'' + msgId + '\', \'' + escapeAttr(baseKw) + '\', \'' + currentMarket + '\')" class="btn-facet-jump" style="flex:1; min-width:200px;">' +
+            '<span>' + primaryBtnLabel + ' 開啟結果</span> ' +
+            '<i class="fa-solid fa-arrow-up-right-from-square"></i>' +
+          '</button>' +
+          '<button onclick="openAmazonTarget(\'' + msgId + '\', \'' + escapeAttr(baseKw) + '\', \'' + altMarket + '\')" class="btn-facet-jump-alt" title="切換至另一市場同步搜尋比價">' +
+            '<i class="fa-solid fa-arrows-rotate"></i> ' +
+            '<span>' + altBtnLabel + '</span>' +
+          '</button>' +
+        '</div>' +
       '</div>' +
     '</div>';
 
@@ -637,7 +671,8 @@ window.toggleFacetTag = function(btn, msgId, baseKw) {
   if (kwPreview) kwPreview.textContent = combinedKw;
 };
 
-window.openAmazonTarget = function(msgId, baseKw) {
+window.openAmazonTarget = function(msgId, baseKw, targetMarketKey) {
+  var mk = targetMarketKey || currentMarket;
   var card = document.getElementById('card-' + msgId);
   var selectedTags = [];
   if (card) {
@@ -647,13 +682,13 @@ window.openAmazonTarget = function(msgId, baseKw) {
     });
   }
 
-  var url = buildAmazonUrl(baseKw, selectedTags);
+  var url = buildAmazonUrl(baseKw, selectedTags, mk);
   window.open(url, '_blank', 'noopener,noreferrer');
 
   if (typeof gtag === 'function') {
     gtag('event', 'amazon_facet_search', {
       event_category: 'ecommerce',
-      event_label: currentMarket.toUpperCase() + ': ' + baseKw + ' [' + selectedTags.join(', ') + ']'
+      event_label: mk.toUpperCase() + ': ' + baseKw + ' [' + selectedTags.join(', ') + ']'
     });
   }
 };
@@ -848,12 +883,21 @@ var pendingImage = null;
 var pendingImageMime = null;
 var pendingImagePreview = null;
 
+function containsJapanese(str) {
+  return /[\u3040-\u309F\u30A0-\u30FF]/.test(str);
+}
+
 window.sendMessage = async function() {
   if (isProcessing) return;
   var input = document.getElementById('user-input');
   var text = input.value.trim();
   if (!text && !pendingImage) return;
   if (!checkApiKey()) return;
+
+  // Auto-detect Japanese input and switch market to JP dynamically if Japanese text is detected
+  if (text && containsJapanese(text) && currentMarket !== 'jp') {
+    switchMarket('jp');
+  }
 
   isProcessing = true;
   document.getElementById('btn-send').disabled = true;
