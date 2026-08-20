@@ -356,11 +356,7 @@ var isProcessing = false;
 var recognition = null;
 var isRecording = false;
 
-/* ===== API KEY MANAGEMENT (Reused from AI Tutor standard) ===== */
-function encodeApiKey(key) {
-  if (!key) return '';
-  try { return 'obf_' + btoa(encodeURIComponent(key)); } catch(e) { return key; }
-}
+/* ===== API KEY MANAGEMENT (100% Universal Persistent gugopro_gemini_api_key) ===== */
 function decodeApiKey(raw) {
   if (!raw) return '';
   if (raw.indexOf('obf_') === 0) {
@@ -374,23 +370,17 @@ function maskApiKey(key) {
   return key.slice(0, 6) + '••••••••' + key.slice(-4);
 }
 function getGlobalApiKey() {
-  var raw = (localStorage.getItem('gugopro_gemini_api_key') || localStorage.getItem('gemini_api_key') || localStorage.getItem('tarot_api_key') || '').trim();
-  var decoded = decodeApiKey(raw);
-  if (decoded && raw.indexOf('obf_') !== 0) { setGlobalApiKey(decoded); }
-  return decoded;
+  var raw = (localStorage.getItem('gugopro_gemini_api_key') || localStorage.getItem('gemini_api_key') || '').trim();
+  return decodeApiKey(raw);
 }
 function setGlobalApiKey(key) {
   if (!key) {
     localStorage.removeItem('gugopro_gemini_api_key');
     localStorage.removeItem('gemini_api_key');
-    localStorage.removeItem('tarot_api_key');
-    updateKeyUI();
-    return;
+  } else {
+    localStorage.setItem('gugopro_gemini_api_key', key.trim());
+    localStorage.setItem('gemini_api_key', key.trim());
   }
-  var obf = encodeApiKey(key.trim());
-  localStorage.setItem('gugopro_gemini_api_key', obf);
-  localStorage.setItem('gemini_api_key', obf);
-  localStorage.setItem('tarot_api_key', obf);
   updateKeyUI();
 }
 function updateKeyUI() {
@@ -415,11 +405,13 @@ function updateKeyUI() {
 }
 window.openApiModal = function() {
   updateKeyUI();
-  document.getElementById('api-key-input').value = '';
+  var input = document.getElementById('api-key-input');
+  if (input) input.value = '';
   document.getElementById('modal-api').style.display = 'flex';
 };
 window.saveApiKey = function() {
-  var key = document.getElementById('api-key-input').value.trim();
+  var input = document.getElementById('api-key-input');
+  var key = (input ? input.value : '').trim();
   if (key) {
     setGlobalApiKey(key);
     document.getElementById('modal-api').style.display = 'none';
@@ -432,7 +424,8 @@ window.saveApiKey = function() {
 window.clearApiKey = function() {
   if (confirm('確定要清除已儲存的 API Key 嗎？')) {
     setGlobalApiKey('');
-    document.getElementById('api-key-input').value = '';
+    var input = document.getElementById('api-key-input');
+    if (input) input.value = '';
     alert('已成功清除 API Key。');
   }
 };
@@ -630,7 +623,7 @@ async function probeAvailableModels(apiKey) {
 
 async function callGemini(userText, imageBase64, imageMime) {
   var apiKey = getGlobalApiKey();
-  if (!apiKey) { openApiModal(); throw new Error('No API Key'); }
+  if (!apiKey) { openApiModal(); throw new Error('請先點擊右上角設定 Gemini API Key'); }
 
   var marketContext = currentMarket === 'jp'
     ? '使用者正在瀏覽日本 Amazon (amazon.co.jp)，請以繁體中文回答，搜尋關鍵字請用日文。'
@@ -661,13 +654,6 @@ async function callGemini(userText, imageBase64, imageMime) {
           })
         });
 
-        if (resp.status === 400 || resp.status === 401 || resp.status === 403) {
-          setGlobalApiKey('');
-          alert('⚠️ 您設定的 Gemini API Key 已失效或輸入有誤，請重新設定。');
-          openApiModal();
-          throw new Error('API Key 無效 (HTTP ' + resp.status + ')');
-        }
-
         if (!resp.ok) {
           console.warn('Model ' + model + ' attempt ' + attempt + ' HTTP ' + resp.status);
           lastError = new Error('HTTP ' + resp.status + ' (' + model + ')');
@@ -687,7 +673,6 @@ async function callGemini(userText, imageBase64, imageMime) {
           }
         }
       } catch(err) {
-        if (err.message && err.message.indexOf('API Key') !== -1) throw err;
         console.warn('Model ' + model + ' attempt ' + attempt + ' error:', err);
         lastError = err;
       }
