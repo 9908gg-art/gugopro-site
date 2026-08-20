@@ -3,896 +3,739 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Amazon 跨境選品與分類導流引擎 | GugoPro (美站 & 日站雙市場)</title>
-<meta name="description" content="GugoPro Amazon 雙市場跨境選品引擎：支援 🇺🇸 美國站 (amazon.com) 與 🇯🇵 日本站 (amazon.co.jp) 一鍵切換、12 大核心品類精準分類導流、雙語屬性標籤。">
-<meta name="keywords" content="Amazon, Amazon US, Amazon JP, 亞馬遜選品, 日本亞馬遜, 美國亞馬遜, 分潤導流, GugoPro">
+<title>Amazon AI 智能購物導師 | GugoPro 多模態尋寶助手</title>
+<meta name="description" content="GugoPro Amazon AI 智能購物導師：語音/相機/文字多模態輸入，Gemini AI 深度剖析商品優缺點，一鍵跳轉 Amazon 精準搜尋。支援美國站與日本站雙市場。">
+<meta name="keywords" content="Amazon AI, 購物助手, AI Shopping, Gemini, GugoPro, Amazon US, Amazon JP">
 <meta name="author" content="GugoPro AI Team">
 
 <!-- Google Analytics 4 (GA4) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-GF1DYLWMKX"></script>
 <script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-GF1DYLWMKX');
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-GF1DYLWMKX');
 </script>
 
 <!-- Font Awesome 6 & Google Fonts -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&family=Outfit:wght@400;700;800&display=swap" rel="stylesheet">
 
 <style>
-  :root {
-    --accent: #00A8E1;
-    --accent-glow: rgba(0, 168, 225, 0.35);
-    --bg-main: #0B1B26;
-    --bg-card: rgba(255, 255, 255, 0.05);
-    --border-card: rgba(255, 255, 255, 0.12);
-    --text-primary: #F5F7FA;
-    --text-muted: #9FB3C8;
-    --gold: #FFD700;
-  }
+:root {
+  --accent: #00A8E1;
+  --accent-glow: rgba(0, 168, 225, 0.35);
+  --accent2: #7000ff;
+  --bg-main: #0a0b10;
+  --bg-card: rgba(255, 255, 255, 0.05);
+  --border-card: rgba(255, 255, 255, 0.1);
+  --text-primary: #e8eaf0;
+  --text-muted: #9FB3C8;
+  --gold: #FFD700;
+  --success: #34c759;
+  --error: #ff3b30;
+  --user-bubble: rgba(0, 168, 225, 0.1);
+  --ai-bubble: rgba(112, 0, 255, 0.08);
+}
+body.theme-jp {
+  --accent: #FF3366;
+  --accent-glow: rgba(255, 51, 102, 0.35);
+  --user-bubble: rgba(255, 51, 102, 0.1);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', 'Noto Sans TC', 'Noto Sans JP', sans-serif;
+  min-height: 100vh;
+  background: radial-gradient(ellipse at 50% 0%, rgba(0,168,225,0.08) 0%, transparent 60%), var(--bg-main);
+  color: var(--text-primary);
+  transition: background 0.3s;
+}
+body.theme-jp {
+  background: radial-gradient(ellipse at 50% 0%, rgba(255,51,102,0.1) 0%, transparent 60%), var(--bg-main);
+}
 
-  body.theme-jp {
-    --accent: #FF3366;
-    --accent-glow: rgba(255, 51, 102, 0.35);
-    --bg-main: #1D0A14;
-    --bg-card: rgba(255, 255, 255, 0.05);
-    --border-card: rgba(255, 255, 255, 0.12);
-    --text-primary: #FFF0F5;
-    --text-muted: #D1B2C1;
-  }
+/* Top Nav */
+.top-nav {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;
+  background: rgba(10,11,16,0.92); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border-card); padding: 10px 16px; position: sticky; top: 0; z-index: 100;
+}
+.brand-group { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.brand-link { color: #fff; text-decoration: none; font-size: 1.05rem; font-weight: 800; display: flex; align-items: center; gap: 7px; font-family: 'Outfit', sans-serif; }
+.brand-link i { color: var(--accent); }
+.market-switcher { display: inline-flex; background: rgba(0,0,0,0.45); border: 1px solid var(--border-card); border-radius: 24px; padding: 2px; gap: 2px; }
+.market-btn { background: transparent; border: none; color: var(--text-muted); font-size: 0.78rem; font-weight: 700; padding: 5px 12px; border-radius: 20px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s; }
+.market-btn:hover { color: #fff; }
+.market-btn.active { background: linear-gradient(135deg, var(--accent), #0077A3); color: #fff; box-shadow: 0 2px 8px var(--accent-glow); }
+body.theme-jp .market-btn.active { background: linear-gradient(135deg, #FF3366, #C70039); }
+.nav-right { display: flex; align-items: center; gap: 6px; }
+.btn-nav { background: rgba(255,255,255,0.07); border: 1px solid var(--border-card); color: var(--text-primary); padding: 5px 12px; border-radius: 18px; font-size: 0.78rem; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s; }
+.btn-nav:hover { background: rgba(255,255,255,0.13); border-color: var(--accent); }
+.btn-nav.api-connected { border-color: var(--success); color: var(--success); }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+/* Hero */
+.hero { text-align: center; padding: 28px 16px 10px; max-width: 700px; margin: 0 auto; }
+.hero h1 { font-size: clamp(1.3rem, 3.5vw, 2rem); font-weight: 800; font-family: 'Outfit', sans-serif; background: linear-gradient(135deg, #fff 30%, var(--accent) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 6px; }
+.hero p { color: var(--text-muted); font-size: 0.85rem; line-height: 1.5; }
 
-  body {
-    font-family: 'Inter', 'Noto Sans TC', 'Noto Sans JP', sans-serif;
-    min-height: 100vh;
-    background: radial-gradient(circle at 50% 10%, rgba(0, 168, 225, 0.12) 0%, transparent 60%),
-                linear-gradient(135deg, var(--bg-main) 0%, #060e14 100%);
-    color: var(--text-primary);
-    padding-bottom: 80px;
-    transition: background 0.3s ease;
-  }
+/* Chat Container */
+.chat-wrapper { max-width: 800px; margin: 12px auto 0; padding: 0 12px; display: flex; flex-direction: column; min-height: calc(100vh - 260px); }
+.chat-messages { flex: 1; overflow-y: auto; padding: 10px 0; display: flex; flex-direction: column; gap: 14px; }
 
-  body.theme-jp {
-    background: radial-gradient(circle at 50% 10%, rgba(255, 51, 102, 0.15) 0%, transparent 60%),
-                linear-gradient(135deg, var(--bg-main) 0%, #10040A 100%);
-  }
+/* Welcome Card */
+.welcome-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-top: 10px; }
+.welcome-card { background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 14px; padding: 14px; cursor: pointer; transition: all 0.2s; }
+.welcome-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+.welcome-card h4 { color: var(--accent); margin-bottom: 6px; font-size: 0.88rem; font-family: 'Outfit', sans-serif; }
+.welcome-card p { color: var(--text-muted); font-size: 0.78rem; line-height: 1.4; }
 
-  /* Top Navigation */
-  .top-nav {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    background: rgba(10, 15, 25, 0.88);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border-bottom: 1px solid var(--border-card);
-    padding: 12px 20px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-  .brand-group {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-  .brand-link {
-    color: #fff;
-    text-decoration: none;
-    font-size: 1.15rem;
-    font-weight: 800;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .brand-link i { color: var(--accent); }
+/* Message Bubbles */
+.msg { display: flex; gap: 10px; max-width: 100%; }
+.msg.user { justify-content: flex-end; }
+.msg.user .bubble { background: var(--user-bubble); border: 1px solid rgba(0,168,225,0.2); border-radius: 16px 16px 4px 16px; }
+body.theme-jp .msg.user .bubble { border-color: rgba(255,51,102,0.2); }
+.msg.ai .bubble { background: var(--ai-bubble); border: 1px solid rgba(112,0,255,0.15); border-radius: 16px 16px 16px 4px; }
+.bubble { padding: 12px 16px; max-width: 85%; font-size: 0.9rem; line-height: 1.6; word-break: break-word; }
+.bubble img.user-photo { max-width: 200px; max-height: 200px; border-radius: 10px; margin-bottom: 6px; display: block; }
+.msg-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; flex-shrink: 0; margin-top: 2px; }
+.msg.user .msg-avatar { background: var(--accent); color: #fff; }
+.msg.ai .msg-avatar { background: var(--accent2); color: #fff; }
 
-  /* Market Switcher Selector */
-  .market-switcher {
-    display: inline-flex;
-    background: rgba(0, 0, 0, 0.45);
-    border: 1px solid var(--border-card);
-    border-radius: 30px;
-    padding: 3px;
-    gap: 2px;
-  }
-  .market-btn {
-    background: transparent;
-    border: none;
-    outline: none;
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    font-weight: 700;
-    padding: 6px 14px;
-    border-radius: 20px;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    transition: all 0.25s ease;
-  }
-  .market-btn:hover { color: #fff; }
-  .market-btn.active {
-    background: linear-gradient(135deg, var(--accent), #0077A3);
-    color: #fff;
-    box-shadow: 0 2px 10px var(--accent-glow);
-  }
-  body.theme-jp .market-btn.active {
-    background: linear-gradient(135deg, #FF3366, #C70039);
-  }
+/* AI Response Card */
+.ai-card { margin-top: 10px; }
+.ai-card .summary-text { color: var(--text-primary); margin-bottom: 12px; font-size: 0.88rem; line-height: 1.6; }
+.product-card { background: rgba(0,0,0,0.25); border: 1px solid var(--border-card); border-radius: 12px; padding: 12px; margin-bottom: 10px; }
+.product-card h5 { color: #fff; font-size: 0.9rem; margin-bottom: 8px; font-weight: 700; }
+.pros-cons { display: flex; flex-direction: column; gap: 4px; font-size: 0.82rem; }
+.pro-item { color: var(--success); }
+.pro-item::before { content: "👍 "; }
+.con-item { color: #f59e0b; }
+.con-item::before { content: "⚠️ "; }
 
-  .nav-right-tools {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .btn-nav-action {
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid var(--border-card);
-    color: var(--text-primary);
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 0.82rem;
-    font-weight: 600;
-    cursor: pointer;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    transition: all 0.2s ease;
-  }
-  .btn-nav-action:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: var(--accent);
-  }
+/* Dynamic Tags */
+.dynamic-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+.dtag { background: rgba(255,255,255,0.06); border: 1px solid var(--border-card); color: var(--text-muted); padding: 4px 12px; border-radius: 16px; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s; user-select: none; }
+.dtag:hover, .dtag.selected { background: var(--accent-glow); border-color: var(--accent); color: #fff; }
 
-  /* Hero */
-  .hero-section {
-    text-align: center;
-    padding: 36px 20px 14px;
-    max-width: 900px;
-    margin: 0 auto;
-  }
-  .hero-title {
-    font-size: clamp(1.6rem, 3.8vw, 2.5rem);
-    font-weight: 800;
-    margin-bottom: 8px;
-    background: linear-gradient(135deg, #fff 30%, var(--accent) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-  .hero-desc {
-    color: var(--text-muted);
-    font-size: 0.92rem;
-    line-height: 1.6;
-  }
+/* Go Amazon Button */
+.btn-go-amazon { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, var(--accent), #0077A3); color: #fff; border: none; border-radius: 10px; padding: 10px 20px; font-size: 0.9rem; font-weight: 700; cursor: pointer; margin-top: 8px; transition: all 0.2s; }
+body.theme-jp .btn-go-amazon { background: linear-gradient(135deg, #FF3366, #C70039); }
+.btn-go-amazon:hover { transform: translateY(-2px); filter: brightness(1.1); }
 
-  /* Breadcrumbs */
-  .breadcrumbs {
-    max-width: 1200px;
-    margin: 10px auto 0;
-    padding: 8px 20px;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.85rem;
-  }
-  .breadcrumbs a, .breadcrumbs span.crumb-current {
-    color: var(--text-muted);
-    text-decoration: none;
-    transition: color 0.2s ease;
-    cursor: pointer;
-  }
-  .breadcrumbs a:hover { color: var(--accent); }
-  .breadcrumbs span.crumb-current { color: var(--text-primary); font-weight: 700; }
-  .breadcrumbs i { font-size: 0.7rem; color: var(--text-muted); }
+/* Typing Indicator */
+.typing-indicator { display: flex; align-items: center; gap: 4px; padding: 8px 14px; }
+.typing-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; animation: typingBounce 1.4s infinite ease-in-out; }
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typingBounce { 0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
 
-  /* Filter & Search Bar */
-  .filter-container {
-    max-width: 1200px;
-    margin: 14px auto 0;
-    padding: 0 20px;
-  }
-  .filter-box {
-    background: var(--bg-card);
-    border: 1px solid var(--border-card);
-    border-radius: 16px;
-    padding: 16px;
-    backdrop-filter: blur(10px);
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    align-items: flex-end;
-  }
-  .fg-group {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-  .fg-group label {
-    font-size: 0.72rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-muted);
-  }
-  .fg-input-search {
-    flex: 1;
-    min-width: 240px;
-  }
-  .filter-box input[type="text"] {
-    width: 100%;
-    background: rgba(0, 0, 0, 0.35);
-    border: 1px solid var(--border-card);
-    border-radius: 10px;
-    padding: 10px 14px;
-    color: #fff;
-    font-size: 0.92rem;
-    outline: none;
-    transition: border 0.2s, box-shadow 0.2s;
-  }
-  .filter-box input[type="text"]:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-glow);
-  }
-  .filter-box select {
-    background: #0B1B26;
-    color: #fff;
-    border: 1px solid var(--border-card);
-    border-radius: 10px;
-    padding: 10px 12px;
-    font-size: 0.88rem;
-    outline: none;
-    cursor: pointer;
-  }
-  body.theme-jp .filter-box select { background: #1F0A14; }
-  .filter-box input[type="number"] {
-    width: 105px;
-    background: rgba(0, 0, 0, 0.35);
-    border: 1px solid var(--border-card);
-    border-radius: 10px;
-    padding: 10px 12px;
-    color: #fff;
-    font-size: 0.88rem;
-    outline: none;
-  }
-  .btn-do-search {
-    background: linear-gradient(135deg, var(--accent), #0077A3);
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    padding: 10px 20px;
-    font-size: 0.92rem;
-    font-weight: 700;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    transition: transform 0.2s, filter 0.2s;
-    height: 41px;
-  }
-  body.theme-jp .btn-do-search {
-    background: linear-gradient(135deg, #FF3366, #C70039);
-  }
-  .btn-do-search:hover { transform: translateY(-2px); filter: brightness(1.1); }
+/* Input Bar */
+.input-bar-wrapper { position: sticky; bottom: 0; background: linear-gradient(transparent, var(--bg-main) 20%); padding: 10px 0 16px; }
+.input-bar { max-width: 800px; margin: 0 auto; display: flex; align-items: flex-end; gap: 6px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-card); border-radius: 16px; padding: 8px 10px; backdrop-filter: blur(10px); }
+.input-bar textarea { flex: 1; background: transparent; border: none; color: #fff; font-size: 0.92rem; resize: none; outline: none; max-height: 120px; min-height: 20px; line-height: 1.4; font-family: inherit; }
+.input-bar textarea::placeholder { color: var(--text-muted); }
+.input-btn { width: 36px; height: 36px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; transition: all 0.2s; flex-shrink: 0; }
+.btn-camera { background: rgba(255,255,255,0.08); color: var(--text-muted); }
+.btn-camera:hover { background: rgba(255,255,255,0.15); color: #fff; }
+.btn-mic { background: var(--accent); color: #fff; }
+.btn-mic.recording { background: var(--error); animation: pulse 1s infinite; }
+@keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(255,59,48,0.4); } 50% { box-shadow: 0 0 0 8px rgba(255,59,48,0); } }
+.btn-send { background: var(--accent); color: #fff; }
+.btn-send:hover { filter: brightness(1.15); }
+.btn-send:disabled { opacity: 0.4; cursor: not-allowed; }
 
-  /* Facets Row */
-  .facets-row {
-    max-width: 1200px;
-    margin: 12px auto 0;
-    padding: 0 20px;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
-  }
-  .facet-title {
-    font-size: 0.78rem;
-    font-weight: 700;
-    color: var(--accent);
-    margin-right: 4px;
-  }
-  .facet-pill {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-card);
-    color: var(--text-muted);
-    padding: 4px 12px;
-    border-radius: 16px;
-    font-size: 0.78rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-  .facet-pill:hover {
-    background: var(--accent-glow);
-    border-color: var(--accent);
-    color: #fff;
-    transform: translateY(-1px);
-  }
+/* Filter Drawer */
+.drawer-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 200; display: none; }
+.drawer-overlay.open { display: block; }
+.filter-drawer { position: fixed; top: 0; right: -360px; width: 340px; max-width: 90vw; height: 100%; background: #12131a; border-left: 1px solid var(--border-card); z-index: 201; transition: right 0.3s ease; overflow-y: auto; padding: 20px; }
+.filter-drawer.open { right: 0; }
+.drawer-title { font-size: 1.05rem; font-weight: 800; color: #fff; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; font-family: 'Outfit', sans-serif; }
+.drawer-close { background: none; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; }
+.filter-group { margin-bottom: 16px; }
+.filter-group-title { font-size: 0.8rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+.filter-option { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; color: var(--text-muted); transition: all 0.15s; }
+.filter-option:hover { background: rgba(255,255,255,0.05); color: #fff; }
+.filter-option input[type="checkbox"] { accent-color: var(--accent); width: 16px; height: 16px; }
 
-  /* Content Grid */
-  .main-content {
-    max-width: 1200px;
-    margin: 20px auto 0;
-    padding: 0 20px;
-  }
-  .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-  }
-  .section-title {
-    font-size: 1.15rem;
-    font-weight: 800;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .section-title i { color: var(--accent); }
-  .section-count { font-size: 0.82rem; color: var(--text-muted); }
+/* Modal */
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); display: none; justify-content: center; align-items: center; z-index: 3000; padding: 20px; }
+.modal-content { background: #15161c; border: 1px solid var(--border-card); border-radius: 24px; padding: 28px; max-width: 480px; width: 100%; max-height: 90vh; overflow-y: auto; }
+.modal-h3 { color: var(--accent); margin-bottom: 14px; font-family: 'Outfit', sans-serif; font-size: 1.05rem; }
+.modal-p { color: var(--text-muted); margin-bottom: 18px; line-height: 1.6; font-size: 0.9rem; }
+.api-input-group input { width: 100%; padding: 13px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-card); border-radius: 12px; color: #fff; font-size: 0.95rem; outline: none; }
+.api-input-group input:focus { border-color: var(--accent); }
+.btn-modal-action { width: 100%; padding: 13px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; font-size: 0.95rem; display: block; text-align: center; }
+.btn-modal-save { background: linear-gradient(135deg, var(--accent), #0077A3); color: #fff; }
+.btn-modal-save:hover { filter: brightness(1.1); }
+.btn-modal-link { background: rgba(0,168,225,0.1); border: 1px solid rgba(0,168,225,0.3); color: var(--accent); text-decoration: none; margin-bottom: 12px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 13px; border-radius: 12px; font-weight: 600; font-size: 0.9rem; }
+.btn-modal-link:hover { background: rgba(0,168,225,0.18); }
 
-  /* Department Cards (Accordion Style) */
-  .dept-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-  .dept-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-card);
-    border-radius: 14px;
-    overflow: hidden;
-    transition: border-color 0.2s;
-  }
-  .dept-card:hover { border-color: rgba(255, 255, 255, 0.25); }
-  .dept-header {
-    padding: 16px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    cursor: pointer;
-    user-select: none;
-  }
-  .dept-header-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 1.05rem;
-    font-weight: 700;
-  }
-  .dept-header-left i {
-    width: 32px; height: 32px; border-radius: 8px;
-    background: rgba(255, 255, 255, 0.08);
-    display: flex; align-items: center; justify-content: center;
-    color: var(--accent); font-size: 0.95rem;
-  }
-  .dept-toggle-icon {
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    transition: transform 0.25s ease;
-  }
-  .dept-card.expanded .dept-toggle-icon {
-    transform: rotate(90deg);
-  }
-  .dept-body {
-    display: none;
-    padding: 0 20px 18px;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
-  }
-  .dept-card.expanded .dept-body { display: block; }
+/* Ko-fi */
+.kofi-float { position: fixed; bottom: 20px; right: 20px; z-index: 50; }
 
-  /* Categories inside Dept */
-  .cats-container {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-top: 14px;
-  }
-  .cat-box {
-    background: rgba(0, 0, 0, 0.25);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 10px;
-    overflow: hidden;
-  }
-  .cat-header {
-    padding: 10px 14px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    cursor: pointer;
-    font-size: 0.92rem;
-    font-weight: 600;
-  }
-  .cat-header:hover { background: rgba(255, 255, 255, 0.04); }
-  .cat-header i { font-size: 0.75rem; color: var(--text-muted); transition: transform 0.2s; }
-  .cat-box.expanded .cat-header i { transform: rotate(90deg); }
-
-  .leaf-grid {
-    display: none;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 8px;
-    padding: 12px;
-    background: rgba(0, 0, 0, 0.4);
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-  }
-  .cat-box.expanded .leaf-grid { display: grid; }
-
-  /* Product Tile */
-  .leaf-item {
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 8px;
-    padding: 10px 12px;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    transition: all 0.2s ease;
-  }
-  .leaf-item:hover {
-    background: rgba(255, 255, 255, 0.09);
-    border-color: var(--accent);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 14px rgba(0,0,0,0.3);
-  }
-  .leaf-name {
-    font-size: 0.86rem;
-    font-weight: 700;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .leaf-name i { font-size: 0.72rem; color: var(--accent); }
-  .leaf-kw {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  @media (max-width: 768px) {
-    .filter-box { flex-direction: column; align-items: stretch; }
-    .btn-do-search { justify-content: center; }
-    .fg-input-search { min-width: 100%; }
-  }
+/* Responsive */
+@media (max-width: 600px) {
+  .hero h1 { font-size: 1.2rem; }
+  .welcome-grid { grid-template-columns: 1fr; }
+  .bubble { max-width: 92%; }
+  .filter-drawer { width: 300px; }
+}
 </style>
 </head>
 <body>
 
-  <!-- Top Navigation Bar -->
-  <header class="top-nav">
-    <div class="brand-group">
-      <a href="https://gugopro.com" class="brand-link">
-        <i class="fa-brands fa-amazon"></i>
-        <span>GugoPro Amazon</span>
-      </a>
-
-      <!-- Market Switcher -->
-      <div class="market-switcher" id="market-switcher">
-        <button class="market-btn active" id="btn-market-us" onclick="switchMarket('us')">
-          <span>🇺🇸 美國站 (amazon.com)</span>
-        </button>
-        <button class="market-btn" id="btn-market-jp" onclick="switchMarket('jp')">
-          <span>🇯🇵 日本站 (amazon.co.jp)</span>
-        </button>
-      </div>
+<!-- Top Navigation -->
+<header class="top-nav">
+  <div class="brand-group">
+    <a href="https://gugopro.com" class="brand-link"><i class="fa-solid fa-house"></i> GugoPro</a>
+    <div class="market-switcher">
+      <button class="market-btn active" id="btn-us" onclick="switchMarket('us')"><span>🇺🇸 美國站</span></button>
+      <button class="market-btn" id="btn-jp" onclick="switchMarket('jp')"><span>🇯🇵 日本站</span></button>
     </div>
-
-    <div class="nav-right-tools">
-      <a href="https://gugopro.com" class="btn-nav-action">
-        <i class="fa-solid fa-house"></i> GugoPro 首頁
-      </a>
-    </div>
-  </header>
-
-  <!-- Hero Section -->
-  <section class="hero-section">
-    <h1 class="hero-title" id="hero-title">Amazon 🇺🇸 跨國選品與分類導流引擎</h1>
-    <p class="hero-desc" id="hero-desc">
-      站內多層級精選目錄瀏覽，點擊任何品類或搜尋將直接跳轉 Amazon 官方站點。
-    </p>
-  </section>
-
-  <!-- Breadcrumbs -->
-  <div class="breadcrumbs" id="breadcrumbs">
-    <span class="crumb-current" id="crumb-root">Amazon US Store</span>
   </div>
+  <div class="nav-right">
+    <button class="btn-nav" id="btn-filter" onclick="toggleDrawer()"><i class="fa-solid fa-sliders"></i> 篩選條件</button>
+    <button class="btn-nav" id="btn-api-config" onclick="openApiModal()"><i class="fa-solid fa-gear"></i> <span id="api-status-text">API 設定</span></button>
+    <a href="https://gugopro.com" class="btn-nav"><i class="fa-solid fa-house"></i> 首頁</a>
+  </div>
+</header>
 
-  <!-- Filter & Search Toolbar -->
-  <div class="filter-container">
-    <div class="filter-box">
-      <div class="fg-group fg-input-search">
-        <label><i class="fa-solid fa-magnifying-glass"></i> <span id="label-search-kw">商品搜尋關鍵字</span></label>
-        <input type="text" id="input-keyword" placeholder="輸入關鍵字 (如: noise cancelling earbuds)...">
+<!-- Hero -->
+<section class="hero">
+  <h1 id="hero-title">🛒 Amazon AI 智能購物導師</h1>
+  <p id="hero-desc">告訴我你想買什麼，AI 會深度剖析商品優缺點，並幫你精準搜尋 Amazon 最佳選擇。支援文字、語音與相機識圖。</p>
+</section>
+
+<!-- Chat Area -->
+<div class="chat-wrapper">
+  <div class="chat-messages" id="chat-messages">
+    <!-- Welcome -->
+    <div id="welcome-section">
+      <div style="text-align:center; margin-bottom:12px;">
+        <i class="fa-solid fa-robot" style="font-size:2.5rem; color:var(--accent); opacity:0.7;"></i>
+        <p style="color:var(--text-muted); font-size:0.85rem; margin-top:8px;">嗨！我是你的 AI 購物導師，試試以下問題開始探索：</p>
       </div>
-
-      <div class="fg-group">
-        <label><i class="fa-solid fa-arrow-down-wide-short"></i> <span id="label-sort">排序方式</span></label>
-        <select id="select-sort">
-          <option value="relevanceblender">精選推薦 (Featured)</option>
-          <option value="price-asc-rank">價格：由低到高</option>
-          <option value="price-desc-rank">價格：由高到低</option>
-          <option value="review-rank">買家評價星級</option>
-          <option value="date-desc-rank">最新上架新品</option>
-          <option value="exact-aware-popularity-rank">暢銷排行榜 (Best Sellers)</option>
-        </select>
-      </div>
-
-      <div class="fg-group">
-        <label><i class="fa-solid fa-star" style="color:var(--gold);"></i> <span id="label-rating">最低評分</span></label>
-        <select id="select-rating">
-          <option value="">全部評分</option>
-          <option value="p_72:1248879011">⭐ 4 顆星以上</option>
-        </select>
-      </div>
-
-      <div class="fg-group" style="flex-direction:row; gap:6px; align-items:flex-end;">
-        <div class="fg-group">
-          <label><span id="label-price-min">最低價</span></label>
-          <input type="number" id="input-price-low" placeholder="Min" min="0">
+      <div class="welcome-grid">
+        <div class="welcome-card" onclick="sendQuickPrompt('推薦一款適合跑步的降噪藍牙耳機')">
+          <h4><i class="fa-solid fa-headphones"></i> 降噪耳機</h4>
+          <p>推薦適合跑步的降噪藍牙耳機</p>
         </div>
-        <div class="fg-group">
-          <label><span id="label-price-max">最高價</span></label>
-          <input type="number" id="input-price-high" placeholder="Max" min="0">
+        <div class="welcome-card" onclick="sendQuickPrompt('我想買一台輕薄筆電，預算 3 萬台幣以內')">
+          <h4><i class="fa-solid fa-laptop"></i> 輕薄筆電</h4>
+          <p>預算 3 萬以內的輕薄筆電推薦</p>
+        </div>
+        <div class="welcome-card" onclick="sendQuickPrompt('適合新手的義式咖啡機有哪些？')">
+          <h4><i class="fa-solid fa-mug-hot"></i> 咖啡機</h4>
+          <p>新手適合的義式咖啡機推薦</p>
+        </div>
+        <div class="welcome-card" onclick="sendQuickPrompt('推薦日本亞馬遜上的人氣護膚品')">
+          <h4><i class="fa-solid fa-spa"></i> 日本護膚</h4>
+          <p>日本亞馬遜人氣護膚品推薦</p>
         </div>
       </div>
+    </div>
+  </div>
+</div>
 
-      <button class="btn-do-search" id="btn-search-amazon" onclick="handleCustomSearch()">
-        <i class="fa-solid fa-arrow-up-right-from-square"></i> <span id="label-btn-search">前往 Amazon 搜尋</span>
+<!-- Input Bar -->
+<div class="input-bar-wrapper">
+  <div class="input-bar" style="max-width:800px; margin:0 auto; padding-left:12px; padding-right:12px;">
+    <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none;">
+    <button class="input-btn btn-camera" onclick="document.getElementById('camera-input').click()" title="拍照/上傳圖片"><i class="fa-solid fa-camera"></i></button>
+    <textarea id="user-input" rows="1" placeholder="輸入你想買的商品或需求..." oninput="autoResize(this)"></textarea>
+    <button class="input-btn btn-mic" id="btn-mic" onclick="toggleMic()" title="語音輸入"><i class="fa-solid fa-microphone"></i></button>
+    <button class="input-btn btn-send" id="btn-send" onclick="sendMessage()" title="發送"><i class="fa-solid fa-paper-plane"></i></button>
+  </div>
+</div>
+
+<!-- Filter Drawer -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="toggleDrawer()"></div>
+<div class="filter-drawer" id="filter-drawer">
+  <div class="drawer-title">
+    <span><i class="fa-solid fa-sliders"></i> 通用基礎篩選條件</span>
+    <button class="drawer-close" onclick="toggleDrawer()"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="filter-group">
+    <div class="filter-group-title"><i class="fa-solid fa-truck-fast"></i> Prime 與配送</div>
+    <label class="filter-option"><input type="checkbox" id="f-global-ship" value="p_76:419158011"> AmazonGlobal 免運直送</label>
+    <label class="filter-option"><input type="checkbox" id="f-fba" value="p_6:AN1VRQENFRJN5"> Amazon 官方自營 (FBA)</label>
+  </div>
+  <div class="filter-group">
+    <div class="filter-group-title"><i class="fa-solid fa-star" style="color:var(--gold);"></i> 買家評價</div>
+    <label class="filter-option"><input type="checkbox" id="f-4star" value="p_72:1248879011"> ⭐ 4 星以上好評</label>
+  </div>
+  <div class="filter-group">
+    <div class="filter-group-title"><i class="fa-solid fa-tags"></i> 優惠與折扣</div>
+    <label class="filter-option"><input type="checkbox" id="f-deals" value="p_n_deal_type:23566065011"> 🔥 今日 Deals 特價</label>
+    <label class="filter-option"><input type="checkbox" id="f-50off" value="p_8:2224371011"> 💰 50% OFF 砍半專區</label>
+  </div>
+  <div class="filter-group">
+    <div class="filter-group-title"><i class="fa-solid fa-box"></i> 商品狀況</div>
+    <label class="filter-option"><input type="checkbox" id="f-new" value="p_n_condition-type:New"> 全新 (New)</label>
+    <label class="filter-option"><input type="checkbox" id="f-used" value="p_n_condition-type:Used"> 二手/整新品 (Used)</label>
+  </div>
+</div>
+
+<!-- API Key Modal -->
+<div id="modal-api" class="modal-overlay">
+  <div class="modal-content">
+    <div style="display:flex; justify-content:flex-end; margin-bottom:-8px;">
+      <button onclick="document.getElementById('modal-api').style.display='none'" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <h3 class="modal-h3"><i class="fa-solid fa-key"></i> 🔑 啟動 AI 服務需要免費的 Gemini API Key</h3>
+    <p class="modal-p">本工具由 Google Gemini 官方模型驅動，安全免費、無需信用卡、全站自動共享。</p>
+    <a href="https://aistudio.google.com/app/apikey" target="_blank" class="btn-modal-link">
+      <i class="fa-solid fa-arrow-up-right-from-square"></i> 前往 Google AI Studio 免費取得 API Key
+    </a>
+    <div id="key-status-box" style="display:none; background:rgba(0,0,0,0.35); border:1px solid rgba(0,168,225,0.3); border-radius:8px; padding:12px; margin-bottom:14px;">
+      <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:4px;">當前已綁定金鑰 (已遮罩加密)：</div>
+      <div style="font-family:monospace; font-size:0.92rem; color:#38bdf8;" id="masked-key-display">AIzaSy••••••••</div>
+    </div>
+    <div class="api-input-group" style="margin-bottom:14px;">
+      <input type="password" id="api-key-input" placeholder="貼上您的 Gemini API Key (以 AIzaSy 開頭)" autocomplete="off">
+    </div>
+    <div style="display:flex; gap:10px;">
+      <button id="btn-save-key" class="btn-modal-action btn-modal-save" style="flex:1;" onclick="saveApiKey()">
+        <i class="fa-solid fa-check"></i> 儲存並開始使用
+      </button>
+      <button id="btn-clear-key" class="btn-modal-action" style="display:none; flex:0 0 auto; padding:13px 16px; background:none; border:1px solid rgba(239,68,68,0.4); color:#f87171; border-radius:12px;" onclick="clearApiKey()">
+        <i class="fa-solid fa-trash-can"></i>
       </button>
     </div>
   </div>
+</div>
 
-  <!-- Facet Tag Pills Row -->
-  <div class="facets-row" id="facets-container"></div>
-
-  <!-- Main Department & Category Listing -->
-  <main class="main-content">
-    <div class="section-header">
-      <div class="section-title">
-        <i class="fa-solid fa-layer-group"></i>
-        <span id="category-section-title">12 大核心品類目錄</span>
-      </div>
-      <div class="section-count" id="category-summary-count">載入中...</div>
-    </div>
-
-    <div class="dept-grid" id="dept-grid"></div>
-  </main>
+<!-- Ko-fi Widget -->
+<div class="kofi-float">
+  <script type='text/javascript' src='https://storage.ko-fi.com/cdn/widget/Widget_2.js'></script>
+  <script type='text/javascript'>kofiwidget2.init('Buy me a coffee', '#72a4f2', 'R1K123XRS9');kofiwidget2.draw();</script>
+</div>
 
 <script>
 (function() {
-  'use strict';
+'use strict';
 
-  /* Silent Affiliate Tags */
-  var US_TAG = '9908qq-20';
-  var JP_TAG = 'gugopro-22';
+/* ===== AFFILIATE TAGS (Silent, never shown in UI) ===== */
+var US_TAG = '9908qq-20';
+var JP_TAG = 'gugopro-22';
 
-  /* Embedded In-Memory Fallback Datasets for Instant 0ms Load */
-  var EMBEDDED_DATA = {
-    us: {"market": "us", "country_name": "United States (美國)", "currency": "USD ($)", "base_url": "https://www.amazon.com/s", "affiliate_tag": "9908qq-20", "tag_storage_key": "gugopro_amazon_us_tag", "categories": [{"id": "electronics_audio", "department_name": "Electronics & Audio", "icon": "fa-headphones", "categories": [{"id": "headphones-speakers", "name": "Headphones & Portable Speakers", "leaf_items": [{"name": "Active Noise Cancelling Over-Ear Headphones", "keywords": "active noise cancelling headphones over ear wireless"}, {"name": "True Wireless Noise Cancelling Earbuds", "keywords": "true wireless earbuds active noise cancelling"}, {"name": "Waterproof Bluetooth Outdoor Speakers", "keywords": "portable waterproof bluetooth speaker ipx7"}, {"name": "Dolby Atmos TV Soundbars with Subwoofer", "keywords": "dolby atmos sound bar with subwoofer wireless"}]}, {"id": "cameras-photography", "name": "Cameras & Photography", "leaf_items": [{"name": "4K Vlogging Mirrorless Cameras", "keywords": "4k vlogging mirrorless digital camera"}, {"name": "4K Action Cameras with Waterproof Case", "keywords": "4k action camera waterproof helmet mount"}, {"name": "3-Axis Handheld Smartphone Gimbals", "keywords": "3 axis smartphone gimbal stabilizer for video"}, {"name": "Professional Carbon Fiber Camera Tripods", "keywords": "carbon fiber camera tripod with ball head"}]}, {"id": "tv-projectors", "name": "TV, Projectors & Home Theater", "leaf_items": [{"name": "Smart 4K Mini LED & OLED TVs", "keywords": "smart 4k oled tv 120hz hdr"}, {"name": "1080p/4K Portable Home Theater Projectors", "keywords": "portable 4k home theater movie projector wifi bluetooth"}, {"name": "4K Streaming Media Players & Sticks", "keywords": "4k streaming stick media player dolby vision"}]}, {"id": "wearable-technology", "name": "Smartwatches & Wearables", "leaf_items": [{"name": "GPS Smartwatches with Heart Rate & SpO2", "keywords": "gps smartwatch fitness tracker heart rate spo2"}, {"name": "Smart Health & Sleep Tracking Rings", "keywords": "smart health ring sleep tracking heart rate"}, {"name": "Bone Conduction Open-Ear Sport Headphones", "keywords": "bone conduction open ear sport headphones bluetooth"}]}, {"id": "mobile-phone-accessories", "name": "Cell Phone Accessories", "leaf_items": [{"name": "MagSafe Magnetic Wireless Power Banks", "keywords": "magsafe power bank wireless portable charger 10000mah"}, {"name": "GaN 65W/100W USB-C Fast Wall Chargers", "keywords": "gan fast charger 65w 100w multi port usb c"}, {"name": "Magnetic Semiconductor Phone Coolers", "keywords": "magnetic phone cooler semiconductor rgb"}, {"name": "Military-Grade Shockproof Phone Cases", "keywords": "heavy duty shockproof military grade phone case"}]}]}, {"id": "computers_accessories", "department_name": "Computers & Office Accessories", "icon": "fa-laptop", "categories": [{"id": "laptops-desktops", "name": "Laptops & Mini PCs", "leaf_items": [{"name": "Ultra-Thin Lightweight Laptops", "keywords": "ultrabook lightweight thin laptop intel core"}, {"name": "High-Performance RTX Gaming Laptops", "keywords": "gaming laptop rtx high refresh rate"}, {"name": "Compact Mini Desktop PCs (Ryzen / Intel)", "keywords": "mini pc desktop computer ryzen intel dual 4k"}]}, {"id": "keyboards-mice", "name": "Keyboards, Mice & Input Devices", "leaf_items": [{"name": "Hot-Swappable Mechanical Keyboards", "keywords": "hot swappable rgb mechanical keyboard wireless"}, {"name": "Ergonomic Vertical Wireless Mice", "keywords": "ergonomic vertical wireless mouse rechargeable"}, {"name": "Ultra-Lightweight Honeycomb Gaming Mice", "keywords": "ultra lightweight wireless gaming mouse sensor"}]}, {"id": "monitors-displays", "name": "Monitors & Screen Bars", "leaf_items": [{"name": "27-inch 4K IPS Ergonomic Monitors", "keywords": "27 inch 4k uhd ips monitor usb c hdr"}, {"name": "High Refresh Rate 144Hz+ Gaming Monitors", "keywords": "gaming monitor 144hz 165hz 1ms fast ips"}, {"name": "Monitor Screen Light Bars with Auto-Dimming", "keywords": "computer monitor light bar screen bar auto dimming"}]}, {"id": "storage-docks", "name": "Storage, SSDs & USB-C Docks", "leaf_items": [{"name": "High-Speed NVMe M.2 External SSDs", "keywords": "portable nvme m2 external ssd high speed 2000mbps"}, {"name": "12-in-1 Dual Display USB-C Docking Stations", "keywords": "usb c docking station dual 4k hdmi 100w pd"}, {"name": "High-Endurance MicroSDXC Cards (U3 / V30)", "keywords": "microsdxc memory card 256gb 512gb v30 a2"}]}]}, {"id": "home_kitchen", "department_name": "Smart Appliances & Kitchen", "icon": "fa-mug-hot", "categories": [{"id": "robot-vacuums-cleaning", "name": "Smart Floor Cleaning", "leaf_items": [{"name": "Robot Vacuum & Mop Combos with Self-Empty", "keywords": "robot vacuum and mop combo self emptying lidar"}, {"name": "Cordless Lightweight Stick Vacuums", "keywords": "cordless stick vacuum cleaner rechargeable lightweight"}, {"name": "Handheld Upholstery & Carpet Spot Cleaners", "keywords": "portable carpet and upholstery spot cleaner"}]}, {"id": "air-purifiers-climate", "name": "Air Purifiers & Climate Control", "leaf_items": [{"name": "True HEPA Air Purifiers for Large Rooms", "keywords": "air purifier for home large room true hepa filter"}, {"name": "Smart Ultrasonic Cool & Warm Mist Humidifiers", "keywords": "ultrasonic cool and warm mist humidifier smart app"}, {"name": "Bladeless Tower Fans & Space Heaters", "keywords": "bladeless tower fan and space heater combo"}]}, {"id": "coffee-espresso", "name": "Coffee & Espresso Machines", "leaf_items": [{"name": "Automatic Espresso Machines with Milk Frother", "keywords": "espresso machine 20 bar with milk frother steam wand"}, {"name": "Precision Conical Burr Coffee Grinders", "keywords": "conical burr coffee grinder electric precision"}, {"name": "Gooseneck Temperature-Control Pour-Over Kettles", "keywords": "electric gooseneck kettle variable temperature control"}]}, {"id": "cooking-airfryers", "name": "Air Fryers, Ovens & Cookware", "leaf_items": [{"name": "Digital Air Fryer Toaster Ovens with Window", "keywords": "air fryer toaster oven combo with viewing window"}, {"name": "Precision Sous Vide Immersion Circulators", "keywords": "sous vide cooker immersion circulator 1000w"}, {"name": "Japanese Damascus Steel Chef Knives", "keywords": "japanese damascus steel chef knife 8 inch"}]}]}, {"id": "clothing_shoes_jewelry", "department_name": "Clothing, Shoes & Jewelry", "icon": "fa-shirt", "categories": [{"id": "men-fashion", "name": "Men's Apparel & Activewear", "leaf_items": [{"name": "Moisture-Wicking Athletic Running Shirts", "keywords": "mens quick dry moisture wicking athletic t shirts"}, {"name": "Water-Resistant Outdoor Softshell Jackets", "keywords": "mens waterproof softshell hooded jacket fleece lined"}, {"name": "Stretch Slim-Fit Chino Pants", "keywords": "mens slim fit stretch lightweight chino pants"}]}, {"id": "women-fashion", "name": "Women's Apparel & Loungewear", "leaf_items": [{"name": "High-Waisted Yoga Leggings with Pockets", "keywords": "womens high waisted yoga pants leggings with pockets"}, {"name": "Packable Lightweight Down Puffer Jackets", "keywords": "womens packable lightweight down jacket water resistant"}, {"name": "Casual Soft Knit Lounge Pajama Sets", "keywords": "womens soft knit loungewear 2 piece pajama set"}]}, {"id": "footwear-running", "name": "Running Shoes & Footwear", "leaf_items": [{"name": "Cushioned Road Running Shoes", "keywords": "road running shoes lightweight cushioned breathable"}, {"name": "Waterproof Hiking & Trail Running Boots", "keywords": "waterproof hiking boots trail walking shoes"}, {"name": "Orthotic Arch Support Recovery Slides", "keywords": "orthotic arch support recovery slide sandals"}]}, {"id": "bags-watches", "name": "Backpacks, Watches & Jewelry", "leaf_items": [{"name": "Anti-Theft Laptop Travel Backpacks with USB", "keywords": "anti theft laptop travel backpack water resistant with usb"}, {"name": "Automatic Stainless Steel Men's Wristwatches", "keywords": "mens automatic mechanical stainless steel wrist watch"}, {"name": "Sterling Silver Minimalist Necklaces & Rings", "keywords": "925 sterling silver minimalist pendant necklace"}]}]}, {"id": "beauty_personal_care", "department_name": "Beauty & Personal Care", "icon": "fa-spa", "categories": [{"id": "facial-skincare", "name": "Facial Skincare & Serums", "leaf_items": [{"name": "Vitamin C + Hyaluronic Acid Brightening Serums", "keywords": "vitamin c serum with hyaluronic acid for face anti aging"}, {"name": "Gentle Hydrating Facial Cleansers", "keywords": "hydrating facial cleanser gentle for sensitive skin"}, {"name": "Korean Centella & Snail Mucin Moisturizers", "keywords": "korean skincare snail mucin cream moisturizing"}]}, {"id": "haircare-styling", "name": "Hair Care, Dryers & Styling", "leaf_items": [{"name": "High-Speed Ionic Brushless Motor Hair Dryers", "keywords": "high speed ionic hair dryer negative ion fast drying"}, {"name": "Ceramic Tourmaline Rotating Curling Irons", "keywords": "ceramic tourmaline curling iron wand auto shut off"}, {"name": "Keratin Argan Oil Deep Conditioning Hair Masks", "keywords": "argan oil hair mask deep conditioning treatment"}]}, {"id": "oral-grooming", "name": "Oral Care & Men's Grooming", "leaf_items": [{"name": "Sonic Electric Toothbrushes with Travel Case", "keywords": "sonic electric toothbrush with wireless charging travel case"}, {"name": "Cordless Water Dental Flossers", "keywords": "cordless water dental flosser portable rechargeable"}, {"name": "Waterproof Foil & Rotary Men's Electric Shavers", "keywords": "electric shaver for men wet dry foil razor waterproof"}]}]}, {"id": "sports_outdoors", "department_name": "Sports, Fitness & Outdoors", "icon": "fa-person-running", "categories": [{"id": "camping-hiking", "name": "Camping, Hiking & Tents", "leaf_items": [{"name": "Lightweight Waterproof Pop-Up Camping Tents", "keywords": "lightweight waterproof camping tent 2 4 person"}, {"name": "Ultralight Inflatable Sleeping Pads", "keywords": "ultralight inflatable camping sleeping pad compact"}, {"name": "Compact Portable Camp Stoves & Cookware", "keywords": "portable backpacking camping stove burner cookware"}]}, {"id": "home-gym-fitness", "name": "Home Gym & Strength Training", "leaf_items": [{"name": "Adjustable Quick-Select Dumbbell Sets", "keywords": "adjustable dumbbells set compact quick select"}, {"name": "Heavy-Duty Resistance Loop Bands Set", "keywords": "heavy duty pull up resistance bands set with handles"}, {"name": "Under-Desk Walking Pad Treadmills", "keywords": "under desk walking pad treadmill flat foldable"}]}, {"id": "cycling-water-sports", "name": "Cycling & Water Sports", "leaf_items": [{"name": "Rechargeable High-Lumen Bike Light Sets", "keywords": "rechargeable led bike light set front headlight taillight"}, {"name": "Inflatable Stand Up Paddle Boards (iSUP)", "keywords": "inflatable stand up paddle board isup with paddle pump"}]}]}, {"id": "automotive_motorcycle", "department_name": "Automotive & Motorcycle Gear", "icon": "fa-car", "categories": [{"id": "dashcams-electronics", "name": "Dash Cams & Electronics", "leaf_items": [{"name": "4K Front and Rear Dual Dash Cams with GPS", "keywords": "4k front and rear dual dash cam with wifi gps night vision"}, {"name": "Wireless Apple CarPlay & Android Auto Adapters", "keywords": "wireless carplay android auto adapter dongle plug and play"}, {"name": "MagSafe 15W Fast Wireless Car Charger Mounts", "keywords": "magsafe wireless car charger mount air vent"}]}, {"id": "emergency-maintenance", "name": "Emergency Jump Starters & Maintenance", "leaf_items": [{"name": "Portable Car Jump Starter Power Banks 2000A+", "keywords": "portable car battery jump starter power bank 12v"}, {"name": "Cordless Digital Tire Inflator Air Compressors", "keywords": "cordless tire inflator portable air compressor auto shut off"}, {"name": "OBD2 Bluetooth Engine Diagnostic Code Readers", "keywords": "obd2 bluetooth scanner car code reader diagnostic tool"}]}]}, {"id": "baby_toys_games", "department_name": "Baby, Toys & Board Games", "icon": "fa-baby", "categories": [{"id": "baby-gear", "name": "Baby Strollers, Seats & Care", "leaf_items": [{"name": "Compact Lightweight Airplane-Cabin Strollers", "keywords": "compact lightweight baby stroller airplane cabin approved"}, {"name": "All-in-One Convertible Baby Car Seats", "keywords": "convertible all in one car seat rear forward facing"}, {"name": "Baby Food Makers, Steamers & Puree Blenders", "keywords": "baby food maker steamer blender all in one"}]}, {"id": "educational-toys-lego", "name": "STEM Toys, LEGO & Board Games", "leaf_items": [{"name": "Magnetic Building Blocks & STEM Tiles", "keywords": "magnetic building blocks tiles educational stem toys"}, {"name": "LEGO Architecture & Iconic Model Sets", "keywords": "lego architecture building kit collectible model set"}, {"name": "Classic Strategy & Family Party Board Games", "keywords": "strategy family board game party card game"}]}]}, {"id": "health_household", "department_name": "Health, Wellness & Massage", "icon": "fa-heart-pulse", "categories": [{"id": "massage-therapy", "name": "Massage Guns & Pain Relief", "leaf_items": [{"name": "Deep Tissue Percussion Muscle Massage Guns", "keywords": "deep tissue percussion massage gun quiet handheld"}, {"name": "Shiatsu Heated Neck & Shoulder Massagers", "keywords": "shiatsu neck and back massager with heat"}, {"name": "Air Compression Leg & Foot Massagers", "keywords": "air compression leg foot massager for circulation"}]}, {"id": "vitamins-supplements", "name": "Vitamins, Supplements & Sleep", "leaf_items": [{"name": "Triple Strength Omega-3 Fish Oil 2000mg", "keywords": "triple strength omega 3 fish oil epa dha burpless"}, {"name": "Magnesium Glycinate for Muscle & Sleep Support", "keywords": "magnesium glycinate capsules sleep muscle relaxation"}, {"name": "White Noise Sound Machines for Sleeping", "keywords": "white noise sound machine for sleeping baby adult"}]}]}, {"id": "grocery_gourmet_food", "department_name": "Grocery & Gourmet Specialty Food", "icon": "fa-utensils", "categories": [{"id": "specialty-snacks", "name": "Gourmet Snacks & Chocolates", "leaf_items": [{"name": "Artisan Dark Chocolate Truffle Gift Boxes", "keywords": "artisan gourmet dark chocolate truffles gift box"}, {"name": "Organic Roasted Mixed Nuts & Trail Mixes", "keywords": "organic roasted mixed nuts unsalted almonds cashews"}, {"name": "Healthy Low-Carb Protein Snack Bars", "keywords": "low sugar high protein bars healthy snack"}]}, {"id": "coffee-tea-beverages", "name": "Specialty Coffee, Matcha & Teas", "leaf_items": [{"name": "Organic Ceremonial Grade Japanese Matcha", "keywords": "organic ceremonial grade matcha green tea powder"}, {"name": "Single-Origin Whole Bean Arabica Coffee", "keywords": "single origin whole bean arabica coffee medium roast"}, {"name": "Organic Herbal Chamomile & Lavender Teas", "keywords": "organic chamomile lavender herbal tea bags caffeine free"}]}]}, {"id": "pet_supplies", "department_name": "Pet Supplies for Dogs & Cats", "icon": "fa-paw", "categories": [{"id": "cat-care", "name": "Cat Feeders, Trees & Toys", "leaf_items": [{"name": "Automatic Timed Cat Feeders with WiFi App", "keywords": "automatic cat feeder with wifi smart app control"}, {"name": "Stainless Steel Cat Water Fountains with Filters", "keywords": "stainless steel cat water fountain ultra quiet filter"}, {"name": "Multi-Level Cat Trees with Scratching Posts", "keywords": "multi level cat tree tower with scratching posts"}]}, {"id": "dog-gear", "name": "Dog Beds, Harnesses & Care", "leaf_items": [{"name": "Orthopedic Memory Foam Dog Beds", "keywords": "orthopedic memory foam dog bed waterproof washable"}, {"name": "No-Pull Reflective Dog Harnesses with Leash", "keywords": "no pull dog harness with handle reflective breathable"}, {"name": "Low Noise Dog Grooming Clippers & Vacuum", "keywords": "dog grooming clippers vacuum kit low noise"}]}]}, {"id": "tools_home_improvement", "department_name": "Tools & Smart Home Improvement", "icon": "fa-screwdriver-wrench", "categories": [{"id": "power-tools", "name": "Cordless Power Tools & Sets", "leaf_items": [{"name": "20V Cordless Brushless Drill & Driver Kit", "keywords": "20v cordless drill driver kit brushless battery charger"}, {"name": "Precision Screwdriver Sets for Electronics Repair", "keywords": "precision screwdriver set for electronics phone repair"}, {"name": "Laser Measure Tools with Digital Backlit Display", "keywords": "laser measure digital distance meter rechargeable"}]}, {"id": "smart-hardware-lighting", "name": "Smart Locks & LED Lighting", "leaf_items": [{"name": "Fingerprint Keyless Smart Front Door Deadbolts", "keywords": "smart door lock fingerprint keyless entry deadbolt wifi"}, {"name": "RGBIC Smart LED Strip Lights with App Control", "keywords": "rgbic smart led strip lights music sync app control"}, {"name": "Heavy-Duty Garage Storage Shelving Units", "keywords": "heavy duty garage storage shelving unit 5 tier adjustable"}]}]}]},
-    jp: {"market": "jp", "country_name": "Japan (日本)", "currency": "JPY (円)", "base_url": "https://www.amazon.co.jp/s", "affiliate_tag": "gugopro-22", "tag_storage_key": "gugopro_amazon_jp_tag", "categories": [{"id": "electronics_audio", "department_name": "電子 3C 與影音 (家電＆カメラ・オーディオ)", "icon": "fa-headphones", "categories": [{"id": "earphones-headphones", "name": "耳機音響與藍牙喇叭 (イヤホン・ヘッドホン・スピーカー)", "leaf_items": [{"name": "主動降噪無線耳機 (ノイズキャンセリング ヘッドホン)", "keywords": "ノイズキャンセリング ワイヤレス ヘッドホン ハイレゾ"}, {"name": "真無線降噪藍牙耳機 (完全ワイヤレスイヤホン)", "keywords": "ノイズキャンセリング 完全ワイヤレスイヤホン"}, {"name": "骨傳導運動防水耳機 (骨伝導イヤホン スポーツ防水)", "keywords": "骨伝導 イヤホン スポーツ 防水"}, {"name": "電視/電腦 Soundbar 音響 (サウンドバー スピーカー)", "keywords": "サウンドバー テレビ PC スピーカー Bluetooth"}]}, {"id": "cameras-photography", "name": "相機攝影與空拍錄影 (デジタルカメラ・Vlog機材)", "leaf_items": [{"name": "4K Vlog 微單眼數位相機 (4K Vlog ミラーレス一眼)", "keywords": "Vlog カメラ 4K ミラーレス デジタルカメラ"}, {"name": "4K 防水運動攝影機 (アクションカメラ 防水 4K)", "keywords": "アクションカメラ 4K 防水 手ぶれ補正"}, {"name": "手機三軸防手震穩定器 (スマホ用ジンバル スタビライザー)", "keywords": "スマホ ジンバル スタビライザー 3軸"}]}, {"id": "tv-projectors", "name": "電視投影與影音串流 (テレビ・プロジェクター)", "leaf_items": [{"name": "家庭劇院高畫質投影機 (ホームプロジェクター 4K/1080P)", "keywords": "プロジェクター 小型 家庭用 自動台形補正 WiFi"}, {"name": "4K 電視電視棒 (4K ストリーミングメディア端末)", "keywords": "Fire TV Stick 4K ストリーミング"}]}, {"id": "wearables-smartwatches", "name": "智慧手錶與穿戴裝置 (スマートウォッチ・ウェアラブル)", "leaf_items": [{"name": "GPS 運動健康智慧手錶 (GPS スマートウォッチ 心拍計)", "keywords": "スマートウォッチ GPS 血中酸素 防水 心拍数"}, {"name": "智慧健康睡眠指環 (スマートリング 睡眠測定)", "keywords": "スマートリング 健康管理 睡眠計測 防水"}]}, {"id": "sumaho-accessories", "name": "手機配件與快充 (スマホアクセサリ・充電器)", "leaf_items": [{"name": "手機半導體磁吸散熱器 (ペルチェ素子 冷却ファン)", "keywords": "スマホ 冷却ファン ペルチェ素子 磁気"}, {"name": "MagSafe 磁吸無線行動電源 (MagSafe モバイルバッテリー)", "keywords": "MagSafe モバイルバッテリー ワイヤレス 10000mAh"}, {"name": "GaN 氮化鎵 65W/100W 快充頭 (GaN 急速充電器)", "keywords": "GaN 急速充電器 65W 100W USB-C"}, {"name": "軍規防摔防撞手機殼 (耐衝撃スマホケース)", "keywords": "スマホケース 耐衝撃 米軍MIL規格"}]}]}, {"id": "computers_accessories", "department_name": "電腦周邊與辦公 (パソコン・周辺機器＆オフィス)", "icon": "fa-laptop", "categories": [{"id": "laptops-mini-pc", "name": "筆記型電腦與迷你主機 (ノートパソコン・ミニPC)", "leaf_items": [{"name": "輕薄長續航筆記型電腦 (軽量薄型ノートパソコン)", "keywords": "ノートパソコン 軽量 薄型 長時間バッテリー"}, {"name": "高效能電競筆電 (ゲーミングノートPC RTX)", "keywords": "ゲーミングノートPC RTX 高リフレッシュレート"}, {"name": "AMD/Intel 迷你桌上型電腦 (高性能ミニPC)", "keywords": "ミニPC 小型デスクトップ Ryzen Intel"}]}, {"id": "keyboards-mice", "name": "機械鍵盤與人體工學滑鼠 (キーボード・マウス)", "leaf_items": [{"name": "熱插拔 RGB 機械式鍵盤 (メカニカルキーボード)", "keywords": "メカニカルキーボード ホットスワップ RGB 無線"}, {"name": "人體工學垂直靜音滑鼠 (エルゴノミクス垂直マウス)", "keywords": "エルゴノミクス マウス ワイヤレス 垂直 静音"}, {"name": "超輕量無線電競滑鼠 (超軽量ゲーミングマウス)", "keywords": "超軽量 ワイヤレス ゲーミングマウス"}]}, {"id": "monitors-screenbars", "name": "外接螢幕與螢幕掛燈 (PCモニター・スクリーンバー)", "leaf_items": [{"name": "27吋 4K IPS 廣色域螢幕 (27インチ 4K ディスプレイ)", "keywords": "PCモニター 27インチ 4K IPS Type-C"}, {"name": "144Hz+ 電競曲面螢幕 (ゲーミングモニター 144Hz)", "keywords": "ゲーミングモニター 144Hz 1ms IPS"}, {"name": "護眼螢幕掛燈 (モニターライト スクリーンバー)", "keywords": "モニターライト スクリーンバー 自動調光"}]}, {"id": "storage-docks", "name": "SSD 硬碟與多功能擴充塢 (外付けSSD・ドッキングステーション)", "leaf_items": [{"name": "高速外接 NVMe M.2 SSD (高速外付けポータブルSSD)", "keywords": "外付けSSD NVMe ポータブル 高速転送"}, {"name": "USB-C 10合1 多功能擴充塢 (USB-C ドッキングステーション)", "keywords": "USB-C ドッキングステーション マルチポート 4K HDMI"}]}]}, {"id": "home_kitchen", "department_name": "智慧家電與廚房 (生活家電＆キッチン用品)", "icon": "fa-mug-hot", "categories": [{"id": "robot-vacuums-cleaning", "name": "掃地機器人與吸塵器 (ロボット掃除機・コードレス掃除機)", "leaf_items": [{"name": "自動集塵拖地掃地機器人 (水拭き自動ゴミ収集ロボット掃除機)", "keywords": "ロボット掃除機 水拭き 自動ゴミ収集 マッピング"}, {"name": "輕量強效無線吸塵器 (軽量コードレススティック掃除機)", "keywords": "コードレス掃除機 スティッククリーナー 強力吸引"}, {"name": "雙拍打溫風除塵蟎吸塵器 (ふとんクリーナー温風乾燥)", "keywords": "布団クリーナー ダニ ちりセンサー 温風"}]}, {"id": "air-purifiers-climate", "name": "空氣清淨機與加濕器 (空気清浄機・加湿器)", "leaf_items": [{"name": "負離子加濕空氣清淨機 (加湿空気清浄機 プラズマクラスター)", "keywords": "加湿空気清浄機 プラズマクラスター ナノイー"}, {"name": "超音波溫冷水氧加濕器 (ハイブリッド加湿器 卓上大容量)", "keywords": "ハイブリッド加湿器 超音波 加熱式 大容量"}, {"name": "無葉片冷暖冷風扇 (羽根なし冷暖兼用タワーファン)", "keywords": "タワーファン 羽根なし セラミックファンヒーター"}]}, {"id": "kitchen-appliances", "name": "日本電鍋與咖啡機 (人気炊飯器・全自動コーヒーメーカー)", "leaf_items": [{"name": "IH 壓力厚釜電子鍋 (IH極め炊き炊飯器)", "keywords": "炊飯器 圧力IH 象印 タイガー 炎舞炊き"}, {"name": "全自動研磨義式咖啡機 (全自動コーヒーメーカー エスプレッソ)", "keywords": "デロンギ 全自動コーヒーメーカー エスプレッソ"}, {"name": "溫度調節細口手沖快煮壺 (温度調節電気ドリップケトル)", "keywords": "電気ケトル 温度調節 ドリップ コーヒー"}]}, {"id": "cookware-knives", "name": "氣炸烤箱與日本名刀 (ノンフライオーブン・高級料理包丁)", "leaf_items": [{"name": "氣炸多功能微波烤箱 (ノンフライオーブントースター)", "keywords": "ノンフライオーブン コンベクション トースター"}, {"name": "大馬士革鋼頂級三德包丁 (ダマスカス鋼プロ三徳包丁)", "keywords": "包丁 ダマスカス 三徳包丁 燕三条 牛刀"}, {"name": "不銹鋼真空超輕保溫杯 (ステンレスマグボトル)", "keywords": "サーモス 象印 水筒 真空断熱マグボトル"}]}]}, {"id": "clothing_shoes_jewelry", "department_name": "服飾、鞋包與飾品 (服＆ファッション小物・シューズ)", "icon": "fa-shirt", "categories": [{"id": "men-fashion", "name": "男士服飾與機能外套 (メンズファッション・アウター)", "leaf_items": [{"name": "防潑水輕量機能登山外套 (撥水マウンテンパーカー 防風)", "keywords": "マウンテンパーカー メンズ 撥水 防風 透湿"}, {"name": "快乾排汗彈性運動衫 (吸汗速乾ドライTシャツ)", "keywords": "メンズ スポーツ Tシャツ 速乾 ドライ"}, {"name": "免燙抗皺彈性休閒九分褲 (テーパードスラックス)", "keywords": "メンズ スラックス テーパード ストレッチ 形状記憶"}]}, {"id": "women-fashion", "name": "女士服飾與居家休閒 (レディースファッション・ルームウェア)", "leaf_items": [{"name": "高腰提臀親膚瑜伽褲 (ハイウエストヨガレギンス)", "keywords": "ヨガパンツ レギンス ハイウエスト 美脚 ポケット付き"}, {"name": "超輕量收納羽絨保暖外套 (ウルトラライトダウンジャケット)", "keywords": "ウルトラライトダウン レディース 軽量 防寒"}, {"name": "日系純棉親膚居家睡衣組 (やわらかコットンルームウェア)", "keywords": "パジャマ レディース 綿100% 長袖 ルームウェア"}]}, {"id": "running-shoes", "name": "運動跑鞋與休閒步履 (ランニングシューズ・スニーカー)", "leaf_items": [{"name": "超輕量避震慢跑鞋 (軽量クッションランニングシューズ)", "keywords": "ランニングシューズ 軽量 クッション 通気性"}, {"name": "GORE-TEX 防水越野健行鞋 (防水トレッキングシューズ)", "keywords": "ゴアテックス トレッキングシューズ 防水 登山靴"}, {"name": "人體工學足弓減壓拖鞋 (リカバリーサンダル 疲労軽減)", "keywords": "リカバリーサンダル アーチサポート 衝撃吸収"}]}, {"id": "bags-watches", "name": "商務後背包與日系手錶 (ビジネスリュック・腕時計)", "leaf_items": [{"name": "大容量防盜防潑水商務後背包 (ビジネスリュック 拡張機能)", "keywords": "ビジネスリュック 大容量 撥水 USBポート PC収納"}, {"name": "日本太陽能電波腕錶 (ソーラー電波腕時計)", "keywords": "セイコー シチズン ソーラー電波 腕時計"}]}]}, {"id": "beauty_personal_care", "department_name": "美妝保養與個人護理 (ビューティー＆ヘルスケア)", "icon": "fa-spa", "categories": [{"id": "skincare-serums", "name": "日本藥妝臉部保養與精華 (スキンケア・美容液)", "leaf_items": [{"name": "高純度維他命 C 亮白精華液 (高濃度ビタミンC美容液)", "keywords": "ビタミンC 美容液 メラノCC 導入液 毛穴ケア"}, {"name": "積雪草修護抗敏保濕霜 (CICAシカクリーム 保湿)", "keywords": "シカクリーム 保湿 敏感肌 スキンケア"}, {"name": "高保濕胺基酸潔顏慕斯 (アミノ酸フェイスウォッシュ泡洗顔)", "keywords": "泡洗顔 アミノ酸 保湿 敏感肌 洗顔料"}]}, {"id": "haircare-styling", "name": "負離子吹風機與美髮造型 (ナノケアドライヤー・ヘアアイロン)", "leaf_items": [{"name": "高浸透奈米負離子吹風機 (ナノケア高浸透ドライヤー)", "keywords": "ヘアドライヤー ナノケア 速乾 大風量 マイナスイオン"}, {"name": "陶瓷溫控直捲兩用美髮離子夾 (2WAYヘアアイロン 温度調節)", "keywords": "ヘアアイロン 2way ストレート カール マイナスイオン"}, {"name": "沙龍級深層修護髮膜 (サロン用補修ヘアトリートメント)", "keywords": "ヘアマスク フィーノ トリートメント 集中補修"}]}, {"id": "oral-shaving", "name": "音波電動牙刷與男士修容 (音波電動歯ブラシ・メンズシェーバー)", "leaf_items": [{"name": "音波震動電動牙刷 (音波振動電動歯ブラシ)", "keywords": "音波電動歯ブラシ パナソニック ドルツ 防水"}, {"name": "脈衝水洗便攜沖牙機 (口腔洗浄器 ジェットウォッシャー)", "keywords": "口腔洗浄機 ジェットウォッシャー 防水 携帯用"}, {"name": "日本 5 刀頭乾濕兩用電鬍刀 (5枚刃リニアメンズシェーバー)", "keywords": "メンズシェーバー 5枚刃 ラムダッシュ お風呂剃り"}]}]}, {"id": "sports_outdoors", "department_name": "運動、健身與戶外露營 (スポーツ＆アウトドア)", "icon": "fa-person-running", "categories": [{"id": "camping-gear", "name": "露營帳篷與戶外炊具 (キャンプテント・アウトドアギア)", "leaf_items": [{"name": "一鍵秒開雙層防水露營帳篷 (ワンタッチテント 耐水圧)", "keywords": "ワンタッチテント 2-4人用 耐水圧 サンシェード"}, {"name": "超輕量航太鋁合金露營折疊椅 (アウトドア軽量チェア)", "keywords": "アウトドアチェア ヘリノックスタイプ 折りたたみ 超軽量"}, {"name": "多功能防風露營卡式爐 (防風カセットコンロ タフまる)", "keywords": "カセットコンロ イワタニ タフまる 防風 キャンプ"}]}, {"id": "home-fitness", "name": "居家健身與重訓器材 (トレーニング器具・ダンベル)", "leaf_items": [{"name": "快速可調重鋼製啞鈴組 (可変式アジャスタブルダンベル)", "keywords": "可変式ダンベル アジャスタブル 筋トレ 省スペース"}, {"name": "靜音摺疊健走跑步機 (折りたたみ静音ウォーキングマシン)", "keywords": "ウォーキングマシン 静音 ルームランナー 折りたたみ"}, {"name": "加厚防滑高密度瑜伽墊 (高密度NBRヨガマット 厚手)", "keywords": "ヨガマット 厚手 10mm 滑り止め トレーニングマット"}]}, {"id": "cycling-sports", "name": "自行車周邊與戶外運動 (サイクル用品・アウトドアスポーツ)", "leaf_items": [{"name": "高流明防水自行車前後車燈 (高輝度LED自転車ライト 防水)", "keywords": "自転車ライト 高輝度 USB充電式 防水 テールライト"}, {"name": "站立式充氣充氣槳板 (インフレータブルSUPパドルボード)", "keywords": "スタンドアップパドルボード SUP インフレータブル"}]}]}, {"id": "automotive_motorcycle", "department_name": "汽車用品與機車周邊 (車＆バイク・カーエレクトロニクス)", "icon": "fa-car", "categories": [{"id": "dashcams-electronics", "name": "4K 行車記錄器與車用導航 (ドライブレコーダー・カーナビ)", "leaf_items": [{"name": "前後雙鏡頭 4K 夜視行車記錄器 (前後2カメラ4Kドライブレコーダー)", "keywords": "ドライブレコーダー 前後 4K SONYセンサー GPS 暗視"}, {"name": "無線 CarPlay 車載轉接器 (ワイヤレスCarPlayアダプター)", "keywords": "CarPlay ワイヤレスアダプター Android Auto ドングル"}, {"name": "車用磁吸 MagSafe 15W 快充支架 (車載マグネット充電ホルダー)", "keywords": "車載ホルダー MagSafe ワイヤレス充電 エアコン吹き出し口"}]}, {"id": "maintenance-cleaning", "name": "車用救車電源與洗車清潔 (ジャンプスターター・洗車用品)", "leaf_items": [{"name": "多功能應急救車行動電源 (大容量ジャンプスターター 12V)", "keywords": "ジャンプスターター 12V車用 モバイルバッテリー"}, {"name": "無線充電式數位輪胎打氣機 (コードレス電動エアコンプレッサー)", "keywords": "電動空気入れ 自動車 自転車 充電式 自動停止"}, {"name": "頂級高泡洗車精與超細纖維吸水布 (高発泡カーシャンプー・クロス)", "keywords": "洗車シャンプー コーティング施工車対応 マイクロファイバータオル"}]}]}, {"id": "baby_toys_games", "department_name": "母嬰用品與玩具遊戲 (ベビー＆マタニティ・おもちゃ)", "icon": "fa-baby", "categories": [{"id": "baby-strollers-care", "name": "嬰兒推車、安全汽座與護理 (ベビーカー・チャイルドシート)", "leaf_items": [{"name": "超輕量單手秒收可登機推車 (超軽量コンパクトベビーカー)", "keywords": "ベビーカー 軽量 コンパクト 折りたたみ ワンタッチ 機内持ち込み"}, {"name": "ISOFIX 360度旋轉型兒童安全座椅 (ISOFIX 回転式チャイルドシート)", "keywords": "チャイルドシート 回転式 ISOFIX 新生児"}, {"name": "多功能嬰兒副食品調理機 (離乳食ブレンダー 調理セット)", "keywords": "離乳食メーカー ブレンダー 蒸し調理 離乳食セット"}]}, {"id": "educational-toys-games", "name": "益智積木、樂高與派對桌遊 (知育玩具・ブロック・ボードゲーム)", "leaf_items": [{"name": "STEM 磁力片積木組合 (知育玩具 マグネットブロック)", "keywords": "マグネットブロック 磁石ブロック 知育玩具 STEM"}, {"name": "經典樂高建築收藏模型 (レゴ アーキテクチャー・コレクター)", "keywords": "レゴ LEGO 大人向け アーキテクチャー"}, {"name": "日本流行派對休閒桌遊 (人気ボードゲーム・パーティーゲーム)", "keywords": "ボードゲーム パーティーゲーム 日本語版"}]}]}, {"id": "health_household", "department_name": "健康保健與家庭護理 (ドラッグストア・マッサージ)", "icon": "fa-heart-pulse", "categories": [{"id": "massage-relaxation", "name": "筋膜按摩槍與肩頸舒緩 (マッサージガン・温熱マッサージャー)", "leaf_items": [{"name": "深層筋膜震動筋膜槍 (ドクターエアタイプ筋膜リリースガン)", "keywords": "マッサージガン 筋膜リリース 静音 軽量 ハンディ"}, {"name": "溫熱指壓頸部按摩枕 (コードレス首肩温熱マッサージャー)", "keywords": "ネックマッサージャー 首 肩 温熱 EMS"}, {"name": "氣壓式腿部循環按摩靴 (エアフットマッサージャー)", "keywords": "フットマッサージャー エアマッサージ 足先 ふくらはぎ 疲労回復"}]}, {"id": "supplements-daily", "name": "營養保健與助眠好物 (サプリメント・睡眠サポート)", "leaf_items": [{"name": "高濃度日本深海魚油 EPA/DHA (高純度オメガ3サプリメント)", "keywords": "DHA EPA サプリメント 国産 オメガ3"}, {"name": "甘胺酸鎂舒壓助眠膠囊 (グリシン＆マグネシウム睡眠サプリ)", "keywords": "睡眠サプリ グリシン GABA テアニン"}, {"name": "除菌消臭家庭清潔噴霧 (除菌消臭スプレー・ファブリックケア)", "keywords": "ファブリーズ 除菌 消臭スプレー 詰め替え"}]}]}, {"id": "grocery_gourmet_food", "department_name": "日本特色食品與咖啡茶飲 (食品＆飲料・お菓子・お茶)", "icon": "fa-utensils", "categories": [{"id": "japanese-snacks", "name": "日本熱銷零食甜點與禮盒 (人気日本銘菓・スイーツギフト)", "leaf_items": [{"name": "北海道風味夾心餅乾禮盒 (北海道ラングドシャ・銘菓ギフト)", "keywords": "ギフト お菓子 ラングドシャ クッキー 詰め合わせ"}, {"name": "無添加香濃堅果綜合包 (無塩無添加ミックスナッツ)", "keywords": "ミックスナッツ 無塩 素焼き アーモンド くるみ"}, {"name": "低卡高蛋白健康威化棒 (プロテインバー 低糖質)", "keywords": "プロテインバー 低糖質 たんぱく質 おやつ"}]}, {"id": "tea-coffee-beverages", "name": "宇治抹茶、手沖咖啡與日本茶 (宇治抹茶・ドリップコーヒー・日本茶)", "leaf_items": [{"name": "京都宇治無添加有機抹茶粉 (京都宇治抹茶パウダー 有機)", "keywords": "宇治抹茶 パウダー 無添加 有機 オーガニック"}, {"name": "單品濾掛式精品咖啡包 (職人ドリップコーヒーギフト)", "keywords": "ドリップコーヒー 詰め合わせ ギフト 深煎り"}, {"name": "靜岡特選深蒸煎茶茶包 (静岡深蒸し煎茶ティーバッグ)", "keywords": "日本茶 煎茶 静岡茶 ティーバッグ 国産"}]}]}, {"id": "pet_supplies", "department_name": "寵物用品 (ペット用品・フード＆ケア)", "icon": "fa-paw", "categories": [{"id": "cat-supplies", "name": "貓咪飼料零食與自動設備 (キャットフード・自動給餌器)", "leaf_items": [{"name": "日本熱銷 CIAO 肉泥點心 (CIAOちゅ〜る 猫用おやつ)", "keywords": "いなば チャオ ちゅ〜る 猫 おやつ"}, {"name": "WiFi 遠端智慧自動餵食器 (自動給餌器 スマホ連動 カメラ付き)", "keywords": "自動給餌器 猫 犬 スマホ アプリ タイマー"}, {"name": "超靜音循環過濾活水機 (ペット用自動給水器 静音フィルター)", "keywords": "ペット 給水器 自動 循環式 軟水化フィルター"}]}, {"id": "dog-supplies", "name": "狗狗胸背帶、睡墊與修毛器 (ドッグハーネス・ペットベッド)", "leaf_items": [{"name": "高彈力支撐減壓狗睡床 (高反発ペットベッド 洗える)", "keywords": "ペットベッド 犬 高反発 洗える クッション"}, {"name": "防暴衝透氣減壓胸背帶 (犬用ハーネス 抜けない 反射材)", "keywords": "犬 ハーネス 引っ張り防止 通気性 胴輪"}, {"name": "低噪音寵物電動吸毛理毛機 (ペット用バリカン 掃除機一体型)", "keywords": "ペット用バリカン 吸引式 グルーミングキット 低騒音"}]}]}, {"id": "tools_home_improvement", "department_name": "工具與居家修繕 (DIY・工具・ガーデン)", "icon": "fa-screwdriver-wrench", "categories": [{"id": "power-tools", "name": "電動工具與精密維修組 (電動インパクトドライバー・工具セット)", "leaf_items": [{"name": "18V 強力無刷充電式衝擊起子機 (18V充電式インパクトドライバー)", "keywords": "インパクトドライバー 充電式 18V ブラシレス"}, {"name": "精密電子修繕螺絲起子套組 (精密ドライバーセット 特殊ネジ対応)", "keywords": "精密ドライバーセット iPhone PC 修理 スマホ"}, {"name": "高精度雷射測距儀 (高精度レーザー距離計 自動計算)", "keywords": "レーザー距離計 小型 充電式 面積 体積 測定"}]}, {"id": "smart-locks-lighting", "name": "智慧門鎖與 LED 照明 (スマートロック・LEDシーリングライト)", "leaf_items": [{"name": "指紋感應免鑰匙智慧電子鎖 (スマートロック 指紋認証 WiFi)", "keywords": "スマートロック 指紋認証 後付け 暗証番号"}, {"name": "無段調光調色 LED 吸頂燈 (LEDシーリングライト 調光調色)", "keywords": "LED シーリングライト 8畳 12畳 調光調色 リモコン"}, {"name": "重型多層可調式收納鐵架 (スチールラック 防サビ 多段)", "keywords": "スチールラック メタルラック 耐荷重 収納棚"}]}]}]}
-  };
+var MARKETS = {
+  us: { key:'us', baseUrl:'https://www.amazon.com/s', tag: US_TAG, themeClass:'',
+    labels: { title:'🛒 Amazon AI 智能購物導師', desc:'告訴我你想買什麼，AI 會深度剖析商品優缺點，並幫你精準搜尋 Amazon.com 最佳選擇。支援文字、語音與相機識圖。', placeholder:'輸入你想買的商品或需求 (如: noise cancelling earbuds)...' }},
+  jp: { key:'jp', baseUrl:'https://www.amazon.co.jp/s', tag: JP_TAG, themeClass:'theme-jp',
+    labels: { title:'🛒 Amazon JP AI 智能購物導師', desc:'告訴我你想買什麼，AI 會深度剖析商品優缺點，並幫你精準搜尋 Amazon.co.jp 最佳選擇。支援文字、語音與相機識圖（中日雙語）。', placeholder:'輸入中文或日文需求 (如: ノイズキャンセリング イヤホン)...' }}
+};
 
-  /* Dynamic Base Path Resolution */
-  var BASE_PATH = (function() {
-    var path = window.location.pathname;
-    if (path.indexOf('/amazon-us') !== -1) return '/amazon-us';
-    if (path.indexOf('/amazon-jp') !== -1) return '/amazon-jp';
-    if (path.indexOf('/amazon') !== -1) return '/amazon';
-    return '/amazon';
-  })();
+var currentMarket = 'us';
+var isProcessing = false;
+var recognition = null;
+var isRecording = false;
 
-  /* Market Configs */
-  var MARKETS = {
-    us: {
-      key: 'us',
-      name: '美國站 (amazon.com)',
-      countryName: 'United States',
-      baseUrl: 'https://www.amazon.com/s',
-      tag: US_TAG,
-      dataPaths: [
-        BASE_PATH + '/data/us/categories_tree.json'
-      ],
-      facetsPaths: [
-        BASE_PATH + '/data/us/facets/electronics.json',
-        BASE_PATH + '/data/us/facets/computers.json',
-        BASE_PATH + '/data/us/facets/home_kitchen.json',
-        BASE_PATH + '/data/us/facets/sports_outdoors.json'
-      ],
-      currency: 'USD ($)',
-      themeClass: '',
-      rhRating: 'p_72:1248879011',
-      labels: {
-        heroTitle: 'Amazon 🇺🇸 跨國選品與分類導流引擎',
-        heroDesc: '站內 12 大核心分類目錄瀏覽，點擊任何品類或搜尋將直接跳轉 Amazon.com。',
-        searchPlaceholder: '輸入搜尋關鍵字 (如: noise cancelling earbuds)...',
-        btnSearch: '前往 Amazon US 搜尋'
-      }
-    },
-    jp: {
-      key: 'jp',
-      name: '日本站 (amazon.co.jp)',
-      countryName: 'Japan (日本)',
-      baseUrl: 'https://www.amazon.co.jp/s',
-      tag: JP_TAG,
-      dataPaths: [
-        BASE_PATH + '/data/jp/categories_tree.json'
-      ],
-      facetsPaths: [
-        BASE_PATH + '/data/jp/facets/electronics.json',
-        BASE_PATH + '/data/jp/facets/computers.json',
-        BASE_PATH + '/data/jp/facets/home_kitchen.json',
-        BASE_PATH + '/data/jp/facets/sports_outdoors.json'
-      ],
-      currency: 'JPY (円)',
-      themeClass: 'theme-jp',
-      rhRating: 'p_72:p_72%2F1248879011',
-      labels: {
-        heroTitle: 'Amazon 🇯🇵 日本站選品與日文語法搜尋引擎',
-        heroDesc: '中日雙語對照標籤導引，自動組合精準日文關鍵字跳轉 Amazon.co.jp，日本正品跨境採購必備。',
-        searchPlaceholder: '輸入中文或日文關鍵字 (如: ノイズキャンセリング イヤホン)...',
-        btnSearch: '前往 Amazon JP 搜尋'
-      }
-    }
-  };
-
-  /* App State */
-  var currentMarket = 'us';
-
-  function initMarketFromUrl() {
-    var params = new URLSearchParams(window.location.search);
-    var m = params.get('market') || (window.location.hash ? window.location.hash.replace('#', '') : '');
-    if (m === 'jp' || m === 'us') {
-      currentMarket = m;
-    } else if (window.location.pathname.indexOf('amazon-jp') !== -1) {
-      currentMarket = 'jp';
-    } else {
-      currentMarket = 'us';
-    }
+/* ===== API KEY MANAGEMENT (Reused from AI Tutor standard) ===== */
+function encodeApiKey(key) {
+  if (!key) return '';
+  try { return 'obf_' + btoa(encodeURIComponent(key)); } catch(e) { return key; }
+}
+function decodeApiKey(raw) {
+  if (!raw) return '';
+  if (raw.indexOf('obf_') === 0) {
+    try { return decodeURIComponent(atob(raw.slice(4))); } catch(e) { return raw.slice(4); }
   }
-
-  function buildAmazonSearchUrl(keyword, options) {
-    var conf = MARKETS[currentMarket];
-    var tag = currentMarket === 'jp' ? JP_TAG : US_TAG;
-    var url = new URL(conf.baseUrl);
-    url.searchParams.set('k', (keyword || '').trim());
-    url.searchParams.set('tag', tag);
-
-    options = options || {};
-    if (options.s) url.searchParams.set('s', options.s);
-    if (options.rh) url.searchParams.set('rh', options.rh);
-
-    // Price range filters
-    var low = options.low || (document.getElementById('input-price-low') ? document.getElementById('input-price-low').value : '');
-    var high = options.high || (document.getElementById('input-price-high') ? document.getElementById('input-price-high').value : '');
-    if (low && !isNaN(Number(low))) url.searchParams.set('low-price', Math.round(Number(low)));
-    if (high && !isNaN(Number(high))) url.searchParams.set('high-price', Math.round(Number(high)));
-
-    return url.toString();
+  return raw;
+}
+function maskApiKey(key) {
+  if (!key) return '';
+  if (key.length <= 10) return '••••••••';
+  return key.slice(0, 6) + '••••••••' + key.slice(-4);
+}
+function getGlobalApiKey() {
+  var raw = (localStorage.getItem('gugopro_gemini_api_key') || localStorage.getItem('gemini_api_key') || localStorage.getItem('tarot_api_key') || '').trim();
+  var decoded = decodeApiKey(raw);
+  if (decoded && raw.indexOf('obf_') !== 0) { setGlobalApiKey(decoded); }
+  return decoded;
+}
+function setGlobalApiKey(key) {
+  if (!key) {
+    localStorage.removeItem('gugopro_gemini_api_key');
+    localStorage.removeItem('gemini_api_key');
+    localStorage.removeItem('tarot_api_key');
+    updateKeyUI();
+    return;
   }
-
-  window.doSearch = function(keyword, options) {
-    if (!keyword) {
-      var input = document.getElementById('input-keyword');
-      keyword = input ? input.value : '';
-    }
-    if (!keyword || !keyword.trim()) return;
-
-    var targetUrl = buildAmazonSearchUrl(keyword, options);
-    window.open(targetUrl, '_blank', 'noopener,noreferrer');
-
-    if (typeof gtag === 'function') {
-      gtag('event', 'amazon_search_click', {
-        'event_category': 'ecommerce',
-        'event_label': currentMarket.toUpperCase() + ': ' + keyword
-      });
-    }
-  };
-
-  window.handleCustomSearch = function() {
-    var kw = document.getElementById('input-keyword').value;
-    var sort = document.getElementById('select-sort').value;
-    var rating = document.getElementById('select-rating').value;
-    doSearch(kw, { s: sort, rh: rating });
-  };
-
-  window.switchMarket = function(marketKey) {
-    if (!MARKETS[marketKey] || currentMarket === marketKey) return;
-    currentMarket = marketKey;
-    
-    // Update theme class on body
-    if (MARKETS[currentMarket].themeClass) {
-      document.body.className = MARKETS[currentMarket].themeClass;
-    } else {
-      document.body.className = '';
-    }
-
-    // Update Switcher buttons
-    document.getElementById('btn-market-us').classList.toggle('active', currentMarket === 'us');
-    document.getElementById('btn-market-jp').classList.toggle('active', currentMarket === 'jp');
-
-    // Update UI Texts
-    var conf = MARKETS[currentMarket];
-    document.getElementById('hero-title').textContent = conf.labels.heroTitle;
-    document.getElementById('hero-desc').textContent = conf.labels.heroDesc;
-    document.getElementById('input-keyword').placeholder = conf.labels.searchPlaceholder;
-    document.getElementById('label-btn-search').textContent = conf.labels.btnSearch;
-    document.getElementById('crumb-root').textContent = 'Amazon ' + currentMarket.toUpperCase() + ' Store';
-    document.getElementById('input-price-low').placeholder = 'Min (' + conf.currency.split(' ')[0] + ')';
-    document.getElementById('input-price-high').placeholder = 'Max (' + conf.currency.split(' ')[0] + ')';
-
-    loadMarketData();
-  };
-
-  async function fetchJsonFirstValid(paths) {
-    for (var i = 0; i < paths.length; i++) {
-      try {
-        var res = await fetch(paths[i], { cache: 'no-store' });
-        if (res.ok) {
-          var data = await res.json();
-          if (data) return data;
-        }
-      } catch(e) {}
-    }
-    return null;
-  }
-
-  async function loadMarketData() {
-    var conf = MARKETS[currentMarket];
-    
-    // 1. Instant fallback rendering (0ms delay)
-    if (EMBEDDED_DATA[currentMarket]) {
-      renderTree(EMBEDDED_DATA[currentMarket]);
-    }
-
-    // 2. Fetch fresh JSON in background
-    try {
-      var data = await fetchJsonFirstValid(conf.dataPaths);
-      if (data && data.categories) {
-        renderTree(data);
-      }
-    } catch(e) {}
-
-    // 3. Load Facet chips
-    loadFacets(conf.facetsPaths || []);
-  }
-
-  function loadFacets(facetsPaths) {
-    var container = document.getElementById('facets-container');
-    if (!facetsPaths || facetsPaths.length === 0) {
-      if (container) container.innerHTML = '';
-      return;
-    }
-
-    var promises = facetsPaths.map(function(p) {
-      return fetch(p, { cache: 'no-store' })
-        .then(function(res) { return res.ok ? res.json() : null; })
-        .catch(function() { return null; });
-    });
-
-    Promise.all(promises).then(function(results) {
-      if (!container) return;
-      var html = '<span class="facet-title"><i class="fa-solid fa-tags"></i> 熱門規格標籤：</span>';
-      var foundAny = false;
-      var seenLabels = new Set();
-
-      results.forEach(function(data) {
-        if (!data || !data.facet_groups) return;
-        data.facet_groups.forEach(function(group) {
-          (group.facets || []).forEach(function(f) {
-            var displayLabel = f.label_tw || f.label || f.label_jp;
-            if (seenLabels.has(displayLabel)) return;
-            seenLabels.add(displayLabel);
-            foundAny = true;
-            var query = (f.search_query || f.label_jp || f.label || '').replace(/'/g, "\\'");
-            html += '<span class="facet-pill" onclick="applyFacetSearch(\'' + query + '\')">' +
-                      displayLabel +
-                    '</span>';
-          });
-        });
-      });
-
-      container.innerHTML = foundAny ? html : '';
-    });
-  }
-
-  window.applyFacetSearch = function(query) {
-    var input = document.getElementById('input-keyword');
-    if (input) input.value = query;
-    doSearch(query);
-  };
-
-  function renderTree(treeData) {
-    var deptGrid = document.getElementById('dept-grid');
-    var countSummary = document.getElementById('category-summary-count');
-    var categories = treeData.categories || [];
-    var nCats = 0, nItems = 0;
-
-    deptGrid.innerHTML = '';
-    categories.forEach(function(dept, deptIdx) {
-      var deptCard = document.createElement('div');
-      deptCard.className = 'dept-card' + (deptIdx === 0 ? ' expanded' : '');
-
-      var catsHtml = '';
-      (dept.categories || []).forEach(function(cat, catIdx) {
-        nCats++;
-        var leafHtml = '';
-        (cat.leaf_items || []).forEach(function(leaf) {
-          nItems++;
-          leafHtml +=
-            '<div class="leaf-item" onclick="doSearch(\'' + leaf.keywords.replace(/'/g, "\\'") + '\')">' +
-              '<div class="leaf-name"><span>' + leaf.name + '</span> <i class="fa-solid fa-arrow-up-right-from-square"></i></div>' +
-              '<div class="leaf-kw">' + leaf.keywords + '</div>' +
-            '</div>';
-        });
-
-        catsHtml +=
-          '<div class="cat-box' + (catIdx === 0 ? ' expanded' : '') + '">' +
-            '<div class="cat-header" onclick="this.parentElement.classList.toggle(\'expanded\')">' +
-              '<span><i class="fa-solid fa-caret-right"></i> ' + cat.name + ' (' + (cat.leaf_items ? cat.leaf_items.length : 0) + ')</span>' +
-            '</div>' +
-            '<div class="leaf-grid">' + leafHtml + '</div>' +
-          '</div>';
-      });
-
-      deptCard.innerHTML =
-        '<div class="dept-header" onclick="this.parentElement.classList.toggle(\'expanded\')">' +
-          '<div class="dept-header-left">' +
-            '<i class="fa-solid ' + (dept.icon || 'fa-box') + '"></i>' +
-            '<span>' + dept.department_name + '</span>' +
-          '</div>' +
-          '<div style="display:flex; align-items:center; gap:10px;">' +
-            '<span style="font-size:0.8rem; color:var(--text-muted);">' + (dept.categories ? dept.categories.length : 0) + ' 分類</span>' +
-            '<i class="fa-solid fa-chevron-right dept-toggle-icon"></i>' +
-          '</div>' +
-        '</div>' +
-        '<div class="dept-body"><div class="cats-container">' + catsHtml + '</div></div>';
-
-      deptGrid.appendChild(deptCard);
-    });
-
-    countSummary.textContent = '(' + categories.length + ' 大品類 · ' + nCats + ' 子分類 · ' + nItems + ' 精選爆品)';
-  }
-
-  /* Initialize Event Listeners */
-  function initEvents() {
-    var searchInput = document.getElementById('input-keyword');
-    if (searchInput) {
-      searchInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && !e.isComposing) {
-          e.preventDefault();
-          handleCustomSearch();
-        }
-      });
-    }
-
-    var searchBtn = document.getElementById('btn-search-amazon');
-    if (searchBtn) {
-      searchBtn.addEventListener('click', function() {
-        handleCustomSearch();
-      });
-    }
-  }
-
-  /* Run Init */
-  initMarketFromUrl();
-  switchMarket(currentMarket);
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initEvents);
+  var obf = encodeApiKey(key.trim());
+  localStorage.setItem('gugopro_gemini_api_key', obf);
+  localStorage.setItem('gemini_api_key', obf);
+  localStorage.setItem('tarot_api_key', obf);
+  updateKeyUI();
+}
+function updateKeyUI() {
+  var key = getGlobalApiKey();
+  var statusBox = document.getElementById('key-status-box');
+  var maskedDisplay = document.getElementById('masked-key-display');
+  var clearBtn = document.getElementById('btn-clear-key');
+  var apiBtn = document.getElementById('btn-api-config');
+  var apiText = document.getElementById('api-status-text');
+  if (key) {
+    if (statusBox) statusBox.style.display = '';
+    if (maskedDisplay) maskedDisplay.textContent = maskApiKey(key);
+    if (clearBtn) clearBtn.style.display = '';
+    if (apiBtn) apiBtn.classList.add('api-connected');
+    if (apiText) apiText.textContent = 'API 已連線';
   } else {
-    initEvents();
+    if (statusBox) statusBox.style.display = 'none';
+    if (clearBtn) clearBtn.style.display = 'none';
+    if (apiBtn) apiBtn.classList.remove('api-connected');
+    if (apiText) apiText.textContent = 'API 設定';
   }
+}
+window.openApiModal = function() {
+  updateKeyUI();
+  document.getElementById('api-key-input').value = '';
+  document.getElementById('modal-api').style.display = 'flex';
+};
+window.saveApiKey = function() {
+  var key = document.getElementById('api-key-input').value.trim();
+  if (key) {
+    setGlobalApiKey(key);
+    document.getElementById('modal-api').style.display = 'none';
+  } else if (getGlobalApiKey()) {
+    document.getElementById('modal-api').style.display = 'none';
+  } else {
+    alert('請輸入有效的 Gemini API Key。');
+  }
+};
+window.clearApiKey = function() {
+  if (confirm('確定要清除已儲存的 API Key 嗎？')) {
+    setGlobalApiKey('');
+    document.getElementById('api-key-input').value = '';
+    alert('已成功清除 API Key。');
+  }
+};
+function checkApiKey() {
+  var key = getGlobalApiKey();
+  if (!key) { openApiModal(); return false; }
+  return true;
+}
+
+/* ===== MARKET SWITCHING ===== */
+function detectMarket() {
+  var path = window.location.pathname;
+  if (path.indexOf('amazon-jp') !== -1) return 'jp';
+  if (path.indexOf('amazon-us') !== -1) return 'us';
+  var params = new URLSearchParams(window.location.search);
+  var m = params.get('market');
+  if (m === 'jp' || m === 'us') return m;
+  var lang = (navigator.language || '').toLowerCase();
+  if (lang.indexOf('ja') !== -1 || lang.indexOf('jp') !== -1) return 'jp';
+  return 'us';
+}
+window.switchMarket = function(mk) {
+  if (!MARKETS[mk]) return;
+  currentMarket = mk;
+  document.body.className = MARKETS[mk].themeClass || '';
+  document.getElementById('btn-us').classList.toggle('active', mk === 'us');
+  document.getElementById('btn-jp').classList.toggle('active', mk === 'jp');
+  var conf = MARKETS[mk];
+  document.getElementById('hero-title').textContent = conf.labels.title;
+  document.getElementById('hero-desc').textContent = conf.labels.desc;
+  document.getElementById('user-input').placeholder = conf.labels.placeholder;
+};
+
+/* ===== FILTER DRAWER ===== */
+window.toggleDrawer = function() {
+  document.getElementById('drawer-overlay').classList.toggle('open');
+  document.getElementById('filter-drawer').classList.toggle('open');
+};
+function getSelectedFilters() {
+  var checks = document.querySelectorAll('.filter-drawer input[type="checkbox"]:checked');
+  var rh = [];
+  checks.forEach(function(c) { rh.push(c.value); });
+  return rh;
+}
+
+/* ===== BUILD AMAZON URL ===== */
+function buildAmazonUrl(keyword, extraTags) {
+  var conf = MARKETS[currentMarket];
+  var tag = currentMarket === 'jp' ? JP_TAG : US_TAG;
+  var fullKeyword = keyword || '';
+  if (extraTags && extraTags.length > 0) {
+    fullKeyword = (fullKeyword + ' ' + extraTags.join(' ')).trim();
+  }
+  var url = new URL(conf.baseUrl);
+  url.searchParams.set('k', fullKeyword);
+  url.searchParams.set('tag', tag);
+  var rh = getSelectedFilters();
+  if (rh.length > 0) url.searchParams.set('rh', rh.join(','));
+  return url.toString();
+}
+
+/* ===== CHAT UI ===== */
+function addMessage(role, html, photoSrc) {
+  var welcome = document.getElementById('welcome-section');
+  if (welcome) welcome.style.display = 'none';
+  var container = document.getElementById('chat-messages');
+  var div = document.createElement('div');
+  div.className = 'msg ' + role;
+  var avatarIcon = role === 'user' ? '<i class="fa-solid fa-user"></i>' : '<i class="fa-solid fa-robot"></i>';
+  var photoHtml = photoSrc ? '<img class="user-photo" src="' + photoSrc + '" alt="uploaded">' : '';
+  if (role === 'user') {
+    div.innerHTML = '<div class="bubble">' + photoHtml + html + '</div><div class="msg-avatar">' + avatarIcon + '</div>';
+  } else {
+    div.innerHTML = '<div class="msg-avatar">' + avatarIcon + '</div><div class="bubble">' + html + '</div>';
+  }
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+  return div;
+}
+function showTyping() {
+  var container = document.getElementById('chat-messages');
+  var div = document.createElement('div');
+  div.className = 'msg ai';
+  div.id = 'typing-msg';
+  div.innerHTML = '<div class="msg-avatar"><i class="fa-solid fa-robot"></i></div><div class="bubble"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>';
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+function removeTyping() {
+  var el = document.getElementById('typing-msg');
+  if (el) el.remove();
+}
+function renderAiResponse(data, keyword) {
+  var html = '<div class="ai-card">';
+  if (data.summary) html += '<div class="summary-text">' + escapeHtml(data.summary) + '</div>';
+  if (data.products && data.products.length > 0) {
+    data.products.forEach(function(p) {
+      html += '<div class="product-card"><h5>' + escapeHtml(p.name) + '</h5><div class="pros-cons">';
+      if (p.pros) p.pros.forEach(function(pr) { html += '<div class="pro-item">' + escapeHtml(pr) + '</div>'; });
+      if (p.cons) p.cons.forEach(function(cn) { html += '<div class="con-item">' + escapeHtml(cn) + '</div>'; });
+      html += '</div></div>';
+    });
+  }
+  var recKw = data.recommendedKeyword || keyword || '';
+  if (data.dynamicTags && data.dynamicTags.length > 0) {
+    html += '<div class="dynamic-tags" id="dtags-' + Date.now() + '">';
+    data.dynamicTags.forEach(function(t) {
+      html += '<span class="dtag" onclick="this.classList.toggle(\'selected\')" data-tag="' + escapeAttr(t) + '">' + escapeHtml(t) + '</span>';
+    });
+    html += '</div>';
+  }
+  var btnId = 'go-' + Date.now();
+  html += '<button class="btn-go-amazon" id="' + btnId + '" onclick="goAmazon(this)" data-keyword="' + escapeAttr(recKw) + '"><i class="fa-solid fa-arrow-up-right-from-square"></i> 前往 Amazon 開啟精準結果</button>';
+  html += '</div>';
+  return html;
+}
+window.goAmazon = function(btn) {
+  var keyword = btn.getAttribute('data-keyword') || '';
+  var tagsContainer = btn.previousElementSibling;
+  var selectedTags = [];
+  if (tagsContainer && tagsContainer.classList.contains('dynamic-tags')) {
+    tagsContainer.querySelectorAll('.dtag.selected').forEach(function(t) {
+      selectedTags.push(t.getAttribute('data-tag'));
+    });
+  }
+  var url = buildAmazonUrl(keyword, selectedTags);
+  window.open(url, '_blank', 'noopener,noreferrer');
+  if (typeof gtag === 'function') {
+    gtag('event', 'amazon_ai_search', { event_category: 'ecommerce', event_label: currentMarket.toUpperCase() + ': ' + keyword });
+  }
+};
+function escapeHtml(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function escapeAttr(s) { return (s || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+
+/* ===== GEMINI API CALL ===== */
+var GEMINI_MODEL = 'gemini-2.5-flash-preview-05-20';
+var GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/';
+
+async function callGemini(userText, imageBase64, imageMime) {
+  var apiKey = getGlobalApiKey();
+  if (!apiKey) { openApiModal(); throw new Error('No API Key'); }
+
+  var marketContext = currentMarket === 'jp'
+    ? '使用者正在瀏覽日本 Amazon (amazon.co.jp)，請以繁體中文回答，搜尋關鍵字請用日文。'
+    : '使用者正在瀏覽美國 Amazon (amazon.com)，請以繁體中文回答，搜尋關鍵字請用英文。';
+
+  var systemPrompt = '你是一位專業的 Amazon 購物顧問 AI。' + marketContext + '\n\n使用者會告訴你想買的商品或需求（可能附帶照片），請根據你的專業知識：\n1. 提供簡短的商品概念解析\n2. 推薦 2-4 個具體的商品類型/規格，並列出各自的核心優勢(pros)與選購考量(cons)\n3. 給出最適合在 Amazon 搜尋的精準關鍵字\n4. 提供 3-5 個可供使用者微調搜尋的動態標籤\n\n請嚴格以 JSON 格式回傳，結構如下：\n{"summary":"簡短綜合解析","recommendedKeyword":"Amazon搜尋關鍵字","products":[{"name":"商品名","pros":["優勢1","優勢2"],"cons":["考量1"]}],"dynamicTags":["標籤1","標籤2","標籤3"]}';
+
+  var parts = [{ text: systemPrompt + '\n\n使用者需求：' + userText }];
+  if (imageBase64 && imageMime) {
+    parts.push({ inlineData: { mimeType: imageMime, data: imageBase64 } });
+  }
+
+  var models = [GEMINI_MODEL, 'gemini-2.0-flash', 'gemini-1.5-flash'];
+  var lastError = null;
+
+  for (var i = 0; i < models.length; i++) {
+    var model = models[i];
+    var url = GEMINI_ENDPOINT + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(apiKey);
+    try {
+      var resp = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: parts }],
+          generationConfig: { temperature: 0.7, maxOutputTokens: 4096, responseMimeType: 'application/json' }
+        })
+      });
+
+      if (resp.status === 400 || resp.status === 401 || resp.status === 403) {
+        setGlobalApiKey('');
+        alert('⚠️ 您設定的 Gemini API Key 已失效或輸入有誤，請重新設定。');
+        openApiModal();
+        throw new Error('API Key 無效 (HTTP ' + resp.status + ')');
+      }
+      if (!resp.ok) {
+        console.warn('Model ' + model + ' HTTP ' + resp.status + ', trying next...');
+        lastError = new Error('HTTP ' + resp.status);
+        continue;
+      }
+
+      var data = await resp.json();
+      var text = data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0] && data.candidates[0].content.parts[0].text;
+      if (text) {
+        try {
+          var cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+          return JSON.parse(cleaned);
+        } catch(pe) {
+          return { summary: text, recommendedKeyword: '', products: [], dynamicTags: [] };
+        }
+      }
+    } catch(err) {
+      if (err.message && err.message.indexOf('API Key') !== -1) throw err;
+      console.warn('Model ' + model + ' error:', err);
+      lastError = err;
+    }
+  }
+  throw lastError || new Error('所有 Gemini 模型呼叫失敗，請檢查網路或稍後重試。');
+}
+
+/* ===== SEND MESSAGE ===== */
+var pendingImage = null;
+var pendingImageMime = null;
+var pendingImagePreview = null;
+
+window.sendMessage = async function() {
+  if (isProcessing) return;
+  var input = document.getElementById('user-input');
+  var text = input.value.trim();
+  if (!text && !pendingImage) return;
+  if (!checkApiKey()) return;
+
+  isProcessing = true;
+  document.getElementById('btn-send').disabled = true;
+  var displayText = text || '(已上傳圖片，請 AI 分析)';
+  addMessage('user', escapeHtml(displayText), pendingImagePreview);
+  input.value = '';
+  autoResize(input);
+
+  var imgData = pendingImage;
+  var imgMime = pendingImageMime;
+  pendingImage = null;
+  pendingImageMime = null;
+  pendingImagePreview = null;
+
+  showTyping();
+  try {
+    var result = await callGemini(text || '請分析這張圖片中的商品並推薦', imgData, imgMime);
+    removeTyping();
+    var aiHtml = renderAiResponse(result, text);
+    addMessage('ai', aiHtml);
+  } catch(err) {
+    removeTyping();
+    addMessage('ai', '<span style="color:var(--error);">❌ ' + escapeHtml(err.message || '發生錯誤，請稍後重試。') + '</span>');
+  }
+  isProcessing = false;
+  document.getElementById('btn-send').disabled = false;
+};
+
+window.sendQuickPrompt = function(text) {
+  document.getElementById('user-input').value = text;
+  sendMessage();
+};
+
+/* ===== CAMERA / IMAGE UPLOAD ===== */
+document.getElementById('camera-input').addEventListener('change', function(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  if (!checkApiKey()) { e.target.value = ''; return; }
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    var dataUrl = ev.target.result;
+    pendingImagePreview = dataUrl;
+    pendingImage = dataUrl.split(',')[1];
+    pendingImageMime = file.type || 'image/jpeg';
+    var input = document.getElementById('user-input');
+    if (!input.value.trim()) input.value = '';
+    input.placeholder = '📷 圖片已載入，輸入補充說明或直接發送...';
+    input.focus();
+    // Auto-send if no text
+    setTimeout(function() { if (!document.getElementById('user-input').value.trim()) sendMessage(); }, 300);
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+});
+
+/* ===== VOICE INPUT ===== */
+window.toggleMic = function() {
+  if (!checkApiKey()) return;
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    alert('您的瀏覽器不支援語音辨識，建議使用 Chrome 瀏覽器。');
+    return;
+  }
+  if (isRecording) {
+    if (recognition) recognition.stop();
+    return;
+  }
+  var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SpeechRecognition();
+  recognition.lang = currentMarket === 'jp' ? 'ja-JP' : 'zh-TW';
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.onstart = function() {
+    isRecording = true;
+    document.getElementById('btn-mic').classList.add('recording');
+  };
+  recognition.onresult = function(event) {
+    var transcript = event.results[0][0].transcript;
+    document.getElementById('user-input').value = transcript;
+    autoResize(document.getElementById('user-input'));
+  };
+  recognition.onend = function() {
+    isRecording = false;
+    document.getElementById('btn-mic').classList.remove('recording');
+    recognition = null;
+    var input = document.getElementById('user-input');
+    if (input.value.trim()) sendMessage();
+  };
+  recognition.onerror = function(e) {
+    isRecording = false;
+    document.getElementById('btn-mic').classList.remove('recording');
+    recognition = null;
+    if (e.error !== 'no-speech' && e.error !== 'aborted') {
+      console.warn('Speech recognition error:', e.error);
+    }
+  };
+  recognition.start();
+};
+
+/* ===== TEXTAREA AUTO RESIZE ===== */
+window.autoResize = function(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+};
+
+/* ===== KEYBOARD HANDLER ===== */
+document.getElementById('user-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+/* ===== INIT ===== */
+currentMarket = detectMarket();
+switchMarket(currentMarket);
+updateKeyUI();
 
 })();
 </script>
