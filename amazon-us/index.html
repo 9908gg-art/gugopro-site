@@ -102,26 +102,87 @@ body.theme-jp .msg.user .bubble { border-color: rgba(255,51,102,0.2); }
 .msg.user .msg-avatar { background: var(--accent); color: #fff; }
 .msg.ai .msg-avatar { background: var(--accent2); color: #fff; }
 
-/* AI Response Card */
-.ai-card { margin-top: 10px; }
-.ai-card .summary-text { color: var(--text-primary); margin-bottom: 12px; font-size: 0.88rem; line-height: 1.6; }
-.product-card { background: rgba(0,0,0,0.25); border: 1px solid var(--border-card); border-radius: 12px; padding: 12px; margin-bottom: 10px; }
-.product-card h5 { color: #fff; font-size: 0.9rem; margin-bottom: 8px; font-weight: 700; }
-.pros-cons { display: flex; flex-direction: column; gap: 4px; font-size: 0.82rem; }
-.pro-item { color: var(--success); }
-.pro-item::before { content: "👍 "; }
-.con-item { color: #f59e0b; }
-.con-item::before { content: "⚠️ "; }
+/* Dynamic Facet Matrix Card (Strict No-Fluff) */
+.ai-facet-card { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+.facet-quick-guide { color: var(--text-primary); font-weight: 700; font-size: 0.88rem; line-height: 1.5; }
+.facet-groups-container { display: flex; flex-direction: column; gap: 8px; }
+.facet-group-box { background: rgba(0, 0, 0, 0.45); border: 1px solid var(--border-card); border-radius: 12px; padding: 10px 12px; }
+.facet-group-title { font-size: 0.78rem; font-weight: 800; color: var(--gold); margin-bottom: 6px; letter-spacing: 0.03em; }
+.facet-chips-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.facet-chip {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-card);
+  color: var(--text-primary);
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+.facet-chip:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: var(--accent);
+  color: #fff;
+  transform: translateY(-1px);
+}
+.facet-chip.selected {
+  background: var(--accent-glow);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 0 10px var(--accent-glow);
+}
+body.theme-jp .facet-chip.selected {
+  background: rgba(255, 51, 102, 0.35);
+  border-color: #FF3366;
+}
 
-/* Dynamic Tags */
-.dynamic-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
-.dtag { background: rgba(255,255,255,0.06); border: 1px solid var(--border-card); color: var(--text-muted); padding: 4px 12px; border-radius: 16px; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s; user-select: none; }
-.dtag:hover, .dtag.selected { background: var(--accent-glow); border-color: var(--accent); color: #fff; }
-
-/* Go Amazon Button */
-.btn-go-amazon { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, var(--accent), #0077A3); color: #fff; border: none; border-radius: 10px; padding: 10px 20px; font-size: 0.9rem; font-weight: 700; cursor: pointer; margin-top: 8px; transition: all 0.2s; }
-body.theme-jp .btn-go-amazon { background: linear-gradient(135deg, #FF3366, #C70039); }
-.btn-go-amazon:hover { transform: translateY(-2px); filter: brightness(1.1); }
+.facet-preview-bar {
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 215, 0, 0.35);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+.facet-kw-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.8rem;
+}
+.facet-kw-info .kw-label { color: var(--text-muted); }
+.facet-kw-info .kw-value {
+  color: var(--gold);
+  font-family: 'Outfit', monospace;
+  font-weight: 800;
+  font-size: 0.88rem;
+  word-break: break-all;
+  text-align: right;
+}
+.btn-facet-jump {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, var(--accent), #0077A3);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px var(--accent-glow);
+}
+body.theme-jp .btn-facet-jump { background: linear-gradient(135deg, #FF3366, #C70039); }
+.btn-facet-jump:hover { transform: translateY(-2px); filter: brightness(1.1); }
 
 /* Typing Indicator */
 .typing-indicator { display: flex; align-items: center; gap: 4px; padding: 8px 14px; }
@@ -518,43 +579,82 @@ function removeTyping() {
   var el = document.getElementById('typing-msg');
   if (el) el.remove();
 }
-function renderAiResponse(data, keyword) {
-  var html = '<div class="ai-card">';
-  if (data.summary) html += '<div class="summary-text">' + escapeHtml(data.summary) + '</div>';
-  if (data.products && data.products.length > 0) {
-    data.products.forEach(function(p) {
-      html += '<div class="product-card"><h5>' + escapeHtml(p.name) + '</h5><div class="pros-cons">';
-      if (p.pros) p.pros.forEach(function(pr) { html += '<div class="pro-item">' + escapeHtml(pr) + '</div>'; });
-      if (p.cons) p.cons.forEach(function(cn) { html += '<div class="con-item">' + escapeHtml(cn) + '</div>'; });
-      html += '</div></div>';
-    });
-  }
-  var recKw = data.recommendedKeyword || keyword || '';
-  if (data.dynamicTags && data.dynamicTags.length > 0) {
-    html += '<div class="dynamic-tags" id="dtags-' + Date.now() + '">';
-    data.dynamicTags.forEach(function(t) {
-      html += '<span class="dtag" onclick="this.classList.toggle(\'selected\')" data-tag="' + escapeAttr(t) + '">' + escapeHtml(t) + '</span>';
-    });
-    html += '</div>';
-  }
-  var btnId = 'go-' + Date.now();
-  html += '<button class="btn-go-amazon" id="' + btnId + '" onclick="goAmazon(this)" data-keyword="' + escapeAttr(recKw) + '"><i class="fa-solid fa-arrow-up-right-from-square"></i> 前往 Amazon 開啟精準結果</button>';
-  html += '</div>';
+function renderAiFacetCard(aiData, msgId, defaultKeyword) {
+  var baseKw = aiData.recommendedBaseKeyword || defaultKeyword || '';
+  var groupsHtml = (aiData.filterGroups || []).map(function(group) {
+    var optsHtml = (group.options || []).map(function(opt) {
+      return '<button onclick="toggleFacetTag(this, \'' + msgId + '\', \'' + escapeAttr(baseKw) + '\')" ' +
+             'data-tag="' + escapeAttr(opt) + '" class="facet-chip">' +
+             '+ ' + escapeHtml(opt) +
+             '</button>';
+    }).join('');
+
+    return '<div class="facet-group-box">' +
+             '<div class="facet-group-title">' + escapeHtml(group.groupTitle || '分類維度') + '</div>' +
+             '<div class="facet-chips-row">' + optsHtml + '</div>' +
+           '</div>';
+  }).join('');
+
+  var html =
+    '<div class="ai-facet-card" id="card-' + msgId + '">' +
+      '<p class="facet-quick-guide">' + escapeHtml(aiData.quickGuide || '已為您鎖定商品類別，請選擇規格標籤進行組合：') + '</p>' +
+      '<div class="facet-groups-container">' + groupsHtml + '</div>' +
+      '<div class="facet-preview-bar">' +
+        '<div class="facet-kw-info">' +
+          '<span class="kw-label">目前組合檢索詞：</span>' +
+          '<span class="kw-value" id="kw-preview-' + msgId + '">' + escapeHtml(baseKw) + '</span>' +
+        '</div>' +
+        '<button onclick="openAmazonTarget(\'' + msgId + '\', \'' + escapeAttr(baseKw) + '\')" class="btn-facet-jump">' +
+          '<span>前往 Amazon 開啟精準結果</span> ' +
+          '<i class="fa-solid fa-arrow-up-right-from-square"></i>' +
+        '</button>' +
+      '</div>' +
+    '</div>';
+
   return html;
 }
-window.goAmazon = function(btn) {
-  var keyword = btn.getAttribute('data-keyword') || '';
-  var tagsContainer = btn.previousElementSibling;
+
+window.toggleFacetTag = function(btn, msgId, baseKw) {
+  btn.classList.toggle('selected');
+  var rawTag = btn.getAttribute('data-tag');
+  if (btn.classList.contains('selected')) {
+    btn.textContent = '✓ ' + rawTag;
+  } else {
+    btn.textContent = '+ ' + rawTag;
+  }
+
+  var card = document.getElementById('card-' + msgId);
+  if (!card) return;
+
   var selectedTags = [];
-  if (tagsContainer && tagsContainer.classList.contains('dynamic-tags')) {
-    tagsContainer.querySelectorAll('.dtag.selected').forEach(function(t) {
-      selectedTags.push(t.getAttribute('data-tag'));
+  card.querySelectorAll('.facet-chip.selected').forEach(function(el) {
+    var tag = el.getAttribute('data-tag');
+    if (tag) selectedTags.push(tag);
+  });
+
+  var combinedKw = (baseKw + (selectedTags.length > 0 ? ' ' + selectedTags.join(' ') : '')).trim();
+  var kwPreview = document.getElementById('kw-preview-' + msgId);
+  if (kwPreview) kwPreview.textContent = combinedKw;
+};
+
+window.openAmazonTarget = function(msgId, baseKw) {
+  var card = document.getElementById('card-' + msgId);
+  var selectedTags = [];
+  if (card) {
+    card.querySelectorAll('.facet-chip.selected').forEach(function(el) {
+      var tag = el.getAttribute('data-tag');
+      if (tag) selectedTags.push(tag);
     });
   }
-  var url = buildAmazonUrl(keyword, selectedTags);
+
+  var url = buildAmazonUrl(baseKw, selectedTags);
   window.open(url, '_blank', 'noopener,noreferrer');
+
   if (typeof gtag === 'function') {
-    gtag('event', 'amazon_ai_search', { event_category: 'ecommerce', event_label: currentMarket.toUpperCase() + ': ' + keyword });
+    gtag('event', 'amazon_facet_search', {
+      event_category: 'ecommerce',
+      event_label: currentMarket.toUpperCase() + ': ' + baseKw + ' [' + selectedTags.join(', ') + ']'
+    });
   }
 };
 function escapeHtml(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
@@ -646,11 +746,29 @@ async function callGemini(userText, imageBase64, imageMime) {
   var apiKey = getGlobalApiKey();
   if (!apiKey) { openApiModal(); throw new Error('請先點擊右上角設定 Gemini API Key'); }
 
-  var marketContext = currentMarket === 'jp'
-    ? '使用者正在瀏覽日本 Amazon (amazon.co.jp)，請以繁體中文回答，搜尋關鍵字請用日文。'
-    : '使用者正在瀏覽美國 Amazon (amazon.com)，請以繁體中文回答，搜尋關鍵字請用英文。';
-
-  var systemPrompt = '你是一位專業的 Amazon 購物顧問 AI。' + marketContext + '\n\n使用者會告訴你想買的商品或需求（可能附帶照片），請根據你的專業知識：\n1. 提供簡短的商品概念解析\n2. 推薦 2-4 個具體的商品類型/規格，並列出各自的核心優勢(pros)與選購考量(cons)\n3. 給出最適合在 Amazon 搜尋的精準關鍵字\n4. 提供 3-5 個可供使用者微調搜尋的動態標籤\n\n請嚴格以 JSON 格式回傳，結構如下：\n{"summary":"簡短綜合解析","recommendedKeyword":"Amazon搜尋關鍵字","products":[{"name":"商品名","pros":["優勢1","優勢2"],"cons":["考量1"]}],"dynamicTags":["標籤1","標籤2","標籤3"]}';
+  var marketDomain = currentMarket === 'jp' ? 'amazon.co.jp' : 'amazon.com';
+  var systemPrompt = '你是一位專業的 Amazon 電商檢索編譯器。' +
+    '你的任務是根據使用者的需求或上傳的照片，直接提取商品的核心細節維度，生成類似 Amazon 官方側邊欄的分組標籤。\n' +
+    '【嚴禁輸出任何長篇分析或優缺點段落！】只許回傳合法 JSON，格式如下：\n\n' +
+    '{\n' +
+    '  "quickGuide": "已為您鎖定【商品類別】，請選擇規格進行組合：",\n' +
+    '  "recommendedBaseKeyword": "Smartphone",\n' +
+    '  "filterGroups": [\n' +
+    '    {\n' +
+    '      "groupTitle": "📱 系統與品牌",\n' +
+    '      "options": ["iPhone", "Samsung", "Google Pixel", "Android Unlocked"]\n' +
+    '    },\n' +
+    '    {\n' +
+    '      "groupTitle": "💾 儲存容量",\n' +
+    '      "options": ["128GB", "256GB", "512GB+"]\n' +
+    '    },\n' +
+    '    {\n' +
+    '      "groupTitle": "⚡ 核心規格",\n' +
+    '      "options": ["5G", "OLED 螢幕", "無線充電", "大容量電池", "雙卡雙待"]\n' +
+    '    }\n' +
+    '  ]\n' +
+    '}\n\n' +
+    '目標市場：' + marketDomain + '。標籤名稱請保持繁體中文與關鍵英文/日文混排（方便搜尋）。';
 
   var parts = [{ text: systemPrompt + '\n\n使用者需求：' + userText }];
   if (imageBase64 && imageMime) {
@@ -736,7 +854,8 @@ window.sendMessage = async function() {
   try {
     var result = await callGemini(text || '請分析這張圖片中的商品並推薦', imgData, imgMime);
     removeTyping();
-    var aiHtml = renderAiResponse(result, text);
+    var msgId = 'msg-' + Date.now();
+    var aiHtml = renderAiFacetCard(result, msgId, text);
     addMessage('ai', aiHtml);
   } catch(err) {
     removeTyping();
