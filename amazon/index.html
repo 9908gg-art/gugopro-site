@@ -80,7 +80,7 @@ body.theme-jp .market-btn.active { background: linear-gradient(135deg, #FF3366, 
 .hero p { color: var(--text-muted); font-size: 0.85rem; line-height: 1.5; }
 
 /* Chat Container */
-.chat-wrapper { max-width: 800px; margin: 12px auto 0; padding: 0 12px; display: flex; flex-direction: column; min-height: calc(100vh - 260px); }
+
 .chat-messages { flex: 1; overflow-y: auto; padding: 10px 0; display: flex; flex-direction: column; gap: 14px; }
 
 /* Welcome Card */
@@ -171,8 +171,12 @@ body.theme-jp .btn-go-amazon { background: linear-gradient(135deg, #FF3366, #C70
 .btn-modal-link { background: rgba(0,168,225,0.1); border: 1px solid rgba(0,168,225,0.3); color: var(--accent); text-decoration: none; margin-bottom: 12px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 13px; border-radius: 12px; font-weight: 600; font-size: 0.9rem; }
 .btn-modal-link:hover { background: rgba(0,168,225,0.18); }
 
-/* Ko-fi */
-.kofi-float { position: fixed; bottom: 20px; right: 20px; z-index: 50; }
+/* Nav Coffee Sponsor */
+.btn-nav.btn-coffee { background: linear-gradient(135deg, #FFDD00, #FBBF24); color: #111; font-weight: 700; border: none; }
+.btn-nav.btn-coffee:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+/* Safe Bottom Padding for Input Bar (pb-28) */
+.chat-wrapper { max-width: 800px; margin: 12px auto 0; padding: 0 12px 100px; display: flex; flex-direction: column; min-height: calc(100vh - 220px); }
 
 /* Responsive */
 @media (max-width: 600px) {
@@ -195,6 +199,9 @@ body.theme-jp .btn-go-amazon { background: linear-gradient(135deg, #FF3366, #C70
     </div>
   </div>
   <div class="nav-right">
+    <a href="https://ko-fi.com/R1K123XRS9" target="_blank" class="btn-nav btn-coffee" title="請開發者喝杯咖啡">
+      <i class="fa-solid fa-mug-hot"></i> 贊助
+    </a>
     <button class="btn-nav" id="btn-filter" onclick="toggleDrawer()"><i class="fa-solid fa-sliders"></i> 篩選條件</button>
     <button class="btn-nav" id="btn-api-config" onclick="openApiModal()"><i class="fa-solid fa-gear"></i> <span id="api-status-text">API 設定</span></button>
     <a href="https://gugopro.com" class="btn-nav"><i class="fa-solid fa-house"></i> 首頁</a>
@@ -210,28 +217,49 @@ body.theme-jp .btn-go-amazon { background: linear-gradient(135deg, #FF3366, #C70
 <!-- Chat Area -->
 <div class="chat-wrapper">
   <div class="chat-messages" id="chat-messages">
-    <!-- Welcome -->
-    <div id="welcome-section">
-      <div style="text-align:center; margin-bottom:12px;">
-        <i class="fa-solid fa-robot" style="font-size:2.5rem; color:var(--accent); opacity:0.7;"></i>
-        <p style="color:var(--text-muted); font-size:0.85rem; margin-top:8px;">嗨！我是你的 AI 購物導師，試試以下問題開始探索：</p>
+    <!-- Humanized AI Shopping Guide Card -->
+    <div id="welcome-section" style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:18px; padding:20px; margin-bottom:14px; backdrop-filter:blur(10px);">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+        <div style="width:38px; height:38px; border-radius:10px; background:var(--user-bubble); display:flex; align-items:center; justify-content:center; color:var(--accent); font-size:1.2rem;">
+          <i class="fa-solid fa-wand-magic-sparkles"></i>
+        </div>
+        <div>
+          <h3 style="font-size:1.05rem; font-weight:800; color:#fff; font-family:'Outfit', sans-serif;">Amazon AI 智能選品導購指南</h3>
+          <p style="font-size:0.78rem; color:var(--text-muted);">多模態視覺與文字剖析，助你挑選最划算、最高評價的 Amazon 好物</p>
+        </div>
       </div>
-      <div class="welcome-grid">
-        <div class="welcome-card" onclick="sendQuickPrompt('推薦一款適合跑步的降噪藍牙耳機')">
-          <h4><i class="fa-solid fa-headphones"></i> 降噪耳機</h4>
-          <p>推薦適合跑步的降噪藍牙耳機</p>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px;">
+        <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:12px 14px;">
+          <div style="font-size:0.86rem; font-weight:700; color:var(--accent); display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+            <i class="fa-solid fa-robot"></i> 🤖 AI 能為你做什麼
+          </div>
+          <div style="font-size:0.78rem; color:var(--text-muted); line-height:1.5;">
+            分析商品優缺點、給予精闢選購建議，並自動產生 Amazon 最佳檢索關鍵字與直達跳轉連結。
+          </div>
         </div>
-        <div class="welcome-card" onclick="sendQuickPrompt('我想買一台輕薄筆電，預算 3 萬台幣以內')">
-          <h4><i class="fa-solid fa-laptop"></i> 輕薄筆電</h4>
-          <p>預算 3 萬以內的輕薄筆電推薦</p>
+        <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:12px 14px;">
+          <div style="font-size:0.86rem; font-weight:700; color:var(--accent); display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+            <i class="fa-solid fa-camera"></i> 📷 拍照識圖比價
+          </div>
+          <div style="font-size:0.78rem; color:var(--text-muted); line-height:1.5;">
+            點選下方相機即可拍照或上傳截圖，AI 自動提取外觀與型號特徵，精準比對搜尋。
+          </div>
         </div>
-        <div class="welcome-card" onclick="sendQuickPrompt('適合新手的義式咖啡機有哪些？')">
-          <h4><i class="fa-solid fa-mug-hot"></i> 咖啡機</h4>
-          <p>新手適合的義式咖啡機推薦</p>
+        <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:12px 14px;">
+          <div style="font-size:0.86rem; font-weight:700; color:var(--accent); display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+            <i class="fa-solid fa-sliders"></i> 🎛️ 基礎條件疊加
+          </div>
+          <div style="font-size:0.78rem; color:var(--text-muted); line-height:1.5;">
+            點選右上角「篩選條件」可疊加 Prime 免運直送、4 星以上好評或 50% OFF 限時折扣。
+          </div>
         </div>
-        <div class="welcome-card" onclick="sendQuickPrompt('推薦日本亞馬遜上的人氣護膚品')">
-          <h4><i class="fa-solid fa-spa"></i> 日本護膚</h4>
-          <p>日本亞馬遜人氣護膚品推薦</p>
+        <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:12px 14px;">
+          <div style="font-size:0.86rem; font-weight:700; color:var(--accent); display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+            <i class="fa-solid fa-globe"></i> 🌐 自動市場導流
+          </div>
+          <div style="font-size:0.78rem; color:var(--text-muted); line-height:1.5;">
+            根據語系自動切換美站 (9908qq-20) 或日站 (gugopro-22)，並可在頂部自由手動覆蓋切換。
+          </div>
         </div>
       </div>
     </div>
@@ -306,11 +334,7 @@ body.theme-jp .btn-go-amazon { background: linear-gradient(135deg, #FF3366, #C70
   </div>
 </div>
 
-<!-- Ko-fi Widget -->
-<div class="kofi-float">
-  <script type='text/javascript' src='https://storage.ko-fi.com/cdn/widget/Widget_2.js'></script>
-  <script type='text/javascript'>kofiwidget2.init('Buy me a coffee', '#72a4f2', 'R1K123XRS9');kofiwidget2.draw();</script>
-</div>
+
 
 <script>
 (function() {
@@ -543,8 +567,14 @@ window.goAmazon = function(btn) {
 function escapeHtml(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 function escapeAttr(s) { return (s || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
 
-/* ===== GEMINI API CALL ===== */
-var GEMINI_MODEL = 'gemini-2.5-flash-preview-05-20';
+/* ===== GEMINI API CALL WITH 3-TIME RETRY & DYNAMIC FALLBACK ===== */
+var PRIMARY_MODEL = 'gemini-2.5-flash-preview-09-2025';
+var FALLBACK_MODELS = [
+  'gemini-2.0-flash',
+  'gemini-1.5-flash',
+  'gemini-1.5-flash-8b',
+  'gemini-1.5-pro'
+];
 var GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/';
 
 async function callGemini(userText, imageBase64, imageMime) {
@@ -562,48 +592,54 @@ async function callGemini(userText, imageBase64, imageMime) {
     parts.push({ inlineData: { mimeType: imageMime, data: imageBase64 } });
   }
 
-  var models = [GEMINI_MODEL, 'gemini-2.0-flash', 'gemini-1.5-flash'];
+  var models = [PRIMARY_MODEL, ...FALLBACK_MODELS];
   var lastError = null;
 
   for (var i = 0; i < models.length; i++) {
     var model = models[i];
     var url = GEMINI_ENDPOINT + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(apiKey);
-    try {
-      var resp = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ role: 'user', parts: parts }],
-          generationConfig: { temperature: 0.7, maxOutputTokens: 4096, responseMimeType: 'application/json' }
-        })
-      });
 
-      if (resp.status === 400 || resp.status === 401 || resp.status === 403) {
-        setGlobalApiKey('');
-        alert('⚠️ 您設定的 Gemini API Key 已失效或輸入有誤，請重新設定。');
-        openApiModal();
-        throw new Error('API Key 無效 (HTTP ' + resp.status + ')');
-      }
-      if (!resp.ok) {
-        console.warn('Model ' + model + ' HTTP ' + resp.status + ', trying next...');
-        lastError = new Error('HTTP ' + resp.status);
-        continue;
-      }
+    for (var attempt = 1; attempt <= 3; attempt++) {
+      try {
+        var resp = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts: parts }],
+            generationConfig: { temperature: 0.7, maxOutputTokens: 4096, responseMimeType: 'application/json' }
+          })
+        });
 
-      var data = await resp.json();
-      var text = data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0] && data.candidates[0].content.parts[0].text;
-      if (text) {
-        try {
-          var cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-          return JSON.parse(cleaned);
-        } catch(pe) {
-          return { summary: text, recommendedKeyword: '', products: [], dynamicTags: [] };
+        if (resp.status === 400 || resp.status === 401 || resp.status === 403) {
+          setGlobalApiKey('');
+          alert('⚠️ 您設定的 Gemini API Key 已失效或輸入有誤，請重新設定。');
+          openApiModal();
+          throw new Error('API Key 無效 (HTTP ' + resp.status + ')');
         }
+
+        if (!resp.ok) {
+          console.warn('Model ' + model + ' attempt ' + attempt + ' HTTP ' + resp.status);
+          lastError = new Error('HTTP ' + resp.status + ' (' + model + ')');
+          if (resp.status === 404) break; // If model not found, immediately advance to next model
+          await new Promise(r => setTimeout(r, 600 * attempt));
+          continue;
+        }
+
+        var data = await resp.json();
+        var text = data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0] && data.candidates[0].content.parts[0].text;
+        if (text) {
+          try {
+            var cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+            return JSON.parse(cleaned);
+          } catch(pe) {
+            return { summary: text, recommendedKeyword: '', products: [], dynamicTags: [] };
+          }
+        }
+      } catch(err) {
+        if (err.message && err.message.indexOf('API Key') !== -1) throw err;
+        console.warn('Model ' + model + ' attempt ' + attempt + ' error:', err);
+        lastError = err;
       }
-    } catch(err) {
-      if (err.message && err.message.indexOf('API Key') !== -1) throw err;
-      console.warn('Model ' + model + ' error:', err);
-      lastError = err;
     }
   }
   throw lastError || new Error('所有 Gemini 模型呼叫失敗，請檢查網路或稍後重試。');
