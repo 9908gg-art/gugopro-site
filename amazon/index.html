@@ -332,7 +332,7 @@ body.theme-jp .btn-facet-jump { background: linear-gradient(135deg, #FF3366, #C7
   <div class="input-bar" style="max-width:800px; margin:0 auto; padding-left:12px; padding-right:12px;">
     <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none;">
     <button class="input-btn btn-camera" onclick="document.getElementById('camera-input').click()" title="拍照/上傳圖片"><i class="fa-solid fa-camera"></i></button>
-    <textarea id="user-input" rows="1" placeholder="輸入你想買的商品或需求..." oninput="autoResize(this)"></textarea>
+    <textarea id="user-input" rows="1" placeholder="輸入你想尋找的任何商品 (如: 登山帳篷、機械鍵盤、全自動咖啡機、美白精華、寵物餵食器)..." oninput="autoResize(this)"></textarea>
     <button class="input-btn btn-mic" id="btn-mic" onclick="toggleMic()" title="語音輸入"><i class="fa-solid fa-microphone"></i></button>
     <button class="input-btn btn-send" id="btn-send" onclick="sendMessage()" title="發送"><i class="fa-solid fa-paper-plane"></i></button>
   </div>
@@ -407,9 +407,9 @@ var JP_TAG = 'gugopro-22';
 
 var MARKETS = {
   us: { key:'us', baseUrl:'https://www.amazon.com/s', tag: US_TAG, themeClass:'',
-    labels: { title:'🛒 Amazon AI 智能購物導師', desc:'告訴我你想買什麼，AI 會深度剖析商品優缺點，並幫你精準搜尋 Amazon.com 最佳選擇。支援文字、語音與相機識圖。', placeholder:'輸入你想買的商品或需求 (如: noise cancelling earbuds)...' }},
+    labels: { title:'🛒 Amazon AI 全品類智能選品導購', desc:'輸入任何商品（3C、露營、家電、美妝、寵物、工具等），AI 即時編譯專屬規格標籤矩陣，一鍵直達 Amazon.com！', placeholder:'輸入你想找的任何商品 (如: camping tent, mechanical keyboard, air purifier)...' }},
   jp: { key:'jp', baseUrl:'https://www.amazon.co.jp/s', tag: JP_TAG, themeClass:'theme-jp',
-    labels: { title:'🛒 Amazon JP AI 智能購物導師', desc:'告訴我你想買什麼，AI 會深度剖析商品優缺點，並幫你精準搜尋 Amazon.co.jp 最佳選擇。支援文字、語音與相機識圖（中日雙語）。', placeholder:'輸入中文或日文需求 (如: ノイズキャンセリング イヤホン)...' }}
+    labels: { title:'🛒 Amazon JP 全品類 AI 智能選品導購', desc:'輸入任何商品（3C家電、露營戶外、日系美妝保養、寵物食品等），AI 自動生成日亞專屬篩選標籤！', placeholder:'輸入你想找的任何商品 (如: キャンプ テント, メカニカルキーボード, 炊飯器)...' }}
 };
 
 var currentMarket = 'us';
@@ -746,29 +746,47 @@ async function callGemini(userText, imageBase64, imageMime) {
   var apiKey = getGlobalApiKey();
   if (!apiKey) { openApiModal(); throw new Error('請先點擊右上角設定 Gemini API Key'); }
 
-  var marketDomain = currentMarket === 'jp' ? 'amazon.co.jp' : 'amazon.com';
-  var systemPrompt = '你是一位專業的 Amazon 電商檢索編譯器。' +
-    '你的任務是根據使用者的需求或上傳的照片，直接提取商品的核心細節維度，生成類似 Amazon 官方側邊欄的分組標籤。\n' +
-    '【嚴禁輸出任何長篇分析或優缺點段落！】只許回傳合法 JSON，格式如下：\n\n' +
+  var marketDomain = currentMarket === 'jp' ? 'Amazon Japan (amazon.co.jp)' : 'Amazon US (amazon.com)';
+  var langRule = currentMarket === 'jp'
+    ? 'recommendedBaseKeyword 請輸出該商品最精準的日文核心關鍵字；標籤請使用繁體中文(日文原名)或日文關鍵詞。'
+    : 'recommendedBaseKeyword 請輸出該商品最精準的英文核心關鍵字；標籤請使用繁體中文(關鍵英文)或英文關鍵詞。';
+
+  var systemPrompt = '你是一位涵蓋全品類的 Amazon 全站電商智能檢索編譯器 (Universal E-Commerce Search & Facet Compiler)。\n' +
+    '使用者可能會尋找【全站任何品類的商品】，包含但不限於：\n' +
+    '• 電子 3C / 影音耳機 / 攝影器材 / 穿戴裝置\n' +
+    '• 電腦周邊 / 筆電主機 / 機械鍵盤 / 螢幕擴充塢\n' +
+    '• 生活家電 / 掃地機 / 空氣清淨機 / 咖啡機 / 廚房鍋具\n' +
+    '• 運動健身 / 戶外露營 / 帳篷 / 自行車 / 水上裝備\n' +
+    '• 美妝保養 / 護膚精華 / 個人護理 / 吹風機 / 刮鬍刀\n' +
+    '• 服飾鞋包 / 機能外套 / 跑鞋 / 手錶飾品\n' +
+    '• 汽機車配件 / 行車記錄器 / 車用充電 / 應急電源\n' +
+    '• 寵物用品 / 自動餵食器 / 貓狗點心 / 玩具護理\n' +
+    '• 母嬰玩具 / 推車汽座 / 積木桌遊 / 居家修繕五金工具 / 特色美食與咖啡豆等【全站所有商品】。\n\n' +
+    '【任務核心規則】：\n' +
+    '1. 根據使用者的輸入（文字或上傳照片），精準識別使用者想找的【該特定商品類別】。\n' +
+    '2. 為【該特定商品】量身打造 3~4 組最關鍵的 Amazon 官方級規格篩選標籤 (filterGroups)（例如：品牌、核心規格、材質/容量/尺寸、適用場景/功能、外觀版型等）。\n' +
+    '3. 每個分組提供 4~8 個高轉換、高熱搜的標籤選項 (options)。\n' +
+    '4. 【絕對禁止輸出任何長篇大論、簡介或優缺點分析段落（廢話）！】只許回傳符合格式的標準 JSON 物件。\n\n' +
+    '【JSON 回傳格式】：\n' +
     '{\n' +
-    '  "quickGuide": "已為您鎖定【商品類別】，請選擇規格進行組合：",\n' +
-    '  "recommendedBaseKeyword": "Smartphone",\n' +
+    '  "quickGuide": "已為您鎖定【識別出的商品類別】，請點選規格標籤進行組合：",\n' +
+    '  "recommendedBaseKeyword": "該特定商品的最精準核心檢索詞",\n' +
     '  "filterGroups": [\n' +
     '    {\n' +
-    '      "groupTitle": "📱 系統與品牌",\n' +
-    '      "options": ["iPhone", "Samsung", "Google Pixel", "Android Unlocked"]\n' +
+    '      "groupTitle": "分組名稱1 (如: 🏷️ 推薦品牌 / 機器類型)",\n' +
+    '      "options": ["選項1", "選項2", "選項3", "選項4"]\n' +
     '    },\n' +
     '    {\n' +
-    '      "groupTitle": "💾 儲存容量",\n' +
-    '      "options": ["128GB", "256GB", "512GB+"]\n' +
+    '      "groupTitle": "分組名稱2 (如: ⚙️ 核心規格 / 容量 / 材質)",\n' +
+    '      "options": ["選項A", "選項B", "選項C", "選項D"]\n' +
     '    },\n' +
     '    {\n' +
-    '      "groupTitle": "⚡ 核心規格",\n' +
-    '      "options": ["5G", "OLED 螢幕", "無線充電", "大容量電池", "雙卡雙待"]\n' +
+    '      "groupTitle": "分組名稱3 (如: 💡 特色功能 / 適用場景)",\n' +
+    '      "options": ["選項甲", "選項乙", "選項丙", "選項丁"]\n' +
     '    }\n' +
     '  ]\n' +
     '}\n\n' +
-    '目標市場：' + marketDomain + '。標籤名稱請保持繁體中文與關鍵英文/日文混排（方便搜尋）。';
+    '目標市場：' + marketDomain + '。' + langRule;
 
   var parts = [{ text: systemPrompt + '\n\n使用者需求：' + userText }];
   if (imageBase64 && imageMime) {
