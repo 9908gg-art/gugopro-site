@@ -68,7 +68,7 @@
             radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.1) 0px, transparent 40%);
     }
 
-    /* Responsive Flex Header (No Overlap) */
+    /* Responsive Flex Header (Zero Overlap) */
     .app-header {
         min-height: 56px;
         background: rgba(7, 9, 14, 0.95);
@@ -329,9 +329,37 @@
     }
     .chip-btn:hover { background: rgba(16, 185, 129, 0.15); border-color: var(--accent); color: #fff; }
 
+    /* Image Preview Container */
+    .image-preview-box {
+        display: none;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        background: rgba(15, 23, 42, 0.9);
+        border: 1px solid var(--border-card);
+        border-radius: 12px;
+        margin-bottom: 6px;
+        flex-shrink: 0;
+    }
+    .image-preview-thumb {
+        width: 48px;
+        height: 48px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 1px solid var(--accent);
+    }
+    .btn-remove-img {
+        background: none;
+        border: none;
+        color: #f87171;
+        font-size: 1.1rem;
+        cursor: pointer;
+        padding: 4px;
+    }
+
     /* Input Bar */
     .input-bar-container {
-        padding: 10px 4px 16px;
+        padding: 6px 4px 14px;
         display: flex;
         align-items: center;
         gap: 8px;
@@ -453,7 +481,7 @@
 </head>
 <body>
 
-    <!-- Responsive Header (No Overlap) -->
+    <!-- Responsive Header (Zero Overlap) -->
     <header class="app-header">
         <div class="brand-box">
             <a href="https://gugopro.com" class="brand-logo">
@@ -515,9 +543,17 @@
             </button>
         </div>
 
+        <!-- Selected Image Preview Box -->
+        <div id="image-preview-container" class="image-preview-box">
+            <img id="image-preview-thumb" class="image-preview-thumb" src="" alt="預覽照片">
+            <span style="font-size:0.85rem; color:var(--text-secondary); flex:1;">📷 已載入餐點照片，點擊發送即刻分析！</span>
+            <button onclick="clearImagePreview()" class="btn-remove-img" title="移除照片"><i class="fa-solid fa-circle-xmark"></i></button>
+        </div>
+
         <!-- Input Bar -->
         <div class="input-bar-container">
-            <input type="file" id="camera-file-input" accept="image/*" style="display:none;" onchange="handleMealPhotoUpload(event)">
+            <!-- Hidden File Input for Camera/Gallery -->
+            <input type="file" id="imageInput" accept="image/*" style="display:none;" onchange="handleMealPhotoUpload(event)">
             <button type="button" onclick="triggerCameraInput()" class="btn-cam-trigger" title="拍照或上傳餐點照片辨識熱量">
                 <i class="fa-solid fa-camera"></i>
             </button>
@@ -657,7 +693,7 @@
         <div class="modal-box">
             <div class="modal-head">
                 <h3><i class="fa-solid fa-key text-emerald"></i> 設定 Gemini API Key</h3>
-                <button onclick="document.getElementById('modal-api').style.display='none'" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+                <button onclick="closeApiKeyModal()" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <p style="color:var(--text-muted); margin-bottom:14px; line-height:1.5; font-size:0.85rem;">
                 GugoPro 全站共用共享金鑰。輸入一次即可在全站通用。金鑰僅儲存在您的瀏覽器本地端 (localStorage)，絕不上傳伺服器。
@@ -702,6 +738,9 @@
         mealsList: []
     };
 
+    var pendingImageBase64 = null;
+    var pendingImageMime = null;
+
     function loadState() {
         var saved = localStorage.getItem('gugopro_dietitian_state');
         if (saved) {
@@ -741,55 +780,69 @@
     function updateUI() {
         // Header Capsule Badge
         var badge = document.getElementById('badge-calories');
-        badge.textContent = Math.round(appState.consumedCal) + ' / ' + Math.round(appState.targetCal) + ' kcal';
+        if (badge) {
+            badge.textContent = Math.round(appState.consumedCal) + ' / ' + Math.round(appState.targetCal) + ' kcal';
+        }
 
         // Modal Overview
-        document.getElementById('modal-cal-text').textContent = Math.round(appState.consumedCal) + ' / ' + Math.round(appState.targetCal) + ' kcal';
-        var calPct = appState.targetCal > 0 ? Math.min(100, Math.round((appState.consumedCal / appState.targetCal) * 100)) : 0;
-        document.getElementById('modal-cal-bar').style.width = calPct + '%';
+        var calText = document.getElementById('modal-cal-text');
+        if (calText) {
+            calText.textContent = Math.round(appState.consumedCal) + ' / ' + Math.round(appState.targetCal) + ' kcal';
+        }
+        var calBar = document.getElementById('modal-cal-bar');
+        if (calBar) {
+            var calPct = appState.targetCal > 0 ? Math.min(100, Math.round((appState.consumedCal / appState.targetCal) * 100)) : 0;
+            calBar.style.width = calPct + '%';
+        }
 
         // Modal Macros
-        document.getElementById('modal-p-text').textContent = Math.round(appState.consumedPro) + ' / ' + appState.targetPro + 'g';
-        document.getElementById('modal-f-text').textContent = Math.round(appState.consumedFat) + ' / ' + appState.targetFat + 'g';
-        document.getElementById('modal-c-text').textContent = Math.round(appState.consumedCarb) + ' / ' + appState.targetCarb + 'g';
+        var pText = document.getElementById('modal-p-text');
+        var fText = document.getElementById('modal-f-text');
+        var cText = document.getElementById('modal-c-text');
+        if (pText) pText.textContent = Math.round(appState.consumedPro) + ' / ' + appState.targetPro + 'g';
+        if (fText) fText.textContent = Math.round(appState.consumedFat) + ' / ' + appState.targetFat + 'g';
+        if (cText) cText.textContent = Math.round(appState.consumedCarb) + ' / ' + appState.targetCarb + 'g';
 
-        var pPct = Math.min(100, Math.round((appState.consumedPro / appState.targetPro) * 100)) || 0;
-        var fPct = Math.min(100, Math.round((appState.consumedFat / appState.targetFat) * 100)) || 0;
-        var cPct = Math.min(100, Math.round((appState.consumedCarb / appState.targetCarb) * 100)) || 0;
-
-        document.getElementById('modal-p-bar').style.width = pPct + '%';
-        document.getElementById('modal-f-bar').style.width = fPct + '%';
-        document.getElementById('modal-c-bar').style.width = cPct + '%';
+        var pBar = document.getElementById('modal-p-bar');
+        var fBar = document.getElementById('modal-f-bar');
+        var cBar = document.getElementById('modal-c-bar');
+        if (pBar) pBar.style.width = (Math.min(100, Math.round((appState.consumedPro / appState.targetPro) * 100)) || 0) + '%';
+        if (fBar) fBar.style.width = (Math.min(100, Math.round((appState.consumedFat / appState.targetFat) * 100)) || 0) + '%';
+        if (cBar) cBar.style.width = (Math.min(100, Math.round((appState.consumedCarb / appState.targetCarb) * 100)) || 0) + '%';
 
         // Modal Meals List with Single Delete Button
-        document.getElementById('modal-meals-count').textContent = appState.mealsList.length;
+        var countEl = document.getElementById('modal-meals-count');
+        if (countEl) countEl.textContent = appState.mealsList.length;
+
         var listContainer = document.getElementById('modal-meals-list');
-        if (appState.mealsList.length === 0) {
-            listContainer.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:10px;">尚未記錄任何餐點，請拍照或對話新增！</div>';
-        } else {
-            var html = '';
-            appState.mealsList.forEach(function(m, i) {
-                html += '<div class="meal-row">' +
-                    '<div class="meal-info">' +
-                        '<div class="meal-name-txt">' + (i+1) + '. ' + m.name + ' <small style="color:var(--text-muted)">(' + (m.time || '') + ')</small></div>' +
-                        '<div class="meal-macros-txt">P:' + (m.protein || 0) + 'g | F:' + (m.fat || 0) + 'g | C:' + (m.carbs || 0) + 'g</div>' +
-                    '</div>' +
-                    '<div style="display:flex; align-items:center; gap:8px;">' +
-                        '<span style="color:var(--accent); font-weight:700;">' + m.calories + ' kcal</span>' +
-                        '<button class="btn-del-meal" onclick="deleteMealItem(' + i + ')" title="刪除此餐紀錄"><i class="fa-solid fa-trash-can"></i></button>' +
-                    '</div>' +
-                '</div>';
-            });
-            listContainer.innerHTML = html;
+        if (listContainer) {
+            if (appState.mealsList.length === 0) {
+                listContainer.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:10px;">尚未記錄任何餐點，請拍照或對話新增！</div>';
+            } else {
+                var html = '';
+                appState.mealsList.forEach(function(m, i) {
+                    html += '<div class="meal-row">' +
+                        '<div class="meal-info">' +
+                            '<div class="meal-name-txt">' + (i+1) + '. ' + m.name + ' <small style="color:var(--text-muted)">(' + (m.time || '') + ')</small></div>' +
+                            '<div class="meal-macros-txt">P:' + (m.protein || 0) + 'g | F:' + (m.fat || 0) + 'g | C:' + (m.carbs || 0) + 'g</div>' +
+                        '</div>' +
+                        '<div style="display:flex; align-items:center; gap:8px;">' +
+                            '<span style="color:var(--accent); font-weight:700;">' + m.calories + ' kcal</span>' +
+                            '<button class="btn-del-meal" onclick="deleteMealItem(' + i + ')" title="刪除此餐紀錄"><i class="fa-solid fa-trash-can"></i></button>' +
+                        '</div>' +
+                    '</div>';
+                });
+                listContainer.innerHTML = html;
+            }
         }
 
         // Form Fields in Modal
-        document.getElementById('set-gender').value = appState.gender;
-        document.getElementById('set-age').value = appState.age;
-        document.getElementById('set-height').value = appState.height;
-        document.getElementById('set-weight').value = appState.weight;
-        document.getElementById('set-activity').value = appState.activity;
-        document.getElementById('set-goal').value = appState.goal;
+        if (document.getElementById('set-gender')) document.getElementById('set-gender').value = appState.gender;
+        if (document.getElementById('set-age')) document.getElementById('set-age').value = appState.age;
+        if (document.getElementById('set-height')) document.getElementById('set-height').value = appState.height;
+        if (document.getElementById('set-weight')) document.getElementById('set-weight').value = appState.weight;
+        if (document.getElementById('set-activity')) document.getElementById('set-activity').value = appState.activity;
+        if (document.getElementById('set-goal')) document.getElementById('set-goal').value = appState.goal;
     }
 
     window.deleteMealItem = function(index) {
@@ -806,7 +859,7 @@
         }
     };
 
-    function syncAndRecalcTdee() {
+    window.syncAndRecalcTdee = function() {
         appState.gender = document.getElementById('set-gender').value;
         appState.age = parseFloat(document.getElementById('set-age').value) || 28;
         appState.height = parseFloat(document.getElementById('set-height').value) || 175;
@@ -817,18 +870,18 @@
         recalcTargets();
         updateUI();
         saveState();
-    }
+    };
 
     // Modal Triggers
-    function openDashboardModal() {
+    window.openDashboardModal = function() {
         updateUI();
         document.getElementById('modal-dashboard').style.display = 'flex';
-    }
-    function closeDashboardModal() {
+    };
+    window.closeDashboardModal = function() {
         document.getElementById('modal-dashboard').style.display = 'none';
-    }
+    };
 
-    function resetDailyLogs() {
+    window.resetDailyLogs = function() {
         if (confirm('確定要清空今日的已攝取熱量與所有餐點紀錄嗎？')) {
             appState.consumedCal = 0;
             appState.consumedPro = 0;
@@ -839,9 +892,9 @@
             saveState();
             appendAiMessage('🔄 今日熱量進度與餐點紀錄已重設為 0。準備好開始記錄下一餐囉！');
         }
-    }
+    };
 
-    function exportReportText() {
+    window.exportReportText = function() {
         var now = new Date();
         var dateStr = now.getFullYear() + '/' + (now.getMonth()+1) + '/' + now.getDate();
         var pct = appState.targetCal > 0 ? Math.round((appState.consumedCal / appState.targetCal) * 100) : 0;
@@ -870,14 +923,29 @@
         }).catch(function() {
             prompt('請手動複製以下日誌內容：', text);
         });
-    }
+    };
 
     // ===== CHAT & MULTI-MODAL LOGIC =====
-    function appendUserMessage(text) {
+    function appendUserMessage(text, imgBase64) {
         var scroller = document.getElementById('chat-scroller');
         var bubble = document.createElement('div');
         bubble.className = 'chat-bubble bubble-user';
-        bubble.textContent = text;
+
+        if (imgBase64) {
+            var img = document.createElement('img');
+            img.src = 'data:image/jpeg;base64,' + imgBase64;
+            img.style.maxWidth = '180px';
+            img.style.maxHeight = '180px';
+            img.style.borderRadius = '10px';
+            img.style.display = 'block';
+            img.style.marginBottom = '8px';
+            bubble.appendChild(img);
+        }
+
+        var textSpan = document.createElement('span');
+        textSpan.textContent = text;
+        bubble.appendChild(textSpan);
+
         scroller.appendChild(bubble);
         scroller.scrollTop = scroller.scrollHeight;
     }
@@ -973,36 +1041,59 @@
         btn.innerHTML = '<i class="fa-solid fa-check"></i> 已自動更新 TDEE 目標！';
     };
 
-    function sendQuickPrompt(text) {
+    window.sendQuickPrompt = function(text) {
         document.getElementById('chat-user-input').value = text;
         handleUserSendMessage();
-    }
+    };
 
-    function triggerCameraInput() {
-        document.getElementById('camera-file-input').click();
-    }
+    window.triggerCameraInput = function() {
+        var inp = document.getElementById('imageInput');
+        if (inp) inp.click();
+    };
 
-    function handleMealPhotoUpload(event) {
-        var file = event.target.files[0];
+    window.handleMealPhotoUpload = function(event) {
+        var file = event.target.files && event.target.files[0];
         if (!file) return;
+
         var reader = new FileReader();
         reader.onload = function(e) {
-            var base64 = e.target.result.split(',')[1];
-            var mime = file.type || 'image/jpeg';
-            appendUserMessage('📷 [已上傳餐點照片，請求營養師分析]');
-            callAiDietitianEngine('請分析這張餐點照片中的食物種類、份量、熱量與三大營養素。', base64, mime);
+            pendingImageBase64 = e.target.result.split(',')[1];
+            pendingImageMime = file.type || 'image/jpeg';
+
+            var previewContainer = document.getElementById('image-preview-container');
+            var previewThumb = document.getElementById('image-preview-thumb');
+            if (previewContainer && previewThumb) {
+                previewThumb.src = e.target.result;
+                previewContainer.style.display = 'flex';
+            }
         };
         reader.readAsDataURL(file);
-    }
+    };
 
-    function handleUserSendMessage() {
+    window.clearImagePreview = function() {
+        pendingImageBase64 = null;
+        pendingImageMime = null;
+        var inp = document.getElementById('imageInput');
+        if (inp) inp.value = '';
+        var previewContainer = document.getElementById('image-preview-container');
+        if (previewContainer) previewContainer.style.display = 'none';
+    };
+
+    window.handleUserSendMessage = function() {
         var input = document.getElementById('chat-user-input');
         var text = input.value.trim();
-        if (!text) return;
+        var imgBase64 = pendingImageBase64;
+        var imgMime = pendingImageMime;
+
+        if (!text && !imgBase64) return;
+
+        var userDisplayText = text || (imgBase64 ? '📷 [已上傳餐點照片，請求營養師分析]' : '');
         input.value = '';
-        appendUserMessage(text);
-        callAiDietitianEngine(text);
-    }
+        clearImagePreview();
+
+        appendUserMessage(userDisplayText, imgBase64);
+        callAiDietitianEngine(text || '請分析這張餐點照片中的食物種類、份量、熱量與三大營養素。', imgBase64, imgMime);
+    };
 
     // ===== QUOTA MULTI-MODEL FALLBACK ENGINE =====
     var cachedQuotaModels = null;
@@ -1241,6 +1332,10 @@
         document.getElementById('modal-api').style.display = 'flex';
     };
     window.openApiModal = window.openApiKeyModal;
+
+    window.closeApiKeyModal = function() {
+        document.getElementById('modal-api').style.display = 'none';
+    };
 
     window.saveApiKey = function() {
         var val = document.getElementById('api-key-input').value.trim();
