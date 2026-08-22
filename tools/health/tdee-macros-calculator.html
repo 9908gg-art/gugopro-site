@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <!-- Cache Control -->
+    <!-- Anti-Cache Control -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -527,7 +527,7 @@
                     我能為您量身精算 <strong>TDEE 熱量赤字與個人化飲食菜單</strong>，更支援 <strong>📷 拍照秒算餐點熱量與三大營養素</strong>，一鍵自動寫入頂部【數據看板】！
                 </p>
                 <p style="margin-top:6px; color:var(--accent); font-weight:600;">
-                    💡 請告訴我您的年齡、身高、體重與體態目標（減脂/增肌），或點擊相機拍照開始！
+                    💡 提示：點擊頂部【📊 數據看板】即可即時試算您的 TDEE 與目標熱量，點擊【⚙️ 設定 API】即可設定您的免費 Gemini API Key 啟用 AI 對話！
                 </p>
             </div>
         </div>
@@ -1097,82 +1097,79 @@
         clearImagePreview();
 
         appendUserMessage(userDisplayText, imgBase64);
-        callAiDietitianEngine(text || '請分析這張餐點照片中的食物種類、份量、熱量與三大營養素。', imgBase64, imgMime);
+        callAiDietitianEngine(userDisplayText, imgBase64, imgMime);
     };
 
     // ===== QUOTA MULTI-MODEL FALLBACK ENGINE =====
-    var cachedQuotaModels = null;
-    var lastQuotaProbeTime = 0;
-    var QUOTA_API_URL = 'https://quota.gugopro.com/api/models';
     var QUOTA_LIMITS_URL = 'https://quota.gugopro.com/gemini_rate_limits.json';
     var GOOGLE_MODELS_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
 
-    function rankModelsDynamically(modelNames) {
-        return modelNames.slice().sort(function(a, b) {
-            var matchA = a.match(/(\d+(?:\.\d+)?)/);
-            var matchB = b.match(/(\d+(?:\.\d+)?)/);
-            var verA = matchA ? parseFloat(matchA[1]) : 1.0;
-            var verB = matchB ? parseFloat(matchB[1]) : 1.0;
-            var isFlashA = a.toLowerCase().indexOf('flash') !== -1 ? 0.5 : 0;
-            var isFlashB = b.toLowerCase().indexOf('flash') !== -1 ? 0.5 : 0;
-            var scoreA = verA + isFlashA;
-            var scoreB = verB + isFlashB;
-            if (scoreB !== scoreA) return scoreB - scoreA;
-            return a.localeCompare(b);
-        });
-    }
+    // Standard live Gemini REST models list (guaranteed fallback)
+    var DEFAULT_GEMINI_MODELS = [
+        'gemini-2.5-flash',
+        'gemini-2.5-pro',
+        'gemini-2.0-flash',
+        'gemini-1.5-flash',
+        'gemini-1.5-pro'
+    ];
 
     async function fetchModelQueue(apiKey) {
-        var now = Date.now();
-        if (cachedQuotaModels && cachedQuotaModels.length > 0 && (now - lastQuotaProbeTime < 300000)) return cachedQuotaModels;
         var models = [];
-        try {
-            var res = await fetch(QUOTA_API_URL).catch(function() { return null; });
-            if (res && res.ok) {
-                var data = await res.json();
-                var raw = Array.isArray(data) ? data : (data.models || []);
-                models = raw.map(function(m) { return typeof m === 'string' ? m : (m.name || m.api_name || ''); })
-                            .map(function(n) { return n.replace('models/', ''); })
-                            .filter(function(n) { return n && !n.includes('embedding') && !n.includes('aqa'); });
-            }
-        } catch(e) {}
 
+        // 1. Try Google Official Models Catalog API for this API Key
+        if (apiKey) {
+            try {
+                var res = await fetch(GOOGLE_MODELS_URL + '?key=' + encodeURIComponent(apiKey));
+                if (res && res.ok) {
+                    var data = await res.json();
+                    if (data && Array.isArray(data.models)) {
+                        models = data.models.filter(function(m) {
+                            return Array.isArray(m.supportedGenerationMethods) &&
+                                   m.supportedGenerationMethods.includes('generateContent');
+                        }).map(function(m) { return (m.name || '').replace(/^models\//, ''); })
+                          .filter(function(name) {
+                            return name && !name.includes('embedding') && !name.includes('aqa') && !name.includes('imagen');
+                        });
+                    }
+                }
+            } catch(e) {}
+        }
+
+        // 2. Try Quota Catalog if Google discovery empty
         if (models.length === 0) {
             try {
                 var res2 = await fetch(QUOTA_LIMITS_URL).catch(function() { return null; });
                 if (res2 && res2.ok) {
                     var data2 = await res2.json();
                     if (data2 && Array.isArray(data2.models)) {
-                        models = data2.models.map(function(m) { return (m.name || m.api_name || '').replace('models/', ''); }).filter(Boolean);
+                        var parsed = data2.models
+                            .filter(function(m) { return m.is_rest_compatible !== false; })
+                            .map(function(m) { return (m.api_name || m.name || '').replace('models/', ''); })
+                            .filter(function(n) {
+                                return n && (n.includes('gemini-2') || n.includes('gemini-1.5')) && !n.includes('live-translate');
+                            });
+                        if (parsed.length > 0) models = parsed;
                     }
                 }
             } catch(e2) {}
         }
 
-        if (models.length === 0 && apiKey) {
-            try {
-                var res3 = await fetch(GOOGLE_MODELS_URL + '?key=' + encodeURIComponent(apiKey));
-                if (res3 && res3.ok) {
-                    var data3 = await res3.json();
-                    models = (data3.models || []).filter(function(m) {
-                        return m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent') && !m.name.includes('embedding');
-                    }).map(function(m) { return m.name.replace('models/', ''); });
-                }
-            } catch(e3) {}
-        }
+        // 3. Guarantee fallback to rock-solid default models
+        DEFAULT_GEMINI_MODELS.forEach(function(m) {
+            if (!models.includes(m)) models.push(m);
+        });
 
-        if (models.length > 0) {
-            var ranked = rankModelsDynamically(models);
-            cachedQuotaModels = ranked;
-            lastQuotaProbeTime = now;
-            return ranked;
-        }
-        return [];
+        return models;
     }
 
     async function callAiDietitianEngine(userText, imageBase64, imageMime) {
         var apiKey = getGlobalApiKey();
         if (!apiKey) {
+            appendAiMessage(
+                '<p>🔑 <strong>請先設定您的 Gemini API Key</strong></p>' +
+                '<p style="margin-top:6px; font-size:0.88rem;">您尚未設定全站 Gemini API Key。請點擊頂部【⚙️ 設定 API】按鈕貼上您的免費 API Key，即可開啟 AI 專屬營養師對話與相機分析功能！</p>' +
+                '<button onclick="openApiKeyModal()" class="btn-action-chat" style="margin-top:10px;"><i class="fa-solid fa-key"></i> 立即設定 API Key</button>'
+            );
             openApiKeyModal();
             return;
         }
@@ -1219,7 +1216,7 @@
 
         try {
             var models = await fetchModelQueue(apiKey);
-            if (!models || models.length === 0) throw new Error('無法從 Quota 取得可用 AI 模型清單。');
+            if (!models || models.length === 0) throw new Error('無法取得可用 AI 模型清單。');
 
             var lastError = null;
             var successData = null;
@@ -1268,7 +1265,7 @@
             if (successData) {
                 appendAiMessage(successData.replyText, successData);
             } else {
-                throw new Error('所有備援模型皆暫時無法連線 (' + (lastError ? lastError.message : '網路異常') + ')，請稍後再試。');
+                throw new Error('所有備援模型皆暫時無法連線 (' + (lastError ? lastError.message : '網路異常') + ')，請檢查 API Key 或稍後再試。');
             }
 
         } catch(err) {
@@ -1347,6 +1344,7 @@
         if (val) {
             setGlobalApiKey(val);
             document.getElementById('modal-api').style.display = 'none';
+            appendAiMessage('✅ API Key 設定成功！您現在可以與 AI 專屬營養師對話或拍照辨識餐點囉！');
         } else if (getGlobalApiKey()) {
             document.getElementById('modal-api').style.display = 'none';
         } else {
