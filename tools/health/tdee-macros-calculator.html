@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI 專屬營養師與 TDEE 熱量追蹤器 (AI Dietitian & TDEE Tracker) | GugoPro</title>
+    <title>AI 專屬營養師與 TDEE 熱量追蹤器 | GugoPro</title>
 
     <!-- SEO Meta Tags -->
-    <meta name="description" content="GugoPro AI 專屬國家級營養師與 TDEE 熱量追蹤器。支援對話式飲食評估、相機拍照辨識餐點熱量與三大營養素、頂部即時熱量進度條與一鍵匯出營養師飲食日誌。">
-    <meta name="keywords" content="AI 營養師, TDEE 計算器, 拍照算熱量, 減脂飲食, 熱量追蹤, 巨量營養素, GugoPro, 食物拍照辨識">
+    <meta name="description" content="GugoPro 國家級 AI 專屬營養師與 TDEE 熱量追蹤器。極簡對話體驗、相機拍照秒算熱量與三大營養素、一鍵自動寫入數據看板。">
+    <meta name="keywords" content="AI 營養師, TDEE 計算器, 拍照算熱量, 減脂飲食, 巨量營養素, GugoPro">
     <meta name="author" content="GugoPro AI Team">
     <link rel="canonical" href="https://gugopro.com/tools/health/tdee-macros-calculator.html">
 
@@ -15,7 +15,7 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://gugopro.com/tools/health/tdee-macros-calculator.html">
     <meta property="og:title" content="AI 專屬營養師與 TDEE 熱量追蹤器 | GugoPro">
-    <meta property="og:description" content="拍照秒算餐點熱量、AI 專屬營養師對話諮詢、頂部 TDEE 進度條即時累加與日誌一鍵匯出。">
+    <meta property="og:description" content="極簡對話介面、拍照秒算熱量、對話自動寫入數據看板。">
     <meta property="og:image" content="https://gugopro.com/screenshot.png">
 
     <!-- Google Analytics 4 (GA4) -->
@@ -27,310 +27,184 @@
     gtag('config', 'G-GF1DYLWMKX');
     </script>
 
-    <!-- Google Fonts & FontAwesome -->
+    <!-- Google Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 
     <style>
     :root {
-        --bg-dark: #06090e;
-        --bg-card: rgba(15, 23, 42, 0.75);
+        --bg-dark: #07090e;
+        --bg-card: rgba(15, 23, 42, 0.85);
         --border-card: rgba(255, 255, 255, 0.08);
-        --border-hover: rgba(16, 185, 129, 0.4);
         --accent: #10b981;
         --accent-glow: rgba(16, 185, 129, 0.25);
         --color-blue: #3b82f6;
         --color-amber: #f59e0b;
         --color-purple: #a855f7;
-        --color-red: #ef4444;
         --text-primary: #f8fafc;
         --text-secondary: #cbd5e1;
         --text-muted: #94a3b8;
-        --radius-lg: 16px;
+        --radius-lg: 18px;
         --radius-md: 12px;
         --radius-sm: 8px;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    body {
+    html, body {
+        height: 100%;
+        overflow: hidden;
         background-color: var(--bg-dark);
         color: var(--text-primary);
-        font-family: 'Inter', 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
-        line-height: 1.6;
-        overflow-x: hidden;
-        background-image:
-            radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.12) 0px, transparent 45%),
-            radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.12) 0px, transparent 45%);
-        background-attachment: fixed;
-        min-height: 100vh;
+        font-family: 'Inter', 'Noto Sans TC', sans-serif;
+    }
+
+    body {
         display: flex;
         flex-direction: column;
+        background-image:
+            radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.1) 0px, transparent 40%),
+            radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.1) 0px, transparent 40%);
     }
 
     /* Header */
-    .main-header {
-        position: sticky;
-        top: 0;
-        z-index: 100;
-        background: rgba(6, 9, 14, 0.92);
+    .app-header {
+        height: 60px;
+        background: rgba(7, 9, 14, 0.95);
         backdrop-filter: blur(16px);
         border-bottom: 1px solid var(--border-card);
-        padding: 10px 0;
-    }
-    .header-container {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 0 16px;
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        flex-wrap: wrap;
-        gap: 10px;
+        justify-content: space-between;
+        padding: 0 16px;
+        flex-shrink: 0;
+        z-index: 100;
     }
     .brand-box { display: flex; align-items: center; gap: 8px; }
     .brand-logo {
         display: flex; align-items: center; gap: 6px;
-        font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 800;
+        font-family: 'Outfit', sans-serif; font-size: 1.2rem; font-weight: 800;
         color: #fff; text-decoration: none;
     }
     .brand-icon { color: var(--accent); }
     .brand-tagline { font-size: 0.78rem; color: var(--text-muted); padding-left: 8px; border-left: 1px solid var(--border-card); }
+
     .header-actions { display: flex; align-items: center; gap: 8px; }
-    .btn-header {
-        display: inline-flex; align-items: center; gap: 6px;
-        padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;
-        text-decoration: none; transition: all 0.2s; border: none; cursor: pointer;
-    }
-    .btn-home { background: rgba(255,255,255,0.06); color: var(--text-secondary); border: 1px solid var(--border-card); }
-    .btn-home:hover { background: rgba(255,255,255,0.12); color: #fff; }
-    .btn-api { background: rgba(16, 185, 129, 0.15); color: var(--accent); border: 1px solid rgba(16, 185, 129, 0.35); }
-    .btn-api:hover { background: rgba(16, 185, 129, 0.25); }
 
-    /* Top Sticky TDEE Dashboard */
-    .sticky-dashboard {
-        position: sticky;
-        top: 53px;
-        z-index: 90;
-        background: rgba(15, 23, 42, 0.88);
-        backdrop-filter: blur(14px);
-        border-bottom: 1px solid rgba(16, 185, 129, 0.25);
-        box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-        padding: 12px 16px;
-    }
-    .dashboard-inner {
-        max-width: 1200px;
-        margin: 0 auto;
-        display: flex;
+    /* Dashboard Capsule Button */
+    .btn-dashboard-pill {
+        display: inline-flex;
         align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 12px;
-    }
-    .dashboard-calories {
-        display: flex;
-        align-items: baseline;
         gap: 8px;
-    }
-    .cal-current {
-        font-family: 'Outfit', sans-serif;
-        font-size: 1.6rem;
-        font-weight: 900;
-        color: var(--accent);
-    }
-    .cal-target {
-        font-size: 0.9rem;
-        color: var(--text-muted);
-        font-weight: 600;
-    }
-    .cal-label {
-        font-size: 0.75rem;
         background: rgba(16, 185, 129, 0.15);
+        border: 1px solid rgba(16, 185, 129, 0.4);
         color: var(--accent);
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-weight: 700;
-        margin-left: 4px;
-    }
-
-    /* Macros Bars Container */
-    .dashboard-macros {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        flex: 1;
-        min-width: 280px;
-        max-width: 580px;
-    }
-    .macro-pill {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 3px;
-    }
-    .macro-pill-header {
-        display: flex;
-        justify-content: space-between;
-        font-size: 0.75rem;
-        font-weight: 700;
-    }
-    .macro-pill-bar {
-        height: 6px;
-        background: rgba(255,255,255,0.08);
-        border-radius: 10px;
-        overflow: hidden;
-    }
-    .macro-pill-fill {
-        height: 100%;
-        border-radius: 10px;
-        transition: width 0.4s ease;
-    }
-    .fill-pro { background: linear-gradient(90deg, #3b82f6, #06b6d4); }
-    .fill-fat { background: linear-gradient(90deg, #f59e0b, #f97316); }
-    .fill-carb { background: linear-gradient(90deg, #10b981, #34d399); }
-
-    .dashboard-tools {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    .btn-dash {
-        padding: 6px 12px;
-        border-radius: 8px;
-        font-size: 0.8rem;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.82rem;
         font-weight: 700;
         cursor: pointer;
-        border: 1px solid var(--border-card);
-        background: rgba(255,255,255,0.06);
-        color: var(--text-secondary);
         transition: all 0.2s;
+    }
+    .btn-dashboard-pill:hover {
+        background: rgba(16, 185, 129, 0.25);
+        box-shadow: 0 0 12px var(--accent-glow);
+        transform: translateY(-1px);
+    }
+    .badge-cal {
+        font-family: 'Outfit', sans-serif;
+        background: rgba(0, 0, 0, 0.4);
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.78rem;
+        color: #fff;
+    }
+
+    .btn-icon-nav {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid var(--border-card);
+        color: var(--text-secondary);
+        cursor: pointer;
+        text-decoration: none;
         display: inline-flex;
         align-items: center;
         gap: 6px;
+        transition: all 0.2s;
     }
-    .btn-dash:hover { background: rgba(255,255,255,0.12); color: #fff; }
-    .btn-dash.report { background: rgba(59, 130, 246, 0.15); border-color: rgba(59, 130, 246, 0.35); color: var(--color-blue); }
-    .btn-dash.report:hover { background: rgba(59, 130, 246, 0.25); }
-    .btn-dash.tdee-calc { background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.35); color: var(--accent); }
-    .btn-dash.tdee-calc:hover { background: rgba(16, 185, 129, 0.25); }
+    .btn-icon-nav:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
 
-    /* Main Layout */
-    .app-layout {
-        max-width: 1000px;
-        margin: 16px auto;
-        padding: 0 16px;
+    /* Main Chat Arena (90%+ Screen Height) */
+    .main-chat-arena {
         flex: 1;
-        width: 100%;
         display: flex;
         flex-direction: column;
-        gap: 16px;
-    }
-
-    /* Chat Arena */
-    .chat-box {
-        background: var(--bg-card);
-        border: 1px solid var(--border-card);
-        border-radius: var(--radius-lg);
-        display: flex;
-        flex-direction: column;
-        height: 620px;
-        max-height: 70vh;
         overflow: hidden;
-        backdrop-filter: blur(16px);
-        box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+        max-width: 960px;
+        width: 100%;
+        margin: 0 auto;
+        padding: 0 12px;
     }
-    .chat-header {
-        padding: 12px 18px;
-        background: rgba(0, 0, 0, 0.3);
-        border-bottom: 1px solid var(--border-card);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    .dietitian-badge {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    .dietitian-avatar {
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, var(--accent), #059669);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #000;
-        font-weight: 900;
-        font-size: 1.1rem;
-        box-shadow: 0 0 10px var(--accent-glow);
-    }
-    .dietitian-info h4 { font-size: 0.95rem; font-weight: 700; color: #fff; }
-    .dietitian-info p { font-size: 0.75rem; color: var(--accent); }
 
-    .chat-messages {
+    .chat-scroller {
         flex: 1;
-        padding: 18px;
         overflow-y: auto;
+        padding: 16px 4px;
         display: flex;
         flex-direction: column;
         gap: 16px;
     }
+    .chat-scroller::-webkit-scrollbar { width: 6px; }
+    .chat-scroller::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+
     .chat-bubble {
-        max-width: 85%;
-        padding: 14px 16px;
-        border-radius: 16px;
-        font-size: 0.93rem;
-        line-height: 1.6;
+        max-width: 86%;
+        padding: 14px 18px;
+        border-radius: var(--radius-lg);
+        font-size: 0.94rem;
+        line-height: 1.65;
         word-break: break-word;
-        position: relative;
+        animation: fadeIn 0.2s ease-out;
     }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
     .bubble-ai {
         align-self: flex-start;
         background: rgba(30, 41, 59, 0.85);
         border: 1px solid rgba(255, 255, 255, 0.08);
         border-bottom-left-radius: 4px;
         color: #f1f5f9;
+        box-shadow: 0 4px 18px rgba(0,0,0,0.25);
     }
     .bubble-user {
         align-self: flex-end;
-        background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(5, 150, 105, 0.35));
-        border: 1px solid rgba(16, 185, 129, 0.4);
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(5, 150, 105, 0.4));
+        border: 1px solid rgba(16, 185, 129, 0.45);
         border-bottom-right-radius: 4px;
         color: #fff;
     }
 
-    /* Food Scan Card inside Chat */
-    .food-card {
+    /* Structured Cards inside Chat */
+    .card-in-chat {
         background: rgba(0, 0, 0, 0.45);
         border: 1px solid rgba(16, 185, 129, 0.35);
         border-radius: var(--radius-md);
-        padding: 12px 14px;
-        margin-top: 10px;
+        padding: 14px;
+        margin-top: 12px;
     }
-    .food-header {
+    .card-in-chat-title {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 8px;
-    }
-    .food-title {
         font-weight: 700;
-        font-size: 1rem;
+        font-size: 0.98rem;
         color: var(--accent);
-        display: flex;
-        align-items: center;
-        gap: 6px;
+        margin-bottom: 10px;
     }
-    .food-cal-tag {
-        font-family: 'Outfit', sans-serif;
-        font-size: 1.1rem;
-        font-weight: 800;
-        color: #fff;
-    }
-    .food-macros-grid {
+    .grid-macros-3 {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         gap: 8px;
@@ -341,38 +215,42 @@
         font-size: 0.8rem;
         margin-bottom: 10px;
     }
-    .food-macro-val { font-weight: 800; margin-top: 2px; }
-    .btn-add-dashboard {
+    .val-bold { font-weight: 800; font-size: 0.95rem; margin-top: 2px; }
+
+    .btn-action-chat {
         width: 100%;
-        padding: 8px;
+        padding: 10px;
         background: linear-gradient(135deg, var(--accent), #059669);
         border: none;
         border-radius: 8px;
         color: #000;
         font-weight: 800;
-        font-size: 0.85rem;
+        font-size: 0.88rem;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 6px;
-        transition: transform 0.15s;
+        transition: all 0.2s;
     }
-    .btn-add-dashboard:hover { transform: scale(1.02); }
-    .btn-add-dashboard.added { background: rgba(255,255,255,0.1); color: var(--text-muted); cursor: default; }
+    .btn-action-chat:hover { transform: translateY(-1px); filter: brightness(1.1); }
+    .btn-action-chat.applied {
+        background: rgba(255,255,255,0.1);
+        color: var(--text-muted);
+        cursor: default;
+    }
 
-    /* Action Chips Container */
-    .chips-bar {
-        padding: 8px 16px;
+    /* Quick Chips Bar */
+    .quick-chips-bar {
         display: flex;
         gap: 8px;
         overflow-x: auto;
-        background: rgba(0, 0, 0, 0.2);
-        border-top: 1px solid var(--border-card);
+        padding: 8px 4px;
         white-space: nowrap;
+        flex-shrink: 0;
     }
-    .chips-bar::-webkit-scrollbar { height: 4px; }
-    .chips-bar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+    .quick-chips-bar::-webkit-scrollbar { height: 3px; }
+    .quick-chips-bar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
     .chip-btn {
         padding: 6px 12px;
         border-radius: 16px;
@@ -387,22 +265,17 @@
         align-items: center;
         gap: 6px;
     }
-    .chip-btn:hover {
-        background: rgba(16, 185, 129, 0.15);
-        border-color: var(--accent);
-        color: #fff;
-    }
+    .chip-btn:hover { background: rgba(16, 185, 129, 0.15); border-color: var(--accent); color: #fff; }
 
-    /* Chat Input Bar */
-    .chat-input-area {
-        padding: 12px 16px;
-        background: rgba(0, 0, 0, 0.35);
-        border-top: 1px solid var(--border-card);
+    /* Input Bar */
+    .input-bar-container {
+        padding: 10px 4px 16px;
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
+        flex-shrink: 0;
     }
-    .btn-camera {
+    .btn-cam-trigger {
         width: 44px;
         height: 44px;
         border-radius: 12px;
@@ -417,20 +290,21 @@
         transition: all 0.2s;
         flex-shrink: 0;
     }
-    .btn-camera:hover { background: rgba(16, 185, 129, 0.25); transform: scale(1.05); }
-    .chat-text-input {
+    .btn-cam-trigger:hover { background: rgba(16, 185, 129, 0.25); transform: scale(1.05); }
+    .text-input-field {
         flex: 1;
-        padding: 12px 16px;
-        background: rgba(0, 0, 0, 0.4);
+        height: 44px;
+        padding: 0 16px;
+        background: rgba(15, 23, 42, 0.8);
         border: 1px solid var(--border-card);
         border-radius: 12px;
         color: #fff;
         font-size: 0.95rem;
         outline: none;
-        transition: border 0.2s;
+        transition: border-color 0.2s;
     }
-    .chat-text-input:focus { border-color: var(--accent); }
-    .btn-send {
+    .text-input-field:focus { border-color: var(--accent); }
+    .btn-send-msg {
         width: 44px;
         height: 44px;
         border-radius: 12px;
@@ -445,285 +319,273 @@
         transition: all 0.2s;
         flex-shrink: 0;
     }
-    .btn-send:hover { transform: scale(1.05); }
+    .btn-send-msg:hover { transform: scale(1.05); }
 
-    /* Modals & Drawers */
-    .modal-overlay {
+    /* Modals */
+    .modal-backdrop {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
-        display: none; justify-content: center; align-items: center; z-index: 3000; padding: 20px;
+        display: none; justify-content: center; align-items: center; z-index: 3000; padding: 16px;
     }
-    .modal-content {
-        background: #15161c; border: 1px solid var(--border-card);
-        border-radius: 20px; padding: 24px; max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto;
+    .modal-box {
+        background: #131722;
+        border: 1px solid var(--border-card);
+        border-radius: 20px;
+        padding: 24px;
+        max-width: 520px;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
     }
-    .modal-title {
-        font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 700;
-        color: #fff; display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;
+    .modal-head {
+        display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;
     }
-    .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
-    .form-label { font-size: 0.82rem; color: var(--text-secondary); font-weight: 600; }
-    .form-input, .form-select {
-        background: rgba(0,0,0,0.4); border: 1px solid var(--border-card);
-        border-radius: 8px; padding: 10px 12px; color: #fff; font-size: 0.9rem; outline: none;
+    .modal-head h3 {
+        font-family: 'Outfit', sans-serif; font-size: 1.2rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 8px;
     }
-    .form-select option { background: #111827; }
-    .btn-modal-submit {
-        width: 100%; padding: 12px; border-radius: 10px; border: none;
-        background: linear-gradient(135deg, var(--accent), #059669); color: #000;
-        font-weight: 800; font-size: 0.95rem; cursor: pointer; margin-top: 8px;
+    .modal-close { background: none; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; }
+
+    /* Progress in Dashboard Modal */
+    .dash-section {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid var(--border-card);
+        border-radius: var(--radius-md);
+        padding: 16px;
+        margin-bottom: 14px;
+    }
+    .dash-metric-title { font-size: 0.82rem; color: var(--text-muted); font-weight: 700; margin-bottom: 6px; }
+    .dash-progress-track {
+        height: 10px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; margin-top: 6px;
+    }
+    .dash-progress-fill { height: 100%; border-radius: 10px; transition: width 0.4s ease; }
+
+    .meals-list-box {
+        max-height: 160px; overflow-y: auto; font-size: 0.85rem; padding-right: 4px;
+    }
+    .meal-row {
+        display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
     }
 
-    /* Footer */
-    .app-footer {
-        text-align: center;
-        padding: 24px 16px;
-        color: var(--text-muted);
-        font-size: 0.8rem;
-        border-top: 1px solid var(--border-card);
-        margin-top: auto;
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .form-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+    .form-label { font-size: 0.8rem; color: var(--text-secondary); font-weight: 600; }
+    .form-input, .form-select {
+        background: rgba(0,0,0,0.4); border: 1px solid var(--border-card); border-radius: 8px;
+        padding: 10px 12px; color: #fff; font-size: 0.9rem; outline: none;
     }
-    .app-footer a { color: var(--accent); text-decoration: none; }
+    .form-select option { background: #111827; }
+    .btn-modal-primary {
+        width: 100%; padding: 12px; border-radius: 10px; border: none;
+        background: linear-gradient(135deg, var(--accent), #059669); color: #000;
+        font-weight: 800; font-size: 0.95rem; cursor: pointer;
+    }
     </style>
 </head>
 <body>
 
     <!-- Header -->
-    <header class="main-header">
-        <div class="header-container">
-            <div class="brand-box">
-                <a href="https://gugopro.com" class="brand-logo">
-                    <i class="fa-solid fa-rocket brand-icon"></i>
-                    <span>GugoPro</span>
-                </a>
-                <span class="brand-tagline">AI 專屬營養師 &amp; TDEE 追蹤器</span>
-            </div>
-            <div class="header-actions">
-                <button onclick="openApiModal()" class="btn-header btn-api">
-                    <i class="fa-solid fa-key"></i> <span id="api-status-text">API 設定</span>
-                </button>
-                <a href="https://gugopro.com" class="btn-header btn-home">
-                    <i class="fa-solid fa-house"></i> 首頁
-                </a>
-            </div>
+    <header class="app-header">
+        <div class="brand-box">
+            <a href="https://gugopro.com" class="brand-logo">
+                <i class="fa-solid fa-rocket brand-icon"></i>
+                <span>GugoPro</span>
+            </a>
+            <span class="brand-tagline">AI 專屬營養師</span>
+        </div>
+
+        <div class="header-actions">
+            <!-- Dashboard Trigger Pill with Live Calorie Badge -->
+            <button onclick="openDashboardModal()" class="btn-dashboard-pill" title="查看熱量與營養素數據看板">
+                <i class="fa-solid fa-chart-simple"></i>
+                <span>數據看板</span>
+                <span class="badge-cal" id="badge-calories">0 / 2,040 kcal</span>
+            </button>
+
+            <!-- API Setting -->
+            <button onclick="openApiModal()" class="btn-icon-nav">
+                <i class="fa-solid fa-key text-emerald"></i> <span id="api-status-text">API</span>
+            </button>
+
+            <!-- Home -->
+            <a href="https://gugopro.com" class="btn-icon-nav">
+                <i class="fa-solid fa-house"></i>
+            </a>
         </div>
     </header>
 
-    <!-- Top Sticky TDEE & Macros Dashboard -->
-    <section class="sticky-dashboard">
-        <div class="dashboard-inner">
-            <!-- Calorie Overview -->
-            <div class="dashboard-calories">
-                <span class="cal-current" id="dash-cal-consumed">0</span>
-                <span class="cal-target">/ <span id="dash-cal-target">2,000</span> kcal</span>
-                <span class="cal-label" id="dash-cal-pct">0%</span>
-            </div>
-
-            <!-- Macros Split Bars -->
-            <div class="dashboard-macros">
-                <!-- Protein -->
-                <div class="macro-pill">
-                    <div class="macro-pill-header">
-                        <span style="color:var(--color-blue);">P 蛋白質</span>
-                        <span id="dash-p-text">0 / 140g</span>
-                    </div>
-                    <div class="macro-pill-bar">
-                        <div class="macro-pill-fill fill-pro" id="dash-p-bar" style="width:0%;"></div>
-                    </div>
-                </div>
-
-                <!-- Fat -->
-                <div class="macro-pill">
-                    <div class="macro-pill-header">
-                        <span style="color:var(--color-amber);">F 脂肪</span>
-                        <span id="dash-f-text">0 / 55g</span>
-                    </div>
-                    <div class="macro-pill-bar">
-                        <div class="macro-pill-fill fill-fat" id="dash-f-bar" style="width:0%;"></div>
-                    </div>
-                </div>
-
-                <!-- Carbs -->
-                <div class="macro-pill">
-                    <div class="macro-pill-header">
-                        <span style="color:var(--accent);">C 碳水</span>
-                        <span id="dash-c-text">0 / 235g</span>
-                    </div>
-                    <div class="macro-pill-bar">
-                        <div class="macro-pill-fill fill-carb" id="dash-c-bar" style="width:0%;"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Dashboard Tools -->
-            <div class="dashboard-tools">
-                <button onclick="openReportModal()" class="btn-dash report">
-                    <i class="fa-solid fa-clipboard-list"></i> 日誌報告
-                </button>
-                <button onclick="openTdeeModal()" class="btn-dash tdee-calc">
-                    <i class="fa-solid fa-sliders"></i> TDEE 參數
-                </button>
-                <button onclick="resetDailyLogs()" class="btn-dash" title="重設今日紀錄">
-                    <i class="fa-solid fa-arrow-rotate-right"></i>
-                </button>
+    <!-- Main Chat Arena (90%+ Viewport Height) -->
+    <main class="main-chat-arena">
+        <!-- Messages Scroller -->
+        <div class="chat-scroller" id="chat-scroller">
+            <!-- Welcome Message -->
+            <div class="chat-bubble bubble-ai">
+                <p>👋 您好！我是您的 <strong>GugoPro 國家級專屬諮詢營養師</strong>。</p>
+                <p style="margin-top:6px;">
+                    我能為您量身計算 <strong>TDEE 熱量赤字與飲食菜單</strong>，並支援 <strong>📷 拍照秒算餐點熱量與三大營養素</strong>，一鍵自動寫入頂部【數據看板】！
+                </p>
+                <p style="margin-top:6px; color:var(--accent); font-weight:600;">
+                    💡 請告訴我您的年齡、身高、體重與體態目標（減脂/增肌），或點擊相機拍照開始！
+                </p>
             </div>
         </div>
-    </section>
 
-    <!-- Main Container -->
-    <main class="app-layout">
-
-        <!-- Chat Area -->
-        <section class="chat-box">
-            <div class="chat-header">
-                <div class="dietitian-badge">
-                    <div class="dietitian-avatar">
-                        <i class="fa-solid fa-user-doctor"></i>
-                    </div>
-                    <div class="dietitian-info">
-                        <h4>GugoPro 國家級專屬諮詢營養師</h4>
-                        <p><i class="fa-solid fa-circle" style="font-size:0.55rem; color:var(--accent);"></i> 在線為您守護飲食熱量</p>
-                    </div>
-                </div>
-                <div style="font-size:0.8rem; color:var(--text-muted);">
-                    <i class="fa-solid fa-camera"></i> 支援拍照秒算熱量
-                </div>
-            </div>
-
-            <!-- Messages List -->
-            <div class="chat-messages" id="chat-messages">
-                <!-- Welcome Bubble -->
-                <div class="chat-bubble bubble-ai">
-                    <p>👋 您好！我是您的 <strong>GugoPro 專屬國家級諮詢營養師</strong>。</p>
-                    <p style="margin-top:6px;">
-                        我能為您提供專業的 <strong>TDEE 能量評估、減脂增肌菜單規劃</strong>，更支援 <strong>📷 拍照即刻辨識餐點熱量與三大營養素</strong>，並即時累加到頂部進度條！
-                    </p>
-                    <p style="margin-top:6px; color:var(--accent); font-weight:600;">
-                        💡 請問您目前的年齡、身高、體重與體態目標（減脂/增肌/維持）是什麼呢？或直接點擊下方快速按鈕開始！
-                    </p>
-                </div>
-            </div>
-
-            <!-- Quick Action Chips -->
-            <div class="chips-bar">
-                <button onclick="sendQuickPrompt('📋 請協助我進行個人諮詢與 TDEE 熱量評估')" class="chip-btn">
-                    📋 評估個人 TDEE 與 Macros
-                </button>
-                <button onclick="sendQuickPrompt('🎯 我想要規劃減脂目標（每天赤字 400 kcal），請給我一日菜單建議')" class="chip-btn">
-                    🎯 規劃減脂赤字菜單
-                </button>
-                <button onclick="sendQuickPrompt('🍱 外食族（7-11 / 全家 / 便當店）減脂高蛋白該怎麼吃？')" class="chip-btn">
-                    🍱 外食超商減脂推薦
-                </button>
-                <button onclick="triggerCameraInput()" class="chip-btn" style="border-color:var(--accent); color:var(--accent);">
-                    📷 拍照辨識餐點熱量
-                </button>
-            </div>
-
-            <!-- Chat Input Bar -->
-            <div class="chat-input-area">
-                <!-- Hidden file input for camera/photo scan -->
-                <input type="file" id="meal-photo-input" accept="image/*" style="display:none;" onchange="handleMealPhotoUpload(event)">
-                <button type="button" onclick="triggerCameraInput()" class="btn-camera" title="拍照或上傳餐點照片辨識熱量">
-                    <i class="fa-solid fa-camera"></i>
-                </button>
-                <input type="text" id="chat-text-input" class="chat-text-input" placeholder="輸入飲食問題、吃了什麼或點相機拍照..." onkeydown="if(event.key==='Enter') handleUserSendMessage()">
-                <button type="button" onclick="handleUserSendMessage()" class="btn-send" title="發送">
-                    <i class="fa-solid fa-paper-plane"></i>
-                </button>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- Footer -->
-    <footer class="app-footer">
-        <p>&copy; 2026 <a href="https://gugopro.com">GugoPro</a>. All rights reserved. | 國家級 AI 專屬營養師 &amp; TDEE 熱量追蹤器</p>
-    </footer>
-
-    <!-- TDEE Settings Modal -->
-    <div class="modal-overlay" id="modal-tdee">
-        <div class="modal-content">
-            <div class="modal-title">
-                <span><i class="fa-solid fa-sliders text-emerald"></i> 設定個人 TDEE 與目標熱量</span>
-                <button onclick="closeTdeeModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="form-group">
-                <label class="form-label">性別</label>
-                <select id="modal-gender" class="form-select">
-                    <option value="male">男性</option>
-                    <option value="female">女性</option>
-                </select>
-            </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                <div class="form-group">
-                    <label class="form-label">年齡 (歲)</label>
-                    <input type="number" id="modal-age" class="form-input" value="28">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">身高 (cm)</label>
-                    <input type="number" id="modal-height" class="form-input" value="175">
-                </div>
-            </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                <div class="form-group">
-                    <label class="form-label">體重 (kg)</label>
-                    <input type="number" id="modal-weight" class="form-input" value="70">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">體脂率 % (選填)</label>
-                    <input type="number" id="modal-bodyfat" class="form-input" placeholder="例如: 18">
-                </div>
-            </div>
-            <div class="form-group">
-                <label class="form-label">活動量等級</label>
-                <select id="modal-activity" class="form-select">
-                    <option value="1.2">久坐不動（幾乎不運動）</option>
-                    <option value="1.375">輕度活動（每週運動 1-3 天）</option>
-                    <option value="1.55" selected>中度活動（每週運動 3-5 天）</option>
-                    <option value="1.725">高度活動（每週運動 6-7 天）</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label class="form-label">體態目標</label>
-                <select id="modal-goal" class="form-select">
-                    <option value="loss" selected>標準減脂 (-20% 熱量)</option>
-                    <option value="mild-loss">溫和減脂 (-10% 熱量)</option>
-                    <option value="maintain">維持體重 (Maintain)</option>
-                    <option value="lean-gain">精實增肌 (+10% 熱量)</option>
-                </select>
-            </div>
-            <button type="button" onclick="saveTdeeSettings()" class="btn-modal-submit">
-                <i class="fa-solid fa-check"></i> 儲存並更新頂部儀表板
+        <!-- Quick Action Chips Bar -->
+        <div class="quick-chips-bar">
+            <button onclick="sendQuickPrompt('📋 請協助我進行個人身體數據諮詢，並計算 TDEE 與建議熱量')" class="chip-btn">
+                📋 諮詢個人 TDEE 與目標
+            </button>
+            <button onclick="sendQuickPrompt('🎯 我想要規劃減脂目標（每日赤字 400 kcal），請給我精準一日菜單建議')" class="chip-btn">
+                🎯 規劃減脂赤字菜單
+            </button>
+            <button onclick="sendQuickPrompt('🍱 外食超商（7-11 / 全家）減脂高蛋白推薦怎麼搭配？')" class="chip-btn">
+                🍱 外食超商減脂搭配
+            </button>
+            <button onclick="triggerCameraInput()" class="chip-btn" style="border-color:var(--accent); color:var(--accent);">
+                📷 拍照辨識餐點熱量
             </button>
         </div>
-    </div>
 
-    <!-- Daily Report Modal -->
-    <div class="modal-overlay" id="modal-report">
-        <div class="modal-content">
-            <div class="modal-title">
-                <span><i class="fa-solid fa-clipboard-check text-emerald"></i> 今日飲食與 TDEE 達成日誌</span>
-                <button onclick="document.getElementById('modal-report').style.display='none'" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+        <!-- Input Bar -->
+        <div class="input-bar-container">
+            <input type="file" id="camera-file-input" accept="image/*" style="display:none;" onchange="handleMealPhotoUpload(event)">
+            <button type="button" onclick="triggerCameraInput()" class="btn-cam-trigger" title="拍照或上傳餐點照片辨識熱量">
+                <i class="fa-solid fa-camera"></i>
+            </button>
+            <input type="text" id="chat-user-input" class="text-input-field" placeholder="輸入飲食問題、吃了什麼或點相機拍照..." onkeydown="if(event.key==='Enter') handleUserSendMessage()">
+            <button type="button" onclick="handleUserSendMessage()" class="btn-send-msg" title="發送">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </div>
+    </main>
+
+    <!-- Modal 1: 📊 Dashboard Modal (熱量進度、三大營養素、餐點清單、TDEE參數) -->
+    <div class="modal-backdrop" id="modal-dashboard">
+        <div class="modal-box">
+            <div class="modal-head">
+                <h3><i class="fa-solid fa-chart-pie text-emerald"></i> 今日飲食與 TDEE 數據看板</h3>
+                <button onclick="closeDashboardModal()" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:12px;">
-                您可以一鍵複製以下標準日誌格式，回傳給教練或個人飲食紀錄。
-            </p>
-            <textarea id="report-text-area" style="width:100%; height:220px; background:rgba(0,0,0,0.5); border:1px solid var(--border-card); border-radius:10px; color:#fff; font-family:monospace; font-size:0.88rem; padding:12px; outline:none; resize:none; line-height:1.5;"></textarea>
-            <div style="display:flex; gap:10px; margin-top:12px;">
-                <button onclick="copyReportText()" class="btn-modal-submit" style="flex:1;">
-                    <i class="fa-solid fa-copy"></i> 複製日誌內容
+
+            <!-- Calorie Overview -->
+            <div class="dash-section">
+                <div style="display:flex; justify-content:space-between; align-items:baseline;">
+                    <span class="dash-metric-title">🔥 今日已攝取熱量 / 目標 TDEE</span>
+                    <span style="font-family:'Outfit',sans-serif; font-size:1.2rem; font-weight:800; color:var(--accent);" id="modal-cal-text">0 / 2,040 kcal</span>
+                </div>
+                <div class="dash-progress-track">
+                    <div class="dash-progress-fill" id="modal-cal-bar" style="width:0%; background:linear-gradient(90deg, var(--accent), #34d399);"></div>
+                </div>
+            </div>
+
+            <!-- Macros P/F/C -->
+            <div class="dash-section">
+                <span class="dash-metric-title">🍗 三大宏量營養素 (Macros) 達成進度</span>
+                <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+                    <div>
+                        <div style="display:flex; justify-content:space-between; font-size:0.8rem; font-weight:700;">
+                            <span style="color:var(--color-blue)">蛋白質 (P)</span>
+                            <span id="modal-p-text">0 / 140g</span>
+                        </div>
+                        <div class="dash-progress-track">
+                            <div class="dash-progress-fill" id="modal-p-bar" style="width:0%; background:linear-gradient(90deg, #3b82f6, #06b6d4);"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="display:flex; justify-content:space-between; font-size:0.8rem; font-weight:700;">
+                            <span style="color:var(--color-amber)">脂肪 (F)</span>
+                            <span id="modal-f-text">0 / 55g</span>
+                        </div>
+                        <div class="dash-progress-track">
+                            <div class="dash-progress-fill" id="modal-f-bar" style="width:0%; background:linear-gradient(90deg, #f59e0b, #f97316);"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="display:flex; justify-content:space-between; font-size:0.8rem; font-weight:700;">
+                            <span style="color:var(--accent)">碳水化合物 (C)</span>
+                            <span id="modal-c-text">0 / 245g</span>
+                        </div>
+                        <div class="dash-progress-track">
+                            <div class="dash-progress-fill" id="modal-c-bar" style="width:0%; background:linear-gradient(90deg, #10b981, #34d399);"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Meal Logs List -->
+            <div class="dash-section">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <span class="dash-metric-title">🍽️ 今日餐點明細 (<span id="modal-meals-count">0</span> 餐)</span>
+                    <button onclick="resetDailyLogs()" style="background:none; border:none; color:var(--text-muted); font-size:0.78rem; cursor:pointer;"><i class="fa-solid fa-rotate-right"></i> 清空紀錄</button>
+                </div>
+                <div class="meals-list-box" id="modal-meals-list">
+                    <div style="color:var(--text-muted); text-align:center; padding:10px;">尚未記錄任何餐點，請拍照或對話新增！</div>
+                </div>
+            </div>
+
+            <!-- TDEE Parameters Setup -->
+            <div class="dash-section">
+                <span class="dash-metric-title">⚙️ 個人 TDEE 參數微調</span>
+                <div class="form-row" style="margin-top:8px;">
+                    <div class="form-group">
+                        <label class="form-label">性別</label>
+                        <select id="set-gender" class="form-select" onchange="syncAndRecalcTdee()">
+                            <option value="male">男性</option>
+                            <option value="female">女性</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">年齡 (歲)</label>
+                        <input type="number" id="set-age" class="form-input" value="28" onchange="syncAndRecalcTdee()">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">身高 (cm)</label>
+                        <input type="number" id="set-height" class="form-input" value="175" onchange="syncAndRecalcTdee()">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">體重 (kg)</label>
+                        <input type="number" id="set-weight" class="form-input" value="70" onchange="syncAndRecalcTdee()">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">活動量</label>
+                        <select id="set-activity" class="form-select" onchange="syncAndRecalcTdee()">
+                            <option value="1.2">久坐不動</option>
+                            <option value="1.375">輕度活動 (1-3天)</option>
+                            <option value="1.55" selected>中度活動 (3-5天)</option>
+                            <option value="1.725">高度活動 (6-7天)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">體態目標</label>
+                        <select id="set-goal" class="form-select" onchange="syncAndRecalcTdee()">
+                            <option value="loss" selected>減脂 (-20%)</option>
+                            <option value="mild-loss">溫和減脂 (-10%)</option>
+                            <option value="maintain">維持體重</option>
+                            <option value="lean-gain">增肌 (+10%)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export Report Button -->
+            <div style="display:flex; gap:10px;">
+                <button onclick="exportReportText()" class="btn-modal-primary" style="flex:1;">
+                    <i class="fa-solid fa-copy"></i> 複製今日飲食日誌報告
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- API Key Modal -->
-    <div class="modal-overlay" id="modal-api">
-        <div class="modal-content">
-            <div class="modal-title">
-                <span><i class="fa-solid fa-key text-emerald"></i> 設定 Gemini API Key</span>
-                <button onclick="document.getElementById('modal-api').style.display='none'" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+    <!-- Modal 2: 🔑 API Key Modal -->
+    <div class="modal-backdrop" id="modal-api">
+        <div class="modal-box">
+            <div class="modal-head">
+                <h3><i class="fa-solid fa-key text-emerald"></i> 設定 Gemini API Key</h3>
+                <button onclick="document.getElementById('modal-api').style.display='none'" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <p style="color:var(--text-muted); margin-bottom:14px; line-height:1.5; font-size:0.85rem;">
                 GugoPro 全站共用共享金鑰。輸入一次即可在全站通用。金鑰僅儲存在您的瀏覽器本地端 (localStorage)，絕不上傳伺服器。
@@ -739,21 +601,20 @@
                 <i class="fa-solid fa-arrow-up-right-from-square"></i> 免費取得 Google Gemini API Key
             </a>
             <div style="display:flex; gap:10px;">
-                <button onclick="saveApiKey()" class="btn-modal-submit" style="flex:1;">儲存設定</button>
+                <button onclick="saveApiKey()" class="btn-modal-primary" style="flex:1;">儲存設定</button>
                 <button id="btn-clear-key" onclick="clearApiKey()" style="display:none; padding:12px 16px; background:none; border:1px solid rgba(239,68,68,0.4); color:#f87171; border-radius:10px; cursor:pointer;"><i class="fa-solid fa-trash-can"></i></button>
             </div>
         </div>
     </div>
 
-    <!-- JavaScript Application Logic -->
+    <!-- JS Application Engine -->
     <script>
-    // ===== STATE MANAGEMENT =====
+    // ===== STATE & DATA MODEL =====
     var appState = {
         gender: 'male',
         age: 28,
         height: 175,
         weight: 70,
-        bodyfat: 18,
         activity: 1.55,
         goal: 'loss',
         bmr: 1650,
@@ -769,34 +630,25 @@
         mealsList: []
     };
 
-    // Initialize from LocalStorage
-    function loadSavedState() {
+    function loadState() {
         var saved = localStorage.getItem('gugopro_dietitian_state');
         if (saved) {
-            try {
-                var parsed = JSON.parse(saved);
-                Object.assign(appState, parsed);
-            } catch(e) {}
+            try { Object.assign(appState, JSON.parse(saved)); } catch(e) {}
         }
-        recalcTdeeTargets();
-        updateDashboardUI();
+        recalcTargets();
+        updateUI();
     }
 
     function saveState() {
         localStorage.setItem('gugopro_dietitian_state', JSON.stringify(appState));
     }
 
-    function recalcTdeeTargets() {
+    function recalcTargets() {
         var bmr = 0;
-        if (appState.bodyfat && appState.bodyfat > 0) {
-            var leanMass = appState.weight * (1 - appState.bodyfat / 100);
-            bmr = 370 + 21.6 * leanMass;
+        if (appState.gender === 'male') {
+            bmr = 10 * appState.weight + 6.25 * appState.height - 5 * appState.age + 5;
         } else {
-            if (appState.gender === 'male') {
-                bmr = 10 * appState.weight + 6.25 * appState.height - 5 * appState.age + 5;
-            } else {
-                bmr = 10 * appState.weight + 6.25 * appState.height - 5 * appState.age - 161;
-            }
+            bmr = 10 * appState.weight + 6.25 * appState.height - 5 * appState.age - 161;
         }
         appState.bmr = Math.round(bmr);
         appState.tdee = Math.round(bmr * appState.activity);
@@ -814,59 +666,90 @@
         appState.targetCarb = Math.round(carbKcal / 4);
     }
 
-    function updateDashboardUI() {
-        document.getElementById('dash-cal-consumed').textContent = Math.round(appState.consumedCal).toLocaleString();
-        document.getElementById('dash-cal-target').textContent = Math.round(appState.targetCal).toLocaleString();
+    function updateUI() {
+        // Header Capsule Badge
+        var badge = document.getElementById('badge-calories');
+        badge.textContent = Math.round(appState.consumedCal) + ' / ' + Math.round(appState.targetCal) + ' kcal';
 
-        var pct = appState.targetCal > 0 ? Math.round((appState.consumedCal / appState.targetCal) * 100) : 0;
-        document.getElementById('dash-cal-pct').textContent = pct + '%';
+        // Modal Overview
+        document.getElementById('modal-cal-text').textContent = Math.round(appState.consumedCal) + ' / ' + Math.round(appState.targetCal) + ' kcal';
+        var calPct = appState.targetCal > 0 ? Math.min(100, Math.round((appState.consumedCal / appState.targetCal) * 100)) : 0;
+        document.getElementById('modal-cal-bar').style.width = calPct + '%';
 
-        // Macros Progress
-        document.getElementById('dash-p-text').textContent = Math.round(appState.consumedPro) + ' / ' + appState.targetPro + 'g';
-        document.getElementById('dash-f-text').textContent = Math.round(appState.consumedFat) + ' / ' + appState.targetFat + 'g';
-        document.getElementById('dash-c-text').textContent = Math.round(appState.consumedCarb) + ' / ' + appState.targetCarb + 'g';
+        // Modal Macros
+        document.getElementById('modal-p-text').textContent = Math.round(appState.consumedPro) + ' / ' + appState.targetPro + 'g';
+        document.getElementById('modal-f-text').textContent = Math.round(appState.consumedFat) + ' / ' + appState.targetFat + 'g';
+        document.getElementById('modal-c-text').textContent = Math.round(appState.consumedCarb) + ' / ' + appState.targetCarb + 'g';
 
         var pPct = Math.min(100, Math.round((appState.consumedPro / appState.targetPro) * 100)) || 0;
         var fPct = Math.min(100, Math.round((appState.consumedFat / appState.targetFat) * 100)) || 0;
-        var cPct = Math.min(100, Math.round((appState.consumedCarb) / appState.targetCarb * 100)) || 0;
+        var cPct = Math.min(100, Math.round((appState.consumedCarb / appState.targetCarb) * 100)) || 0;
 
-        document.getElementById('dash-p-bar').style.width = pPct + '%';
-        document.getElementById('dash-f-bar').style.width = fPct + '%';
-        document.getElementById('dash-c-bar').style.width = cPct + '%';
+        document.getElementById('modal-p-bar').style.width = pPct + '%';
+        document.getElementById('modal-f-bar').style.width = fPct + '%';
+        document.getElementById('modal-c-bar').style.width = cPct + '%';
+
+        // Modal Meals List
+        document.getElementById('modal-meals-count').textContent = appState.mealsList.length;
+        var listContainer = document.getElementById('modal-meals-list');
+        if (appState.mealsList.length === 0) {
+            listContainer.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:10px;">尚未記錄任何餐點，請拍照或對話新增！</div>';
+        } else {
+            var html = '';
+            appState.mealsList.forEach(function(m, i) {
+                html += '<div class="meal-row">' +
+                    '<span><strong>' + (i+1) + '. ' + m.name + '</strong> <small style="color:var(--text-muted)">(' + m.time + ')</small></span>' +
+                    '<span style="color:var(--accent); font-weight:700;">' + m.calories + ' kcal</span>' +
+                '</div>';
+            });
+            listContainer.innerHTML = html;
+        }
+
+        // Form Fields in Modal
+        document.getElementById('set-gender').value = appState.gender;
+        document.getElementById('set-age').value = appState.age;
+        document.getElementById('set-height').value = appState.height;
+        document.getElementById('set-weight').value = appState.weight;
+        document.getElementById('set-activity').value = appState.activity;
+        document.getElementById('set-goal').value = appState.goal;
     }
 
-    // ===== MODALS & DRAWERS =====
-    function openTdeeModal() {
-        document.getElementById('modal-gender').value = appState.gender;
-        document.getElementById('modal-age').value = appState.age;
-        document.getElementById('modal-height').value = appState.height;
-        document.getElementById('modal-weight').value = appState.weight;
-        document.getElementById('modal-bodyfat').value = appState.bodyfat || '';
-        document.getElementById('modal-activity').value = appState.activity;
-        document.getElementById('modal-goal').value = appState.goal;
-        document.getElementById('modal-tdee').style.display = 'flex';
-    }
-    function closeTdeeModal() {
-        document.getElementById('modal-tdee').style.display = 'none';
-    }
-    function saveTdeeSettings() {
-        appState.gender = document.getElementById('modal-gender').value;
-        appState.age = parseFloat(document.getElementById('modal-age').value) || 28;
-        appState.height = parseFloat(document.getElementById('modal-height').value) || 175;
-        appState.weight = parseFloat(document.getElementById('modal-weight').value) || 70;
-        appState.bodyfat = parseFloat(document.getElementById('modal-bodyfat').value) || 0;
-        appState.activity = parseFloat(document.getElementById('modal-activity').value) || 1.55;
-        appState.goal = document.getElementById('modal-goal').value;
+    function syncAndRecalcTdee() {
+        appState.gender = document.getElementById('set-gender').value;
+        appState.age = parseFloat(document.getElementById('set-age').value) || 28;
+        appState.height = parseFloat(document.getElementById('set-height').value) || 175;
+        appState.weight = parseFloat(document.getElementById('set-weight').value) || 70;
+        appState.activity = parseFloat(document.getElementById('set-activity').value) || 1.55;
+        appState.goal = document.getElementById('set-goal').value;
 
-        recalcTdeeTargets();
-        updateDashboardUI();
+        recalcTargets();
+        updateUI();
         saveState();
-        closeTdeeModal();
-
-        appendAiMessage('✅ 已成功更新您的身體數據與 TDEE 目標！當前每日建議目標熱量為 <strong>' + appState.targetCal + ' kcal</strong>（蛋白質 ' + appState.targetPro + 'g、脂肪 ' + appState.targetFat + 'g、碳水 ' + appState.targetCarb + 'g）。');
     }
 
-    function openReportModal() {
+    // Modal Triggers
+    function openDashboardModal() {
+        updateUI();
+        document.getElementById('modal-dashboard').style.display = 'flex';
+    }
+    function closeDashboardModal() {
+        document.getElementById('modal-dashboard').style.display = 'none';
+    }
+
+    function resetDailyLogs() {
+        if (confirm('確定要清空今日的已攝取熱量與餐點紀錄嗎？')) {
+            appState.consumedCal = 0;
+            appState.consumedPro = 0;
+            appState.consumedFat = 0;
+            appState.consumedCarb = 0;
+            appState.mealsList = [];
+            updateUI();
+            saveState();
+            appendAiMessage('🔄 今日熱量進度與餐點紀錄已重設為 0。準備好開始記錄下一餐囉！');
+        }
+    }
+
+    function exportReportText() {
         var now = new Date();
         var dateStr = now.getFullYear() + '/' + (now.getMonth()+1) + '/' + now.getDate();
         var pct = appState.targetCal > 0 ? Math.round((appState.consumedCal / appState.targetCal) * 100) : 0;
@@ -879,10 +762,10 @@
             '🥑 脂肪 (F)：' + appState.consumedFat + ' / ' + appState.targetFat + ' g\n' +
             '🍚 碳水化合物 (C)：' + appState.consumedCarb + ' / ' + appState.targetCarb + ' g\n' +
             '-----------------------------------\n' +
-            '🍽️ 今日餐點紀錄清單 (' + (appState.mealsList.length) + ' 餐)：\n';
+            '🍽️ 今日餐點明細 (' + appState.mealsList.length + ' 餐)：\n';
 
         if (appState.mealsList.length === 0) {
-            text += '（尚無記錄任何餐點，請點選相機拍照或輸入食物名稱記錄）\n';
+            text += '（今日尚未記錄任何餐點）\n';
         } else {
             appState.mealsList.forEach(function(m, idx) {
                 text += (idx + 1) + '. ' + m.name + '：' + m.calories + ' kcal (P:' + m.protein + 'g, C:' + m.carbs + 'g, F:' + m.fat + 'g)\n';
@@ -890,74 +773,80 @@
         }
         text += '-----------------------------------\n✨ 產生自 GugoPro AI 專屬營養師 (https://gugopro.com)';
 
-        document.getElementById('report-text-area').value = text;
-        document.getElementById('modal-report').style.display = 'flex';
-    }
-
-    function copyReportText() {
-        var ta = document.getElementById('report-text-area');
-        ta.select();
-        document.execCommand('copy');
-        alert('✅ 已複製今日日誌內容至剪貼簿！');
-    }
-
-    function resetDailyLogs() {
-        if (confirm('確定要清空今日的已攝取熱量與餐點紀錄嗎？')) {
-            appState.consumedCal = 0;
-            appState.consumedPro = 0;
-            appState.consumedFat = 0;
-            appState.consumedCarb = 0;
-            appState.mealsList = [];
-            updateDashboardUI();
-            saveState();
-            appendAiMessage('🔄 今日熱量進度與餐點紀錄已成功重設為 0。準備好開始記錄下一餐囉！');
-        }
+        navigator.clipboard.writeText(text).then(function() {
+            alert('✅ 今日飲食日誌已成功複製至剪貼簿！');
+        }).catch(function() {
+            prompt('請手動複製以下日誌內容：', text);
+        });
     }
 
     // ===== CHAT & MULTI-MODAL LOGIC =====
     function appendUserMessage(text) {
-        var container = document.getElementById('chat-messages');
+        var scroller = document.getElementById('chat-scroller');
         var bubble = document.createElement('div');
         bubble.className = 'chat-bubble bubble-user';
         bubble.textContent = text;
-        container.appendChild(bubble);
-        container.scrollTop = container.scrollHeight;
+        scroller.appendChild(bubble);
+        scroller.scrollTop = scroller.scrollHeight;
     }
 
-    function appendAiMessage(htmlContent, foodData) {
-        var container = document.getElementById('chat-messages');
+    function appendAiMessage(htmlContent, structuredData) {
+        var scroller = document.getElementById('chat-scroller');
         var bubble = document.createElement('div');
         bubble.className = 'chat-bubble bubble-ai';
 
-        var textP = document.createElement('div');
-        textP.innerHTML = htmlContent;
-        bubble.appendChild(textP);
+        var contentDiv = document.createElement('div');
+        contentDiv.innerHTML = htmlContent;
+        bubble.appendChild(contentDiv);
 
-        if (foodData) {
+        // Render Food Scan Result Card
+        if (structuredData && structuredData.foodScanResult) {
+            var food = structuredData.foodScanResult;
             var foodCard = document.createElement('div');
-            foodCard.className = 'food-card';
+            foodCard.className = 'card-in-chat';
             foodCard.innerHTML =
-                '<div class="food-header">' +
-                    '<span class="food-title"><i class="fa-solid fa-bowl-food"></i> ' + foodData.mealName + '</span>' +
-                    '<span class="food-cal-tag">' + foodData.calories + ' kcal</span>' +
+                '<div class="card-in-chat-title">' +
+                    '<span><i class="fa-solid fa-bowl-food"></i> ' + food.mealName + '</span>' +
+                    '<span style="font-family:'Outfit',sans-serif; font-size:1.1rem; color:#fff;">' + food.calories + ' kcal</span>' +
                 '</div>' +
-                '<div class="food-macros-grid">' +
-                    '<div><span style="color:var(--color-blue)">蛋白質</span><div class="food-macro-val">' + foodData.protein + 'g</div></div>' +
-                    '<div><span style="color:var(--color-amber)">脂肪</span><div class="food-macro-val">' + foodData.fat + 'g</div></div>' +
-                    '<div><span style="color:var(--accent)">碳水</span><div class="food-macro-val">' + foodData.carbs + 'g</div></div>' +
+                '<div class="grid-macros-3">' +
+                    '<div><span style="color:var(--color-blue)">蛋白質</span><div class="val-bold">' + food.protein + 'g</div></div>' +
+                    '<div><span style="color:var(--color-amber)">脂肪</span><div class="val-bold">' + food.fat + 'g</div></div>' +
+                    '<div><span style="color:var(--accent)">碳水</span><div class="val-bold">' + food.carbs + 'g</div></div>' +
                 '</div>' +
-                '<button class="btn-add-dashboard" onclick="addFoodToDashboard(this, ' + JSON.stringify(foodData).replace(/"/g, '&quot;') + ')">' +
-                    '<i class="fa-solid fa-plus"></i> 將此餐加入今日熱量儀表板' +
+                '<button class="btn-action-chat" onclick="autoWriteFoodToDashboard(this, ' + JSON.stringify(food).replace(/"/g, '&quot;') + ')">' +
+                    '<i class="fa-solid fa-plus"></i> 自動寫入數據看板' +
                 '</button>';
             bubble.appendChild(foodCard);
         }
 
-        container.appendChild(bubble);
-        container.scrollTop = container.scrollHeight;
+        // Render Suggested TDEE Card
+        if (structuredData && structuredData.suggestedTdee) {
+            var tdeeData = structuredData.suggestedTdee;
+            var tdeeCard = document.createElement('div');
+            tdeeCard.className = 'card-in-chat';
+            tdeeCard.innerHTML =
+                '<div class="card-in-chat-title">' +
+                    '<span><i class="fa-solid fa-sliders"></i> AI 建議目標熱量</span>' +
+                    '<span style="font-family:'Outfit',sans-serif; font-size:1.15rem; color:var(--accent);">' + tdeeData.targetCal + ' kcal</span>' +
+                '</div>' +
+                '<div class="grid-macros-3">' +
+                    '<div><span style="color:var(--color-blue)">蛋白質 (P)</span><div class="val-bold">' + tdeeData.protein + 'g</div></div>' +
+                    '<div><span style="color:var(--color-amber)">脂肪 (F)</span><div class="val-bold">' + tdeeData.fat + 'g</div></div>' +
+                    '<div><span style="color:var(--accent)">碳水 (C)</span><div class="val-bold">' + tdeeData.carbs + 'g</div></div>' +
+                '</div>' +
+                '<button class="btn-action-chat" onclick="autoApplyTdeeToDashboard(this, ' + JSON.stringify(tdeeData).replace(/"/g, '&quot;') + ')">' +
+                    '<i class="fa-solid fa-bolt"></i> 自動套用至今日 TDEE 目標' +
+                '</button>';
+            bubble.appendChild(tdeeCard);
+        }
+
+        scroller.appendChild(bubble);
+        scroller.scrollTop = scroller.scrollHeight;
     }
 
-    window.addFoodToDashboard = function(btn, food) {
-        if (btn.classList.contains('added')) return;
+    window.autoWriteFoodToDashboard = function(btn, food) {
+        if (btn.classList.contains('applied')) return;
         appState.consumedCal += parseFloat(food.calories) || 0;
         appState.consumedPro += parseFloat(food.protein) || 0;
         appState.consumedFat += parseFloat(food.fat) || 0;
@@ -971,31 +860,43 @@
             time: new Date().toLocaleTimeString()
         });
 
-        updateDashboardUI();
+        updateUI();
         saveState();
 
-        btn.classList.add('added');
-        btn.innerHTML = '<i class="fa-solid fa-check"></i> 已累加至今日進度條';
+        btn.classList.add('applied');
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> 已成功寫入數據看板！';
     };
 
-    function sendQuickPrompt(promptText) {
-        document.getElementById('chat-text-input').value = promptText;
+    window.autoApplyTdeeToDashboard = function(btn, tdeeData) {
+        if (btn.classList.contains('applied')) return;
+        if (tdeeData.targetCal) appState.targetCal = Math.round(tdeeData.targetCal);
+        if (tdeeData.protein) appState.targetPro = Math.round(tdeeData.protein);
+        if (tdeeData.fat) appState.targetFat = Math.round(tdeeData.fat);
+        if (tdeeData.carbs) appState.targetCarb = Math.round(tdeeData.carbs);
+
+        updateUI();
+        saveState();
+
+        btn.classList.add('applied');
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> 已自動更新 TDEE 目標！';
+    };
+
+    function sendQuickPrompt(text) {
+        document.getElementById('chat-user-input').value = text;
         handleUserSendMessage();
     }
 
     function triggerCameraInput() {
-        document.getElementById('meal-photo-input').click();
+        document.getElementById('camera-file-input').click();
     }
 
     function handleMealPhotoUpload(event) {
         var file = event.target.files[0];
         if (!file) return;
-
         var reader = new FileReader();
         reader.onload = function(e) {
             var base64 = e.target.result.split(',')[1];
             var mime = file.type || 'image/jpeg';
-
             appendUserMessage('📷 [已上傳餐點照片，請求營養師分析]');
             callAiDietitianEngine('請分析這張餐點照片中的食物種類、份量、熱量與三大營養素。', base64, mime);
         };
@@ -1003,16 +904,15 @@
     }
 
     function handleUserSendMessage() {
-        var input = document.getElementById('chat-text-input');
+        var input = document.getElementById('chat-user-input');
         var text = input.value.trim();
         if (!text) return;
         input.value = '';
-
         appendUserMessage(text);
         callAiDietitianEngine(text);
     }
 
-    // ===== QUOTA ENGINE & MULTI-MODEL FALLBACK LOOP =====
+    // ===== QUOTA MULTI-MODEL FALLBACK ENGINE =====
     var cachedQuotaModels = null;
     var lastQuotaProbeTime = 0;
     var QUOTA_API_URL = 'https://quota.gugopro.com/api/models';
@@ -1090,41 +990,44 @@
         }
 
         var systemPrompt = '你是一位專業、親切且具備臨床經驗的 GugoPro 國家級專屬諮詢營養師。\n' +
-            '【學員當前數據】：' +
+            '【學員當前看板數據】：' +
             '性別：' + (appState.gender === 'male' ? '男' : '女') + '，年齡：' + appState.age + ' 歲，身高：' + appState.height + ' cm，體重：' + appState.weight + ' kg，目標：' + appState.goal + '，' +
             'BMR：' + appState.bmr + ' kcal，TDEE：' + appState.tdee + ' kcal，目標每日熱量：' + appState.targetCal + ' kcal (P:' + appState.targetPro + 'g, F:' + appState.targetFat + 'g, C:' + appState.targetCarb + 'g)，今日已攝取：' + appState.consumedCal + ' kcal。\n\n' +
             '【任務規範】：\n' +
-            '1. 如果使用者提供餐點照片或提及吃了某餐，請務必精準識別食物種類、估算份量與三大營養素，並在回覆中附帶 JSON 格式。\n' +
-            '2. 若包含餐點辨識，必須輸出格式如下（嚴禁多餘包裹）：\n' +
+            '1. 若使用者提供餐點照片或描述吃了某餐，請估算該餐熱量與三大營養素，並回傳 JSON 格式附帶 foodScanResult。\n' +
+            '2. 若使用者詢問/提供身材數據要求評估 TDEE，請計算並在 JSON 附帶 suggestedTdee 物件。\n' +
+            '3. 輸出必須為標準 JSON：\n' +
             '{\n' +
-            '  "replyText": "營養師針對此餐的親切點評、優缺點分析與下一餐建議",\n' +
+            '  "replyText": "營養師親切專業詳細的回覆文字 (使用 Emoji 與清楚換行)",\n' +
             '  "foodScanResult": {\n' +
-            '    "mealName": "餐點名稱 (如: 雞胸肉烤蔬菜糙米便當)",\n' +
+            '    "mealName": "餐點名稱",\n' +
             '    "calories": 520,\n' +
-            '    "protein": 38,\n' +
+            '    "protein": 35,\n' +
             '    "fat": 12,\n' +
-            '    "carbs": 65\n' +
+            '    "carbs": 68\n' +
+            '  },\n' +
+            '  "suggestedTdee": {\n' +
+            '    "targetCal": 2040,\n' +
+            '    "protein": 140,\n' +
+            '    "fat": 55,\n' +
+            '    "carbs": 245\n' +
             '  }\n' +
-            '}\n\n' +
-            '3. 若僅為一般飲食對話諮詢（非單餐估算），則回傳：\n' +
-            '{\n' +
-            '  "replyText": "營養師專業詳細回覆，排版清晰美觀，富含 Emoji"\n' +
-            '}';
+            '}\n' +
+            '（若無對應項目則該物件為 null）';
 
         var parts = [{ text: systemPrompt + '\n\n使用者訊息：' + userText }];
         if (imageBase64 && imageMime) {
             parts.push({ inlineData: { mimeType: imageMime, data: imageBase64 } });
         }
 
-        // Show thinking bubble
         var thinkingId = 'thinking-' + Date.now();
-        var container = document.getElementById('chat-messages');
+        var scroller = document.getElementById('chat-scroller');
         var thinkingBubble = document.createElement('div');
         thinkingBubble.className = 'chat-bubble bubble-ai';
         thinkingBubble.id = thinkingId;
-        thinkingBubble.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> 營養師正在為您運算分析中...';
-        container.appendChild(thinkingBubble);
-        container.scrollTop = container.scrollHeight;
+        thinkingBubble.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> 營養師正在為您計算與分析中...';
+        scroller.appendChild(thinkingBubble);
+        scroller.scrollTop = scroller.scrollHeight;
 
         try {
             var models = await fetchModelQueue(apiKey);
@@ -1171,12 +1074,11 @@
                 if (successData) break;
             }
 
-            // Remove thinking bubble
             var tEl = document.getElementById(thinkingId);
             if (tEl) tEl.remove();
 
             if (successData) {
-                appendAiMessage(successData.replyText, successData.foodScanResult);
+                appendAiMessage(successData.replyText, successData);
             } else {
                 throw new Error('所有備援模型皆暫時無法連線 (' + (lastError ? lastError.message : '網路異常') + ')，請稍後再試。');
             }
@@ -1229,7 +1131,7 @@
         } else {
             if (statusBox) statusBox.style.display = 'none';
             if (clearBtn) clearBtn.style.display = 'none';
-            if (statusText) statusText.textContent = 'API 設定';
+            if (statusText) statusText.textContent = 'API';
         }
     }
     window.openApiModal = function() {
@@ -1256,9 +1158,8 @@
         }
     };
 
-    // Initialize on Load
     document.addEventListener('DOMContentLoaded', function() {
-        loadSavedState();
+        loadState();
         updateKeyUI();
     });
     </script>
