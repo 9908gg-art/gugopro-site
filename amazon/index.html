@@ -687,9 +687,11 @@ window.openAmazonTarget = function(msgId, baseKw, targetMarketKey) {
 function escapeHtml(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 function escapeAttr(s) { return (s || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
 
-/* ===== 100% PURE DYNAMIC MODEL PROBING ENGINE (ZERO HARDCODED MODELS) ===== */
+/* ===== GUGO PRO GLOBAL AI ENGINE: QUOTA HUB & MULTI-MODEL FALLBACK QUEUE ===== */
 var cachedValidModels = null;
 var lastProbeTime = 0;
+var QUOTA_API_ENDPOINT = 'https://quota.gugopro.com/api/models';
+var QUOTA_LIMITS_ENDPOINT = 'https://quota.gugopro.com/gemini_rate_limits.json';
 var GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 function rankModelsDynamically(modelNames) {
@@ -720,44 +722,66 @@ async function probeAvailableModels(apiKey) {
 
   var discovered = [];
 
-  // 1. Dynamic live query from Google official models catalog for this API Key
+  // 1. Primary: Dynamic query from Quota Hub (https://quota.gugopro.com/api/models)
   try {
-    var res = await fetch(GEMINI_ENDPOINT + '?key=' + encodeURIComponent(apiKey));
-    if (res.ok) {
-      var data = await res.json();
-      var valid = (data.models || [])
-        .filter(function(m) {
-          var supportsGen = m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent');
-          var name = (m.name || '').toLowerCase();
-          var isExcluded = name.includes('embedding') || name.includes('aqa') || name.includes('imagen') || name.includes('tts') || name.includes('whisper');
-          return supportsGen && !isExcluded;
-        })
-        .map(function(m) { return m.name.replace('models/', ''); });
-
-      if (valid.length > 0) {
-        discovered = rankModelsDynamically(valid);
+    var qRes = await fetch(QUOTA_API_ENDPOINT).catch(function() { return null; });
+    if (qRes && qRes.ok) {
+      var qData = await qRes.json();
+      var rawModels = Array.isArray(qData) ? qData : (qData.models || []);
+      var validQuota = rawModels
+        .map(function(m) { return typeof m === 'string' ? m : (m.name || m.api_name || ''); })
+        .map(function(n) { return n.replace('models/', ''); })
+        .filter(function(n) { return n && !n.includes('embedding') && !n.includes('aqa'); });
+      if (validQuota.length > 0) {
+        discovered = rankModelsDynamically(validQuota);
       }
     }
-  } catch(e) {
-    console.warn('Official live model discovery error:', e);
+  } catch(qe) {
+    console.warn('[AI Engine] Quota /api/models probe error:', qe);
   }
 
-  // 2. Dynamic query from GugoPro Quota & Model service fallback
+  // 2. Secondary: Dynamic query from Quota Rate Limits JSON catalog
   if (discovered.length === 0) {
     try {
-      var qRes = await fetch('https://quota.gugopro.com/gemini_rate_limits.json').catch(function() { return null; });
-      if (qRes && qRes.ok) {
-        var qData = await qRes.json();
-        if (qData && Array.isArray(qData.models)) {
-          var qValid = qData.models
+      var limitRes = await fetch(QUOTA_LIMITS_ENDPOINT).catch(function() { return null; });
+      if (limitRes && limitRes.ok) {
+        var limitData = await limitRes.json();
+        if (limitData && Array.isArray(limitData.models)) {
+          var validLimits = limitData.models
             .map(function(m) { return (m.name || m.api_name || '').replace('models/', ''); })
             .filter(function(n) { return n && !n.includes('embedding') && !n.includes('aqa'); });
-          if (qValid.length > 0) {
-            discovered = rankModelsDynamically(qValid);
+          if (validLimits.length > 0) {
+            discovered = rankModelsDynamically(validLimits);
           }
         }
       }
-    } catch(qe) {}
+    } catch(le) {
+      console.warn('[AI Engine] Quota rate limits probe error:', le);
+    }
+  }
+
+  // 3. Fallback: Dynamic query from Google official models catalog for this API Key
+  if (discovered.length === 0 && apiKey) {
+    try {
+      var res = await fetch(GEMINI_ENDPOINT + '?key=' + encodeURIComponent(apiKey));
+      if (res.ok) {
+        var data = await res.json();
+        var valid = (data.models || [])
+          .filter(function(m) {
+            var supportsGen = m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent');
+            var name = (m.name || '').toLowerCase();
+            var isExcluded = name.includes('embedding') || name.includes('aqa') || name.includes('imagen') || name.includes('tts') || name.includes('whisper');
+            return supportsGen && !isExcluded;
+          })
+          .map(function(m) { return m.name.replace('models/', ''); });
+
+        if (valid.length > 0) {
+          discovered = rankModelsDynamically(valid);
+        }
+      }
+    } catch(e) {
+      console.warn('[AI Engine] Official live model discovery error:', e);
+    }
   }
 
   if (discovered.length > 0) {

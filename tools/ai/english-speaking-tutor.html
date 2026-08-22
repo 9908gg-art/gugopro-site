@@ -920,6 +920,7 @@
             { id: 'openrouter', label: 'OpenRouter 備援線路', type: 'openai', endpoint: 'https://openrouter.ai/api/v1/chat/completions', keyStorage: 'openrouter_api_key', modelStorage: 'openrouter_model', defaultModel: 'openrouter/auto' },
             { id: 'groq', label: 'Groq 備援線路', type: 'openai', endpoint: 'https://api.groq.com/openai/v1/chat/completions', keyStorage: 'groq_api_key', modelStorage: 'groq_model', defaultModel: 'llama-3.1-8b-instant' }
         ];
+        const QUOTA_API_URL = 'https://quota.gugopro.com/api/models';
         const MODEL_CATALOG_URL = 'https://quota.gugopro.com/gemini_rate_limits.json';
         // Known-good fallback models that are confirmed to exist on Google's Gemini API
         const FALLBACK_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
@@ -1094,19 +1095,20 @@
             const apiKey = getGlobalApiKey().split(/[\n,;]+/).map(key => key.trim()).filter(Boolean)[0];
             try {
                 let discovered = [];
-                if (apiKey) {
-                    try {
-                        const discoveryUrl = `${MODEL_DISCOVERY_URL}?key=${encodeURIComponent(apiKey)}`;
-                        const res = await fetchWithTimeout(discoveryUrl);
-                        if (!res.ok) throw new Error(`MODEL_DISCOVERY_${res.status}`);
-                        const data = await res.json();
-                        discovered = (data.models || []).map(normaliseModel).filter(Boolean);
-                    } catch (discoveryError) {
-                        console.warn('動態模型端點暫時無法使用，改讀取動態模型目錄。', discoveryError);
+
+                // 1. Primary: Query https://quota.gugopro.com/api/models
+                try {
+                    const qRes = await fetchWithTimeout(QUOTA_API_URL);
+                    if (qRes.ok) {
+                        const qData = await qRes.json();
+                        const raw = Array.isArray(qData) ? qData : (qData.models || []);
+                        discovered = raw.map(m => normaliseModel(typeof m === 'string' ? { name: m } : m)).filter(Boolean);
                     }
+                } catch (qe) {
+                    console.warn('[AI Engine] Quota /api/models probe error:', qe);
                 }
 
-                // The catalog remains a dynamic fallback for first launch or providers that hide model metadata.
+                // 2. Secondary: Query https://quota.gugopro.com/gemini_rate_limits.json
                 if (discovered.length === 0) {
                     try {
                         const res = await fetchWithTimeout(MODEL_CATALOG_URL);
@@ -1117,11 +1119,25 @@
                                 .map(normaliseModel).filter(Boolean);
                         }
                     } catch (catalogError) {
-                        console.warn('模型目錄暫時無法使用，使用內建備援模型。', catalogError);
+                        console.warn('[AI Engine] 模型目錄暫時無法使用：', catalogError);
                     }
                 }
 
-                // Always ensure known-good fallback models are included at the end of the queue
+                // 3. Fallback: Query Google official models API for this key
+                if (discovered.length === 0 && apiKey) {
+                    try {
+                        const discoveryUrl = `${MODEL_DISCOVERY_URL}?key=${encodeURIComponent(apiKey)}`;
+                        const res = await fetchWithTimeout(discoveryUrl);
+                        if (res.ok) {
+                            const data = await res.json();
+                            discovered = (data.models || []).map(normaliseModel).filter(Boolean);
+                        }
+                    } catch (discoveryError) {
+                        console.warn('[AI Engine] 動態模型端點暫時無法使用：', discoveryError);
+                    }
+                }
+
+                // Add safe modern fallback models
                 const discoveredNames = new Set(discovered.map(m => m.api_name));
                 FALLBACK_MODELS.forEach(name => {
                     if (!discoveredNames.has(name)) {
@@ -1140,7 +1156,6 @@
                 console.log(`Loaded ${modelQueue.length} active models; primary model selected dynamically.`);
             } catch (error) {
                 console.error('❌ 無法取得動態模型資料，使用內建備援模型', error);
-                // Even if everything fails, use hardcoded known-good models
                 modelQueue = FALLBACK_MODELS.map(name => ({ api_name: name, latency_ms: 1000, priority: 1 }));
                 availableModels = modelQueue;
                 currentModelIndex = 0;

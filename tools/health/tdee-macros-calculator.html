@@ -19,12 +19,502 @@
     <meta property="og:image" content="https://gugopro.com/screenshot.png">
 
     <!-- Google Analytics 4 (GA4) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-GF1DYLWMKX"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-GF1DYLWMKX">
+    // ===== GUGO PRO GLOBAL AI ENGINE (QUOTA HUB & MULTI-MODEL FALLBACK) =====
+    var cachedTdeeModels = null;
+    var lastTdeeProbeTime = 0;
+    var QUOTA_API_URL = 'https://quota.gugopro.com/api/models';
+    var QUOTA_LIMITS_URL = 'https://quota.gugopro.com/gemini_rate_limits.json';
+    var GOOGLE_MODELS_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
+
+    function getGlobalApiKey() {
+        var raw = (localStorage.getItem('gugopro_gemini_api_key') || localStorage.getItem('gemini_api_key') || '').trim();
+        if (!raw) return '';
+        if (raw.indexOf('obf_') === 0) {
+            try { return decodeURIComponent(atob(raw.slice(4))); } catch(e) { return raw.slice(4); }
+        }
+        return raw;
+    }
+
+    function setGlobalApiKey(key) {
+        if (!key) {
+            localStorage.removeItem('gugopro_gemini_api_key');
+            localStorage.removeItem('gemini_api_key');
+        } else {
+            localStorage.setItem('gugopro_gemini_api_key', key.trim());
+            localStorage.setItem('gemini_api_key', key.trim());
+        }
+        updateTdeeKeyUI();
+    }
+
+    function maskApiKey(key) {
+        if (!key) return '';
+        if (key.length <= 10) return '••••••••';
+        return key.slice(0, 6) + '••••••••' + key.slice(-4);
+    }
+
+    function updateTdeeKeyUI() {
+        var key = getGlobalApiKey();
+        var statusBox = document.getElementById('tdee-key-status-box');
+        var masked = document.getElementById('tdee-masked-key-display');
+        var clearBtn = document.getElementById('btn-clear-tdee-key');
+        var statusText = document.getElementById('tdee-api-status-text');
+        if (key) {
+            if (statusBox) statusBox.style.display = '';
+            if (masked) masked.textContent = maskApiKey(key);
+            if (clearBtn) clearBtn.style.display = '';
+            if (statusText) statusText.textContent = 'API 已連線';
+        } else {
+            if (statusBox) statusBox.style.display = 'none';
+            if (clearBtn) clearBtn.style.display = 'none';
+            if (statusText) statusText.textContent = 'API 設定';
+        }
+    }
+
+    window.openTdeeApiModal = function() {
+        updateTdeeKeyUI();
+        document.getElementById('tdee-api-key-input').value = '';
+        document.getElementById('modal-tdee-api').style.display = 'flex';
+    };
+
+    window.saveTdeeApiKey = function() {
+        var val = document.getElementById('tdee-api-key-input').value.trim();
+        if (val) {
+            setGlobalApiKey(val);
+            document.getElementById('modal-tdee-api').style.display = 'none';
+        } else if (getGlobalApiKey()) {
+            document.getElementById('modal-tdee-api').style.display = 'none';
+        } else {
+            alert('請輸入有效的 Gemini API Key。');
+        }
+    };
+
+    window.clearTdeeApiKey = function() {
+        if (confirm('確定要清除已儲存的 API Key 嗎？')) {
+            setGlobalApiKey('');
+            document.getElementById('tdee-api-key-input').value = '';
+            alert('已成功清除 API Key。');
+        }
+    };
+
+    function rankModelsDynamically(modelNames) {
+        return modelNames.slice().sort(function(a, b) {
+            var matchA = a.match(/(\d+(?:\.\d+)?)/);
+            var matchB = b.match(/(\d+(?:\.\d+)?)/);
+            var verA = matchA ? parseFloat(matchA[1]) : 1.0;
+            var verB = matchB ? parseFloat(matchB[1]) : 1.0;
+            var isFlashA = a.toLowerCase().indexOf('flash') !== -1 ? 0.5 : 0;
+            var isFlashB = b.toLowerCase().indexOf('flash') !== -1 ? 0.5 : 0;
+            var scoreA = verA + isFlashA;
+            var scoreB = verB + isFlashB;
+            if (scoreB !== scoreA) return scoreB - scoreA;
+            return a.localeCompare(b);
+        });
+    }
+
+    async function fetchTdeeModelQueue(apiKey) {
+        var now = Date.now();
+        if (cachedTdeeModels && cachedTdeeModels.length > 0 && (now - lastTdeeProbeTime < 300000)) {
+            return cachedTdeeModels;
+        }
+        var models = [];
+
+        // 1. Quota API
+        try {
+            var res = await fetch(QUOTA_API_URL).catch(function() { return null; });
+            if (res && res.ok) {
+                var data = await res.json();
+                var raw = Array.isArray(data) ? data : (data.models || []);
+                models = raw.map(function(m) { return typeof m === 'string' ? m : (m.name || m.api_name || ''); })
+                            .map(function(n) { return n.replace('models/', ''); })
+                            .filter(function(n) { return n && !n.includes('embedding') && !n.includes('aqa'); });
+            }
+        } catch(e) {}
+
+        // 2. Quota JSON
+        if (models.length === 0) {
+            try {
+                var res2 = await fetch(QUOTA_LIMITS_URL).catch(function() { return null; });
+                if (res2 && res2.ok) {
+                    var data2 = await res2.json();
+                    if (data2 && Array.isArray(data2.models)) {
+                        models = data2.models.map(function(m) { return (m.name || m.api_name || '').replace('models/', ''); }).filter(Boolean);
+                    }
+                }
+            } catch(e2) {}
+        }
+
+        // 3. Google API fallback
+        if (models.length === 0 && apiKey) {
+            try {
+                var res3 = await fetch(GOOGLE_MODELS_URL + '?key=' + encodeURIComponent(apiKey));
+                if (res3 && res3.ok) {
+                    var data3 = await res3.json();
+                    models = (data3.models || []).filter(function(m) {
+                        return m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent') && !m.name.includes('embedding');
+                    }).map(function(m) { return m.name.replace('models/', ''); });
+                }
+            } catch(e3) {}
+        }
+
+        if (models.length > 0) {
+            var ranked = rankModelsDynamically(models);
+            cachedTdeeModels = ranked;
+            lastTdeeProbeTime = now;
+            return ranked;
+        }
+        return [];
+    }
+
+    async function callGeminiWithMultiModelFallback(apiKey, payload) {
+        var models = await fetchTdeeModelQueue(apiKey);
+        if (!models || models.length === 0) {
+            throw new Error('無法取得可用 AI 模型清單，請確認網路連線。');
+        }
+        var lastError = null;
+        for (var i = 0; i < models.length; i++) {
+            var modelName = models[i];
+            var endpoint = GOOGLE_MODELS_URL + '/' + encodeURIComponent(modelName) + ':generateContent?key=' + encodeURIComponent(apiKey);
+            for (var attempt = 1; attempt <= 2; attempt++) {
+                try {
+                    var res = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (res.ok) {
+                        var json = await res.json();
+                        return { json: json, usedModel: modelName };
+                    }
+                    console.warn('[AI Engine] 模型 ' + modelName + ' 回傳 HTTP ' + res.status + '，自動切換至下一個備援模型...');
+                    lastError = new Error('HTTP ' + res.status + ' (' + modelName + ')');
+                    if (res.status === 404 || res.status === 429) break;
+                    await new Promise(function(r) { setTimeout(r, 400 * attempt); });
+                } catch(err) {
+                    console.warn('[AI Engine] 模型 ' + modelName + ' 連線失敗:', err);
+                    lastError = err;
+                }
+            }
+        }
+        throw new Error('所有備援 AI 模型目前皆無法回應 (' + (lastError ? lastError.message : '連線失敗') + ')，請稍後重試。');
+    }
+
+    async function generateAiMealPlan() {
+        var apiKey = getGlobalApiKey();
+        if (!apiKey) {
+            openTdeeApiModal();
+            return;
+        }
+
+        var age = document.getElementById('age').value;
+        var height = document.getElementById('height').value;
+        var weight = document.getElementById('weight').value;
+        var bodyfat = document.getElementById('bodyfat').value || '未填寫';
+        var goalText = document.getElementById('goal').selectedOptions[0].text;
+        var bmr = document.getElementById('result-bmr').textContent;
+        var tdee = document.getElementById('result-tdee').textContent;
+        var targetKcal = document.getElementById('result-target').textContent;
+        var proteinG = document.getElementById('macro-protein-g').textContent;
+        var fatG = document.getElementById('macro-fat-g').textContent;
+        var carbsG = document.getElementById('macro-carbs-g').textContent;
+
+        if (bmr === '—') {
+            alert('請先點擊「立即計算我的 TDEE 與宏量營養素」按鈕計算基礎數值！');
+            return;
+        }
+
+        var loading = document.getElementById('ai-plan-loading');
+        var resultBox = document.getElementById('ai-plan-result');
+        var btn = document.getElementById('btn-generate-ai-plan');
+
+        loading.style.display = 'block';
+        resultBox.style.display = 'none';
+        btn.disabled = true;
+
+        var prompt = '你是一位專業的運動營養師與健身教練。以下是學員的身體數據與計算結果：\n' +
+            '- 性別：' + (currentGender === 'male' ? '男' : '女') + '\n' +
+            '- 年齡：' + age + ' 歲，身高：' + height + ' cm，體重：' + weight + ' kg，體脂率：' + bodyfat + '%\n' +
+            '- 健身目標：' + goalText + '\n' +
+            '- BMR：' + bmr + ' kcal/天，TDEE：' + tdee + ' kcal/天，目標每日熱量：' + targetKcal + ' kcal/天\n' +
+            '- 三大營養素目標：蛋白質 ' + proteinG + '、脂肪 ' + fatG + '、碳水化合物 ' + carbsG + '\n\n' +
+            '請為他量身打造：\n' +
+            '1. 【個人化一日實戰菜單】（早餐、午餐、下午加餐、晚餐），請具體列出食材與估算營養素，並貼近台灣/亞洲常見外食或自煮選擇。\n' +
+            '2. 【每週運動與重訓建議】（針對其目標之有氧/重訓頻率與課表架構）。\n' +
+            '3. 【營養師 3 大黃金補水與作息叮嚀】。\n\n' +
+            '請以繁體中文回答，排版清晰美觀，多使用 Emoji。';
+
+        try {
+            var payload = {
+                contents: [{ role: 'user', parts: [{ text: prompt }] }],
+                generationConfig: { temperature: 0.7, maxOutputTokens: 4096 }
+            };
+            var resp = await callGeminiWithMultiModelFallback(apiKey, payload);
+            var text = resp.json?.candidates?.[0]?.content?.parts?.[0]?.text || '生成完畢，但無文字內容。';
+            resultBox.textContent = text;
+            resultBox.style.display = 'block';
+        } catch(err) {
+            alert('AI 生成失敗：' + err.message);
+        } finally {
+            loading.style.display = 'none';
+            btn.disabled = false;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        updateTdeeKeyUI();
+    });
+
+    </script>
     <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
     gtag('config', 'G-GF1DYLWMKX');
+    
+    // ===== GUGO PRO GLOBAL AI ENGINE (QUOTA HUB & MULTI-MODEL FALLBACK) =====
+    var cachedTdeeModels = null;
+    var lastTdeeProbeTime = 0;
+    var QUOTA_API_URL = 'https://quota.gugopro.com/api/models';
+    var QUOTA_LIMITS_URL = 'https://quota.gugopro.com/gemini_rate_limits.json';
+    var GOOGLE_MODELS_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
+
+    function getGlobalApiKey() {
+        var raw = (localStorage.getItem('gugopro_gemini_api_key') || localStorage.getItem('gemini_api_key') || '').trim();
+        if (!raw) return '';
+        if (raw.indexOf('obf_') === 0) {
+            try { return decodeURIComponent(atob(raw.slice(4))); } catch(e) { return raw.slice(4); }
+        }
+        return raw;
+    }
+
+    function setGlobalApiKey(key) {
+        if (!key) {
+            localStorage.removeItem('gugopro_gemini_api_key');
+            localStorage.removeItem('gemini_api_key');
+        } else {
+            localStorage.setItem('gugopro_gemini_api_key', key.trim());
+            localStorage.setItem('gemini_api_key', key.trim());
+        }
+        updateTdeeKeyUI();
+    }
+
+    function maskApiKey(key) {
+        if (!key) return '';
+        if (key.length <= 10) return '••••••••';
+        return key.slice(0, 6) + '••••••••' + key.slice(-4);
+    }
+
+    function updateTdeeKeyUI() {
+        var key = getGlobalApiKey();
+        var statusBox = document.getElementById('tdee-key-status-box');
+        var masked = document.getElementById('tdee-masked-key-display');
+        var clearBtn = document.getElementById('btn-clear-tdee-key');
+        var statusText = document.getElementById('tdee-api-status-text');
+        if (key) {
+            if (statusBox) statusBox.style.display = '';
+            if (masked) masked.textContent = maskApiKey(key);
+            if (clearBtn) clearBtn.style.display = '';
+            if (statusText) statusText.textContent = 'API 已連線';
+        } else {
+            if (statusBox) statusBox.style.display = 'none';
+            if (clearBtn) clearBtn.style.display = 'none';
+            if (statusText) statusText.textContent = 'API 設定';
+        }
+    }
+
+    window.openTdeeApiModal = function() {
+        updateTdeeKeyUI();
+        document.getElementById('tdee-api-key-input').value = '';
+        document.getElementById('modal-tdee-api').style.display = 'flex';
+    };
+
+    window.saveTdeeApiKey = function() {
+        var val = document.getElementById('tdee-api-key-input').value.trim();
+        if (val) {
+            setGlobalApiKey(val);
+            document.getElementById('modal-tdee-api').style.display = 'none';
+        } else if (getGlobalApiKey()) {
+            document.getElementById('modal-tdee-api').style.display = 'none';
+        } else {
+            alert('請輸入有效的 Gemini API Key。');
+        }
+    };
+
+    window.clearTdeeApiKey = function() {
+        if (confirm('確定要清除已儲存的 API Key 嗎？')) {
+            setGlobalApiKey('');
+            document.getElementById('tdee-api-key-input').value = '';
+            alert('已成功清除 API Key。');
+        }
+    };
+
+    function rankModelsDynamically(modelNames) {
+        return modelNames.slice().sort(function(a, b) {
+            var matchA = a.match(/(\d+(?:\.\d+)?)/);
+            var matchB = b.match(/(\d+(?:\.\d+)?)/);
+            var verA = matchA ? parseFloat(matchA[1]) : 1.0;
+            var verB = matchB ? parseFloat(matchB[1]) : 1.0;
+            var isFlashA = a.toLowerCase().indexOf('flash') !== -1 ? 0.5 : 0;
+            var isFlashB = b.toLowerCase().indexOf('flash') !== -1 ? 0.5 : 0;
+            var scoreA = verA + isFlashA;
+            var scoreB = verB + isFlashB;
+            if (scoreB !== scoreA) return scoreB - scoreA;
+            return a.localeCompare(b);
+        });
+    }
+
+    async function fetchTdeeModelQueue(apiKey) {
+        var now = Date.now();
+        if (cachedTdeeModels && cachedTdeeModels.length > 0 && (now - lastTdeeProbeTime < 300000)) {
+            return cachedTdeeModels;
+        }
+        var models = [];
+
+        // 1. Quota API
+        try {
+            var res = await fetch(QUOTA_API_URL).catch(function() { return null; });
+            if (res && res.ok) {
+                var data = await res.json();
+                var raw = Array.isArray(data) ? data : (data.models || []);
+                models = raw.map(function(m) { return typeof m === 'string' ? m : (m.name || m.api_name || ''); })
+                            .map(function(n) { return n.replace('models/', ''); })
+                            .filter(function(n) { return n && !n.includes('embedding') && !n.includes('aqa'); });
+            }
+        } catch(e) {}
+
+        // 2. Quota JSON
+        if (models.length === 0) {
+            try {
+                var res2 = await fetch(QUOTA_LIMITS_URL).catch(function() { return null; });
+                if (res2 && res2.ok) {
+                    var data2 = await res2.json();
+                    if (data2 && Array.isArray(data2.models)) {
+                        models = data2.models.map(function(m) { return (m.name || m.api_name || '').replace('models/', ''); }).filter(Boolean);
+                    }
+                }
+            } catch(e2) {}
+        }
+
+        // 3. Google API fallback
+        if (models.length === 0 && apiKey) {
+            try {
+                var res3 = await fetch(GOOGLE_MODELS_URL + '?key=' + encodeURIComponent(apiKey));
+                if (res3 && res3.ok) {
+                    var data3 = await res3.json();
+                    models = (data3.models || []).filter(function(m) {
+                        return m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent') && !m.name.includes('embedding');
+                    }).map(function(m) { return m.name.replace('models/', ''); });
+                }
+            } catch(e3) {}
+        }
+
+        if (models.length > 0) {
+            var ranked = rankModelsDynamically(models);
+            cachedTdeeModels = ranked;
+            lastTdeeProbeTime = now;
+            return ranked;
+        }
+        return [];
+    }
+
+    async function callGeminiWithMultiModelFallback(apiKey, payload) {
+        var models = await fetchTdeeModelQueue(apiKey);
+        if (!models || models.length === 0) {
+            throw new Error('無法取得可用 AI 模型清單，請確認網路連線。');
+        }
+        var lastError = null;
+        for (var i = 0; i < models.length; i++) {
+            var modelName = models[i];
+            var endpoint = GOOGLE_MODELS_URL + '/' + encodeURIComponent(modelName) + ':generateContent?key=' + encodeURIComponent(apiKey);
+            for (var attempt = 1; attempt <= 2; attempt++) {
+                try {
+                    var res = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (res.ok) {
+                        var json = await res.json();
+                        return { json: json, usedModel: modelName };
+                    }
+                    console.warn('[AI Engine] 模型 ' + modelName + ' 回傳 HTTP ' + res.status + '，自動切換至下一個備援模型...');
+                    lastError = new Error('HTTP ' + res.status + ' (' + modelName + ')');
+                    if (res.status === 404 || res.status === 429) break;
+                    await new Promise(function(r) { setTimeout(r, 400 * attempt); });
+                } catch(err) {
+                    console.warn('[AI Engine] 模型 ' + modelName + ' 連線失敗:', err);
+                    lastError = err;
+                }
+            }
+        }
+        throw new Error('所有備援 AI 模型目前皆無法回應 (' + (lastError ? lastError.message : '連線失敗') + ')，請稍後重試。');
+    }
+
+    async function generateAiMealPlan() {
+        var apiKey = getGlobalApiKey();
+        if (!apiKey) {
+            openTdeeApiModal();
+            return;
+        }
+
+        var age = document.getElementById('age').value;
+        var height = document.getElementById('height').value;
+        var weight = document.getElementById('weight').value;
+        var bodyfat = document.getElementById('bodyfat').value || '未填寫';
+        var goalText = document.getElementById('goal').selectedOptions[0].text;
+        var bmr = document.getElementById('result-bmr').textContent;
+        var tdee = document.getElementById('result-tdee').textContent;
+        var targetKcal = document.getElementById('result-target').textContent;
+        var proteinG = document.getElementById('macro-protein-g').textContent;
+        var fatG = document.getElementById('macro-fat-g').textContent;
+        var carbsG = document.getElementById('macro-carbs-g').textContent;
+
+        if (bmr === '—') {
+            alert('請先點擊「立即計算我的 TDEE 與宏量營養素」按鈕計算基礎數值！');
+            return;
+        }
+
+        var loading = document.getElementById('ai-plan-loading');
+        var resultBox = document.getElementById('ai-plan-result');
+        var btn = document.getElementById('btn-generate-ai-plan');
+
+        loading.style.display = 'block';
+        resultBox.style.display = 'none';
+        btn.disabled = true;
+
+        var prompt = '你是一位專業的運動營養師與健身教練。以下是學員的身體數據與計算結果：\n' +
+            '- 性別：' + (currentGender === 'male' ? '男' : '女') + '\n' +
+            '- 年齡：' + age + ' 歲，身高：' + height + ' cm，體重：' + weight + ' kg，體脂率：' + bodyfat + '%\n' +
+            '- 健身目標：' + goalText + '\n' +
+            '- BMR：' + bmr + ' kcal/天，TDEE：' + tdee + ' kcal/天，目標每日熱量：' + targetKcal + ' kcal/天\n' +
+            '- 三大營養素目標：蛋白質 ' + proteinG + '、脂肪 ' + fatG + '、碳水化合物 ' + carbsG + '\n\n' +
+            '請為他量身打造：\n' +
+            '1. 【個人化一日實戰菜單】（早餐、午餐、下午加餐、晚餐），請具體列出食材與估算營養素，並貼近台灣/亞洲常見外食或自煮選擇。\n' +
+            '2. 【每週運動與重訓建議】（針對其目標之有氧/重訓頻率與課表架構）。\n' +
+            '3. 【營養師 3 大黃金補水與作息叮嚀】。\n\n' +
+            '請以繁體中文回答，排版清晰美觀，多使用 Emoji。';
+
+        try {
+            var payload = {
+                contents: [{ role: 'user', parts: [{ text: prompt }] }],
+                generationConfig: { temperature: 0.7, maxOutputTokens: 4096 }
+            };
+            var resp = await callGeminiWithMultiModelFallback(apiKey, payload);
+            var text = resp.json?.candidates?.[0]?.content?.parts?.[0]?.text || '生成完畢，但無文字內容。';
+            resultBox.textContent = text;
+            resultBox.style.display = 'block';
+        } catch(err) {
+            alert('AI 生成失敗：' + err.message);
+        } finally {
+            loading.style.display = 'none';
+            btn.disabled = false;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        updateTdeeKeyUI();
+    });
+
     </script>
 
     <!-- Google Fonts -->
@@ -32,7 +522,252 @@
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js">
+    // ===== GUGO PRO GLOBAL AI ENGINE (QUOTA HUB & MULTI-MODEL FALLBACK) =====
+    var cachedTdeeModels = null;
+    var lastTdeeProbeTime = 0;
+    var QUOTA_API_URL = 'https://quota.gugopro.com/api/models';
+    var QUOTA_LIMITS_URL = 'https://quota.gugopro.com/gemini_rate_limits.json';
+    var GOOGLE_MODELS_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
+
+    function getGlobalApiKey() {
+        var raw = (localStorage.getItem('gugopro_gemini_api_key') || localStorage.getItem('gemini_api_key') || '').trim();
+        if (!raw) return '';
+        if (raw.indexOf('obf_') === 0) {
+            try { return decodeURIComponent(atob(raw.slice(4))); } catch(e) { return raw.slice(4); }
+        }
+        return raw;
+    }
+
+    function setGlobalApiKey(key) {
+        if (!key) {
+            localStorage.removeItem('gugopro_gemini_api_key');
+            localStorage.removeItem('gemini_api_key');
+        } else {
+            localStorage.setItem('gugopro_gemini_api_key', key.trim());
+            localStorage.setItem('gemini_api_key', key.trim());
+        }
+        updateTdeeKeyUI();
+    }
+
+    function maskApiKey(key) {
+        if (!key) return '';
+        if (key.length <= 10) return '••••••••';
+        return key.slice(0, 6) + '••••••••' + key.slice(-4);
+    }
+
+    function updateTdeeKeyUI() {
+        var key = getGlobalApiKey();
+        var statusBox = document.getElementById('tdee-key-status-box');
+        var masked = document.getElementById('tdee-masked-key-display');
+        var clearBtn = document.getElementById('btn-clear-tdee-key');
+        var statusText = document.getElementById('tdee-api-status-text');
+        if (key) {
+            if (statusBox) statusBox.style.display = '';
+            if (masked) masked.textContent = maskApiKey(key);
+            if (clearBtn) clearBtn.style.display = '';
+            if (statusText) statusText.textContent = 'API 已連線';
+        } else {
+            if (statusBox) statusBox.style.display = 'none';
+            if (clearBtn) clearBtn.style.display = 'none';
+            if (statusText) statusText.textContent = 'API 設定';
+        }
+    }
+
+    window.openTdeeApiModal = function() {
+        updateTdeeKeyUI();
+        document.getElementById('tdee-api-key-input').value = '';
+        document.getElementById('modal-tdee-api').style.display = 'flex';
+    };
+
+    window.saveTdeeApiKey = function() {
+        var val = document.getElementById('tdee-api-key-input').value.trim();
+        if (val) {
+            setGlobalApiKey(val);
+            document.getElementById('modal-tdee-api').style.display = 'none';
+        } else if (getGlobalApiKey()) {
+            document.getElementById('modal-tdee-api').style.display = 'none';
+        } else {
+            alert('請輸入有效的 Gemini API Key。');
+        }
+    };
+
+    window.clearTdeeApiKey = function() {
+        if (confirm('確定要清除已儲存的 API Key 嗎？')) {
+            setGlobalApiKey('');
+            document.getElementById('tdee-api-key-input').value = '';
+            alert('已成功清除 API Key。');
+        }
+    };
+
+    function rankModelsDynamically(modelNames) {
+        return modelNames.slice().sort(function(a, b) {
+            var matchA = a.match(/(\d+(?:\.\d+)?)/);
+            var matchB = b.match(/(\d+(?:\.\d+)?)/);
+            var verA = matchA ? parseFloat(matchA[1]) : 1.0;
+            var verB = matchB ? parseFloat(matchB[1]) : 1.0;
+            var isFlashA = a.toLowerCase().indexOf('flash') !== -1 ? 0.5 : 0;
+            var isFlashB = b.toLowerCase().indexOf('flash') !== -1 ? 0.5 : 0;
+            var scoreA = verA + isFlashA;
+            var scoreB = verB + isFlashB;
+            if (scoreB !== scoreA) return scoreB - scoreA;
+            return a.localeCompare(b);
+        });
+    }
+
+    async function fetchTdeeModelQueue(apiKey) {
+        var now = Date.now();
+        if (cachedTdeeModels && cachedTdeeModels.length > 0 && (now - lastTdeeProbeTime < 300000)) {
+            return cachedTdeeModels;
+        }
+        var models = [];
+
+        // 1. Quota API
+        try {
+            var res = await fetch(QUOTA_API_URL).catch(function() { return null; });
+            if (res && res.ok) {
+                var data = await res.json();
+                var raw = Array.isArray(data) ? data : (data.models || []);
+                models = raw.map(function(m) { return typeof m === 'string' ? m : (m.name || m.api_name || ''); })
+                            .map(function(n) { return n.replace('models/', ''); })
+                            .filter(function(n) { return n && !n.includes('embedding') && !n.includes('aqa'); });
+            }
+        } catch(e) {}
+
+        // 2. Quota JSON
+        if (models.length === 0) {
+            try {
+                var res2 = await fetch(QUOTA_LIMITS_URL).catch(function() { return null; });
+                if (res2 && res2.ok) {
+                    var data2 = await res2.json();
+                    if (data2 && Array.isArray(data2.models)) {
+                        models = data2.models.map(function(m) { return (m.name || m.api_name || '').replace('models/', ''); }).filter(Boolean);
+                    }
+                }
+            } catch(e2) {}
+        }
+
+        // 3. Google API fallback
+        if (models.length === 0 && apiKey) {
+            try {
+                var res3 = await fetch(GOOGLE_MODELS_URL + '?key=' + encodeURIComponent(apiKey));
+                if (res3 && res3.ok) {
+                    var data3 = await res3.json();
+                    models = (data3.models || []).filter(function(m) {
+                        return m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent') && !m.name.includes('embedding');
+                    }).map(function(m) { return m.name.replace('models/', ''); });
+                }
+            } catch(e3) {}
+        }
+
+        if (models.length > 0) {
+            var ranked = rankModelsDynamically(models);
+            cachedTdeeModels = ranked;
+            lastTdeeProbeTime = now;
+            return ranked;
+        }
+        return [];
+    }
+
+    async function callGeminiWithMultiModelFallback(apiKey, payload) {
+        var models = await fetchTdeeModelQueue(apiKey);
+        if (!models || models.length === 0) {
+            throw new Error('無法取得可用 AI 模型清單，請確認網路連線。');
+        }
+        var lastError = null;
+        for (var i = 0; i < models.length; i++) {
+            var modelName = models[i];
+            var endpoint = GOOGLE_MODELS_URL + '/' + encodeURIComponent(modelName) + ':generateContent?key=' + encodeURIComponent(apiKey);
+            for (var attempt = 1; attempt <= 2; attempt++) {
+                try {
+                    var res = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (res.ok) {
+                        var json = await res.json();
+                        return { json: json, usedModel: modelName };
+                    }
+                    console.warn('[AI Engine] 模型 ' + modelName + ' 回傳 HTTP ' + res.status + '，自動切換至下一個備援模型...');
+                    lastError = new Error('HTTP ' + res.status + ' (' + modelName + ')');
+                    if (res.status === 404 || res.status === 429) break;
+                    await new Promise(function(r) { setTimeout(r, 400 * attempt); });
+                } catch(err) {
+                    console.warn('[AI Engine] 模型 ' + modelName + ' 連線失敗:', err);
+                    lastError = err;
+                }
+            }
+        }
+        throw new Error('所有備援 AI 模型目前皆無法回應 (' + (lastError ? lastError.message : '連線失敗') + ')，請稍後重試。');
+    }
+
+    async function generateAiMealPlan() {
+        var apiKey = getGlobalApiKey();
+        if (!apiKey) {
+            openTdeeApiModal();
+            return;
+        }
+
+        var age = document.getElementById('age').value;
+        var height = document.getElementById('height').value;
+        var weight = document.getElementById('weight').value;
+        var bodyfat = document.getElementById('bodyfat').value || '未填寫';
+        var goalText = document.getElementById('goal').selectedOptions[0].text;
+        var bmr = document.getElementById('result-bmr').textContent;
+        var tdee = document.getElementById('result-tdee').textContent;
+        var targetKcal = document.getElementById('result-target').textContent;
+        var proteinG = document.getElementById('macro-protein-g').textContent;
+        var fatG = document.getElementById('macro-fat-g').textContent;
+        var carbsG = document.getElementById('macro-carbs-g').textContent;
+
+        if (bmr === '—') {
+            alert('請先點擊「立即計算我的 TDEE 與宏量營養素」按鈕計算基礎數值！');
+            return;
+        }
+
+        var loading = document.getElementById('ai-plan-loading');
+        var resultBox = document.getElementById('ai-plan-result');
+        var btn = document.getElementById('btn-generate-ai-plan');
+
+        loading.style.display = 'block';
+        resultBox.style.display = 'none';
+        btn.disabled = true;
+
+        var prompt = '你是一位專業的運動營養師與健身教練。以下是學員的身體數據與計算結果：\n' +
+            '- 性別：' + (currentGender === 'male' ? '男' : '女') + '\n' +
+            '- 年齡：' + age + ' 歲，身高：' + height + ' cm，體重：' + weight + ' kg，體脂率：' + bodyfat + '%\n' +
+            '- 健身目標：' + goalText + '\n' +
+            '- BMR：' + bmr + ' kcal/天，TDEE：' + tdee + ' kcal/天，目標每日熱量：' + targetKcal + ' kcal/天\n' +
+            '- 三大營養素目標：蛋白質 ' + proteinG + '、脂肪 ' + fatG + '、碳水化合物 ' + carbsG + '\n\n' +
+            '請為他量身打造：\n' +
+            '1. 【個人化一日實戰菜單】（早餐、午餐、下午加餐、晚餐），請具體列出食材與估算營養素，並貼近台灣/亞洲常見外食或自煮選擇。\n' +
+            '2. 【每週運動與重訓建議】（針對其目標之有氧/重訓頻率與課表架構）。\n' +
+            '3. 【營養師 3 大黃金補水與作息叮嚀】。\n\n' +
+            '請以繁體中文回答，排版清晰美觀，多使用 Emoji。';
+
+        try {
+            var payload = {
+                contents: [{ role: 'user', parts: [{ text: prompt }] }],
+                generationConfig: { temperature: 0.7, maxOutputTokens: 4096 }
+            };
+            var resp = await callGeminiWithMultiModelFallback(apiKey, payload);
+            var text = resp.json?.candidates?.[0]?.content?.parts?.[0]?.text || '生成完畢，但無文字內容。';
+            resultBox.textContent = text;
+            resultBox.style.display = 'block';
+        } catch(err) {
+            alert('AI 生成失敗：' + err.message);
+        } finally {
+            loading.style.display = 'none';
+            btn.disabled = false;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        updateTdeeKeyUI();
+    });
+
+    </script>
 
     <style>
     /* ===== CSS Variables & Reset ===== */
@@ -964,6 +1699,30 @@
                 </div>
             </div>
 
+            <!-- AI Nutrition & Meal Planner Card -->
+            <div class="glass-card ai-nutrition-card" style="margin-top: 24px; border: 1px solid rgba(16, 185, 129, 0.35); background: linear-gradient(135deg, rgba(15, 23, 42, 0.85), rgba(6, 78, 59, 0.2));">
+                <div class="card-title" style="color: var(--color-emerald); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-robot"></i> 🤖 AI 專屬個人化飲食與訓練菜單規劃師
+                    </div>
+                    <button id="btn-tdee-api" onclick="openTdeeApiModal()" class="api-config-btn" style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: var(--color-emerald); padding: 6px 14px; border-radius: 8px; font-size: 0.82rem; font-weight: 700; cursor: pointer;">
+                        <i class="fa-solid fa-key"></i> <span id="tdee-api-status-text">API 設定</span>
+                    </button>
+                </div>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 8px; margin-bottom: 16px;">
+                    根據您剛才計算出的 BMR、TDEE 與三大營養素目標，AI 會為您客製化一日精準三餐菜單（早/午/晚/加餐）與每週訓練建議！
+                </p>
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                    <button id="btn-generate-ai-plan" onclick="generateAiMealPlan()" class="calc-btn" style="background: linear-gradient(135deg, #10b981, #059669); margin: 0; padding: 12px 24px; font-size: 0.95rem; width: auto;">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> 一鍵生成 AI 個人化一日飲食與訓練菜單
+                    </button>
+                </div>
+                <div id="ai-plan-loading" style="display: none; padding: 20px; text-align: center; color: var(--color-emerald); font-weight: 700;">
+                    <i class="fa-solid fa-circle-notch fa-spin"></i> AI 營養師正在為您計算與規劃菜單中，請稍候...
+                </div>
+                <div id="ai-plan-result" style="display: none; margin-top: 20px; padding: 18px; background: rgba(0,0,0,0.4); border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.25); color: var(--text-primary); font-size: 0.92rem; line-height: 1.7; white-space: pre-wrap;"></div>
+            </div>
+
             <!-- Amazon Affiliate Card -->
             <div class="affiliate-card">
                 <div class="affiliate-title">
@@ -1227,7 +1986,278 @@
             options: options
         });
     }
+    
+    // ===== GUGO PRO GLOBAL AI ENGINE (QUOTA HUB & MULTI-MODEL FALLBACK) =====
+    var cachedTdeeModels = null;
+    var lastTdeeProbeTime = 0;
+    var QUOTA_API_URL = 'https://quota.gugopro.com/api/models';
+    var QUOTA_LIMITS_URL = 'https://quota.gugopro.com/gemini_rate_limits.json';
+    var GOOGLE_MODELS_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
+
+    function getGlobalApiKey() {
+        var raw = (localStorage.getItem('gugopro_gemini_api_key') || localStorage.getItem('gemini_api_key') || '').trim();
+        if (!raw) return '';
+        if (raw.indexOf('obf_') === 0) {
+            try { return decodeURIComponent(atob(raw.slice(4))); } catch(e) { return raw.slice(4); }
+        }
+        return raw;
+    }
+
+    function setGlobalApiKey(key) {
+        if (!key) {
+            localStorage.removeItem('gugopro_gemini_api_key');
+            localStorage.removeItem('gemini_api_key');
+        } else {
+            localStorage.setItem('gugopro_gemini_api_key', key.trim());
+            localStorage.setItem('gemini_api_key', key.trim());
+        }
+        updateTdeeKeyUI();
+    }
+
+    function maskApiKey(key) {
+        if (!key) return '';
+        if (key.length <= 10) return '••••••••';
+        return key.slice(0, 6) + '••••••••' + key.slice(-4);
+    }
+
+    function updateTdeeKeyUI() {
+        var key = getGlobalApiKey();
+        var statusBox = document.getElementById('tdee-key-status-box');
+        var masked = document.getElementById('tdee-masked-key-display');
+        var clearBtn = document.getElementById('btn-clear-tdee-key');
+        var statusText = document.getElementById('tdee-api-status-text');
+        if (key) {
+            if (statusBox) statusBox.style.display = '';
+            if (masked) masked.textContent = maskApiKey(key);
+            if (clearBtn) clearBtn.style.display = '';
+            if (statusText) statusText.textContent = 'API 已連線';
+        } else {
+            if (statusBox) statusBox.style.display = 'none';
+            if (clearBtn) clearBtn.style.display = 'none';
+            if (statusText) statusText.textContent = 'API 設定';
+        }
+    }
+
+    window.openTdeeApiModal = function() {
+        updateTdeeKeyUI();
+        document.getElementById('tdee-api-key-input').value = '';
+        document.getElementById('modal-tdee-api').style.display = 'flex';
+    };
+
+    window.saveTdeeApiKey = function() {
+        var val = document.getElementById('tdee-api-key-input').value.trim();
+        if (val) {
+            setGlobalApiKey(val);
+            document.getElementById('modal-tdee-api').style.display = 'none';
+        } else if (getGlobalApiKey()) {
+            document.getElementById('modal-tdee-api').style.display = 'none';
+        } else {
+            alert('請輸入有效的 Gemini API Key。');
+        }
+    };
+
+    window.clearTdeeApiKey = function() {
+        if (confirm('確定要清除已儲存的 API Key 嗎？')) {
+            setGlobalApiKey('');
+            document.getElementById('tdee-api-key-input').value = '';
+            alert('已成功清除 API Key。');
+        }
+    };
+
+    function rankModelsDynamically(modelNames) {
+        return modelNames.slice().sort(function(a, b) {
+            var matchA = a.match(/(\d+(?:\.\d+)?)/);
+            var matchB = b.match(/(\d+(?:\.\d+)?)/);
+            var verA = matchA ? parseFloat(matchA[1]) : 1.0;
+            var verB = matchB ? parseFloat(matchB[1]) : 1.0;
+            var isFlashA = a.toLowerCase().indexOf('flash') !== -1 ? 0.5 : 0;
+            var isFlashB = b.toLowerCase().indexOf('flash') !== -1 ? 0.5 : 0;
+            var scoreA = verA + isFlashA;
+            var scoreB = verB + isFlashB;
+            if (scoreB !== scoreA) return scoreB - scoreA;
+            return a.localeCompare(b);
+        });
+    }
+
+    async function fetchTdeeModelQueue(apiKey) {
+        var now = Date.now();
+        if (cachedTdeeModels && cachedTdeeModels.length > 0 && (now - lastTdeeProbeTime < 300000)) {
+            return cachedTdeeModels;
+        }
+        var models = [];
+
+        // 1. Quota API
+        try {
+            var res = await fetch(QUOTA_API_URL).catch(function() { return null; });
+            if (res && res.ok) {
+                var data = await res.json();
+                var raw = Array.isArray(data) ? data : (data.models || []);
+                models = raw.map(function(m) { return typeof m === 'string' ? m : (m.name || m.api_name || ''); })
+                            .map(function(n) { return n.replace('models/', ''); })
+                            .filter(function(n) { return n && !n.includes('embedding') && !n.includes('aqa'); });
+            }
+        } catch(e) {}
+
+        // 2. Quota JSON
+        if (models.length === 0) {
+            try {
+                var res2 = await fetch(QUOTA_LIMITS_URL).catch(function() { return null; });
+                if (res2 && res2.ok) {
+                    var data2 = await res2.json();
+                    if (data2 && Array.isArray(data2.models)) {
+                        models = data2.models.map(function(m) { return (m.name || m.api_name || '').replace('models/', ''); }).filter(Boolean);
+                    }
+                }
+            } catch(e2) {}
+        }
+
+        // 3. Google API fallback
+        if (models.length === 0 && apiKey) {
+            try {
+                var res3 = await fetch(GOOGLE_MODELS_URL + '?key=' + encodeURIComponent(apiKey));
+                if (res3 && res3.ok) {
+                    var data3 = await res3.json();
+                    models = (data3.models || []).filter(function(m) {
+                        return m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent') && !m.name.includes('embedding');
+                    }).map(function(m) { return m.name.replace('models/', ''); });
+                }
+            } catch(e3) {}
+        }
+
+        if (models.length > 0) {
+            var ranked = rankModelsDynamically(models);
+            cachedTdeeModels = ranked;
+            lastTdeeProbeTime = now;
+            return ranked;
+        }
+        return [];
+    }
+
+    async function callGeminiWithMultiModelFallback(apiKey, payload) {
+        var models = await fetchTdeeModelQueue(apiKey);
+        if (!models || models.length === 0) {
+            throw new Error('無法取得可用 AI 模型清單，請確認網路連線。');
+        }
+        var lastError = null;
+        for (var i = 0; i < models.length; i++) {
+            var modelName = models[i];
+            var endpoint = GOOGLE_MODELS_URL + '/' + encodeURIComponent(modelName) + ':generateContent?key=' + encodeURIComponent(apiKey);
+            for (var attempt = 1; attempt <= 2; attempt++) {
+                try {
+                    var res = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (res.ok) {
+                        var json = await res.json();
+                        return { json: json, usedModel: modelName };
+                    }
+                    console.warn('[AI Engine] 模型 ' + modelName + ' 回傳 HTTP ' + res.status + '，自動切換至下一個備援模型...');
+                    lastError = new Error('HTTP ' + res.status + ' (' + modelName + ')');
+                    if (res.status === 404 || res.status === 429) break;
+                    await new Promise(function(r) { setTimeout(r, 400 * attempt); });
+                } catch(err) {
+                    console.warn('[AI Engine] 模型 ' + modelName + ' 連線失敗:', err);
+                    lastError = err;
+                }
+            }
+        }
+        throw new Error('所有備援 AI 模型目前皆無法回應 (' + (lastError ? lastError.message : '連線失敗') + ')，請稍後重試。');
+    }
+
+    async function generateAiMealPlan() {
+        var apiKey = getGlobalApiKey();
+        if (!apiKey) {
+            openTdeeApiModal();
+            return;
+        }
+
+        var age = document.getElementById('age').value;
+        var height = document.getElementById('height').value;
+        var weight = document.getElementById('weight').value;
+        var bodyfat = document.getElementById('bodyfat').value || '未填寫';
+        var goalText = document.getElementById('goal').selectedOptions[0].text;
+        var bmr = document.getElementById('result-bmr').textContent;
+        var tdee = document.getElementById('result-tdee').textContent;
+        var targetKcal = document.getElementById('result-target').textContent;
+        var proteinG = document.getElementById('macro-protein-g').textContent;
+        var fatG = document.getElementById('macro-fat-g').textContent;
+        var carbsG = document.getElementById('macro-carbs-g').textContent;
+
+        if (bmr === '—') {
+            alert('請先點擊「立即計算我的 TDEE 與宏量營養素」按鈕計算基礎數值！');
+            return;
+        }
+
+        var loading = document.getElementById('ai-plan-loading');
+        var resultBox = document.getElementById('ai-plan-result');
+        var btn = document.getElementById('btn-generate-ai-plan');
+
+        loading.style.display = 'block';
+        resultBox.style.display = 'none';
+        btn.disabled = true;
+
+        var prompt = '你是一位專業的運動營養師與健身教練。以下是學員的身體數據與計算結果：\n' +
+            '- 性別：' + (currentGender === 'male' ? '男' : '女') + '\n' +
+            '- 年齡：' + age + ' 歲，身高：' + height + ' cm，體重：' + weight + ' kg，體脂率：' + bodyfat + '%\n' +
+            '- 健身目標：' + goalText + '\n' +
+            '- BMR：' + bmr + ' kcal/天，TDEE：' + tdee + ' kcal/天，目標每日熱量：' + targetKcal + ' kcal/天\n' +
+            '- 三大營養素目標：蛋白質 ' + proteinG + '、脂肪 ' + fatG + '、碳水化合物 ' + carbsG + '\n\n' +
+            '請為他量身打造：\n' +
+            '1. 【個人化一日實戰菜單】（早餐、午餐、下午加餐、晚餐），請具體列出食材與估算營養素，並貼近台灣/亞洲常見外食或自煮選擇。\n' +
+            '2. 【每週運動與重訓建議】（針對其目標之有氧/重訓頻率與課表架構）。\n' +
+            '3. 【營養師 3 大黃金補水與作息叮嚀】。\n\n' +
+            '請以繁體中文回答，排版清晰美觀，多使用 Emoji。';
+
+        try {
+            var payload = {
+                contents: [{ role: 'user', parts: [{ text: prompt }] }],
+                generationConfig: { temperature: 0.7, maxOutputTokens: 4096 }
+            };
+            var resp = await callGeminiWithMultiModelFallback(apiKey, payload);
+            var text = resp.json?.candidates?.[0]?.content?.parts?.[0]?.text || '生成完畢，但無文字內容。';
+            resultBox.textContent = text;
+            resultBox.style.display = 'block';
+        } catch(err) {
+            alert('AI 生成失敗：' + err.message);
+        } finally {
+            loading.style.display = 'none';
+            btn.disabled = false;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        updateTdeeKeyUI();
+    });
+
     </script>
 
+    <!-- API Key Modal -->
+    <div id="modal-tdee-api" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); display:none; justify-content:center; align-items:center; z-index:3000; padding:20px;">
+        <div style="background:#15161c; border:1px solid rgba(255,255,255,0.1); border-radius:24px; padding:28px; max-width:480px; width:100%; max-height:90vh; overflow-y:auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                <h3 style="color:var(--color-emerald); font-family:'Outfit', sans-serif; font-size:1.1rem; margin:0;"><i class="fa-solid fa-key"></i> 設定 Gemini API Key</h3>
+                <button onclick="document.getElementById('modal-tdee-api').style.display='none'" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p style="color:var(--text-muted); margin-bottom:18px; line-height:1.6; font-size:0.9rem;">
+                GugoPro 全站通用共享金鑰。輸入一次即可在全站所有 AI 工具中通用。金鑰僅儲存在您的瀏覽器本地端 (localStorage)，絕不上傳伺服器。
+            </p>
+            <div id="tdee-key-status-box" style="display:none; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); border-radius:12px; padding:12px; margin-bottom:16px;">
+                <div style="font-size:0.8rem; color:var(--color-emerald); font-weight:700;">目前已連線之 API Key：</div>
+                <div id="tdee-masked-key-display" style="font-family:monospace; font-size:0.95rem; color:#fff; margin-top:4px;">••••••••</div>
+            </div>
+            <div style="margin-bottom:16px;">
+                <input type="password" id="tdee-api-key-input" placeholder="貼上您的 Gemini API Key (AIzaSy...)" style="width:100%; padding:13px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:12px; color:#fff; font-size:0.95rem; outline:none;">
+            </div>
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" style="background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); color:var(--color-emerald); text-decoration:none; margin-bottom:12px; display:inline-flex; align-items:center; justify-content:center; gap:6px; width:100%; padding:13px; border-radius:12px; font-weight:600; font-size:0.9rem;">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> 免費取得 Google Gemini API Key
+            </a>
+            <div style="display:flex; gap:10px;">
+                <button onclick="saveTdeeApiKey()" style="flex:1; padding:13px; border-radius:12px; border:none; font-weight:700; cursor:pointer; font-size:0.95rem; background:linear-gradient(135deg, #10b981, #059669); color:#fff;">儲存設定</button>
+                <button id="btn-clear-tdee-key" onclick="clearTdeeApiKey()" style="display:none; padding:13px 16px; background:none; border:1px solid rgba(239,68,68,0.4); color:#f87171; border-radius:12px; cursor:pointer;"><i class="fa-solid fa-trash-can"></i></button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
