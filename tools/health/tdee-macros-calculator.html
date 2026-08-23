@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="zh-TW">
 <head>
-    <!-- GugoPro TDEE Engine Anti-Cache Build Token: 1787452336 -->
+    <!-- GugoPro TDEE Engine Anti-Cache Build Token: 1787452731 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AI 專屬營養師與 TDEE 熱量追蹤器 | GugoPro</title>
@@ -194,7 +194,7 @@ async function callDietitian(text, image) {
     return;
   }
 
-  const systemInstructionText = `你是一位專業、親切且具備臨床經驗的 GugoPro 國家級專屬諮詢營養師，請使用繁體中文回答。
+  const prompt = `你是 GugoPro 專業且親切的 AI 專屬諮詢營養師，請用繁體中文回答。
 
 【學員當前數據】：
 - 性別：${state.gender === 'male' ? '男' : '女'}，年齡：${state.age} 歲，身高：${state.height} cm，體重：${state.weight} kg
@@ -206,28 +206,19 @@ async function callDietitian(text, image) {
 【回應原則與任務】：
 1. 若使用者提供餐點照片或描述吃了某餐，請估算該餐熱量與三大營養素 (蛋白質 P / 脂肪 F / 碳水 C)，並在回傳 JSON 附帶 foodScanResult 物件。
 2. 若使用者詢問身體數據、TDEE 或目標規劃，請評估並在回傳 JSON 附帶 suggestedTdee 物件。
-3. 輸出必須為標準 JSON 格式：
+
+使用者訊息："${text}"
+
+請只回傳以下純 JSON 物件（嚴禁包含 markdown 以外的多餘說明）：
 {
   "replyText": "親切專業詳細的回應內容 (可使用 Emoji 與良好段落排版)",
-  "foodScanResult": {
-    "mealName": "餐點名稱",
-    "calories": 520,
-    "protein": 35,
-    "fat": 12,
-    "carbs": 68
-  },
-  "suggestedTdee": {
-    "targetCal": 2040,
-    "protein": 140,
-    "fat": 55,
-    "carbs": 245
-  }
-}
-（若無對應項目則該物件設為 null）`;
+  "foodScanResult": null 或 {"mealName":"餐點名稱","calories":520,"protein":35,"fat":12,"carbs":68},
+  "suggestedTdee": null 或 {"targetCal":2040,"protein":140,"fat":55,"carbs":245}
+}`;
 
-  const userParts = [{ text: text }];
+  const parts = [{ text: prompt }];
   if (image && image.data && image.mime) {
-    userParts.push({
+    parts.push({
       inlineData: {
         mimeType: image.mime,
         data: image.data
@@ -235,24 +226,13 @@ async function callDietitian(text, image) {
     });
   }
 
-  // Standard compliant payload structure with systemInstruction, contents, and generationConfig
-  const bodyPayload = {
+  // EXACT 1:1 MIRROR OF english-speaking-tutor.html API BODY STRUCTURE
+  const body = {
     contents: [
       {
-        role: "user",
-        parts: userParts
+        parts: parts
       }
-    ],
-    systemInstruction: {
-      parts: [
-        { text: systemInstructionText }
-      ]
-    },
-    generationConfig: {
-      temperature: 0.7,
-      maxOutputTokens: 2048,
-      responseMimeType: "application/json"
-    }
+    ]
   };
 
   const thinking = { id: uid('thinking'), role: 'ai', text: '營養師正在分析中…', createdAt: new Date().toISOString() };
@@ -273,7 +253,7 @@ async function callDietitian(text, image) {
         const response = await fetchTimeout(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(bodyPayload)
+          body: JSON.stringify(body)
         });
 
         if (response.ok) {
