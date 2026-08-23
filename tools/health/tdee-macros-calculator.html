@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="zh-TW">
 <head>
-    <!-- GugoPro TDEE Engine Anti-Cache Build Token: 1787452888 -->
+    <!-- GugoPro TDEE Engine Anti-Cache Build Token: 1787452970 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AI 專屬營養師與 TDEE 熱量追蹤器 | GugoPro</title>
@@ -48,6 +48,49 @@
 <script>
 (function(){
 'use strict';
+// ===== API KEY SECURITY & OBFUSCATION MODULE (Aligned 100% with AI Tutor) =====
+function encodeApiKey(key) {
+  if (!key) return '';
+  try { return 'obf_' + btoa(encodeURIComponent(key)); } catch(e) { return key; }
+}
+
+function decodeApiKey(raw) {
+  if (!raw) return '';
+  if (raw.indexOf('obf_') === 0) {
+    try { return decodeURIComponent(atob(raw.slice(4))); } catch(e) { return raw.slice(4); }
+  }
+  return raw;
+}
+
+function maskApiKey(key) {
+  if (!key) return '';
+  if (key.length <= 10) return '••••••••';
+  return key.slice(0, 6) + '••••••••' + key.slice(-4);
+}
+
+function getGlobalApiKey() {
+  const raw = (localStorage.getItem('gugopro_gemini_api_key') || localStorage.getItem('gemini_api_key') || localStorage.getItem('tarot_api_key') || '').trim();
+  const decoded = decodeApiKey(raw);
+  if (decoded && raw.indexOf('obf_') !== 0) {
+    setGlobalApiKey(decoded);
+  }
+  return decoded;
+}
+
+function setGlobalApiKey(key) {
+  if (!key) {
+    localStorage.removeItem('gugopro_gemini_api_key');
+    localStorage.removeItem('gemini_api_key');
+    localStorage.removeItem('tarot_api_key');
+    return;
+  }
+  const obf = encodeApiKey(key.trim());
+  localStorage.setItem('gugopro_gemini_api_key', obf);
+  localStorage.setItem('gemini_api_key', obf);
+  localStorage.setItem('tarot_api_key', obf);
+}
+
+
 const KEY='gugopro_gemini_api_key', SESSION_KEY='gugopro_tdee_chat_sessions', STATE_KEY='gugopro_dietitian_state';
 const QUOTA_URL='https://quota.gugopro.com/api/models', CATALOG_URL='https://quota.gugopro.com/gemini_rate_limits.json', DISCOVERY_URL='https://generativelanguage.googleapis.com/v1beta/models';
 const state={gender:'male',age:28,height:175,weight:70,activity:1.55,goal:'loss',bmr:0,tdee:0,targetCal:0,targetPro:0,targetFat:0,targetCarb:0,consumedCal:0,consumedPro:0,consumedFat:0,consumedCarb:0,mealsList:[]};
@@ -164,7 +207,7 @@ function parseAiResponse(payload) {
 }
 
 async function callDietitian(text, image) {
-  const apiKey = (localStorage.getItem(KEY) || '').trim();
+  const apiKey = getGlobalApiKey();
   if (!apiKey) {
     addAiMessage('🔑 請先點擊頂部【⚙️ 設定 API】按鈕貼上您的免費 Gemini API Key，即可開啟 AI 對話與拍照辨識餐點。');
     openModal('api-backdrop');
@@ -257,11 +300,11 @@ async function callDietitian(text, image) {
   addAiMessage(result.replyText || '分析完成。', result);
 }
 async function sendMessage(){if(sending)return;const input=$('chat-input'),text=input.value.trim(),image=pendingImage;if(!text&&!image)return;input.value='';clearImage();addUserMessage(text||'請分析這張餐點照片。',image);sending=true;try{await callDietitian(text||'請分析這張餐點照片的食物名稱、熱量與三大營養素。',image)}finally{sending=false}}
-function updateApiUi(){const key=(localStorage.getItem(KEY)||'').trim(),button=$('api-open');button.classList.toggle('connected',!!key);button.classList.toggle('unconnected',!key);$('api-label').textContent=key?'API 已連線':'設定 API';$('key-status').style.display=key?'block':'none';$('key-status').textContent=key?'目前 Key：'+(key.length>10?key.slice(0,6)+'••••••••'+key.slice(-4):'••••••••'):'';$('clear-api-key').style.display=key?'block':'none'}
-function saveApiKey(){const value=$('api-key-input').value.trim();if(!value&&!localStorage.getItem(KEY)){alert('請輸入有效的 API Key。');return}if(value)localStorage.setItem(KEY,value);updateApiUi();closeModal('api-backdrop');if(value)addAiMessage('API Key 已保存於本機瀏覽器，現在可以開始對話或分析餐點。')}
+function updateApiUi(){const key=getGlobalApiKey(),button=$('api-open');button.classList.toggle('connected',!!key);button.classList.toggle('unconnected',!key);$('api-label').textContent=key?'API 已連線':'設定 API';$('key-status').style.display=key?'block':'none';$('key-status').textContent=key?'目前 Key：'+(key.length>10?key.slice(0,6)+'••••••••'+key.slice(-4):'••••••••'):'';$('clear-api-key').style.display=key?'block':'none'}
+function saveApiKey(){const value=$('api-key-input').value.trim();if(!value&&!localStorage.getItem(KEY)){alert('請輸入有效的 API Key。');return}if(value)setGlobalApiKey(value);updateApiUi();closeModal('api-backdrop');if(value)addAiMessage('API Key 已保存於本機瀏覽器，現在可以開始對話或分析餐點。')}
 function exportReport(){const lines=['【GugoPro 飲食與 TDEE 每日健康日誌】','日期：'+new Date().toLocaleDateString('zh-TW'),'熱量：'+state.consumedCal+' / '+state.targetCal+' kcal','蛋白質：'+state.consumedPro+' / '+state.targetPro+' g','脂肪：'+state.consumedFat+' / '+state.targetFat+' g','碳水化合物：'+state.consumedCarb+' / '+state.targetCarb+' g','餐點明細：'];state.mealsList.forEach((meal,index)=>lines.push((index+1)+'. '+meal.name+'：'+meal.calories+' kcal (P:'+meal.protein+'g, C:'+meal.carbs+'g, F:'+meal.fat+'g)'));const report=lines.join('\n');if(navigator.clipboard)navigator.clipboard.writeText(report).then(()=>alert('飲食日誌已複製至剪貼簿。')).catch(()=>prompt('請手動複製：',report));else prompt('請手動複製：',report)}
 function syncTdee(){state.gender=$('set-gender').value;state.age=safeNumber($('set-age').value,28);state.height=safeNumber($('set-height').value,175);state.weight=safeNumber($('set-weight').value,70);state.activity=safeNumber($('set-activity').value,1.55);state.goal=$('set-goal').value;recalc();saveState();updateDashboard()}
-function bind(){document.querySelectorAll('[data-close]').forEach(button=>button.addEventListener('click',()=>closeModal(button.dataset.close)));document.querySelectorAll('.backdrop').forEach(backdrop=>backdrop.addEventListener('click',event=>{if(event.target===backdrop)backdrop.classList.remove('open')}));$('dashboard-open').addEventListener('click',()=>{updateDashboard();openModal('dashboard-backdrop')});$('api-open').addEventListener('click',()=>{updateApiUi();$('api-key-input').value='';openModal('api-backdrop')});$('history-open').addEventListener('click',openDrawer);$('menu-open').addEventListener('click',openDrawer);$('drawer-close').addEventListener('click',closeDrawer);$('drawer-overlay').addEventListener('click',closeDrawer);$('new-chat').addEventListener('click',()=>{newSession('新對話');closeDrawer()});$('clear-all-chats').addEventListener('click',()=>{if(!confirm('確定清除全部歷史聊天室嗎？'))return;const first={id:uid('session'),title:'一般飲食諮詢',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),messages:[]};sessions=[first];activeSessionId=first.id;saveSessions();renderRooms();renderActiveSession()});$('media-open').addEventListener('click',showMedia);$('photo-chip').addEventListener('click',showMedia);$('camera-choice').addEventListener('click',()=>{$('camera-input').click()});$('gallery-choice').addEventListener('click',()=>{$('gallery-input').click()});$('camera-input').addEventListener('change',event=>readImage(event.target.files?.[0]));$('gallery-input').addEventListener('change',event=>readImage(event.target.files?.[0]));$('remove-image').addEventListener('click',clearImage);$('send-message').addEventListener('click',sendMessage);$('chat-input').addEventListener('keydown',event=>{if(event.key==='Enter')sendMessage()});document.querySelectorAll('[data-prompt]').forEach(button=>button.addEventListener('click',()=>sendQuick(button.dataset.prompt)));$('save-api-key').addEventListener('click',saveApiKey);$('clear-api-key').addEventListener('click',()=>{if(confirm('確定清除本機 API Key 嗎？')){localStorage.setItem(KEY,'');updateApiUi()}});$('reset-meals').addEventListener('click',()=>{if(!confirm('確定清空今日餐點紀錄嗎？'))return;state.consumedCal=0;state.consumedPro=0;state.consumedFat=0;state.consumedCarb=0;state.mealsList=[];saveState();updateDashboard()});$('export-report').addEventListener('click',exportReport);['gender','age','height','weight','activity','goal'].forEach(key=>$( 'set-'+key).addEventListener('change',syncTdee))}
+function bind(){document.querySelectorAll('[data-close]').forEach(button=>button.addEventListener('click',()=>closeModal(button.dataset.close)));document.querySelectorAll('.backdrop').forEach(backdrop=>backdrop.addEventListener('click',event=>{if(event.target===backdrop)backdrop.classList.remove('open')}));$('dashboard-open').addEventListener('click',()=>{updateDashboard();openModal('dashboard-backdrop')});$('api-open').addEventListener('click',()=>{updateApiUi();$('api-key-input').value='';openModal('api-backdrop')});$('history-open').addEventListener('click',openDrawer);$('menu-open').addEventListener('click',openDrawer);$('drawer-close').addEventListener('click',closeDrawer);$('drawer-overlay').addEventListener('click',closeDrawer);$('new-chat').addEventListener('click',()=>{newSession('新對話');closeDrawer()});$('clear-all-chats').addEventListener('click',()=>{if(!confirm('確定清除全部歷史聊天室嗎？'))return;const first={id:uid('session'),title:'一般飲食諮詢',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),messages:[]};sessions=[first];activeSessionId=first.id;saveSessions();renderRooms();renderActiveSession()});$('media-open').addEventListener('click',showMedia);$('photo-chip').addEventListener('click',showMedia);$('camera-choice').addEventListener('click',()=>{$('camera-input').click()});$('gallery-choice').addEventListener('click',()=>{$('gallery-input').click()});$('camera-input').addEventListener('change',event=>readImage(event.target.files?.[0]));$('gallery-input').addEventListener('change',event=>readImage(event.target.files?.[0]));$('remove-image').addEventListener('click',clearImage);$('send-message').addEventListener('click',sendMessage);$('chat-input').addEventListener('keydown',event=>{if(event.key==='Enter')sendMessage()});document.querySelectorAll('[data-prompt]').forEach(button=>button.addEventListener('click',()=>sendQuick(button.dataset.prompt)));$('save-api-key').addEventListener('click',saveApiKey);$('clear-api-key').addEventListener('click',()=>{if(confirm('確定清除本機 API Key 嗎？')){setGlobalApiKey('');updateApiUi()}});$('reset-meals').addEventListener('click',()=>{if(!confirm('確定清空今日餐點紀錄嗎？'))return;state.consumedCal=0;state.consumedPro=0;state.consumedFat=0;state.consumedCarb=0;state.mealsList=[];saveState();updateDashboard()});$('export-report').addEventListener('click',exportReport);['gender','age','height','weight','activity','goal'].forEach(key=>$( 'set-'+key).addEventListener('change',syncTdee))}
 function init(){loadState();loadSessions();bind();updateDashboard();updateApiUi()}
 document.addEventListener('DOMContentLoaded',init)
 }())
