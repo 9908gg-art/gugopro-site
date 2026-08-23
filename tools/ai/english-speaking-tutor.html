@@ -962,26 +962,72 @@
             return 'zh-TW';
         }
 
+        const QUOTA_MODELS_URL = 'https://quota.gugopro.com/api/models';
+        const GOOGLE_MODELS_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
+
+        function getGeminiApiKey() {
+            return (localStorage.getItem('gugopro_gemini_api_key') || localStorage.getItem('gemini_api_key') || '').trim();
+        }
+
+        function normaliseGeminiModel(model) {
+            if (!model) return null;
+            const rawName = typeof model === 'string' ? model : (model.api_name || model.name || '');
+            const name = String(rawName).replace(/^models\//, '').trim();
+            if (!/^gemini-[a-zA-Z0-9.\-]+$/.test(name)) return null;
+            if (model && typeof model === 'object') {
+                if (model.is_rest_compatible === false) return null;
+                if (Array.isArray(model.supportedGenerationMethods) && !model.supportedGenerationMethods.includes('generateContent')) return null;
+            }
+            if (['embedding', 'aqa', 'tts', 'audio', 'robotics', 'grounding', 'computer-use', 'nano-banana', 'lyria', 'veo', 'gemma', 'deep-research'].some(part => name.toLowerCase().includes(part))) return null;
+            const version = name.match(/(\d+(?:\.\d+)?)/);
+            const score = (version ? parseFloat(version[1]) * 100 : 0) + (name.toLowerCase().includes('pro') ? 50 : 0) + (name.toLowerCase().includes('flash') ? 30 : 0) - (name.toLowerCase().includes('lite') ? 20 : 0);
+            return { api_name: name, score };
+        }
+
         async function fetchLatestModel() {
+            let discovered = [];
             try {
-                const res = await fetch('https://quota.gugopro.com/gemini_rate_limits.json');
-                if (!res.ok) throw new Error("Fetch Failed");
-                const data = await res.json();
-                availableModels = data.models.filter(m => m.is_free_tier && m.is_rest_compatible && m.capabilities.includes("text_generation"));
-                if (availableModels.length > 0) {
-                    currentModelIndex = 0;
-                    currentModel = availableModels[currentModelIndex].api_name;
-                    console.log(`Current Model: ${currentModel} (Updated: ${data.last_updated_date})`);
-                    hideError();
-                } else { throw new Error("No models"); }
-            } catch (e) {
-                console.error("❌ 無法取得模型資料", e);
-                showError("❌ 無法取得模型資料，請檢查網路連線。");
+                const res = await fetch(QUOTA_MODELS_URL, { cache: 'no-store' });
+                if (res.ok) {
+                    const data = await res.json();
+                    const raw = Array.isArray(data) ? data : (data.models || []);
+                    discovered = raw.map(normaliseGeminiModel).filter(Boolean);
+                }
+            } catch (quotaError) {
+                console.warn('Quota Hub model discovery failed:', quotaError);
+            }
+
+            const apiKey = getGeminiApiKey();
+            if (discovered.length === 0 && apiKey) {
+                try {
+                    const res = await fetch(`${GOOGLE_MODELS_URL}?key=${encodeURIComponent(apiKey)}`, { cache: 'no-store' });
+                    if (res.ok) {
+                        const data = await res.json();
+                        discovered = (data.models || []).map(normaliseGeminiModel).filter(Boolean);
+                    }
+                } catch (googleError) {
+                    console.warn('Google model discovery failed:', googleError);
+                }
+            }
+
+            const unique = new Map();
+            discovered.forEach(model => {
+                if (!unique.has(model.api_name) || unique.get(model.api_name).score < model.score) unique.set(model.api_name, model);
+            });
+            availableModels = Array.from(unique.values()).sort((a, b) => b.score - a.score);
+            currentModelIndex = 0;
+            currentModel = availableModels[0]?.api_name || null;
+            if (currentModel) {
+                console.log(`Current Model: ${currentModel}`);
+                hideError();
+            } else {
+                console.error('❌ 無法取得可用 Gemini 模型');
+                showError('❌ 無法取得可用 Gemini 模型，請檢查網路連線或 API Key。');
             }
         }
 
         function checkApiKey() {
-            if (!localStorage.getItem('gemini_api_key')) {
+            if (!getGeminiApiKey()) {
                 document.getElementById('modal-api').style.display = 'flex';
             }
         }
@@ -1130,14 +1176,20 @@
         overlay.onclick = closeMenu;
 
         document.getElementById('btn-config').onclick = () => {
-            document.getElementById('api-key-input').value = localStorage.getItem('gemini_api_key') || '';
+            document.getElementById('api-key-input').value = getGeminiApiKey();
             document.getElementById('modal-api').style.display = 'flex';
             closeMenu();
         };
 
         document.getElementById('btn-save-key').onclick = () => {
             const key = document.getElementById('api-key-input').value.trim();
-            if (key) { localStorage.setItem('gemini_api_key', key); document.getElementById('modal-api').style.display = 'none'; hideError(); }
+            if (key) {
+                localStorage.setItem('gugopro_gemini_api_key', key);
+                localStorage.setItem('gemini_api_key', key);
+                document.getElementById('modal-api').style.display = 'none';
+                hideError();
+                fetchLatestModel();
+            }
         };
 
         // --- Room Advanced Operations ---
@@ -1253,7 +1305,7 @@
             const content = textInput.value.trim();
             if (!content) return;
 
-            const apiKey = localStorage.getItem('gemini_api_key')?.trim();
+            const apiKey = getGeminiApiKey();
             if (!apiKey) { checkApiKey(); return; }
 
             textInput.value = '';
@@ -1325,11 +1377,29 @@
               "tutor_my": "Your reply in ${myLang}"
             }`;
 
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${apiKey}`;
-            const res = await fetch(url, {
+            const chatHistory = room.messages.map(message => ({
+                role: message.role === 'user' ? 'user' : 'model',
+                parts: [{ text: String(message.role === 'user' ? (message.learning || '') : (message.learning || '')) }]
+            }));
+            chatHistory.push({ role: 'user', parts: [{ text: prompt }] });
+
+            const payload = {
+                contents: chatHistory,
+                systemInstruction: {
+                    parts: [{ text: '你是一位專業親切的外語口說導師。' }]
+                },
+                generationConfig: {
+                    temperature: 0.7
+                }
+            };
+            const modelName = String(currentModel || '').replace(/^models\//, '');
+            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelName)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+            console.log('[GugoPro Gemini] Endpoint:', endpoint);
+            console.log('[GugoPro Gemini] Payload:', JSON.stringify(payload, null, 2));
+            const res = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                body: JSON.stringify(payload)
             });
 
             if (!res.ok) { const error = new Error("API_ERROR"); error.status = res.status; throw error; }
