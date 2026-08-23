@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- GugoPro Tarot Engine Anti-Cache Build Token: 1787459079 -->
     <title>AI 塔羅大師 | 全對話式靈性占卜師 | GugoPro</title>
     <meta name="description" content="全對話式 AI 塔羅占卜師：完整 78 張韋特牌、3D 翻牌動畫、語音/文字雙模態輸入、Gemini AI 多輪深度對話解牌與行動建議。">
     <meta name="keywords" content="塔羅牌, AI 塔羅, 塔羅占卜, 韋特塔羅, 占卜對話, 語音占卜, Gemini AI, 時間流牌陣, 每日指引, GugoPro">
@@ -799,84 +798,104 @@ var state = {
 /* =====================================================================
    DYNAMIC GEMINI MODEL DISCOVERY & MULTI-MODEL FALLBACK ENGINE
    ===================================================================== */
-/* =====================================================================
-   GEMINI API & DYNAMIC MODEL QUEUE MODULE (100% Mirror of AI Tutor)
-   ===================================================================== */
-var FALLBACK_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+var discoveredModels = null;
+var lastModelFetchTime = 0;
 var QUOTA_API_ENDPOINT = 'https://quota.gugopro.com/api/models';
 var QUOTA_LIMITS_ENDPOINT = 'https://quota.gugopro.com/gemini_rate_limits.json';
 var GOOGLE_MODELS_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models';
 
-function normaliseModel(model) {
-  var apiName = typeof model === 'string' ? model : (model.api_name || model.name?.replace(/^models\//, ''));
-  if (!apiName) return null;
-  var methods = model.supportedGenerationMethods || model.capabilities || [];
-  var canGenerate = methods.length === 0 || methods.includes('generateContent') || methods.includes('text_generation');
-  return canGenerate ? {
-    api_name: apiName,
-    latency_ms: Number(model.latency_ms || model.response_time_ms || model.avg_latency_ms || Number.MAX_SAFE_INTEGER),
-    priority: Number(model.priority || Number.MAX_SAFE_INTEGER)
-  } : null;
+function rankModelsDynamically(modelNames) {
+  return modelNames.slice().sort(function(a, b) {
+    var matchA = a.match(/(\d+(?:\.\d+)?)/);
+    var matchB = b.match(/(\d+(?:\.\d+)?)/);
+    var verA = matchA ? parseFloat(matchA[1]) : 1.0;
+    var verB = matchB ? parseFloat(matchB[1]) : 1.0;
+    var isFlashA = a.toLowerCase().indexOf('flash') !== -1 ? 0.5 : 0;
+    var isFlashB = b.toLowerCase().indexOf('flash') !== -1 ? 0.5 : 0;
+    var scoreA = verA + isFlashA;
+    var scoreB = verB + isFlashB;
+    if (scoreB !== scoreA) return scoreB - scoreA;
+    return a.localeCompare(b);
+  });
 }
 
 async function getAvailableGeminiModels(apiKey) {
-  var discovered = [];
+  var now = Date.now();
+  if (discoveredModels && (now - lastModelFetchTime < 300000)) {
+    return discoveredModels;
+  }
 
-  // 1. Primary: Query https://quota.gugopro.com/api/models
+  var models = [];
+
+  // 1. Primary: Dynamic query from Quota Hub (https://quota.gugopro.com/api/models)
   try {
     var qRes = await fetch(QUOTA_API_ENDPOINT).catch(function() { return null; });
     if (qRes && qRes.ok) {
       var qData = await qRes.json();
-      var raw = Array.isArray(qData) ? qData : (qData.models || []);
-      discovered = raw.map(function(m) { return normaliseModel(typeof m === 'string' ? { name: m } : m); }).filter(Boolean);
-    }
-  } catch (qe) {
-    console.warn('[AI Engine] Quota /api/models probe error:', qe);
-  }
-
-  // 2. Secondary: Query https://quota.gugopro.com/gemini_rate_limits.json
-  if (discovered.length === 0) {
-    try {
-      var res = await fetch(QUOTA_LIMITS_ENDPOINT).catch(function() { return null; });
-      if (res && res.ok) {
-        var data = await res.json();
-        discovered = (data.models || [])
-          .filter(function(model) { return model.is_free_tier && model.is_rest_compatible && (!model.capabilities || model.capabilities.includes('text_generation')); })
-          .map(normaliseModel).filter(Boolean);
+      var rawModels = Array.isArray(qData) ? qData : (qData.models || []);
+      var validQuota = rawModels
+        .map(function(m) { return typeof m === 'string' ? m : (m.name || m.api_name || ''); })
+        .map(function(n) { return n.replace('models/', ''); })
+        .filter(function(n) { return n && !n.includes('embedding') && !n.includes('aqa'); });
+      if (validQuota.length > 0) {
+        models = rankModelsDynamically(validQuota);
       }
-    } catch (catalogError) {
-      console.warn('[AI Engine] 模型目錄暫時無法使用：', catalogError);
     }
+  } catch(qe) {
+    console.warn('[AI Engine] Quota /api/models probe error in Tarot:', qe);
   }
 
-  // 3. Fallback: Query Google official models API for this key
-  if (discovered.length === 0 && apiKey) {
+  // 2. Secondary: Dynamic query from Quota Rate Limits JSON catalog
+  if (models.length === 0) {
     try {
-      var discoveryUrl = GOOGLE_MODELS_ENDPOINT + '?key=' + encodeURIComponent(apiKey);
-      var res = await fetch(discoveryUrl).catch(function() { return null; });
-      if (res && res.ok) {
-        var data = await res.json();
-        discovered = (data.models || []).map(normaliseModel).filter(Boolean);
+      var limitRes = await fetch(QUOTA_LIMITS_ENDPOINT).catch(function() { return null; });
+      if (limitRes && limitRes.ok) {
+        var limitData = await limitRes.json();
+        if (limitData && Array.isArray(limitData.models)) {
+          var validLimits = limitData.models
+            .map(function(m) { return (m.name || m.api_name || '').replace('models/', ''); })
+            .filter(function(n) { return n && !n.includes('embedding') && !n.includes('aqa'); });
+          if (validLimits.length > 0) {
+            models = rankModelsDynamically(validLimits);
+          }
+        }
       }
-    } catch (discoveryError) {
-      console.warn('[AI Engine] 動態模型端點暫時無法使用：', discoveryError);
+    } catch(le) {}
+  }
+
+  // 3. Fallback: Dynamic query from Google official models catalog for this API Key
+  if (models.length === 0 && apiKey) {
+    try {
+      var resp = await fetch(GOOGLE_MODELS_ENDPOINT + '?key=' + encodeURIComponent(apiKey));
+      if (resp.ok) {
+        var data = await resp.json();
+        if (data && Array.isArray(data.models)) {
+          var valid = data.models
+            .filter(function(m) {
+              return Array.isArray(m.supportedGenerationMethods) &&
+                     m.supportedGenerationMethods.includes('generateContent');
+            })
+            .map(function(m) { return (m.name || '').replace(/^models\//, ''); })
+            .filter(function(name) {
+              return !name.includes('embedding') && !name.includes('vision') && !name.includes('aqa');
+            });
+          if (valid.length > 0) {
+            models = rankModelsDynamically(valid);
+          }
+        }
+      }
+    } catch(e) {
+      console.warn('動態獲取 Google Gemini 模型清單失敗：', e);
     }
   }
 
-  // Add safe modern fallback models exactly as in AI Tutor
-  var discoveredNames = new Set(discovered.map(function(m) { return m.api_name; }));
-  FALLBACK_MODELS.forEach(function(name) {
-    if (!discoveredNames.has(name)) {
-      discovered.push({ api_name: name, latency_ms: Number.MAX_SAFE_INTEGER - 1, priority: 999 });
-    }
-  });
+  if (models.length > 0) {
+    discoveredModels = models;
+    lastModelFetchTime = now;
+    return models;
+  }
 
-  var queue = discovered
-    .filter(function(model, index, models) { return models.findIndex(function(item) { return item.api_name === model.api_name; }) === index; })
-    .sort(function(a, b) { return (a.latency_ms - b.latency_ms) || (a.priority - b.priority); })
-    .map(function(m) { return m.api_name; });
-
-  return queue;
+  return [];
 }
 
 async function callGeminiWithRetry(apiKey, prompt, generationConfig) {
@@ -885,17 +904,27 @@ async function callGeminiWithRetry(apiKey, prompt, generationConfig) {
 
   for (var i = 0; i < candidateModels.length; i++) {
     var model = candidateModels[i];
-    var url = GOOGLE_MODELS_ENDPOINT + '/' + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(apiKey);
+    var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(apiKey);
     try {
       var resp = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }]
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          generationConfig: generationConfig || { temperature: 0.75, maxOutputTokens: 4096 }
         })
       });
 
+      if (resp.status === 401 || resp.status === 403) {
+        // Preserve key in storage without clearing
+        alert('⚠️ 您設定的 Gemini API Key 已失效或權限受限，請重新設定。');
+        openApiKeyModal();
+        throw new Error('API Key 無效或已過期 (HTTP ' + resp.status + ')');
+      }
+
       if (!resp.ok) {
+        var errBody = await resp.text().catch(function(){ return ''; });
+        console.warn('模型 ' + model + ' 回傳 HTTP ' + resp.status + '，自動切換至下一個備用模型...', errBody);
         lastError = new Error('HTTP ' + resp.status + ' (' + model + ')');
         continue;
       }
@@ -907,6 +936,7 @@ async function callGeminiWithRetry(apiKey, prompt, generationConfig) {
         return text;
       }
     } catch(err) {
+      if (err.message && err.message.includes('API Key 無效')) throw err;
       console.warn('呼叫模型 ' + model + ' 發生異常：', err);
       lastError = err;
     }
@@ -921,17 +951,27 @@ async function callGeminiMultiTurnWithRetry(apiKey, contents, generationConfig) 
 
   for (var i = 0; i < candidateModels.length; i++) {
     var model = candidateModels[i];
-    var url = GOOGLE_MODELS_ENDPOINT + '/' + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(apiKey);
+    var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(apiKey);
     try {
       var resp = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents: contents
+          contents: contents,
+          generationConfig: generationConfig || { temperature: 0.75, maxOutputTokens: 2048 }
         })
       });
 
+      if (resp.status === 401 || resp.status === 403) {
+        // Preserve key in storage without clearing
+        alert('⚠️ 您設定的 Gemini API Key 已失效或權限受限，請重新設定。');
+        openApiKeyModal();
+        throw new Error('API Key 無效或已過期 (HTTP ' + resp.status + ')');
+      }
+
       if (!resp.ok) {
+        var errBody = await resp.text().catch(function(){ return ''; });
+        console.warn('追問時模型 ' + model + ' 回傳 HTTP ' + resp.status + '，自動切換至下一個備用模型...', errBody);
         lastError = new Error('HTTP ' + resp.status + ' (' + model + ')');
         continue;
       }
@@ -943,6 +983,7 @@ async function callGeminiMultiTurnWithRetry(apiKey, contents, generationConfig) 
         return text;
       }
     } catch(err) {
+      if (err.message && err.message.includes('API Key 無效')) throw err;
       console.warn('追問呼叫模型 ' + model + ' 發生異常：', err);
       lastError = err;
     }
@@ -950,6 +991,8 @@ async function callGeminiMultiTurnWithRetry(apiKey, contents, generationConfig) 
 
   throw lastError || new Error('所有可用 Gemini 模型呼叫皆失敗，請檢查網路或稍後重試。');
 }
+
+var lastRequest = null;
 
 /* =====================================================================
    API KEY SECURITY & OBFUSCATION MODULE
