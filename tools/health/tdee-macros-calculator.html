@@ -92,7 +92,7 @@ function setGlobalApiKey(key) {
 
 
 const KEY='gugopro_gemini_api_key', SESSION_KEY='gugopro_tdee_chat_sessions', STATE_KEY='gugopro_dietitian_state';
-const QUOTA_URL='https://quota.gugopro.com/api/models', CATALOG_URL='https://quota.gugopro.com/gemini_rate_limits.json', DISCOVERY_URL='https://generativelanguage.googleapis.com/v1beta/models';
+const QUOTA_URL='https://quota.gugopro.com/api/models', DISCOVERY_URL='https://generativelanguage.googleapis.com/v1beta/models';
 const state={gender:'male',age:28,height:175,weight:70,activity:1.55,goal:'loss',bmr:0,tdee:0,targetCal:0,targetPro:0,targetFat:0,targetCarb:0,consumedCal:0,consumedPro:0,consumedFat:0,consumedCarb:0,mealsList:[]};
 let sessions=[], activeSessionId='', pendingImage=null, sending=false;
 const $=id=>document.getElementById(id);
@@ -127,8 +127,6 @@ function addUserMessage(text,image){const session=activeSession();const message=
 function addAiMessage(text,structured){const session=activeSession();const message={id:uid('message'),role:'ai',text:text||'分析完成。',structured:structured||null,createdAt:new Date().toISOString()};session.messages.push(message);session.updatedAt=message.createdAt;saveSessions();renderActiveSession()}
 function scrollBottom(){requestAnimationFrame(()=>{$('chat-scroll').scrollTop=$('chat-scroll').scrollHeight})}
 async function fetchTimeout(url,options={},timeout=12000){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeout);try{return await fetch(url,{...options,signal:controller.signal,cache:'no-store'})}finally{clearTimeout(timer)}}
-const FALLBACK_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
-
 function normaliseModel(model) {
   if (!model) return null;
   const rawName = typeof model === 'string' ? model : (model.api_name || model.name || '');
@@ -138,6 +136,7 @@ function normaliseModel(model) {
   // Strict exclusions: non-rest, audio, tts, robotics, grounding, computer-use, embedding, image
   if (model && typeof model === 'object') {
     if (model.is_rest_compatible === false) return null;
+    if (Array.isArray(model.supportedGenerationMethods) && !model.supportedGenerationMethods.includes('generateContent')) return null;
   }
 
   if (['tts', 'audio', 'robotics', 'grounding', 'computer-use', 'nano-banana', 'lyria', 'veo', 'embedding', 'aqa', 'live-translate', 'gemma', 'deep-research', 'antigravity'].some(bad => cleanName.includes(bad))) {
@@ -168,28 +167,17 @@ function normaliseModel(model) {
 async function fetchModelQueue(apiKey) {
   let discovered = [];
 
-  // 1. Primary: Query https://quota.gugopro.com/gemini_rate_limits.json
+  // 1. Primary: Query the dynamic Quota Hub model API.
   try {
-    const res = await fetchTimeout(CATALOG_URL);
-    if (res.ok) {
-      const data = await res.json();
-      discovered = (data.models || []).map(normaliseModel).filter(Boolean);
+    const qRes = await fetchTimeout(QUOTA_URL);
+    if (qRes.ok) {
+      const qData = await qRes.json();
+      const raw = Array.isArray(qData) ? qData : (qData.models || []);
+      discovered = raw.map(m => normaliseModel(typeof m === 'string' ? { name: m } : m)).filter(Boolean);
     }
-  } catch (catalogError) {}
+  } catch (quotaError) {}
 
-  // 2. Secondary: Query https://quota.gugopro.com/api/models
-  if (discovered.length === 0) {
-    try {
-      const qRes = await fetchTimeout(QUOTA_URL);
-      if (qRes.ok) {
-        const qData = await qRes.json();
-        const raw = Array.isArray(qData) ? qData : (qData.models || []);
-        discovered = raw.map(m => normaliseModel(typeof m === 'string' ? { name: m } : m)).filter(Boolean);
-      }
-    } catch (qe) {}
-  }
-
-  // 3. Fallback: Query Google official models discovery API for this key
+  // 2. Secondary: Query Google official models discovery API for this key
   if (discovered.length === 0 && apiKey) {
     try {
       const discoveryUrl = `${DISCOVERY_URL}?key=${encodeURIComponent(apiKey)}`;
@@ -201,14 +189,7 @@ async function fetchModelQueue(apiKey) {
     } catch (discoveryError) {}
   }
 
-  // Add safe modern fallback models
-  const discoveredNames = new Set(discovered.map(m => m.api_name));
-  FALLBACK_MODELS.forEach(name => {
-    if (!discoveredNames.has(name)) {
-      discovered.push({ api_name: name, score: name.includes('2.5') ? 230 : (name.includes('2.0') ? 130 : 50) });
-    }
-  });
-
+  // Do not invent or hard-code model names. If discovery fails, fail clearly instead.
   // Deduplicate keeping highest score
   const uniqueMap = new Map();
   discovered.forEach(m => {
@@ -265,27 +246,36 @@ async function callDietitian(text, image) {
   "suggestedTdee": null 或 {"targetCal":2040,"protein":140,"fat":55,"carbs":245}
 }`;
 
-  const parts = [{ text: prompt }];
-  if (image && image.data && image.mime) {
-    parts.push({
-      inlineData: {
-        mimeType: image.mime,
-        data: image.data
+  const session = activeSession();
+  const chatHistory = session.messages
+    .filter(message => message && message.text)
+    .map(message => {
+      const messageParts = [{ text: String(message.text) }];
+      if (message.image && message.image.data && message.image.mime) {
+        messageParts.push({
+          inlineData: {
+            mimeType: message.image.mime,
+            data: message.image.data
+          }
+        });
       }
+      return {
+        role: message.role === 'user' ? 'user' : 'model',
+        parts: messageParts
+      };
     });
-  }
 
-  // EXACT 1:1 MIRROR OF english-speaking-tutor.html API BODY STRUCTURE
   const body = {
-    contents: [
-      {
-        parts: parts
-      }
-    ]
+    contents: chatHistory,
+    systemInstruction: {
+      parts: [{ text: '你是一位專業的國家級諮詢營養師，請提供專業且親切的飲食與 TDEE 諮詢。' }]
+    },
+    generationConfig: {
+      temperature: 0.7
+    }
   };
 
   const thinking = { id: uid('thinking'), role: 'ai', text: '營養師正在分析中…', createdAt: new Date().toISOString() };
-  const session = activeSession();
   session.messages.push(thinking);
   session.updatedAt = thinking.createdAt;
   saveSessions();
@@ -298,7 +288,9 @@ async function callDietitian(text, image) {
     const queue = await fetchModelQueue(apiKey);
     for (const modelName of queue) {
       try {
-        const url = `${DISCOVERY_URL}/${encodeURIComponent(modelName)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+        const url = `${DISCOVERY_URL}/${encodeURIComponent(String(modelName).replace(/^models\//, ''))}:generateContent?key=${encodeURIComponent(apiKey)}`;
+        console.log('[GugoPro Gemini] Endpoint:', url);
+        console.log('[GugoPro Gemini] Payload:', JSON.stringify(body, null, 2));
         const response = await fetchTimeout(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
