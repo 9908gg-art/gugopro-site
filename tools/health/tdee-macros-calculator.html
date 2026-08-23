@@ -87,15 +87,16 @@ function normaliseModelName(model) {
   const apiName = typeof model === 'string' ? model : (model.api_name || model.name || model.id || '');
   const cleanName = String(apiName).replace(/^models\//, '').trim();
   if (!cleanName) return null;
+  // Ensure valid name format without deprecated/special models
   if (!/^gemini-[a-zA-Z0-9.\-]+$/.test(cleanName)) return null;
   if (cleanName.includes('nano-banana') || cleanName.includes('imagen') || cleanName.includes('embedding') || cleanName.includes('aqa') || cleanName.includes('live-translate')) return null;
   return cleanName;
 }
 
-const FALLBACK_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-2.5-pro', 'gemini-1.5-pro'];
-
 async function fetchModelQueue(apiKey) {
   let discovered = [];
+
+  // 1. Primary: Query https://quota.gugopro.com/api/models
   try {
     const res = await fetchTimeout(QUOTA_URL);
     if (res.ok) {
@@ -105,6 +106,7 @@ async function fetchModelQueue(apiKey) {
     }
   } catch(e) {}
 
+  // 2. Secondary: Query https://quota.gugopro.com/gemini_rate_limits.json
   if (!discovered.length) {
     try {
       const res = await fetchTimeout(CATALOG_URL);
@@ -118,23 +120,29 @@ async function fetchModelQueue(apiKey) {
     } catch(e) {}
   }
 
+  // 3. Fallback: Query Google official models discovery API dynamically for this API key
   if (!discovered.length && apiKey) {
     try {
       const res = await fetchTimeout(`${DISCOVERY_URL}?key=${encodeURIComponent(apiKey)}`);
       if (res.ok) {
         const data = await res.json();
         discovered = (data.models || [])
+          .filter(m => {
+            const methods = m.supportedGenerationMethods || [];
+            return methods.length === 0 || methods.includes('generateContent');
+          })
           .map(normaliseModelName)
           .filter(Boolean);
       }
     } catch(e) {}
   }
 
-  FALLBACK_MODELS.forEach(name => {
-    if (!discovered.includes(name)) discovered.push(name);
-  });
-
-  return discovered.filter((name, idx, arr) => arr.indexOf(name) === idx);
+  // Deduplicate discovered active models list (ZERO hardcoded static fallback models!)
+  const queue = discovered.filter((name, idx, arr) => arr.indexOf(name) === idx);
+  if (!queue.length) {
+    throw new Error('無法動態取得目前可用之 Gemini 模型清單，請檢查網路連線或 API Key 狀態。');
+  }
+  return queue;
 }
 
 function parseAiResponse(payload) {
