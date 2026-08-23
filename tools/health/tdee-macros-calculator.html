@@ -720,649 +720,206 @@
         </div>
     </div>
 
-    <!-- JS Application Engine -->
+    <!-- JS Application Engine: rebuilt from the dynamic quota architecture -->
     <script>
-    // ===== STATE & DATA MODEL =====
-    var appState = {
-        gender: 'male',
-        age: 28,
-        height: 175,
-        weight: 70,
-        activity: 1.55,
-        goal: 'loss',
-        bmr: 1650,
-        tdee: 2550,
-        targetCal: 2040,
-        targetPro: 140,
-        targetFat: 55,
-        targetCarb: 245,
-        consumedCal: 0,
-        consumedPro: 0,
-        consumedFat: 0,
-        consumedCarb: 0,
-        mealsList: []
-    };
+// ===== GugoPro AI Dietitian: state, dashboard and dynamic Gemini engine =====
+(function () {
+    'use strict';
 
+    var API_KEY_STORAGE = 'gugopro_gemini_api_key';
+    var QUOTA_MODELS_URL = 'https://quota.gugopro.com/api/models';
+    var GOOGLE_MODELS_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
+    var appState = {
+        gender: 'male', age: 28, height: 175, weight: 70, activity: 1.55, goal: 'loss',
+        bmr: 0, tdee: 0, targetCal: 0, targetPro: 0, targetFat: 0, targetCarb: 0,
+        consumedCal: 0, consumedPro: 0, consumedFat: 0, consumedCarb: 0, mealsList: []
+    };
     var pendingImageBase64 = null;
     var pendingImageMime = null;
 
-    function loadState() {
-        var saved = localStorage.getItem('gugopro_dietitian_state');
-        if (saved) {
-            try { Object.assign(appState, JSON.parse(saved)); } catch(e) {}
-        }
-        recalcTargets();
-        updateUI();
+    function number(value, fallback) {
+        var parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : fallback;
     }
-
+    function escapeHtml(value) {
+        return String(value == null ? '' : value).replace(/[&<>"']/g, function (char) {
+            return {'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[char];
+        });
+    }
     function saveState() {
         localStorage.setItem('gugopro_dietitian_state', JSON.stringify(appState));
     }
-
     function recalcTargets() {
-        var bmr = 0;
-        if (appState.gender === 'male') {
-            bmr = 10 * appState.weight + 6.25 * appState.height - 5 * appState.age + 5;
-        } else {
-            bmr = 10 * appState.weight + 6.25 * appState.height - 5 * appState.age - 161;
-        }
+        var bmr = appState.gender === 'male'
+            ? 10 * appState.weight + 6.25 * appState.height - 5 * appState.age + 5
+            : 10 * appState.weight + 6.25 * appState.height - 5 * appState.age - 161;
         appState.bmr = Math.round(bmr);
         appState.tdee = Math.round(bmr * appState.activity);
-
-        var target = appState.tdee;
-        if (appState.goal === 'mild-loss') target = appState.tdee * 0.9;
-        else if (appState.goal === 'loss') target = appState.tdee * 0.8;
-        else if (appState.goal === 'lean-gain') target = appState.tdee * 1.1;
-
-        appState.targetCal = Math.round(target);
-        appState.targetPro = Math.round(appState.weight * 2.0);
+        var multiplier = appState.goal === 'loss' ? 0.8 : appState.goal === 'mild-loss' ? 0.9 : appState.goal === 'lean-gain' ? 1.1 : 1;
+        appState.targetCal = Math.max(0, Math.round(appState.tdee * multiplier));
+        appState.targetPro = Math.max(0, Math.round(appState.weight * 2));
         var fatKcal = Math.round(appState.targetCal * 0.25);
-        appState.targetFat = Math.round(fatKcal / 9);
-        var carbKcal = Math.max(0, appState.targetCal - (appState.targetPro * 4) - fatKcal);
-        appState.targetCarb = Math.round(carbKcal / 4);
+        appState.targetFat = Math.max(0, Math.round(fatKcal / 9));
+        appState.targetCarb = Math.max(0, Math.round((appState.targetCal - appState.targetPro * 4 - fatKcal) / 4));
     }
-
-    function updateUI() {
-        // Header Capsule Badge
-        var badge = document.getElementById('badge-calories');
-        if (badge) {
-            badge.textContent = Math.round(appState.consumedCal) + ' / ' + Math.round(appState.targetCal) + ' kcal';
-        }
-
-        // Modal Overview
-        var calText = document.getElementById('modal-cal-text');
-        if (calText) {
-            calText.textContent = Math.round(appState.consumedCal) + ' / ' + Math.round(appState.targetCal) + ' kcal';
-        }
-        var calBar = document.getElementById('modal-cal-bar');
-        if (calBar) {
-            var calPct = appState.targetCal > 0 ? Math.min(100, Math.round((appState.consumedCal / appState.targetCal) * 100)) : 0;
-            calBar.style.width = calPct + '%';
-        }
-
-        // Modal Macros
-        var pText = document.getElementById('modal-p-text');
-        var fText = document.getElementById('modal-f-text');
-        var cText = document.getElementById('modal-c-text');
-        if (pText) pText.textContent = Math.round(appState.consumedPro) + ' / ' + appState.targetPro + 'g';
-        if (fText) fText.textContent = Math.round(appState.consumedFat) + ' / ' + appState.targetFat + 'g';
-        if (cText) cText.textContent = Math.round(appState.consumedCarb) + ' / ' + appState.targetCarb + 'g';
-
-        var pBar = document.getElementById('modal-p-bar');
-        var fBar = document.getElementById('modal-f-bar');
-        var cBar = document.getElementById('modal-c-bar');
-        if (pBar) pBar.style.width = (Math.min(100, Math.round((appState.consumedPro / appState.targetPro) * 100)) || 0) + '%';
-        if (fBar) fBar.style.width = (Math.min(100, Math.round((appState.consumedFat / appState.targetFat) * 100)) || 0) + '%';
-        if (cBar) cBar.style.width = (Math.min(100, Math.round((appState.consumedCarb / appState.targetCarb) * 100)) || 0) + '%';
-
-        // Modal Meals List with Single Delete Button
-        var countEl = document.getElementById('modal-meals-count');
-        if (countEl) countEl.textContent = appState.mealsList.length;
-
-        var listContainer = document.getElementById('modal-meals-list');
-        if (listContainer) {
-            if (appState.mealsList.length === 0) {
-                listContainer.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:10px;">尚未記錄任何餐點，請拍照或對話新增！</div>';
-            } else {
-                var html = '';
-                appState.mealsList.forEach(function(m, i) {
-                    html += '<div class="meal-row">' +
-                        '<div class="meal-info">' +
-                            '<div class="meal-name-txt">' + (i+1) + '. ' + m.name + ' <small style="color:var(--text-muted)">(' + (m.time || '') + ')</small></div>' +
-                            '<div class="meal-macros-txt">P:' + (m.protein || 0) + 'g | F:' + (m.fat || 0) + 'g | C:' + (m.carbs || 0) + 'g</div>' +
-                        '</div>' +
-                        '<div style="display:flex; align-items:center; gap:8px;">' +
-                            '<span style="color:var(--accent); font-weight:700;">' + m.calories + ' kcal</span>' +
-                            '<button class="btn-del-meal" onclick="deleteMealItem(' + i + ')" title="刪除此餐紀錄"><i class="fa-solid fa-trash-can"></i></button>' +
-                        '</div>' +
-                    '</div>';
-                });
-                listContainer.innerHTML = html;
-            }
-        }
-
-        // Form Fields in Modal
-        if (document.getElementById('set-gender')) document.getElementById('set-gender').value = appState.gender;
-        if (document.getElementById('set-age')) document.getElementById('set-age').value = appState.age;
-        if (document.getElementById('set-height')) document.getElementById('set-height').value = appState.height;
-        if (document.getElementById('set-weight')) document.getElementById('set-weight').value = appState.weight;
-        if (document.getElementById('set-activity')) document.getElementById('set-activity').value = appState.activity;
-        if (document.getElementById('set-goal')) document.getElementById('set-goal').value = appState.goal;
-    }
-
-    window.deleteMealItem = function(index) {
-        if (index >= 0 && index < appState.mealsList.length) {
-            var removed = appState.mealsList.splice(index, 1)[0];
-            if (removed) {
-                appState.consumedCal = Math.max(0, appState.consumedCal - (parseFloat(removed.calories) || 0));
-                appState.consumedPro = Math.max(0, appState.consumedPro - (parseFloat(removed.protein) || 0));
-                appState.consumedFat = Math.max(0, appState.consumedFat - (parseFloat(removed.fat) || 0));
-                appState.consumedCarb = Math.max(0, appState.consumedCarb - (parseFloat(removed.carbs) || 0));
-            }
-            updateUI();
-            saveState();
-        }
-    };
-
-    window.syncAndRecalcTdee = function() {
-        appState.gender = document.getElementById('set-gender').value;
-        appState.age = parseFloat(document.getElementById('set-age').value) || 28;
-        appState.height = parseFloat(document.getElementById('set-height').value) || 175;
-        appState.weight = parseFloat(document.getElementById('set-weight').value) || 70;
-        appState.activity = parseFloat(document.getElementById('set-activity').value) || 1.55;
-        appState.goal = document.getElementById('set-goal').value;
-
+    function loadState() {
+        try {
+            var stored = JSON.parse(localStorage.getItem('gugopro_dietitian_state') || 'null');
+            if (stored && typeof stored === 'object') Object.assign(appState, stored);
+        } catch (error) { console.warn('Dietitian state could not be loaded.', error); }
+        if (!Array.isArray(appState.mealsList)) appState.mealsList = [];
         recalcTargets();
         updateUI();
-        saveState();
-    };
-
-    // Modal Triggers
-    window.openDashboardModal = function() {
-        updateUI();
-        document.getElementById('modal-dashboard').style.display = 'flex';
-    };
-    window.closeDashboardModal = function() {
-        document.getElementById('modal-dashboard').style.display = 'none';
-    };
-
-    window.resetDailyLogs = function() {
-        if (confirm('確定要清空今日的已攝取熱量與所有餐點紀錄嗎？')) {
-            appState.consumedCal = 0;
-            appState.consumedPro = 0;
-            appState.consumedFat = 0;
-            appState.consumedCarb = 0;
-            appState.mealsList = [];
-            updateUI();
-            saveState();
-            appendAiMessage('🔄 今日熱量進度與餐點紀錄已重設為 0。準備好開始記錄下一餐囉！');
-        }
-    };
-
-    window.exportReportText = function() {
-        var now = new Date();
-        var dateStr = now.getFullYear() + '/' + (now.getMonth()+1) + '/' + now.getDate();
-        var pct = appState.targetCal > 0 ? Math.round((appState.consumedCal / appState.targetCal) * 100) : 0;
-
-        var text = '📋【GugoPro 飲食與 TDEE 每日健康日誌】\n' +
-            '📅 日期：' + dateStr + '\n' +
-            '-----------------------------------\n' +
-            '🔥 熱量達成率：' + appState.consumedCal + ' / ' + appState.targetCal + ' kcal (' + pct + '%)\n' +
-            '🍗 蛋白質 (P)：' + appState.consumedPro + ' / ' + appState.targetPro + ' g\n' +
-            '🥑 脂肪 (F)：' + appState.consumedFat + ' / ' + appState.targetFat + ' g\n' +
-            '🍚 碳水化合物 (C)：' + appState.consumedCarb + ' / ' + appState.targetCarb + ' g\n' +
-            '-----------------------------------\n' +
-            '🍽️ 今日餐點明細 (' + appState.mealsList.length + ' 餐)：\n';
-
-        if (appState.mealsList.length === 0) {
-            text += '（今日尚未記錄任何餐點）\n';
-        } else {
-            appState.mealsList.forEach(function(m, idx) {
-                text += (idx + 1) + '. ' + m.name + '：' + m.calories + ' kcal (P:' + (m.protein||0) + 'g, C:' + (m.carbs||0) + 'g, F:' + (m.fat||0) + 'g)\n';
-            });
-        }
-        text += '-----------------------------------\n✨ 產生自 GugoPro AI 專屬營養師 (https://gugopro.com)';
-
-        navigator.clipboard.writeText(text).then(function() {
-            alert('✅ 今日飲食日誌已成功複製至剪貼簿！');
-        }).catch(function() {
-            prompt('請手動複製以下日誌內容：', text);
-        });
-    };
-
-    // ===== CHAT & MULTI-MODAL LOGIC =====
-    function appendUserMessage(text, imgBase64) {
-        var scroller = document.getElementById('chat-scroller');
-        var bubble = document.createElement('div');
-        bubble.className = 'chat-bubble bubble-user';
-
-        if (imgBase64) {
-            var img = document.createElement('img');
-            img.src = 'data:image/jpeg;base64,' + imgBase64;
-            img.style.maxWidth = '180px';
-            img.style.maxHeight = '180px';
-            img.style.borderRadius = '10px';
-            img.style.display = 'block';
-            img.style.marginBottom = '8px';
-            bubble.appendChild(img);
-        }
-
-        var textSpan = document.createElement('span');
-        textSpan.textContent = text;
-        bubble.appendChild(textSpan);
-
-        scroller.appendChild(bubble);
-        scroller.scrollTop = scroller.scrollHeight;
     }
-
-    function appendAiMessage(htmlContent, structuredData) {
-        var scroller = document.getElementById('chat-scroller');
-        var bubble = document.createElement('div');
-        bubble.className = 'chat-bubble bubble-ai';
-
-        var contentDiv = document.createElement('div');
-        contentDiv.innerHTML = htmlContent;
-        bubble.appendChild(contentDiv);
-
-        // Render Food Scan Result Card
-        if (structuredData && structuredData.foodScanResult) {
-            var food = structuredData.foodScanResult;
-            var foodCard = document.createElement('div');
-            foodCard.className = 'card-in-chat';
-            foodCard.innerHTML =
-                '<div class="card-in-chat-title">' +
-                    '<span><i class="fa-solid fa-bowl-food"></i> ' + food.mealName + '</span>' +
-                    '<span style="font-family:'Outfit',sans-serif; font-size:1.1rem; color:#fff;">' + food.calories + ' kcal</span>' +
-                '</div>' +
-                '<div class="grid-macros-3">' +
-                    '<div><span style="color:var(--color-blue)">蛋白質</span><div class="val-bold">' + food.protein + 'g</div></div>' +
-                    '<div><span style="color:var(--color-amber)">脂肪</span><div class="val-bold">' + food.fat + 'g</div></div>' +
-                    '<div><span style="color:var(--accent)">碳水</span><div class="val-bold">' + food.carbs + 'g</div></div>' +
-                '</div>' +
-                '<button class="btn-action-chat" onclick="autoWriteFoodToDashboard(this, ' + JSON.stringify(food).replace(/"/g, '&quot;') + ')">' +
-                    '<i class="fa-solid fa-plus"></i> 自動寫入數據看板' +
-                '</button>';
-            bubble.appendChild(foodCard);
-        }
-
-        // Render Suggested TDEE Card
-        if (structuredData && structuredData.suggestedTdee) {
-            var tdeeData = structuredData.suggestedTdee;
-            var tdeeCard = document.createElement('div');
-            tdeeCard.className = 'card-in-chat';
-            tdeeCard.innerHTML =
-                '<div class="card-in-chat-title">' +
-                    '<span><i class="fa-solid fa-sliders"></i> AI 建議目標熱量</span>' +
-                    '<span style="font-family:'Outfit',sans-serif; font-size:1.15rem; color:var(--accent);">' + tdeeData.targetCal + ' kcal</span>' +
-                '</div>' +
-                '<div class="grid-macros-3">' +
-                    '<div><span style="color:var(--color-blue)">蛋白質 (P)</span><div class="val-bold">' + tdeeData.protein + 'g</div></div>' +
-                    '<div><span style="color:var(--color-amber)">脂肪 (F)</span><div class="val-bold">' + tdeeData.fat + 'g</div></div>' +
-                    '<div><span style="color:var(--accent)">碳水 (C)</span><div class="val-bold">' + tdeeData.carbs + 'g</div></div>' +
-                '</div>' +
-                '<button class="btn-action-chat" onclick="autoApplyTdeeToDashboard(this, ' + JSON.stringify(tdeeData).replace(/"/g, '&quot;') + ')">' +
-                    '<i class="fa-solid fa-bolt"></i> 自動套用至今日 TDEE 目標' +
-                '</button>';
-            bubble.appendChild(tdeeCard);
-        }
-
-        scroller.appendChild(bubble);
-        scroller.scrollTop = scroller.scrollHeight;
+    function setProgress(id, current, target) {
+        var el = document.getElementById(id);
+        if (el) el.style.width = (target > 0 ? Math.min(100, Math.max(0, Math.round(current / target * 100))) : 0) + '%';
     }
-
-    window.autoWriteFoodToDashboard = function(btn, food) {
-        if (btn.classList.contains('applied')) return;
-        appState.consumedCal += parseFloat(food.calories) || 0;
-        appState.consumedPro += parseFloat(food.protein) || 0;
-        appState.consumedFat += parseFloat(food.fat) || 0;
-        appState.consumedCarb += parseFloat(food.carbs) || 0;
-        appState.mealsList.push({
-            name: food.mealName,
-            calories: food.calories,
-            protein: food.protein,
-            carbs: food.carbs,
-            fat: food.fat,
-            time: new Date().toLocaleTimeString()
-        });
-
-        updateUI();
-        saveState();
-
-        btn.classList.add('applied');
-        btn.innerHTML = '<i class="fa-solid fa-check"></i> 已成功寫入數據看板！';
-    };
-
-    window.autoApplyTdeeToDashboard = function(btn, tdeeData) {
-        if (btn.classList.contains('applied')) return;
-        if (tdeeData.targetCal) appState.targetCal = Math.round(tdeeData.targetCal);
-        if (tdeeData.protein) appState.targetPro = Math.round(tdeeData.protein);
-        if (tdeeData.fat) appState.targetFat = Math.round(tdeeData.fat);
-        if (tdeeData.carbs) appState.targetCarb = Math.round(tdeeData.carbs);
-
-        updateUI();
-        saveState();
-
-        btn.classList.add('applied');
-        btn.innerHTML = '<i class="fa-solid fa-check"></i> 已自動更新 TDEE 目標！';
-    };
-
-    window.sendQuickPrompt = function(text) {
-        document.getElementById('chat-user-input').value = text;
-        handleUserSendMessage();
-    };
-
-    window.triggerCameraInput = function() {
-        var inp = document.getElementById('imageInput');
-        if (inp) inp.click();
-    };
-
-    window.handleMealPhotoUpload = function(event) {
-        var file = event.target.files && event.target.files[0];
-        if (!file) return;
-
-        var reader = new FileReader();
-        reader.onload = function(e) {
-            pendingImageBase64 = e.target.result.split(',')[1];
-            pendingImageMime = file.type || 'image/jpeg';
-
-            var previewContainer = document.getElementById('image-preview-container');
-            var previewThumb = document.getElementById('image-preview-thumb');
-            if (previewContainer && previewThumb) {
-                previewThumb.src = e.target.result;
-                previewContainer.style.display = 'flex';
-            }
+    function updateUI() {
+        var values = {
+            'badge-calories': Math.round(appState.consumedCal) + ' / ' + Math.round(appState.targetCal) + ' kcal',
+            'modal-cal-text': Math.round(appState.consumedCal) + ' / ' + Math.round(appState.targetCal) + ' kcal',
+            'modal-p-text': Math.round(appState.consumedPro) + ' / ' + appState.targetPro + 'g',
+            'modal-f-text': Math.round(appState.consumedFat) + ' / ' + appState.targetFat + 'g',
+            'modal-c-text': Math.round(appState.consumedCarb) + ' / ' + appState.targetCarb + 'g'
         };
-        reader.readAsDataURL(file);
-    };
-
-    window.clearImagePreview = function() {
-        pendingImageBase64 = null;
-        pendingImageMime = null;
-        var inp = document.getElementById('imageInput');
-        if (inp) inp.value = '';
-        var previewContainer = document.getElementById('image-preview-container');
-        if (previewContainer) previewContainer.style.display = 'none';
-    };
-
-    window.handleUserSendMessage = function() {
-        var input = document.getElementById('chat-user-input');
-        var text = input.value.trim();
-        var imgBase64 = pendingImageBase64;
-        var imgMime = pendingImageMime;
-
-        if (!text && !imgBase64) return;
-
-        var userDisplayText = text || (imgBase64 ? '📷 [已上傳餐點照片，請求營養師分析]' : '');
-        input.value = '';
-        clearImagePreview();
-
-        appendUserMessage(userDisplayText, imgBase64);
-        callAiDietitianEngine(userDisplayText, imgBase64, imgMime);
-    };
-
-    // ===== QUOTA MULTI-MODEL FALLBACK ENGINE =====
-    var QUOTA_LIMITS_URL = 'https://quota.gugopro.com/gemini_rate_limits.json';
-    var GOOGLE_MODELS_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
-
-    // Standard live Gemini REST models list (guaranteed fallback)
-    var DEFAULT_GEMINI_MODELS = [
-        'gemini-2.5-flash',
-        'gemini-2.5-pro',
-        'gemini-2.0-flash',
-        'gemini-1.5-flash',
-        'gemini-1.5-pro'
-    ];
-
-    async function fetchModelQueue(apiKey) {
-        var models = [];
-
-        // 1. Try Google Official Models Catalog API for this API Key
-        if (apiKey) {
-            try {
-                var res = await fetch(GOOGLE_MODELS_URL + '?key=' + encodeURIComponent(apiKey));
-                if (res && res.ok) {
-                    var data = await res.json();
-                    if (data && Array.isArray(data.models)) {
-                        models = data.models.filter(function(m) {
-                            return Array.isArray(m.supportedGenerationMethods) &&
-                                   m.supportedGenerationMethods.includes('generateContent');
-                        }).map(function(m) { return (m.name || '').replace(/^models\//, ''); })
-                          .filter(function(name) {
-                            return name && !name.includes('embedding') && !name.includes('aqa') && !name.includes('imagen');
-                        });
-                    }
-                }
-            } catch(e) {}
-        }
-
-        // 2. Try Quota Catalog if Google discovery empty
-        if (models.length === 0) {
-            try {
-                var res2 = await fetch(QUOTA_LIMITS_URL).catch(function() { return null; });
-                if (res2 && res2.ok) {
-                    var data2 = await res2.json();
-                    if (data2 && Array.isArray(data2.models)) {
-                        var parsed = data2.models
-                            .filter(function(m) { return m.is_rest_compatible !== false; })
-                            .map(function(m) { return (m.api_name || m.name || '').replace('models/', ''); })
-                            .filter(function(n) {
-                                return n && (n.includes('gemini-2') || n.includes('gemini-1.5')) && !n.includes('live-translate');
-                            });
-                        if (parsed.length > 0) models = parsed;
-                    }
-                }
-            } catch(e2) {}
-        }
-
-        // 3. Guarantee fallback to rock-solid default models
-        DEFAULT_GEMINI_MODELS.forEach(function(m) {
-            if (!models.includes(m)) models.push(m);
+        Object.keys(values).forEach(function (id) { var el = document.getElementById(id); if (el) el.textContent = values[id]; });
+        setProgress('modal-cal-bar', appState.consumedCal, appState.targetCal);
+        setProgress('modal-p-bar', appState.consumedPro, appState.targetPro);
+        setProgress('modal-f-bar', appState.consumedFat, appState.targetFat);
+        setProgress('modal-c-bar', appState.consumedCarb, appState.targetCarb);
+        ['gender','age','height','weight','activity','goal'].forEach(function (key) {
+            var el = document.getElementById('set-' + key); if (el) el.value = appState[key];
         });
-
-        return models;
-    }
-
-    async function callAiDietitianEngine(userText, imageBase64, imageMime) {
-        var apiKey = getGlobalApiKey();
-        if (!apiKey) {
-            appendAiMessage(
-                '<p>🔑 <strong>請先設定您的 Gemini API Key</strong></p>' +
-                '<p style="margin-top:6px; font-size:0.88rem;">您尚未設定全站 Gemini API Key。請點擊頂部【⚙️ 設定 API】按鈕貼上您的免費 API Key，即可開啟 AI 專屬營養師對話與相機分析功能！</p>' +
-                '<button onclick="openApiKeyModal()" class="btn-action-chat" style="margin-top:10px;"><i class="fa-solid fa-key"></i> 立即設定 API Key</button>'
-            );
-            openApiKeyModal();
+        var count = document.getElementById('modal-meals-count'); if (count) count.textContent = appState.mealsList.length;
+        var list = document.getElementById('modal-meals-list');
+        if (!list) return;
+        if (!appState.mealsList.length) {
+            list.innerHTML = '<div style="color:var(--text-muted);text-align:center;padding:10px;">尚未記錄任何餐點，請拍照或對話新增！</div>';
             return;
         }
-
-        var systemPrompt = '你是一位專業、親切且具備臨床經驗的 GugoPro 國家級專屬諮詢營養師。\n' +
-            '【學員當前看板數據】：' +
-            '性別：' + (appState.gender === 'male' ? '男' : '女') + '，年齡：' + appState.age + ' 歲，身高：' + appState.height + ' cm，體重：' + appState.weight + ' kg，目標：' + appState.goal + '，' +
-            'BMR：' + appState.bmr + ' kcal，TDEE：' + appState.tdee + ' kcal，目標每日熱量：' + appState.targetCal + ' kcal (P:' + appState.targetPro + 'g, F:' + appState.targetFat + 'g, C:' + appState.targetCarb + 'g)，今日已攝取：' + appState.consumedCal + ' kcal。\n\n' +
-            '【任務規範】：\n' +
-            '1. 若使用者提供餐點照片或描述吃了某餐，請估算該餐熱量與三大營養素，並回傳 JSON 格式附帶 foodScanResult。\n' +
-            '2. 若使用者詢問/提供身材數據要求評估 TDEE，請計算並在 JSON 附帶 suggestedTdee 物件。\n' +
-            '3. 輸出必須為標準 JSON：\n' +
-            '{\n' +
-            '  "replyText": "營養師親切專業詳細的回覆文字 (使用 Emoji 與清楚換行)",\n' +
-            '  "foodScanResult": {\n' +
-            '    "mealName": "餐點名稱",\n' +
-            '    "calories": 520,\n' +
-            '    "protein": 35,\n' +
-            '    "fat": 12,\n' +
-            '    "carbs": 68\n' +
-            '  },\n' +
-            '  "suggestedTdee": {\n' +
-            '    "targetCal": 2040,\n' +
-            '    "protein": 140,\n' +
-            '    "fat": 55,\n' +
-            '    "carbs": 245\n' +
-            '  }\n' +
-            '}\n' +
-            '（若無對應項目則該物件為 null）';
-
-        var parts = [{ text: systemPrompt + '\n\n使用者訊息：' + userText }];
-        if (imageBase64 && imageMime) {
-            parts.push({ inlineData: { mimeType: imageMime, data: imageBase64 } });
-        }
-
-        var thinkingId = 'thinking-' + Date.now();
+        list.innerHTML = appState.mealsList.map(function (meal, index) {
+            return '<div class="meal-row"><div class="meal-info"><div class="meal-name-txt">' + (index + 1) + '. ' + escapeHtml(meal.name) + ' <small style="color:var(--text-muted)">' + escapeHtml(meal.time || '') + '</small></div><div class="meal-macros-txt">P:' + number(meal.protein, 0) + 'g | F:' + number(meal.fat, 0) + 'g | C:' + number(meal.carbs, 0) + 'g</div></div><div style="display:flex;align-items:center;gap:8px"><span style="color:var(--accent);font-weight:700">' + number(meal.calories, 0) + ' kcal</span><button class="btn-del-meal" data-delete-meal="' + index + '" title="刪除此餐紀錄"><i class="fa-solid fa-trash-can"></i></button></div></div>';
+        }).join('');
+        list.querySelectorAll('[data-delete-meal]').forEach(function (button) {
+            button.addEventListener('click', function () { deleteMealItem(Number(button.dataset.deleteMeal)); });
+        });
+    }
+    function appendAiMessage(text, structuredData) {
         var scroller = document.getElementById('chat-scroller');
-        var thinkingBubble = document.createElement('div');
-        thinkingBubble.className = 'chat-bubble bubble-ai';
-        thinkingBubble.id = thinkingId;
-        thinkingBubble.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> 營養師正在為您計算與分析中...';
-        scroller.appendChild(thinkingBubble);
-        scroller.scrollTop = scroller.scrollHeight;
-
-        try {
-            var models = await fetchModelQueue(apiKey);
-            if (!models || models.length === 0) throw new Error('無法取得可用 AI 模型清單。');
-
-            var lastError = null;
-            var successData = null;
-
-            for (var i = 0; i < models.length; i++) {
-                var modelName = models[i];
-                var endpoint = GOOGLE_MODELS_URL + '/' + encodeURIComponent(modelName) + ':generateContent?key=' + encodeURIComponent(apiKey);
-                for (var attempt = 1; attempt <= 2; attempt++) {
-                    try {
-                        var res = await fetch(endpoint, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                contents: [{ role: 'user', parts: parts }],
-                                generationConfig: { temperature: 0.7, maxOutputTokens: 2048, responseMimeType: 'application/json' }
-                            })
-                        });
-
-                        if (res.ok) {
-                            var json = await res.json();
-                            var rawText = json.candidates?.[0]?.content?.parts?.[0]?.text;
-                            if (rawText) {
-                                try {
-                                    var cleaned = rawText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-                                    successData = JSON.parse(cleaned);
-                                } catch(pe) {
-                                    successData = { replyText: rawText };
-                                }
-                                break;
-                            }
-                        }
-
-                        lastError = new Error('HTTP ' + res.status + ' (' + modelName + ')');
-                        if (res.status === 404 || res.status === 429) break;
-                        await new Promise(function(r) { setTimeout(r, 400 * attempt); });
-                    } catch(err) {
-                        lastError = err;
-                    }
-                }
-                if (successData) break;
-            }
-
-            var tEl = document.getElementById(thinkingId);
-            if (tEl) tEl.remove();
-
-            if (successData) {
-                appendAiMessage(successData.replyText, successData);
-            } else {
-                throw new Error('所有備援模型皆暫時無法連線 (' + (lastError ? lastError.message : '網路異常') + ')，請檢查 API Key 或稍後再試。');
-            }
-
-        } catch(err) {
-            var tEl2 = document.getElementById(thinkingId);
-            if (tEl2) tEl2.remove();
-            appendAiMessage('⚠️ ' + err.message);
+        var bubble = document.createElement('div'); bubble.className = 'chat-bubble bubble-ai';
+        var content = document.createElement('div'); content.textContent = text || '營養師暫時沒有文字回覆。'; bubble.appendChild(content);
+        if (structuredData && structuredData.foodScanResult) {
+            var food = structuredData.foodScanResult, card = document.createElement('div'); card.className = 'card-in-chat';
+            card.innerHTML = '<div class="card-in-chat-title"><span><i class="fa-solid fa-bowl-food"></i> ' + escapeHtml(food.mealName) + '</span><span style="font-family:Outfit,sans-serif;font-size:1.1rem;color:#fff">' + number(food.calories, 0) + ' kcal</span></div><div class="grid-macros-3"><div><span style="color:var(--color-blue)">蛋白質</span><div class="val-bold">' + number(food.protein, 0) + 'g</div></div><div><span style="color:var(--color-amber)">脂肪</span><div class="val-bold">' + number(food.fat, 0) + 'g</div></div><div><span style="color:var(--accent)">碳水</span><div class="val-bold">' + number(food.carbs, 0) + 'g</div></div></div><button class="btn-action-chat" data-add-food="1"><i class="fa-solid fa-plus"></i> 自動寫入數據看板</button>';
+            card.querySelector('[data-add-food]').addEventListener('click', function () { autoWriteFoodToDashboard(this, food); }); bubble.appendChild(card);
         }
-    }
-
-    // ===== API KEY STORAGE & MODAL =====
-    function decodeApiKey(raw) {
-        if (!raw) return '';
-        if (raw.indexOf('obf_') === 0) {
-            try { return decodeURIComponent(atob(raw.slice(4))); } catch(e) { return raw.slice(4); }
+        if (structuredData && structuredData.suggestedTdee) {
+            var tdee = structuredData.suggestedTdee, tdeeCard = document.createElement('div'); tdeeCard.className = 'card-in-chat';
+            tdeeCard.innerHTML = '<div class="card-in-chat-title"><span><i class="fa-solid fa-sliders"></i> AI 建議目標熱量</span><span style="font-family:Outfit,sans-serif;font-size:1.15rem;color:var(--accent)">' + number(tdee.targetCal, 0) + ' kcal</span></div><div class="grid-macros-3"><div><span style="color:var(--color-blue)">蛋白質 (P)</span><div class="val-bold">' + number(tdee.protein, 0) + 'g</div></div><div><span style="color:var(--color-amber)">脂肪 (F)</span><div class="val-bold">' + number(tdee.fat, 0) + 'g</div></div><div><span style="color:var(--accent)">碳水 (C)</span><div class="val-bold">' + number(tdee.carbs, 0) + 'g</div></div></div><button class="btn-action-chat" data-apply-tdee="1"><i class="fa-solid fa-bolt"></i> 自動套用至今日 TDEE 目標</button>';
+            tdeeCard.querySelector('[data-apply-tdee]').addEventListener('click', function () { autoApplyTdeeToDashboard(this, tdee); }); bubble.appendChild(tdeeCard);
         }
-        return raw;
+        scroller.appendChild(bubble); scroller.scrollTop = scroller.scrollHeight;
     }
-    function maskApiKey(key) {
-        if (!key) return '';
-        if (key.length <= 10) return '••••••••';
-        return key.slice(0, 6) + '••••••••' + key.slice(-4);
+    function appendUserMessage(text, imageData) {
+        var scroller = document.getElementById('chat-scroller'), bubble = document.createElement('div'); bubble.className = 'chat-bubble bubble-user';
+        if (imageData) { var image = document.createElement('img'); image.src = 'data:' + imageData.mime + ';base64,' + imageData.data; image.alt = '使用者上傳的餐點照片'; image.style.cssText = 'max-width:180px;max-height:180px;border-radius:10px;display:block;margin-bottom:8px'; bubble.appendChild(image); }
+        var span = document.createElement('span'); span.textContent = text; bubble.appendChild(span); scroller.appendChild(bubble); scroller.scrollTop = scroller.scrollHeight;
     }
-    function getGlobalApiKey() {
-        var raw = (localStorage.getItem('gugopro_gemini_api_key') || localStorage.getItem('gemini_api_key') || '').trim();
-        return decodeApiKey(raw);
+    function deleteMealItem(index) {
+        var meal = appState.mealsList.splice(index, 1)[0];
+        if (meal) { appState.consumedCal = Math.max(0, appState.consumedCal - number(meal.calories, 0)); appState.consumedPro = Math.max(0, appState.consumedPro - number(meal.protein, 0)); appState.consumedFat = Math.max(0, appState.consumedFat - number(meal.fat, 0)); appState.consumedCarb = Math.max(0, appState.consumedCarb - number(meal.carbs, 0)); saveState(); updateUI(); }
     }
-    function setGlobalApiKey(key) {
-        if (!key) {
-            localStorage.removeItem('gugopro_gemini_api_key');
-            localStorage.removeItem('gemini_api_key');
-        } else {
-            localStorage.setItem('gugopro_gemini_api_key', key.trim());
-            localStorage.setItem('gemini_api_key', key.trim());
-        }
-        updateKeyUI();
+    function autoWriteFoodToDashboard(button, food) {
+        if (button.classList.contains('applied')) return;
+        appState.consumedCal += number(food.calories, 0); appState.consumedPro += number(food.protein, 0); appState.consumedFat += number(food.fat, 0); appState.consumedCarb += number(food.carbs, 0);
+        appState.mealsList.push({ name: food.mealName || '未命名餐點', calories: number(food.calories, 0), protein: number(food.protein, 0), fat: number(food.fat, 0), carbs: number(food.carbs, 0), time: new Date().toLocaleTimeString() });
+        saveState(); updateUI(); button.classList.add('applied'); button.innerHTML = '<i class="fa-solid fa-check"></i> 已成功寫入數據看板！';
     }
+    function autoApplyTdeeToDashboard(button, tdee) {
+        if (button.classList.contains('applied')) return;
+        appState.targetCal = number(tdee.targetCal, appState.targetCal); appState.targetPro = number(tdee.protein, appState.targetPro); appState.targetFat = number(tdee.fat, appState.targetFat); appState.targetCarb = number(tdee.carbs, appState.targetCarb);
+        saveState(); updateUI(); button.classList.add('applied'); button.innerHTML = '<i class="fa-solid fa-check"></i> 已自動更新 TDEE 目標！';
+    }
+    function getGlobalApiKey() { return (localStorage.getItem(API_KEY_STORAGE) || '').trim(); }
+    function maskApiKey(key) { return key.length > 10 ? key.slice(0, 6) + '••••••••' + key.slice(-4) : '••••••••'; }
     function updateKeyUI() {
-        var key = getGlobalApiKey();
-        var statusBox = document.getElementById('key-status-box');
-        var masked = document.getElementById('masked-key-display');
-        var clearBtn = document.getElementById('btn-clear-key');
-        var btnTrigger = document.getElementById('btn-api-trigger');
-        var btnLabel = document.getElementById('api-btn-label');
-
-        if (key) {
-            if (statusBox) statusBox.style.display = '';
-            if (masked) masked.textContent = maskApiKey(key);
-            if (clearBtn) clearBtn.style.display = '';
-            if (btnTrigger) {
-                btnTrigger.className = 'btn-api-status connected';
-            }
-            if (btnLabel) btnLabel.textContent = 'API 已連線';
-        } else {
-            if (statusBox) statusBox.style.display = 'none';
-            if (clearBtn) clearBtn.style.display = 'none';
-            if (btnTrigger) {
-                btnTrigger.className = 'btn-api-status unconnected';
-            }
-            if (btnLabel) btnLabel.textContent = '設定 API';
-        }
+        var key = getGlobalApiKey(), status = document.getElementById('key-status-box'), masked = document.getElementById('masked-key-display'), clear = document.getElementById('btn-clear-key'), trigger = document.getElementById('btn-api-trigger'), label = document.getElementById('api-btn-label');
+        if (status) status.style.display = key ? '' : 'none'; if (masked) masked.textContent = key ? maskApiKey(key) : ''; if (clear) clear.style.display = key ? '' : 'none';
+        if (trigger) trigger.className = 'btn-api-status ' + (key ? 'connected' : 'unconnected'); if (label) label.textContent = key ? 'API 已連線' : '設定 API';
     }
-
-    window.openApiKeyModal = function() {
-        updateKeyUI();
-        document.getElementById('api-key-input').value = '';
-        document.getElementById('modal-api').style.display = 'flex';
-    };
+    function extractModelNames(data) {
+        var source = Array.isArray(data) ? data : data && (data.models || data.data || data.availableModels);
+        if (!Array.isArray(source)) return [];
+        return source.map(function (entry) {
+            if (typeof entry === 'string') return entry;
+            return entry && (entry.name || entry.api_name || entry.model || entry.id);
+        }).filter(Boolean).map(function (name) { return String(name).replace(/^models\//, ''); }).filter(function (name, index, list) { return name && list.indexOf(name) === index; });
+    }
+    async function fetchModelQueue(apiKey) {
+        var queue = [];
+        try {
+            var quotaResponse = await fetch(QUOTA_MODELS_URL, { cache: 'no-store' });
+            if (quotaResponse.ok) queue = extractModelNames(await quotaResponse.json());
+        } catch (error) { console.warn('Quota model discovery failed.', error); }
+        if (!queue.length && apiKey) {
+            try {
+                var googleResponse = await fetch(GOOGLE_MODELS_URL + '?key=' + encodeURIComponent(apiKey), { cache: 'no-store' });
+                if (googleResponse.ok) {
+                    var googleData = await googleResponse.json();
+                    queue = (googleData.models || []).filter(function (model) { return Array.isArray(model.supportedGenerationMethods) && model.supportedGenerationMethods.indexOf('generateContent') !== -1; }).map(function (model) { return String(model.name || '').replace(/^models\//, ''); }).filter(Boolean);
+                }
+            } catch (error2) { console.warn('Google model discovery failed.', error2); }
+        }
+        if (!queue.length) throw new Error('無法動態取得可用模型清單，請檢查網路連線或 API Key 狀態。');
+        return queue;
+    }
+    function parseModelResponse(response) {
+        var raw = response && response.candidates && response.candidates[0] && response.candidates[0].content && response.candidates[0].content.parts && response.candidates[0].content.parts[0] && response.candidates[0].content.parts[0].text;
+        if (!raw) throw new Error('AI 回應內容為空。');
+        var cleaned = String(raw).replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+        try { return JSON.parse(cleaned); } catch (error) { return { replyText: cleaned }; }
+    }
+    async function callAiDietitianEngine(userText, imageBase64, imageMime) {
+        var apiKey = getGlobalApiKey();
+        if (!apiKey) { appendAiMessage('請先設定您的 Gemini API Key，才能啟用 AI 對話與相機餐點分析。'); openApiKeyModal(); return; }
+        var context = '你是 GugoPro 專業 AI 營養師。請以繁體中文、親切且安全的方式回答，不取代醫師診斷。\n' +
+            '目前資料：性別=' + appState.gender + '，年齡=' + appState.age + '，身高=' + appState.height + 'cm，體重=' + appState.weight + 'kg，目標=' + appState.goal + '，BMR=' + appState.bmr + '，TDEE=' + appState.tdee + '，目標熱量=' + appState.targetCal + '，P=' + appState.targetPro + 'g，F=' + appState.targetFat + 'g，C=' + appState.targetCarb + 'g，今日已攝取=' + appState.consumedCal + 'kcal。\n' +
+            '若訊息涉及餐點或照片，請在 JSON 中提供 foodScanResult；若涉及個人評估，請提供 suggestedTdee。只輸出 JSON，格式為 {"replyText":"...","foodScanResult":null 或 {"mealName":"...","calories":0,"protein":0,"fat":0,"carbs":0},"suggestedTdee":null 或 {"targetCal":0,"protein":0,"fat":0,"carbs":0}}。';
+        var parts = [{ text: context + '\n使用者訊息：' + userText }]; if (imageBase64) parts.push({ inlineData: { mimeType: imageMime || 'image/jpeg', data: imageBase64 } });
+        var thinking = document.createElement('div'); thinking.className = 'chat-bubble bubble-ai'; thinking.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> 營養師正在分析中...'; var scroller = document.getElementById('chat-scroller'); scroller.appendChild(thinking); scroller.scrollTop = scroller.scrollHeight;
+        try {
+            var queue = await fetchModelQueue(apiKey), lastError = null;
+            for (var index = 0; index < queue.length; index += 1) {
+                var modelName = queue[index];
+                try {
+                    var response = await fetch(GOOGLE_MODELS_URL + '/' + encodeURIComponent(modelName) + ':generateContent?key=' + encodeURIComponent(apiKey), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ role: 'user', parts: parts }], generationConfig: { temperature: 0.7, maxOutputTokens: 2048, responseMimeType: 'application/json' } }) });
+                    if (response.ok) { var parsedResponse = parseModelResponse(await response.json()); appendAiMessage(parsedResponse.replyText || '分析完成。', parsedResponse); break; }
+                    lastError = new Error('HTTP ' + response.status + ' (' + modelName + ')');
+                } catch (error) { lastError = error; }
+                if (index === queue.length - 1) throw lastError || new Error('所有動態模型皆無法回應。');
+            }
+        } catch (error2) { appendAiMessage('目前 AI 暫時無法回應：' + (error2 && error2.message ? error2.message : '網路異常') + '。API Key 仍會保留，請稍後再試。'); }
+        finally { if (thinking.parentNode) thinking.parentNode.removeChild(thinking); }
+    }
+    window.openDashboardModal = function () { updateUI(); document.getElementById('modal-dashboard').style.display = 'flex'; };
+    window.closeDashboardModal = function () { document.getElementById('modal-dashboard').style.display = 'none'; };
+    window.openApiKeyModal = function () { updateKeyUI(); document.getElementById('api-key-input').value = ''; document.getElementById('modal-api').style.display = 'flex'; };
     window.openApiModal = window.openApiKeyModal;
-
-    window.closeApiKeyModal = function() {
-        document.getElementById('modal-api').style.display = 'none';
-    };
-
-    window.saveApiKey = function() {
-        var val = document.getElementById('api-key-input').value.trim();
-        if (val) {
-            setGlobalApiKey(val);
-            document.getElementById('modal-api').style.display = 'none';
-            appendAiMessage('✅ API Key 設定成功！您現在可以與 AI 專屬營養師對話或拍照辨識餐點囉！');
-        } else if (getGlobalApiKey()) {
-            document.getElementById('modal-api').style.display = 'none';
-        } else {
-            alert('請輸入有效的 Gemini API Key。');
-        }
-    };
-    window.clearApiKey = function() {
-        if (confirm('確定要清除已儲存的 API Key 嗎？')) {
-            setGlobalApiKey('');
-            document.getElementById('api-key-input').value = '';
-            alert('已成功清除 API Key。');
-        }
-    };
-
-    document.addEventListener('DOMContentLoaded', function() {
-        loadState();
-        updateKeyUI();
-    });
+    window.closeApiKeyModal = function () { document.getElementById('modal-api').style.display = 'none'; };
+    window.saveApiKey = function () { var value = document.getElementById('api-key-input').value.trim(); if (!value && !getGlobalApiKey()) { alert('請輸入有效的 Gemini API Key。'); return; } if (value) localStorage.setItem(API_KEY_STORAGE, value); updateKeyUI(); closeApiKeyModal(); if (value) appendAiMessage('API Key 已安全儲存在本機瀏覽器，現在可以開始對話或拍照分析。'); };
+    window.clearApiKey = function () { if (confirm('確定要清除已儲存的 API Key 嗎？')) { localStorage.setItem(API_KEY_STORAGE, ''); updateKeyUI(); alert('已清除 API Key。'); } };
+    window.syncAndRecalcTdee = function () { appState.gender = document.getElementById('set-gender').value; appState.age = number(document.getElementById('set-age').value, 28); appState.height = number(document.getElementById('set-height').value, 175); appState.weight = number(document.getElementById('set-weight').value, 70); appState.activity = number(document.getElementById('set-activity').value, 1.55); appState.goal = document.getElementById('set-goal').value; recalcTargets(); saveState(); updateUI(); };
+    window.deleteMealItem = deleteMealItem;
+    window.resetDailyLogs = function () { if (!confirm('確定要清空今日的已攝取熱量與所有餐點紀錄嗎？')) return; appState.consumedCal = 0; appState.consumedPro = 0; appState.consumedFat = 0; appState.consumedCarb = 0; appState.mealsList = []; saveState(); updateUI(); appendAiMessage('今日熱量進度與餐點紀錄已重設為 0。'); };
+    window.exportReportText = function () { var lines = ['【GugoPro 飲食與 TDEE 每日健康日誌】','日期：' + new Date().toLocaleDateString('zh-TW'),'熱量：' + appState.consumedCal + ' / ' + appState.targetCal + ' kcal','蛋白質：' + appState.consumedPro + ' / ' + appState.targetPro + ' g','脂肪：' + appState.consumedFat + ' / ' + appState.targetFat + ' g','碳水化合物：' + appState.consumedCarb + ' / ' + appState.targetCarb + ' g','餐點明細：']; appState.mealsList.forEach(function (meal, index) { lines.push((index + 1) + '. ' + meal.name + '：' + meal.calories + ' kcal (P:' + meal.protein + 'g, C:' + meal.carbs + 'g, F:' + meal.fat + 'g)'); }); var report = lines.join('\n'); navigator.clipboard && navigator.clipboard.writeText(report).then(function () { alert('今日飲食日誌已複製至剪貼簿。'); }).catch(function () { prompt('請手動複製以下日誌內容：', report); }); };
+    window.sendQuickPrompt = function (text) { document.getElementById('chat-user-input').value = text; window.handleUserSendMessage(); };
+    window.triggerCameraInput = function () { document.getElementById('imageInput').click(); };
+    window.handleMealPhotoUpload = function (event) { var file = event.target.files && event.target.files[0]; if (!file) return; var reader = new FileReader(); reader.onload = function (eventObject) { var parts = eventObject.target.result.split(','); pendingImageBase64 = parts[1]; pendingImageMime = file.type || 'image/jpeg'; document.getElementById('image-preview-thumb').src = eventObject.target.result; document.getElementById('image-preview-container').style.display = 'flex'; }; reader.readAsDataURL(file); };
+    window.clearImagePreview = function () { pendingImageBase64 = null; pendingImageMime = null; document.getElementById('imageInput').value = ''; document.getElementById('image-preview-container').style.display = 'none'; };
+    window.handleUserSendMessage = function () { var input = document.getElementById('chat-user-input'), text = input.value.trim(), image = pendingImageBase64 ? { data: pendingImageBase64, mime: pendingImageMime } : null; if (!text && !image) return; input.value = ''; clearImagePreview(); appendUserMessage(text || '已上傳餐點照片，請協助分析。', image); callAiDietitianEngine(text || '請分析這張餐點照片的食物名稱、熱量與三大營養素。', image && image.data, image && image.mime); };
+    document.addEventListener('DOMContentLoaded', function () { loadState(); updateKeyUI(); });
+}());
     </script>
 
 </body>
