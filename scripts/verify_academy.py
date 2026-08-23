@@ -4,16 +4,19 @@ import re
 
 root = Path(__file__).resolve().parents[1]
 ET.parse(root / 'sitemap.xml')
-files = list((root / 'academy').rglob('*.html'))
+files = list((root / 'academy').rglob('*.html')) + list((root / 'articles' / 'investment').glob('*.html'))
 missing = []
 for page in files:
     text = page.read_text(encoding='utf-8')
     for href in re.findall(r'href=["\']([^"\']+)["\']', text):
-        if href.startswith(('http', '#', 'mailto:', 'javascript:')):
+        if href.startswith(('http', '/', '#', 'mailto:', 'javascript:')):
             continue
-        target = (page.parent / href.split('#')[0]).resolve()
+        target = (page.parent / href.split('#')[0].split('?')[0]).resolve()
         if not target.exists():
             missing.append((str(page.relative_to(root)), href))
+linked_lessons = [p for p in (root / 'articles' / 'investment').glob('[0-9][0-9]-*.html') if 'GugoPro Academy interactive lab' in p.read_text(encoding='utf-8')]
+if len(linked_lessons) != 14:
+    raise SystemExit(f'expected 14 linked lessons, found {len(linked_lessons)}')
 required = [
     'academy/index.html',
     'academy/lessons/15-retirement-cashflow.html',
