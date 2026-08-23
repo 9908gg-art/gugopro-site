@@ -697,7 +697,7 @@
             
             <div class="header-right">
                 <div class="lang-compact-header">
-                    <button id="btn-tts-auto" class="btn-lang-toggle" style="margin-right:8px;" title="切換自動朗讀語音"><i class="fa-solid fa-volume-high" style="color:var(--primary-neon);"></i> <span id="tts-auto-label">自動語音: 開</span></button><button id="btn-lang-toggle" class="btn-lang-toggle">
+                    <button id="btn-lang-toggle" class="btn-lang-toggle">
                         <span id="lang-display-label">載入中...</span>
                         <i class="fa-solid fa-chevron-down"></i>
                     </button>
@@ -947,7 +947,6 @@
             fetchLatestModel();
             initSpeechRecognition();
             initLangPanel();
-            initTTSEngine();
             
             window.onscroll = () => {
                 const btn = document.getElementById('btn-back-to-top');
@@ -1497,7 +1496,7 @@
                 const tutorId = 'tutor-' + Date.now();
                 addMessageToUI('tutor', response.tutor_learning, response.tutor_my, response.correction, tutorId);
                 room.messages.push({ id: tutorId, role: 'tutor', learning: response.tutor_learning, my: response.tutor_my, correction: response.correction });
-                if (autoPlayTTS) { speak(response.tutor_learning, targetLang); }
+                speak(response.tutor_learning, targetLang);
                 saveRoomsToLocal();
                 hideError();
                 scrollToBottom();
@@ -1751,115 +1750,26 @@
             }
         };
 
-        // --- Enhanced Multi-Language TTS Speech Engine ---
-        let autoPlayTTS = localStorage.getItem('gugopro_auto_play_tts') !== 'false';
-        let availableVoices = [];
-
-        function updateTTSAutoUI() {
-            const btn = document.getElementById('btn-tts-auto');
-            const label = document.getElementById('tts-auto-label');
-            if (label) label.textContent = autoPlayTTS ? '自動語音: 開' : '自動語音: 關';
-            if (btn) {
-                btn.style.borderColor = autoPlayTTS ? 'var(--primary-neon)' : 'var(--glass-border)';
-                btn.style.opacity = autoPlayTTS ? '1' : '0.6';
-            }
-        }
-
-        function initTTSEngine() {
-            if (!('speechSynthesis' in window)) return;
-            const loadVoices = () => {
-                try {
-                    availableVoices = window.speechSynthesis.getVoices() || [];
-                } catch(e) {}
-            };
-            loadVoices();
-            if (window.speechSynthesis.onvoiceschanged !== undefined) {
-                window.speechSynthesis.onvoiceschanged = loadVoices;
-            }
-            const btnAuto = document.getElementById('btn-tts-auto');
-            if (btnAuto) {
-                btnAuto.onclick = () => {
-                    autoPlayTTS = !autoPlayTTS;
-                    localStorage.setItem('gugopro_auto_play_tts', autoPlayTTS ? 'true' : 'false');
-                    updateTTSAutoUI();
-                    if (autoPlayTTS) {
-                        speak('Auto speech enabled', document.getElementById('target-lang').value);
-                    } else {
-                        if (window.speechSynthesis) window.speechSynthesis.cancel();
-                    }
-                };
-                updateTTSAutoUI();
-            }
-            // Pre-warm audio context on user interaction
-            const prewarm = () => {
-                if (window.speechSynthesis && availableVoices.length === 0) {
-                    availableVoices = window.speechSynthesis.getVoices() || [];
-                }
-            };
-            document.addEventListener('click', prewarm, { once: true });
-            document.addEventListener('touchstart', prewarm, { once: true });
-        }
-
-        function cleanTextForSpeech(rawText) {
-            if (!rawText) return '';
-            return String(rawText)
-                .replace(/```[\s\S]*?```/g, '') // remove code blocks
-                .replace(/`([^`]+)`/g, '$1')     # remove inline code
-                .replace(/[*#_~>]/g, '')         # remove markdown symbols
-                .replace(/\(.*?\)/g, '')         # remove parenthetical notes in text if needed, or keep
-                .replace(/[
-]+/g, ' ')
-                .trim();
-        }
-
-        function getBestVoiceForLang(langCode) {
-            if (!availableVoices.length && window.speechSynthesis) {
-                availableVoices = window.speechSynthesis.getVoices() || [];
-            }
-            if (!availableVoices.length) return null;
-            const primaryLang = String(langCode).split('-')[0].toLowerCase();
-            
-            // 1. Exact match (e.g. ja-JP)
-            let voice = availableVoices.find(v => v.lang.replace('_', '-').toLowerCase() === langCode.toLowerCase());
-            // 2. Prefix match (e.g. ja)
-            if (!voice) {
-                voice = availableVoices.find(v => v.lang.toLowerCase().startsWith(primaryLang));
-            }
-            // 3. Local/High-quality preferred
-            if (!voice) {
-                voice = availableVoices.find(v => v.lang.toLowerCase().includes(primaryLang));
-            }
-            return voice || null;
-        }
-
         function speak(text, langCode) {
-            if (!('speechSynthesis' in window)) return;
-            const cleanText = cleanTextForSpeech(text);
-            if (!cleanText) return;
-
+            if (!window.speechSynthesis) return;
             try {
-                window.speechSynthesis.cancel(); // stop previous playback
-                const utterance = new SpeechSynthesisUtterance(cleanText);
-                utterance.lang = langCode || document.getElementById('target-lang').value || 'en-US';
-                utterance.rate = 0.95; // Clear learning pace
-                utterance.pitch = 1.0;
-
-                const matchedVoice = getBestVoiceForLang(utterance.lang);
-                if (matchedVoice) {
-                    utterance.voice = matchedVoice;
-                }
-
-                window.speechSynthesis.speak(utterance);
-            } catch (err) {
-                console.warn('[TTS Speech Engine Error]:', err);
+                window.speechSynthesis.cancel();
+                const targetLang = langCode || document.getElementById('target-lang')?.value || 'en-US';
+                const cleanText = String(text || '').replace(/[*#_~`]/g, '').trim();
+                if (!cleanText) return;
+                const ut = new SpeechSynthesisUtterance(cleanText);
+                ut.lang = targetLang;
+                ut.rate = 0.95;
+                window.speechSynthesis.speak(ut);
+            } catch (e) {
+                console.warn('[TTS Playback Error]:', e);
             }
         }
 
         window.speakMessage = (btn) => {
             const msgDiv = btn.closest('.message');
-            const learningText = msgDiv.querySelector('.msg-learning')?.textContent || '';
-            const targetLang = document.getElementById('target-lang').value || 'en-US';
-            speak(learningText, targetLang);
+            const text = msgDiv.querySelector('.msg-learning')?.textContent;
+            speak(text, document.getElementById('target-lang')?.value || 'en-US');
         };
 
         // --- Helpers ---
