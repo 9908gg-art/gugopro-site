@@ -258,9 +258,10 @@
             background: rgba(15, 23, 42, 0.9);
             border: 1px solid rgba(255, 255, 255, 0.25);
             color: #ffffff;
-            padding: 8px 16px;
+            padding: 10px 18px;
             border-radius: 20px;
-            font-size: 0.9rem;
+            font-size: 1.05rem;
+            min-width: 210px;
             font-weight: 600;
             outline: none;
             cursor: pointer;
@@ -318,7 +319,7 @@
             z-index: 95;
         }
 
-        .btn-swap-langs {
+        .btn-repeat-speech {
             display: inline-flex;
             align-items: center;
             gap: 8px;
@@ -335,14 +336,14 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         }
 
-        .btn-swap-langs:hover {
+        .btn-repeat-speech:hover {
             background: linear-gradient(135deg, rgba(0, 242, 255, 0.35), rgba(112, 0, 255, 0.4));
             border-color: var(--primary-neon);
             transform: translateY(-2px) scale(1.02);
             box-shadow: 0 6px 20px rgba(0, 242, 255, 0.3);
         }
 
-        .btn-swap-langs:active {
+        .btn-repeat-speech:active {
             transform: scale(0.96);
         }
 
@@ -370,7 +371,7 @@
         }
 
         .text-translated {
-            font-size: 2.5rem;
+            font-size: 2rem;
             font-weight: 800;
             color: #ffffff;
             line-height: 1.2;
@@ -498,7 +499,8 @@
         }
 
         @media (max-width: 600px) {
-            .text-translated { font-size: 2.2rem; }
+            select.lang-selector { min-width: 220px; font-size: 1.05rem; padding: 10px 16px; }
+            .text-translated { font-size: 1.7rem; line-height: 1.3; }
             main { min-height: 480px; }
         }
 
@@ -611,10 +613,10 @@
             </div>
         </section>
 
-        <!-- Swap Language Quick Bar -->
+        <!-- Repeat Speech Quick Bar -->
         <div class="global-swap-wrapper">
-            <button type="button" class="btn-swap-langs" id="btn-swap-langs" title="快速互換雙向語言">
-                <i class="fa-solid fa-arrow-right-arrow-left"></i> <span id="ui-swap-label">互換語言 (Swap)</span>
+            <button type="button" class="btn-repeat-speech" id="btn-repeat-speech" title="重複播放上一段翻譯">
+                <i class="fa-solid fa-repeat"></i> <span id="ui-repeat-label">重複發話</span>
             </button>
         </div>
 
@@ -672,7 +674,7 @@
                     </div>
                     <div style="background: rgba(255,255,255,0.03); padding: 22px; border-radius: 16px; border: 1px solid var(--glass-border);">
                         <h3 style="color: #ffffff; margin-bottom: 10px; font-size: 1.15rem;"><i class="fa-solid fa-globe" style="color: var(--primary-neon);"></i> 12+ 多國主流語言</h3>
-                        <p style="font-size: 0.92rem; color: #94a3b8; line-height: 1.6;">支援繁體中文、簡體中文、English、日本語、한국어、Tiếng Việt、Français、Español 等多國語言，並提供一鍵雙向語言互換。</p>
+                        <p style="font-size: 0.92rem; color: #94a3b8; line-height: 1.6;">支援繁體中文、簡體中文、English、日本語、한국어、Tiếng Việt、Français、Español 等多國語言，並提供重複播放上一段翻譯的操作。</p>
                     </div>
                 </div>
 
@@ -733,14 +735,14 @@
                 selfInit: 'Hello! Tap to Speak',
                 partnerHint: '對方點擊發話 (Partner Speak)',
                 selfHint: '我方點擊發話 (Self Speak)',
-                swapLabel: '互換語言 (Swap)',
+                repeatLabel: '重複發話',
                 modeLabel: '對話模式：',
                 modeTap: '點擊模式 (Tap)',
                 modeWalkie: '對講機模式 (Walkie-Talkie)',
                 kofi: '贊助一杯咖啡，支持開發',
                 disclaimer: '免責聲明：本工具採用瀏覽器原生語音引擎與網路公開翻譯端點，僅供日常溝通、旅遊交流與學習參考。',
                 copied: '已複製到剪貼簿',
-                swapped: '雙向語言已互換'
+                repeated: '已重複播放上一段翻譯'
             },
             'en': {
                 title: 'Face-to-Face Real-time Translator | Free Voice Translation | GugoPro AI',
@@ -753,14 +755,14 @@
                 selfInit: 'Hello! Tap to Speak',
                 partnerHint: 'Partner Tap to Speak',
                 selfHint: 'Self Tap to Speak',
-                swapLabel: 'Swap Languages',
+                repeatLabel: 'Repeat Speech',
                 modeLabel: 'Mode:',
                 modeTap: 'Tap Mode',
                 modeWalkie: 'Walkie-Talkie Mode',
                 kofi: 'Buy me a coffee to support development',
                 disclaimer: 'Disclaimer: This tool uses browser native engines and public endpoints for reference only.',
                 copied: 'Copied to clipboard',
-                swapped: 'Languages Swapped'
+                repeated: 'Repeated the last translation'
             },
             'ja': {
                 title: '対面式リアルタイム翻訳機 | 無料音声翻訳 | GugoPro AI',
@@ -773,14 +775,14 @@
                 selfInit: 'こんにちは！ここをタップして発話',
                 partnerHint: '相手側タップで発話',
                 selfHint: '自分側タップで発話',
-                swapLabel: '言語を入れ替え',
+                repeatLabel: 'もう一度再生',
                 modeLabel: 'モード：',
                 modeTap: 'タップモード',
                 modeWalkie: 'トランシーバーモード',
                 kofi: 'コーヒーを奢って開発を支援する',
                 disclaimer: '免責事項：本ツールはブラウザ標準の音声エンジンを使用しており、学習や旅行の参考用です。',
                 copied: 'クリップボードにコピーしました',
-                swapped: '言語を入れ替えました'
+                repeated: '前回の翻訳を再生しました'
             }
         };
 
@@ -804,6 +806,8 @@
         let recognition = null;
         let currentLangKey = 'zh';
         let currentMode = 'tap'; // 'tap' or 'walkie'
+        let lastSpokenText = '';
+        let lastSpokenLang = '';
         const statusBar = document.getElementById('status-bar');
         const toastEl = document.getElementById('copy-toast');
 
@@ -825,7 +829,7 @@
             document.getElementById('mode-walkie').textContent = t.modeWalkie;
             document.getElementById('ui-hint-partner').textContent = t.partnerHint;
             document.getElementById('ui-hint-self').textContent = t.selfHint;
-            document.getElementById('ui-swap-label').textContent = t.swapLabel;
+            document.getElementById('ui-repeat-label').textContent = t.repeatLabel;
             document.getElementById('ui-disclaimer').textContent = t.disclaimer;
             document.documentElement.lang = langKey === 'zh' ? 'zh-TW' : (langKey === 'ja' ? 'ja' : 'en');
         }
@@ -889,14 +893,13 @@
                     showToast('無有效內容可複製');
                     return;
                 }
-                navigator.clipboard.writeText(text).then(() => {
+                copyText(text).then(() => {
                     showToast(i18n[currentLangKey].copied);
                 }).catch(() => {
                     showToast('複製失敗，請手動選取');
                 });
             };
             btn.addEventListener('click', copyHandler);
-            btn.addEventListener('touchend', copyHandler);
             btn.addEventListener('mousedown', (e) => e.stopPropagation());
             btn.addEventListener('touchstart', (e) => e.stopPropagation());
         });
@@ -910,7 +913,6 @@
             partnerArea.classList.toggle('flipped');
         };
         toggleFlip.addEventListener('click', flipHandler);
-        toggleFlip.addEventListener('touchend', flipHandler);
         toggleFlip.addEventListener('mousedown', (e) => e.stopPropagation());
         toggleFlip.addEventListener('touchstart', (e) => e.stopPropagation());
 
@@ -921,25 +923,62 @@
             sel.addEventListener('mousedown', stopBubble);
             sel.addEventListener('touchstart', stopBubble);
             sel.addEventListener('touchend', stopBubble);
-            sel.addEventListener('change', stopBubble);
+            sel.addEventListener('change', (e) => { stopBubble(e); updateInitialTexts(); });
         });
 
-        // Language Swap Button
-        const btnSwapLangs = document.getElementById('btn-swap-langs');
-        const swapHandler = (e) => {
+        // Repeat Speech Button
+        const btnRepeatSpeech = document.getElementById('btn-repeat-speech');
+        const repeatHandler = (e) => {
             e.stopPropagation();
             e.preventDefault();
-            const selfSelect = document.getElementById('self-lang');
-            const partnerSelect = document.getElementById('partner-lang');
-            const tempVal = selfSelect.value;
-            selfSelect.value = partnerSelect.value;
-            partnerSelect.value = tempVal;
-            showToast(i18n[currentLangKey].swapped || '雙向語言已互換');
+            repeatLastSpeech();
         };
-        btnSwapLangs.addEventListener('click', swapHandler);
-        btnSwapLangs.addEventListener('touchend', swapHandler);
-        btnSwapLangs.addEventListener('mousedown', (e) => e.stopPropagation());
-        btnSwapLangs.addEventListener('touchstart', (e) => e.stopPropagation());
+        btnRepeatSpeech.addEventListener('click', repeatHandler);
+        btnRepeatSpeech.addEventListener('mousedown', (e) => e.stopPropagation());
+        btnRepeatSpeech.addEventListener('touchstart', (e) => e.stopPropagation());
+
+        const initialPromptByLanguage = {
+            'zh-TW': '你好！點擊此區域開始說話',
+            'zh-CN': '你好！点击此区域开始说话',
+            'en-US': 'Hello! Tap this area to speak',
+            'ja-JP': 'こんにちは！ここをタップして発話',
+            'ko-KR': '안녕하세요! 이 영역을 눌러 말하세요',
+            'th-TH': 'สวัสดี! แตะบริเวณนี้เพื่อพูด',
+            'vi-VN': 'Xin chào! Nhấn vào đây để nói',
+            'fr-FR': 'Bonjour ! Touchez ici pour parler',
+            'de-DE': 'Hallo! Zum Sprechen hier tippen',
+            'es-ES': '¡Hola! Toca aquí para hablar',
+            'it-IT': 'Ciao! Tocca qui per parlare',
+            'ru-RU': 'Привет! Нажмите здесь, чтобы говорить'
+        };
+
+        function updateInitialTexts() {
+            const partner = document.getElementById('partner-lang').value;
+            const self = document.getElementById('self-lang').value;
+            const partnerDisplay = document.getElementById('partner-display');
+            const selfDisplay = document.getElementById('self-display');
+            const placeholders = Object.values(initialPromptByLanguage).concat(['Hello! Tap to Speak', '你好！點擊此區域開始說話']);
+            if (placeholders.includes(partnerDisplay.textContent) || !partnerDisplay.textContent.trim()) partnerDisplay.textContent = initialPromptByLanguage[partner] || initialPromptByLanguage['en-US'];
+            if (placeholders.includes(selfDisplay.textContent) || !selfDisplay.textContent.trim()) selfDisplay.textContent = initialPromptByLanguage[self] || initialPromptByLanguage['zh-TW'];
+        }
+
+        updateInitialTexts();
+
+        function copyText(text) {
+            if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
+            return new Promise((resolve, reject) => {
+                const area = document.createElement('textarea');
+                area.value = text;
+                area.setAttribute('readonly', '');
+                area.style.position = 'fixed';
+                area.style.opacity = '0';
+                document.body.appendChild(area);
+                area.select();
+                try {
+                    if (document.execCommand('copy')) resolve(); else reject(new Error('copy failed'));
+                } catch (error) { reject(error); } finally { area.remove(); }
+            });
+        }
 
         async function translateText(text, fromCode, toCode) {
             try {
@@ -957,16 +996,26 @@
         }
 
         function speak(text, langCode) {
-            if ('speechSynthesis' in window) {
-                try {
-                    window.speechSynthesis.cancel();
-                    const utterance = new SpeechSynthesisUtterance(text);
-                    utterance.lang = langCode;
-                    window.speechSynthesis.speak(utterance);
-                } catch (e) {
-                    console.warn("TTS Speech error:", e);
-                }
+            if (!text || !('speechSynthesis' in window)) return;
+            lastSpokenText = text;
+            lastSpokenLang = langCode;
+            try {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = langCode;
+                window.speechSynthesis.speak(utterance);
+            } catch (e) {
+                console.warn("TTS Speech error:", e);
             }
+        }
+
+        function repeatLastSpeech() {
+            if (!lastSpokenText) {
+                showToast('尚未有可重複播放的翻譯');
+                return;
+            }
+            speak(lastSpokenText, lastSpokenLang);
+            showToast(i18n[currentLangKey].repeated || '已重複播放上一段翻譯');
         }
 
         function startRecording(mode) {
@@ -1043,7 +1092,7 @@
         // Helper to check if event target is an interactive UI control
         function isInteractiveControl(target) {
             if (!target) return false;
-            return !!target.closest('button, select, option, a, input, .area-tools, .lang-select-wrapper, .btn-swap-langs, .tool-btn');
+            return !!target.closest('button, select, option, a, input, .area-tools, .lang-select-wrapper, .btn-repeat-speech, .tool-btn');
         }
 
         // Area Interaction Binding
