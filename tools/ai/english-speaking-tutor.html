@@ -964,8 +964,20 @@
         const QUOTA_MODELS_URL = 'https://quota.gugopro.com/api/models';
         const GOOGLE_MODELS_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
 
+        function decodeGeminiApiKey(raw) {
+            if (!raw) return '';
+            if (!raw.startsWith('obf_')) return raw;
+            try {
+                return decodeURIComponent(atob(raw.slice(4)));
+            } catch (error) {
+                console.warn('Gemini API Key 解碼失敗:', error);
+                return '';
+            }
+        }
+
         function getGeminiApiKey() {
-            return (localStorage.getItem('gugopro_gemini_api_key') || localStorage.getItem('gemini_api_key') || '').trim();
+            const raw = (localStorage.getItem('gugopro_gemini_api_key') || localStorage.getItem('gemini_api_key') || '').trim();
+            return decodeGeminiApiKey(raw).trim();
         }
 
         function normaliseGeminiModel(model) {
