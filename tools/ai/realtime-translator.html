@@ -439,6 +439,40 @@
             box-shadow: 0 2px 10px rgba(0, 242, 255, 0.3);
         }
 
+        .mic-hint-corner i {
+            color: var(--primary-neon);
+        }
+
+        .repeat-card-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 8px;
+            padding: 7px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            border-radius: 16px;
+            background: rgba(5, 10, 24, 0.72);
+            color: #fff;
+            font: inherit;
+            font-size: 0.74rem;
+            font-weight: 700;
+            cursor: pointer;
+            pointer-events: auto;
+            white-space: nowrap;
+        }
+
+        .repeat-card-btn:hover,
+        .repeat-card-btn:focus-visible {
+            border-color: var(--primary-neon);
+            color: var(--primary-neon);
+            outline: none;
+        }
+
+        @media (max-width: 600px) {
+            .repeat-card-btn { font-size: 0.7rem; padding: 7px 10px; }
+        }
+
         /* Status Bar */
         #status-bar {
             position: fixed;
@@ -610,15 +644,11 @@
             
             <div class="mic-hint-corner">
                 <i class="fa-solid fa-microphone"></i> <span id="ui-hint-partner">對方點擊發話 (Partner Speak)</span>
+                <button type="button" class="repeat-card-btn" data-speaker="partner" id="repeat-partner" title="重複播放對方翻譯">
+                    <i class="fa-solid fa-repeat" aria-hidden="true"></i><span id="repeat-partner-label">對方重複發話</span>
+                </button>
             </div>
         </section>
-
-        <!-- Repeat Speech Quick Bar -->
-        <div class="global-swap-wrapper">
-            <button type="button" class="btn-repeat-speech" id="btn-repeat-speech" title="重複播放上一段翻譯">
-                <i class="fa-solid fa-repeat"></i> <span id="ui-repeat-label">重複發話</span>
-            </button>
-        </div>
 
         <!-- Bottom Area (Self) -->
         <section class="translate-area area-self" id="self-area">
@@ -642,6 +672,9 @@
 
             <div class="mic-hint-corner">
                 <i class="fa-solid fa-microphone"></i> <span id="ui-hint-self">我方點擊發話 (Self Speak)</span>
+                <button type="button" class="repeat-card-btn" data-speaker="self" id="repeat-self" title="重複播放我方翻譯">
+                    <i class="fa-solid fa-repeat" aria-hidden="true"></i><span id="repeat-self-label">我方重複發話</span>
+                </button>
             </div>
         </section>
     </main>
@@ -735,7 +768,8 @@
                 selfInit: 'Hello! Tap to Speak',
                 partnerHint: '對方點擊發話 (Partner Speak)',
                 selfHint: '我方點擊發話 (Self Speak)',
-                repeatLabel: '重複發話',
+                repeatSelf: '我方重複發話',
+                repeatPartner: '對方重複發話',
                 modeLabel: '對話模式：',
                 modeTap: '點擊模式 (Tap)',
                 modeWalkie: '對講機模式 (Walkie-Talkie)',
@@ -755,7 +789,8 @@
                 selfInit: 'Hello! Tap to Speak',
                 partnerHint: 'Partner Tap to Speak',
                 selfHint: 'Self Tap to Speak',
-                repeatLabel: 'Repeat Speech',
+                repeatSelf: 'Repeat My Speech',
+                repeatPartner: 'Repeat Partner Speech',
                 modeLabel: 'Mode:',
                 modeTap: 'Tap Mode',
                 modeWalkie: 'Walkie-Talkie Mode',
@@ -775,7 +810,8 @@
                 selfInit: 'こんにちは！ここをタップして発話',
                 partnerHint: '相手側タップで発話',
                 selfHint: '自分側タップで発話',
-                repeatLabel: 'もう一度再生',
+                repeatSelf: '自分の発話を再生',
+                repeatPartner: '相手の発話を再生',
                 modeLabel: 'モード：',
                 modeTap: 'タップモード',
                 modeWalkie: 'トランシーバーモード',
@@ -806,8 +842,10 @@
         let recognition = null;
         let currentLangKey = 'zh';
         let currentMode = 'tap'; // 'tap' or 'walkie'
-        let lastSpokenText = '';
-        let lastSpokenLang = '';
+        const lastSpokenBySpeaker = {
+            self: { text: '', lang: '' },
+            partner: { text: '', lang: '' }
+        };
         const statusBar = document.getElementById('status-bar');
         const toastEl = document.getElementById('copy-toast');
 
@@ -817,6 +855,36 @@
             setTimeout(() => {
                 toastEl.style.display = 'none';
             }, 2000);
+        }
+
+        const repeatLabels = {
+            'zh-TW': { self: '我方重複發話', partner: '對方重複發話' },
+            'zh-CN': { self: '我方重复播放', partner: '对方重复播放' },
+            'en-US': { self: 'Repeat My Speech', partner: 'Repeat Partner Speech' },
+            'ja-JP': { self: '自分の発話を再生', partner: '相手の発話を再生' },
+            'ko-KR': { self: '내 말 다시 듣기', partner: '상대 말 다시 듣기' },
+            'th-TH': { self: 'เล่นเสียงของฉันซ้ำ', partner: 'เล่นเสียงคู่สนทนาซ้ำ' },
+            'vi-VN': { self: 'Phát lại lời tôi', partner: 'Phát lại lời đối phương' },
+            'fr-FR': { self: 'Répéter ma phrase', partner: 'Répéter la phrase adverse' },
+            'de-DE': { self: 'Meine Aussage wiederholen', partner: 'Aussage des Partners wiederholen' },
+            'es-ES': { self: 'Repetir mi frase', partner: 'Repetir frase del interlocutor' },
+            'it-IT': { self: 'Ripeti la mia frase', partner: 'Ripeti la frase dell’interlocutore' },
+            'ru-RU': { self: 'Повторить мою фразу', partner: 'Повторить фразу собеседника' }
+        };
+
+        function updateRepeatLabels() {
+            const selfCode = document.getElementById('self-lang')?.value || 'zh-TW';
+            const partnerCode = document.getElementById('partner-lang')?.value || 'en-US';
+            const selfLabel = document.getElementById('repeat-self-label');
+            const partnerLabel = document.getElementById('repeat-partner-label');
+            const selfButton = document.getElementById('repeat-self');
+            const partnerButton = document.getElementById('repeat-partner');
+            const selfText = repeatLabels[selfCode]?.self || repeatLabels['en-US'].self;
+            const partnerText = repeatLabels[partnerCode]?.partner || repeatLabels['en-US'].partner;
+            if (selfLabel) selfLabel.textContent = selfText;
+            if (partnerLabel) partnerLabel.textContent = partnerText;
+            if (selfButton) selfButton.title = selfText;
+            if (partnerButton) partnerButton.title = partnerText;
         }
 
         function updateUI(langKey) {
@@ -829,7 +897,7 @@
             document.getElementById('mode-walkie').textContent = t.modeWalkie;
             document.getElementById('ui-hint-partner').textContent = t.partnerHint;
             document.getElementById('ui-hint-self').textContent = t.selfHint;
-            document.getElementById('ui-repeat-label').textContent = t.repeatLabel;
+            updateRepeatLabels();
             document.getElementById('ui-disclaimer').textContent = t.disclaimer;
             document.documentElement.lang = langKey === 'zh' ? 'zh-TW' : (langKey === 'ja' ? 'ja' : 'en');
         }
@@ -923,19 +991,20 @@
             sel.addEventListener('mousedown', stopBubble);
             sel.addEventListener('touchstart', stopBubble);
             sel.addEventListener('touchend', stopBubble);
-            sel.addEventListener('change', (e) => { stopBubble(e); updateInitialTexts(); });
+            sel.addEventListener('change', (e) => { stopBubble(e); updateInitialTexts(); updateRepeatLabels(); });
         });
 
-        // Repeat Speech Button
-        const btnRepeatSpeech = document.getElementById('btn-repeat-speech');
-        const repeatHandler = (e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            repeatLastSpeech();
-        };
-        btnRepeatSpeech.addEventListener('click', repeatHandler);
-        btnRepeatSpeech.addEventListener('mousedown', (e) => e.stopPropagation());
-        btnRepeatSpeech.addEventListener('touchstart', (e) => e.stopPropagation());
+        // Per-side Repeat Speech Buttons
+        document.querySelectorAll('.repeat-card-btn').forEach(button => {
+            const repeatHandler = (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                repeatSpeech(button.dataset.speaker);
+            };
+            button.addEventListener('click', repeatHandler);
+            button.addEventListener('mousedown', (e) => e.stopPropagation());
+            button.addEventListener('touchstart', (e) => e.stopPropagation());
+        });
 
         const initialPromptByLanguage = {
             'zh-TW': '你好！點擊此區域開始說話',
@@ -995,10 +1064,11 @@
             }
         }
 
-        function speak(text, langCode) {
+        function speak(text, langCode, speaker) {
             if (!text || !('speechSynthesis' in window)) return;
-            lastSpokenText = text;
-            lastSpokenLang = langCode;
+            if (speaker && lastSpokenBySpeaker[speaker]) {
+                lastSpokenBySpeaker[speaker] = { text, lang: langCode };
+            }
             try {
                 window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(text);
@@ -1009,12 +1079,13 @@
             }
         }
 
-        function repeatLastSpeech() {
-            if (!lastSpokenText) {
-                showToast('尚未有可重複播放的翻譯');
+        function repeatSpeech(speaker) {
+            const previous = lastSpokenBySpeaker[speaker];
+            if (!previous || !previous.text) {
+                showToast(speaker === 'self' ? '尚未有我方可重複播放的翻譯' : '尚未有對方可重複播放的翻譯');
                 return;
             }
-            speak(lastSpokenText, lastSpokenLang);
+            speak(previous.text, previous.lang, speaker);
             showToast(i18n[currentLangKey].repeated || '已重複播放上一段翻譯');
         }
 
@@ -1048,12 +1119,12 @@
                     document.getElementById('self-original').textContent = transcript;
                     const translated = await translateText(transcript, selfLang, partnerLang);
                     document.getElementById('partner-display').textContent = translated;
-                    speak(translated, partnerLang);
+                    speak(translated, partnerLang, 'self');
                 } else {
                     document.getElementById('partner-original').textContent = transcript;
                     const translated = await translateText(transcript, partnerLang, selfLang);
                     document.getElementById('self-display').textContent = translated;
-                    speak(translated, selfLang);
+                    speak(translated, selfLang, 'partner');
                 }
             };
 
@@ -1092,7 +1163,7 @@
         // Helper to check if event target is an interactive UI control
         function isInteractiveControl(target) {
             if (!target) return false;
-            return !!target.closest('button, select, option, a, input, .area-tools, .lang-select-wrapper, .btn-repeat-speech, .tool-btn');
+            return !!target.closest('button, select, option, a, input, .area-tools, .lang-select-wrapper, .repeat-card-btn, .tool-btn');
         }
 
         // Area Interaction Binding
