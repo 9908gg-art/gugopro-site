@@ -74,9 +74,54 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 16px;
             z-index: 100;
-            position: sticky;
-            top: 0;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        .header-actions #ui-back-home {
+            width: 44px;
+            height: 44px;
+            padding: 0;
+            justify-content: center;
+            flex: 0 0 44px;
+        }
+
+        .header-actions #ui-back-home i {
+            margin: 0;
+        }
+
+        @media (max-width: 600px) {
+            header {
+                padding: 10px 12px;
+                gap: 8px;
+            }
+            .header-actions {
+                gap: 6px;
+            }
+            .header-actions .api-button {
+                width: 44px;
+                padding: 0;
+                justify-content: center;
+                flex: 0 0 44px;
+            }
+            .header-actions .api-button span {
+                display: none;
+            }
+            .logo-text {
+                font-size: 0.9rem;
+                text-align: center;
+            }
+            .ui-lang-select {
+                max-width: 112px;
+                padding: 8px 8px;
+            }
         }
 
         .btn-back-home {
@@ -488,12 +533,14 @@
 
     <header>
         <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-            <a href="https://gugopro.com" class="btn-back-home" id="ui-back-home">
-                <i class="fa-solid fa-house"></i> 返回 GugoPro 首頁
-            </a>
-            <button onclick="openApiKeyModal()" class="btn-back-home" style="cursor: pointer; background: rgba(0, 242, 255, 0.1); border-color: rgba(0, 242, 255, 0.3); color: var(--primary-neon);">
-                <i class="fa-solid fa-gear"></i> <span id="nav-key-status">API 設定</span>
-            </button>
+            <div class="header-actions">
+                <a href="https://gugopro.com" class="btn-back-home" id="ui-back-home" aria-label="返回 GugoPro 首頁" title="返回 GugoPro 首頁">
+                    <i class="fa-solid fa-house" aria-hidden="true"></i>
+                </a>
+                <button onclick="openApiKeyModal()" class="btn-back-home api-button" aria-label="API 設定" title="API 設定" style="cursor: pointer; background: rgba(0, 242, 255, 0.1); border-color: rgba(0, 242, 255, 0.3); color: var(--primary-neon);">
+                    <i class="fa-solid fa-gear" aria-hidden="true"></i> <span id="nav-key-status">API 設定</span>
+                </button>
+            </div>
         </div>
         <div class="logo-text">GugoPro AI</div>
         <select id="ui-lang-toggle" class="ui-lang-select">
@@ -677,7 +724,7 @@
         const i18n = {
             'zh': {
                 title: '手機面對面即時對話翻譯機 | 免費語音雙向翻譯 | GugoPro AI 旅遊必備',
-                backHome: '<i class="fa-solid fa-house"></i> 返回 GugoPro 首頁',
+                backHome: '<i class="fa-solid fa-house" aria-hidden="true"></i>',
                 statusRecording: '正在聽取中...',
                 statusTranslating: '翻譯中...',
                 partnerWaiting: 'Waiting...',
@@ -697,7 +744,7 @@
             },
             'en': {
                 title: 'Face-to-Face Real-time Translator | Free Voice Translation | GugoPro AI',
-                backHome: '<i class="fa-solid fa-house"></i> Back to GugoPro',
+                backHome: '<i class="fa-solid fa-house" aria-hidden="true"></i>',
                 statusRecording: 'Listening...',
                 statusTranslating: 'Translating...',
                 partnerWaiting: 'Waiting...',
@@ -717,7 +764,7 @@
             },
             'ja': {
                 title: '対面式リアルタイム翻訳機 | 無料音声翻訳 | GugoPro AI',
-                backHome: '<i class="fa-solid fa-house"></i> GugoPro ホームへ',
+                backHome: '<i class="fa-solid fa-house" aria-hidden="true"></i>',
                 statusRecording: '聞き取り中...',
                 statusTranslating: '翻訳中...',
                 partnerWaiting: '待機中...',
@@ -1045,6 +1092,8 @@
                     stopRecording();
                 }
             }, { passive: false });
+        });
+
         /* =====================================================================
            API KEY SECURITY & OBFUSCATION MODULE
            ===================================================================== */
