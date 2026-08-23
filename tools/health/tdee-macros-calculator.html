@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="zh-TW">
 <head>
-    <!-- GugoPro TDEE Engine Anti-Cache Build Token: 1787451900 -->
+    <!-- GugoPro TDEE Engine Anti-Cache Build Token: 1787452336 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AI 專屬營養師與 TDEE 熱量追蹤器 | GugoPro</title>
@@ -84,39 +84,64 @@ function addUserMessage(text,image){const session=activeSession();const message=
 function addAiMessage(text,structured){const session=activeSession();const message={id:uid('message'),role:'ai',text:text||'分析完成。',structured:structured||null,createdAt:new Date().toISOString()};session.messages.push(message);session.updatedAt=message.createdAt;saveSessions();renderActiveSession()}
 function scrollBottom(){requestAnimationFrame(()=>{$('chat-scroll').scrollTop=$('chat-scroll').scrollHeight})}
 async function fetchTimeout(url,options={},timeout=12000){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeout);try{return await fetch(url,{...options,signal:controller.signal,cache:'no-store'})}finally{clearTimeout(timer)}}
-function normaliseModelName(model) {
-  const apiName = typeof model === 'string' ? model : (model.api_name || model.name || model.id || '');
-  const cleanName = String(apiName).replace(/^models\//, '').trim();
-  if (!cleanName) return null;
-  // Ensure valid name format without deprecated/special models
-  if (!/^gemini-[a-zA-Z0-9.\-]+$/.test(cleanName)) return null;
-  if (cleanName.includes('nano-banana') || cleanName.includes('imagen') || cleanName.includes('embedding') || cleanName.includes('aqa') || cleanName.includes('live-translate')) return null;
-  return cleanName;
+function normaliseModel(m) {
+  if (!m) return null;
+  const name = String(typeof m === 'string' ? m : (m.api_name || m.name || m.id || '')).replace(/^models\//, '').trim();
+  if (!name || !/^gemini-[a-zA-Z0-9.\-]+$/.test(name)) return null;
+
+  // Strict exclusions: 1.5/1.0 models, lite models, non-chat / image / tts / robotics models
+  if (name.includes('1.5') || name.includes('1.0') || name.includes('lite') || name.includes('nano-banana') || name.includes('imagen') || name.includes('embedding') || name.includes('aqa') || name.includes('live-translate') || name.includes('tts') || name.includes('audio') || name.includes('robotics')) {
+    return null;
+  }
+
+  if (typeof m === 'object' && m !== null) {
+    if (m.is_rest_compatible === false) return null;
+    const caps = m.capabilities || m.supportedGenerationMethods || [];
+    if (caps.length > 0 && !caps.includes('text_generation') && !caps.includes('generateContent') && !caps.includes('chat_dialog')) {
+      return null;
+    }
+  }
+
+  // Smart score ranking: Top-tier latest flagship models first (3.7 > 3.6 > 3.5 > 3.1 > 3.0 > 2.5 > 2.0; Pro > Flash)
+  let score = 100;
+  if (name.includes('3.7')) score += 700;
+  else if (name.includes('3.6')) score += 600;
+  else if (name.includes('3.5')) score += 500;
+  else if (name.includes('3.1')) score += 400;
+  else if (name.includes('3.0')) score += 300;
+  else if (name.includes('2.5')) score += 200;
+  else if (name.includes('2.0')) score += 100;
+
+  if (name.includes('pro')) score += 50;
+  else if (name.includes('flash')) score += 30;
+
+  return {
+    api_name: name,
+    score: score
+  };
 }
 
 async function fetchModelQueue(apiKey) {
   let discovered = [];
 
-  // 1. Primary: Query https://quota.gugopro.com/api/models
+  // 1. Primary: Query https://quota.gugopro.com/gemini_rate_limits.json
   try {
-    const res = await fetchTimeout(QUOTA_URL);
+    const res = await fetchTimeout(CATALOG_URL);
     if (res.ok) {
       const data = await res.json();
-      const raw = Array.isArray(data) ? data : (data.models || []);
-      discovered = raw.map(normaliseModelName).filter(Boolean);
+      const raw = data.models || [];
+      discovered = raw.map(normaliseModel).filter(Boolean);
     }
   } catch(e) {}
 
-  // 2. Secondary: Query https://quota.gugopro.com/gemini_rate_limits.json
+  // 2. Secondary: Query https://quota.gugopro.com/api/models
   if (!discovered.length) {
     try {
-      const res = await fetchTimeout(CATALOG_URL);
+      const res = await fetchTimeout(QUOTA_URL);
       if (res.ok) {
         const data = await res.json();
-        discovered = (data.models || [])
-          .filter(m => m.is_rest_compatible !== false)
-          .map(normaliseModelName)
-          .filter(Boolean);
+        const raw = Array.isArray(data) ? data : (data.models || []);
+        discovered = raw.map(normaliseModel).filter(Boolean);
       }
     } catch(e) {}
   }
@@ -127,23 +152,27 @@ async function fetchModelQueue(apiKey) {
       const res = await fetchTimeout(`${DISCOVERY_URL}?key=${encodeURIComponent(apiKey)}`);
       if (res.ok) {
         const data = await res.json();
-        discovered = (data.models || [])
-          .filter(m => {
-            const methods = m.supportedGenerationMethods || [];
-            return methods.length === 0 || methods.includes('generateContent');
-          })
-          .map(normaliseModelName)
-          .filter(Boolean);
+        discovered = (data.models || []).map(normaliseModel).filter(Boolean);
       }
     } catch(e) {}
   }
 
-  // Deduplicate discovered active models list (ZERO hardcoded static fallback models!)
-  const queue = discovered.filter((name, idx, arr) => arr.indexOf(name) === idx);
-  if (!queue.length) {
-    throw new Error('無法動態取得目前可用之 Gemini 模型清單，請檢查網路連線或 API Key 狀態。');
+  // Deduplicate and sort descending by model power score
+  const uniqueMap = new Map();
+  discovered.forEach(m => {
+    if (!uniqueMap.has(m.api_name) || uniqueMap.get(m.api_name).score < m.score) {
+      uniqueMap.set(m.api_name, m);
+    }
+  });
+
+  const sortedList = Array.from(uniqueMap.values())
+    .sort((a, b) => b.score - a.score)
+    .map(m => m.api_name);
+
+  if (!sortedList.length) {
+    throw new Error('無法動態取得目前可用之高階 Gemini 模型清單，請檢查網路連線或 API Key 狀態。');
   }
-  return queue;
+  return sortedList;
 }
 
 function parseAiResponse(payload) {
@@ -165,7 +194,7 @@ async function callDietitian(text, image) {
     return;
   }
 
-  const context = `你是一位專業且親切的 GugoPro 國家級專屬諮詢營養師，請使用繁體中文回答。
+  const systemInstructionText = `你是一位專業、親切且具備臨床經驗的 GugoPro 國家級專屬諮詢營養師，請使用繁體中文回答。
 
 【學員當前數據】：
 - 性別：${state.gender === 'male' ? '男' : '女'}，年齡：${state.age} 歲，身高：${state.height} cm，體重：${state.weight} kg
@@ -196,11 +225,9 @@ async function callDietitian(text, image) {
 }
 （若無對應項目則該物件設為 null）`;
 
-  const promptText = context + '\n\n使用者訊息：' + text;
-
-  const parts = [{ text: promptText }];
+  const userParts = [{ text: text }];
   if (image && image.data && image.mime) {
-    parts.push({
+    userParts.push({
       inlineData: {
         mimeType: image.mime,
         data: image.data
@@ -208,13 +235,24 @@ async function callDietitian(text, image) {
     });
   }
 
+  // Standard compliant payload structure with systemInstruction, contents, and generationConfig
   const bodyPayload = {
     contents: [
       {
         role: "user",
-        parts: parts
+        parts: userParts
       }
-    ]
+    ],
+    systemInstruction: {
+      parts: [
+        { text: systemInstructionText }
+      ]
+    },
+    generationConfig: {
+      temperature: 0.7,
+      maxOutputTokens: 2048,
+      responseMimeType: "application/json"
+    }
   };
 
   const thinking = { id: uid('thinking'), role: 'ai', text: '營養師正在分析中…', createdAt: new Date().toISOString() };
