@@ -914,7 +914,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             initChatSystem();
             checkApiKey();
-            fetchLatestModel();
             initSpeechRecognition();
             initLangPanel();
             
@@ -1188,7 +1187,6 @@
                 localStorage.setItem('gemini_api_key', key);
                 document.getElementById('modal-api').style.display = 'none';
                 hideError();
-                fetchLatestModel();
             }
         };
 
@@ -1300,13 +1298,16 @@
 
         // --- Chat Logic ---
         async function sendMessage() {
-            if (!currentModel) { showError("❌ 尚未取得模型，請重試。"); return; }
             const textInput = document.getElementById('user-text');
             const content = textInput.value.trim();
             if (!content) return;
 
             const apiKey = getGeminiApiKey();
             if (!apiKey) { checkApiKey(); return; }
+            if (!currentModel) {
+                await fetchLatestModel();
+                if (!currentModel) return;
+            }
 
             textInput.value = '';
             const myLang = document.getElementById('my-lang').value;
