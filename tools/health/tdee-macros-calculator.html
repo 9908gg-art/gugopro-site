@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="zh-TW">
 <head>
-    <!-- GugoPro TDEE Engine Anti-Cache Build Token: 1787452970 -->
+    <!-- GugoPro TDEE Engine Anti-Cache Build Token: 1787494717 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AI 專屬營養師與 TDEE 熱量追蹤器 | GugoPro</title>
@@ -130,44 +130,66 @@ async function fetchTimeout(url,options={},timeout=12000){const controller=new A
 const FALLBACK_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
 
 function normaliseModel(model) {
-  const apiName = typeof model === 'string' ? model : (model.api_name || model.name?.replace(/^models\//, ''));
-  if (!apiName) return null;
-  const methods = model.supportedGenerationMethods || model.capabilities || [];
-  const canGenerate = methods.length === 0 || methods.includes('generateContent') || methods.includes('text_generation');
-  return canGenerate ? {
-    api_name: apiName,
-    latency_ms: Number(model.latency_ms || model.response_time_ms || model.avg_latency_ms || Number.MAX_SAFE_INTEGER),
-    priority: Number(model.priority || Number.MAX_SAFE_INTEGER)
-  } : null;
+  if (!model) return null;
+  const rawName = typeof model === 'string' ? model : (model.api_name || model.name || '');
+  const cleanName = String(rawName).replace(/^models\//, '').trim();
+  if (!cleanName || !/^gemini-[a-zA-Z0-9.\-]+$/.test(cleanName)) return null;
+
+  // Strict exclusions: non-rest, audio, tts, robotics, grounding, computer-use, embedding, image
+  if (model && typeof model === 'object') {
+    if (model.is_rest_compatible === false) return null;
+  }
+
+  if (['tts', 'audio', 'robotics', 'grounding', 'computer-use', 'nano-banana', 'lyria', 'veo', 'embedding', 'aqa', 'live-translate', 'gemma', 'deep-research', 'antigravity'].some(bad => cleanName.includes(bad))) {
+    return null;
+  }
+
+  // Calculate dynamic rank score for chat generation
+  let score = 100;
+  if (cleanName.includes('3.7')) score += 700;
+  else if (cleanName.includes('3.6')) score += 600;
+  else if (cleanName.includes('3.5')) score += 500;
+  else if (cleanName.includes('3.1')) score += 400;
+  else if (cleanName.includes('3.0')) score += 300;
+  else if (cleanName.includes('2.5')) score += 200;
+  else if (cleanName.includes('2.0')) score += 100;
+  else if (cleanName.includes('1.5')) score += 50;
+
+  if (cleanName.includes('pro')) score += 50;
+  else if (cleanName.includes('flash')) score += 30;
+  if (cleanName.includes('lite')) score -= 20;
+
+  return {
+    api_name: cleanName,
+    score: score
+  };
 }
 
 async function fetchModelQueue(apiKey) {
   let discovered = [];
 
-  // 1. Primary: Query https://quota.gugopro.com/api/models
+  // 1. Primary: Query https://quota.gugopro.com/gemini_rate_limits.json
   try {
-    const qRes = await fetchTimeout(QUOTA_URL);
-    if (qRes.ok) {
-      const qData = await qRes.json();
-      const raw = Array.isArray(qData) ? qData : (qData.models || []);
-      discovered = raw.map(m => normaliseModel(typeof m === 'string' ? { name: m } : m)).filter(Boolean);
+    const res = await fetchTimeout(CATALOG_URL);
+    if (res.ok) {
+      const data = await res.json();
+      discovered = (data.models || []).map(normaliseModel).filter(Boolean);
     }
-  } catch (qe) {}
+  } catch (catalogError) {}
 
-  // 2. Secondary: Query https://quota.gugopro.com/gemini_rate_limits.json
+  // 2. Secondary: Query https://quota.gugopro.com/api/models
   if (discovered.length === 0) {
     try {
-      const res = await fetchTimeout(CATALOG_URL);
-      if (res.ok) {
-        const data = await res.json();
-        discovered = (data.models || [])
-          .filter(model => model.is_free_tier && model.is_rest_compatible && (!model.capabilities || model.capabilities.includes('text_generation')))
-          .map(normaliseModel).filter(Boolean);
+      const qRes = await fetchTimeout(QUOTA_URL);
+      if (qRes.ok) {
+        const qData = await qRes.json();
+        const raw = Array.isArray(qData) ? qData : (qData.models || []);
+        discovered = raw.map(m => normaliseModel(typeof m === 'string' ? { name: m } : m)).filter(Boolean);
       }
-    } catch (catalogError) {}
+    } catch (qe) {}
   }
 
-  // 3. Fallback: Query Google official models API for this key
+  // 3. Fallback: Query Google official models discovery API for this key
   if (discovered.length === 0 && apiKey) {
     try {
       const discoveryUrl = `${DISCOVERY_URL}?key=${encodeURIComponent(apiKey)}`;
@@ -179,17 +201,24 @@ async function fetchModelQueue(apiKey) {
     } catch (discoveryError) {}
   }
 
-  // Add safe modern fallback models exactly as in AI Tutor
+  // Add safe modern fallback models
   const discoveredNames = new Set(discovered.map(m => m.api_name));
   FALLBACK_MODELS.forEach(name => {
     if (!discoveredNames.has(name)) {
-      discovered.push({ api_name: name, latency_ms: Number.MAX_SAFE_INTEGER - 1, priority: 999 });
+      discovered.push({ api_name: name, score: name.includes('2.5') ? 230 : (name.includes('2.0') ? 130 : 50) });
     }
   });
 
-  const queue = discovered
-    .filter((model, index, models) => models.findIndex(item => item.api_name === model.api_name) === index)
-    .sort((a, b) => (a.latency_ms - b.latency_ms) || (a.priority - b.priority))
+  // Deduplicate keeping highest score
+  const uniqueMap = new Map();
+  discovered.forEach(m => {
+    if (!uniqueMap.has(m.api_name) || uniqueMap.get(m.api_name).score < m.score) {
+      uniqueMap.set(m.api_name, m);
+    }
+  });
+
+  const queue = Array.from(uniqueMap.values())
+    .sort((a, b) => b.score - a.score)
     .map(m => m.api_name);
 
   return queue;
