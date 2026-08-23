@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="zh-TW">
 <head>
-    <!-- GugoPro TDEE Engine Anti-Cache Build Token: 1787452731 -->
+    <!-- GugoPro TDEE Engine Anti-Cache Build Token: 1787452888 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AI 專屬營養師與 TDEE 熱量追蹤器 | GugoPro</title>
@@ -84,95 +84,72 @@ function addUserMessage(text,image){const session=activeSession();const message=
 function addAiMessage(text,structured){const session=activeSession();const message={id:uid('message'),role:'ai',text:text||'分析完成。',structured:structured||null,createdAt:new Date().toISOString()};session.messages.push(message);session.updatedAt=message.createdAt;saveSessions();renderActiveSession()}
 function scrollBottom(){requestAnimationFrame(()=>{$('chat-scroll').scrollTop=$('chat-scroll').scrollHeight})}
 async function fetchTimeout(url,options={},timeout=12000){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeout);try{return await fetch(url,{...options,signal:controller.signal,cache:'no-store'})}finally{clearTimeout(timer)}}
-function normaliseModel(m) {
-  if (!m) return null;
-  const name = String(typeof m === 'string' ? m : (m.api_name || m.name || m.id || '')).replace(/^models\//, '').trim();
-  if (!name || !/^gemini-[a-zA-Z0-9.\-]+$/.test(name)) return null;
+const FALLBACK_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
 
-  // Strict exclusions: 1.5/1.0 models, lite models, non-chat / image / tts / robotics models
-  if (name.includes('1.5') || name.includes('1.0') || name.includes('lite') || name.includes('nano-banana') || name.includes('imagen') || name.includes('embedding') || name.includes('aqa') || name.includes('live-translate') || name.includes('tts') || name.includes('audio') || name.includes('robotics')) {
-    return null;
-  }
-
-  if (typeof m === 'object' && m !== null) {
-    if (m.is_rest_compatible === false) return null;
-    const caps = m.capabilities || m.supportedGenerationMethods || [];
-    if (caps.length > 0 && !caps.includes('text_generation') && !caps.includes('generateContent') && !caps.includes('chat_dialog')) {
-      return null;
-    }
-  }
-
-  // Smart score ranking: Top-tier latest flagship models first (3.7 > 3.6 > 3.5 > 3.1 > 3.0 > 2.5 > 2.0; Pro > Flash)
-  let score = 100;
-  if (name.includes('3.7')) score += 700;
-  else if (name.includes('3.6')) score += 600;
-  else if (name.includes('3.5')) score += 500;
-  else if (name.includes('3.1')) score += 400;
-  else if (name.includes('3.0')) score += 300;
-  else if (name.includes('2.5')) score += 200;
-  else if (name.includes('2.0')) score += 100;
-
-  if (name.includes('pro')) score += 50;
-  else if (name.includes('flash')) score += 30;
-
-  return {
-    api_name: name,
-    score: score
-  };
+function normaliseModel(model) {
+  const apiName = typeof model === 'string' ? model : (model.api_name || model.name?.replace(/^models\//, ''));
+  if (!apiName) return null;
+  const methods = model.supportedGenerationMethods || model.capabilities || [];
+  const canGenerate = methods.length === 0 || methods.includes('generateContent') || methods.includes('text_generation');
+  return canGenerate ? {
+    api_name: apiName,
+    latency_ms: Number(model.latency_ms || model.response_time_ms || model.avg_latency_ms || Number.MAX_SAFE_INTEGER),
+    priority: Number(model.priority || Number.MAX_SAFE_INTEGER)
+  } : null;
 }
 
 async function fetchModelQueue(apiKey) {
   let discovered = [];
 
-  // 1. Primary: Query https://quota.gugopro.com/gemini_rate_limits.json
+  // 1. Primary: Query https://quota.gugopro.com/api/models
   try {
-    const res = await fetchTimeout(CATALOG_URL);
-    if (res.ok) {
-      const data = await res.json();
-      const raw = data.models || [];
-      discovered = raw.map(normaliseModel).filter(Boolean);
+    const qRes = await fetchTimeout(QUOTA_URL);
+    if (qRes.ok) {
+      const qData = await qRes.json();
+      const raw = Array.isArray(qData) ? qData : (qData.models || []);
+      discovered = raw.map(m => normaliseModel(typeof m === 'string' ? { name: m } : m)).filter(Boolean);
     }
-  } catch(e) {}
+  } catch (qe) {}
 
-  // 2. Secondary: Query https://quota.gugopro.com/api/models
-  if (!discovered.length) {
+  // 2. Secondary: Query https://quota.gugopro.com/gemini_rate_limits.json
+  if (discovered.length === 0) {
     try {
-      const res = await fetchTimeout(QUOTA_URL);
+      const res = await fetchTimeout(CATALOG_URL);
       if (res.ok) {
         const data = await res.json();
-        const raw = Array.isArray(data) ? data : (data.models || []);
-        discovered = raw.map(normaliseModel).filter(Boolean);
+        discovered = (data.models || [])
+          .filter(model => model.is_free_tier && model.is_rest_compatible && (!model.capabilities || model.capabilities.includes('text_generation')))
+          .map(normaliseModel).filter(Boolean);
       }
-    } catch(e) {}
+    } catch (catalogError) {}
   }
 
-  // 3. Fallback: Query Google official models discovery API dynamically for this API key
-  if (!discovered.length && apiKey) {
+  // 3. Fallback: Query Google official models API for this key
+  if (discovered.length === 0 && apiKey) {
     try {
-      const res = await fetchTimeout(`${DISCOVERY_URL}?key=${encodeURIComponent(apiKey)}`);
+      const discoveryUrl = `${DISCOVERY_URL}?key=${encodeURIComponent(apiKey)}`;
+      const res = await fetchTimeout(discoveryUrl);
       if (res.ok) {
         const data = await res.json();
         discovered = (data.models || []).map(normaliseModel).filter(Boolean);
       }
-    } catch(e) {}
+    } catch (discoveryError) {}
   }
 
-  // Deduplicate and sort descending by model power score
-  const uniqueMap = new Map();
-  discovered.forEach(m => {
-    if (!uniqueMap.has(m.api_name) || uniqueMap.get(m.api_name).score < m.score) {
-      uniqueMap.set(m.api_name, m);
+  // Add safe modern fallback models exactly as in AI Tutor
+  const discoveredNames = new Set(discovered.map(m => m.api_name));
+  FALLBACK_MODELS.forEach(name => {
+    if (!discoveredNames.has(name)) {
+      discovered.push({ api_name: name, latency_ms: Number.MAX_SAFE_INTEGER - 1, priority: 999 });
     }
   });
 
-  const sortedList = Array.from(uniqueMap.values())
-    .sort((a, b) => b.score - a.score)
+  const queue = discovered
+    .filter((model, index, models) => models.findIndex(item => item.api_name === model.api_name) === index)
+    .sort((a, b) => (a.latency_ms - b.latency_ms) || (a.priority - b.priority))
     .map(m => m.api_name);
 
-  if (!sortedList.length) {
-    throw new Error('無法動態取得目前可用之高階 Gemini 模型清單，請檢查網路連線或 API Key 狀態。');
-  }
-  return sortedList;
+  return queue;
 }
 
 function parseAiResponse(payload) {
