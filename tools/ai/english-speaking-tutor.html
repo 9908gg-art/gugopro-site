@@ -613,15 +613,38 @@
         }
 
         .error-panel {
-            background: var(--error-red);
-            color: #fff;
-            padding: 10px;
+            background: rgba(245, 158, 11, 0.12);
+            color: #fcd34d;
+            border: 1px solid rgba(245, 158, 11, 0.45);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+            padding: 10px 12px;
             border-radius: 10px;
             margin-bottom: 10px;
             display: none;
             text-align: center;
             font-size: 0.85rem;
             font-weight: 600;
+            line-height: 1.5;
+        }
+        .error-panel.busy {
+            background: rgba(14, 165, 233, 0.12);
+            color: #bae6fd;
+            border-color: rgba(14, 165, 233, 0.45);
+        }
+        .error-panel button {
+            border: 1px solid rgba(255, 255, 255, 0.24);
+            background: rgba(255, 255, 255, 0.12);
+            color: #fff;
+            padding: 4px 12px;
+            font-size: 0.8rem;
+            border-radius: 6px;
+            margin-left: 10px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .error-panel button:disabled {
+            opacity: 0.55;
+            cursor: wait;
         }
 
         .hidden { display: none !important; }
@@ -774,7 +797,7 @@
             <div class="input-wrapper">
                 <div id="error-panel" class="error-panel">
                     <span id="error-msg"></span>
-                    <button id="btn-retry-model" class="btn-tool" style="background:#fff; color:#000; padding:4px 12px; font-size:0.8rem; border-radius:6px; margin-left:10px; font-weight:bold;">🔄 重試</button>
+                    <button id="btn-retry-model" class="btn-tool">🔄 手動重試</button>
                 </div>
 
                 <div class="input-options">
@@ -894,6 +917,9 @@
         let availableModels = [];
         let currentModelIndex = 0;
         let currentModel = null;
+        let retryCountdownTimer = null;
+        let pendingRetryRequest = null;
+        let isSendingMessage = false;
         let recognition = null;
         let isRecording = false;
         let inputMode = 'target'; // 'target' or 'my'
@@ -963,6 +989,8 @@
 
         const QUOTA_MODELS_URL = 'https://quota.gugopro.com/api/models';
         const GOOGLE_MODELS_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
+        const GEMINI_RETRY_DELAYS_MS = [1500, 3000];
+        const BUSY_MESSAGE = '⚠️ 官方 AI 伺服器目前連線繁忙（尖峰時段負載較高），正在為您自動重試或切換線路...';
 
         function decodeGeminiApiKey(raw) {
             if (!raw) return '';
@@ -1309,9 +1337,22 @@
         }
 
         // --- Chat Logic ---
-        async function sendMessage() {
+        function wait(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function createGeminiApiError(status, model) {
+            const error = new Error(`Gemini API 回傳 HTTP ${status}`);
+            error.status = status;
+            error.model = model;
+            return error;
+        }
+
+        async function sendMessage(retryRequest = null) {
+            if (isSendingMessage) return;
+
             const textInput = document.getElementById('user-text');
-            const content = textInput.value.trim();
+            const content = String(retryRequest?.content || textInput.value || '').trim();
             if (!content) return;
 
             const apiKey = getGeminiApiKey();
@@ -1322,23 +1363,31 @@
             }
 
             textInput.value = '';
-            const myLang = document.getElementById('my-lang').value;
-            const targetLang = document.getElementById('target-lang').value;
-            const inputLang = inputMode === 'target' ? targetLang : myLang;
+            const myLang = retryRequest?.myLang || document.getElementById('my-lang').value;
+            const targetLang = retryRequest?.targetLang || document.getElementById('target-lang').value;
+            const inputLang = retryRequest?.inputLang || (inputMode === 'target' ? targetLang : myLang);
+            const msgId = retryRequest?.msgId || 'msg-' + Date.now();
+            const existingUserEl = document.querySelector(`[data-id="${msgId}"]`);
 
-            const msgId = 'msg-' + Date.now();
-            addMessageToUI('user', content, "正在處理...", null, msgId); 
+            if (existingUserEl) {
+                existingUserEl.querySelector('.msg-my').textContent = '正在處理...';
+            } else {
+                addMessageToUI('user', content, '正在處理...', null, msgId);
+            }
+            pendingRetryRequest = null;
+            isSendingMessage = true;
+            hideError();
             scrollToBottom();
 
             try {
                 const response = await callGemini(content, myLang, targetLang, inputLang, apiKey);
-                
+
                 const userMsgEl = document.querySelector(`[data-id="${msgId}"]`);
                 if (userMsgEl) {
                     userMsgEl.querySelector('.msg-learning').textContent = response.user_learning;
                     userMsgEl.querySelector('.msg-my').textContent = response.user_my;
                 }
-                
+
                 const room = chatRooms.find(r => r.id === activeRoomId);
                 room.messages.push({ id: msgId, role: 'user', learning: response.user_learning, my: response.user_my });
 
@@ -1350,14 +1399,21 @@
                 saveRoomsToLocal();
                 scrollToBottom();
             } catch (err) {
-                console.error("API Error:", err);
-                if (err.status === 429 && currentModelIndex < availableModels.length - 1) {
-                    currentModelIndex++;
-                    currentModel = availableModels[currentModelIndex].api_name;
-                    console.log(`Switching to backup model: ${currentModel}`);
-                    return sendMessage();
+                console.error('API Error:', err);
+                const userMsgEl = document.querySelector(`[data-id="${msgId}"]`);
+                if (err.status === 503) {
+                    pendingRetryRequest = { content, myLang, targetLang, inputLang, msgId };
+                    if (userMsgEl) userMsgEl.querySelector('.msg-my').textContent = '官方 AI 伺服器暫時繁忙，尚未完成回覆。';
+                    showError(`${BUSY_MESSAGE} 已完成所有自動重試，請稍候再手動重試。`, { busy: true, countdownSeconds: 5 });
+                } else if (err.status === 401 || err.status === 403) {
+                    if (userMsgEl) userMsgEl.querySelector('.msg-my').textContent = 'API Key 或權限需要確認。';
+                    showError('❌ Gemini API Key 無效或權限受限，請至右側選單重新設定。');
+                } else {
+                    if (userMsgEl) userMsgEl.querySelector('.msg-my').textContent = '本次請求未完成，請稍後再試。';
+                    showError(`❌ 請求未完成：${err.status || '連線失敗'}。您可以按下「手動重試」。`);
                 }
-                showError(`❌ 錯誤: ${err.status || '連線失敗'}`);
+            } finally {
+                isSendingMessage = false;
             }
         }
 
@@ -1366,7 +1422,7 @@
             const targetLang = LANG_NAMES[targetLangCode];
             const inputLang = LANG_NAMES[inputLangCode];
             const room = chatRooms.find(r => r.id === activeRoomId);
-            const historyContext = room.messages.slice(-10).map(h => `${h.role === 'user' ? 'Student' : 'Tutor'}: ${h.learning} (${h.my})`).join('\n');
+            const historyContext = room.messages.slice(-10).map(h => `${h.role === 'user' ? 'Student' : 'Tutor'}: ${h.learning} (${h.my})`).join('\\n');
 
             const prompt = `You are a friendly language tutor. The student's native language is ${myLang} and they are learning ${targetLang}.
             The student just sent a message in ${inputLang}.
@@ -1392,7 +1448,7 @@
 
             const chatHistory = room.messages.map(message => ({
                 role: message.role === 'user' ? 'user' : 'model',
-                parts: [{ text: String(message.role === 'user' ? (message.learning || '') : (message.learning || '')) }]
+                parts: [{ text: String(message.learning || '') }]
             }));
             chatHistory.push({ role: 'user', parts: [{ text: prompt }] });
 
@@ -1405,20 +1461,70 @@
                     temperature: 0.7
                 }
             };
-            const modelName = String(currentModel || '').replace(/^models\//, '');
-            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelName)}:generateContent?key=${encodeURIComponent(apiKey)}`;
-            console.log('[GugoPro Gemini] Endpoint:', endpoint);
-            console.log('[GugoPro Gemini] Payload:', JSON.stringify(payload, null, 2));
-            const res = await fetch(endpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
 
-            if (!res.ok) { const error = new Error("API_ERROR"); error.status = res.status; throw error; }
-            const data = await res.json();
-            const rawText = data.candidates[0].content.parts[0].text;
-            return JSON.parse(rawText.replace(/```json|```/g, '').trim());
+            const candidateModels = [];
+            [currentModel, ...availableModels.map(model => model.api_name || model)]
+                .map(model => String(model || '').replace(/^models\//, ''))
+                .filter(Boolean)
+                .forEach(model => { if (!candidateModels.includes(model)) candidateModels.push(model); });
+
+            if (candidateModels.length === 0) {
+                throw new Error('目前沒有可用的 Gemini 模型。');
+            }
+
+            let lastError = null;
+            for (let modelIndex = 0; modelIndex < candidateModels.length; modelIndex++) {
+                const modelName = candidateModels[modelIndex];
+                currentModelIndex = modelIndex;
+                currentModel = modelName;
+                const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelName)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+                console.log(`[GugoPro Gemini] Endpoint (${modelIndex + 1}/${candidateModels.length}):`, endpoint);
+                console.log('[GugoPro Gemini] Payload:', JSON.stringify(payload, null, 2));
+
+                for (let retryIndex = 0; retryIndex <= GEMINI_RETRY_DELAYS_MS.length; retryIndex++) {
+                    try {
+                        const res = await fetch(endpoint, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        if (res.ok) {
+                            const data = await res.json();
+                            const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                            if (!rawText) throw new Error('Gemini API 回傳空白內容。');
+                            hideError();
+                            return JSON.parse(rawText.replace(/```json|```/g, '').trim());
+                        }
+
+                        const error = createGeminiApiError(res.status, modelName);
+                        lastError = error;
+                        if (res.status === 503) {
+                            if (retryIndex < GEMINI_RETRY_DELAYS_MS.length) {
+                                const delayMs = GEMINI_RETRY_DELAYS_MS[retryIndex];
+                                showBusyStatus(`將於 ${(delayMs / 1000).toFixed(1)} 秒後進行第 ${retryIndex + 1} 次自動重試。`);
+                                await wait(delayMs);
+                                continue;
+                            }
+                            if (modelIndex < candidateModels.length - 1) {
+                                showBusyStatus(`原模型仍然繁忙，正在切換至備用線路（${modelIndex + 2}/${candidateModels.length}）。`);
+                            }
+                            break;
+                        }
+
+                        if (res.status === 429 && modelIndex < candidateModels.length - 1) {
+                            console.warn(`模型 ${modelName} 回傳 HTTP 429，切換至下一個備用模型。`);
+                            break;
+                        }
+                        throw error;
+                    } catch (error) {
+                        if (error.status === 503 && retryIndex < GEMINI_RETRY_DELAYS_MS.length) continue;
+                        throw error;
+                    }
+                }
+            }
+
+            throw lastError || new Error('所有可用 Gemini 模型呼叫皆失敗，請稍後重試。');
         }
 
         function addMessageToUI(role, learning, my, correction, id) {
@@ -1530,9 +1636,70 @@
         };
 
         // --- Helpers ---
-        function showError(msg) { const p = document.getElementById('error-panel'); document.getElementById('error-msg').textContent = msg; p.style.display = 'block'; }
-        function hideError() { document.getElementById('error-panel').style.display = 'none'; }
-        document.getElementById('btn-retry-model').onclick = fetchLatestModel;
+        function clearRetryCountdown() {
+            if (retryCountdownTimer !== null) {
+                clearInterval(retryCountdownTimer);
+                retryCountdownTimer = null;
+            }
+        }
+
+        function showError(msg, options = {}) {
+            clearRetryCountdown();
+            const panel = document.getElementById('error-panel');
+            const message = document.getElementById('error-msg');
+            const retryButton = document.getElementById('btn-retry-model');
+            panel.classList.toggle('busy', Boolean(options.busy));
+            message.textContent = msg;
+            panel.style.display = 'block';
+            retryButton.style.display = options.showRetryButton === false ? 'none' : '';
+            retryButton.disabled = Boolean(options.disabled);
+            retryButton.textContent = options.buttonLabel || '🔄 手動重試';
+
+            const seconds = Number(options.countdownSeconds || 0);
+            if (seconds > 0) {
+                let remaining = Math.ceil(seconds);
+                const updateCountdown = () => {
+                    if (remaining > 0) {
+                        message.textContent = `${msg} ${remaining} 秒後可按下「手動重試」。`;
+                        retryButton.disabled = true;
+                    } else {
+                        message.textContent = `${msg} 您可以按下「手動重試」。`;
+                        retryButton.disabled = false;
+                    }
+                };
+                updateCountdown();
+                retryCountdownTimer = setInterval(() => {
+                    remaining -= 1;
+                    if (remaining <= 0) {
+                        clearRetryCountdown();
+                        remaining = 0;
+                    }
+                    updateCountdown();
+                }, 1000);
+            }
+        }
+
+        function showBusyStatus(detail = '') {
+            const suffix = detail ? ` ${detail}` : '';
+            showError(`${BUSY_MESSAGE}${suffix}`, { busy: true, showRetryButton: false, disabled: true });
+        }
+
+        function hideError() {
+            clearRetryCountdown();
+            document.getElementById('error-panel').style.display = 'none';
+        }
+
+        async function handleManualRetry() {
+            if (isSendingMessage || retryCountdownTimer !== null) return;
+            const retryRequest = pendingRetryRequest;
+            await fetchLatestModel();
+            if (!currentModel) return;
+            if (retryRequest) {
+                await sendMessage(retryRequest);
+            }
+        }
+
+        document.getElementById('btn-retry-model').onclick = handleManualRetry;
         document.getElementById('btn-send').onclick = sendMessage;
         document.getElementById('user-text').onkeypress = (e) => { if(e.key === 'Enter') sendMessage(); };
     </script>
