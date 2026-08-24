@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="使用 SheetJS 在瀏覽器本地完成 JSON、CSV 與 Excel XLSX 的互轉、表格預覽與下載。">
+    <title>結構化數據轉換器 JSON CSV XLSX | GugoPro Converter Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/app.css">
+    <link rel="stylesheet" href="converter-base.css">
+    <link rel="stylesheet" href="converter-hub.css">
+</head>
+<body class="converter-page">
+    <header><div class="nav-container">            <a href="../index.html#tools-section" class="logo" aria-label="回到 GugoPro 主站首頁"><div class="logo-icon"><i class="fa-solid fa-rocket"></i></div><span class="logo-text">GugoPro</span><span class="logo-tag">生活實用工具</span></a><div class="tools-selector"><button class="tools-btn" type="button" aria-haspopup="true"><i class="fa-solid fa-screwdriver-wrench"></i> 轉檔工具 <i class="fa-solid fa-caret-down"></i></button><div class="tools-dropdown"><a href="converter-hub.html">轉檔工具專區</a><a href="converter-subtitles.html">字幕格式轉換器</a><a href="converter-image.html">多功能影像處理器</a><a href="converter-data.html">結構化數據轉換器</a><a href="converter-image-pdf.html">圖片合併轉 PDF</a><a href="../index.html#tools-section">主站工具總覽</a></div></div><div class="nav-actions"><a class="kofi-nav-btn" href="https://ko-fi.com/R1K123XRS9" target="_blank" rel="noopener sponsored"><i class="fa-solid fa-mug-hot"></i> 支持創作</a><a class="converter-home-link" href="../index.html#tools-section"><i class="fa-solid fa-house"></i> 主站首頁</a></div></div></header>
+    <section class="hero converter-hero"><div class="hero-badge"><i class="fa-solid fa-table"></i> Converter Hub / 資料工作流</div><h1>結構化數據轉換器</h1><p>用 SheetJS 在本機解析 JSON、CSV 與 Excel XLSX，先預覽表格，再選擇想要的格式下載，不需要把資料送到雲端。</p><div class="hero-actions"><a class="converter-button secondary" href="converter-hub.html"><i class="fa-solid fa-arrow-left"></i> 返回 Converter Hub</a><span class="converter-stat"><strong>SheetJS</strong> CDN 函式庫</span></div></section>
+    <main class="converter-shell"><div class="converter-workbench-wrap"><section class="converter-workbench" aria-labelledby="data-workbench-heading"><div class="converter-section-heading"><div><h2 id="data-workbench-heading">匯入、預覽與匯出</h2><p>支援 JSON 陣列 / 物件、CSV 與 XLSX / XLS。</p></div></div><label class="converter-upload-zone" id="data-dropzone" for="data-file"><input id="data-file" type="file" accept=".json,.csv,.xlsx,.xls,application/json,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"><span><i class="fa-solid fa-cloud-arrow-up converter-upload-icon"></i><strong>拖曳 JSON / CSV / XLSX 到這裡</strong><small>或點擊選擇檔案 · 所有解析都在本地執行</small></span></label><div class="converter-file-info" id="data-file-info" aria-live="polite"></div><div class="converter-form-grid"><div class="converter-control"><label class="converter-label" for="data-output-format">輸出格式</label><select id="data-output-format"><option value="json">JSON</option><option value="csv">CSV</option><option value="xlsx">Excel XLSX</option></select></div><div class="converter-control"><label class="converter-label" for="data-sheet-name">工作表名稱（XLSX）</label><input id="data-sheet-name" type="text" maxlength="31" value="ConvertedData" placeholder="ConvertedData"></div></div><div class="converter-preview" id="data-preview"><h3>表格預覽</h3><div class="converter-table-wrap" id="data-table-wrap"><p class="converter-hint" style="padding: 12px;">選擇資料檔案後會顯示前 40 列預覽。</p></div></div><div class="converter-actions"><button class="converter-button primary" id="data-export" type="button" disabled><i class="fa-solid fa-download"></i> 匯出並下載</button><button class="converter-button secondary" id="data-clear" type="button"><i class="fa-solid fa-rotate-left"></i> 清除</button></div><div class="converter-progress"><div class="converter-progress-head"><span>解析與匯出進度</span><span id="data-progress-label">0%</span></div><div class="converter-progress-track"><div class="converter-progress-bar" id="data-progress-bar"></div></div></div><p class="converter-status" id="data-status" aria-live="polite">請先選擇 JSON、CSV 或 Excel 檔案。</p>                <div class="converter-output" id="data-output"><h3>輸出摘要</h3><pre id="data-output-preview"></pre><div class="converter-actions"><button class="converter-button primary" id="data-download" type="button" disabled><i class="fa-solid fa-download"></i> 下載最近輸出</button></div></div></section><aside><section class="converter-side-card"><h3><i class="fa-solid fa-table-list"></i> 資料整理提示</h3><p>JSON 陣列會以物件鍵名建立欄位；若每列欄位不同，空白儲存格會自動補齊。</p><h4>預覽範圍</h4><p>介面預覽前 40 列、前 12 欄，完整資料仍會保留在下載檔案中。</p></section><section class="converter-side-card"><h3><i class="fa-solid fa-shield-halved"></i> 隱私承諾</h3><p>SheetJS 只在目前頁面的 JavaScript 執行環境解析檔案，不會呼叫上傳端點。</p></section></aside></div><div id="converter-commerce"></div></main>
+    <footer><a class="converter-footer-support" href="https://ko-fi.com/R1K123XRS9" target="_blank" rel="noopener sponsored"><i class="fa-solid fa-mug-hot"></i> 喜歡這個工具？請在 Ko-fi 支持我們</a><div class="footer-links"><a href="../index.html#tools-section">主站首頁</a><a href="converter-hub.html">轉檔工具</a><a href="../index.html#tools-section">主站工具總覽</a><a href="../privacy.html">隱私權政策</a><a href="../terms.html">服務條款</a></div><p>© 2026 GugoPro. All rights reserved.</p><p class="converter-footer-note">本工具只在瀏覽器本地處理資料。Amazon、TradingView 與 Ko-fi 連結可能包含合作推廣標記。</p></footer>
+    <script src="converter-nav.js"></script><script src="converter-common.js"></script><script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    <script>
+        (function () {
+            'use strict';
+            var C = window.ConverterCommon;
+            var file = null;
+            var rows = [];
+            var outputBlob = null;
+            var outputName = '';
+            var fileInput = document.getElementById('data-file');
+            var fileInfo = document.getElementById('data-file-info');
+            var tableWrap = document.getElementById('data-table-wrap');
+            var outputPreview = document.getElementById('data-output-preview');
+            var downloadButton = document.getElementById('data-download');
+            var exportButton = document.getElementById('data-export');
+            var status = document.getElementById('data-status');
+            var progressBar = document.getElementById('data-progress-bar');
+            var progressLabel = document.getElementById('data-progress-label');
+            function setProgress(value) { C.setProgress(progressBar, progressLabel, value); }
+            function baseName(name) { return name.replace(/\.[^.]+$/, '') || 'converted-data'; }
+            function normaliseRows(input) {
+                if (Array.isArray(input)) {
+                    if (!input.length) return [];
+                    if (input.every(function (item) { return item && typeof item === 'object' && !Array.isArray(item); })) {
+                        var keys = Array.from(new Set(input.reduce(function (all, item) { return all.concat(Object.keys(item)); }, [])));
+                        return [keys].concat(input.map(function (item) { return keys.map(function (key) { return serialiseCell(item[key]); }); }));
+                    }
+                    return input.map(function (item) { return Array.isArray(item) ? item.map(serialiseCell) : [serialiseCell(item)]; });
+                }
+                if (input && typeof input === 'object') return [['key', 'value']].concat(Object.keys(input).map(function (key) { return [key, serialiseCell(input[key])]; }));
+                return [['value'], [serialiseCell(input)]];
+            }
+            function serialiseCell(value) { return value != null && typeof value === 'object' ? JSON.stringify(value) : (value == null ? '' : value); }
+            function parseDelimitedOrWorkbook() {
+                if (!window.XLSX) return Promise.reject(new Error('SheetJS 尚未載入，請確認網路連線後重新整理頁面。'));
+                if (/\.json$/i.test(file.name)) return C.readText(file).then(function (text) { return normaliseRows(JSON.parse(text.replace(/^\uFEFF/, ''))); });
+                if (/\.csv$/i.test(file.name)) return C.readText(file).then(function (text) { var workbook = XLSX.read(text.replace(/^\uFEFF/, ''), { type: 'string', raw: false }); return XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1, defval: '' }); });
+                return C.readArrayBuffer(file).then(function (buffer) { var workbook = XLSX.read(buffer, { type: 'array' }); return XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1, defval: '' }); });
+            }
+            function renderTable(data) {
+                if (!data.length) { tableWrap.innerHTML = '<p class="converter-hint" style="padding: 12px;">資料是空的，沒有可預覽的列。</p>'; return; }
+                var width = Math.min(12, data.reduce(function (max, row) { return Math.max(max, row.length); }, 0));
+                var previewRows = data.slice(0, 40);
+                var header = previewRows[0] || [];
+                var html = '<table class="converter-table"><thead><tr>' + Array.from({ length: width }, function (_, index) { return '<th>' + C.escapeHtml(header[index] == null || header[index] === '' ? '欄位 ' + (index + 1) : header[index]) + '</th>'; }).join('') + '</tr></thead><tbody>';
+                previewRows.slice(1).forEach(function (row) { html += '<tr>' + Array.from({ length: width }, function (_, index) { return '<td>' + C.escapeHtml(row[index] == null ? '' : row[index]) + '</td>'; }).join('') + '</tr>'; });
+                html += '</tbody></table>';
+                tableWrap.innerHTML = html;
+            }
+            function buildWorkbook() {
+                var sheet = XLSX.utils.aoa_to_sheet(rows);
+                var workbook = XLSX.utils.book_new();
+                var name = (document.getElementById('data-sheet-name').value || 'ConvertedData').slice(0, 31);
+                XLSX.utils.book_append_sheet(workbook, sheet, name);
+                return workbook;
+            }
+            function exportData() {
+                if (!rows.length || !file) return;
+                setProgress(28); C.setStatus(status, '正在於本機建立輸出檔…');
+                window.setTimeout(function () {
+                    var format = document.getElementById('data-output-format').value;
+                    var workbook = buildWorkbook();
+                    var data;
+                    if (format === 'json') {
+                        var headers = rows[0].map(function (header, index) { return String(header || 'column_' + (index + 1)); });
+                        var objects = rows.slice(1).map(function (row) { return headers.reduce(function (obj, header, index) { obj[header] = row[index] == null ? '' : row[index]; return obj; }, {}); });
+                        data = JSON.stringify(objects, null, 2);
+                        outputBlob = new Blob([data], { type: 'application/json;charset=utf-8' });
+                        outputName = baseName(file.name) + '.json';
+                        outputPreview.textContent = data.slice(0, 5000);
+                    } else if (format === 'csv') {
+                        data = XLSX.write(workbook, { bookType: 'csv', type: 'string' });
+                        outputBlob = new Blob([data], { type: 'text/csv;charset=utf-8' });
+                        outputName = baseName(file.name) + '.csv';
+                        outputPreview.textContent = data.slice(0, 5000);
+                    } else {
+                        data = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+                        outputBlob = new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                        outputName = baseName(file.name) + '.xlsx';
+                        outputPreview.textContent = '已建立 XLSX 工作簿：' + outputName + '\n資料列數：' + Math.max(0, rows.length - 1).toLocaleString() + '\n欄位數：' + (rows[0] ? rows[0].length : 0).toLocaleString();
+                    }
+                    downloadButton.disabled = false;
+                    setProgress(100); C.setStatus(status, '輸出完成，可以下載 ' + outputName + '。', 'success');
+                }, 160);
+            }
+            function selectFile(files) {
+                var candidate = files[0];
+                if (!candidate || !/\.(json|csv|xlsx|xls)$/i.test(candidate.name)) { C.setStatus(status, '請選擇 .json、.csv、.xlsx 或 .xls 檔案。', 'error'); return; }
+                file = candidate; rows = []; outputBlob = null; outputPreview.textContent = ''; exportButton.disabled = true; setProgress(12); C.renderFileInfo(fileInfo, file); C.setStatus(status, '正在於本機解析資料…');
+                parseDelimitedOrWorkbook().then(function (parsed) { rows = parsed.filter(function (row) { return Array.isArray(row); }); renderTable(rows); exportButton.disabled = !rows.length; setProgress(100); C.setStatus(status, '解析完成：' + rows.length.toLocaleString() + ' 列，可以選擇輸出格式。', 'success'); }).catch(function (error) { tableWrap.innerHTML = '<p class="converter-hint" style="padding: 12px;">無法建立預覽。</p>'; C.setStatus(status, '解析失敗：' + (error.message || '檔案格式不正確') + '。', 'error'); setProgress(0); });
+            }
+            C.bindDropzone(document.getElementById('data-dropzone'), fileInput, selectFile);
+            exportButton.addEventListener('click', function () { exportData(); });
+            downloadButton.addEventListener('click', function () { if (outputBlob) C.downloadBlob(outputBlob, outputName); });
+            document.getElementById('data-clear').addEventListener('click', function () { file = null; rows = []; outputBlob = null; fileInput.value = ''; fileInfo.innerHTML = ''; tableWrap.innerHTML = '<p class="converter-hint" style="padding: 12px;">選擇資料檔案後會顯示前 40 列預覽。</p>'; outputPreview.textContent = ''; exportButton.disabled = true; downloadButton.disabled = true; setProgress(0); C.setStatus(status, '請先選擇 JSON、CSV 或 Excel 檔案。'); });
+            C.initCommerce('converter-commerce');
+        }());
+    </script>
+</body>
+</html>
