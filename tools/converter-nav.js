@@ -21,6 +21,11 @@
         imageCropper: 'ID Photo & Social Cropper',
         imageBgRemover: 'Solid Background Remover',
         imageWatermark: 'Privacy Watermark & Mosaic',
+        universalPdf: 'Universal PDF Converter',
+        textEncoding: 'Text Width & Encoding',
+        hashGenerator: 'Secure Hash & Passwords',
+        svgRaster: 'SVG to High-Resolution Image',
+        contact: 'Contact Us',
         overview: 'All site tools'
     } : {
         hub: '轉檔工具專區',
@@ -40,6 +45,11 @@
         imageCropper: '證件照與社群比例裁切器',
         imageBgRemover: '純色背景去除器',
         imageWatermark: '圖片隱私浮水印與馬賽克工具',
+        universalPdf: '萬用轉 PDF 神器',
+        textEncoding: '文字全半形與編碼轉換器',
+        hashGenerator: '安全雜湊與強密碼生成器',
+        svgRaster: 'SVG 向量圖轉高清圖',
+        contact: '聯絡我們',
         overview: '主站工具總覽'
     };
     var home = '../index.html#tools-section';
@@ -61,6 +71,11 @@
         ['converter-image-cropper.html', labels.imageCropper],
         ['converter-image-bgremover.html', labels.imageBgRemover],
         ['converter-image-watermark.html', labels.imageWatermark],
+        ['converter-universal-pdf.html', labels.universalPdf],
+        ['converter-text-encoding.html', labels.textEncoding],
+        ['converter-hash-generator.html', labels.hashGenerator],
+        ['converter-svg-raster.html', labels.svgRaster],
+        ['../contact.html', labels.contact],
         [home, labels.overview]
     ];
 
@@ -99,5 +114,24 @@
             }
         });
     }
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initDropdowns); else initDropdowns();
+
+    function initHubSearch() {
+        var input = document.getElementById('converter-search');
+        var cards = Array.prototype.slice.call(document.querySelectorAll('.converter-tool-card'));
+        var count = document.getElementById('converter-search-count');
+        if (!input || !cards.length) return;
+        input.addEventListener('input', function () {
+            var query = input.value.trim().toLowerCase();
+            var visible = 0;
+            cards.forEach(function (card) {
+                var match = !query || card.textContent.toLowerCase().indexOf(query) !== -1;
+                card.hidden = !match;
+                if (match) visible += 1;
+            });
+            if (count) count.textContent = visible + (en ? ' tools shown' : ' 個工具顯示');
+        });
+    }
+
+    function initAll() { initDropdowns(); initHubSearch(); }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initAll); else initAll();
 }());
