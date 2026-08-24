@@ -364,6 +364,7 @@
         .model-option:hover { background: rgba(255,255,255,0.1); border-color: rgba(0, 242, 255, 0.45); }
         .model-option input { accent-color: var(--primary-neon); flex-shrink: 0; }
         .model-option.is-disabled { opacity: 0.58; border-color: rgba(255,255,255,0.12); }
+        .model-option.is-preferred { border-color: rgba(255,230,0,0.72); box-shadow: 0 0 0 1px rgba(255,230,0,0.16); }
         .model-option.is-disabled .model-option-name { text-decoration: line-through; }
         .model-option-control { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
         .model-toggle { position: relative; width: 34px; height: 18px; appearance: none; -webkit-appearance: none; background: rgba(148,163,184,0.35); border: 1px solid rgba(255,255,255,0.22); border-radius: 999px; cursor: pointer; transition: all 0.2s; margin: 0 !important; }
@@ -457,8 +458,8 @@
             word-break: break-word;
         }
 
-        .tts-active-word {
-            color: #FF334B !important;
+        .tts-active-sentence {
+            color: #FFE600 !important;
             font-weight: 700 !important;
             background: transparent !important;
             text-decoration: none !important;
@@ -988,7 +989,7 @@
         let retryCountdownTimer = null;
         let modelCatalogPromise = null;
         let disabledModelPreferences = loadDisabledModelPreferences();
-        localStorage.removeItem('gugopro_ai_tutor_model_preference_v1');
+        const MODEL_PREFERENCE_KEY = 'gugopro_ai_tutor_model_preference_v1';
         let lastModelCatalogUpdatedAt = null;
         let pendingRetryRequest = null;
         let isSendingMessage = false;
@@ -1116,8 +1117,38 @@
             return Boolean(apiName) && !disabledModelPreferences.has(apiName);
         }
 
+        function getSavedModelPreference() {
+            return String(localStorage.getItem(MODEL_PREFERENCE_KEY) || '').trim();
+        }
+
+        function persistModelPreference(apiName) {
+            if (apiName) localStorage.setItem(MODEL_PREFERENCE_KEY, String(apiName));
+            else localStorage.removeItem(MODEL_PREFERENCE_KEY);
+        }
+
+        function setPreferredModel(apiName) {
+            const model = getModelByName(apiName);
+            if (!model || !isModelEnabled(apiName)) return;
+            persistModelPreference(apiName);
+            const modelQueue = getModelQueue();
+            currentModel = modelQueue[0]?.api_name || apiName;
+            currentModelIndex = Math.max(0, modelQueue.findIndex(item => item.api_name === currentModel));
+            setModelSettingsStatus(`已選擇 ${model.display_name}；下次開啟將優先使用此模型。`, '');
+            renderModelOptions();
+        }
+
         function getEnabledModels() {
             return availableModels.filter(model => isModelEnabled(model.api_name));
+        }
+
+        function reconcileCurrentModel() {
+            const savedPreference = getSavedModelPreference();
+            const savedModelStillAvailable = Boolean(savedPreference && availableModels.some(model => model.api_name === savedPreference));
+            const modelQueue = getModelQueue();
+            currentModel = modelQueue[0]?.api_name || null;
+            currentModelIndex = Math.max(0, modelQueue.findIndex(model => model.api_name === currentModel));
+            if (currentModel && (!savedPreference || !savedModelStillAvailable)) persistModelPreference(currentModel);
+            return { savedPreference, savedModelStillAvailable, modelQueue };
         }
 
         function getEnabledDailyQuota() {
@@ -1253,10 +1284,16 @@
 
         function createModelOption(model, value) {
             const enabled = isModelEnabled(value);
+            const preferred = getSavedModelPreference() === value;
             const option = document.createElement('div');
-            option.className = `model-option ${enabled ? '' : 'is-disabled'}`.trim();
+            option.className = `model-option ${enabled ? '' : 'is-disabled'} ${preferred ? 'is-preferred' : ''}`.trim();
             option.dataset.model = value;
             option.setAttribute('role', 'listitem');
+            option.setAttribute('aria-pressed', String(preferred));
+            option.title = enabled ? `點擊選擇 ${model.display_name}；目前${preferred ? '為' : '非'}首選模型` : `${model.display_name} 已停用`;
+            option.addEventListener('click', () => {
+                if (enabled) setPreferredModel(value);
+            });
 
             const body = document.createElement('div');
             body.className = 'model-option-body';
@@ -1307,9 +1344,10 @@
             else disabledModelPreferences.add(apiName);
             persistDisabledModelPreferences();
 
+            const modelQueue = reconcileCurrentModel().modelQueue;
             const enabledModels = getEnabledModels();
-            currentModel = enabledModels[0]?.api_name || null;
-            currentModelIndex = Math.max(0, getModelQueue().findIndex(model => model.api_name === currentModel));
+            currentModel = modelQueue[0]?.api_name || null;
+            currentModelIndex = Math.max(0, modelQueue.findIndex(model => model.api_name === currentModel));
             if (enabledModels.length === 0) {
                 setModelSettingsStatus('目前沒有已啟用模型，請至少開啟一個模型。', 'error');
             } else {
@@ -1320,7 +1358,14 @@
         }
 
         function getModelQueue() {
-            return [...getEnabledModels()];
+            const enabledModels = [...getEnabledModels()];
+            const preferred = getSavedModelPreference();
+            const preferredIndex = enabledModels.findIndex(model => model.api_name === preferred);
+            if (preferredIndex > 0) {
+                const [preferredModel] = enabledModels.splice(preferredIndex, 1);
+                enabledModels.unshift(preferredModel);
+            }
+            return enabledModels;
         }
 
         async function fetchLatestModel({ silent = false } = {}) {
@@ -1333,9 +1378,10 @@
                     const data = await res.json();
                     const raw = Array.isArray(data) ? data : (data.models || []);
                     availableModels = mergeFreeModels(raw.map(normaliseGeminiModel).filter(Boolean));
+                    const { modelQueue } = reconcileCurrentModel();
                     const enabledModels = getEnabledModels();
-                    currentModel = enabledModels[0]?.api_name || null;
-                    currentModelIndex = Math.max(0, getModelQueue().findIndex(model => model.api_name === currentModel));
+                    currentModel = modelQueue[0]?.api_name || null;
+                    currentModelIndex = Math.max(0, modelQueue.findIndex(model => model.api_name === currentModel));
                     lastModelCatalogUpdatedAt = new Date();
                     renderModelOptions();
                     renderGlobalAIQuota();
@@ -2036,13 +2082,14 @@
             'es': 'es-ES', 'th': 'th-TH', 'vi': 'vi-VN', 'id': 'id-ID', 'pt': 'pt-BR', 'it': 'it-IT',
             'ru': 'ru-RU', 'ar': 'ar-SA', 'hi': 'hi-IN', 'ms': 'ms-MY', 'nl': 'nl-NL', 'pl': 'pl-PL', 'tr': 'tr-TR'
         });
-        const TTS_PUNCTUATION_RE = /[\p{P}\p{S}]/u;
+        const TTS_SENTENCE_BOUNDARY_RE = /[.!?。！？]+|\r?\n+/gu;
         let speechSessionId = 0;
         let activeSpeechSession = null;
         let speechBoundaryFrame = null;
-        let speechFallbackTimer = null;
-        const SPEECH_FALLBACK_TICK_MS = 120;
-        const SPEECH_FALLBACK_IDLE_MS = 700;
+        let speechSentenceFallbackTimer = null;
+        const SPEECH_SENTENCE_FALLBACK_TICK_MS = 120;
+        const SPEECH_SENTENCE_FALLBACK_DELAY_MS = 900;
+        const SPEECH_SENTENCE_FALLBACK_IDLE_MS = 1600;
 
         function resolveSpeechLocale(langCode) {
             const requested = String(langCode || '').trim();
@@ -2068,41 +2115,30 @@
                 || (codePoint >= 0x0e00 && codePoint <= 0x0e7f);
         }
 
-        function appendSpeechWordSegments(parent, text, offset) {
+        function appendSpeechSentenceSegments(parent, text, offset = 0) {
             const source = String(text || '');
+            if (!source) return;
+            const boundaryMatcher = new RegExp(TTS_SENTENCE_BOUNDARY_RE.source, 'gu');
             let cursor = 0;
-            while (cursor < source.length) {
-                const codePoint = source.codePointAt(cursor);
-                const charLength = codePoint > 0xffff ? 2 : 1;
-                const char = source.slice(cursor, cursor + charLength);
-                if (/\s/u.test(char)) {
-                    const whitespaceStart = cursor;
-                    cursor += charLength;
-                    while (cursor < source.length && /\s/u.test(source[cursor])) cursor += 1;
-                    parent.appendChild(document.createTextNode(source.slice(whitespaceStart, cursor)));
-                    continue;
-                }
-
-                const tokenStart = cursor;
-                if (isSingleCharacterScript(char) || TTS_PUNCTUATION_RE.test(char)) {
-                    cursor += charLength;
-                } else {
-                    cursor += charLength;
-                    while (cursor < source.length) {
-                        const nextCodePoint = source.codePointAt(cursor);
-                        const nextLength = nextCodePoint > 0xffff ? 2 : 1;
-                        const nextChar = source.slice(cursor, cursor + nextLength);
-                        if (/\s/u.test(nextChar) || isSingleCharacterScript(nextChar) || TTS_PUNCTUATION_RE.test(nextChar)) break;
-                        cursor += nextLength;
-                    }
-                }
-
-                const word = document.createElement('span');
-                word.className = 'speaking-word';
-                word.dataset.start = String(offset + tokenStart);
-                word.dataset.end = String(offset + cursor);
-                word.textContent = source.slice(tokenStart, cursor);
-                parent.appendChild(word);
+            let match;
+            while ((match = boundaryMatcher.exec(source)) !== null) {
+                const end = boundaryMatcher.lastIndex;
+                if (end <= cursor) continue;
+                const sentence = document.createElement('span');
+                sentence.className = 'speaking-sentence';
+                sentence.dataset.start = String(offset + cursor);
+                sentence.dataset.end = String(offset + end);
+                sentence.textContent = source.slice(cursor, end);
+                parent.appendChild(sentence);
+                cursor = end;
+            }
+            if (cursor < source.length) {
+                const sentence = document.createElement('span');
+                sentence.className = 'speaking-sentence';
+                sentence.dataset.start = String(offset + cursor);
+                sentence.dataset.end = String(offset + source.length);
+                sentence.textContent = source.slice(cursor);
+                parent.appendChild(sentence);
             }
         }
 
@@ -2111,7 +2147,7 @@
             if (!learning) return;
             const source = String(text || '');
             learning.replaceChildren();
-            appendSpeechWordSegments(learning, source, 0);
+            appendSpeechSentenceSegments(learning, source, 0);
         }
 
         function cancelSpeechBoundaryFrame() {
@@ -2121,43 +2157,48 @@
             }
         }
 
-        function cancelSpeechFallbackTimer() {
-            if (speechFallbackTimer !== null) {
-                clearInterval(speechFallbackTimer);
-                speechFallbackTimer = null;
+        function cancelSpeechSentenceFallbackTimer() {
+            if (speechSentenceFallbackTimer !== null) {
+                clearInterval(speechSentenceFallbackTimer);
+                speechSentenceFallbackTimer = null;
             }
         }
 
-        function estimateSpeechFallbackDuration(session, words) {
-            const hasSingleCharacterScript = [...String(session?.text || '')].some(isSingleCharacterScript);
-            const perTokenMs = hasSingleCharacterScript ? 180 : 340;
-            return Math.max(900, Math.min(60000, words.length * perTokenMs));
+        function estimateSpeechSentenceFallbackDuration(session, sentences) {
+            const source = String(session?.text || '');
+            const hasSingleCharacterScript = [...source].some(isSingleCharacterScript);
+            const perCharacterMs = hasSingleCharacterScript ? 95 : 62;
+            return Math.max(1400, Math.min(60000, Math.max(1, source.length) * perCharacterMs));
         }
 
-        function startSpeechBoundaryFallback(session) {
-            cancelSpeechFallbackTimer();
+        function startSpeechSentenceFallback(session) {
+            cancelSpeechSentenceFallbackTimer();
             const learning = session?.root?.querySelector('.msg-learning');
-            const words = learning ? [...learning.querySelectorAll('.speaking-word')] : [];
-            if (!words.length) return;
+            const sentences = learning ? [...learning.querySelectorAll('.speaking-sentence')] : [];
+            if (!sentences.length) return;
+            session.sentences = sentences;
             session.fallbackStartedAt = performance.now();
-            session.fallbackDuration = estimateSpeechFallbackDuration(session, words);
-            speechFallbackTimer = window.setInterval(() => {
+            session.fallbackDuration = estimateSpeechSentenceFallbackDuration(session, sentences);
+            speechSentenceFallbackTimer = window.setInterval(() => {
                 if (!activeSpeechSession || activeSpeechSession.id !== session.id) {
-                    cancelSpeechFallbackTimer();
+                    cancelSpeechSentenceFallbackTimer();
                     return;
                 }
                 const now = performance.now();
+                const elapsed = now - session.fallbackStartedAt;
+                if (!session.boundarySeen && elapsed < SPEECH_SENTENCE_FALLBACK_DELAY_MS) return;
                 if (session.boundarySeen && session.lastBoundaryAt !== null
-                    && now - session.lastBoundaryAt < SPEECH_FALLBACK_IDLE_MS) return;
-                const progress = Math.min(0.99, Math.max(0, (now - session.fallbackStartedAt) / session.fallbackDuration));
-                const word = words[Math.min(words.length - 1, Math.floor(progress * words.length))];
-                queueSpeechBoundary(session, Number(word.dataset.start));
-            }, SPEECH_FALLBACK_TICK_MS);
+                    && now - session.lastBoundaryAt < SPEECH_SENTENCE_FALLBACK_IDLE_MS) return;
+                const progress = Math.min(0.99, Math.max(0, elapsed / session.fallbackDuration));
+                const targetIndex = Math.min(Math.max(0, String(session.text || '').length - 1), Math.floor(progress * String(session.text || '').length));
+                const sentence = sentences.find(element => targetIndex >= Number(element.dataset.start) && targetIndex < Number(element.dataset.end)) || sentences[sentences.length - 1];
+                queueSpeechSentenceBoundary(session, Number(sentence.dataset.start));
+            }, SPEECH_SENTENCE_FALLBACK_TICK_MS);
         }
 
         function removeSpeechHighlightClasses(root = document) {
-            root.querySelectorAll('.tts-active-word').forEach(element => {
-                element.classList.remove('tts-active-word');
+            root.querySelectorAll('.tts-active-word, .tts-active-sentence').forEach(element => {
+                element.classList.remove('tts-active-word', 'tts-active-sentence');
             });
         }
 
@@ -2168,7 +2209,7 @@
 
         function resetSpeechVisuals() {
             cancelSpeechBoundaryFrame();
-            cancelSpeechFallbackTimer();
+            cancelSpeechSentenceFallbackTimer();
             removeSpeechHighlightClasses();
             if (activeSpeechSession?.root) restoreSpeechText(activeSpeechSession.root);
             activeSpeechSession = null;
@@ -2185,29 +2226,29 @@
             resetSpeechVisuals();
         }
 
-        function applySpeechBoundary(session, charIndex) {
+        function applySpeechSentenceBoundary(session, charIndex) {
             if (!session?.root) return;
             const index = Math.max(0, Number(charIndex) || 0);
             if (index === session.lastBoundaryIndex) return;
             const learning = session.root.querySelector('.msg-learning');
             if (!learning) return;
-            const words = [...learning.querySelectorAll('.speaking-word')];
-            const word = words.find(element => index >= Number(element.dataset.start) && index < Number(element.dataset.end));
-            if (!word || word === session.activeWord) return;
-            learning.querySelectorAll('.tts-active-word').forEach(element => element.classList.remove('tts-active-word'));
-            word.classList.add('tts-active-word');
-            session.activeWord = word;
+            const sentences = session.sentences || [...learning.querySelectorAll('.speaking-sentence')];
+            const sentence = sentences.find(element => index >= Number(element.dataset.start) && index < Number(element.dataset.end));
+            if (!sentence || sentence === session.activeSentence) return;
+            learning.querySelectorAll('.tts-active-sentence').forEach(element => element.classList.remove('tts-active-sentence'));
+            sentence.classList.add('tts-active-sentence');
+            session.activeSentence = sentence;
             session.lastBoundaryIndex = index;
         }
 
-        function queueSpeechBoundary(session, charIndex) {
+        function queueSpeechSentenceBoundary(session, charIndex) {
             if (!session || !activeSpeechSession || activeSpeechSession.id !== session.id) return;
             session.pendingBoundaryIndex = Math.max(0, Number(charIndex) || 0);
             if (speechBoundaryFrame !== null) return;
             speechBoundaryFrame = requestAnimationFrame(() => {
                 speechBoundaryFrame = null;
                 if (!activeSpeechSession || activeSpeechSession.id !== session.id) return;
-                applySpeechBoundary(session, session.pendingBoundaryIndex);
+                applySpeechSentenceBoundary(session, session.pendingBoundaryIndex);
             });
         }
 
@@ -2230,16 +2271,17 @@
                 text: source,
                 lastBoundaryIndex: -1,
                 pendingBoundaryIndex: null,
-                activeWord: null,
+                activeSentence: null,
                 boundarySeen: false,
                 lastBoundaryAt: null,
                 fallbackStartedAt: performance.now(),
-                fallbackDuration: 0
+                fallbackDuration: 0,
+                sentences: []
             };
             activeSpeechSession = session;
             if (root) {
-                queueSpeechBoundary(session, 0);
-                startSpeechBoundaryFallback(session);
+                queueSpeechSentenceBoundary(session, 0);
+                startSpeechSentenceFallback(session);
             }
             utterance.onboundary = event => {
                 if (!activeSpeechSession || activeSpeechSession.id !== sessionId) return;
@@ -2251,7 +2293,7 @@
                     session.boundarySeen = true;
                     session.lastBoundaryAt = performance.now();
                 }
-                queueSpeechBoundary(session, boundaryIndex);
+                queueSpeechSentenceBoundary(session, boundaryIndex);
             };
             utterance.onstart = () => {
                 if (activeSpeechSession?.id === sessionId) session.fallbackStartedAt = performance.now();
