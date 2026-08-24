@@ -13,6 +13,11 @@ export default function SiteShell({ children }: { children: ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [draftKey, setDraftKey] = useState("");
   useEffect(() => { if (panelOpen) setDraftKey(apiKey); }, [apiKey, panelOpen]);
+  useEffect(() => {
+    const openPanel = () => setPanelOpen(true);
+    window.addEventListener("gugopro:open-api-key", openPanel);
+    return () => window.removeEventListener("gugopro:open-api-key", openPanel);
+  }, []);
   const saveKey = () => { setApiKey(draftKey); setPanelOpen(false); };
 
   return <div className="site-frame">
