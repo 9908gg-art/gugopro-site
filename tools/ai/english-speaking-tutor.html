@@ -18,6 +18,8 @@
         gtag('config', 'G-GF1DYLWMKX');
     </script>
 
+    <script src="../../js/global-ai-quota.js"></script>
+
     <!-- Fonts & Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Noto+Sans+TC:wght@400;700&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
@@ -339,6 +341,9 @@
         }
         .model-settings-status.loading { color: var(--primary-neon); }
         .model-settings-status.error { color: #fca5a5; }
+        .global-ai-quota-pill { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 0 0 10px; padding: 8px; border: 1px solid rgba(0, 242, 255, 0.18); border-radius: 10px; background: rgba(0, 242, 255, 0.06); }
+        .global-ai-quota-item { min-width: 0; color: var(--text-dim); font-size: 0.66rem; line-height: 1.35; }
+        .global-ai-quota-item strong { display: block; margin-top: 2px; color: var(--text-main); font-size: 0.78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .model-options {
             display: flex;
             flex-direction: column;
@@ -375,10 +380,6 @@
         .model-option-heading { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
         .model-option-name { color: var(--text-main); font-size: 0.82rem; font-weight: 700; overflow-wrap: anywhere; }
         .model-score { color: #fcd34d; font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
-        .model-option-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
-        .model-tag { color: var(--text-dim); font-size: 0.68rem; background: rgba(255,255,255,0.06); border-radius: 5px; padding: 2px 5px; }
-        .model-tag.free { color: #86efac; background: rgba(34, 197, 94, 0.12); }
-        .model-option-capabilities { color: #94a3b8; font-size: 0.68rem; line-height: 1.45; margin-top: 5px; }
         .model-refresh-button { color: var(--primary-neon); }
 
         /* Chat Area */
@@ -902,6 +903,10 @@
                 <button id="btn-refresh-models" class="btn-room-action model-refresh-button" title="重新整理免費模型清單" aria-label="重新整理免費模型清單"><i class="fa-solid fa-rotate"></i></button>
             </div>
             <p id="model-settings-status" class="model-settings-status" aria-live="polite">正在載入站內免費模型清單...</p>
+            <div id="global-ai-quota-pill" class="global-ai-quota-pill" aria-live="polite">
+                <div class="global-ai-quota-item">📊 今日免費用量上限<strong id="global-ai-quota-limit">讀取中…</strong></div>
+                <div class="global-ai-quota-item">⚡ 今日已使用量<strong id="global-ai-quota-used">讀取中…</strong></div>
+            </div>
             <div id="model-options" class="model-options" role="radiogroup" aria-label="免費模型選擇"></div>
         </div>
 
@@ -1006,6 +1011,7 @@
             initSpeechRecognition();
             initLangPanel();
             renderModelOptions();
+            renderGlobalAIQuota();
             fetchLatestModel({ silent: true });
             
             window.onscroll = () => {
@@ -1019,6 +1025,9 @@
             document.getElementById('btn-back-to-top').onclick = () => {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             };
+            window.addEventListener('storage', (event) => {
+                if (event.key === 'gugopro_global_ai_quota_v1') renderGlobalAIQuota();
+            });
         });
 
         function initChatSystem() {
@@ -1059,7 +1068,28 @@
         const BUSY_MESSAGE = '⚠️ 官方 AI 伺服器目前連線繁忙（尖峰時段負載較高），正在為您自動重試或切換線路...';
         const ALL_ENABLED_MODELS_BUSY_MESSAGE = '⚠️ 目前所有已啟用的 AI 免費模型均處於繁忙狀態，請稍候 3~5 分鐘後再試。';
         const MODEL_TEXT_CAPABILITIES = new Set(['text_generation', 'chat_dialog']);
-        const FREE_MODEL_FILTER = model => model && model.is_free_tier === true && model.requires_billing_account !== true && model.is_rest_compatible !== false;
+        const MODEL_EXCLUDED_TOKENS = /embedding|aqa|tts|speech|audio|live|ocr|image[_-]?gen|robotics|computer[-_]?use|deep[-_]?research|veo|lyria/i;
+
+        function getModelDailyQuota(model) {
+            const rawQuota = model?.free_quota ?? model?.freeQuota ?? model?.rpd_limit ?? model?.daily_limit ?? model?.quota ?? 0;
+            const quota = Number(String(rawQuota).replace(/,/g, '').match(/-?\d+(?:\.\d+)?/)?.[0] || rawQuota);
+            return Number.isFinite(quota) ? quota : 0;
+        }
+
+        function isChatModelRecord(model) {
+            if (!model || model.is_free_tier !== true || model.requires_billing_account === true || model.is_rest_compatible === false) return false;
+            if (getModelDailyQuota(model) <= 0) return false;
+            const name = String(model.api_name || model.name || '').toLowerCase();
+            const category = String(model.category || '').toLowerCase();
+            const capabilities = Array.isArray(model.capabilities) ? model.capabilities.map(item => String(item).toLowerCase()) : [];
+            const hasTextCapability = capabilities.some(capability => MODEL_TEXT_CAPABILITIES.has(capability));
+            const isTextOut = category.includes('text-out') || category.includes('text out');
+            if (!hasTextCapability || MODEL_EXCLUDED_TOKENS.test(name)) return false;
+            if (!isTextOut && /embedding|aqa|tts|speech|audio|live|ocr|image|vision|map|grounding|search|robotics|computer|deep[-_ ]?research/i.test(category)) return false;
+            return true;
+        }
+
+        const FREE_MODEL_FILTER = model => isChatModelRecord(model);
 
         function decodeGeminiApiKey(raw) {
             if (!raw) return '';
@@ -1099,6 +1129,23 @@
             return availableModels.filter(model => isModelEnabled(model.api_name));
         }
 
+        function getEnabledDailyQuota() {
+            return getEnabledModels().reduce((total, model) => total + Math.max(0, Number(model.dailyQuota) || 0), 0);
+        }
+
+        function renderGlobalAIQuota() {
+            const tracker = window.GugoProGlobalAIQuota;
+            const limitEl = document.getElementById('global-ai-quota-limit');
+            const usedEl = document.getElementById('global-ai-quota-used');
+            if (!tracker || !limitEl || !usedEl) return;
+            tracker.resetIfNewPacificDay();
+            const limit = getEnabledDailyQuota();
+            tracker.setDailyLimit(limit, 'quota.gugopro.com enabled chat models');
+            const snapshot = tracker.getSnapshot();
+            limitEl.textContent = snapshot.dailyLimit === null ? '暫無可用額度' : `${snapshot.dailyLimit} 次`;
+            usedEl.textContent = `${snapshot.usedCount} 次 / 剩餘 ${snapshot.remainingCount === null ? '—' : `${snapshot.remainingCount} 次`}`;
+        }
+
         async function fetchQuotaModelsWithTimeout() {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
@@ -1127,6 +1174,7 @@
                 api_name: name,
                 display_name: String(model.display_name || name),
                 score: Number.isFinite(Number(model.model_score)) ? Number(model.model_score) : 0,
+                dailyQuota: getModelDailyQuota(model),
                 category: String(model.category || ''),
                 fine_category: String(model.fine_category || ''),
                 fine_category_name_zh: String(model.fine_category_name_zh || ''),
@@ -1146,12 +1194,14 @@
                     unique.set(model.api_name, {
                         ...model,
                         categoryLabels: model.category ? [model.category] : [],
+                        dailyQuota: model.dailyQuota || 0,
                         fineCategoryLabels: model.fine_category_name_zh ? [model.fine_category_name_zh] : [],
                         capabilities: [...model.capabilities]
                     });
                     return;
                 }
                 existing.score = Math.max(existing.score, model.score);
+                existing.dailyQuota = Math.max(existing.dailyQuota || 0, model.dailyQuota || 0);
                 existing.is_verified_live = existing.is_verified_live || model.is_verified_live;
                 if (!existing.display_name || existing.display_name === existing.api_name) existing.display_name = model.display_name;
                 if (model.category && !existing.categoryLabels.includes(model.category)) existing.categoryLabels.push(model.category);
@@ -1200,6 +1250,15 @@
             option.dataset.model = value;
             option.setAttribute('role', 'group');
 
+            const body = document.createElement('div');
+            body.className = 'model-option-body';
+            const heading = document.createElement('div');
+            heading.className = 'model-option-heading';
+            appendModelText(heading, 'strong', 'model-option-name', isAuto ? '自動依評分推薦（預設）' : model.display_name);
+            appendModelText(heading, 'span', 'model-score', isAuto ? '⭐ 最高分' : `⭐ ${Number(model.score || 0).toFixed(1)}`);
+            body.appendChild(heading);
+            option.appendChild(body);
+
             const control = document.createElement('div');
             control.className = 'model-option-control';
             const radio = document.createElement('input');
@@ -1237,31 +1296,6 @@
                 control.appendChild(toggleWrap);
             }
             option.appendChild(control);
-
-            const body = document.createElement('div');
-            body.className = 'model-option-body';
-            const heading = document.createElement('div');
-            heading.className = 'model-option-heading';
-            appendModelText(heading, 'strong', 'model-option-name', isAuto ? '自動依評分推薦（預設）' : model.display_name);
-            appendModelText(heading, 'span', 'model-score', isAuto ? '⭐ 最高分' : `⭐ ${Number(model.score || 0).toFixed(1)}`);
-            body.appendChild(heading);
-
-            const meta = document.createElement('div');
-            meta.className = 'model-option-meta';
-            appendModelText(meta, 'span', 'model-tag free', 'Free 免費');
-            if (isAuto) {
-                appendModelText(meta, 'span', 'model-tag', '依站內最新評分排序');
-            } else {
-                const categories = [...new Set([...(model.fineCategoryLabels || []), ...(model.categoryLabels || [])])].filter(Boolean).slice(0, 3);
-                categories.forEach(category => appendModelText(meta, 'span', 'model-tag', category));
-                appendModelText(meta, 'span', 'model-tag', model.is_verified_live ? '已驗證' : '可用清單');
-            }
-            body.appendChild(meta);
-
-            if (!isAuto && model.capabilities.length > 0) {
-                appendModelText(body, 'div', 'model-option-capabilities', `支援：${model.capabilities.join(' · ')}`);
-            }
-            option.appendChild(body);
             option.addEventListener('click', (event) => {
                 if (event.target.closest('.model-toggle') || event.target.closest('.model-option-control')) return;
                 if (enabled) setSelectedModelPreference(value);
@@ -1316,6 +1350,7 @@
                 setModelSettingsStatus(`已${enabled ? '啟用' : '停用'} ${getModelDisplayName(apiName)}；目前有 ${enabledModels.length} 個模型可供輪替。`, '');
             }
             renderModelOptions();
+            renderGlobalAIQuota();
         }
 
         function getModelQueue() {
@@ -1347,13 +1382,14 @@
                     currentModelIndex = Math.max(0, getModelQueue().findIndex(model => model.api_name === currentModel));
                     lastModelCatalogUpdatedAt = new Date();
                     renderModelOptions();
+                    renderGlobalAIQuota();
 
                     const updated = lastModelCatalogUpdatedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                     if (currentModel) {
-                        setModelSettingsStatus(`已載入 ${availableModels.length} 個免費文字模型；已啟用 ${enabledModels.length} 個；更新於 ${updated}。`, '');
+                        setModelSettingsStatus(`已載入 ${availableModels.length} 個免費對話模型；已啟用 ${enabledModels.length} 個；更新於 ${updated}。`, '');
                         console.log(`Current Model: ${currentModel}`);
                     } else if (availableModels.length > 0) {
-                        setModelSettingsStatus(`已載入 ${availableModels.length} 個免費文字模型；目前沒有已啟用模型，請至少開啟一個。`, 'error');
+                        setModelSettingsStatus(`已載入 ${availableModels.length} 個免費對話模型；目前沒有已啟用模型，請至少開啟一個。`, 'error');
                         if (!silent) showError('⚠️ 目前沒有已啟用的免費模型，請在模型設定中至少開啟一個。', { busy: true });
                     } else {
                         setModelSettingsStatus('目前沒有符合條件的免費模型。', 'error');
@@ -1513,18 +1549,55 @@
         // --- UI Events ---
         const menu = document.getElementById('side-menu');
         const overlay = document.getElementById('side-menu-overlay');
-        document.getElementById('btn-menu').onclick = () => {
+        let drawerHistoryEntryActive = false;
+
+        function isDrawerOpen() {
+            return window.innerWidth >= 1024
+                ? !menu.classList.contains('collapsed')
+                : menu.classList.contains('active');
+        }
+
+        function setDrawerOpen(open) {
             if (window.innerWidth >= 1024) {
-                menu.classList.toggle('collapsed');
+                menu.classList.toggle('collapsed', !open);
             } else {
-                menu.classList.add('active');
-                overlay.classList.add('active');
+                menu.classList.toggle('active', open);
+                overlay.classList.toggle('active', open);
+            }
+        }
+
+        function openDrawer() {
+            setDrawerOpen(true);
+            if (!drawerHistoryEntryActive) {
+                history.pushState({ ...(history.state || {}), drawerOpen: true, gugoproDrawerOpen: true }, '', window.location.href);
+                drawerHistoryEntryActive = true;
             }
             fetchLatestModel({ silent: true });
+        }
+
+        function closeDrawerUi() {
+            setDrawerOpen(false);
+        }
+
+        function closeMenu({ syncHistory = true } = {}) {
+            closeDrawerUi();
+            if (syncHistory && drawerHistoryEntryActive) history.back();
+            else if (!syncHistory) drawerHistoryEntryActive = false;
+        }
+
+        window.addEventListener('popstate', (event) => {
+            if (drawerHistoryEntryActive || event.state?.drawerOpen || event.state?.gugoproDrawerOpen) {
+                drawerHistoryEntryActive = false;
+                closeDrawerUi();
+            }
+        });
+
+        document.getElementById('btn-menu').onclick = () => {
+            if (isDrawerOpen()) closeMenu();
+            else openDrawer();
         };
-        const closeMenu = () => { menu.classList.remove('active'); overlay.classList.remove('active'); };
-        document.getElementById('btn-menu-close').onclick = closeMenu;
-        overlay.onclick = closeMenu;
+        document.getElementById('btn-menu-close').onclick = () => closeMenu();
+        overlay.onclick = () => closeMenu();
 
         document.getElementById('btn-refresh-models').onclick = () => fetchLatestModel({ silent: false });
 
@@ -1685,6 +1758,7 @@
 
         async function sendMessage(retryRequest = null) {
             if (isSendingMessage) return;
+            renderGlobalAIQuota();
 
             const textInput = document.getElementById('user-text');
             const content = String(retryRequest?.content || textInput.value || '').trim();
@@ -1732,6 +1806,11 @@
 
                 const room = chatRooms.find(r => r.id === activeRoomId);
                 room.messages.push({ id: msgId, role: 'user', learning: response.user_learning, my: response.user_my });
+
+                if (window.GugoProGlobalAIQuota) {
+                    window.GugoProGlobalAIQuota.recordUsage(1);
+                    renderGlobalAIQuota();
+                }
 
                 const tutorId = 'tutor-' + Date.now();
                 addMessageToUI('tutor', response.tutor_learning, response.tutor_my, response.correction, tutorId);

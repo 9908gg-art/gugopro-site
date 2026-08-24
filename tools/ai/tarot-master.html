@@ -18,6 +18,8 @@
     <!-- FontAwesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
+    <script src="../../js/global-ai-quota.js"></script>
+
     <!-- GA4 -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-GF1DYLWMKX"></script>
     <script>
@@ -1399,6 +1401,7 @@ async function fetchGeminiReading(reading, timer1, timer2) {
   try {
     var apiKey = getGlobalApiKey();
     var responseText = await callGeminiWithRetry(apiKey, systemPrompt, { temperature: 0.75, maxOutputTokens: 4096 });
+    if (window.GugoProGlobalAIQuota) window.GugoProGlobalAIQuota.recordUsage(1);
 
     clearTimeout(timer1);
     clearTimeout(timer2);
@@ -1476,6 +1479,7 @@ async function handleFollowUpFlow(question) {
   try {
     var apiKey = getGlobalApiKey();
     var responseText = await callGeminiMultiTurnWithRetry(apiKey, contents, { temperature: 0.75, maxOutputTokens: 2048 });
+    if (window.GugoProGlobalAIQuota) window.GugoProGlobalAIQuota.recordUsage(1);
 
     state.chatHistory.push({ role: 'user', content: question });
     state.chatHistory.push({ role: 'model', content: responseText });
