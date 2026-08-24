@@ -1,42 +1,27 @@
+/** Signal Atelier: application routing preserves the single AI hub as a precise, dark editorial instrument. */
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { ApiKeyProvider } from "./contexts/ApiKeyContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
-
+import InfoPage from "./pages/InfoPage";
+import ToolDetail from "./pages/ToolDetail";
 
 function Router() {
-  return (
-    <Switch>
-      <Route path={"/"} component={Home} />
-      <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
-      <Route component={NotFound} />
-    </Switch>
-  );
+  return <Switch>
+    <Route path="/" component={Home} />
+    <Route path="/tools/:slug" component={ToolDetail} />
+    <Route path="/privacy">{() => <InfoPage kind="privacy" />}</Route>
+    <Route path="/terms">{() => <InfoPage kind="terms" />}</Route>
+    <Route path="/about">{() => <InfoPage kind="about" />}</Route>
+    <Route path="/contact">{() => <InfoPage kind="contact" />}</Route>
+    <Route path="/404" component={NotFound} />
+    <Route component={NotFound} />
+  </Switch>;
 }
 
-// NOTE: About Theme
-// - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
-//   to keep consistent foreground/background color across components
-// - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
-
-function App() {
-  return (
-    <ErrorBoundary>
-      <ThemeProvider
-        defaultTheme="light"
-        // switchable
-      >
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
-      </ThemeProvider>
-    </ErrorBoundary>
-  );
-}
-
+function App() { return <ErrorBoundary><ThemeProvider defaultTheme="dark"><ApiKeyProvider><TooltipProvider><Toaster /><Router /></TooltipProvider></ApiKeyProvider></ThemeProvider></ErrorBoundary>; }
 export default App;
