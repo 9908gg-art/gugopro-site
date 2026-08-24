@@ -1949,10 +1949,14 @@
                 : messages[messages.length - 1];
             requestAnimationFrame(() => {
                 if (target) {
-                    target.scrollIntoView({ block: 'start', inline: 'nearest', behavior: 'auto' });
+                    const marginTop = parseFloat(getComputedStyle(target).scrollMarginTop) || 88;
+                    const targetTop = target.getBoundingClientRect().top + window.scrollY - marginTop;
+                    const scrollElement = document.scrollingElement || document.documentElement;
+                    const maxScrollTop = Math.max(0, scrollElement.scrollHeight - window.innerHeight);
+                    window.scrollTo({ top: Math.min(Math.max(0, targetTop), maxScrollTop), behavior: 'auto' });
                     return;
                 }
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                window.scrollTo({ top: 0, behavior: 'auto' });
             });
         }
 
