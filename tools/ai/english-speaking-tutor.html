@@ -362,12 +362,10 @@
             transition: all 0.2s;
         }
         .model-option:hover { background: rgba(255,255,255,0.1); border-color: rgba(0, 242, 255, 0.45); }
-        .model-option.selected { background: rgba(0, 242, 255, 0.08); border-color: var(--primary-neon); }
-        .model-option input { margin-top: 3px; accent-color: var(--primary-neon); flex-shrink: 0; }
+        .model-option input { accent-color: var(--primary-neon); flex-shrink: 0; }
         .model-option.is-disabled { opacity: 0.58; border-color: rgba(255,255,255,0.12); }
         .model-option.is-disabled .model-option-name { text-decoration: line-through; }
         .model-option-control { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-        .model-option-radio { margin-top: 3px; accent-color: var(--primary-neon); }
         .model-toggle { position: relative; width: 34px; height: 18px; appearance: none; -webkit-appearance: none; background: rgba(148,163,184,0.35); border: 1px solid rgba(255,255,255,0.22); border-radius: 999px; cursor: pointer; transition: all 0.2s; margin: 0 !important; }
         .model-toggle::after { content: ''; position: absolute; width: 12px; height: 12px; top: 2px; left: 2px; border-radius: 50%; background: #cbd5e1; transition: transform 0.2s, background 0.2s; }
         .model-toggle:checked { background: rgba(34,197,94,0.45); border-color: #86efac; }
@@ -383,12 +381,14 @@
         .drawer-contact-section { margin-top: 4px; padding: 12px 16px 18px; border-top: 1px solid rgba(255,255,255,0.08); color: var(--text-dim); font-size: 0.68rem; line-height: 1.55; text-align: center; }
         .drawer-contact-section a { color: #67e8f9; text-decoration: none; }
         .drawer-contact-links { display: flex; justify-content: center; flex-wrap: wrap; gap: 5px 10px; }
+        .drawer-contact-note { margin: 7px 0 0; color: var(--text-dim); font-size: 0.64rem; }
+        .drawer-contact-copyright { margin: 4px 0 0; color: rgba(148, 163, 184, 0.72); font-size: 0.6rem; }
         .model-refresh-button { color: var(--primary-neon); }
 
         /* Chat Area */
         #chat-container {
             flex: 1 0 auto;
-            padding: 20px 16px 120px;
+            padding: 32px 16px 180px;
             display: flex;
             flex-direction: column;
             gap: 20px;
@@ -419,6 +419,8 @@
         .message {
             max-width: 88%;
             padding: 16px 20px;
+            scroll-margin-top: 88px;
+            scroll-margin-bottom: 180px;
             border-radius: 20px;
             position: relative;
             animation: slideUp 0.3s ease-out;
@@ -590,27 +592,6 @@
             100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); }
         }
 
-        /* Back to Top */
-        #btn-back-to-top {
-            position: fixed;
-            bottom: 120px;
-            right: 20px;
-            width: 40px;
-            height: 40px;
-            background: rgba(0, 242, 255, 0.2);
-            border: 1px solid var(--primary-neon);
-            color: var(--primary-neon);
-            border-radius: 50%;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            z-index: 997;
-            backdrop-filter: blur(5px);
-            transition: all 0.3s;
-        }
-        #btn-back-to-top:hover { background: var(--primary-neon); color: #000; }
-
         /* Modals */
         .modal-overlay {
             position: fixed;
@@ -757,7 +738,8 @@
             .logo-text { font-size: 0.95rem; }
             .btn-circle { width: 42px; height: 42px; }
             .bottom-controls { padding: 10px 12px 15px; }
-            #btn-back-to-top { bottom: 100px; right: 15px; }
+            #chat-container { padding: 24px 12px 170px; }
+            .message { scroll-margin-top: 76px; scroll-margin-bottom: 170px; }
         }
     </style>
 </head>
@@ -870,8 +852,6 @@
         </div>
     </div>
 
-    <button id="btn-back-to-top"><i class="fa-solid fa-arrow-up"></i></button>
-
     <!-- Side Menu -->
     <div id="side-menu-overlay" class="side-menu-overlay"></div>
     <div id="side-menu" class="side-menu">
@@ -910,7 +890,7 @@
                 <div class="global-ai-quota-item">📊 今日免費用量上限<strong id="global-ai-quota-limit">讀取中…</strong></div>
                 <div class="global-ai-quota-item">⚡ 今日已使用量<strong id="global-ai-quota-used">讀取中…</strong></div>
             </div>
-            <div id="model-options" class="model-options" role="radiogroup" aria-label="免費模型選擇"></div>
+            <div id="model-options" class="model-options" role="list" aria-label="免費模型清單，使用開關控制"></div>
         </div>
 
         <div class="menu-section amazon-menu-section">
@@ -933,10 +913,12 @@
                 <a href="mailto:contact@gugopro.com">Support: contact@gugopro.com</a>
             </div>
             <div class="drawer-contact-links" style="margin-top: 5px;">
-                <a href="../../privacy.html">隱私政策</a>
+                <a href="../../privacy.html">Privacy Policy / 隱私政策</a>
                 <span aria-hidden="true">·</span>
-                <a href="../../terms.html">服務條款</a>
+                <a href="../../terms.html">Terms / 服務條款</a>
             </div>
+            <p class="drawer-contact-note">意見回饋與 Bug 回報，歡迎透過 Email 聯絡我們。</p>
+            <p class="drawer-contact-copyright">© 2026 GugoPro. All rights reserved.</p>
         </div>
     </div>
 
@@ -998,8 +980,8 @@
         let currentModel = null;
         let retryCountdownTimer = null;
         let modelCatalogPromise = null;
-        let selectedModelPreference = localStorage.getItem('gugopro_ai_tutor_model_preference_v1') || 'auto';
         let disabledModelPreferences = loadDisabledModelPreferences();
+        localStorage.removeItem('gugopro_ai_tutor_model_preference_v1');
         let lastModelCatalogUpdatedAt = null;
         let pendingRetryRequest = null;
         let isSendingMessage = false;
@@ -1028,18 +1010,6 @@
             renderModelOptions();
             renderGlobalAIQuota();
             fetchLatestModel({ silent: true });
-            
-            window.onscroll = () => {
-                const btn = document.getElementById('btn-back-to-top');
-                if (document.body.scrollTop > 500 || document.documentElement.scrollTop > 500) {
-                    btn.style.display = 'flex';
-                } else {
-                    btn.style.display = 'none';
-                }
-            };
-            document.getElementById('btn-back-to-top').onclick = () => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            };
             window.addEventListener('storage', (event) => {
                 if (event.key === 'gugopro_global_ai_quota_v1') renderGlobalAIQuota();
             });
@@ -1077,7 +1047,6 @@
         }
 
         const QUOTA_MODELS_URL = 'https://quota.gugopro.com/gemini_rate_limits.json';
-        const MODEL_PREFERENCE_KEY = 'gugopro_ai_tutor_model_preference_v1';
         const MODEL_DISABLED_KEY = 'gugopro_ai_tutor_disabled_models_v1';
         const REQUEST_TIMEOUT_MS = 10000;
         const BUSY_MESSAGE = '⚠️ 官方 AI 伺服器目前連線繁忙（尖峰時段負載較高），正在為您自動重試或切換線路...';
@@ -1235,13 +1204,6 @@
             status.className = `model-settings-status ${state}`.trim();
         }
 
-        function getPreferredModel() {
-            if (selectedModelPreference !== 'auto') {
-                return availableModels.find(model => model.api_name === selectedModelPreference) || null;
-            }
-            return null;
-        }
-
         function getModelByName(apiName) {
             return availableModels.find(model => model.api_name === apiName) || null;
         }
@@ -1282,68 +1244,46 @@
             return element;
         }
 
-        function createModelOption(model, value, isAuto = false) {
-            const enabled = isAuto || isModelEnabled(value);
+        function createModelOption(model, value) {
+            const enabled = isModelEnabled(value);
             const option = document.createElement('div');
-            option.className = `model-option ${selectedModelPreference === value ? 'selected' : ''} ${enabled ? '' : 'is-disabled'}`.trim();
+            option.className = `model-option ${enabled ? '' : 'is-disabled'}`.trim();
             option.dataset.model = value;
-            option.setAttribute('role', 'group');
+            option.setAttribute('role', 'listitem');
 
             const body = document.createElement('div');
             body.className = 'model-option-body';
             const heading = document.createElement('div');
             heading.className = 'model-option-heading';
-            appendModelText(heading, 'strong', 'model-option-name', isAuto ? '自動依評分推薦（預設）' : model.display_name);
-            appendModelText(heading, 'span', 'model-score', isAuto ? '⭐ 最高分' : `⭐ ${Number(model.score || 0).toFixed(1)}`);
+            appendModelText(heading, 'strong', 'model-option-name', model.display_name);
+            appendModelText(heading, 'span', 'model-score', `⭐ ${Number(model.score || 0).toFixed(1)}`);
             body.appendChild(heading);
-            if (!isAuto) {
-                appendModelText(body, 'div', 'model-option-quota', `每日上限：${Number(model.dailyQuota || 0)} 次 · 今日已用：${getModelUsageCount(value)} 次`);
-                const busyLabel = getModelBusyLabel(value);
-                if (busyLabel) appendModelText(body, 'div', 'model-busy-badge', busyLabel);
-            }
+            appendModelText(body, 'div', 'model-option-quota', `每日上限：${Number(model.dailyQuota || 0)} 次 · 今日已用：${getModelUsageCount(value)} 次`);
+            const busyLabel = getModelBusyLabel(value);
+            if (busyLabel) appendModelText(body, 'div', 'model-busy-badge', busyLabel);
             option.appendChild(body);
 
             const control = document.createElement('div');
             control.className = 'model-option-control';
-            const radio = document.createElement('input');
-            radio.type = 'radio';
-            radio.className = 'model-option-radio';
-            radio.name = 'tutor-model-preference';
-            radio.value = value;
-            radio.checked = selectedModelPreference === value;
-            radio.disabled = !enabled;
-            radio.setAttribute('aria-label', isAuto ? '自動依評分推薦' : `${model.display_name} 模型選擇`);
-            radio.addEventListener('change', (event) => {
+            const toggleWrap = document.createElement('div');
+            toggleWrap.className = 'model-toggle-wrap';
+            const toggle = document.createElement('input');
+            toggle.type = 'checkbox';
+            toggle.className = 'model-toggle';
+            toggle.checked = enabled;
+            toggle.setAttribute('role', 'switch');
+            toggle.setAttribute('aria-checked', String(enabled));
+            toggle.setAttribute('aria-label', `啟用 ${model.display_name}`);
+            toggle.title = enabled ? `停用 ${model.display_name}` : `啟用 ${model.display_name}`;
+            toggle.addEventListener('click', (event) => event.stopPropagation());
+            toggle.addEventListener('change', (event) => {
                 event.stopPropagation();
-                if (enabled) setSelectedModelPreference(value);
+                setModelEnabled(model.api_name, toggle.checked);
             });
-            control.appendChild(radio);
-
-            if (!isAuto) {
-                const toggleWrap = document.createElement('div');
-                toggleWrap.className = 'model-toggle-wrap';
-                const toggle = document.createElement('input');
-                toggle.type = 'checkbox';
-                toggle.className = 'model-toggle';
-                toggle.checked = enabled;
-                toggle.setAttribute('role', 'switch');
-                toggle.setAttribute('aria-checked', String(enabled));
-                toggle.setAttribute('aria-label', `啟用 ${model.display_name}`);
-                toggle.title = enabled ? `停用 ${model.display_name}` : `啟用 ${model.display_name}`;
-                toggle.addEventListener('click', (event) => event.stopPropagation());
-                toggle.addEventListener('change', (event) => {
-                    event.stopPropagation();
-                    setModelEnabled(model.api_name, toggle.checked);
-                });
-                toggleWrap.appendChild(toggle);
-                appendModelText(toggleWrap, 'span', 'model-toggle-label', enabled ? '啟用' : '停用');
-                control.appendChild(toggleWrap);
-            }
+            toggleWrap.appendChild(toggle);
+            appendModelText(toggleWrap, 'span', 'model-toggle-label', enabled ? '啟用' : '停用');
+            control.appendChild(toggleWrap);
             option.appendChild(control);
-            option.addEventListener('click', (event) => {
-                if (event.target.closest('.model-toggle') || event.target.closest('.model-option-control')) return;
-                if (enabled) setSelectedModelPreference(value);
-            });
             return option;
         }
 
@@ -1351,27 +1291,7 @@
             const container = document.getElementById('model-options');
             if (!container) return;
             container.replaceChildren();
-            container.appendChild(createModelOption(null, 'auto', true));
             availableModels.forEach(model => container.appendChild(createModelOption(model, model.api_name)));
-        }
-
-        function setSelectedModelPreference(value) {
-            const candidate = value || 'auto';
-            if (candidate !== 'auto' && !isModelEnabled(candidate)) return;
-            selectedModelPreference = candidate;
-            localStorage.setItem(MODEL_PREFERENCE_KEY, selectedModelPreference);
-            const preferredModel = getPreferredModel();
-            const enabledModels = getEnabledModels();
-            currentModel = preferredModel?.api_name || enabledModels[0]?.api_name || null;
-            currentModelIndex = Math.max(0, getModelQueue().findIndex(model => model.api_name === currentModel));
-            if (preferredModel) {
-                setModelSettingsStatus(`已鎖定 ${preferredModel.display_name}（⭐ ${preferredModel.score.toFixed(1)}）；下次對話將優先使用此模型。`, '');
-            } else if (selectedModelPreference === 'auto') {
-                setModelSettingsStatus(enabledModels.length > 0 ? '已切換為自動依站內最新評分推薦。' : '目前沒有已啟用模型，請至少開啟一個模型。', enabledModels.length > 0 ? '' : 'error');
-            } else {
-                setModelSettingsStatus('指定模型目前未啟用，將先使用自動推薦。', 'error');
-            }
-            renderModelOptions();
         }
 
         function setModelEnabled(apiName, enabled) {
@@ -1380,13 +1300,8 @@
             else disabledModelPreferences.add(apiName);
             persistDisabledModelPreferences();
 
-            if (!enabled && selectedModelPreference === apiName) {
-                selectedModelPreference = 'auto';
-                localStorage.setItem(MODEL_PREFERENCE_KEY, selectedModelPreference);
-            }
             const enabledModels = getEnabledModels();
-            const preferredModel = getPreferredModel();
-            currentModel = preferredModel?.api_name || enabledModels[0]?.api_name || null;
+            currentModel = enabledModels[0]?.api_name || null;
             currentModelIndex = Math.max(0, getModelQueue().findIndex(model => model.api_name === currentModel));
             if (enabledModels.length === 0) {
                 setModelSettingsStatus('目前沒有已啟用模型，請至少開啟一個模型。', 'error');
@@ -1398,12 +1313,7 @@
         }
 
         function getModelQueue() {
-            const enabledModels = getEnabledModels();
-            const preferredModel = enabledModels.find(model => model.api_name === selectedModelPreference) || null;
-            if (preferredModel) {
-                return [preferredModel, ...enabledModels.filter(model => model.api_name !== preferredModel.api_name)];
-            }
-            return [...enabledModels];
+            return [...getEnabledModels()];
         }
 
         async function fetchLatestModel({ silent = false } = {}) {
@@ -1416,13 +1326,8 @@
                     const data = await res.json();
                     const raw = Array.isArray(data) ? data : (data.models || []);
                     availableModels = mergeFreeModels(raw.map(normaliseGeminiModel).filter(Boolean));
-                    if (selectedModelPreference !== 'auto' && (!availableModels.some(model => model.api_name === selectedModelPreference) || !isModelEnabled(selectedModelPreference))) {
-                        selectedModelPreference = 'auto';
-                        localStorage.setItem(MODEL_PREFERENCE_KEY, selectedModelPreference);
-                    }
                     const enabledModels = getEnabledModels();
-                    const preferredModel = getPreferredModel();
-                    currentModel = preferredModel?.api_name || enabledModels[0]?.api_name || null;
+                    currentModel = enabledModels[0]?.api_name || null;
                     currentModelIndex = Math.max(0, getModelQueue().findIndex(model => model.api_name === currentModel));
                     lastModelCatalogUpdatedAt = new Date();
                     renderModelOptions();
@@ -1548,7 +1453,7 @@
             
             renderRoomList();
             saveRoomsToLocal();
-            scrollToBottom();
+            scrollToLatestMessage();
         }
 
         document.getElementById('btn-new-room').onclick = () => {
@@ -1834,7 +1739,7 @@
             pendingRetryRequest = null;
             isSendingMessage = true;
             hideError();
-            scrollToBottom();
+            scrollToLatestMessage(msgId);
 
             try {
                 const response = await callGemini(content, myLang, targetLang, inputLang, apiKey, (modelName) => {
@@ -1863,7 +1768,7 @@
 
                 speak(response.tutor_learning, targetLang);
                 saveRoomsToLocal();
-                scrollToBottom();
+                scrollToLatestMessage(tutorId);
             } catch (err) {
                 console.error('API Error:', err);
                 const userMsgEl = document.querySelector(`[data-id="${msgId}"]`);
@@ -2035,7 +1940,21 @@
             if (el) el.remove();
         };
 
-        function scrollToBottom() { window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' }); }
+        function scrollToLatestMessage(messageId = null) {
+            const container = document.getElementById('chat-container');
+            if (!container) return;
+            const messages = Array.from(container.querySelectorAll('.message'));
+            const target = messageId
+                ? messages.find(message => message.dataset.id === String(messageId))
+                : messages[messages.length - 1];
+            requestAnimationFrame(() => {
+                if (target) {
+                    target.scrollIntoView({ block: 'start', inline: 'nearest', behavior: 'auto' });
+                    return;
+                }
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        }
 
         // --- Speech Recognition (Native Web Speech API) ---
         function initSpeechRecognition() {
