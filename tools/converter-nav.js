@@ -25,6 +25,10 @@
         textEncoding: 'Text Width & Encoding',
         hashGenerator: 'Secure Hash & Passwords',
         svgRaster: 'SVG to High-Resolution Image',
+        imageMerge: 'Image Merge & Collage',
+        imageSplitter: 'Image Grid Splitter',
+        gifMaker: 'GIF Animation Maker',
+        imageColorPicker: 'Image Color Picker & Palette',
         contact: 'Contact Us',
         overview: 'All site tools'
     } : {
@@ -49,6 +53,10 @@
         textEncoding: '文字全半形與編碼轉換器',
         hashGenerator: '安全雜湊與強密碼生成器',
         svgRaster: 'SVG 向量圖轉高清圖',
+        imageMerge: '圖片拼接工具',
+        imageSplitter: '圖片九宮格／多格分割器',
+        gifMaker: 'GIF 動畫製作器',
+        imageColorPicker: '圖片調色盤／顏色吸取器',
         contact: '聯絡我們',
         overview: '主站工具總覽'
     };
@@ -75,6 +83,10 @@
         ['converter-text-encoding.html', labels.textEncoding],
         ['converter-hash-generator.html', labels.hashGenerator],
         ['converter-svg-raster.html', labels.svgRaster],
+        ['converter-image-merge.html', labels.imageMerge],
+        ['converter-image-splitter.html', labels.imageSplitter],
+        ['converter-gif-maker.html', labels.gifMaker],
+        ['converter-image-colorpicker.html', labels.imageColorPicker],
         ['../contact.html', labels.contact],
         [home, labels.overview]
     ];
@@ -116,6 +128,7 @@
     }
 
     function initHubSearch() {
+        if (document.body.classList.contains('dashboard-page')) return;
         var input = document.getElementById('converter-search');
         var cards = Array.prototype.slice.call(document.querySelectorAll('.converter-tool-card'));
         var count = document.getElementById('converter-search-count');
@@ -132,6 +145,103 @@
         });
     }
 
-    function initAll() { initDropdowns(); initHubSearch(); }
+    function initDashboard() {
+        if (!document.body.classList.contains('dashboard-page')) return;
+        var input = document.getElementById('converter-search');
+        var cards = Array.prototype.slice.call(document.querySelectorAll('.dashboard-category-section .converter-tool-card:not([data-count-exclude])'));
+        var companions = Array.prototype.slice.call(document.querySelectorAll('[data-companion="true"] .converter-tool-card'));
+        var sections = Array.prototype.slice.call(document.querySelectorAll('.dashboard-category-section'));
+        var count = document.getElementById('converter-search-count');
+        var noResults = document.getElementById('dashboard-no-results');
+        var menu = document.getElementById('dashboard-menu-toggle');
+        var closeButton = document.getElementById('dashboard-sidebar-close');
+        var overlay = document.getElementById('dashboard-overlay');
+        var page = document.body;
+        var activeFilter = 'all';
+
+        function closeMenu() {
+            page.classList.remove('dashboard-menu-open');
+            if (menu) menu.setAttribute('aria-expanded', 'false');
+        }
+
+        function matchesQuery(card, query) {
+            return !query || card.textContent.toLowerCase().indexOf(query) !== -1;
+        }
+
+        function updateBadges(query) {
+            var totals = { images: 0, 'audio-video': 0, 'document-process': 0, 'document-convert': 0, 'smart-text': 0, security: 0 };
+            var total = 0;
+            cards.forEach(function (card) {
+                if (!matchesQuery(card, query)) return;
+                var key = card.getAttribute('data-category');
+                if (Object.prototype.hasOwnProperty.call(totals, key)) totals[key] += 1;
+                total += 1;
+            });
+            companions.forEach(function (card) { if (matchesQuery(card, query)) total += 1; });
+            document.querySelectorAll('[data-dashboard-count]').forEach(function (badge) {
+                var key = badge.getAttribute('data-dashboard-count');
+                badge.textContent = key === 'all' ? String(total) : String(totals[key] || 0);
+            });
+            document.querySelectorAll('[data-dashboard-section-count]').forEach(function (badge) {
+                var key = badge.getAttribute('data-dashboard-section-count');
+                badge.textContent = String(totals[key] || 0);
+            });
+            return total;
+        }
+
+        function applyFilter() {
+            var query = input ? input.value.trim().toLowerCase() : '';
+            var visible = 0;
+            cards.forEach(function (card) {
+                var categoryMatch = activeFilter === 'all' || card.getAttribute('data-category') === activeFilter;
+                var queryMatch = matchesQuery(card, query);
+                card.hidden = !(categoryMatch && queryMatch);
+                if (!card.hidden) visible += 1;
+            });
+            companions.forEach(function (card) {
+                var categoryMatch = activeFilter === 'all' || activeFilter === 'smart-text';
+                var queryMatch = matchesQuery(card, query);
+                card.hidden = !(categoryMatch && queryMatch);
+                if (!card.hidden) visible += 1;
+            });
+            sections.forEach(function (section) {
+                var key = section.getAttribute('data-dashboard-category');
+                var sectionMatch = activeFilter === 'all' || key === activeFilter;
+                var hasVisibleCard = !!section.querySelector('.converter-tool-card:not([hidden]):not([data-count-exclude])');
+                var emptySelection = section.getAttribute('data-empty-category') === 'true' && key === activeFilter && !query;
+                section.hidden = !(sectionMatch && (hasVisibleCard || emptySelection));
+            });
+            var matchingTotal = updateBadges(query);
+            var isEmptySelection = activeFilter !== 'all' && !query && document.querySelector('[data-dashboard-category="' + activeFilter + '"][data-empty-category="true"]');
+            if (count) count.textContent = visible + (en ? ' tools shown' : ' 個工具顯示');
+            if (noResults) noResults.hidden = visible > 0 || !!isEmptySelection;
+            if (matchingTotal === 0 && activeFilter === 'all' && noResults) noResults.hidden = false;
+        }
+
+        document.querySelectorAll('[data-dashboard-filter]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                activeFilter = button.getAttribute('data-dashboard-filter') || 'all';
+                document.querySelectorAll('[data-dashboard-filter]').forEach(function (item) { item.classList.toggle('is-active', item === button); });
+                applyFilter();
+                closeMenu();
+                if (activeFilter !== 'all') {
+                    var section = document.getElementById('dashboard-category-' + activeFilter);
+                    if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+        if (input) input.addEventListener('input', applyFilter);
+        if (menu) menu.addEventListener('click', function () {
+            var open = !page.classList.contains('dashboard-menu-open');
+            page.classList.toggle('dashboard-menu-open', open);
+            menu.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+        if (closeButton) closeButton.addEventListener('click', closeMenu);
+        if (overlay) overlay.addEventListener('click', closeMenu);
+        document.addEventListener('keydown', function (event) { if (event.key === 'Escape') closeMenu(); });
+        applyFilter();
+    }
+
+    function initAll() { initDropdowns(); initHubSearch(); initDashboard(); }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initAll); else initAll();
 }());
