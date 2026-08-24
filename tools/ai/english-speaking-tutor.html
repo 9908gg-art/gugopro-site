@@ -457,6 +457,13 @@
             word-break: break-word;
         }
 
+        .speaking-word,
+        .speaking-sentence { transition: color 0.16s ease, background-color 0.16s ease, box-shadow 0.16s ease; }
+        .speaking-word { border-radius: 4px; }
+        .speaking-word-highlight { color: #06131b; background: #67e8f9; box-shadow: 0 0 0 3px rgba(103, 232, 249, 0.2), 0 0 16px rgba(103, 232, 249, 0.58); }
+        .speaking-sentence { border-radius: 5px; }
+        .speaking-sentence-focus { background: rgba(103, 232, 249, 0.14); box-shadow: 0 0 0 3px rgba(103, 232, 249, 0.08); }
+
         .msg-my {
             font-size: 0.9rem;
             color: var(--text-dim);
@@ -1766,7 +1773,7 @@
                 addMessageToUI('tutor', response.tutor_learning, response.tutor_my, response.correction, tutorId);
                 room.messages.push({ id: tutorId, role: 'tutor', learning: response.tutor_learning, my: response.tutor_my, correction: response.correction });
 
-                speak(response.tutor_learning, targetLang);
+                speak(response.tutor_learning, targetLang, document.querySelector(`[data-id="${tutorId}"]`));
                 saveRoomsToLocal();
                 scrollToLatestMessage(tutorId);
             } catch (err) {
@@ -2024,17 +2031,247 @@
             }
         };
 
-        function speak(text, langCode) {
-            if (!window.speechSynthesis) return;
-            window.speechSynthesis.cancel();
-            const ut = new SpeechSynthesisUtterance(text); ut.lang = langCode;
-            window.speechSynthesis.speak(ut);
+        const TTS_LOCALE_MAP = Object.freeze({
+            'en': 'en-US', 'zh': 'zh-TW', 'ja': 'ja-JP', 'ko': 'ko-KR', 'fr': 'fr-FR', 'de': 'de-DE',
+            'es': 'es-ES', 'th': 'th-TH', 'vi': 'vi-VN', 'id': 'id-ID', 'pt': 'pt-BR', 'it': 'it-IT',
+            'ru': 'ru-RU', 'ar': 'ar-SA', 'hi': 'hi-IN', 'ms': 'ms-MY', 'nl': 'nl-NL', 'pl': 'pl-PL', 'tr': 'tr-TR'
+        });
+        const TTS_SENTENCE_BOUNDARY_RE = /[.!?。！？\n]/u;
+        const TTS_PUNCTUATION_RE = /[\p{P}\p{S}]/u;
+        let speechSessionId = 0;
+        let activeSpeechSession = null;
+        let speechFallbackTimer = null;
+
+        function resolveSpeechLocale(langCode) {
+            const requested = String(langCode || '').trim();
+            if (!requested) return 'en-US';
+            const base = requested.split('-')[0].toLowerCase();
+            return TTS_LOCALE_MAP[base] || requested;
+        }
+
+        function getSpeechVoice(locale) {
+            if (!window.speechSynthesis || typeof window.speechSynthesis.getVoices !== 'function') return null;
+            const voices = window.speechSynthesis.getVoices();
+            const normalized = locale.toLowerCase();
+            const base = normalized.split('-')[0];
+            return voices.find(voice => String(voice.lang || '').toLowerCase() === normalized)
+                || voices.find(voice => String(voice.lang || '').toLowerCase().split('-')[0] === base)
+                || null;
+        }
+
+        function isSingleCharacterScript(char) {
+            const codePoint = char.codePointAt(0);
+            return (codePoint >= 0x2e80 && codePoint <= 0x9fff)
+                || (codePoint >= 0xac00 && codePoint <= 0xd7af)
+                || (codePoint >= 0x0e00 && codePoint <= 0x0e7f);
+        }
+
+        function splitSpeechSentences(text) {
+            const source = String(text || '');
+            const ranges = [];
+            let start = 0;
+            for (let index = 0; index < source.length; index += 1) {
+                if (TTS_SENTENCE_BOUNDARY_RE.test(source[index])) {
+                    ranges.push({ start, end: index + 1 });
+                    start = index + 1;
+                }
+            }
+            if (start < source.length || ranges.length === 0) ranges.push({ start, end: source.length });
+            return ranges.filter(range => range.end > range.start);
+        }
+
+        function appendSpeechWordSegments(parent, text, offset) {
+            const source = String(text || '');
+            let cursor = 0;
+            while (cursor < source.length) {
+                const codePoint = source.codePointAt(cursor);
+                const charLength = codePoint > 0xffff ? 2 : 1;
+                const char = source.slice(cursor, cursor + charLength);
+                if (/\s/u.test(char)) {
+                    const whitespaceStart = cursor;
+                    cursor += charLength;
+                    while (cursor < source.length && /\s/u.test(source[cursor])) cursor += 1;
+                    parent.appendChild(document.createTextNode(source.slice(whitespaceStart, cursor)));
+                    continue;
+                }
+
+                const tokenStart = cursor;
+                if (isSingleCharacterScript(char) || TTS_PUNCTUATION_RE.test(char)) {
+                    cursor += charLength;
+                } else {
+                    cursor += charLength;
+                    while (cursor < source.length) {
+                        const nextCodePoint = source.codePointAt(cursor);
+                        const nextLength = nextCodePoint > 0xffff ? 2 : 1;
+                        const nextChar = source.slice(cursor, cursor + nextLength);
+                        if (/\s/u.test(nextChar) || isSingleCharacterScript(nextChar) || TTS_PUNCTUATION_RE.test(nextChar)) break;
+                        cursor += nextLength;
+                    }
+                }
+
+                const word = document.createElement('span');
+                word.className = 'speaking-word';
+                word.dataset.start = String(offset + tokenStart);
+                word.dataset.end = String(offset + cursor);
+                word.textContent = source.slice(tokenStart, cursor);
+                parent.appendChild(word);
+            }
+        }
+
+        function renderSpeechText(messageRoot, text) {
+            if (!messageRoot) return;
+            const learning = messageRoot.querySelector('.msg-learning');
+            const translation = messageRoot.querySelector('.msg-my');
+            const source = String(text || '');
+            const sentenceRanges = splitSpeechSentences(source);
+            if (learning) {
+                learning.replaceChildren();
+                sentenceRanges.forEach((range, sentenceIndex) => {
+                    const sentence = document.createElement('span');
+                    sentence.className = 'speaking-sentence';
+                    sentence.dataset.sentenceIndex = String(sentenceIndex);
+                    sentence.dataset.start = String(range.start);
+                    sentence.dataset.end = String(range.end);
+                    appendSpeechWordSegments(sentence, source.slice(range.start, range.end), range.start);
+                    learning.appendChild(sentence);
+                });
+            }
+            if (translation) {
+                renderSentenceText(translation, translation.textContent, sentenceRanges.length);
+            }
+        }
+
+        function renderSentenceText(element, text, sentenceCount) {
+            if (!element) return;
+            const source = String(text || '');
+            const ranges = splitSpeechSentences(source);
+            element.replaceChildren();
+            ranges.forEach((range, sentenceIndex) => {
+                const sentence = document.createElement('span');
+                sentence.className = 'speaking-sentence';
+                sentence.dataset.sentenceIndex = String(Math.min(sentenceIndex, Math.max(0, sentenceCount - 1)));
+                sentence.textContent = source.slice(range.start, range.end);
+                element.appendChild(sentence);
+            });
+        }
+
+        function clearSpeechFallbackTimer() {
+            if (speechFallbackTimer !== null) {
+                clearInterval(speechFallbackTimer);
+                speechFallbackTimer = null;
+            }
+        }
+
+        function removeSpeechHighlightClasses(root = document) {
+            root.querySelectorAll('.speaking-word-highlight, .speaking-sentence-focus').forEach(element => {
+                element.classList.remove('speaking-word-highlight', 'speaking-sentence-focus');
+            });
+        }
+
+        function restoreSpeechText(messageRoot) {
+            if (!messageRoot) return;
+            ['.msg-learning', '.msg-my'].forEach(selector => {
+                const element = messageRoot.querySelector(selector);
+                if (element) element.replaceChildren(document.createTextNode(element.textContent));
+            });
+        }
+
+        function resetSpeechVisuals() {
+            clearSpeechFallbackTimer();
+            removeSpeechHighlightClasses();
+            if (activeSpeechSession?.root) restoreSpeechText(activeSpeechSession.root);
+            activeSpeechSession = null;
+        }
+
+        function finishSpeechSession(sessionId) {
+            if (!activeSpeechSession || activeSpeechSession.id !== sessionId) return;
+            resetSpeechVisuals();
+        }
+
+        function stopSpeech() {
+            speechSessionId += 1;
+            if (window.speechSynthesis) window.speechSynthesis.cancel();
+            resetSpeechVisuals();
+        }
+
+        function focusSpeechSentence(session, sentenceIndex) {
+            if (!session?.root) return;
+            removeSpeechHighlightClasses(session.root);
+            session.root.querySelectorAll(`[data-sentence-index="${sentenceIndex}"]`).forEach(element => {
+                element.classList.add('speaking-sentence-focus');
+            });
+            session.currentSentence = sentenceIndex;
+        }
+
+        function highlightSpeechBoundary(session, charIndex) {
+            if (!session?.root) return;
+            const index = Math.max(0, Number(charIndex) || 0);
+            const words = [...session.root.querySelectorAll('.speaking-word')];
+            const word = words.find(element => index >= Number(element.dataset.start) && index < Number(element.dataset.end))
+                || words[words.length - 1];
+            if (!word) return;
+            const sentence = word.closest('.speaking-sentence');
+            if (sentence) focusSpeechSentence(session, Number(sentence.dataset.sentenceIndex));
+            session.root.querySelectorAll('.speaking-word-highlight').forEach(element => element.classList.remove('speaking-word-highlight'));
+            word.classList.add('speaking-word-highlight');
+        }
+
+        function startSpeechSentenceFallback(session) {
+            clearSpeechFallbackTimer();
+            if (!session?.root || session.boundaryObserved) return;
+            const sentenceCount = session.root.querySelectorAll('.msg-learning .speaking-sentence').length;
+            if (sentenceCount === 0) return;
+            let sentenceIndex = 0;
+            focusSpeechSentence(session, sentenceIndex);
+            const duration = Math.max(2400, Math.min(16000, session.text.length * 70));
+            const interval = Math.max(850, Math.round(duration / sentenceCount));
+            speechFallbackTimer = setInterval(() => {
+                if (!activeSpeechSession || activeSpeechSession.id !== session.id || session.boundaryObserved) {
+                    clearSpeechFallbackTimer();
+                    return;
+                }
+                sentenceIndex = (sentenceIndex + 1) % sentenceCount;
+                focusSpeechSentence(session, sentenceIndex);
+            }, interval);
+        }
+
+        function speak(text, langCode, messageRoot = null) {
+            if (!window.speechSynthesis || typeof SpeechSynthesisUtterance === 'undefined') return;
+            stopSpeech();
+            const sessionId = speechSessionId;
+            const source = String(text || '');
+            const root = messageRoot || null;
+            const locale = resolveSpeechLocale(langCode);
+            if (root) renderSpeechText(root, source);
+
+            const utterance = new SpeechSynthesisUtterance(source);
+            utterance.lang = locale;
+            const voice = getSpeechVoice(locale);
+            if (voice) utterance.voice = voice;
+            const session = { id: sessionId, root, text: source, boundaryObserved: false, currentSentence: 0 };
+            activeSpeechSession = session;
+            utterance.onstart = () => {
+                if (activeSpeechSession?.id === sessionId) startSpeechSentenceFallback(session);
+            };
+            utterance.onboundary = event => {
+                if (!activeSpeechSession || activeSpeechSession.id !== sessionId) return;
+                session.boundaryObserved = true;
+                clearSpeechFallbackTimer();
+                highlightSpeechBoundary(session, event.charIndex);
+            };
+            utterance.onend = () => finishSpeechSession(sessionId);
+            utterance.onerror = () => finishSpeechSession(sessionId);
+            utterance.onpause = () => {
+                if (activeSpeechSession?.id === sessionId) resetSpeechVisuals();
+            };
+            window.speechSynthesis.speak(utterance);
+            startSpeechSentenceFallback(session);
         }
 
         window.speakMessage = (btn) => {
             const msgDiv = btn.closest('.message');
             const text = msgDiv.querySelector('.msg-learning').textContent;
-            speak(text, document.getElementById('target-lang').value);
+            speak(text, document.getElementById('target-lang').value, msgDiv);
         };
 
         // --- Helpers ---
