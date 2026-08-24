@@ -457,12 +457,12 @@
             word-break: break-word;
         }
 
-        .speaking-word,
-        .speaking-sentence { transition: color 0.16s ease, background-color 0.16s ease, box-shadow 0.16s ease; }
-        .speaking-word { border-radius: 4px; }
-        .speaking-word-highlight { color: #06131b; background: #67e8f9; box-shadow: 0 0 0 3px rgba(103, 232, 249, 0.2), 0 0 16px rgba(103, 232, 249, 0.58); }
-        .speaking-sentence { border-radius: 5px; }
-        .speaking-sentence-focus { background: rgba(103, 232, 249, 0.14); box-shadow: 0 0 0 3px rgba(103, 232, 249, 0.08); }
+        .tts-active-word {
+            color: #FF334B !important;
+            font-weight: 700 !important;
+            background: transparent !important;
+            text-decoration: none !important;
+        }
 
         .msg-my {
             font-size: 0.9rem;
@@ -2036,11 +2036,10 @@
             'es': 'es-ES', 'th': 'th-TH', 'vi': 'vi-VN', 'id': 'id-ID', 'pt': 'pt-BR', 'it': 'it-IT',
             'ru': 'ru-RU', 'ar': 'ar-SA', 'hi': 'hi-IN', 'ms': 'ms-MY', 'nl': 'nl-NL', 'pl': 'pl-PL', 'tr': 'tr-TR'
         });
-        const TTS_SENTENCE_BOUNDARY_RE = /[.!?。！？\n]/u;
         const TTS_PUNCTUATION_RE = /[\p{P}\p{S}]/u;
         let speechSessionId = 0;
         let activeSpeechSession = null;
-        let speechFallbackTimer = null;
+        let speechBoundaryFrame = null;
 
         function resolveSpeechLocale(langCode) {
             const requested = String(langCode || '').trim();
@@ -2064,20 +2063,6 @@
             return (codePoint >= 0x2e80 && codePoint <= 0x9fff)
                 || (codePoint >= 0xac00 && codePoint <= 0xd7af)
                 || (codePoint >= 0x0e00 && codePoint <= 0x0e7f);
-        }
-
-        function splitSpeechSentences(text) {
-            const source = String(text || '');
-            const ranges = [];
-            let start = 0;
-            for (let index = 0; index < source.length; index += 1) {
-                if (TTS_SENTENCE_BOUNDARY_RE.test(source[index])) {
-                    ranges.push({ start, end: index + 1 });
-                    start = index + 1;
-                }
-            }
-            if (start < source.length || ranges.length === 0) ranges.push({ start, end: source.length });
-            return ranges.filter(range => range.end > range.start);
         }
 
         function appendSpeechWordSegments(parent, text, offset) {
@@ -2119,65 +2104,33 @@
         }
 
         function renderSpeechText(messageRoot, text) {
-            if (!messageRoot) return;
-            const learning = messageRoot.querySelector('.msg-learning');
-            const translation = messageRoot.querySelector('.msg-my');
+            const learning = messageRoot?.querySelector('.msg-learning');
+            if (!learning) return;
             const source = String(text || '');
-            const sentenceRanges = splitSpeechSentences(source);
-            if (learning) {
-                learning.replaceChildren();
-                sentenceRanges.forEach((range, sentenceIndex) => {
-                    const sentence = document.createElement('span');
-                    sentence.className = 'speaking-sentence';
-                    sentence.dataset.sentenceIndex = String(sentenceIndex);
-                    sentence.dataset.start = String(range.start);
-                    sentence.dataset.end = String(range.end);
-                    appendSpeechWordSegments(sentence, source.slice(range.start, range.end), range.start);
-                    learning.appendChild(sentence);
-                });
-            }
-            if (translation) {
-                renderSentenceText(translation, translation.textContent, sentenceRanges.length);
-            }
+            learning.replaceChildren();
+            appendSpeechWordSegments(learning, source, 0);
         }
 
-        function renderSentenceText(element, text, sentenceCount) {
-            if (!element) return;
-            const source = String(text || '');
-            const ranges = splitSpeechSentences(source);
-            element.replaceChildren();
-            ranges.forEach((range, sentenceIndex) => {
-                const sentence = document.createElement('span');
-                sentence.className = 'speaking-sentence';
-                sentence.dataset.sentenceIndex = String(Math.min(sentenceIndex, Math.max(0, sentenceCount - 1)));
-                sentence.textContent = source.slice(range.start, range.end);
-                element.appendChild(sentence);
-            });
-        }
-
-        function clearSpeechFallbackTimer() {
-            if (speechFallbackTimer !== null) {
-                clearInterval(speechFallbackTimer);
-                speechFallbackTimer = null;
+        function cancelSpeechBoundaryFrame() {
+            if (speechBoundaryFrame !== null) {
+                cancelAnimationFrame(speechBoundaryFrame);
+                speechBoundaryFrame = null;
             }
         }
 
         function removeSpeechHighlightClasses(root = document) {
-            root.querySelectorAll('.speaking-word-highlight, .speaking-sentence-focus').forEach(element => {
-                element.classList.remove('speaking-word-highlight', 'speaking-sentence-focus');
+            root.querySelectorAll('.tts-active-word').forEach(element => {
+                element.classList.remove('tts-active-word');
             });
         }
 
         function restoreSpeechText(messageRoot) {
-            if (!messageRoot) return;
-            ['.msg-learning', '.msg-my'].forEach(selector => {
-                const element = messageRoot.querySelector(selector);
-                if (element) element.replaceChildren(document.createTextNode(element.textContent));
-            });
+            const element = messageRoot?.querySelector('.msg-learning');
+            if (element) element.replaceChildren(document.createTextNode(element.textContent));
         }
 
         function resetSpeechVisuals() {
-            clearSpeechFallbackTimer();
+            cancelSpeechBoundaryFrame();
             removeSpeechHighlightClasses();
             if (activeSpeechSession?.root) restoreSpeechText(activeSpeechSession.root);
             activeSpeechSession = null;
@@ -2194,45 +2147,30 @@
             resetSpeechVisuals();
         }
 
-        function focusSpeechSentence(session, sentenceIndex) {
-            if (!session?.root) return;
-            removeSpeechHighlightClasses(session.root);
-            session.root.querySelectorAll(`[data-sentence-index="${sentenceIndex}"]`).forEach(element => {
-                element.classList.add('speaking-sentence-focus');
-            });
-            session.currentSentence = sentenceIndex;
-        }
-
-        function highlightSpeechBoundary(session, charIndex) {
+        function applySpeechBoundary(session, charIndex) {
             if (!session?.root) return;
             const index = Math.max(0, Number(charIndex) || 0);
-            const words = [...session.root.querySelectorAll('.speaking-word')];
-            const word = words.find(element => index >= Number(element.dataset.start) && index < Number(element.dataset.end))
-                || words[words.length - 1];
-            if (!word) return;
-            const sentence = word.closest('.speaking-sentence');
-            if (sentence) focusSpeechSentence(session, Number(sentence.dataset.sentenceIndex));
-            session.root.querySelectorAll('.speaking-word-highlight').forEach(element => element.classList.remove('speaking-word-highlight'));
-            word.classList.add('speaking-word-highlight');
+            if (index === session.lastBoundaryIndex) return;
+            const learning = session.root.querySelector('.msg-learning');
+            if (!learning) return;
+            const words = [...learning.querySelectorAll('.speaking-word')];
+            const word = words.find(element => index >= Number(element.dataset.start) && index < Number(element.dataset.end));
+            if (!word || word === session.activeWord) return;
+            learning.querySelectorAll('.tts-active-word').forEach(element => element.classList.remove('tts-active-word'));
+            word.classList.add('tts-active-word');
+            session.activeWord = word;
+            session.lastBoundaryIndex = index;
         }
 
-        function startSpeechSentenceFallback(session) {
-            clearSpeechFallbackTimer();
-            if (!session?.root || session.boundaryObserved) return;
-            const sentenceCount = session.root.querySelectorAll('.msg-learning .speaking-sentence').length;
-            if (sentenceCount === 0) return;
-            let sentenceIndex = 0;
-            focusSpeechSentence(session, sentenceIndex);
-            const duration = Math.max(2400, Math.min(16000, session.text.length * 70));
-            const interval = Math.max(850, Math.round(duration / sentenceCount));
-            speechFallbackTimer = setInterval(() => {
-                if (!activeSpeechSession || activeSpeechSession.id !== session.id || session.boundaryObserved) {
-                    clearSpeechFallbackTimer();
-                    return;
-                }
-                sentenceIndex = (sentenceIndex + 1) % sentenceCount;
-                focusSpeechSentence(session, sentenceIndex);
-            }, interval);
+        function queueSpeechBoundary(session, charIndex) {
+            if (!session || !activeSpeechSession || activeSpeechSession.id !== session.id) return;
+            session.pendingBoundaryIndex = Math.max(0, Number(charIndex) || 0);
+            if (speechBoundaryFrame !== null) return;
+            speechBoundaryFrame = requestAnimationFrame(() => {
+                speechBoundaryFrame = null;
+                if (!activeSpeechSession || activeSpeechSession.id !== session.id) return;
+                applySpeechBoundary(session, session.pendingBoundaryIndex);
+            });
         }
 
         function speak(text, langCode, messageRoot = null) {
@@ -2248,16 +2186,11 @@
             utterance.lang = locale;
             const voice = getSpeechVoice(locale);
             if (voice) utterance.voice = voice;
-            const session = { id: sessionId, root, text: source, boundaryObserved: false, currentSentence: 0 };
+            const session = { id: sessionId, root, text: source, lastBoundaryIndex: -1, pendingBoundaryIndex: null, activeWord: null };
             activeSpeechSession = session;
-            utterance.onstart = () => {
-                if (activeSpeechSession?.id === sessionId) startSpeechSentenceFallback(session);
-            };
             utterance.onboundary = event => {
                 if (!activeSpeechSession || activeSpeechSession.id !== sessionId) return;
-                session.boundaryObserved = true;
-                clearSpeechFallbackTimer();
-                highlightSpeechBoundary(session, event.charIndex);
+                queueSpeechBoundary(session, event.charIndex);
             };
             utterance.onend = () => finishSpeechSession(sessionId);
             utterance.onerror = () => finishSpeechSession(sessionId);
@@ -2265,7 +2198,6 @@
                 if (activeSpeechSession?.id === sessionId) resetSpeechVisuals();
             };
             window.speechSynthesis.speak(utterance);
-            startSpeechSentenceFallback(session);
         }
 
         window.speakMessage = (btn) => {
