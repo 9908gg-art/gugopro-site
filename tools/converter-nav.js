@@ -25,10 +25,6 @@
         textEncoding: 'Text Width & Encoding',
         hashGenerator: 'Secure Hash & Passwords',
         svgRaster: 'SVG to High-Resolution Image',
-        imageMerge: 'Image Merge & Collage',
-        imageSplitter: 'Image Grid Splitter',
-        gifMaker: 'GIF Animation Maker',
-        imageColorPicker: 'Image Color Picker & Palette',
         contact: 'Contact Us',
         overview: 'All site tools'
     } : {
@@ -53,10 +49,6 @@
         textEncoding: '文字全半形與編碼轉換器',
         hashGenerator: '安全雜湊與強密碼生成器',
         svgRaster: 'SVG 向量圖轉高清圖',
-        imageMerge: '圖片拼接工具',
-        imageSplitter: '圖片九宮格／多格分割器',
-        gifMaker: 'GIF 動畫製作器',
-        imageColorPicker: '圖片調色盤／顏色吸取器',
         contact: '聯絡我們',
         overview: '主站工具總覽'
     };
@@ -83,10 +75,6 @@
         ['converter-text-encoding.html', labels.textEncoding],
         ['converter-hash-generator.html', labels.hashGenerator],
         ['converter-svg-raster.html', labels.svgRaster],
-        ['converter-image-merge.html', labels.imageMerge],
-        ['converter-image-splitter.html', labels.imageSplitter],
-        ['converter-gif-maker.html', labels.gifMaker],
-        ['converter-image-colorpicker.html', labels.imageColorPicker],
         ['../contact.html', labels.contact],
         [home, labels.overview]
     ];
@@ -128,7 +116,6 @@
     }
 
     function initHubSearch() {
-        if (document.body.classList.contains('dashboard-page')) return;
         var input = document.getElementById('converter-search');
         var cards = Array.prototype.slice.call(document.querySelectorAll('.converter-tool-card'));
         var count = document.getElementById('converter-search-count');
@@ -145,61 +132,6 @@
         });
     }
 
-    function initDashboard() {
-        if (!document.body.classList.contains('dashboard-page')) return;
-        var input = document.getElementById('converter-search');
-        var cards = Array.prototype.slice.call(document.querySelectorAll('.dashboard-category-section .converter-tool-card'));
-        var sections = Array.prototype.slice.call(document.querySelectorAll('.dashboard-category-section'));
-        var count = document.getElementById('converter-search-count');
-        var menu = document.getElementById('dashboard-menu-toggle');
-        var closeButton = document.getElementById('dashboard-sidebar-close');
-        var overlay = document.getElementById('dashboard-overlay');
-        var page = document.body;
-        var activeFilter = 'all';
-        function closeMenu() {
-            page.classList.remove('dashboard-menu-open');
-            if (menu) menu.setAttribute('aria-expanded', 'false');
-        }
-        function applyFilter() {
-            var query = input ? input.value.trim().toLowerCase() : '';
-            var visible = 0;
-            cards.forEach(function (card) {
-                var categoryMatch = activeFilter === 'all' || card.getAttribute('data-category') === activeFilter;
-                var queryMatch = !query || card.textContent.toLowerCase().indexOf(query) !== -1;
-                card.hidden = !(categoryMatch && queryMatch);
-                if (!card.hidden) visible += 1;
-            });
-            sections.forEach(function (section) {
-                var sectionMatch = activeFilter === 'all' || section.getAttribute('data-dashboard-category') === activeFilter;
-                var hasVisibleCard = section.querySelector('.converter-tool-card:not([hidden])');
-                section.hidden = !(sectionMatch && hasVisibleCard);
-            });
-            if (count) count.textContent = visible + (en ? ' tools shown' : ' 個工具顯示');
-        }
-        document.querySelectorAll('[data-dashboard-filter]').forEach(function (button) {
-            button.addEventListener('click', function () {
-                activeFilter = button.getAttribute('data-dashboard-filter') || 'all';
-                document.querySelectorAll('[data-dashboard-filter]').forEach(function (item) { item.classList.toggle('is-active', item === button); });
-                applyFilter();
-                closeMenu();
-                if (activeFilter !== 'all') {
-                    var section = document.getElementById('dashboard-category-' + activeFilter);
-                    if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-            });
-        });
-        if (input) input.addEventListener('input', applyFilter);
-        if (menu) menu.addEventListener('click', function () {
-            var open = !page.classList.contains('dashboard-menu-open');
-            page.classList.toggle('dashboard-menu-open', open);
-            menu.setAttribute('aria-expanded', open ? 'true' : 'false');
-        });
-        if (closeButton) closeButton.addEventListener('click', closeMenu);
-        if (overlay) overlay.addEventListener('click', closeMenu);
-        document.addEventListener('keydown', function (event) { if (event.key === 'Escape') closeMenu(); });
-        applyFilter();
-    }
-
-    function initAll() { initDropdowns(); initHubSearch(); initDashboard(); }
+    function initAll() { initDropdowns(); initHubSearch(); }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initAll); else initAll();
 }());
