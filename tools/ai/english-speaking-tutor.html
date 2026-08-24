@@ -361,6 +361,16 @@
         .model-option:hover { background: rgba(255,255,255,0.1); border-color: rgba(0, 242, 255, 0.45); }
         .model-option.selected { background: rgba(0, 242, 255, 0.08); border-color: var(--primary-neon); }
         .model-option input { margin-top: 3px; accent-color: var(--primary-neon); flex-shrink: 0; }
+        .model-option.is-disabled { opacity: 0.58; border-color: rgba(255,255,255,0.12); }
+        .model-option.is-disabled .model-option-name { text-decoration: line-through; }
+        .model-option-control { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        .model-option-radio { margin-top: 3px; accent-color: var(--primary-neon); }
+        .model-toggle { position: relative; width: 34px; height: 18px; appearance: none; -webkit-appearance: none; background: rgba(148,163,184,0.35); border: 1px solid rgba(255,255,255,0.22); border-radius: 999px; cursor: pointer; transition: all 0.2s; margin: 0 !important; }
+        .model-toggle::after { content: ''; position: absolute; width: 12px; height: 12px; top: 2px; left: 2px; border-radius: 50%; background: #cbd5e1; transition: transform 0.2s, background 0.2s; }
+        .model-toggle:checked { background: rgba(34,197,94,0.45); border-color: #86efac; }
+        .model-toggle:checked::after { transform: translateX(16px); background: #bbf7d0; }
+        .model-toggle:focus-visible { outline: 2px solid var(--primary-neon); outline-offset: 2px; }
+        .model-toggle-label { color: var(--text-dim); font-size: 0.65rem; white-space: nowrap; }
         .model-option-body { min-width: 0; flex: 1; }
         .model-option-heading { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
         .model-option-name { color: var(--text-main); font-size: 0.82rem; font-weight: 700; overflow-wrap: anywhere; }
@@ -969,6 +979,7 @@
         let retryCountdownTimer = null;
         let modelCatalogPromise = null;
         let selectedModelPreference = localStorage.getItem('gugopro_ai_tutor_model_preference_v1') || 'auto';
+        let disabledModelPreferences = loadDisabledModelPreferences();
         let lastModelCatalogUpdatedAt = null;
         let pendingRetryRequest = null;
         let isSendingMessage = false;
@@ -1043,7 +1054,11 @@
 
         const QUOTA_MODELS_URL = 'https://quota.gugopro.com/gemini_rate_limits.json';
         const MODEL_PREFERENCE_KEY = 'gugopro_ai_tutor_model_preference_v1';
+        const MODEL_DISABLED_KEY = 'gugopro_ai_tutor_disabled_models_v1';
+        const REQUEST_TIMEOUT_MS = 10000;
         const BUSY_MESSAGE = '⚠️ 官方 AI 伺服器目前連線繁忙（尖峰時段負載較高），正在為您自動重試或切換線路...';
+        const ALL_ENABLED_MODELS_BUSY_MESSAGE = '⚠️ 目前所有已啟用的 AI 免費模型均處於繁忙狀態，請稍候 3~5 分鐘後再試。';
+        const MODEL_TEXT_CAPABILITIES = new Set(['text_generation', 'chat_dialog']);
         const FREE_MODEL_FILTER = model => model && model.is_free_tier === true && model.requires_billing_account !== true && model.is_rest_compatible !== false;
 
         function decodeGeminiApiKey(raw) {
@@ -1062,6 +1077,43 @@
             return decodeGeminiApiKey(raw).trim();
         }
 
+        function loadDisabledModelPreferences() {
+            try {
+                const saved = JSON.parse(localStorage.getItem('gugopro_ai_tutor_disabled_models_v1') || '[]');
+                return new Set(Array.isArray(saved) ? saved.map(item => String(item)).filter(Boolean) : []);
+            } catch (error) {
+                console.warn('模型啟用狀態讀取失敗，將使用全部啟用:', error);
+                return new Set();
+            }
+        }
+
+        function persistDisabledModelPreferences() {
+            localStorage.setItem(MODEL_DISABLED_KEY, JSON.stringify(Array.from(disabledModelPreferences)));
+        }
+
+        function isModelEnabled(apiName) {
+            return Boolean(apiName) && !disabledModelPreferences.has(apiName);
+        }
+
+        function getEnabledModels() {
+            return availableModels.filter(model => isModelEnabled(model.api_name));
+        }
+
+        async function fetchQuotaModelsWithTimeout() {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+            try {
+                return await fetch(QUOTA_MODELS_URL, { cache: 'no-store', signal: controller.signal });
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    throw new Error(`站內模型清單請求超過 ${REQUEST_TIMEOUT_MS / 1000} 秒未回應`);
+                }
+                throw error;
+            } finally {
+                clearTimeout(timeoutId);
+            }
+        }
+
         function normaliseGeminiModel(model) {
             if (!model || typeof model !== 'object' || !FREE_MODEL_FILTER(model)) return null;
             const name = String(model.api_name || model.name || '').replace(/^models\//, '').trim();
@@ -1069,6 +1121,7 @@
             if (Array.isArray(model.supportedGenerationMethods) && !model.supportedGenerationMethods.includes('generateContent')) return null;
 
             const capabilities = Array.isArray(model.capabilities) ? [...new Set(model.capabilities.map(item => String(item).trim()).filter(Boolean))] : [];
+            if (!capabilities.some(capability => MODEL_TEXT_CAPABILITIES.has(capability))) return null;
 
             return {
                 api_name: name,
@@ -1141,18 +1194,49 @@
         }
 
         function createModelOption(model, value, isAuto = false) {
-            const option = document.createElement('label');
-            option.className = `model-option ${selectedModelPreference === value ? 'selected' : ''}`.trim();
+            const enabled = isAuto || isModelEnabled(value);
+            const option = document.createElement('div');
+            option.className = `model-option ${selectedModelPreference === value ? 'selected' : ''} ${enabled ? '' : 'is-disabled'}`.trim();
             option.dataset.model = value;
+            option.setAttribute('role', 'group');
 
-            const input = document.createElement('input');
-            input.type = 'radio';
-            input.name = 'tutor-model-preference';
-            input.value = value;
-            input.checked = selectedModelPreference === value;
-            input.setAttribute('aria-label', isAuto ? '自動依評分推薦' : model.display_name);
-            input.addEventListener('change', () => setSelectedModelPreference(value));
-            option.appendChild(input);
+            const control = document.createElement('div');
+            control.className = 'model-option-control';
+            const radio = document.createElement('input');
+            radio.type = 'radio';
+            radio.className = 'model-option-radio';
+            radio.name = 'tutor-model-preference';
+            radio.value = value;
+            radio.checked = selectedModelPreference === value;
+            radio.disabled = !enabled;
+            radio.setAttribute('aria-label', isAuto ? '自動依評分推薦' : `${model.display_name} 模型選擇`);
+            radio.addEventListener('change', (event) => {
+                event.stopPropagation();
+                if (enabled) setSelectedModelPreference(value);
+            });
+            control.appendChild(radio);
+
+            if (!isAuto) {
+                const toggleWrap = document.createElement('div');
+                toggleWrap.className = 'model-toggle-wrap';
+                const toggle = document.createElement('input');
+                toggle.type = 'checkbox';
+                toggle.className = 'model-toggle';
+                toggle.checked = enabled;
+                toggle.setAttribute('role', 'switch');
+                toggle.setAttribute('aria-checked', String(enabled));
+                toggle.setAttribute('aria-label', `啟用 ${model.display_name}`);
+                toggle.title = enabled ? `停用 ${model.display_name}` : `啟用 ${model.display_name}`;
+                toggle.addEventListener('click', (event) => event.stopPropagation());
+                toggle.addEventListener('change', (event) => {
+                    event.stopPropagation();
+                    setModelEnabled(model.api_name, toggle.checked);
+                });
+                toggleWrap.appendChild(toggle);
+                appendModelText(toggleWrap, 'span', 'model-toggle-label', enabled ? '啟用' : '停用');
+                control.appendChild(toggleWrap);
+            }
+            option.appendChild(control);
 
             const body = document.createElement('div');
             body.className = 'model-option-body';
@@ -1178,6 +1262,10 @@
                 appendModelText(body, 'div', 'model-option-capabilities', `支援：${model.capabilities.join(' · ')}`);
             }
             option.appendChild(body);
+            option.addEventListener('click', (event) => {
+                if (event.target.closest('.model-toggle') || event.target.closest('.model-option-control')) return;
+                if (enabled) setSelectedModelPreference(value);
+            });
             return option;
         }
 
@@ -1190,27 +1278,53 @@
         }
 
         function setSelectedModelPreference(value) {
-            selectedModelPreference = value || 'auto';
+            const candidate = value || 'auto';
+            if (candidate !== 'auto' && !isModelEnabled(candidate)) return;
+            selectedModelPreference = candidate;
             localStorage.setItem(MODEL_PREFERENCE_KEY, selectedModelPreference);
             const preferredModel = getPreferredModel();
-            currentModel = preferredModel?.api_name || availableModels[0]?.api_name || null;
-            currentModelIndex = Math.max(0, availableModels.findIndex(model => model.api_name === currentModel));
+            const enabledModels = getEnabledModels();
+            currentModel = preferredModel?.api_name || enabledModels[0]?.api_name || null;
+            currentModelIndex = Math.max(0, getModelQueue().findIndex(model => model.api_name === currentModel));
             if (preferredModel) {
                 setModelSettingsStatus(`已鎖定 ${preferredModel.display_name}（⭐ ${preferredModel.score.toFixed(1)}）；下次對話將優先使用此模型。`, '');
             } else if (selectedModelPreference === 'auto') {
-                setModelSettingsStatus('已切換為自動依站內最新評分推薦。', '');
+                setModelSettingsStatus(enabledModels.length > 0 ? '已切換為自動依站內最新評分推薦。' : '目前沒有已啟用模型，請至少開啟一個模型。', enabledModels.length > 0 ? '' : 'error');
             } else {
-                setModelSettingsStatus('指定模型目前不在免費清單，將先使用自動推薦。', 'error');
+                setModelSettingsStatus('指定模型目前未啟用，將先使用自動推薦。', 'error');
+            }
+            renderModelOptions();
+        }
+
+        function setModelEnabled(apiName, enabled) {
+            if (!apiName || !getModelByName(apiName)) return;
+            if (enabled) disabledModelPreferences.delete(apiName);
+            else disabledModelPreferences.add(apiName);
+            persistDisabledModelPreferences();
+
+            if (!enabled && selectedModelPreference === apiName) {
+                selectedModelPreference = 'auto';
+                localStorage.setItem(MODEL_PREFERENCE_KEY, selectedModelPreference);
+            }
+            const enabledModels = getEnabledModels();
+            const preferredModel = getPreferredModel();
+            currentModel = preferredModel?.api_name || enabledModels[0]?.api_name || null;
+            currentModelIndex = Math.max(0, getModelQueue().findIndex(model => model.api_name === currentModel));
+            if (enabledModels.length === 0) {
+                setModelSettingsStatus('目前沒有已啟用模型，請至少開啟一個模型。', 'error');
+            } else {
+                setModelSettingsStatus(`已${enabled ? '啟用' : '停用'} ${getModelDisplayName(apiName)}；目前有 ${enabledModels.length} 個模型可供輪替。`, '');
             }
             renderModelOptions();
         }
 
         function getModelQueue() {
-            const preferredModel = getPreferredModel();
+            const enabledModels = getEnabledModels();
+            const preferredModel = enabledModels.find(model => model.api_name === selectedModelPreference) || null;
             if (preferredModel) {
-                return [preferredModel, ...availableModels.filter(model => model.api_name !== preferredModel.api_name)];
+                return [preferredModel, ...enabledModels.filter(model => model.api_name !== preferredModel.api_name)];
             }
-            return [...availableModels];
+            return [...enabledModels];
         }
 
         async function fetchLatestModel({ silent = false } = {}) {
@@ -1218,25 +1332,29 @@
             setModelSettingsStatus('正在更新站內免費模型清單...', 'loading');
             modelCatalogPromise = (async () => {
                 try {
-                    const res = await fetch(QUOTA_MODELS_URL, { cache: 'no-store' });
+                    const res = await fetchQuotaModelsWithTimeout();
                     if (!res.ok) throw new Error(`模型評分模組回傳 HTTP ${res.status}`);
                     const data = await res.json();
                     const raw = Array.isArray(data) ? data : (data.models || []);
                     availableModels = mergeFreeModels(raw.map(normaliseGeminiModel).filter(Boolean));
-                    if (selectedModelPreference !== 'auto' && !availableModels.some(model => model.api_name === selectedModelPreference)) {
+                    if (selectedModelPreference !== 'auto' && (!availableModels.some(model => model.api_name === selectedModelPreference) || !isModelEnabled(selectedModelPreference))) {
                         selectedModelPreference = 'auto';
                         localStorage.setItem(MODEL_PREFERENCE_KEY, selectedModelPreference);
                     }
+                    const enabledModels = getEnabledModels();
                     const preferredModel = getPreferredModel();
-                    currentModel = preferredModel?.api_name || availableModels[0]?.api_name || null;
-                    currentModelIndex = Math.max(0, availableModels.findIndex(model => model.api_name === currentModel));
+                    currentModel = preferredModel?.api_name || enabledModels[0]?.api_name || null;
+                    currentModelIndex = Math.max(0, getModelQueue().findIndex(model => model.api_name === currentModel));
                     lastModelCatalogUpdatedAt = new Date();
                     renderModelOptions();
 
+                    const updated = lastModelCatalogUpdatedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                     if (currentModel) {
-                        const updated = lastModelCatalogUpdatedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                        setModelSettingsStatus(`已載入 ${availableModels.length} 個免費模型；更新於 ${updated}。`, '');
+                        setModelSettingsStatus(`已載入 ${availableModels.length} 個免費文字模型；已啟用 ${enabledModels.length} 個；更新於 ${updated}。`, '');
                         console.log(`Current Model: ${currentModel}`);
+                    } else if (availableModels.length > 0) {
+                        setModelSettingsStatus(`已載入 ${availableModels.length} 個免費文字模型；目前沒有已啟用模型，請至少開啟一個。`, 'error');
+                        if (!silent) showError('⚠️ 目前沒有已啟用的免費模型，請在模型設定中至少開啟一個。', { busy: true });
                     } else {
                         setModelSettingsStatus('目前沒有符合條件的免費模型。', 'error');
                         if (!silent) showError('❌ 目前無法取得站內免費模型清單，請稍後再試。');
@@ -1534,12 +1652,35 @@
         }
 
         // --- Chat Logic ---
-        function createGeminiApiError(status, model, attemptedModels = []) {
-            const error = new Error(`Gemini API 回傳 HTTP ${status}`);
+        function createGeminiApiError(status, model, attemptedModels = [], metadata = {}) {
+            const error = new Error(status === 'TIMEOUT' ? `Gemini API 請求超過 ${REQUEST_TIMEOUT_MS / 1000} 秒未回應` : `Gemini API 回傳 HTTP ${status}`);
             error.status = status;
             error.model = model;
             error.attemptedModels = attemptedModels;
+            Object.assign(error, metadata);
             return error;
+        }
+
+        async function fetchGeminiWithTimeout(endpoint, payload, modelName, attemptedModels) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                    signal: controller.signal
+                });
+                const data = response.ok ? await response.json() : null;
+                return { response, data };
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    throw createGeminiApiError('TIMEOUT', modelName, attemptedModels, { timedOut: true });
+                }
+                throw error;
+            } finally {
+                clearTimeout(timeoutId);
+            }
         }
 
         async function sendMessage(retryRequest = null) {
@@ -1554,6 +1695,10 @@
             if (availableModels.length === 0) {
                 await fetchLatestModel({ silent: false });
                 if (availableModels.length === 0) return;
+            }
+            if (getEnabledModels().length === 0) {
+                showError('⚠️ 目前沒有已啟用的免費模型，請在右上角模型設定中至少開啟一個。', { busy: true });
+                return;
             }
 
             textInput.value = '';
@@ -1574,7 +1719,10 @@
             scrollToBottom();
 
             try {
-                const response = await callGemini(content, myLang, targetLang, inputLang, apiKey);
+                const response = await callGemini(content, myLang, targetLang, inputLang, apiKey, (modelName) => {
+                    const processingModelEl = document.querySelector(`[data-id="${msgId}"] .msg-my`);
+                    if (processingModelEl) processingModelEl.textContent = `${getModelDisplayName(modelName)} 正在處理中...`;
+                });
 
                 const userMsgEl = document.querySelector(`[data-id="${msgId}"]`);
                 if (userMsgEl) {
@@ -1599,14 +1747,18 @@
                     ? `（本輪已嘗試 ${err.attemptedModels.length} 個免費模型）`
                     : '';
 
-                if (err.circuitBreaker && err.status === 503) {
+                if (err.circuitBreaker && (err.status === 503 || err.status === 'TIMEOUT')) {
                     pendingRetryRequest = { content, myLang, targetLang, inputLang, msgId };
-                    if (userMsgEl) userMsgEl.querySelector('.msg-my').textContent = '所有免費模型目前都在忙碌，尚未完成回覆。';
-                    showError(`⚠️ 目前所有 AI 免費模型伺服器均處於極度繁忙狀態 (503)，請稍候 3~5 分鐘後再重新嘗試發問。${attemptedText}`, { busy: true, countdownSeconds: 5 });
+                    if (userMsgEl) userMsgEl.querySelector('.msg-my').textContent = '所有已啟用模型目前都在忙碌或逾時，尚未完成回覆。';
+                    showError(`${ALL_ENABLED_MODELS_BUSY_MESSAGE}${attemptedText}`, { busy: true, countdownSeconds: 5 });
                 } else if (err.status === 429) {
                     pendingRetryRequest = { content, myLang, targetLang, inputLang, msgId };
                     if (userMsgEl) userMsgEl.querySelector('.msg-my').textContent = '目前免費模型的請求額度繁忙，尚未完成回覆。';
                     showError(`⚠️ 免費模型目前請求繁忙 (429)，系統已完成自動輪替；您可以稍後手動重試。${attemptedText}`, { busy: true, countdownSeconds: 5 });
+                } else if (err.status === 500) {
+                    pendingRetryRequest = { content, myLang, targetLang, inputLang, msgId };
+                    if (userMsgEl) userMsgEl.querySelector('.msg-my').textContent = '免費模型暫時無法回應，尚未完成回覆。';
+                    showError(`⚠️ 免費模型目前暫時無法回應 (500)，系統已完成自動輪替；您可以稍後手動重試。${attemptedText}`, { busy: true, countdownSeconds: 5 });
                 } else if (err.status === 401 || err.status === 403) {
                     if (userMsgEl) userMsgEl.querySelector('.msg-my').textContent = 'API Key 或權限需要確認。';
                     showError('❌ Gemini API Key 無效或權限受限，請至右側選單重新設定。');
@@ -1619,7 +1771,7 @@
             }
         }
 
-        async function callGemini(userInput, myLangCode, targetLangCode, inputLangCode, apiKey) {
+        async function callGemini(userInput, myLangCode, targetLangCode, inputLangCode, apiKey, onModelAttempt = null) {
             const myLang = LANG_NAMES[myLangCode];
             const targetLang = LANG_NAMES[targetLangCode];
             const inputLang = LANG_NAMES[inputLangCode];
@@ -1671,26 +1823,23 @@
 
             const attemptedModels = [];
             let lastError = null;
-            let allModels503 = true;
+            let allModelsBusy = true;
             for (let modelIndex = 0; modelIndex < candidateModels.length; modelIndex++) {
                 const modelName = candidateModels[modelIndex];
                 attemptedModels.push(modelName);
                 currentModelIndex = modelIndex;
                 currentModel = modelName;
+                renderModelOptions();
+                if (typeof onModelAttempt === 'function') onModelAttempt(modelName, modelIndex, candidateModels.length);
                 const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelName)}:generateContent?key=${encodeURIComponent(apiKey)}`;
                 console.log(`[GugoPro Gemini] Endpoint (${modelIndex + 1}/${candidateModels.length}):`, endpoint);
                 console.log('[GugoPro Gemini] Payload:', JSON.stringify(payload, null, 2));
 
                 try {
-                    const res = await fetch(endpoint, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
+                    const { response: res, data } = await fetchGeminiWithTimeout(endpoint, payload, modelName, attemptedModels);
 
                     if (res.ok) {
-                        const data = await res.json();
-                        const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                        const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
                         if (!rawText) throw new Error('Gemini API 回傳空白內容。');
                         currentModelIndex = modelIndex;
                         currentModel = modelName;
@@ -1700,8 +1849,8 @@
                     }
 
                     lastError = createGeminiApiError(res.status, modelName, attemptedModels);
-                    if (res.status !== 503) allModels503 = false;
-                    if (res.status === 503 || res.status === 429) {
+                    if (res.status !== 503 && res.status !== 'TIMEOUT') allModelsBusy = false;
+                    if (res.status === 503 || res.status === 429 || res.status === 500) {
                         if (modelIndex < candidateModels.length - 1) {
                             showModelSwitchNotice(modelName, candidateModels[modelIndex + 1], res.status);
                             continue;
@@ -1710,19 +1859,23 @@
                     }
                     throw lastError;
                 } catch (error) {
-                    if (error.status === 503 || error.status === 429) {
+                    if (error.status === 503 || error.status === 429 || error.status === 500 || error.status === 'TIMEOUT') {
                         lastError = error;
-                        if (error.status !== 503) allModels503 = false;
-                        continue;
+                        if (error.status !== 503 && error.status !== 'TIMEOUT') allModelsBusy = false;
+                        if (modelIndex < candidateModels.length - 1) {
+                            showModelSwitchNotice(modelName, candidateModels[modelIndex + 1], error.status);
+                            continue;
+                        }
+                        break;
                     }
-                    allModels503 = false;
+                    allModelsBusy = false;
                     throw error;
                 }
             }
 
             const finalError = lastError || createGeminiApiError(503, candidateModels[candidateModels.length - 1], attemptedModels);
             finalError.attemptedModels = attemptedModels;
-            finalError.circuitBreaker = allModels503 && attemptedModels.length === candidateModels.length;
+            finalError.circuitBreaker = allModelsBusy && attemptedModels.length === candidateModels.length;
             throw finalError;
         }
 
@@ -1881,7 +2034,8 @@
         function showModelSwitchNotice(busyModel, nextModel, status) {
             const busyName = getModelDisplayName(busyModel);
             const nextName = getModelDisplayName(nextModel);
-            showError(`⚠️ [${busyName}] 伺服器目前工作繁忙 (HTTP ${status})，系統已依最新評分自動為您切換至 [${nextName}] 繼續為您解答...`, { busy: true, showRetryButton: false, disabled: true });
+            const statusLabel = status === 'TIMEOUT' ? `請求超過 ${REQUEST_TIMEOUT_MS / 1000} 秒未回應` : `HTTP ${status}`;
+            showError(`⚠️ [${busyName}] 伺服器目前工作繁忙（${statusLabel}），系統已依最新評分自動為您切換至 [${nextName}] 繼續為您解答...`, { busy: true, showRetryButton: false, disabled: true });
         }
 
         function hideError() {
