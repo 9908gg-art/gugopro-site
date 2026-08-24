@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title">AI 多國語言對話導師 | GugoPro AI 學習工具</title>
+    
+    <!-- SEO Tags -->
+    <meta name="description" content="GugoPro AI 多國語言對話導師，支援雙語對照顯示、即時語法修正與情境對話練習。結合動態 Gemini 模型與語音互動，為您提供最道地的語言學習體驗。">
+    <meta name="keywords" content="AI語言導師, 英文口說練習, 雙語對照, 語法校正, 情境對話, Gemini AI, 語音辨識, 語言學習工具">
+    
+    <!-- Google Analytics 4 (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-GF1DYLWMKX"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-GF1DYLWMKX');
+    </script>
+
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Noto+Sans+TC:wght@400;700&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-neon: #00f2ff;
+            --secondary-neon: #7000ff;
+            --bg-dark: #0a0b10;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #e0e0e0;
+            --text-dim: #a0a0a0;
+            --user-bubble: rgba(0, 242, 255, 0.08);
+            --tutor-bubble: rgba(112, 0, 255, 0.08);
+            --error-red: #ff3b30;
+            --success-green: #34c759;
+            --sidebar-width: 300px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            height: auto;
+            min-height: 100%;
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-image: 
+                radial-gradient(circle at 5% 5%, rgba(0, 242, 255, 0.05) 0%, transparent 25%),
+                radial-gradient(circle at 95% 95%, rgba(112, 0, 255, 0.05) 0%, transparent 25%);
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        /* Desktop Sidebar Layout */
+        @media (min-width: 1024px) {
+            body { flex-direction: row; }
+            #app-main { flex: 1; display: flex; flex-direction: column; position: relative; }
+            .side-menu {
+                position: sticky !important;
+                top: 0;
+                right: 0;
+                transform: none !important;
+                transition: width 0.3s;
+                border-left: 1px solid var(--glass-border);
+                box-shadow: none;
+            }
+            .side-menu.collapsed { width: 0; overflow: hidden; padding: 0; border: none; }
+            .side-menu-overlay { display: none !important; }
+        }
+
+        #app-main { width: 100%; min-height: 100vh; display: flex; flex-direction: column; }
+
+        /* Layout */
+        header {
+            padding: 12px 16px;
+            background: rgba(10, 11, 16, 0.95);
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            flex-shrink: 0;
+            position: sticky;
+            top: 0;
+        }
+
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .header-right { display: flex; align-items: center; gap: 10px; }
+
+        .btn-back-home {
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+        }
+
+        .logo-text {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            background: linear-gradient(45deg, var(--primary-neon), var(--secondary-neon));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: none;
+        }
+        @media (min-width: 768px) { .logo-text { display: block; } }
+
+        /* Lang Toggle in Header */
+        .lang-compact-header {
+            display: flex;
+            justify-content: center;
+            position: relative;
+        }
+
+        .btn-lang-toggle {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            padding: 4px 12px;
+            border-radius: 20px;
+            color: var(--text-main);
+            font-size: 0.75rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .btn-lang-toggle:hover { background: rgba(255,255,255,0.1); border-color: var(--primary-neon); }
+
+        .lang-panel {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 10px;
+            background: #1a1b23;
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 16px;
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 1001;
+            width: 280px;
+        }
+        .lang-panel.active { display: flex; }
+
+        .lang-settings-grid {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .lang-box { display: flex; flex-direction: column; gap: 2px; }
+        .lang-label { font-size: 0.6rem; color: var(--text-dim); text-transform: uppercase; }
+        .lang-select {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            padding: 4px 6px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            outline: none;
+        }
+        .btn-swap-mini { background: none; border: none; color: var(--primary-neon); cursor: pointer; padding: 4px; font-size: 0.9rem; }
+
+        /* Side Menu */
+        .side-menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 1999;
+            display: none;
+            backdrop-filter: blur(4px);
+        }
+
+        .side-menu {
+            position: fixed;
+            top: 0;
+            right: calc(-1 * var(--sidebar-width));
+            width: var(--sidebar-width);
+            height: 100%;
+            background: #15161c;
+            border-left: 1px solid var(--glass-border);
+            z-index: 2000;
+            transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 60px 0 20px;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .side-menu.active { right: 0; }
+        .side-menu-overlay.active { display: block; }
+
+        .menu-close {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .menu-section {
+            padding: 0 20px;
+            margin-bottom: 25px;
+        }
+
+        .menu-title {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .room-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .room-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .room-item:hover { background: rgba(255,255,255,0.1); }
+        .room-item.active { border-color: var(--primary-neon); background: rgba(0, 242, 255, 0.05); }
+
+        .room-name {
+            flex: 1;
+            font-size: 0.9rem;
+            color: var(--text-main);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .room-actions {
+            display: flex;
+            gap: 6px;
+            opacity: 0.5;
+        }
+
+        .room-item:hover .room-actions { opacity: 1; }
+
+        .btn-room-action {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            font-size: 0.85rem;
+            padding: 2px;
+        }
+
+        .btn-room-action:hover { color: #fff; }
+
+        .btn-add-room {
+            width: 100%;
+            padding: 10px;
+            background: transparent;
+            border: 1px dashed var(--glass-border);
+            color: var(--text-dim);
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            margin-top: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-add-room:hover { border-color: var(--primary-neon); color: var(--primary-neon); }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            color: var(--text-main);
+            text-decoration: none;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            cursor: pointer;
+            width: 100%;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        .menu-item:hover { background: rgba(255,255,255,0.1); }
+
+        /* Chat Area */
+        #chat-container {
+            flex: 1 0 auto;
+            padding: 20px 16px 120px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .welcome-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 10px;
+            color: var(--text-dim);
+            font-size: 0.9rem;
+            line-height: 1.8;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .welcome-card h4 { color: var(--primary-neon); margin-bottom: 10px; font-family: 'Outfit', sans-serif; }
+        .welcome-card ul { list-style: none; }
+        .welcome-card li { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+        .welcome-card i { color: var(--primary-neon); margin-top: 4px; font-size: 0.8rem; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .message {
+            max-width: 88%;
+            padding: 16px 20px;
+            border-radius: 20px;
+            position: relative;
+            animation: slideUp 0.3s ease-out;
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message-user {
+            align-self: flex-end;
+            background: var(--user-bubble);
+            border: 1px solid rgba(0, 242, 255, 0.15);
+            border-bottom-right-radius: 4px;
+        }
+
+        .message-tutor {
+            align-self: flex-start;
+            background: var(--tutor-bubble);
+            border: 1px solid rgba(112, 0, 255, 0.15);
+            border-bottom-left-radius: 4px;
+        }
+
+        .msg-learning {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 6px;
+            padding-right: 50px;
+            word-break: break-word;
+        }
+
+        .msg-my {
+            font-size: 0.9rem;
+            color: var(--text-dim);
+            word-break: break-word;
+        }
+
+        .msg-actions {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 8px;
+            opacity: 0.4;
+            transition: opacity 0.2s;
+        }
+
+        .message:hover .msg-actions { opacity: 1; }
+
+        .btn-msg-action {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 4px;
+        }
+
+        .btn-msg-action:hover { color: #fff; }
+        .btn-msg-delete:hover { color: var(--error-red); }
+
+        .correction-box {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--glass-border);
+            font-size: 0.9rem;
+        }
+
+        .correction-natural { color: var(--success-green); font-weight: 600; }
+        .correction-tip { color: #ffcc00; font-weight: 600; }
+
+        /* Floating Input Area */
+        .bottom-controls {
+            position: sticky;
+            bottom: 0;
+            z-index: 998;
+            background: rgba(10, 11, 16, 0.95);
+            backdrop-filter: blur(15px);
+            border-top: 1px solid var(--glass-border);
+            padding: 10px 16px 20px;
+        }
+
+        .input-wrapper {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .input-options {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            padding: 0 5px;
+        }
+
+        .input-mode-toggle {
+            display: flex;
+            background: var(--glass-bg);
+            border-radius: 20px;
+            padding: 2px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .mode-btn {
+            padding: 4px 12px;
+            border-radius: 18px;
+            border: none;
+            background: none;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .mode-btn.active {
+            background: var(--primary-neon);
+            color: #000;
+            font-weight: 600;
+        }
+
+        .main-input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 18px;
+            padding: 12px 20px;
+            color: #fff;
+            outline: none;
+            transition: border-color 0.3s;
+            font-size: 1rem;
+        }
+
+        input[type="text"]:focus { border-color: var(--primary-neon); }
+
+        .btn-circle {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .btn-mic { background: var(--primary-neon); color: #000; }
+        .btn-mic.recording { background: var(--error-red); color: #fff; animation: pulse 1.5s infinite; }
+        .btn-send { background: var(--secondary-neon); color: #fff; }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7); }
+            70% { box-shadow: 0 0 0 12px rgba(255, 59, 48, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); }
+        }
+
+        /* Back to Top */
+        #btn-back-to-top {
+            position: fixed;
+            bottom: 120px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background: rgba(0, 242, 255, 0.2);
+            border: 1px solid var(--primary-neon);
+            color: var(--primary-neon);
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 997;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s;
+        }
+        #btn-back-to-top:hover { background: var(--primary-neon); color: #000; }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(8px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: #15161c;
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-h3 { color: var(--primary-neon); margin-bottom: 15px; font-family: 'Outfit', sans-serif; }
+        .modal-p { color: var(--text-dim); margin-bottom: 20px; line-height: 1.6; font-size: 0.95rem; }
+
+        .api-input-group input {
+            width: 100%;
+            padding: 14px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: #fff;
+            margin-bottom: 20px;
+            font-size: 1rem;
+        }
+
+        .btn-full {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 700;
+            cursor: pointer;
+            margin-bottom: 12px;
+            text-decoration: none;
+            display: block;
+            text-align: center;
+            font-size: 1rem;
+        }
+
+        .error-panel {
+            background: var(--error-red);
+            color: #fff;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            display: none;
+            text-align: center;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .hidden { display: none !important; }
+
+        /* Room Ops Modal Specific */
+        .room-ops-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+        }
+        .room-op-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px;
+            background: var(--glass-bg);
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .room-op-item input[type="checkbox"], .room-op-item input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary-neon);
+        }
+
+        /* Amazon Section in Menu */
+        .amazon-menu-section {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .amazon-link {
+            display: block;
+            color: #ff9900;
+            text-decoration: none;
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+            padding: 10px;
+            background: rgba(255, 153, 0, 0.08);
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        @media (max-width: 600px) {
+            .message { max-width: 94%; padding: 14px 18px; }
+            .msg-learning { font-size: 1.1rem; }
+            .side-menu { width: 100%; right: -100%; }
+            header { padding: 10px 12px; }
+            .logo-text { font-size: 0.95rem; }
+            .btn-circle { width: 42px; height: 42px; }
+            .bottom-controls { padding: 10px 12px 15px; }
+            #btn-back-to-top { bottom: 100px; right: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-main">
+        <header id="main-header">
+            <div class="header-left">
+                <a href="https://gugopro.com" class="btn-back-home">
+                    <i class="fa-solid fa-house"></i> 返回 GugoPro
+                </a>
+                <div class="logo-text">AI Language Tutor</div>
+            </div>
+            
+            <div class="header-right">
+                <div class="lang-compact-header">
+                    <button id="btn-lang-toggle" class="btn-lang-toggle">
+                        <span id="lang-display-label">載入中...</span>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    
+                    <div id="lang-panel" class="lang-panel">
+                        <div class="lang-settings-grid">
+                            <div class="lang-box">
+                                <span class="lang-label">我的語言</span>
+                                <select id="my-lang" class="lang-select">
+                                    <option value="zh-TW">繁體中文</option>
+                                    <option value="zh-CN">简体中文</option>
+                                    <option value="en-US">English</option>
+                                    <option value="ja-JP">日本語</option>
+                                    <option value="ko-KR">한국어</option>
+                                    <option value="fr-FR">Français</option>
+                                    <option value="de-DE">Deutsch</option>
+                                    <option value="es-ES">Español</option>
+                                    <option value="th-TH">ไทย</option>
+                                    <option value="vi-VN">Tiếng Việt</option>
+                                    <option value="id-ID">Bahasa Indonesia</option>
+                                    <option value="pt-BR">Português</option>
+                                    <option value="it-IT">Italiano</option>
+                                    <option value="ru-RU">Русский</option>
+                                    <option value="ar-SA">العربية</option>
+                                    <option value="hi-IN">हिन्दी</option>
+                                    <option value="ms-MY">Bahasa Melayu</option>
+                                    <option value="nl-NL">Nederlands</option>
+                                    <option value="pl-PL">Polski</option>
+                                    <option value="tr-TR">Türkçe</option>
+                                </select>
+                            </div>
+                            <button id="btn-swap-lang" class="btn-swap-mini"><i class="fa-solid fa-right-left"></i></button>
+                            <div class="lang-box">
+                                <span class="lang-label">學習語言</span>
+                                <select id="target-lang" class="lang-select">
+                                    <option value="en-US">English</option>
+                                    <option value="ja-JP">日本語</option>
+                                    <option value="ko-KR">한국어</option>
+                                    <option value="zh-TW">繁體中文</option>
+                                    <option value="zh-CN">简体中文</option>
+                                    <option value="fr-FR">Français</option>
+                                    <option value="de-DE">Deutsch</option>
+                                    <option value="es-ES">Español</option>
+                                    <option value="th-TH">ไทย</option>
+                                    <option value="vi-VN">Tiếng Việt</option>
+                                    <option value="id-ID">Bahasa Indonesia</option>
+                                    <option value="pt-BR">Português</option>
+                                    <option value="it-IT">Italiano</option>
+                                    <option value="ru-RU">Русский</option>
+                                    <option value="ar-SA">العربية</option>
+                                    <option value="hi-IN">हिन्दी</option>
+                                    <option value="ms-MY">Bahasa Melayu</option>
+                                    <option value="nl-NL">Nederlands</option>
+                                    <option value="pl-PL">Polski</option>
+                                    <option value="tr-TR">Türkçe</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button id="btn-lang-confirm" class="btn-full btn-send" style="margin-top: 10px; padding: 8px;">確認設定</button>
+                    </div>
+                </div>
+                
+                <button id="btn-menu" style="background:none; border:none; color:#fff; font-size:1.4rem; cursor:pointer; padding: 8px;">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </header>
+
+        <main id="chat-container">
+            <!-- Welcome card will be inserted here -->
+        </main>
+
+        <div class="bottom-controls">
+            <div class="input-wrapper">
+                <div id="error-panel" class="error-panel">
+                    <span id="error-msg"></span>
+                    <button id="btn-retry-model" class="btn-tool" style="background:#fff; color:#000; padding:4px 12px; font-size:0.8rem; border-radius:6px; margin-left:10px; font-weight:bold;">🔄 重試</button>
+                </div>
+
+                <div class="input-options">
+                    <div class="input-mode-toggle">
+                        <button id="mode-target" class="mode-btn active" onclick="setInputMode('target')">🗣️ 學習語言</button>
+                        <button id="mode-my" class="mode-btn" onclick="setInputMode('my')">🗣️ 母語</button>
+                    </div>
+                </div>
+
+                <div class="main-input-group">
+                    <button id="btn-mic" class="btn-circle btn-mic"><i class="fa-solid fa-microphone"></i></button>
+                    <input type="text" id="user-text" placeholder="說話或輸入..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" data-lpignore="true">
+                    <button id="btn-send" class="btn-circle btn-send"><i class="fa-solid fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button id="btn-back-to-top"><i class="fa-solid fa-arrow-up"></i></button>
+
+    <!-- Side Menu -->
+    <div id="side-menu-overlay" class="side-menu-overlay"></div>
+    <div id="side-menu" class="side-menu">
+        <button id="btn-menu-close" class="menu-close"><i class="fa-solid fa-xmark"></i></button>
+        
+        <div class="menu-section">
+            <div class="menu-title">
+                聊天教室
+                <button id="btn-new-room" class="btn-room-action" title="新增教室"><i class="fa-solid fa-plus"></i></button>
+            </div>
+            <div id="room-list" class="room-list">
+                <!-- Rooms will appear here -->
+            </div>
+        </div>
+
+        <div class="menu-section">
+            <div class="menu-title">教室進階操作</div>
+            <button id="btn-room-export-ops" class="menu-item"><i class="fa-solid fa-file-export"></i> 匯出對話紀錄 (多選/全選)</button>
+            <button id="btn-export-all" class="menu-item"><i class="fa-solid fa-box-archive"></i> 一鍵匯出全部教室</button>
+            <button id="btn-import" class="menu-item"><i class="fa-solid fa-upload"></i> 導入對話到當前教室</button>
+            <button id="btn-room-delete-ops" class="menu-item"><i class="fa-solid fa-trash-can"></i> 清除或刪除教室</button>
+        </div>
+
+        <div class="menu-section">
+            <div class="menu-title">全域設定</div>
+            <button id="btn-config" class="menu-item"><i class="fa-solid fa-key"></i> 變更 Gemini API Key</button>
+        </div>
+        
+        <div class="menu-section amazon-menu-section">
+            <p style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 12px;">語言學習推薦書單：</p>
+            <a href="https://www.amazon.com/s?k=language+learning+and+speaking+books&tag=9908qq-20" target="_blank" class="amazon-link"><i class="fa-brands fa-amazon"></i> 美國亞馬遜 (Amazon US)</a>
+            <a href="https://www.amazon.co.jp/s?k=語學+英會話+學習&tag=gugopro-22" target="_blank" class="amazon-link"><i class="fa-brands fa-amazon"></i> 日本亞馬遜 (Amazon JP)</a>
+        </div>
+
+        <div style="margin-top: auto; padding: 20px; text-align: center;">
+            <a href="https://ko-fi.com/R1K123XRS9" target="_blank" rel="noopener" class="kofi-button" style="background:#72a4f2; color:#fff; padding:12px 20px; border-radius:10px; text-decoration:none; display:inline-flex; align-items:center; gap:8px; font-weight:bold; font-size: 0.9rem;">
+                <i class="fa-solid fa-mug-hot"></i> Buy me a coffee
+            </a>
+            <div style="margin-top: 20px; font-size: 0.7rem; color: var(--text-dim); line-height: 1.4;">
+                <p>免責聲明：本工具語音辨識與 AI 診斷建議由 LLM 模型即時處理，僅供參考。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="modal-api" class="modal-overlay">
+        <div class="modal-content">
+            <h3 class="modal-h3">設定您的 API Key</h3>
+            <p class="modal-p">本工具使用 Google Gemini AI。請輸入您的 API Key 以開始對話。</p>
+            <a href="https://gugopro.com/tools/tutorials/how-to-get-gemini-api-key.html" target="_blank" class="btn-full btn-tool" style="background:rgba(255,255,255,0.1); color:#fff; text-decoration:none;">
+                👉 還沒有 API Key？點此觀看教學
+            </a>
+            <div class="api-input-group">
+                <input type="password" id="api-key-input" placeholder="貼上您的 Gemini API Key">
+            </div>
+            <button id="btn-save-key" class="btn-full btn-send">儲存並開始</button>
+        </div>
+    </div>
+
+    <div id="modal-stt-guide" class="modal-overlay">
+        <div class="modal-content">
+            <h3 class="modal-h3">您的瀏覽器尚未啟用語音辨識功能</h3>
+            <p class="modal-p">為了獲得最佳體驗，請參考以下引導：</p>
+            <div style="color: var(--text-dim); font-size: 0.9rem; line-height: 1.6; margin-bottom: 20px;">
+                <ul style="padding-left: 20px;">
+                    <li>建議使用 <b>Google Chrome</b> 瀏覽器。</li>
+                    <li>請確認已允許本網頁的<b>麥克風權限</b>。</li>
+                    <li><b>iOS 用戶</b>：請使用 Safari 並確認「設定 > Safari > 麥克風」已開啟。</li>
+                    <li><b>Android 用戶</b>：請在 Chrome 網址列左方點擊鎖頭圖示允許麥克風。</li>
+                </ul>
+                <p style="margin-top: 15px; color: var(--primary-neon);">💡 您仍可使用文字輸入進行對話練習。</p>
+            </div>
+            <button onclick="document.getElementById('modal-stt-guide').style.display='none'" class="btn-full btn-send">我了解了</button>
+        </div>
+    </div>
+
+    <div id="modal-room-ops" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="room-ops-title" class="modal-h3">教室操作</h3>
+            <p id="room-ops-desc" class="modal-p">請選擇要操作的教室：</p>
+            <div id="room-ops-list" class="room-ops-list">
+                <!-- Room checkboxes/radios here -->
+            </div>
+            <div id="room-ops-footer">
+                <button id="btn-room-ops-confirm" class="btn-full btn-send">確認執行</button>
+                <button onclick="document.getElementById('modal-room-ops').style.display='none'" class="btn-full" style="background:rgba(255,255,255,0.1); color:#fff;">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <input type="file" id="file-import" class="hidden" accept=".json">
+
+    <script>
+        // --- Core State ---
+        let chatRooms = [];
+        let activeRoomId = null;
+        let availableModels = [];
+        let currentModelIndex = 0;
+        let currentModel = null;
+        let recognition = null;
+        let isRecording = false;
+        let inputMode = 'target'; // 'target' or 'my'
+        let baseText = '';
+        let textAfterCursor = '';
+
+        const LANG_NAMES = {
+            'zh-TW': '繁體中文', 'zh-CN': '简体中文', 'en-US': 'English',
+            'ja-JP': '日本語', 'ko-KR': '韓國語', 'fr-FR': 'Français',
+            'de-DE': 'Deutsch', 'es-ES': 'Español', 'th-TH': 'ไทย',
+            'vi-VN': 'Tiếng Việt', 'id-ID': 'Bahasa Indonesia', 'pt-BR': 'Português',
+            'it-IT': 'Italiano', 'ru-RU': 'Русский', 'ar-SA': 'العربية',
+            'hi-IN': 'हिन्दी', 'ms-MY': 'Bahasa Melayu', 'nl-NL': 'Nederlands',
+            'pl-PL': 'Polski', 'tr-TR': 'Türkçe'
+        };
+
+        // --- Init ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initChatSystem();
+            checkApiKey();
+            initSpeechRecognition();
+            initLangPanel();
+            
+            window.onscroll = () => {
+                const btn = document.getElementById('btn-back-to-top');
+                if (document.body.scrollTop > 500 || document.documentElement.scrollTop > 500) {
+                    btn.style.display = 'flex';
+                } else {
+                    btn.style.display = 'none';
+                }
+            };
+            document.getElementById('btn-back-to-top').onclick = () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+        });
+
+        function initChatSystem() {
+            const saved = localStorage.getItem('gugopro_ai_tutor_rooms_v3');
+            if (saved) {
+                const data = JSON.parse(saved);
+                chatRooms = data.chatRooms;
+                activeRoomId = data.activeRoomId;
+            } else {
+                const defaultRoom = {
+                    id: 'room_' + Date.now(),
+                    name: '一般對話',
+                    language: { my: detectBrowserLang(), learning: 'en-US' },
+                    messages: [],
+                    createdAt: new Date().toISOString()
+                };
+                chatRooms = [defaultRoom];
+                activeRoomId = defaultRoom.id;
+                saveRoomsToLocal();
+            }
+            renderRoomList();
+            switchRoom(activeRoomId);
+        }
+
+        function detectBrowserLang() {
+            const browserLang = navigator.language;
+            const supported = Object.keys(LANG_NAMES);
+            for (let lang of supported) {
+                if (browserLang.startsWith(lang.split('-')[0])) return lang;
+            }
+            return 'zh-TW';
+        }
+
+        const QUOTA_MODELS_URL = 'https://quota.gugopro.com/api/models';
+        const GOOGLE_MODELS_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
+
+        function decodeGeminiApiKey(raw) {
+            if (!raw) return '';
+            if (!raw.startsWith('obf_')) return raw;
+            try {
+                return decodeURIComponent(atob(raw.slice(4)));
+            } catch (error) {
+                console.warn('Gemini API Key 解碼失敗:', error);
+                return '';
+            }
+        }
+
+        function getGeminiApiKey() {
+            const raw = (localStorage.getItem('gugopro_gemini_api_key') || localStorage.getItem('gemini_api_key') || '').trim();
+            return decodeGeminiApiKey(raw).trim();
+        }
+
+        function normaliseGeminiModel(model) {
+            if (!model) return null;
+            const rawName = typeof model === 'string' ? model : (model.api_name || model.name || '');
+            const name = String(rawName).replace(/^models\//, '').trim();
+            if (!/^gemini-[a-zA-Z0-9.\-]+$/.test(name)) return null;
+            if (model && typeof model === 'object') {
+                if (model.is_rest_compatible === false) return null;
+                if (Array.isArray(model.supportedGenerationMethods) && !model.supportedGenerationMethods.includes('generateContent')) return null;
+            }
+            if (['embedding', 'aqa', 'tts', 'audio', 'robotics', 'grounding', 'computer-use', 'nano-banana', 'lyria', 'veo', 'gemma', 'deep-research'].some(part => name.toLowerCase().includes(part))) return null;
+            const version = name.match(/(\d+(?:\.\d+)?)/);
+            const score = (version ? parseFloat(version[1]) * 100 : 0) + (name.toLowerCase().includes('pro') ? 50 : 0) + (name.toLowerCase().includes('flash') ? 30 : 0) - (name.toLowerCase().includes('lite') ? 20 : 0);
+            return { api_name: name, score };
+        }
+
+        async function fetchLatestModel() {
+            let discovered = [];
+            try {
+                const res = await fetch(QUOTA_MODELS_URL, { cache: 'no-store' });
+                if (res.ok) {
+                    const data = await res.json();
+                    const raw = Array.isArray(data) ? data : (data.models || []);
+                    discovered = raw.map(normaliseGeminiModel).filter(Boolean);
+                }
+            } catch (quotaError) {
+                console.warn('Quota Hub model discovery failed:', quotaError);
+            }
+
+            const apiKey = getGeminiApiKey();
+            if (discovered.length === 0 && apiKey) {
+                try {
+                    const res = await fetch(`${GOOGLE_MODELS_URL}?key=${encodeURIComponent(apiKey)}`, { cache: 'no-store' });
+                    if (res.ok) {
+                        const data = await res.json();
+                        discovered = (data.models || []).map(normaliseGeminiModel).filter(Boolean);
+                    }
+                } catch (googleError) {
+                    console.warn('Google model discovery failed:', googleError);
+                }
+            }
+
+            const unique = new Map();
+            discovered.forEach(model => {
+                if (!unique.has(model.api_name) || unique.get(model.api_name).score < model.score) unique.set(model.api_name, model);
+            });
+            availableModels = Array.from(unique.values()).sort((a, b) => b.score - a.score);
+            currentModelIndex = 0;
+            currentModel = availableModels[0]?.api_name || null;
+            if (currentModel) {
+                console.log(`Current Model: ${currentModel}`);
+                hideError();
+            } else {
+                console.error('❌ 無法取得可用 Gemini 模型');
+                showError('❌ 無法取得可用 Gemini 模型，請檢查網路連線或 API Key。');
+            }
+        }
+
+        function checkApiKey() {
+            if (!getGeminiApiKey()) {
+                document.getElementById('modal-api').style.display = 'flex';
+            }
+        }
+
+        function saveRoomsToLocal() {
+            localStorage.setItem('gugopro_ai_tutor_rooms_v3', JSON.stringify({ chatRooms, activeRoomId }));
+        }
+
+        // --- UI Logic ---
+        function initLangPanel() {
+            const btn = document.getElementById('btn-lang-toggle');
+            const panel = document.getElementById('lang-panel');
+            const confirmBtn = document.getElementById('btn-lang-confirm');
+            
+            btn.onclick = (e) => { e.stopPropagation(); panel.classList.toggle('active'); };
+            panel.onclick = (e) => e.stopPropagation();
+            document.onclick = () => panel.classList.remove('active');
+            
+            confirmBtn.onclick = () => {
+                const my = document.getElementById('my-lang').value;
+                const target = document.getElementById('target-lang').value;
+                const room = chatRooms.find(r => r.id === activeRoomId);
+                if (room) {
+                    room.language.my = my;
+                    room.language.learning = target;
+                    updateLangDisplay();
+                    saveRoomsToLocal();
+                }
+                panel.classList.remove('active');
+            };
+        }
+
+        function updateLangDisplay() {
+            const my = document.getElementById('my-lang').value;
+            const target = document.getElementById('target-lang').value;
+            document.getElementById('lang-display-label').textContent = `${LANG_NAMES[my]} → ${LANG_NAMES[target]}`;
+        }
+
+        function addWelcomeCard() {
+            const container = document.getElementById('chat-container');
+            const card = document.createElement('div');
+            card.className = 'welcome-card';
+            card.innerHTML = `
+                <h4>👋 歡迎使用 AI 語言導師！</h4>
+                <ul>
+                    <li><i class="fa-solid fa-microphone"></i> 點擊麥克風用語音輸入，或直接打字</li>
+                    <li><i class="fa-solid fa-comments"></i> 你可以要求特定主題對話練習（如：旅遊、點餐、商務）</li>
+                    <li><i class="fa-solid fa-language"></i> 頂部標籤可切換母語/學習語言</li>
+                    <li><i class="fa-solid fa-gear"></i> 右上角選單可管理教室和設定</li>
+                </ul>
+            `;
+            container.prepend(card);
+        }
+
+        // --- Room Management ---
+        function renderRoomList() {
+            const list = document.getElementById('room-list');
+            list.innerHTML = '';
+            chatRooms.forEach(room => {
+                const item = document.createElement('div');
+                item.className = `room-item ${room.id === activeRoomId ? 'active' : ''}`;
+                item.onclick = () => switchRoom(room.id);
+                
+                item.innerHTML = `
+                    <span class="room-name">${room.name}</span>
+                    <div class="room-actions">
+                        <button class="btn-room-action" onclick="event.stopPropagation(); editRoomName('${room.id}')"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn-room-action" onclick="event.stopPropagation(); deleteRoom('${room.id}')"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function switchRoom(roomId) {
+            activeRoomId = roomId;
+            const room = chatRooms.find(r => r.id === roomId);
+            if (!room) return;
+            
+            document.getElementById('my-lang').value = room.language.my;
+            document.getElementById('target-lang').value = room.language.learning;
+            updateLangDisplay();
+            
+            const container = document.getElementById('chat-container');
+            container.innerHTML = '';
+            addWelcomeCard();
+            room.messages.forEach(m => addMessageToUI(m.role, m.learning, m.my, m.correction, m.id));
+            
+            renderRoomList();
+            saveRoomsToLocal();
+            scrollToBottom();
+        }
+
+        document.getElementById('btn-new-room').onclick = () => {
+            const name = prompt("請輸入新教室名稱：", "新教室");
+            if (!name) return;
+            const newRoom = {
+                id: 'room_' + Date.now(),
+                name: name,
+                language: { my: document.getElementById('my-lang').value, learning: document.getElementById('target-lang').value },
+                messages: [],
+                createdAt: new Date().toISOString()
+            };
+            chatRooms.push(newRoom);
+            activeRoomId = newRoom.id;
+            saveRoomsToLocal();
+            renderRoomList();
+            switchRoom(newRoom.id);
+        };
+
+        window.editRoomName = (id) => {
+            const room = chatRooms.find(r => r.id === id);
+            if (!room) return;
+            const newName = prompt("重新命名教室：", room.name);
+            if (newName) {
+                room.name = newName;
+                saveRoomsToLocal();
+                renderRoomList();
+            }
+        };
+
+        window.deleteRoom = (id) => {
+            if (chatRooms.length <= 1) { alert("至少需保留一個教室。"); return; }
+            if (confirm("確定要刪除此教室嗎？所有對話將永久消失。")) {
+                chatRooms = chatRooms.filter(r => r.id !== id);
+                if (activeRoomId === id) activeRoomId = chatRooms[0].id;
+                saveRoomsToLocal();
+                renderRoomList();
+                switchRoom(activeRoomId);
+            }
+        };
+
+        // --- UI Events ---
+        const menu = document.getElementById('side-menu');
+        const overlay = document.getElementById('side-menu-overlay');
+        document.getElementById('btn-menu').onclick = () => { 
+            if (window.innerWidth >= 1024) {
+                menu.classList.toggle('collapsed');
+            } else {
+                menu.classList.add('active'); 
+                overlay.classList.add('active'); 
+            }
+        };
+        const closeMenu = () => { menu.classList.remove('active'); overlay.classList.remove('active'); };
+        document.getElementById('btn-menu-close').onclick = closeMenu;
+        overlay.onclick = closeMenu;
+
+        document.getElementById('btn-config').onclick = () => {
+            document.getElementById('api-key-input').value = getGeminiApiKey();
+            document.getElementById('modal-api').style.display = 'flex';
+            closeMenu();
+        };
+
+        document.getElementById('btn-save-key').onclick = () => {
+            const key = document.getElementById('api-key-input').value.trim();
+            if (key) {
+                localStorage.setItem('gugopro_gemini_api_key', key);
+                localStorage.setItem('gemini_api_key', key);
+                document.getElementById('modal-api').style.display = 'none';
+                hideError();
+            }
+        };
+
+        // --- Room Advanced Operations ---
+        let currentRoomOp = ''; // 'export' or 'delete'
+
+        document.getElementById('btn-room-export-ops').onclick = () => {
+            currentRoomOp = 'export';
+            showRoomOpsModal("匯出對話紀錄", "請勾選要匯出的教室：", "checkbox");
+        };
+
+        document.getElementById('btn-room-delete-ops').onclick = () => {
+            currentRoomOp = 'delete';
+            showRoomOpsModal("清除或刪除教室", "請選擇要操作的教室：", "radio");
+        };
+
+        document.getElementById('btn-export-all').onclick = () => {
+            const allData = chatRooms.map(r => ({ name: r.name, language: r.language, messages: r.messages }));
+            downloadJson(allData, `ai-tutor-all-rooms-${Date.now()}.json`);
+        };
+
+        function showRoomOpsModal(title, desc, inputType) {
+            document.getElementById('room-ops-title').textContent = title;
+            document.getElementById('room-ops-desc').textContent = desc;
+            const list = document.getElementById('room-ops-list');
+            list.innerHTML = '';
+            chatRooms.forEach(room => {
+                const label = document.createElement('label');
+                label.className = 'room-op-item';
+                label.innerHTML = `
+                    <input type="${inputType}" name="room-op-select" value="${room.id}">
+                    <span>${room.name} (${room.messages.length} 則訊息)</span>
+                `;
+                list.appendChild(label);
+            });
+            document.getElementById('modal-room-ops').style.display = 'flex';
+            closeMenu();
+        }
+
+        document.getElementById('btn-room-ops-confirm').onclick = () => {
+            const selected = Array.from(document.querySelectorAll('input[name="room-op-select"]:checked')).map(el => el.value);
+            if (selected.length === 0) { alert("請至少選擇一個教室。"); return; }
+
+            if (currentRoomOp === 'export') {
+                const exportData = chatRooms.filter(r => selected.includes(r.id)).map(r => ({ name: r.name, language: r.language, messages: r.messages }));
+                downloadJson(exportData, `ai-tutor-export-${Date.now()}.json`);
+            } else if (currentRoomOp === 'delete') {
+                const op = confirm("請選擇操作：\n確定 [是]：清除選中教室的對話紀錄\n取消 [否]：直接刪除選中的教室");
+                if (op) {
+                    // Clear messages
+                    chatRooms.forEach(r => { if(selected.includes(r.id)) r.messages = []; });
+                } else {
+                    // Delete rooms
+                    if (selected.length >= chatRooms.length) { alert("不能刪除所有教室。"); return; }
+                    chatRooms = chatRooms.filter(r => !selected.includes(r.id));
+                    if (selected.includes(activeRoomId)) activeRoomId = chatRooms[0].id;
+                }
+                saveRoomsToLocal();
+                switchRoom(activeRoomId);
+            }
+            document.getElementById('modal-room-ops').style.display = 'none';
+        };
+
+        function downloadJson(data, filename) {
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = filename;
+            document.body.appendChild(a); a.click();
+            setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+        }
+
+        document.getElementById('btn-import').onclick = () => document.getElementById('file-import').click();
+        document.getElementById('file-import').onchange = (e) => {
+            const file = e.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    const data = JSON.parse(ev.target.result);
+                    const room = chatRooms.find(r => r.id === activeRoomId);
+                    if (room) { 
+                        // If imported data is an array of messages, import to current
+                        if (Array.isArray(data)) {
+                            room.messages = data;
+                        } else if (data.messages) {
+                            room.messages = data.messages;
+                        }
+                        saveRoomsToLocal(); 
+                        switchRoom(activeRoomId); 
+                        closeMenu(); 
+                    }
+                } catch(err) { alert("無效的 JSON 檔案"); }
+            };
+            reader.readAsText(file);
+        };
+
+        document.getElementById('btn-swap-lang').onclick = () => {
+            const my = document.getElementById('my-lang');
+            const target = document.getElementById('target-lang');
+            const temp = my.value; my.value = target.value; target.value = temp;
+            updateLangDisplay();
+        };
+
+        function setInputMode(mode) {
+            inputMode = mode;
+            document.getElementById('mode-target').classList.toggle('active', mode === 'target');
+            document.getElementById('mode-my').classList.toggle('active', mode === 'my');
+            document.getElementById('user-text').placeholder = mode === 'target' ? '使用學習語言說話或輸入...' : '使用母語說話或輸入...';
+        }
+
+        // --- Chat Logic ---
+        async function sendMessage() {
+            const textInput = document.getElementById('user-text');
+            const content = textInput.value.trim();
+            if (!content) return;
+
+            const apiKey = getGeminiApiKey();
+            if (!apiKey) { checkApiKey(); return; }
+            if (!currentModel) {
+                await fetchLatestModel();
+                if (!currentModel) return;
+            }
+
+            textInput.value = '';
+            const myLang = document.getElementById('my-lang').value;
+            const targetLang = document.getElementById('target-lang').value;
+            const inputLang = inputMode === 'target' ? targetLang : myLang;
+
+            const msgId = 'msg-' + Date.now();
+            addMessageToUI('user', content, "正在處理...", null, msgId); 
+            scrollToBottom();
+
+            try {
+                const response = await callGemini(content, myLang, targetLang, inputLang, apiKey);
+                
+                const userMsgEl = document.querySelector(`[data-id="${msgId}"]`);
+                if (userMsgEl) {
+                    userMsgEl.querySelector('.msg-learning').textContent = response.user_learning;
+                    userMsgEl.querySelector('.msg-my').textContent = response.user_my;
+                }
+                
+                const room = chatRooms.find(r => r.id === activeRoomId);
+                room.messages.push({ id: msgId, role: 'user', learning: response.user_learning, my: response.user_my });
+
+                const tutorId = 'tutor-' + Date.now();
+                addMessageToUI('tutor', response.tutor_learning, response.tutor_my, response.correction, tutorId);
+                room.messages.push({ id: tutorId, role: 'tutor', learning: response.tutor_learning, my: response.tutor_my, correction: response.correction });
+
+                speak(response.tutor_learning, targetLang);
+                saveRoomsToLocal();
+                scrollToBottom();
+            } catch (err) {
+                console.error("API Error:", err);
+                if (err.status === 429 && currentModelIndex < availableModels.length - 1) {
+                    currentModelIndex++;
+                    currentModel = availableModels[currentModelIndex].api_name;
+                    console.log(`Switching to backup model: ${currentModel}`);
+                    return sendMessage();
+                }
+                showError(`❌ 錯誤: ${err.status || '連線失敗'}`);
+            }
+        }
+
+        async function callGemini(userInput, myLangCode, targetLangCode, inputLangCode, apiKey) {
+            const myLang = LANG_NAMES[myLangCode];
+            const targetLang = LANG_NAMES[targetLangCode];
+            const inputLang = LANG_NAMES[inputLangCode];
+            const room = chatRooms.find(r => r.id === activeRoomId);
+            const historyContext = room.messages.slice(-10).map(h => `${h.role === 'user' ? 'Student' : 'Tutor'}: ${h.learning} (${h.my})`).join('\n');
+
+            const prompt = `You are a friendly language tutor. The student's native language is ${myLang} and they are learning ${targetLang}.
+            The student just sent a message in ${inputLang}.
+            
+            System Instructions:
+            - Support situational practice. Roleplay if requested.
+            - If student makes mistakes in ${targetLang}, provide a brief, gentle correction at the end.
+            - Correction format: "💡 更自然的說法：..." or "⚠️ 小提醒：...".
+            
+            Recent Context:
+            ${historyContext}
+            
+            Student Input: "${userInput}"
+            
+            Return ONLY a raw JSON object:
+            {
+              "user_learning": "${targetLang} version of student input",
+              "user_my": "${myLang} version of student input",
+              "correction": "Correction or tip if needed, else null",
+              "tutor_learning": "Your reply in ${targetLang}",
+              "tutor_my": "Your reply in ${myLang}"
+            }`;
+
+            const chatHistory = room.messages.map(message => ({
+                role: message.role === 'user' ? 'user' : 'model',
+                parts: [{ text: String(message.role === 'user' ? (message.learning || '') : (message.learning || '')) }]
+            }));
+            chatHistory.push({ role: 'user', parts: [{ text: prompt }] });
+
+            const payload = {
+                contents: chatHistory,
+                systemInstruction: {
+                    parts: [{ text: '你是一位專業親切的外語口說導師。' }]
+                },
+                generationConfig: {
+                    temperature: 0.7
+                }
+            };
+            const modelName = String(currentModel || '').replace(/^models\//, '');
+            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelName)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+            console.log('[GugoPro Gemini] Endpoint:', endpoint);
+            console.log('[GugoPro Gemini] Payload:', JSON.stringify(payload, null, 2));
+            const res = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) { const error = new Error("API_ERROR"); error.status = res.status; throw error; }
+            const data = await res.json();
+            const rawText = data.candidates[0].content.parts[0].text;
+            return JSON.parse(rawText.replace(/```json|```/g, '').trim());
+        }
+
+        function addMessageToUI(role, learning, my, correction, id) {
+            const container = document.getElementById('chat-container');
+            const div = document.createElement('div');
+            div.className = `message message-${role}`;
+            div.setAttribute('data-id', id);
+            div.innerHTML = `
+                <div class="msg-learning">${learning}</div>
+                <div class="msg-my">${my}</div>
+                <div class="msg-actions">
+                    <button class="btn-msg-action" onclick="speakMessage(this)"><i class="fa-solid fa-volume-high"></i></button>
+                    <button class="btn-msg-action btn-msg-delete" onclick="deleteMessage('${id}')"><i class="fa-solid fa-trash-can"></i></button>
+                </div>
+            `;
+            if (correction && correction !== "null" && correction.trim() !== "") {
+                const cDiv = document.createElement('div');
+                cDiv.className = 'correction-box';
+                cDiv.innerHTML = `<span class="${correction.includes('💡') ? 'correction-natural' : 'correction-tip'}">${correction}</span>`;
+                div.appendChild(cDiv);
+            }
+            container.appendChild(div);
+        }
+
+        window.deleteMessage = (id) => {
+            const room = chatRooms.find(r => r.id === activeRoomId);
+            if (room) { room.messages = room.messages.filter(m => m.id !== id); saveRoomsToLocal(); }
+            const el = document.querySelector(`[data-id="${id}"]`);
+            if (el) el.remove();
+        };
+
+        function scrollToBottom() { window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' }); }
+
+        // --- Speech Recognition (Native Web Speech API) ---
+        function initSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                console.warn("Speech Recognition API not supported in this browser.");
+                return;
+            }
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            
+            recognition.onstart = () => {
+                isRecording = true;
+                document.getElementById('btn-mic').classList.add('recording');
+                baseText = document.getElementById('user-text').value;
+                
+                const input = document.getElementById('user-text');
+                const pos = input.selectionStart || input.value.length;
+                textAfterCursor = input.value.substring(pos);
+                // We'll append at the end as per request: "追加到輸入框現有文字的最後面"
+            };
+            
+            recognition.onresult = (event) => {
+                const input = document.getElementById('user-text');
+                let transcript = '';
+                
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    transcript += event.results[i][0].transcript;
+                }
+                
+                // Cumulative append at the end of baseText
+                input.value = baseText + transcript;
+            };
+            
+            recognition.onerror = (event) => {
+                console.error("Speech Recognition Error:", event.error);
+                stopRecording();
+            };
+            
+            recognition.onend = () => {
+                stopRecording();
+            };
+        }
+
+        function stopRecording() {
+            isRecording = false;
+            document.getElementById('btn-mic').classList.remove('recording');
+            if (recognition) recognition.stop();
+        }
+
+        document.getElementById('btn-mic').onclick = () => {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                document.getElementById('modal-stt-guide').style.display = 'flex';
+                return;
+            }
+            if (isRecording) {
+                stopRecording();
+            } else {
+                recognition.lang = inputMode === 'target' ? document.getElementById('target-lang').value : document.getElementById('my-lang').value;
+                recognition.start();
+            }
+        };
+
+        function speak(text, langCode) {
+            if (!window.speechSynthesis) return;
+            window.speechSynthesis.cancel();
+            const ut = new SpeechSynthesisUtterance(text); ut.lang = langCode;
+            window.speechSynthesis.speak(ut);
+        }
+
+        window.speakMessage = (btn) => {
+            const msgDiv = btn.closest('.message');
+            const text = msgDiv.querySelector('.msg-learning').textContent;
+            speak(text, document.getElementById('target-lang').value);
+        };
+
+        // --- Helpers ---
+        function showError(msg) { const p = document.getElementById('error-panel'); document.getElementById('error-msg').textContent = msg; p.style.display = 'block'; }
+        function hideError() { document.getElementById('error-panel').style.display = 'none'; }
+        document.getElementById('btn-retry-model').onclick = fetchLatestModel;
+        document.getElementById('btn-send').onclick = sendMessage;
+        document.getElementById('user-text').onkeypress = (e) => { if(e.key === 'Enter') sendMessage(); };
+    </script>
+<footer class="site-contact-footer" style="padding:24px 20px;text-align:center;border-top:1px solid rgba(255,255,255,.08);color:#94a3b8;"><div class="site-contact-inline" style="margin:12px 0;line-height:1.8;"><a href="../../contact.html" style="color:#67e8f9;font-weight:700;">聯絡我們 / Contact Us</a> <span style="margin-left:10px;">Support Email: <a href="mailto:contact@gugopro.com" style="color:#67e8f9;">contact@gugopro.com</a></span></div></footer></body>
+</html>

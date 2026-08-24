@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="在瀏覽器本地完成文字、圖片與 SVG 的 Base64 DataURI 編解碼與 SVG 優化。">
+    <title>Base64 / SVG 編解碼器 | GugoPro Converter Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/app.css">
+    <link rel="stylesheet" href="converter-base.css">
+    <link rel="stylesheet" href="converter-hub.css">
+</head>
+<body class="converter-page">
+    <header><div class="nav-container">
+        <a href="../index.html#tools-section" class="logo" aria-label="回到 GugoPro 主站首頁"><div class="logo-icon"><i class="fa-solid fa-rocket"></i></div><span class="logo-text">GugoPro</span><span class="logo-tag">生活實用工具</span></a>
+        <div class="tools-selector"><button class="tools-btn" type="button" aria-haspopup="true"><i class="fa-solid fa-screwdriver-wrench"></i> 轉檔工具 <i class="fa-solid fa-caret-down"></i></button><div class="tools-dropdown"></div></div>
+        <div class="nav-actions"><a class="kofi-nav-btn" href="https://ko-fi.com/R1K123XRS9" target="_blank" rel="noopener sponsored"><i class="fa-solid fa-mug-hot"></i> 支持創作</a><a class="converter-home-link" href="../index.html#tools-section"><i class="fa-solid fa-house"></i> 主站首頁</a><a class="converter-language-link" href="../en/tools/converter-base64.html"><i class="fa-solid fa-language"></i> English</a></div>
+    </div></header>
+    <section class="hero converter-hero"><div class="hero-badge"><i class="fa-solid fa-code"></i> Converter Hub / 開發工作流</div><h1>Base64 / SVG 編解碼器</h1><p>在瀏覽器本地處理文字、圖片 DataURI 與 SVG，支援即時預覽、壓縮優化、複製與下載。</p><div class="hero-actions"><a class="converter-button secondary" href="converter-hub.html"><i class="fa-solid fa-arrow-left"></i> 返回 Converter Hub</a><span class="converter-stat"><strong>Local</strong> 不上傳內容</span></div></section>
+    <main class="converter-shell"><div class="converter-workbench-wrap">
+        <section class="converter-workbench" aria-labelledby="base64-workbench-heading"><div class="converter-section-heading"><div><h2 id="base64-workbench-heading">Base64 DataURI 工具</h2><p>文字可做 UTF-8 編解碼；圖片則直接讀取為 data URI。</p></div></div>
+            <div class="converter-control"><label class="converter-label" for="base64-text-input">文字或 DataURI</label><textarea id="base64-text-input" rows="9" placeholder="貼上文字、Base64，或 data:image/png;base64,..."></textarea></div>
+            <div class="converter-actions"><button class="converter-button primary" id="base64-encode" type="button"><i class="fa-solid fa-lock"></i> 編碼成 Base64</button><button class="converter-button secondary" id="base64-decode" type="button"><i class="fa-solid fa-unlock"></i> 解碼 Base64</button><button class="converter-button secondary" id="base64-copy" type="button"><i class="fa-solid fa-copy"></i> 複製結果</button><button class="converter-button secondary" id="base64-download" type="button"><i class="fa-solid fa-download"></i> 下載結果</button></div>
+            <label class="converter-upload-zone compact-upload" id="base64-dropzone" for="base64-file"><input id="base64-file" type="file" accept="image/*"><span><i class="fa-solid fa-image converter-upload-icon"></i><strong>拖曳圖片到這裡取得 DataURI</strong><small>圖片只在你的瀏覽器讀取</small></span></label><div class="converter-file-info" id="base64-file-info"></div>
+            <div class="converter-progress"><div class="converter-progress-head"><span>處理進度</span><span id="base64-progress-label">0%</span></div><div class="converter-progress-track"><div class="converter-progress-bar" id="base64-progress-bar"></div></div></div><p class="converter-status" id="base64-status" aria-live="polite">請貼上內容或選擇圖片。</p><div class="converter-output"><h3>DataURI 預覽</h3><div id="base64-preview" class="converter-rich-preview"></div></div>
+            <hr class="converter-divider">
+            <div class="converter-section-heading"><div><h2>SVG 即時預覽與優化</h2><p>移除註解、事件屬性與多餘空白，再複製或下載精簡後的 SVG。</p></div></div><div class="converter-control"><label class="converter-label" for="svg-source">SVG 程式碼</label><textarea id="svg-source" rows="10" placeholder="<svg viewBox=&quot;0 0 100 100&quot; ...>...</svg>"></textarea></div><div class="converter-actions"><button class="converter-button primary" id="svg-preview-button" type="button"><i class="fa-solid fa-eye"></i> 預覽 SVG</button><button class="converter-button secondary" id="svg-optimize" type="button"><i class="fa-solid fa-compress"></i> 壓縮優化</button><button class="converter-button secondary" id="svg-copy" type="button"><i class="fa-solid fa-copy"></i> 複製 SVG</button><button class="converter-button secondary" id="svg-download" type="button"><i class="fa-solid fa-download"></i> 下載 SVG</button></div><div id="svg-preview" class="converter-svg-preview" aria-live="polite"></div>
+        </section><aside><section class="converter-side-card"><h3><i class="fa-solid fa-circle-info"></i> 使用方式</h3><p>文字編碼使用 UTF-8；輸入 data URI 解碼時會自動辨識文字或圖片 MIME type。</p><h4>SVG 安全預覽</h4><p>預覽會移除 script、foreignObject 與 on* 事件屬性，避免不必要的執行風險。</p></section><section class="converter-side-card"><h3><i class="fa-solid fa-shield-halved"></i> 隱私承諾</h3><p>所有內容只經過目前頁面的 File API、TextEncoder 與 DOMParser，不會上傳到伺服器。</p></section></aside>
+    </div><div id="converter-commerce"></div><!-- ad-sense-editorial -->
+<section class="converter-editorial" aria-labelledby="editorial-heading">
+    <div class="converter-editorial-intro">
+        <span class="converter-editorial-kicker">功能特點與使用指南</span>
+        <h2 id="editorial-heading">這個工具適合什麼工作？</h2>
+        <p>文字與圖片 DataURI 互轉，提供 SVG 安全預覽、壓縮優化、複製與下載。</p>
+    </div>
+    <div class="converter-editorial-grid">
+        <section class="converter-guide-card" aria-labelledby="guide-heading">
+            <h3 id="guide-heading"><i class="fa-solid fa-list-check"></i> 3 步快速操作</h3>
+            <ol class="converter-step-list"><li><span>1</span><div>貼上文字、DataURI 或 SVG 程式碼，或選擇圖片。</div></li><li><span>2</span><div>執行編碼、解碼或 SVG 安全預覽。</div></li><li><span>3</span><div>複製結果，或下載文字與圖片輸出。</div></li></ol>
+        </section>
+        <section class="converter-privacy-card" aria-labelledby="privacy-heading-editorial">
+            <h3 id="privacy-heading-editorial"><i class="fa-solid fa-shield-halved"></i> 隱私宣告</h3>
+            <p>Base64、DataURI 與 SVG 只在目前瀏覽器處理，沒有檔案上傳或遠端保存。</p>
+            <p class="converter-editorial-note">沒有檔案上傳端點；實際速度取決於裝置效能與瀏覽器支援。</p>
+        </section>
+    </div>
+    <section class="converter-faq" aria-labelledby="faq-heading">
+        <h3 id="faq-heading"><i class="fa-solid fa-circle-question"></i> 常見問題解答</h3>
+        <details><summary>Base64 內容會離開裝置嗎？</summary><p>不會。文字、圖片與 SVG 都以瀏覽器 File API、DOMParser 或 Canvas 本地處理。</p></details><details><summary>SVG 為什麼會被清理？</summary><p>預覽會移除 script、事件屬性與危險 javascript: 連結，降低不必要的執行風險。</p></details><details><summary>DataURI 適合放大檔案嗎？</summary><p>DataURI 會增加文字體積，較大的圖片更適合直接使用檔案或 CDN。</p></details>
+    </section>
+</section></main>
+    <footer><a class="converter-footer-support" href="https://ko-fi.com/R1K123XRS9" target="_blank" rel="noopener sponsored"><i class="fa-solid fa-mug-hot"></i> 喜歡這個工具？請在 Ko-fi 支持我們</a><div class="footer-links"><a href="../index.html#tools-section">主站首頁</a><a href="converter-hub.html">轉檔工具</a><a href="../privacy.html">隱私權政策</a><a href="../terms.html">服務條款</a></div><p>© 2026 GugoPro. All rights reserved.</p><p class="converter-footer-note">本工具只在瀏覽器本地處理 Base64 與 SVG。Amazon、TradingView 與 Ko-fi 連結可能包含合作推廣標記。</p><div class="site-contact-inline" style="margin:12px 0;line-height:1.8;"><a href="../contact.html" style="color:#67e8f9;font-weight:700;">聯絡我們 / Contact Us</a> <span style="margin-left:10px;">Support Email: <a href="mailto:contact@gugopro.com" style="color:#67e8f9;">contact@gugopro.com</a></span></div></footer>
+    <script src="converter-nav.js"></script><script src="converter-common.js"></script>
+    <script>
+    (function () {
+        'use strict';
+        var C = window.ConverterCommon, text = document.getElementById('base64-text-input'), preview = document.getElementById('base64-preview'), status = document.getElementById('base64-status'), bar = document.getElementById('base64-progress-bar'), label = document.getElementById('base64-progress-label'), svg = document.getElementById('svg-source'), svgPreview = document.getElementById('svg-preview');
+        function utf8ToBase64(value) { var bytes = new TextEncoder().encode(value), binary = ''; for (var i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(binary); }
+        function base64ToUtf8(value) { var clean = value.replace(/^data:[^,]*,/, '').replace(/\s/g, ''); var binary = atob(clean); var bytes = new Uint8Array(binary.length); for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i); return new TextDecoder().decode(bytes); }
+        function isImageUri(value) { return /^data:image\//i.test(value); }
+        function renderDataUri(value) { preview.innerHTML = ''; if (isImageUri(value)) { var image = document.createElement('img'); image.src = value; image.alt = 'Base64 decoded image preview'; preview.appendChild(image); } else { var pre = document.createElement('pre'); pre.textContent = value.slice(0, 12000); preview.appendChild(pre); } }
+        function runEncode() { var value = text.value; if (!value.trim()) { C.setStatus(status, '請先輸入文字或選擇圖片。', 'error'); return; } C.setProgress(bar, label, 30); window.setTimeout(function () { text.value = utf8ToBase64(value); renderDataUri(text.value); C.setProgress(bar, label, 100); C.setStatus(status, '內容已編碼成 Base64。', 'success'); }, 100); }
+        function runDecode() { var value = text.value; if (!value.trim()) { C.setStatus(status, '請先輸入 Base64 內容。', 'error'); return; } try { C.setProgress(bar, label, 35); window.setTimeout(function () { var decoded = base64ToUtf8(value); text.value = decoded; renderDataUri(decoded); C.setProgress(bar, label, 100); C.setStatus(status, 'Base64 已解碼成 UTF-8 文字。', 'success'); }, 100); } catch (error) { C.setProgress(bar, label, 0); C.setStatus(status, 'Base64 格式無法解碼，請確認內容完整。', 'error'); } }
+        function sanitizeSvg(source) { var doc = new DOMParser().parseFromString(source, 'image/svg+xml'); if (doc.querySelector('parsererror') || !doc.documentElement || doc.documentElement.tagName.toLowerCase() !== 'svg') throw new Error('SVG 格式無效'); doc.querySelectorAll('script,foreignObject').forEach(function (node) { node.remove(); }); doc.querySelectorAll('*').forEach(function (node) { Array.from(node.attributes).forEach(function (attr) { if (/^on/i.test(attr.name) || (attr.name === 'href' && /^javascript:/i.test(attr.value))) node.removeAttribute(attr.name); }); }); return new XMLSerializer().serializeToString(doc.documentElement); }
+        function showSvg(optimize) { if (!svg.value.trim()) { C.setStatus(status, '請先貼上 SVG 程式碼。', 'error'); return; } try { var safe = sanitizeSvg(svg.value); if (optimize) safe = safe.replace(/<!--([\s\S]*?)-->/g, '').replace(/>\s+</g, '><').replace(/\s{2,}/g, ' ').trim(); svg.value = safe; svgPreview.innerHTML = safe; C.setProgress(bar, label, 100); C.setStatus(status, optimize ? 'SVG 已安全壓縮優化。' : 'SVG 預覽已更新。', 'success'); } catch (error) { C.setProgress(bar, label, 0); C.setStatus(status, 'SVG 格式無法解析，請檢查根元素。', 'error'); } }
+        function copy(value) { if (!value) { C.setStatus(status, '沒有可複製的內容。', 'error'); return; } if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(value); else { var area = document.createElement('textarea'); area.value = value; document.body.appendChild(area); area.select(); document.execCommand('copy'); area.remove(); } C.setStatus(status, '內容已複製到剪貼簿。', 'success'); }
+        C.bindDropzone(document.getElementById('base64-dropzone'), document.getElementById('base64-file'), function (files) { var file = files[0]; C.renderFileInfo(document.getElementById('base64-file-info'), file); C.readDataUrl(file).then(function (data) { text.value = data; renderDataUri(data); C.setProgress(bar, label, 100); C.setStatus(status, '圖片 DataURI 已準備完成。', 'success'); }); });
+        document.getElementById('base64-encode').addEventListener('click', runEncode); document.getElementById('base64-decode').addEventListener('click', runDecode); document.getElementById('base64-copy').addEventListener('click', function () { copy(text.value); }); document.getElementById('base64-download').addEventListener('click', function () { C.downloadText(text.value, 'converted-base64.txt', 'text/plain;charset=utf-8'); }); document.getElementById('svg-preview-button').addEventListener('click', function () { showSvg(false); }); document.getElementById('svg-optimize').addEventListener('click', function () { showSvg(true); }); document.getElementById('svg-copy').addEventListener('click', function () { try { copy(sanitizeSvg(svg.value)); } catch (error) { C.setStatus(status, '請先輸入有效 SVG。', 'error'); } }); document.getElementById('svg-download').addEventListener('click', function () { try { C.downloadText(sanitizeSvg(svg.value), 'optimized.svg', 'image/svg+xml;charset=utf-8'); } catch (error) { C.setStatus(status, '請先輸入有效 SVG。', 'error'); } }); C.initCommerce('converter-commerce');
+    }());
+    </script>
+</body>
+</html>

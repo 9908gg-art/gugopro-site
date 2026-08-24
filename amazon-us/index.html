@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amazon AI 智能購物導師 | GugoPro 多模態尋寶助手</title>
+<meta name="description" content="GugoPro Amazon AI 智能購物導師：語音/相機/文字多模態輸入，Gemini AI 深度剖析商品優缺點，一鍵跳轉 Amazon 精準搜尋。支援美國站與日本站雙市場。">
+<meta name="keywords" content="Amazon AI, 購物助手, AI Shopping, Gemini, GugoPro, Amazon US, Amazon JP">
+<meta name="author" content="GugoPro AI Team">
+
+<!-- Google Analytics 4 (GA4) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GF1DYLWMKX"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-GF1DYLWMKX');
+</script>
+
+<!-- Font Awesome 6 & Google Fonts -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&family=Outfit:wght@400;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --accent: #00A8E1;
+  --accent-glow: rgba(0, 168, 225, 0.35);
+  --accent2: #7000ff;
+  --bg-main: #0a0b10;
+  --bg-card: rgba(255, 255, 255, 0.05);
+  --border-card: rgba(255, 255, 255, 0.1);
+  --text-primary: #e8eaf0;
+  --text-muted: #9FB3C8;
+  --gold: #FFD700;
+  --success: #34c759;
+  --error: #ff3b30;
+  --user-bubble: rgba(0, 168, 225, 0.1);
+  --ai-bubble: rgba(112, 0, 255, 0.08);
+}
+body.theme-jp {
+  --accent: #FF3366;
+  --accent-glow: rgba(255, 51, 102, 0.35);
+  --user-bubble: rgba(255, 51, 102, 0.1);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', 'Noto Sans TC', 'Noto Sans JP', sans-serif;
+  min-height: 100vh;
+  background: radial-gradient(ellipse at 50% 0%, rgba(0,168,225,0.08) 0%, transparent 60%), var(--bg-main);
+  color: var(--text-primary);
+  transition: background 0.3s;
+}
+body.theme-jp {
+  background: radial-gradient(ellipse at 50% 0%, rgba(255,51,102,0.1) 0%, transparent 60%), var(--bg-main);
+}
+
+/* Top Nav */
+.top-nav {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;
+  background: rgba(10,11,16,0.92); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border-card); padding: 10px 16px; position: sticky; top: 0; z-index: 100;
+}
+.brand-group { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.brand-link { color: #fff; text-decoration: none; font-size: 1.05rem; font-weight: 800; display: flex; align-items: center; gap: 7px; font-family: 'Outfit', sans-serif; }
+.brand-link i { color: var(--accent); }
+.market-switcher { display: inline-flex; background: rgba(0,0,0,0.45); border: 1px solid var(--border-card); border-radius: 24px; padding: 2px; gap: 2px; }
+.market-btn { background: transparent; border: none; color: var(--text-muted); font-size: 0.78rem; font-weight: 700; padding: 5px 12px; border-radius: 20px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s; }
+.market-btn:hover { color: #fff; }
+.market-btn.active { background: linear-gradient(135deg, var(--accent), #0077A3); color: #fff; box-shadow: 0 2px 8px var(--accent-glow); }
+body.theme-jp .market-btn.active { background: linear-gradient(135deg, #FF3366, #C70039); }
+.nav-right { display: flex; align-items: center; gap: 6px; }
+.btn-nav { background: rgba(255,255,255,0.07); border: 1px solid var(--border-card); color: var(--text-primary); padding: 5px 12px; border-radius: 18px; font-size: 0.78rem; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s; }
+.btn-nav:hover { background: rgba(255,255,255,0.13); border-color: var(--accent); }
+.btn-nav.api-connected { border-color: var(--success); color: var(--success); }
+
+/* Hero */
+.hero { text-align: center; padding: 28px 16px 10px; max-width: 700px; margin: 0 auto; }
+.hero h1 { font-size: clamp(1.3rem, 3.5vw, 2rem); font-weight: 800; font-family: 'Outfit', sans-serif; background: linear-gradient(135deg, #fff 30%, var(--accent) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 6px; }
+.hero p { color: var(--text-muted); font-size: 0.85rem; line-height: 1.5; }
+
+/* Chat Container */
+
+.chat-messages { flex: 1; overflow-y: auto; padding: 10px 0; display: flex; flex-direction: column; gap: 14px; }
+
+/* Welcome Card */
+.welcome-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-top: 10px; }
+.welcome-card { background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 14px; padding: 14px; cursor: pointer; transition: all 0.2s; }
+.welcome-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+.welcome-card h4 { color: var(--accent); margin-bottom: 6px; font-size: 0.88rem; font-family: 'Outfit', sans-serif; }
+.welcome-card p { color: var(--text-muted); font-size: 0.78rem; line-height: 1.4; }
+
+/* Message Bubbles */
+.msg { display: flex; gap: 10px; max-width: 100%; }
+.msg.user { justify-content: flex-end; }
+.msg.user .bubble { background: var(--user-bubble); border: 1px solid rgba(0,168,225,0.2); border-radius: 16px 16px 4px 16px; }
+body.theme-jp .msg.user .bubble { border-color: rgba(255,51,102,0.2); }
+.msg.ai .bubble { background: var(--ai-bubble); border: 1px solid rgba(112,0,255,0.15); border-radius: 16px 16px 16px 4px; }
+.bubble { padding: 12px 16px; max-width: 85%; font-size: 0.9rem; line-height: 1.6; word-break: break-word; }
+.bubble img.user-photo { max-width: 200px; max-height: 200px; border-radius: 10px; margin-bottom: 6px; display: block; }
+.msg-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; flex-shrink: 0; margin-top: 2px; }
+.msg.user .msg-avatar { background: var(--accent); color: #fff; }
+.msg.ai .msg-avatar { background: var(--accent2); color: #fff; }
+
+/* Dynamic Facet Matrix Card (Strict No-Fluff) */
+.ai-facet-card { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+.facet-quick-guide { color: var(--text-primary); font-weight: 700; font-size: 0.88rem; line-height: 1.5; }
+.facet-groups-container { display: flex; flex-direction: column; gap: 8px; }
+.facet-group-box { background: rgba(0, 0, 0, 0.45); border: 1px solid var(--border-card); border-radius: 12px; padding: 10px 12px; }
+.facet-group-title { font-size: 0.78rem; font-weight: 800; color: var(--gold); margin-bottom: 6px; letter-spacing: 0.03em; }
+.facet-chips-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.facet-chip {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-card);
+  color: var(--text-primary);
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+.facet-chip:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: var(--accent);
+  color: #fff;
+  transform: translateY(-1px);
+}
+.facet-chip.selected {
+  background: var(--accent-glow);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 0 10px var(--accent-glow);
+}
+body.theme-jp .facet-chip.selected {
+  background: rgba(255, 51, 102, 0.35);
+  border-color: #FF3366;
+}
+
+.facet-preview-bar {
+  background: rgba(0, 0, 0, 0.65);
+  border: 1px solid rgba(255, 215, 0, 0.35);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+.btn-facet-jump-alt {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-card);
+  color: var(--text-primary);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.btn-facet-jump-alt:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: var(--gold);
+  color: #fff;
+  transform: translateY(-1px);
+}
+.facet-kw-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.8rem;
+}
+.facet-kw-info .kw-label { color: var(--text-muted); }
+.facet-kw-info .kw-value {
+  color: var(--gold);
+  font-family: 'Outfit', monospace;
+  font-weight: 800;
+  font-size: 0.88rem;
+  word-break: break-all;
+  text-align: right;
+}
+.btn-facet-jump {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, var(--accent), #0077A3);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px var(--accent-glow);
+}
+body.theme-jp .btn-facet-jump { background: linear-gradient(135deg, #FF3366, #C70039); }
+.btn-facet-jump:hover { transform: translateY(-2px); filter: brightness(1.1); }
+
+/* Typing Indicator */
+.typing-indicator { display: flex; align-items: center; gap: 4px; padding: 8px 14px; }
+.typing-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; animation: typingBounce 1.4s infinite ease-in-out; }
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typingBounce { 0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
+
+/* Input Bar */
+.input-bar-wrapper { position: sticky; bottom: 0; background: linear-gradient(transparent, var(--bg-main) 20%); padding: 10px 0 16px; }
+.input-bar { max-width: 800px; margin: 0 auto; display: flex; align-items: flex-end; gap: 6px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-card); border-radius: 16px; padding: 8px 10px; backdrop-filter: blur(10px); }
+.input-bar textarea { flex: 1; background: transparent; border: none; color: #fff; font-size: 0.92rem; resize: none; outline: none; max-height: 120px; min-height: 20px; line-height: 1.4; font-family: inherit; }
+.input-bar textarea::placeholder { color: var(--text-muted); }
+.input-btn { width: 36px; height: 36px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; transition: all 0.2s; flex-shrink: 0; }
+.btn-camera { background: rgba(255,255,255,0.08); color: var(--text-muted); }
+.btn-camera:hover { background: rgba(255,255,255,0.15); color: #fff; }
+.btn-mic { background: var(--accent); color: #fff; }
+.btn-mic.recording { background: var(--error); animation: pulse 1s infinite; }
+@keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(255,59,48,0.4); } 50% { box-shadow: 0 0 0 8px rgba(255,59,48,0); } }
+.btn-send { background: var(--accent); color: #fff; }
+.btn-send:hover { filter: brightness(1.15); }
+.btn-send:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Filter Drawer */
+.drawer-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 200; display: none; }
+.drawer-overlay.open { display: block; }
+.filter-drawer { position: fixed; top: 0; right: -360px; width: 340px; max-width: 90vw; height: 100%; background: #12131a; border-left: 1px solid var(--border-card); z-index: 201; transition: right 0.3s ease; overflow-y: auto; padding: 20px; }
+.filter-drawer.open { right: 0; }
+.drawer-title { font-size: 1.05rem; font-weight: 800; color: #fff; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; font-family: 'Outfit', sans-serif; }
+.drawer-close { background: none; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; }
+.filter-group { margin-bottom: 16px; }
+.filter-group-title { font-size: 0.8rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+.filter-option { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; color: var(--text-muted); transition: all 0.15s; }
+.filter-option:hover { background: rgba(255,255,255,0.05); color: #fff; }
+.filter-option input[type="checkbox"] { accent-color: var(--accent); width: 16px; height: 16px; }
+
+/* Modal */
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); display: none; justify-content: center; align-items: center; z-index: 3000; padding: 20px; }
+.modal-content { background: #15161c; border: 1px solid var(--border-card); border-radius: 24px; padding: 28px; max-width: 480px; width: 100%; max-height: 90vh; overflow-y: auto; }
+.modal-h3 { color: var(--accent); margin-bottom: 14px; font-family: 'Outfit', sans-serif; font-size: 1.05rem; }
+.modal-p { color: var(--text-muted); margin-bottom: 18px; line-height: 1.6; font-size: 0.9rem; }
+.api-input-group input { width: 100%; padding: 13px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-card); border-radius: 12px; color: #fff; font-size: 0.95rem; outline: none; }
+.api-input-group input:focus { border-color: var(--accent); }
+.btn-modal-action { width: 100%; padding: 13px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; font-size: 0.95rem; display: block; text-align: center; }
+.btn-modal-save { background: linear-gradient(135deg, var(--accent), #0077A3); color: #fff; }
+.btn-modal-save:hover { filter: brightness(1.1); }
+.btn-modal-link { background: rgba(0,168,225,0.1); border: 1px solid rgba(0,168,225,0.3); color: var(--accent); text-decoration: none; margin-bottom: 12px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 13px; border-radius: 12px; font-weight: 600; font-size: 0.9rem; }
+.btn-modal-link:hover { background: rgba(0,168,225,0.18); }
+
+/* Nav Coffee Sponsor */
+.btn-nav.btn-coffee { background: linear-gradient(135deg, #FFDD00, #FBBF24); color: #111; font-weight: 700; border: none; }
+.btn-nav.btn-coffee:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+/* Safe Bottom Padding for Input Bar (pb-28) */
+.chat-wrapper { max-width: 800px; margin: 12px auto 0; padding: 0 12px 100px; display: flex; flex-direction: column; min-height: calc(100vh - 220px); }
+
+/* Responsive */
+@media (max-width: 600px) {
+  .hero h1 { font-size: 1.2rem; }
+  .welcome-grid { grid-template-columns: 1fr; }
+  .bubble { max-width: 92%; }
+  .filter-drawer { width: 300px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Top Navigation -->
+<header class="top-nav">
+  <div class="brand-group">
+    <a href="https://gugopro.com" class="brand-link"><i class="fa-solid fa-house"></i> GugoPro</a>
+    <div class="market-switcher">
+      <button class="market-btn active" id="btn-us" onclick="switchMarket('us')"><span>🇺🇸 美國站</span></button>
+      <button class="market-btn" id="btn-jp" onclick="switchMarket('jp')"><span>🇯🇵 日本站</span></button>
+    </div>
+  </div>
+  <div class="nav-right">
+    <a href="https://ko-fi.com/R1K123XRS9" target="_blank" class="btn-nav btn-coffee" title="請開發者喝杯咖啡">
+      <i class="fa-solid fa-mug-hot"></i> 贊助
+    </a>
+    <button class="btn-nav" id="btn-filter" onclick="toggleDrawer()"><i class="fa-solid fa-sliders"></i> 篩選條件</button>
+    <button class="btn-nav" id="btn-api-config" onclick="openApiModal()"><i class="fa-solid fa-gear"></i> <span id="api-status-text">API 設定</span></button>
+    <a href="https://gugopro.com" class="btn-nav"><i class="fa-solid fa-house"></i> 首頁</a>
+  </div>
+</header>
+
+<!-- Hero -->
+<section class="hero">
+  <h1 id="hero-title">🛒 Amazon AI 智能購物導師</h1>
+  <p id="hero-desc">告訴我你想買什麼，AI 會深度剖析商品優缺點，並幫你精準搜尋 Amazon 最佳選擇。支援文字、語音與相機識圖。</p>
+</section>
+
+<!-- Chat Area -->
+<div class="chat-wrapper">
+  <div class="chat-messages" id="chat-messages">
+    <!-- Humanized AI Shopping Guide Card -->
+    <div id="welcome-section" style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:18px; padding:20px; margin-bottom:14px; backdrop-filter:blur(10px);">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+        <div style="width:38px; height:38px; border-radius:10px; background:var(--user-bubble); display:flex; align-items:center; justify-content:center; color:var(--accent); font-size:1.2rem;">
+          <i class="fa-solid fa-wand-magic-sparkles"></i>
+        </div>
+        <div>
+          <h3 style="font-size:1.05rem; font-weight:800; color:#fff; font-family:'Outfit', sans-serif;">Amazon AI 智能選品導購指南</h3>
+          <p style="font-size:0.78rem; color:var(--text-muted);">多模態視覺與文字剖析，助你挑選最划算、最高評價的 Amazon 好物</p>
+        </div>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:10px;">
+        <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:12px 14px;">
+          <div style="font-size:0.86rem; font-weight:700; color:var(--accent); display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+            <i class="fa-solid fa-robot"></i> 🤖 全品類規格編譯
+          </div>
+          <div style="font-size:0.78rem; color:var(--text-muted); line-height:1.5;">
+            輸入任何你想找的商品，AI 自動提煉 3~4 組官方級規格篩選維度與熱搜標籤。
+          </div>
+        </div>
+        <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:12px 14px;">
+          <div style="font-size:0.86rem; font-weight:700; color:var(--accent); display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+            <i class="fa-solid fa-camera"></i> 📷 拍照識圖搜尋
+          </div>
+          <div style="font-size:0.78rem; color:var(--text-muted); line-height:1.5;">
+            點選左下角相機上傳商品照片或截圖，AI 自動擷取型號與外觀特徵精準檢索。
+          </div>
+        </div>
+        <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:12px 14px;">
+          <div style="font-size:0.86rem; font-weight:700; color:var(--accent); display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+            <i class="fa-solid fa-bolt"></i> ⚡ 即時組合直達
+          </div>
+          <div style="font-size:0.78rem; color:var(--text-muted); line-height:1.5;">
+            點選多個規格標籤即時合成精準搜尋字串，一鍵在新分頁開啟 Amazon 官方商城。
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Input Bar -->
+<div class="input-bar-wrapper">
+  <div class="input-bar" style="max-width:800px; margin:0 auto; padding-left:12px; padding-right:12px;">
+    <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none;">
+    <button class="input-btn btn-camera" onclick="document.getElementById('camera-input').click()" title="拍照/上傳圖片"><i class="fa-solid fa-camera"></i></button>
+    <textarea id="user-input" rows="1" placeholder="輸入你想尋找的任何商品 (如: 登山帳篷、機械鍵盤、全自動咖啡機、美白精華、寵物餵食器)..." oninput="autoResize(this)"></textarea>
+    <button class="input-btn btn-mic" id="btn-mic" onclick="toggleMic()" title="語音輸入"><i class="fa-solid fa-microphone"></i></button>
+    <button class="input-btn btn-send" id="btn-send" onclick="sendMessage()" title="發送"><i class="fa-solid fa-paper-plane"></i></button>
+  </div>
+</div>
+
+<!-- Filter Drawer -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="toggleDrawer()"></div>
+<div class="filter-drawer" id="filter-drawer">
+  <div class="drawer-title">
+    <span><i class="fa-solid fa-sliders"></i> 通用基礎篩選條件</span>
+    <button class="drawer-close" onclick="toggleDrawer()"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="filter-group">
+    <div class="filter-group-title"><i class="fa-solid fa-truck-fast"></i> Prime 與配送</div>
+    <label class="filter-option"><input type="checkbox" id="f-global-ship" value="p_76:419158011"> AmazonGlobal 免運直送</label>
+    <label class="filter-option"><input type="checkbox" id="f-fba" value="p_6:AN1VRQENFRJN5"> Amazon 官方自營 (FBA)</label>
+  </div>
+  <div class="filter-group">
+    <div class="filter-group-title"><i class="fa-solid fa-star" style="color:var(--gold);"></i> 買家評價</div>
+    <label class="filter-option"><input type="checkbox" id="f-4star" value="p_72:1248879011"> ⭐ 4 星以上好評</label>
+  </div>
+  <div class="filter-group">
+    <div class="filter-group-title"><i class="fa-solid fa-tags"></i> 優惠與折扣</div>
+    <label class="filter-option"><input type="checkbox" id="f-deals" value="p_n_deal_type:23566065011"> 🔥 今日 Deals 特價</label>
+    <label class="filter-option"><input type="checkbox" id="f-50off" value="p_8:2224371011"> 💰 50% OFF 砍半專區</label>
+  </div>
+  <div class="filter-group">
+    <div class="filter-group-title"><i class="fa-solid fa-box"></i> 商品狀況</div>
+    <label class="filter-option"><input type="checkbox" id="f-new" value="p_n_condition-type:New"> 全新 (New)</label>
+    <label class="filter-option"><input type="checkbox" id="f-used" value="p_n_condition-type:Used"> 二手/整新品 (Used)</label>
+  </div>
+</div>
+
+<!-- API Key Modal -->
+<div id="modal-api" class="modal-overlay">
+  <div class="modal-content">
+    <div style="display:flex; justify-content:flex-end; margin-bottom:-8px;">
+      <button onclick="document.getElementById('modal-api').style.display='none'" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <h3 class="modal-h3"><i class="fa-solid fa-key"></i> 🔑 啟動 AI 服務需要免費的 Gemini API Key</h3>
+    <p class="modal-p">本工具由 Google Gemini 官方模型驅動，安全免費、無需信用卡、全站自動共享。</p>
+    <a href="https://aistudio.google.com/app/apikey" target="_blank" class="btn-modal-link">
+      <i class="fa-solid fa-arrow-up-right-from-square"></i> 前往 Google AI Studio 免費取得 API Key
+    </a>
+    <div id="key-status-box" style="display:none; background:rgba(0,0,0,0.35); border:1px solid rgba(0,168,225,0.3); border-radius:8px; padding:12px; margin-bottom:14px;">
+      <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:4px;">當前已綁定金鑰 (已遮罩加密)：</div>
+      <div style="font-family:monospace; font-size:0.92rem; color:#38bdf8;" id="masked-key-display">AIzaSy••••••••</div>
+    </div>
+    <div class="api-input-group" style="margin-bottom:14px;">
+      <input type="password" id="api-key-input" placeholder="貼上您的 Gemini API Key (以 AIzaSy 開頭)" autocomplete="off">
+    </div>
+    <div style="display:flex; gap:10px;">
+      <button id="btn-save-key" class="btn-modal-action btn-modal-save" style="flex:1;" onclick="saveApiKey()">
+        <i class="fa-solid fa-check"></i> 儲存並開始使用
+      </button>
+      <button id="btn-clear-key" class="btn-modal-action" style="display:none; flex:0 0 auto; padding:13px 16px; background:none; border:1px solid rgba(239,68,68,0.4); color:#f87171; border-radius:12px;" onclick="clearApiKey()">
+        <i class="fa-solid fa-trash-can"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+
+
+<script>
+(function() {
+'use strict';
+
+/* ===== AFFILIATE TAGS (Silent, never shown in UI) ===== */
+var US_TAG = '9908qq-20';
+var JP_TAG = 'gugopro-22';
+
+var MARKETS = {
+  us: { key:'us', baseUrl:'https://www.amazon.com/s', tag: US_TAG, themeClass:'',
+    labels: { title:'🛒 Amazon AI 全品類智能選品導購', desc:'輸入任何商品（3C、露營、家電、美妝、寵物、工具等），AI 即時編譯專屬規格標籤矩陣，一鍵直達 Amazon.com！', placeholder:'輸入你想找的任何商品 (如: camping tent, mechanical keyboard, air purifier)...' }},
+  jp: { key:'jp', baseUrl:'https://www.amazon.co.jp/s', tag: JP_TAG, themeClass:'theme-jp',
+    labels: { title:'🛒 Amazon JP 全品類 AI 智能選品導購', desc:'輸入任何商品（3C家電、露營戶外、日系美妝保養、寵物食品等），AI 自動生成日亞專屬篩選標籤！', placeholder:'輸入你想找的任何商品 (如: キャンプ テント, メカニカルキーボード, 炊飯器)...' }}
+};
+
+var currentMarket = 'us';
+var isProcessing = false;
+var recognition = null;
+var isRecording = false;
+
+/* ===== API KEY MANAGEMENT (100% Universal Persistent gugopro_gemini_api_key) ===== */
+function decodeApiKey(raw) {
+  if (!raw) return '';
+  if (raw.indexOf('obf_') === 0) {
+    try { return decodeURIComponent(atob(raw.slice(4))); } catch(e) { return raw.slice(4); }
+  }
+  return raw;
+}
+function maskApiKey(key) {
+  if (!key) return '';
+  if (key.length <= 10) return '••••••••';
+  return key.slice(0, 6) + '••••••••' + key.slice(-4);
+}
+function getGlobalApiKey() {
+  var raw = (localStorage.getItem('gugopro_gemini_api_key') || localStorage.getItem('gemini_api_key') || '').trim();
+  return decodeApiKey(raw);
+}
+function setGlobalApiKey(key) {
+  if (!key) {
+    localStorage.removeItem('gugopro_gemini_api_key');
+    localStorage.removeItem('gemini_api_key');
+  } else {
+    localStorage.setItem('gugopro_gemini_api_key', key.trim());
+    localStorage.setItem('gemini_api_key', key.trim());
+  }
+  updateKeyUI();
+}
+function updateKeyUI() {
+  var key = getGlobalApiKey();
+  var statusBox = document.getElementById('key-status-box');
+  var maskedDisplay = document.getElementById('masked-key-display');
+  var clearBtn = document.getElementById('btn-clear-key');
+  var apiBtn = document.getElementById('btn-api-config');
+  var apiText = document.getElementById('api-status-text');
+  if (key) {
+    if (statusBox) statusBox.style.display = '';
+    if (maskedDisplay) maskedDisplay.textContent = maskApiKey(key);
+    if (clearBtn) clearBtn.style.display = '';
+    if (apiBtn) apiBtn.classList.add('api-connected');
+    if (apiText) apiText.textContent = 'API 已連線';
+  } else {
+    if (statusBox) statusBox.style.display = 'none';
+    if (clearBtn) clearBtn.style.display = 'none';
+    if (apiBtn) apiBtn.classList.remove('api-connected');
+    if (apiText) apiText.textContent = 'API 設定';
+  }
+}
+window.openApiModal = function() {
+  updateKeyUI();
+  var input = document.getElementById('api-key-input');
+  if (input) input.value = '';
+  document.getElementById('modal-api').style.display = 'flex';
+};
+window.saveApiKey = function() {
+  var input = document.getElementById('api-key-input');
+  var key = (input ? input.value : '').trim();
+  if (key) {
+    setGlobalApiKey(key);
+    document.getElementById('modal-api').style.display = 'none';
+  } else if (getGlobalApiKey()) {
+    document.getElementById('modal-api').style.display = 'none';
+  } else {
+    alert('請輸入有效的 Gemini API Key。');
+  }
+};
+window.clearApiKey = function() {
+  if (confirm('確定要清除已儲存的 API Key 嗎？')) {
+    setGlobalApiKey('');
+    var input = document.getElementById('api-key-input');
+    if (input) input.value = '';
+    alert('已成功清除 API Key。');
+  }
+};
+function checkApiKey() {
+  var key = getGlobalApiKey();
+  if (!key) { openApiModal(); return false; }
+  return true;
+}
+
+/* ===== MARKET SWITCHING ===== */
+function detectMarket() {
+  var path = window.location.pathname;
+  if (path.indexOf('amazon-jp') !== -1) return 'jp';
+  if (path.indexOf('amazon-us') !== -1) return 'us';
+  var params = new URLSearchParams(window.location.search);
+  var m = params.get('market');
+  if (m === 'jp' || m === 'us') return m;
+  var lang = (navigator.language || '').toLowerCase();
+  if (lang.indexOf('ja') !== -1 || lang.indexOf('jp') !== -1) return 'jp';
+  return 'us';
+}
+window.switchMarket = function(mk) {
+  if (!MARKETS[mk]) return;
+  currentMarket = mk;
+  document.body.className = MARKETS[mk].themeClass || '';
+  document.getElementById('btn-us').classList.toggle('active', mk === 'us');
+  document.getElementById('btn-jp').classList.toggle('active', mk === 'jp');
+  var conf = MARKETS[mk];
+  document.getElementById('hero-title').textContent = conf.labels.title;
+  document.getElementById('hero-desc').textContent = conf.labels.desc;
+  document.getElementById('user-input').placeholder = conf.labels.placeholder;
+};
+
+/* ===== FILTER DRAWER ===== */
+window.toggleDrawer = function() {
+  document.getElementById('drawer-overlay').classList.toggle('open');
+  document.getElementById('filter-drawer').classList.toggle('open');
+};
+function getSelectedFilters() {
+  var checks = document.querySelectorAll('.filter-drawer input[type="checkbox"]:checked');
+  var rh = [];
+  checks.forEach(function(c) { rh.push(c.value); });
+  return rh;
+}
+
+/* ===== BUILD AMAZON URL ===== */
+function buildAmazonUrl(keyword, extraTags, targetMarketKey) {
+  var mk = targetMarketKey || currentMarket;
+  var conf = MARKETS[mk] || MARKETS.us;
+  var tag = mk === 'jp' ? JP_TAG : US_TAG;
+  var fullKeyword = keyword || '';
+  if (extraTags && extraTags.length > 0) {
+    fullKeyword = (fullKeyword + ' ' + extraTags.join(' ')).trim();
+  }
+  var url = new URL(conf.baseUrl);
+  url.searchParams.set('k', fullKeyword);
+  url.searchParams.set('tag', tag);
+  var rh = getSelectedFilters();
+  if (rh.length > 0) url.searchParams.set('rh', rh.join(','));
+  return url.toString();
+}
+
+/* ===== CHAT UI ===== */
+function addMessage(role, html, photoSrc) {
+  var welcome = document.getElementById('welcome-section');
+  if (welcome) welcome.style.display = 'none';
+  var container = document.getElementById('chat-messages');
+  var div = document.createElement('div');
+  div.className = 'msg ' + role;
+  var avatarIcon = role === 'user' ? '<i class="fa-solid fa-user"></i>' : '<i class="fa-solid fa-robot"></i>';
+  var photoHtml = photoSrc ? '<img class="user-photo" src="' + photoSrc + '" alt="uploaded">' : '';
+  if (role === 'user') {
+    div.innerHTML = '<div class="bubble">' + photoHtml + html + '</div><div class="msg-avatar">' + avatarIcon + '</div>';
+  } else {
+    div.innerHTML = '<div class="msg-avatar">' + avatarIcon + '</div><div class="bubble">' + html + '</div>';
+  }
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+  return div;
+}
+function showTyping() {
+  var container = document.getElementById('chat-messages');
+  var div = document.createElement('div');
+  div.className = 'msg ai';
+  div.id = 'typing-msg';
+  div.innerHTML = '<div class="msg-avatar"><i class="fa-solid fa-robot"></i></div><div class="bubble"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>';
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+function removeTyping() {
+  var el = document.getElementById('typing-msg');
+  if (el) el.remove();
+}
+function renderAiFacetCard(aiData, msgId, defaultKeyword) {
+  var baseKw = aiData.recommendedBaseKeyword || defaultKeyword || '';
+  var groupsHtml = (aiData.filterGroups || []).map(function(group) {
+    var optsHtml = (group.options || []).map(function(opt) {
+      return '<button onclick="toggleFacetTag(this, \'' + msgId + '\', \'' + escapeAttr(baseKw) + '\')" ' +
+             'data-tag="' + escapeAttr(opt) + '" class="facet-chip">' +
+             '+ ' + escapeHtml(opt) +
+             '</button>';
+    }).join('');
+
+    return '<div class="facet-group-box">' +
+             '<div class="facet-group-title">' + escapeHtml(group.groupTitle || '分類維度') + '</div>' +
+             '<div class="facet-chips-row">' + optsHtml + '</div>' +
+           '</div>';
+  }).join('');
+
+  var isJp = currentMarket === 'jp';
+  var primaryBtnLabel = isJp ? '🇯🇵 前往 Amazon JP (日本站)' : '🇺🇸 前往 Amazon US (美國站)';
+  var altMarket = isJp ? 'us' : 'jp';
+  var altBtnLabel = isJp ? '🇺🇸 同步比價美國站' : '🇯🇵 同步比價日本站';
+
+  var html =
+    '<div class="ai-facet-card" id="card-' + msgId + '">' +
+      '<p class="facet-quick-guide">' + escapeHtml(aiData.quickGuide || '已為您鎖定商品類別，請點選規格標籤進行組合：') + '</p>' +
+      '<div class="facet-groups-container">' + groupsHtml + '</div>' +
+      '<div class="facet-preview-bar">' +
+        '<div class="facet-kw-info">' +
+          '<span class="kw-label">目前組合檢索詞：</span>' +
+          '<span class="kw-value" id="kw-preview-' + msgId + '">' + escapeHtml(baseKw) + '</span>' +
+        '</div>' +
+        '<div style="display:flex; gap:8px; flex-wrap:wrap;">' +
+          '<button onclick="openAmazonTarget(\'' + msgId + '\', \'' + escapeAttr(baseKw) + '\', \'' + currentMarket + '\')" class="btn-facet-jump" style="flex:1; min-width:200px;">' +
+            '<span>' + primaryBtnLabel + ' 開啟結果</span> ' +
+            '<i class="fa-solid fa-arrow-up-right-from-square"></i>' +
+          '</button>' +
+          '<button onclick="openAmazonTarget(\'' + msgId + '\', \'' + escapeAttr(baseKw) + '\', \'' + altMarket + '\')" class="btn-facet-jump-alt" title="切換至另一市場同步搜尋比價">' +
+            '<i class="fa-solid fa-arrows-rotate"></i> ' +
+            '<span>' + altBtnLabel + '</span>' +
+          '</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+  return html;
+}
+
+window.toggleFacetTag = function(btn, msgId, baseKw) {
+  btn.classList.toggle('selected');
+  var rawTag = btn.getAttribute('data-tag');
+  if (btn.classList.contains('selected')) {
+    btn.textContent = '✓ ' + rawTag;
+  } else {
+    btn.textContent = '+ ' + rawTag;
+  }
+
+  var card = document.getElementById('card-' + msgId);
+  if (!card) return;
+
+  var selectedTags = [];
+  card.querySelectorAll('.facet-chip.selected').forEach(function(el) {
+    var tag = el.getAttribute('data-tag');
+    if (tag) selectedTags.push(tag);
+  });
+
+  var combinedKw = (baseKw + (selectedTags.length > 0 ? ' ' + selectedTags.join(' ') : '')).trim();
+  var kwPreview = document.getElementById('kw-preview-' + msgId);
+  if (kwPreview) kwPreview.textContent = combinedKw;
+};
+
+window.openAmazonTarget = function(msgId, baseKw, targetMarketKey) {
+  var mk = targetMarketKey || currentMarket;
+  var card = document.getElementById('card-' + msgId);
+  var selectedTags = [];
+  if (card) {
+    card.querySelectorAll('.facet-chip.selected').forEach(function(el) {
+      var tag = el.getAttribute('data-tag');
+      if (tag) selectedTags.push(tag);
+    });
+  }
+
+  var url = buildAmazonUrl(baseKw, selectedTags, mk);
+  window.open(url, '_blank', 'noopener,noreferrer');
+
+  if (typeof gtag === 'function') {
+    gtag('event', 'amazon_facet_search', {
+      event_category: 'ecommerce',
+      event_label: mk.toUpperCase() + ': ' + baseKw + ' [' + selectedTags.join(', ') + ']'
+    });
+  }
+};
+function escapeHtml(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function escapeAttr(s) { return (s || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+
+/* ===== GUGO PRO GLOBAL AI ENGINE: QUOTA HUB & MULTI-MODEL FALLBACK QUEUE ===== */
+var cachedValidModels = null;
+var lastProbeTime = 0;
+var QUOTA_API_ENDPOINT = 'https://quota.gugopro.com/api/models';
+var QUOTA_LIMITS_ENDPOINT = 'https://quota.gugopro.com/gemini_rate_limits.json';
+var GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models';
+
+function rankModelsDynamically(modelNames) {
+  return modelNames.slice().sort(function(a, b) {
+    var matchA = a.match(/(\d+(?:\.\d+)?)/);
+    var matchB = b.match(/(\d+(?:\.\d+)?)/);
+    var verA = matchA ? parseFloat(matchA[1]) : 1.0;
+    var verB = matchB ? parseFloat(matchB[1]) : 1.0;
+    
+    var isFlashA = a.toLowerCase().indexOf('flash') !== -1 ? 0.5 : 0;
+    var isFlashB = b.toLowerCase().indexOf('flash') !== -1 ? 0.5 : 0;
+    
+    var scoreA = verA + isFlashA;
+    var scoreB = verB + isFlashB;
+    
+    if (scoreB !== scoreA) {
+      return scoreB - scoreA;
+    }
+    return a.localeCompare(b);
+  });
+}
+
+async function probeAvailableModels(apiKey) {
+  var now = Date.now();
+  if (cachedValidModels && cachedValidModels.length > 0 && (now - lastProbeTime < 300000)) {
+    return cachedValidModels;
+  }
+
+  var discovered = [];
+
+  // 1. Primary: Dynamic query from Quota Hub (https://quota.gugopro.com/api/models)
+  try {
+    var qRes = await fetch(QUOTA_API_ENDPOINT).catch(function() { return null; });
+    if (qRes && qRes.ok) {
+      var qData = await qRes.json();
+      var rawModels = Array.isArray(qData) ? qData : (qData.models || []);
+      var validQuota = rawModels
+        .map(function(m) { return typeof m === 'string' ? m : (m.name || m.api_name || ''); })
+        .map(function(n) { return n.replace('models/', ''); })
+        .filter(function(n) { return n && !n.includes('embedding') && !n.includes('aqa'); });
+      if (validQuota.length > 0) {
+        discovered = rankModelsDynamically(validQuota);
+      }
+    }
+  } catch(qe) {
+    console.warn('[AI Engine] Quota /api/models probe error:', qe);
+  }
+
+  // 2. Secondary: Dynamic query from Quota Rate Limits JSON catalog
+  if (discovered.length === 0) {
+    try {
+      var limitRes = await fetch(QUOTA_LIMITS_ENDPOINT).catch(function() { return null; });
+      if (limitRes && limitRes.ok) {
+        var limitData = await limitRes.json();
+        if (limitData && Array.isArray(limitData.models)) {
+          var validLimits = limitData.models
+            .map(function(m) { return (m.name || m.api_name || '').replace('models/', ''); })
+            .filter(function(n) { return n && !n.includes('embedding') && !n.includes('aqa'); });
+          if (validLimits.length > 0) {
+            discovered = rankModelsDynamically(validLimits);
+          }
+        }
+      }
+    } catch(le) {
+      console.warn('[AI Engine] Quota rate limits probe error:', le);
+    }
+  }
+
+  // 3. Fallback: Dynamic query from Google official models catalog for this API Key
+  if (discovered.length === 0 && apiKey) {
+    try {
+      var res = await fetch(GEMINI_ENDPOINT + '?key=' + encodeURIComponent(apiKey));
+      if (res.ok) {
+        var data = await res.json();
+        var valid = (data.models || [])
+          .filter(function(m) {
+            var supportsGen = m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent');
+            var name = (m.name || '').toLowerCase();
+            var isExcluded = name.includes('embedding') || name.includes('aqa') || name.includes('imagen') || name.includes('tts') || name.includes('whisper');
+            return supportsGen && !isExcluded;
+          })
+          .map(function(m) { return m.name.replace('models/', ''); });
+
+        if (valid.length > 0) {
+          discovered = rankModelsDynamically(valid);
+        }
+      }
+    } catch(e) {
+      console.warn('[AI Engine] Official live model discovery error:', e);
+    }
+  }
+
+  if (discovered.length > 0) {
+    cachedValidModels = discovered;
+    lastProbeTime = now;
+    return discovered;
+  }
+
+  return [];
+}
+
+async function callGemini(userText, imageBase64, imageMime) {
+  var apiKey = getGlobalApiKey();
+  if (!apiKey) { openApiModal(); throw new Error('請先點擊右上角設定 Gemini API Key'); }
+
+  var marketDomain = currentMarket === 'jp' ? 'Amazon Japan (amazon.co.jp)' : 'Amazon US (amazon.com)';
+  var langRule = currentMarket === 'jp'
+    ? 'recommendedBaseKeyword 請輸出該商品最精準的日文核心關鍵字；標籤請使用繁體中文(日文原名)或日文關鍵詞。'
+    : 'recommendedBaseKeyword 請輸出該商品最精準的英文核心關鍵字；標籤請使用繁體中文(關鍵英文)或英文關鍵詞。';
+
+  var systemPrompt = '你是一位涵蓋全品類的 Amazon 全站電商智能檢索編譯器 (Universal E-Commerce Search & Facet Compiler)。\n' +
+    '使用者可能會尋找【全站任何品類的商品】，包含但不限於：\n' +
+    '• 電子 3C / 影音耳機 / 攝影器材 / 穿戴裝置\n' +
+    '• 電腦周邊 / 筆電主機 / 機械鍵盤 / 螢幕擴充塢\n' +
+    '• 生活家電 / 掃地機 / 空氣清淨機 / 咖啡機 / 廚房鍋具\n' +
+    '• 運動健身 / 戶外露營 / 帳篷 / 自行車 / 水上裝備\n' +
+    '• 美妝保養 / 護膚精華 / 個人護理 / 吹風機 / 刮鬍刀\n' +
+    '• 服飾鞋包 / 機能外套 / 跑鞋 / 手錶飾品\n' +
+    '• 汽機車配件 / 行車記錄器 / 車用充電 / 應急電源\n' +
+    '• 寵物用品 / 自動餵食器 / 貓狗點心 / 玩具護理\n' +
+    '• 母嬰玩具 / 推車汽座 / 積木桌遊 / 居家修繕五金工具 / 特色美食與咖啡豆等【全站所有商品】。\n\n' +
+    '【任務核心規則】：\n' +
+    '1. 根據使用者的輸入（文字或上傳照片），精準識別使用者想找的【該特定商品類別】。\n' +
+    '2. 為【該特定商品】量身打造 3~4 組最關鍵的 Amazon 官方級規格篩選標籤 (filterGroups)（例如：品牌、核心規格、材質/容量/尺寸、適用場景/功能、外觀版型等）。\n' +
+    '3. 每個分組提供 4~8 個高轉換、高熱搜的標籤選項 (options)。\n' +
+    '4. 【絕對禁止輸出任何長篇大論、簡介或優缺點分析段落（廢話）！】只許回傳符合格式的標準 JSON 物件。\n\n' +
+    '【JSON 回傳格式】：\n' +
+    '{\n' +
+    '  "quickGuide": "已為您鎖定【識別出的商品類別】，請點選規格標籤進行組合：",\n' +
+    '  "recommendedBaseKeyword": "該特定商品的最精準核心檢索詞",\n' +
+    '  "filterGroups": [\n' +
+    '    {\n' +
+    '      "groupTitle": "分組名稱1 (如: 🏷️ 推薦品牌 / 機器類型)",\n' +
+    '      "options": ["選項1", "選項2", "選項3", "選項4"]\n' +
+    '    },\n' +
+    '    {\n' +
+    '      "groupTitle": "分組名稱2 (如: ⚙️ 核心規格 / 容量 / 材質)",\n' +
+    '      "options": ["選項A", "選項B", "選項C", "選項D"]\n' +
+    '    },\n' +
+    '    {\n' +
+    '      "groupTitle": "分組名稱3 (如: 💡 特色功能 / 適用場景)",\n' +
+    '      "options": ["選項甲", "選項乙", "選項丙", "選項丁"]\n' +
+    '    }\n' +
+    '  ]\n' +
+    '}\n\n' +
+    '目標市場：' + marketDomain + '。' + langRule;
+
+  var parts = [{ text: systemPrompt + '\n\n使用者需求：' + userText }];
+  if (imageBase64 && imageMime) {
+    parts.push({ inlineData: { mimeType: imageMime, data: imageBase64 } });
+  }
+
+var modelsToTry = await probeAvailableModels(apiKey);
+  if (!modelsToTry || modelsToTry.length === 0) {
+    throw new Error('無法從 Google 取得可用模型清單，請確認網路連線或 API Key 是否具備有效權限。');
+  }
+
+  var lastError = null;
+
+  for (var i = 0; i < modelsToTry.length; i++) {
+    var model = modelsToTry[i];
+    var url = GEMINI_ENDPOINT + '/' + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(apiKey);
+
+    for (var attempt = 1; attempt <= 3; attempt++) {
+      try {
+        var resp = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts: parts }],
+            generationConfig: { temperature: 0.7, maxOutputTokens: 4096, responseMimeType: 'application/json' }
+          })
+        });
+
+        if (!resp.ok) {
+          console.warn('Model ' + model + ' attempt ' + attempt + ' HTTP ' + resp.status);
+          lastError = new Error('HTTP ' + resp.status + ' (' + model + ')');
+          if (resp.status === 404) break; // Model 404, immediately skip to next model in probe list
+          await new Promise(function(r) { setTimeout(r, 500 * attempt); });
+          continue;
+        }
+
+        var data = await resp.json();
+        var text = data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0] && data.candidates[0].content.parts[0].text;
+        if (text) {
+          try {
+            var cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+            return JSON.parse(cleaned);
+          } catch(pe) {
+            return { summary: text, recommendedKeyword: '', products: [], dynamicTags: [] };
+          }
+        }
+      } catch(err) {
+        console.warn('Model ' + model + ' attempt ' + attempt + ' error:', err);
+        lastError = err;
+      }
+    }
+  }
+
+  throw lastError || new Error('所有可用 AI 模型連線失敗，請檢查網路或稍後重試。');
+}
+
+/* ===== SEND MESSAGE ===== */
+var pendingImage = null;
+var pendingImageMime = null;
+var pendingImagePreview = null;
+
+function containsJapanese(str) {
+  return /[\u3040-\u309F\u30A0-\u30FF]/.test(str);
+}
+
+window.sendMessage = async function() {
+  if (isProcessing) return;
+  var input = document.getElementById('user-input');
+  var text = input.value.trim();
+  if (!text && !pendingImage) return;
+  if (!checkApiKey()) return;
+
+  // Auto-detect Japanese input and switch market to JP dynamically if Japanese text is detected
+  if (text && containsJapanese(text) && currentMarket !== 'jp') {
+    switchMarket('jp');
+  }
+
+  isProcessing = true;
+  document.getElementById('btn-send').disabled = true;
+  var displayText = text || '(已上傳圖片，請 AI 分析)';
+  addMessage('user', escapeHtml(displayText), pendingImagePreview);
+  input.value = '';
+  autoResize(input);
+
+  var imgData = pendingImage;
+  var imgMime = pendingImageMime;
+  pendingImage = null;
+  pendingImageMime = null;
+  pendingImagePreview = null;
+
+  showTyping();
+  try {
+    var result = await callGemini(text || '請分析這張圖片中的商品並推薦', imgData, imgMime);
+    removeTyping();
+    var msgId = 'msg-' + Date.now();
+    var aiHtml = renderAiFacetCard(result, msgId, text);
+    addMessage('ai', aiHtml);
+  } catch(err) {
+    removeTyping();
+    addMessage('ai', '<span style="color:var(--error);">❌ ' + escapeHtml(err.message || '發生錯誤，請稍後重試。') + '</span>');
+  }
+  isProcessing = false;
+  document.getElementById('btn-send').disabled = false;
+};
+
+window.sendQuickPrompt = function(text) {
+  document.getElementById('user-input').value = text;
+  sendMessage();
+};
+
+/* ===== CAMERA / IMAGE UPLOAD ===== */
+document.getElementById('camera-input').addEventListener('change', function(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  if (!checkApiKey()) { e.target.value = ''; return; }
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    var dataUrl = ev.target.result;
+    pendingImagePreview = dataUrl;
+    pendingImage = dataUrl.split(',')[1];
+    pendingImageMime = file.type || 'image/jpeg';
+    var input = document.getElementById('user-input');
+    if (!input.value.trim()) input.value = '';
+    input.placeholder = '📷 圖片已載入，輸入補充說明或直接發送...';
+    input.focus();
+    // Auto-send if no text
+    setTimeout(function() { if (!document.getElementById('user-input').value.trim()) sendMessage(); }, 300);
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+});
+
+/* ===== VOICE INPUT ===== */
+window.toggleMic = function() {
+  if (!checkApiKey()) return;
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    alert('您的瀏覽器不支援語音辨識，建議使用 Chrome 瀏覽器。');
+    return;
+  }
+  if (isRecording) {
+    if (recognition) recognition.stop();
+    return;
+  }
+  var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SpeechRecognition();
+  recognition.lang = currentMarket === 'jp' ? 'ja-JP' : 'zh-TW';
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.onstart = function() {
+    isRecording = true;
+    document.getElementById('btn-mic').classList.add('recording');
+  };
+  recognition.onresult = function(event) {
+    var transcript = event.results[0][0].transcript;
+    document.getElementById('user-input').value = transcript;
+    autoResize(document.getElementById('user-input'));
+  };
+  recognition.onend = function() {
+    isRecording = false;
+    document.getElementById('btn-mic').classList.remove('recording');
+    recognition = null;
+    var input = document.getElementById('user-input');
+    if (input.value.trim()) sendMessage();
+  };
+  recognition.onerror = function(e) {
+    isRecording = false;
+    document.getElementById('btn-mic').classList.remove('recording');
+    recognition = null;
+    if (e.error !== 'no-speech' && e.error !== 'aborted') {
+      console.warn('Speech recognition error:', e.error);
+    }
+  };
+  recognition.start();
+};
+
+/* ===== TEXTAREA AUTO RESIZE ===== */
+window.autoResize = function(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+};
+
+/* ===== KEYBOARD HANDLER ===== */
+document.getElementById('user-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+/* ===== INIT ===== */
+currentMarket = detectMarket();
+switchMarket(currentMarket);
+updateKeyUI();
+
+})();
+</script>
+<footer class="site-contact-footer" style="padding:24px 20px;text-align:center;border-top:1px solid rgba(255,255,255,.08);color:#94a3b8;"><div class="site-contact-inline" style="margin:12px 0;line-height:1.8;"><a href="../contact.html" style="color:#67e8f9;font-weight:700;">聯絡我們 / Contact Us</a> <span style="margin-left:10px;">Support Email: <a href="mailto:contact@gugopro.com" style="color:#67e8f9;">contact@gugopro.com</a></span></div></footer></body>
+</html>

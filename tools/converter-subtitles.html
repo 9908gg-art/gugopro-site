@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="在瀏覽器本地完成 SRT 與 VTT 字幕雙向轉換、TXT 腳本匯出與時間軸毫秒偏移。">
+    <title>字幕格式轉換器 SRT VTT | GugoPro Converter Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/app.css">
+    <link rel="stylesheet" href="converter-base.css">
+    <link rel="stylesheet" href="converter-hub.css">
+</head>
+<body class="converter-page">
+    <header>
+        <div class="nav-container">
+            <a href="../index.html#tools-section" class="logo" aria-label="回到 GugoPro 主站首頁"><div class="logo-icon"><i class="fa-solid fa-rocket"></i></div><span class="logo-text">GugoPro</span><span class="logo-tag">生活實用工具</span></a>
+            <div class="tools-selector">
+                <button class="tools-btn" type="button" aria-haspopup="true"><i class="fa-solid fa-screwdriver-wrench"></i> 轉檔工具 <i class="fa-solid fa-caret-down"></i></button>
+                <div class="tools-dropdown"><a href="converter-hub.html">轉檔工具專區</a><a href="converter-subtitles.html">字幕格式轉換器</a><a href="converter-image.html">多功能影像處理器</a><a href="converter-data.html">結構化數據轉換器</a><a href="converter-image-pdf.html">圖片合併轉 PDF</a><a href="../index.html#tools-section">主站工具總覽</a></div>
+            </div>
+            <div class="nav-actions"><a class="kofi-nav-btn" href="https://ko-fi.com/R1K123XRS9" target="_blank" rel="noopener sponsored"><i class="fa-solid fa-mug-hot"></i> 支持創作</a><a class="converter-home-link" href="../index.html#tools-section"><i class="fa-solid fa-house"></i> 主站首頁</a><a class="converter-language-link" href="../en/tools/converter-subtitles.html"><i class="fa-solid fa-language"></i> English</a></div>
+        </div>
+    </header>
+
+    <section class="hero converter-hero">
+        <div class="hero-badge"><i class="fa-solid fa-closed-captioning"></i> Converter Hub / 字幕工作流</div>
+        <h1>字幕格式轉換器</h1>
+        <p>將 SRT 與 VTT 在瀏覽器本地互轉，也能移除時間戳匯出純文字腳本，並以毫秒微調整段字幕延遲。</p>
+        <div class="hero-actions"><a class="converter-button secondary" href="converter-hub.html"><i class="fa-solid fa-arrow-left"></i> 返回 Converter Hub</a><span class="converter-stat"><strong>Local</strong> 不上傳檔案</span></div>
+    </section>
+
+    <main class="converter-shell">
+        <div class="converter-workbench-wrap">
+            <section class="converter-workbench" aria-labelledby="subtitle-workbench-heading">
+                <div class="converter-section-heading"><div><h2 id="subtitle-workbench-heading">設定轉換參數</h2><p>支援拖曳或點擊選擇單一字幕檔案。</p></div></div>
+                <label class="converter-upload-zone" id="subtitle-dropzone" for="subtitle-file">
+                    <input id="subtitle-file" type="file" accept=".srt,.vtt,text/vtt,application/x-subrip,text/plain">
+                    <span><i class="fa-solid fa-cloud-arrow-up converter-upload-icon"></i><strong>拖曳 SRT / VTT 到這裡</strong><small>或點擊選擇檔案 · 只在你的瀏覽器處理</small></span>
+                </label>
+                <div class="converter-file-info" id="subtitle-file-info" aria-live="polite"></div>
+                <div class="converter-form-grid">
+                    <div class="converter-control"><label class="converter-label" for="subtitle-direction">輸出格式</label><select id="subtitle-direction"><option value="auto">自動判斷（SRT ⇄ VTT）</option><option value="srt">輸出 SRT</option><option value="vtt">輸出 VTT</option></select></div>
+                    <div class="converter-control"><label class="converter-label" for="subtitle-delay">時間軸偏移（毫秒）</label><div class="converter-inline-controls"><button class="converter-button compact secondary" id="delay-minus" type="button" aria-label="減少 100 毫秒">−100</button><input id="subtitle-delay" type="number" step="10" value="0"><button class="converter-button compact secondary" id="delay-plus" type="button" aria-label="增加 100 毫秒">+100</button></div><p class="converter-hint">正值延後字幕，負值提前字幕。</p></div>
+                </div>
+                <div class="converter-actions"><button class="converter-button primary" id="subtitle-convert" type="button" disabled><i class="fa-solid fa-wand-magic-sparkles"></i> 轉換字幕</button><button class="converter-button secondary" id="subtitle-script" type="button" disabled><i class="fa-solid fa-file-lines"></i> 只匯出 TXT 腳本</button><button class="converter-button secondary" id="subtitle-clear" type="button"><i class="fa-solid fa-rotate-left"></i> 清除</button></div>
+                <div class="converter-progress" aria-label="轉換進度"><div class="converter-progress-head"><span>處理進度</span><span id="subtitle-progress-label">0%</span></div><div class="converter-progress-track"><div class="converter-progress-bar" id="subtitle-progress-bar"></div></div></div>
+                <p class="converter-status" id="subtitle-status" aria-live="polite">請先選擇字幕檔案。</p>
+                <div class="converter-output" id="subtitle-output"><h3>輸出預覽</h3><pre id="subtitle-output-preview"></pre><div class="converter-actions"><button class="converter-button primary" id="subtitle-download" type="button" disabled><i class="fa-solid fa-download"></i> 下載輸出檔</button></div></div>
+            </section>
+            <aside>
+                <section class="converter-side-card"><h3><i class="fa-solid fa-circle-info"></i> 使用方式</h3><p>先選檔案，再選輸出格式。自動模式會依原始副檔名選擇相反格式。</p><h4>延遲微調</h4><p>用 −100 / +100 快速調整，或直接輸入更精細的毫秒數；時間不會被推移到 00:00:00 以下。</p></section>
+                <section class="converter-side-card"><h3><i class="fa-solid fa-shield-halved"></i> 隱私承諾</h3><p>讀取與輸出均使用瀏覽器 File API 和 Blob，沒有檔案上傳 API，也不會保存你的字幕內容。</p></section>
+            </aside>
+        </div>
+        <div id="converter-commerce"></div>
+    <!-- ad-sense-editorial -->
+<section class="converter-editorial" aria-labelledby="editorial-heading">
+    <div class="converter-editorial-intro">
+        <span class="converter-editorial-kicker">功能特點與使用指南</span>
+        <h2 id="editorial-heading">這個工具適合什麼工作？</h2>
+        <p>SRT ⇄ VTT、TXT 腳本匯出、毫秒級時間軸偏移，適合字幕校對與影片後製。</p>
+    </div>
+    <div class="converter-editorial-grid">
+        <section class="converter-guide-card" aria-labelledby="guide-heading">
+            <h3 id="guide-heading"><i class="fa-solid fa-list-check"></i> 3 步快速操作</h3>
+            <ol class="converter-step-list"><li><span>1</span><div>選擇或拖入 SRT / VTT 字幕檔。</div></li><li><span>2</span><div>設定輸出格式與正負毫秒偏移量。</div></li><li><span>3</span><div>執行轉換後預覽並下載結果。</div></li></ol>
+        </section>
+        <section class="converter-privacy-card" aria-labelledby="privacy-heading-editorial">
+            <h3 id="privacy-heading-editorial"><i class="fa-solid fa-shield-halved"></i> 隱私宣告</h3>
+            <p>字幕內容不離開裝置，也不會被保存或建立遠端上傳端點。</p>
+            <p class="converter-editorial-note">沒有檔案上傳端點；實際速度取決於裝置效能與瀏覽器支援。</p>
+        </section>
+    </div>
+    <section class="converter-faq" aria-labelledby="faq-heading">
+        <h3 id="faq-heading"><i class="fa-solid fa-circle-question"></i> 常見問題解答</h3>
+        <details><summary>檔案會上傳到伺服器嗎？</summary><p>不會。字幕文字只由目前瀏覽器的 File API 讀取，轉換結果以 Blob 在本機產生。</p></details><details><summary>一次可以處理幾個檔案？</summary><p>單檔字幕頁適合精準校對；若要一次處理多個檔案，請使用字幕批次同步調時器。</p></details><details><summary>輸入格式需要嚴格一致嗎？</summary><p>建議使用標準 SRT 或 VTT 時間碼；不完整的區塊會被保留並以狀態訊息提示。</p></details>
+    </section>
+</section></main>
+
+    <footer><a class="converter-footer-support" href="https://ko-fi.com/R1K123XRS9" target="_blank" rel="noopener sponsored"><i class="fa-solid fa-mug-hot"></i> 喜歡這個工具？請在 Ko-fi 支持我們</a><div class="footer-links"><a href="../index.html#tools-section">主站首頁</a><a href="converter-hub.html">轉檔工具</a><a href="../index.html#tools-section">主站工具總覽</a><a href="../privacy.html">隱私權政策</a><a href="../terms.html">服務條款</a></div><p>© 2026 GugoPro. All rights reserved.</p><p class="converter-footer-note">本工具只在瀏覽器本地處理字幕。Amazon、TradingView 與 Ko-fi 連結可能包含合作推廣標記。</p><div class="site-contact-inline" style="margin:12px 0;line-height:1.8;"><a href="../contact.html" style="color:#67e8f9;font-weight:700;">聯絡我們 / Contact Us</a> <span style="margin-left:10px;">Support Email: <a href="mailto:contact@gugopro.com" style="color:#67e8f9;">contact@gugopro.com</a></span></div></footer>
+
+    <script src="converter-nav.js"></script><script src="converter-common.js"></script>
+    <script>
+        (function () {
+            'use strict';
+            var C = window.ConverterCommon;
+            var file = null;
+            var sourceText = '';
+            var outputText = '';
+            var outputName = '';
+            var outputMime = 'text/plain;charset=utf-8';
+            var fileInput = document.getElementById('subtitle-file');
+            var fileInfo = document.getElementById('subtitle-file-info');
+            var status = document.getElementById('subtitle-status');
+            var convertButton = document.getElementById('subtitle-convert');
+            var scriptButton = document.getElementById('subtitle-script');
+            var downloadButton = document.getElementById('subtitle-download');
+            var outputPreview = document.getElementById('subtitle-output-preview');
+            var delayInput = document.getElementById('subtitle-delay');
+            var directionInput = document.getElementById('subtitle-direction');
+            var progressBar = document.getElementById('subtitle-progress-bar');
+            var progressLabel = document.getElementById('subtitle-progress-label');
+
+            function setProgress(value) { C.setProgress(progressBar, progressLabel, value); }
+            function parseTime(value) {
+                var parts = value.replace(',', '.').split(':').map(Number);
+                if (parts.length === 2) parts.unshift(0);
+                return ((parts[0] * 3600) + (parts[1] * 60) + parts[2]) * 1000;
+            }
+            function formatTime(milliseconds, separator) {
+                var total = Math.max(0, Math.round(milliseconds));
+                var hours = Math.floor(total / 3600000);
+                var minutes = Math.floor((total % 3600000) / 60000);
+                var seconds = Math.floor((total % 60000) / 1000);
+                var millis = total % 1000;
+                return String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0') + separator + String(millis).padStart(3, '0');
+            }
+            function shiftTimecodes(text, offset, separator) {
+                return text.replace(/(?:\d{1,2}:)?\d{2}:\d{2}[,.]\d{3}/g, function (value) {
+                    return formatTime(parseTime(value) + offset, separator);
+                });
+            }
+            function cleanBaseName(name) { return name.replace(/\.(srt|vtt)$/i, '') || 'subtitle'; }
+            function inferFormat() { return /\.vtt$/i.test(file.name) ? 'srt' : 'vtt'; }
+            function toVtt(text, offset) {
+                var body = text.replace(/^\uFEFF/, '').replace(/^\s*WEBVTT[^\n]*(?:\n|$)/i, '').replace(/^\s*\n/, '');
+                return 'WEBVTT\n\n' + shiftTimecodes(body, offset, '.') .replace(/\r/g, '');
+            }
+            function toSrt(text, offset) {
+                var body = text.replace(/^\uFEFF/, '').replace(/^\s*WEBVTT[^\n]*(?:\n|$)/i, '').replace(/^\s*(STYLE|REGION|NOTE)[^\n]*(?:\n|$)/i, '').replace(/\r/g, '');
+                return shiftTimecodes(body, offset, ',').trim() + '\n';
+            }
+            function toScript(text) {
+                return text.replace(/^\uFEFF/, '').replace(/\r/g, '').split('\n').filter(function (line) {
+                    var trimmed = line.trim();
+                    return trimmed !== '' && trimmed.toUpperCase() !== 'WEBVTT' && !/^\d+$/.test(trimmed) && !/(?:\d{1,2}:)?\d{2}:\d{2}[,.]\d{3}\s+-->\s+/.test(trimmed) && !/^(NOTE|STYLE|REGION)(\s|$)/i.test(trimmed);
+                }).join('\n').trim() + '\n';
+            }
+            function renderOutput(text, name, mime) {
+                outputText = text;
+                outputName = name;
+                outputMime = mime;
+                outputPreview.textContent = text.slice(0, 9000);
+                downloadButton.disabled = !text;
+            }
+            function runConversion(asScript) {
+                if (!file) return;
+                setProgress(20);
+                C.setStatus(status, '正在於本機解析字幕內容…');
+                window.setTimeout(function () {
+                    var offset = Number(delayInput.value) || 0;
+                    var target = directionInput.value === 'auto' ? inferFormat() : directionInput.value;
+                    if (asScript) {
+                        renderOutput(toScript(sourceText), cleanBaseName(file.name) + '.txt', 'text/plain;charset=utf-8');
+                    } else if (target === 'vtt') {
+                        renderOutput(toVtt(sourceText, offset), cleanBaseName(file.name) + '.vtt', 'text/vtt;charset=utf-8');
+                    } else {
+                        renderOutput(toSrt(sourceText, offset), cleanBaseName(file.name) + '.srt', 'application/x-subrip;charset=utf-8');
+                    }
+                    setProgress(100);
+                    C.setStatus(status, asScript ? '已移除時間戳，TXT 腳本可以下載。' : '字幕轉換完成，可以下載輸出檔。', 'success');
+                }, 180);
+            }
+            function selectFile(files) {
+                var candidate = files[0];
+                if (!/\.(srt|vtt)$/i.test(candidate.name)) {
+                    C.setStatus(status, '請選擇 .srt 或 .vtt 字幕檔案。', 'error');
+                    return;
+                }
+                file = candidate;
+                sourceText = '';
+                setProgress(0);
+                C.renderFileInfo(fileInfo, file);
+                C.setStatus(status, '已載入檔案，正在讀取內容…');
+                C.readText(file).then(function (text) {
+                    sourceText = text;
+                    convertButton.disabled = false;
+                    scriptButton.disabled = false;
+                    renderOutput('', '', '');
+                    C.setStatus(status, '檔案已準備好，請選擇輸出格式或匯出 TXT。', 'success');
+                }).catch(function () { C.setStatus(status, '讀取檔案失敗，請重新選擇。', 'error'); });
+            }
+            C.bindDropzone(document.getElementById('subtitle-dropzone'), fileInput, selectFile);
+            document.getElementById('delay-minus').addEventListener('click', function () { delayInput.value = (Number(delayInput.value) || 0) - 100; });
+            document.getElementById('delay-plus').addEventListener('click', function () { delayInput.value = (Number(delayInput.value) || 0) + 100; });
+            convertButton.addEventListener('click', function () { runConversion(false); });
+            scriptButton.addEventListener('click', function () { runConversion(true); });
+            downloadButton.addEventListener('click', function () { if (outputText) C.downloadBlob(new Blob([outputText], { type: outputMime }), outputName); });
+            document.getElementById('subtitle-clear').addEventListener('click', function () { file = null; sourceText = ''; outputText = ''; fileInput.value = ''; fileInfo.innerHTML = ''; outputPreview.textContent = ''; convertButton.disabled = true; scriptButton.disabled = true; downloadButton.disabled = true; setProgress(0); C.setStatus(status, '請先選擇字幕檔案。'); });
+            C.initCommerce('converter-commerce');
+        }());
+    </script>
+</body>
+</html>

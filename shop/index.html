@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GugoPro Shop Portal | 亞馬遜商城總入口</title>
+<meta name="description" content="GugoPro 亞馬遜商城總門戶：10 大品類部門・36 類精選子分類，選擇前往美國亞馬遜專區（Amazon US Store）或日本亞馬遜專區（Amazon JP ストア），精選電競設備、生活家電、棋牌周邊、投資書單與塔羅水晶好物。">
+<meta name="keywords" content="GugoPro, Shop Portal, Amazon US, Amazon JP, 商城入口, 18 大分類, gugopro.com">
+<meta name="author" content="GugoPro AI Team">
+
+<!-- Google Analytics 4 (GA4) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GF1DYLWMKX"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-GF1DYLWMKX');
+</script>
+
+<!-- Font Awesome 6 -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<style>
+  :root {
+    --accent: #5B6CEB;
+    --accent-2: #8A5BF0;
+    --bg-start: #0B0F1A;
+    --bg-end: #131B2E;
+    --card-bg: rgba(255, 255, 255, 0.06);
+    --card-border: rgba(255, 255, 255, 0.12);
+    --text-main: #F5F7FA;
+    --text-muted: #9FB3C8;
+    --us-glow: rgba(0, 168, 225, 0.35);
+    --jp-glow: rgba(228, 0, 43, 0.35);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", "Noto Sans JP", system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 55%, #1B2540 100%);
+    color: var(--text-main);
+    padding-bottom: 60px;
+  }
+
+  /* ===== 頂部導覽列 ===== */
+  .top-nav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--card-border);
+    padding: 10px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .top-nav a {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 999px;
+    transition: all 0.25s ease;
+    white-space: nowrap;
+  }
+  .top-nav a:hover { background: rgba(255, 255, 255, 0.08); color: var(--text-main); }
+  .top-nav a.active {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(91, 108, 235, 0.35);
+  }
+
+  /* ===== 旗艦 Hero Banner ===== */
+  .hero {
+    position: relative;
+    text-align: center;
+    padding: 72px 20px 18px;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -80px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 640px;
+    height: 420px;
+    background: radial-gradient(ellipse at center, rgba(91, 108, 235, 0.22), rgba(138, 91, 240, 0.12), transparent 70%);
+    pointer-events: none;
+  }
+  .hero .brand {
+    position: relative;
+    font-size: 15px;
+    letter-spacing: 4px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .hero h1 {
+    position: relative;
+    font-size: clamp(30px, 5.5vw, 50px);
+    background: linear-gradient(135deg, #A5B4FC, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 16px;
+  }
+  .hero p {
+    position: relative;
+    color: var(--text-muted);
+    max-width: 720px;
+    margin: 0 auto;
+    line-height: 1.9;
+    font-size: 15.5px;
+  }
+  .hero-stats {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+    margin-top: 26px;
+  }
+  .hero-stats div { text-align: center; }
+  .hero-stats strong {
+    display: block;
+    font-size: 26px;
+    background: linear-gradient(135deg, #A5B4FC, var(--accent));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .hero-stats span { font-size: 12.5px; color: var(--text-muted); }
+  .kofi-wrap { position: relative; margin-top: 26px; }
+  .kofi-button {
+    background: #72a4f2; color: #fff; padding: 10px 18px; border-radius: 8px;
+    text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-weight: bold; font-size: 14px;
+  }
+
+  /* ===== 門戶卡片 ===== */
+  .container { max-width: 960px; margin: 0 auto; padding: 20px 20px 0; }
+
+  .portal-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 26px;
+    margin-top: 44px;
+  }
+
+  .portal-card {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 22px;
+    padding: 36px 30px 30px;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    text-decoration: none;
+    color: var(--text-main);
+    overflow: hidden;
+    position: relative;
+  }
+  .portal-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 22px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .portal-card.us::before { background: linear-gradient(135deg, rgba(0, 168, 225, 0.14), rgba(255, 153, 0, 0.08)); }
+  .portal-card.jp::before { background: linear-gradient(135deg, rgba(228, 0, 43, 0.14), rgba(255, 255, 255, 0.06)); }
+  .portal-card:hover::before { opacity: 1; }
+  .portal-card:hover { transform: translateY(-6px); }
+  .portal-card.us:hover { box-shadow: 0 20px 50px var(--us-glow); }
+  .portal-card.jp:hover { box-shadow: 0 20px 50px var(--jp-glow); }
+
+  .portal-card > * { position: relative; z-index: 1; }
+
+  .flag-circle {
+    width: 74px;
+    height: 74px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 34px;
+    margin-bottom: 20px;
+  }
+  .portal-card.us .flag-circle { background: linear-gradient(135deg, #00A8E1, #1A73A7); box-shadow: 0 8px 20px var(--us-glow); }
+  .portal-card.jp .flag-circle { background: linear-gradient(135deg, #E4002B, #A1061F); box-shadow: 0 8px 20px var(--jp-glow); }
+
+  .portal-card h2 { font-size: 23px; font-weight: 700; margin-bottom: 8px; }
+  .portal-card .subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; }
+  .portal-card p.desc { font-size: 14.5px; color: var(--text-muted); line-height: 1.7; margin-bottom: 24px; }
+
+  .categories-hint { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+  .categories-hint span {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 999px;
+    font-size: 12px;
+    padding: 5px 12px;
+    color: var(--text-muted);
+  }
+
+  .enter-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: auto;
+    border-radius: 12px;
+    padding: 13px 18px;
+    font-weight: 700;
+    font-size: 15px;
+    text-decoration: none;
+    color: #fff;
+    transition: transform 0.25s ease, filter 0.25s ease;
+  }
+  .portal-card.us .enter-btn { background: linear-gradient(135deg, #00A8E1, #1A73A7); }
+  .portal-card.jp .enter-btn { background: linear-gradient(135deg, #E4002B, #A1061F); }
+  .portal-card:hover .enter-btn { transform: translateX(4px); }
+
+  .loading, .error {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 60px 20px;
+    font-size: 15px;
+  }
+  .error i { color: #E16A6A; margin-right: 8px; }
+
+  footer {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 12.5px;
+    margin-top: 64px;
+    padding: 0 20px;
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  @media (max-width: 760px) {
+    .portal-grid { grid-template-columns: 1fr; }
+    .top-nav { justify-content: flex-start; }
+    .top-nav a { font-size: 13px; padding: 7px 11px; }
+    .hero-stats { gap: 24px; }
+  }
+</style>
+</head>
+<body>
+<nav class="top-nav" style="padding: 12px 24px; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center;">
+  <a href="https://gugopro.com" style="text-decoration:none; color:#fff; font-weight:800; font-family:'Outfit', sans-serif; font-size:1.3rem; display:flex; align-items:center; gap:8px;">
+    <i class="fa-solid fa-rocket" style="color:#38bdf8;"></i> GugoPro
+  </a>
+  <a href="https://gugopro.com" class="btn-back-home" style="display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,0.06); color:#cbd5e1; padding:6px 16px; border-radius:20px; border:1px solid rgba(255,255,255,0.1); text-decoration:none; font-size:0.9rem; font-weight:500;">
+    <i class="fa-solid fa-house"></i> 返回 GugoPro 首頁
+  </a>
+</nav>
+
+<!-- 頂部導覽列 -->
+<nav class="top-nav" aria-label="商城導覽">
+  <a href="./index.html" class="active"><i class="fa-solid fa-store"></i> 商城總門戶</a>
+  <a href="../amazon-us/index.html"><i class="fa-solid fa-flag-usa"></i> 🇺🇸 Amazon US Store</a>
+  <a href="../amazon-jp/index.html"><i class="fa-solid fa-torii-gate"></i> 🇯🇵 Amazon JP ストア</a>
+  <a href="https://gugopro.com"><i class="fa-solid fa-house"></i> 返回 GugoPro 首頁</a>
+</nav>
+
+<!-- 旗艦 Hero Banner -->
+<header class="hero">
+  <p class="brand">GugoPro Shop Portal</p>
+  <h1><i class="fa-solid fa-store"></i> 亞馬遜商城總入口</h1>
+  <p>歡迎來到 GugoPro 商城！整合 Amazon 官方 18 大全品類 — 從 3C 電腦、電競設備、生活家電、棋牌博弈、投資書單到塔羅水晶與寵物用品，請選擇您要前往的亞馬遜地區門市，即可一鍵搜尋精選好物。</p>
+  <div class="hero-stats">
+    <div><strong>10</strong><span>大品類部門</span></div>
+    <div><strong>2</strong><span>地區門市（美・日）</span></div>
+    <div><strong>100+</strong><span>精選搜尋項目</span></div>
+  </div>
+  <div class="kofi-wrap">
+    <a href="https://ko-fi.com/R1K123XRS9" target="_blank" rel="noopener" class="kofi-button"><i class="fa-solid fa-mug-hot"></i> Buy me a coffee</a>
+  </div>
+</header>
+
+<!-- 門戶卡片容器 -->
+<main class="container">
+  <div id="portal-grid" class="portal-grid">
+    <p class="loading"><i class="fa-solid fa-spinner fa-spin"></i> 載入門市資訊中...</p>
+  </div>
+</main>
+
+<footer class="main-footer" style="margin-top:50px; padding:30px 0; border-top:1px solid rgba(255,255,255,0.05); text-align:center; color:#64748b; background:rgba(15, 23, 42, 0.9);">
+  <div class="container" style="max-width:1000px; margin:0 auto; padding:0 20px; display:flex; flex-direction:column; gap:12px; align-items:center;">
+    <p style="font-size:0.9rem;">© 2026 GugoPro (gugopro.com). All rights reserved. 亞馬遜官方聯盟行銷精選門戶。</p>
+    <div style="display:flex; gap:14px; flex-wrap:wrap; justify-content:center; font-size:0.9rem;">
+      <a href="https://gugopro.com" style="color:#94a3b8; text-decoration:none;">首頁</a> |
+      <a href="https://gugopro.com/about.html" style="color:#94a3b8; text-decoration:none;">關於我們</a> |
+      <a href="https://gugopro.com/disclaimer.html" style="color:#94a3b8; text-decoration:none;">免責聲明</a> |
+      <a href="https://gugopro.com/privacy.html" style="color:#94a3b8; text-decoration:none;">隱私權政策</a> |
+      <a href="https://gugopro.com/terms.html" style="color:#94a3b8; text-decoration:none;">服務條款</a> |
+      <a href="https://gugopro.com/contact.html" style="color:#94a3b8; text-decoration:none;">聯絡我們</a> |
+      <a href="https://ko-fi.com/R1K123XRS9" target="_blank" style="color:#72a4f2; text-decoration:none;"><i class="fa-solid fa-mug-hot"></i> 贊助支持</a>
+    </div>
+  </div>
+<div class="site-contact-inline" style="margin:12px 0;line-height:1.8;"><a href="../contact.html" style="color:#67e8f9;font-weight:700;">聯絡我們 / Contact Us</a> <span style="margin-left:10px;">Support Email: <a href="mailto:contact@gugopro.com" style="color:#67e8f9;">contact@gugopro.com</a></span></div></footer>
+
+<script>
+(function () {
+  var grid = document.getElementById('portal-grid');
+
+  function renderError() {
+    grid.innerHTML = '<p class="error"><i class="fa-solid fa-triangle-exclamation"></i>門市資訊載入失敗，請稍後重試。</p>';
+  }
+
+  function buildPortalCard(meta) {
+    var card = document.createElement('a');
+    card.className = 'portal-card ' + meta.cls;
+    card.href = meta.href;
+
+    var hint = document.createElement('div');
+    hint.className = 'categories-hint';
+    meta.hints.forEach(function (h) {
+      var s = document.createElement('span');
+      s.textContent = h;
+      hint.appendChild(s);
+    });
+
+    card.innerHTML =
+      '<div class="flag-circle"><i class="fa-solid ' + meta.icon + '"></i></div>' +
+      '<h2>' + meta.title + '</h2>' +
+      '<div class="subtitle">' + meta.subtitle + '</div>' +
+      '<p class="desc">' + meta.desc + '</p>';
+    card.appendChild(hint);
+
+    var btn = document.createElement('span');
+    btn.className = 'enter-btn';
+    btn.innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket"></i> ' + meta.btnText;
+    card.appendChild(btn);
+    return card;
+  }
+
+  function render(categories) {
+    grid.innerHTML = '';
+    var total = categories.us_categories.reduce(function (sum, d) { return sum + d.categories.reduce(function (s, c) { return s + c.leaf_items.length; }, 0); }, 0);
+    var us = {
+      cls: 'us',
+      href: '/amazon/?market=us',
+      icon: 'fa-flag-usa',
+      title: '🇺🇸 Amazon US Store (AI 選品)',
+      subtitle: 'American Amazon · 美國亞馬遜',
+      desc: 'Electronics, gaming & esports, home appliances, trading books, tarot & crystals — 支援拍照識圖、語音對話與 AI 深度選品。',
+      hints: [],
+      btnText: '進入美國門市 (AI 導購)'
+    };
+    var jp = {
+      cls: 'jp',
+      href: '/amazon/?market=jp',
+      icon: 'fa-torii-gate',
+      title: '🇯🇵 Amazon JP ストア (AI 選品)',
+      subtitle: 'Japanese Amazon · 日本亞馬遜',
+      desc: 'パソコン・ゲーミング、生活家電、麻雀・ボードゲーム、投資本、タロット — 支援拍照識圖、語音對話與日亞官方選品。',
+      hints: [],
+      btnText: '進入日本門市 (AI 導購)'
+    };
+    us.hints = categories.us_categories.map(function (d) { return d.department_name; }).slice(0, 8);
+    jp.hints = categories.jp_categories.map(function (d) { return d.department_name; }).slice(0, 8);
+    grid.appendChild(buildPortalCard(us));
+    grid.appendChild(buildPortalCard(jp));
+    gtag('event', 'shop_portal_loaded', { total_items: total });
+  }
+
+  fetch('../data/amazon-categories.json', { cache: 'no-store' })
+    .then(function (res) {
+      if (!res.ok) { throw new Error('HTTP ' + res.status); }
+      return res.json();
+    })
+    .then(function (data) { render(data); })
+    .catch(renderError);
+})();
+</script>
+
+</body>
+</html>

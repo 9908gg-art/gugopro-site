@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="使用 jsPDF 在瀏覽器本地將多張圖片依自訂順序合併成單一 PDF，支援拖曳上傳與手機操作。">
+    <title>圖片合併轉 PDF | GugoPro Converter Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/app.css">
+    <link rel="stylesheet" href="converter-base.css">
+    <link rel="stylesheet" href="converter-hub.css">
+</head>
+<body class="converter-page">
+    <header><div class="nav-container">            <a href="../index.html#tools-section" class="logo" aria-label="回到 GugoPro 主站首頁"><div class="logo-icon"><i class="fa-solid fa-rocket"></i></div><span class="logo-text">GugoPro</span><span class="logo-tag">生活實用工具</span></a><div class="tools-selector"><button class="tools-btn" type="button" aria-haspopup="true"><i class="fa-solid fa-screwdriver-wrench"></i> 轉檔工具 <i class="fa-solid fa-caret-down"></i></button><div class="tools-dropdown"><a href="converter-hub.html">轉檔工具專區</a><a href="converter-subtitles.html">字幕格式轉換器</a><a href="converter-image.html">多功能影像處理器</a><a href="converter-data.html">結構化數據轉換器</a><a href="converter-image-pdf.html">圖片合併轉 PDF</a><a href="../index.html#tools-section">主站工具總覽</a></div></div><div class="nav-actions"><a class="kofi-nav-btn" href="https://ko-fi.com/R1K123XRS9" target="_blank" rel="noopener sponsored"><i class="fa-solid fa-mug-hot"></i> 支持創作</a><a class="converter-home-link" href="../index.html#tools-section"><i class="fa-solid fa-house"></i> 主站首頁</a><a class="converter-language-link" href="../en/tools/converter-image-pdf.html"><i class="fa-solid fa-language"></i> English</a></div></div></header>
+    <section class="hero converter-hero"><div class="hero-badge"><i class="fa-solid fa-file-pdf"></i> Converter Hub / 文件工作流</div><h1>圖片合併轉 PDF</h1><p>把多張圖片依你的順序組合成單一 PDF。檔案只在瀏覽器本地處理，適合整理掃描稿、研究筆記與內容素材。</p><div class="hero-actions"><a class="converter-button secondary" href="converter-hub.html"><i class="fa-solid fa-arrow-left"></i> 返回 Converter Hub</a><span class="converter-stat"><strong>jsPDF</strong> 本地生成</span></div></section>
+    <main class="converter-shell"><div class="converter-workbench-wrap"><section class="converter-workbench" aria-labelledby="pdf-workbench-heading"><div class="converter-section-heading"><div><h2 id="pdf-workbench-heading">排列圖片並建立 PDF</h2><p>可一次拖曳多張圖片；使用每列右側按鈕調整順序。</p></div></div><label class="converter-upload-zone" id="pdf-dropzone" for="pdf-files"><input id="pdf-files" type="file" multiple accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp"><span><i class="fa-solid fa-images converter-upload-icon"></i><strong>拖曳多張圖片到這裡</strong><small>或點擊選擇圖片 · 支援 PNG、JPG、WEBP</small></span></label><div class="file-list" id="pdf-file-list" aria-live="polite"><p class="converter-hint">目前尚未加入圖片。</p></div><div class="converter-form-grid" style="margin-top: 18px;"><div class="converter-control"><label class="converter-label" for="pdf-page-size">PDF 紙張</label><select id="pdf-page-size"><option value="a4">A4</option><option value="letter">Letter</option><option value="a5">A5</option></select></div><div class="converter-control"><label class="converter-label" for="pdf-orientation">頁面方向</label><select id="pdf-orientation"><option value="portrait">直式 Portrait</option><option value="landscape">橫式 Landscape</option></select></div><div class="converter-control full"><label class="converter-label" for="pdf-margin">頁邊距（mm）</label><input id="pdf-margin" type="number" min="0" max="50" step="1" value="10"><p class="converter-hint">每張圖片會等比例縮放並置中於頁面內，不會裁切。</p></div></div><div class="converter-actions"><button class="converter-button primary" id="pdf-generate" type="button" disabled><i class="fa-solid fa-file-pdf"></i> 合併並下載 PDF</button><button class="converter-button secondary" id="pdf-clear" type="button"><i class="fa-solid fa-rotate-left"></i> 清除全部</button></div><div class="converter-progress"><div class="converter-progress-head"><span>PDF 生成進度</span><span id="pdf-progress-label">0%</span></div><div class="converter-progress-track"><div class="converter-progress-bar" id="pdf-progress-bar"></div></div></div><p class="converter-status" id="pdf-status" aria-live="polite">請先加入至少一張圖片。</p><div class="converter-output" id="pdf-output"><h3>輸出摘要</h3><pre id="pdf-output-preview"></pre><div class="converter-actions"><button class="converter-button primary" id="pdf-download" type="button" disabled><i class="fa-solid fa-download"></i> 下載最近 PDF</button></div></div></section><aside><section class="converter-side-card"><h3><i class="fa-solid fa-arrow-down-wide-short"></i> 調整順序</h3><p>每張圖片右側的上移、下移按鈕只會改變本地清單順序；你可以在生成前反覆調整。</p><h4>版面適配</h4><p>工具會依圖片比例自動縮放，保留頁邊距，不會把圖片送往外部服務。</p></section><section class="converter-side-card"><h3><i class="fa-solid fa-shield-halved"></i> 隱私承諾</h3><p>jsPDF 在目前頁面中建立 PDF Blob，原始影像不會離開你的裝置。</p></section></aside></div><div id="converter-commerce"></div><!-- ad-sense-editorial -->
+<section class="converter-editorial" aria-labelledby="editorial-heading">
+    <div class="converter-editorial-intro">
+        <span class="converter-editorial-kicker">功能特點與使用指南</span>
+        <h2 id="editorial-heading">這個工具適合什麼工作？</h2>
+        <p>拖曳多張圖片、調整順序、選擇 A4 方向與邊界，在本地合成單一 PDF。</p>
+    </div>
+    <div class="converter-editorial-grid">
+        <section class="converter-guide-card" aria-labelledby="guide-heading">
+            <h3 id="guide-heading"><i class="fa-solid fa-list-check"></i> 3 步快速操作</h3>
+            <ol class="converter-step-list"><li><span>1</span><div>選擇或拖入多張圖片並調整順序。</div></li><li><span>2</span><div>設定紙張方向、邊界與圖片適配方式。</div></li><li><span>3</span><div>在瀏覽器生成 PDF，預覽摘要後下載。</div></li></ol>
+        </section>
+        <section class="converter-privacy-card" aria-labelledby="privacy-heading-editorial">
+            <h3 id="privacy-heading-editorial"><i class="fa-solid fa-shield-halved"></i> 隱私宣告</h3>
+            <p>影像與生成的 PDF 只存在於本機頁面；頁面沒有檔案上傳端點。</p>
+            <p class="converter-editorial-note">沒有檔案上傳端點；實際速度取決於裝置效能與瀏覽器支援。</p>
+        </section>
+    </div>
+    <section class="converter-faq" aria-labelledby="faq-heading">
+        <h3 id="faq-heading"><i class="fa-solid fa-circle-question"></i> 常見問題解答</h3>
+        <details><summary>圖片會被上傳嗎？</summary><p>不會。每張圖片由 File API 與 Canvas 在本地讀取，jsPDF 只在瀏覽器生成 PDF。</p></details><details><summary>能處理多少張圖片？</summary><p>沒有伺服器檔案數限制，但大量高解析圖片會消耗裝置記憶體；可分批處理以保持穩定。</p></details><details><summary>可以重新排序嗎？</summary><p>可以，檔案清單提供上移、下移與移除控制。</p></details>
+    </section>
+</section></main>
+    <footer><a class="converter-footer-support" href="https://ko-fi.com/R1K123XRS9" target="_blank" rel="noopener sponsored"><i class="fa-solid fa-mug-hot"></i> 喜歡這個工具？請在 Ko-fi 支持我們</a><div class="footer-links"><a href="../index.html#tools-section">主站首頁</a><a href="converter-hub.html">轉檔工具</a><a href="../index.html#tools-section">主站工具總覽</a><a href="../privacy.html">隱私權政策</a><a href="../terms.html">服務條款</a></div><p>© 2026 GugoPro. All rights reserved.</p><p class="converter-footer-note">本工具只在瀏覽器本地處理圖片。Amazon、TradingView 與 Ko-fi 連結可能包含合作推廣標記。</p><div class="site-contact-inline" style="margin:12px 0;line-height:1.8;"><a href="../contact.html" style="color:#67e8f9;font-weight:700;">聯絡我們 / Contact Us</a> <span style="margin-left:10px;">Support Email: <a href="mailto:contact@gugopro.com" style="color:#67e8f9;">contact@gugopro.com</a></span></div></footer>
+    <script src="converter-nav.js"></script><script src="converter-common.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        (function () {
+            'use strict';
+            var C = window.ConverterCommon;
+            var files = [];
+            var outputBlob = null;
+            var status = document.getElementById('pdf-status');
+            var fileList = document.getElementById('pdf-file-list');
+            var generateButton = document.getElementById('pdf-generate');
+            var downloadButton = document.getElementById('pdf-download');
+            var outputPreview = document.getElementById('pdf-output-preview');
+            var progressBar = document.getElementById('pdf-progress-bar');
+            var progressLabel = document.getElementById('pdf-progress-label');
+            function setProgress(value) { C.setProgress(progressBar, progressLabel, value); }
+            function renderList() {
+                if (!files.length) { fileList.innerHTML = '<p class="converter-hint">目前尚未加入圖片。</p>'; generateButton.disabled = true; return; }
+                fileList.innerHTML = files.map(function (file, index) {
+                    return '<div class="file-list-item"><i class="fa-solid fa-image"></i><span class="file-list-name" title="' + C.escapeHtml(file.name) + '">' + (index + 1) + '. ' + C.escapeHtml(file.name) + '</span><span>' + C.formatBytes(file.size) + '</span><span class="file-list-actions"><button type="button" data-action="up" data-index="' + index + '" aria-label="上移"><i class="fa-solid fa-chevron-up"></i></button><button type="button" data-action="down" data-index="' + index + '" aria-label="下移"><i class="fa-solid fa-chevron-down"></i></button><button type="button" data-action="remove" data-index="' + index + '" aria-label="移除"><i class="fa-solid fa-xmark"></i></button></span></div>';
+                }).join('');
+                generateButton.disabled = false;
+                C.setStatus(status, '已加入 ' + files.length + ' 張圖片，可以調整順序後生成 PDF。', 'success');
+            }
+            function addFiles(selected) {
+                var valid = selected.filter(function (file) { return /^image\/(png|jpe?g|webp)$/i.test(file.type) || /\.(png|jpe?g|webp)$/i.test(file.name); });
+                if (!valid.length) { C.setStatus(status, '請選擇 PNG、JPG、JPEG 或 WEBP 圖片。', 'error'); return; }
+                files = files.concat(valid); renderList();
+            }
+            function pageOptions() {
+                return { format: document.getElementById('pdf-page-size').value, orientation: document.getElementById('pdf-orientation').value, unit: 'mm', compress: true };
+            }
+            function imageFormat(file) { return /\.png$/i.test(file.name) || file.type === 'image/png' ? 'PNG' : 'JPEG'; }
+            function generatePdf() {
+                if (!files.length) return;
+                if (!window.jspdf || !window.jspdf.jsPDF) { C.setStatus(status, 'jsPDF 尚未載入，請確認網路連線後重新整理頁面。', 'error'); return; }
+                var margin = Math.max(0, Math.min(50, Number(document.getElementById('pdf-margin').value) || 10));
+                var doc = new window.jspdf.jsPDF(pageOptions());
+                var pageWidth = doc.internal.pageSize.getWidth();
+                var pageHeight = doc.internal.pageSize.getHeight();
+                var usableWidth = Math.max(1, pageWidth - margin * 2);
+                var usableHeight = Math.max(1, pageHeight - margin * 2);
+                setProgress(5); C.setStatus(status, '正在逐張讀取圖片並合併…');
+                Promise.all(files.map(function (file, index) { return Promise.all([C.readDataUrl(file), C.imageFromFile(file)]).then(function (values) { return { file: file, dataUrl: values[0], image: values[1], index: index }; }); })).then(function (items) {
+                    items.forEach(function (item, index) {
+                        if (index > 0) doc.addPage();
+                        var sourceWidth = item.image.naturalWidth || item.image.width;
+                        var sourceHeight = item.image.naturalHeight || item.image.height;
+                        var scale = Math.min(usableWidth / sourceWidth, usableHeight / sourceHeight);
+                        var width = sourceWidth * scale;
+                        var height = sourceHeight * scale;
+                        var x = (pageWidth - width) / 2;
+                        var y = (pageHeight - height) / 2;
+                        doc.addImage(item.dataUrl, imageFormat(item.file), Number(x), Number(y), Number(width), Number(height));
+                        setProgress(15 + ((index + 1) / items.length) * 75);
+                    });
+                    outputBlob = doc.output('blob');
+                    var outputName = 'gugopro-images-' + new Date().toISOString().slice(0, 10) + '.pdf';
+                    outputPreview.textContent = '已建立：' + outputName + '\n頁數：' + files.length + '\n頁面：' + String(document.getElementById('pdf-page-size').value).toUpperCase() + ' · ' + document.getElementById('pdf-orientation').value;
+                    downloadButton.disabled = false;
+                    setProgress(100); C.setStatus(status, 'PDF 生成完成，可以下載檔案。', 'success');
+                    downloadButton.dataset.filename = outputName;
+                }).catch(function (error) { C.setStatus(status, 'PDF 生成失敗：' + (error.message || '無法解析圖片') + '。', 'error'); setProgress(0); });
+            }
+            C.bindDropzone(document.getElementById('pdf-dropzone'), document.getElementById('pdf-files'), addFiles);
+            fileList.addEventListener('click', function (event) { var button = event.target.closest('button[data-action]'); if (!button) return; var index = Number(button.dataset.index); var action = button.dataset.action; if (action === 'remove') files.splice(index, 1); if (action === 'up' && index > 0) { var up = files[index - 1]; files[index - 1] = files[index]; files[index] = up; } if (action === 'down' && index < files.length - 1) { var down = files[index + 1]; files[index + 1] = files[index]; files[index] = down; } renderList(); });
+            generateButton.addEventListener('click', generatePdf);
+            downloadButton.addEventListener('click', function () { if (outputBlob) C.downloadBlob(outputBlob, downloadButton.dataset.filename || 'gugopro-images.pdf'); });
+            document.getElementById('pdf-clear').addEventListener('click', function () { files = []; outputBlob = null; document.getElementById('pdf-files').value = ''; outputPreview.textContent = ''; downloadButton.disabled = true; setProgress(0); renderList(); C.setStatus(status, '請先加入至少一張圖片。'); });
+            C.initCommerce('converter-commerce');
+        }());
+    </script>
+</body>
+</html>

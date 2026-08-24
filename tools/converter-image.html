@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="在瀏覽器本地完成 WEBP、JPG、PNG 互轉，支援影像品質、等比例縮放、多尺寸 Favicon ICO 與 Base64 導出。">
+    <title>多功能影像處理器 WEBP JPG PNG | GugoPro Converter Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/app.css">
+    <link rel="stylesheet" href="converter-base.css">
+    <link rel="stylesheet" href="converter-hub.css">
+</head>
+<body class="converter-page">
+    <header><div class="nav-container">            <a href="../index.html#tools-section" class="logo" aria-label="回到 GugoPro 主站首頁"><div class="logo-icon"><i class="fa-solid fa-rocket"></i></div><span class="logo-text">GugoPro</span><span class="logo-tag">生活實用工具</span></a><div class="tools-selector"><button class="tools-btn" type="button" aria-haspopup="true"><i class="fa-solid fa-screwdriver-wrench"></i> 轉檔工具 <i class="fa-solid fa-caret-down"></i></button><div class="tools-dropdown"><a href="converter-hub.html">轉檔工具專區</a><a href="converter-subtitles.html">字幕格式轉換器</a><a href="converter-image.html">多功能影像處理器</a><a href="converter-data.html">結構化數據轉換器</a><a href="converter-image-pdf.html">圖片合併轉 PDF</a><a href="../index.html#tools-section">主站工具總覽</a></div></div><div class="nav-actions"><a class="kofi-nav-btn" href="https://ko-fi.com/R1K123XRS9" target="_blank" rel="noopener sponsored"><i class="fa-solid fa-mug-hot"></i> 支持創作</a><a class="converter-home-link" href="../index.html#tools-section"><i class="fa-solid fa-house"></i> 主站首頁</a><a class="converter-language-link" href="../en/tools/converter-image.html"><i class="fa-solid fa-language"></i> English</a></div></div></header>
+    <section class="hero converter-hero"><div class="hero-badge"><i class="fa-solid fa-image"></i> Converter Hub / 影像工作流</div><h1>多功能影像處理器</h1><p>不必上傳到網站，直接在瀏覽器內完成格式轉換、壓縮、縮放、Favicon ICO 生成與 Base64 導出。</p><div class="hero-actions"><a class="converter-button secondary" href="converter-hub.html"><i class="fa-solid fa-arrow-left"></i> 返回 Converter Hub</a><span class="converter-stat"><strong>Canvas</strong> 裝置本地運算</span></div></section>
+    <main class="converter-shell"><div class="converter-workbench-wrap"><section class="converter-workbench" aria-labelledby="image-workbench-heading"><div class="converter-section-heading"><div><h2 id="image-workbench-heading">影像設定與輸出</h2><p>支援 PNG、JPG、JPEG 與 WEBP，輸出不會覆寫原始檔。</p></div></div><label class="converter-upload-zone" id="image-dropzone" for="image-file"><input id="image-file" type="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp"><span><i class="fa-solid fa-cloud-arrow-up converter-upload-icon"></i><strong>拖曳影像到這裡</strong><small>或點擊選擇圖片 · 不上傳伺服器</small></span></label><div class="converter-file-info" id="image-file-info" aria-live="polite"></div><div class="converter-preview" id="image-preview"><h3>原始影像預覽</h3><img id="image-preview-img" alt="原始影像預覽" hidden><p class="converter-hint" id="image-empty-hint">選擇圖片後會顯示尺寸與預覽。</p></div><div class="converter-form-grid"><div class="converter-control"><label class="converter-label" for="image-format">輸出格式</label><select id="image-format"><option value="webp">WEBP（推薦）</option><option value="jpeg">JPG</option><option value="png">PNG</option></select></div><div class="converter-control"><label class="converter-label" for="image-width">輸出寬度（px）</label><input id="image-width" type="number" min="1" step="1" placeholder="維持原尺寸"></div><div class="converter-control full"><label class="converter-label" for="image-quality">品質：<span id="image-quality-label">82</span>%</label><input id="image-quality" type="range" min="10" max="100" value="82"><p class="converter-hint">JPG / WEBP 會使用品質滑桿；PNG 以無損方式輸出。</p></div><div class="converter-control full"><label class="converter-check"><input id="image-keep-ratio" type="checkbox" checked> 等比例縮放（建議保持勾選）</label></div></div><div class="converter-actions"><button class="converter-button primary" id="image-convert" type="button" disabled><i class="fa-solid fa-wand-magic-sparkles"></i> 轉換與壓縮</button><button class="converter-button warning" id="image-favicon" type="button" disabled><i class="fa-solid fa-star"></i> 生成多尺寸 Favicon ICO</button><button class="converter-button secondary" id="image-base64" type="button" disabled><i class="fa-solid fa-code"></i> 導出 Base64</button><button class="converter-button secondary" id="image-clear" type="button"><i class="fa-solid fa-rotate-left"></i> 清除</button></div><div class="converter-progress"><div class="converter-progress-head"><span>處理進度</span><span id="image-progress-label">0%</span></div><div class="converter-progress-track"><div class="converter-progress-bar" id="image-progress-bar"></div></div></div><p class="converter-status" id="image-status" aria-live="polite">請先選擇圖片。</p><div class="converter-output" id="image-output"><h3 id="image-output-title">輸出預覽</h3><img id="image-output-img" alt="轉換後影像預覽" hidden><pre id="image-output-text"></pre><div class="converter-actions"><button class="converter-button primary" id="image-download" type="button" disabled><i class="fa-solid fa-download"></i> 下載輸出檔</button></div></div></section><aside><section class="converter-side-card"><h3><i class="fa-solid fa-sliders"></i> 參數小抄</h3><p>WEBP 適合網頁使用；JPG 適合照片；PNG 適合需要透明背景的圖像。將寬度留空即可保持原始尺寸。</p><h4>Favicon 輸出</h4><p>一次生成 16、32、48、64、128、256 px 的 PNG-in-ICO 多尺寸檔案，適合網站瀏覽器圖示。</p></section><section class="converter-side-card"><h3><i class="fa-solid fa-shield-halved"></i> 隱私承諾</h3><p>影像只經過本機 Image、Canvas 與 Blob API；原始檔不會離開你的裝置。</p></section></aside></div><div id="converter-commerce"></div><!-- ad-sense-editorial -->
+<section class="converter-editorial" aria-labelledby="editorial-heading">
+    <div class="converter-editorial-intro">
+        <span class="converter-editorial-kicker">功能特點與使用指南</span>
+        <h2 id="editorial-heading">這個工具適合什麼工作？</h2>
+        <p>WEBP、JPG、PNG 互轉，支援等比例縮放、品質壓縮、Favicon / ICO 與 Base64 導出。</p>
+    </div>
+    <div class="converter-editorial-grid">
+        <section class="converter-guide-card" aria-labelledby="guide-heading">
+            <h3 id="guide-heading"><i class="fa-solid fa-list-check"></i> 3 步快速操作</h3>
+            <ol class="converter-step-list"><li><span>1</span><div>選擇或拖入一張圖片並確認檔案資訊。</div></li><li><span>2</span><div>調整輸出格式、尺寸與壓縮品質。</div></li><li><span>3</span><div>預覽 Canvas 結果後下載本地輸出檔。</div></li></ol>
+        </section>
+        <section class="converter-privacy-card" aria-labelledby="privacy-heading-editorial">
+            <h3 id="privacy-heading-editorial"><i class="fa-solid fa-shield-halved"></i> 隱私宣告</h3>
+            <p>原始圖片只存在於目前瀏覽器工作階段，預覽與輸出都在本機完成。</p>
+            <p class="converter-editorial-note">沒有檔案上傳端點；實際速度取決於裝置效能與瀏覽器支援。</p>
+        </section>
+    </div>
+    <section class="converter-faq" aria-labelledby="faq-heading">
+        <h3 id="faq-heading"><i class="fa-solid fa-circle-question"></i> 常見問題解答</h3>
+        <details><summary>圖片會送到雲端嗎？</summary><p>不會。圖片由瀏覽器的 File API、Image 與 Canvas API 處理。</p></details><details><summary>如何處理多張圖片？</summary><p>單圖頁面適合逐張調整；需要多檔案與 ZIP 下載時，請使用多圖批次轉檔工具。</p></details><details><summary>為什麼輸出大小會不同？</summary><p>格式、尺寸與品質設定會影響 Blob 大小；JPG 與 WEBP 的有損品質也會改變檔案體積。</p></details>
+    </section>
+</section></main>
+    <footer><a class="converter-footer-support" href="https://ko-fi.com/R1K123XRS9" target="_blank" rel="noopener sponsored"><i class="fa-solid fa-mug-hot"></i> 喜歡這個工具？請在 Ko-fi 支持我們</a><div class="footer-links"><a href="../index.html#tools-section">主站首頁</a><a href="converter-hub.html">轉檔工具</a><a href="../index.html#tools-section">主站工具總覽</a><a href="../privacy.html">隱私權政策</a><a href="../terms.html">服務條款</a></div><p>© 2026 GugoPro. All rights reserved.</p><p class="converter-footer-note">本工具只在瀏覽器本地處理影像。Amazon、TradingView 與 Ko-fi 連結可能包含合作推廣標記。</p><div class="site-contact-inline" style="margin:12px 0;line-height:1.8;"><a href="../contact.html" style="color:#67e8f9;font-weight:700;">聯絡我們 / Contact Us</a> <span style="margin-left:10px;">Support Email: <a href="mailto:contact@gugopro.com" style="color:#67e8f9;">contact@gugopro.com</a></span></div></footer>
+    <script src="converter-nav.js"></script><script src="converter-common.js"></script>
+    <script>
+        (function () {
+            'use strict';
+            var C = window.ConverterCommon;
+            var file = null;
+            var image = null;
+            var outputBlob = null;
+            var outputName = '';
+            var outputMime = '';
+            var fileInput = document.getElementById('image-file');
+            var fileInfo = document.getElementById('image-file-info');
+            var sourcePreview = document.getElementById('image-preview-img');
+            var emptyHint = document.getElementById('image-empty-hint');
+            var outputPreview = document.getElementById('image-output-img');
+            var outputText = document.getElementById('image-output-text');
+            var status = document.getElementById('image-status');
+            var convertButton = document.getElementById('image-convert');
+            var faviconButton = document.getElementById('image-favicon');
+            var base64Button = document.getElementById('image-base64');
+            var downloadButton = document.getElementById('image-download');
+            var progressBar = document.getElementById('image-progress-bar');
+            var progressLabel = document.getElementById('image-progress-label');
+            var qualityInput = document.getElementById('image-quality');
+            var qualityLabel = document.getElementById('image-quality-label');
+            var widthInput = document.getElementById('image-width');
+            var formatInput = document.getElementById('image-format');
+            function setProgress(value) { C.setProgress(progressBar, progressLabel, value); }
+            function baseName(name) { return name.replace(/\.[^.]+$/, '') || 'image'; }
+            function canvasBlob(canvas, type, quality) { return new Promise(function (resolve, reject) { canvas.toBlob(function (blob) { blob ? resolve(blob) : reject(new Error('瀏覽器無法建立輸出影像')); }, type, quality); }); }
+            function renderCanvas(width, sizeOverride) {
+                var sourceWidth = image.naturalWidth || image.width;
+                var sourceHeight = image.naturalHeight || image.height;
+                var width = sizeOverride || Number(widthInput.value) || sourceWidth;
+                var height = Math.max(1, Math.round(width * sourceHeight / sourceWidth));
+                var canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                var context = canvas.getContext('2d');
+                if (formatInput.value === 'jpeg' || sizeOverride) { context.fillStyle = '#ffffff'; context.fillRect(0, 0, width, height); }
+                context.imageSmoothingEnabled = true;
+                context.imageSmoothingQuality = 'high';
+                context.drawImage(image, 0, 0, width, height);
+                return canvas;
+            }
+            function showOutput(blob, name, mime) {
+                outputBlob = blob;
+                outputName = name;
+                outputMime = mime;
+                outputText.textContent = '';
+                outputPreview.hidden = false;
+                outputPreview.src = URL.createObjectURL(blob);
+                downloadButton.disabled = false;
+            }
+            function selectFile(files) {
+                var candidate = files[0];
+                if (!candidate || !/^image\/(png|jpe?g|webp)$/i.test(candidate.type) && !/\.(png|jpe?g|webp)$/i.test(candidate.name)) { C.setStatus(status, '請選擇 PNG、JPG、JPEG 或 WEBP 圖片。', 'error'); return; }
+                file = candidate;
+                C.renderFileInfo(fileInfo, file);
+                C.setStatus(status, '正在讀取影像尺寸…');
+                C.imageFromFile(file).then(function (loaded) {
+                    image = loaded;
+                    sourcePreview.src = URL.createObjectURL(file);
+                    sourcePreview.hidden = false;
+                    emptyHint.hidden = true;
+                    widthInput.value = loaded.naturalWidth;
+                    convertButton.disabled = false;
+                    faviconButton.disabled = false;
+                    base64Button.disabled = false;
+                    setProgress(0);
+                    C.setStatus(status, '影像已準備好，請選擇輸出操作。', 'success');
+                }).catch(function () { C.setStatus(status, '無法解析影像，請確認檔案未損壞。', 'error'); });
+            }
+            function convertImage() {
+                if (!image) return;
+                setProgress(20); C.setStatus(status, '正在於本機繪製與壓縮影像…');
+                window.setTimeout(function () {
+                    var type = C.mimeForExtension(formatInput.value === 'jpeg' ? 'jpg' : formatInput.value);
+                    var extension = formatInput.value === 'jpeg' ? 'jpg' : formatInput.value;
+                    var canvas = renderCanvas();
+                    setProgress(58);
+                    canvasBlob(canvas, type, Number(qualityInput.value) / 100).then(function (blob) {
+                        showOutput(blob, baseName(file.name) + '-converted.' + extension, type);
+                        setProgress(100); C.setStatus(status, '影像轉換完成，可以下載輸出檔。', 'success');
+                    }).catch(function () { C.setStatus(status, '輸出影像失敗，請嘗試降低尺寸或品質。', 'error'); });
+                }, 140);
+            }
+            function createIco() {
+                if (!image) return;
+                var sizes = [16, 32, 48, 64, 128, 256];
+                setProgress(10); C.setStatus(status, '正在生成多尺寸 Favicon…');
+                Promise.all(sizes.map(function (size, index) { return canvasBlob(renderCanvas(size, size), 'image/png').then(function (blob) { setProgress(15 + ((index + 1) / sizes.length) * 65); return blob.arrayBuffer(); }); })).then(function (buffers) {
+                    var headerSize = 6 + (16 * buffers.length);
+                    var totalSize = headerSize + buffers.reduce(function (sum, buffer) { return sum + buffer.byteLength; }, 0);
+                    var result = new Uint8Array(totalSize);
+                    var view = new DataView(result.buffer);
+                    view.setUint16(0, 0, true); view.setUint16(2, 1, true); view.setUint16(4, buffers.length, true);
+                    var offset = headerSize;
+                    buffers.forEach(function (buffer, index) {
+                        var directory = 6 + (index * 16);
+                        var size = sizes[index];
+                        view.setUint8(directory, size === 256 ? 0 : size); view.setUint8(directory + 1, size === 256 ? 0 : size); view.setUint8(directory + 2, 0); view.setUint8(directory + 3, 0); view.setUint16(directory + 4, 1, true); view.setUint16(directory + 6, 32, true); view.setUint32(directory + 8, buffer.byteLength, true); view.setUint32(directory + 12, offset, true);
+                        result.set(new Uint8Array(buffer), offset); offset += buffer.byteLength;
+                    });
+                    showOutput(new Blob([result], { type: 'image/x-icon' }), baseName(file.name) + '-favicon.ico', 'image/x-icon');
+                    document.getElementById('image-output-title').textContent = 'Favicon ICO 預覽（第一個尺寸）';
+                    outputPreview.src = URL.createObjectURL(new Blob([buffers[0]], { type: 'image/png' }));
+                    setProgress(100); C.setStatus(status, '已生成 16 / 32 / 48 / 64 / 128 / 256 px 的多尺寸 ICO。', 'success');
+                }).catch(function () { C.setStatus(status, 'Favicon 生成失敗，請換一張圖片再試。', 'error'); });
+            }
+            function exportBase64() {
+                if (!file) return;
+                setProgress(35); C.setStatus(status, '正在建立 Base64 Data URL…');
+                C.readDataUrl(file).then(function (dataUrl) {
+                    outputBlob = new Blob([dataUrl], { type: 'text/plain;charset=utf-8' }); outputName = baseName(file.name) + '-base64.txt'; outputMime = 'text/plain;charset=utf-8'; outputPreview.hidden = true; outputText.textContent = dataUrl; downloadButton.disabled = false; setProgress(100); C.setStatus(status, 'Base64 已生成，可以下載 .txt。', 'success');
+                }).catch(function () { C.setStatus(status, 'Base64 導出失敗，請重新選擇圖片。', 'error'); });
+            }
+            qualityInput.addEventListener('input', function () { qualityLabel.textContent = qualityInput.value; });
+            C.bindDropzone(document.getElementById('image-dropzone'), fileInput, selectFile);
+            convertButton.addEventListener('click', convertImage);
+            faviconButton.addEventListener('click', createIco);
+            base64Button.addEventListener('click', exportBase64);
+            downloadButton.addEventListener('click', function () { if (outputBlob) C.downloadBlob(outputBlob, outputName); });
+            document.getElementById('image-clear').addEventListener('click', function () { file = null; image = null; outputBlob = null; fileInput.value = ''; fileInfo.innerHTML = ''; sourcePreview.hidden = true; sourcePreview.removeAttribute('src'); outputPreview.hidden = true; outputPreview.removeAttribute('src'); outputText.textContent = ''; emptyHint.hidden = false; convertButton.disabled = true; faviconButton.disabled = true; base64Button.disabled = true; downloadButton.disabled = true; setProgress(0); C.setStatus(status, '請先選擇圖片。'); });
+            C.initCommerce('converter-commerce');
+        }());
+    </script>
+</body>
+</html>

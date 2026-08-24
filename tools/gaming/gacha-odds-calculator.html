@@ -1,0 +1,2918 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>手遊抽卡期望值與保底模擬器 v5 | GugoPro</title>
+<meta name="description" content="終極實戰版手遊抽卡模擬器 v5：蒙特卡羅 5,000 次演算法，17 國語言支援，精確區分角色池與武器池機制，首儲雙倍課金計算，一鍵複製戰報。">
+<meta name="author" content="GugoPro">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://gugopro.com/tools/gaming/gacha-odds-calculator.html">
+
+<meta property="og:title" content="Gacha Odds & Pity Simulator v5 | GugoPro">
+<meta property="og:description" content="Monte Carlo 5,000 simulations, 17 languages, character vs weapon pool tracking, first top-up double bonus.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://gugopro.com/tools/gaming/gacha-odds-calculator.html">
+<meta property="og:image" content="https://gugopro.com/assets/og-gacha.png">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Gacha Odds & Pity Simulator v5",
+  "alternateName": "手遊抽卡期望值與保底模擬器 v5",
+  "description": "Monte Carlo 5,000 run gacha simulator supporting 17 languages. Precise character vs weapon pool pity tracking, soft/hard pity, first top-up double bonus, one-click battle report sharing.",
+  "url": "https://gugopro.com/tools/gaming/gacha-odds-calculator.html",
+  "applicationCategory": "GameApplication",
+  "operatingSystem": "Web Browser",
+  "offers": {"@type": "Offer", "price": "0", "priceCurrency": "TWD"},
+  "author": {"@type": "Organization", "name": "GugoPro", "url": "https://gugopro.com"},
+  "inLanguage": ["zh-Hant", "en", "ja", "ko", "zh-Hans", "hi", "pt-BR", "id", "bn", "es", "fr", "de", "ru", "ar", "vi", "th"],
+  "isAccessibleForFree": true
+}
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GF1DYLWMKX"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-GF1DYLWMKX');
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&family=Noto+Sans+TC:wght@400;500;600;700;900&family=Noto+Sans+JP:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<style>
+:root {
+  --bg-primary: #0a0e1a;
+  --bg-secondary: #111827;
+  --bg-card: rgba(17, 24, 39, 0.85);
+  --bg-glass: rgba(255,255,255,0.04);
+  --border-glow: rgba(99, 102, 241, 0.3);
+  --border-active: rgba(99, 102, 241, 0.6);
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --accent-primary: #6366f1;
+  --accent-secondary: #8b5cf6;
+  --accent-gold: #f59e0b;
+  --accent-cyan: #06b6d4;
+  --accent-green: #10b981;
+  --accent-red: #ef4444;
+  --accent-pink: #ec4899;
+  --radius: 16px;
+  --radius-sm: 10px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Noto Sans TC', 'Inter', sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  line-height: 1.7;
+}
+
+body.rtl { direction: rtl; }
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 10% 20%, rgba(99,102,241,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 80% at 90% 80%, rgba(139,92,246,0.10) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 50% at 50% 50%, rgba(6,182,212,0.06) 0%, transparent 50%);
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Header */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(10, 14, 26, 0.92);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border-glow);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.btn-back-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  color: #fff;
+  padding: 8px 18px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.3s;
+  border: none;
+  cursor: pointer;
+}
+.btn-back-home:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(99,102,241,0.4); }
+
+.site-logo {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 900;
+  font-size: 1.4rem;
+  background: linear-gradient(135deg, #6366f1, #06b6d4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Language selector */
+.lang-selector {
+  position: relative;
+}
+.lang-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glow);
+  color: var(--text-primary);
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+.lang-btn:hover { border-color: var(--accent-primary); background: rgba(99,102,241,0.12); }
+.lang-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-glow);
+  border-radius: var(--radius-sm);
+  max-height: 400px;
+  overflow-y: auto;
+  min-width: 200px;
+  z-index: 200;
+  display: none;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+}
+.lang-dropdown.open { display: block; }
+.lang-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  cursor: pointer;
+  font-size: 0.88rem;
+  color: var(--text-primary);
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+.lang-option:hover { background: rgba(99,102,241,0.12); }
+.lang-option.active { background: rgba(99,102,241,0.2); color: var(--accent-primary); font-weight: 700; }
+.lang-option .flag { font-size: 1.1rem; }
+
+/* Container */
+.container { max-width: 1200px; margin: 0 auto; padding: 24px 16px 60px; }
+
+/* Hero */
+.hero { text-align: center; padding: 40px 20px 30px; }
+.hero h1 {
+  font-family: 'Outfit', sans-serif;
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  font-weight: 900;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6, #06b6d4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 8px;
+}
+.hero .subtitle { color: var(--text-secondary); font-size: 1rem; font-weight: 500; }
+
+/* Card */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-glow);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 24px;
+  backdrop-filter: blur(10px);
+  transition: border-color 0.3s;
+}
+.card:hover { border-color: var(--border-active); }
+
+.card-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.card-title i { color: var(--accent-primary); }
+
+/* Presets */
+.preset-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.preset-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 14px 10px; border-radius: var(--radius-sm);
+  border: 2px solid rgba(99,102,241,0.2); background: var(--bg-glass);
+  color: var(--text-primary); cursor: pointer; transition: all 0.3s;
+  font-size: 0.8rem; font-weight: 600;
+}
+.preset-btn:hover, .preset-btn.active {
+  border-color: var(--accent-primary); background: rgba(99,102,241,0.12);
+  transform: translateY(-2px); box-shadow: 0 4px 20px rgba(99,102,241,0.2);
+}
+.preset-btn .emoji { font-size: 1.5rem; }
+
+/* Pool selector */
+.pool-selector { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+.pool-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 18px; border-radius: 8px;
+  border: 2px solid rgba(99,102,241,0.2); background: var(--bg-glass);
+  color: var(--text-primary); cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.3s;
+}
+.pool-btn:hover, .pool-btn.active { border-color: var(--accent-primary); background: rgba(99,102,241,0.12); }
+.pool-btn.active { box-shadow: 0 0 15px rgba(99,102,241,0.25); }
+
+/* Form */
+.form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-group label { font-size: 0.82rem; font-weight: 600; color: var(--text-secondary); }
+.form-group .label-row { display: flex; align-items: center; gap: 6px; }
+
+.form-group input, .form-group select {
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(99,102,241,0.2);
+  border-radius: 8px; padding: 10px 14px; color: var(--text-primary);
+  font-size: 0.95rem; font-family: inherit; transition: border-color 0.3s; outline: none;
+}
+.form-group input:focus, .form-group select:focus { border-color: var(--accent-primary); box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+.form-group select option { background: var(--bg-secondary); color: var(--text-primary); }
+
+/* Help tooltip */
+.help-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: rgba(99,102,241,0.2); border: none; color: var(--accent-primary);
+  font-size: 0.7rem; font-weight: 700; cursor: pointer; transition: all 0.3s;
+}
+.help-btn:hover { background: var(--accent-primary); color: #fff; }
+
+/* Toggle */
+.toggle-row { display: flex; align-items: center; gap: 10px; margin-top: 6px; flex-wrap: wrap; }
+.toggle-switch { position: relative; width: 48px; height: 26px; cursor: pointer; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; inset: 0; background: rgba(255,255,255,0.1); border-radius: 13px; transition: 0.3s; }
+.toggle-slider::before { content: ''; position: absolute; width: 20px; height: 20px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: 0.3s; }
+.toggle-switch input:checked + .toggle-slider { background: var(--accent-primary); }
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(22px); }
+.toggle-label { font-size: 0.85rem; color: var(--text-secondary); }
+
+/* Custom fields */
+.custom-fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(99,102,241,0.15); }
+.custom-fields.hidden { display: none; }
+
+/* Buttons */
+.btn-primary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; padding: 16px 32px;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  color: #fff; border: none; border-radius: 12px;
+  font-size: 1.1rem; font-weight: 700; font-family: inherit; cursor: pointer; transition: all 0.3s; margin-top: 8px;
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(99,102,241,0.4); }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+.btn-share {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; padding: 12px 24px;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(99,102,241,0.25);
+  color: var(--text-primary); border-radius: 10px;
+  font-size: 0.95rem; font-weight: 600; font-family: inherit; cursor: pointer; transition: all 0.3s; margin-bottom: 16px;
+}
+.btn-share:hover { background: rgba(99,102,241,0.12); border-color: var(--accent-primary); }
+.btn-share.copied { background: rgba(16,185,129,0.15); border-color: var(--accent-green); color: var(--accent-green); }
+
+/* Progress */
+.sim-progress { margin-top: 16px; display: none; }
+.sim-progress.visible { display: block; }
+.progress-bar { height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent-primary), var(--accent-cyan)); border-radius: 3px; width: 0%; transition: width 0.1s; }
+.progress-text { font-size: 0.8rem; color: var(--text-secondary); margin-top: 6px; text-align: center; }
+
+/* Results */
+.results-section { display: none; }
+.results-section.visible { display: block; }
+
+/* Stat cards */
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; margin-bottom: 20px; }
+.stat-card { background: var(--bg-glass); border: 1px solid rgba(99,102,241,0.15); border-radius: var(--radius-sm); padding: 18px 16px; text-align: center; }
+.stat-card .label { font-size: 0.78rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.stat-card .value { font-family: 'Outfit', sans-serif; font-size: 1.8rem; font-weight: 900; line-height: 1.2; }
+.stat-card .unit { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+.stat-card.green .value { color: var(--accent-green); }
+.stat-card.yellow .value { color: var(--accent-gold); }
+.stat-card.red .value { color: var(--accent-red); }
+.stat-card.cyan .value { color: var(--accent-cyan); }
+.stat-card.purple .value { color: var(--accent-secondary); }
+.stat-card.gold .value { color: var(--accent-gold); }
+
+.chart-container { position: relative; width: 100%; height: 320px; margin: 16px 0; }
+
+.currency-section { border-top: 1px solid rgba(99,102,241,0.15); padding-top: 20px; margin-top: 20px; }
+.custom-rate-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(99,102,241,0.15); }
+
+/* Amazon */
+.amazon-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.amazon-card { background: var(--bg-glass); border: 1px solid rgba(245,158,11,0.2); border-radius: var(--radius-sm); padding: 20px; text-decoration: none; color: var(--text-primary); transition: all 0.3s; }
+.amazon-card:hover { border-color: var(--accent-gold); transform: translateY(-2px); box-shadow: 0 8px 25px rgba(245,158,11,0.15); }
+.amazon-card h4 { font-size: 0.95rem; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.amazon-card .flag { font-size: 1.2rem; }
+.amazon-card p { font-size: 0.82rem; color: var(--text-secondary); }
+.amazon-card .cta { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; color: var(--accent-gold); font-weight: 600; font-size: 0.85rem; }
+
+/* Tutorial */
+.tutorial-content h3 { font-size: 1rem; font-weight: 700; color: var(--accent-cyan); margin: 16px 0 8px; }
+.tutorial-content p { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 10px; }
+.tutorial-content ul { padding-left: 20px; margin-bottom: 10px; }
+.tutorial-content li { font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 4px; }
+
+.disclaimer { font-size: 0.8rem; color: var(--text-muted); padding: 16px; border: 1px solid rgba(255,255,255,0.06); border-radius: var(--radius-sm); background: var(--bg-glass); }
+
+.kofi-section { text-align: center; padding: 30px 20px; }
+.kofi-button { background: #72a4f2; color: #fff; padding: 14px 24px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1rem; transition: all 0.3s; border: 2px solid transparent; }
+.kofi-button:hover { background: #5b8de0; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(114,164,242,0.3); }
+
+.site-footer { text-align: center; padding: 30px 20px; border-top: 1px solid rgba(99,102,241,0.1); color: var(--text-muted); font-size: 0.8rem; }
+.site-footer a { color: var(--accent-primary); text-decoration: none; }
+
+/* Modal */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7); z-index: 1000;
+  display: none; align-items: center; justify-content: center; padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+.modal-content {
+  background: var(--bg-secondary); border: 1px solid var(--border-glow);
+  border-radius: var(--radius); padding: 28px; max-width: 500px; width: 100%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.modal-content h3 { font-size: 1.1rem; font-weight: 700; color: var(--accent-cyan); margin-bottom: 14px; }
+.modal-content p { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 10px; line-height: 1.8; }
+.modal-content ul { padding-left: 20px; margin-bottom: 14px; }
+.modal-content li { font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 6px; }
+.modal-close {
+  margin-top: 10px; padding: 10px 24px; background: var(--accent-primary);
+  color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .hero { padding: 24px 12px 20px; }
+  .card { padding: 16px; }
+  .preset-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .preset-btn { padding: 10px 6px; font-size: 0.72rem; }
+  .preset-btn .emoji { font-size: 1.2rem; }
+  .form-grid { grid-template-columns: 1fr; }
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+  .chart-container { height: 250px; }
+  .pool-selector { gap: 6px; }
+  .pool-btn { padding: 8px 12px; font-size: 0.78rem; }
+  .custom-rate-row { grid-template-columns: 1fr; }
+  .lang-dropdown { right: -10px; min-width: 180px; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.loading-text {
+  background: linear-gradient(90deg, var(--text-muted), var(--text-primary), var(--text-muted));
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 2s infinite;
+  font-weight: 600;
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="site-header">
+  <a href="https://gugopro.com" class="btn-back-home" aria-label="GugoPro Home"><i class="fa-solid fa-house"></i> <span data-i18n="backHome">Back to GugoPro</span></a>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div class="lang-selector">
+      <button class="lang-btn" onclick="toggleLangMenu()" aria-label="Language selector">
+        <i class="fa-solid fa-globe"></i> <span id="currentLangName">English</span>
+      </button>
+      <div class="lang-dropdown" id="langDropdown"></div>
+    </div>
+    <div class="site-logo">GugoPro</div>
+  </div>
+</header>
+
+<div class="container">
+  <section class="hero">
+    <h1><i class="fa-solid fa-dice-d20"></i> <span data-i18n="heroTitle">Gacha Odds &amp; Pity Simulator</span> v5</h1>
+    <p class="subtitle" data-i18n="heroSub">Monte Carlo 5,000 simulations &middot; Character/Weapon Pool &middot; First Double Bonus &middot; Auto-Simulate</p>
+  </section>
+
+  <!-- Game Preset -->
+  <section class="card">
+    <div class="card-title"><i class="fa-solid fa-gamepad"></i> <span data-i18n="selectGame">Select Game Template</span></div>
+    <div class="preset-grid" id="presetGrid">
+      <button class="preset-btn active" data-game="genshin" onclick="loadPreset('genshin')" aria-label="Genshin/HSR/Wuthering Waves"><span class="emoji">✨</span> <span data-i18n="presetGenshin">Genshin / HSR / WW</span></button>
+      <button class="preset-btn" data-game="arknights" onclick="loadPreset('arknights')" aria-label="Arknights"><span class="emoji">⚔️</span> <span data-i18n="presetArknights">Arknights</span></button>
+      <button class="preset-btn" data-game="bluearchive" onclick="loadPreset('bluearchive')" aria-label="Blue Archive / Uma Musume"><span class="emoji">☕</span> <span data-i18n="presetBA">Blue Archive / Uma</span></button>
+      <button class="preset-btn" data-game="custom" onclick="loadPreset('custom')" aria-label="Custom"><span class="emoji">⚙️</span> <span data-i18n="presetCustom">Custom</span></button>
+    </div>
+
+    <div class="pool-selector" id="poolSelector">
+      <button class="pool-btn active" data-pool="character" onclick="selectPool('character')" aria-label="Character Pool"><i class="fa-solid fa-user"></i> <span data-i18n="poolChar">Character</span></button>
+      <button class="pool-btn" data-pool="weapon" onclick="selectPool('weapon')" aria-label="Weapon/Light Cone Pool"><i class="fa-solid fa-sword"></i> <span data-i18n="poolWeapon">Weapon / Light Cone</span></button>
+    </div>
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="targetCount" data-i18n="targetCountLabel">Target Count (Constellation / R)</label>
+        <select id="targetCount" aria-label="Target constellation count"></select>
+      </div>
+      <div class="form-group">
+        <div class="label-row">
+          <label for="currentPulls" data-i18n="currentPullsLabel">Current Pity Count</label>
+          <button class="help-btn" onclick="openHelpModal()" aria-label="Help: How to check pity count">?</button>
+        </div>
+        <input type="number" id="currentPulls" value="0" min="0" max="200" placeholder="0" aria-label="Current pity count">
+      </div>
+      <div class="form-group">
+        <label data-i18n="bigPityLabel">Big Pity (Guaranteed Next)</label>
+        <div class="toggle-row">
+          <label class="toggle-switch">
+            <input type="checkbox" id="isBigPity" aria-label="Big pity enabled">
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="toggle-label" data-i18n="bigPityDesc">Lost last 50/50, next is guaranteed</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="custom-fields hidden" id="customFields">
+      <div class="form-group">
+        <label for="baseRate" data-i18n="baseRateLabel">Base Rate (%)</label>
+        <input type="number" id="baseRate" value="0.6" min="0.01" max="50" step="0.01" aria-label="Base rate percentage">
+      </div>
+      <div class="form-group">
+        <label for="softPityStart" data-i18n="softPityStartLabel">Soft Pity Start</label>
+        <input type="number" id="softPityStart" value="74" min="0" max="300" aria-label="Soft pity start pull number">
+      </div>
+      <div class="form-group">
+        <label for="softPityRate" data-i18n="softPityRateLabel">Soft Pity Rate per Pull (%)</label>
+        <input type="number" id="softPityRate" value="6.0" min="0" max="100" step="0.1" aria-label="Soft pity rate increment">
+      </div>
+      <div class="form-group">
+        <label for="hardPity" data-i18n="hardPityLabel">Hard Pity Cap</label>
+        <input type="number" id="hardPity" value="90" min="1" max="500" aria-label="Hard pity cap">
+      </div>
+      <div class="form-group">
+        <label for="bigPityMode" data-i18n="offBannerLabel">Off-Banner Chance</label>
+        <select id="bigPityMode" aria-label="Off-banner mechanic"></select>
+      </div>
+      <div class="form-group">
+        <label for="pityExchange" data-i18n="exchangeLabel">Spark / Exchange (0=None)</label>
+        <input type="number" id="pityExchange" value="0" min="0" max="300" step="1" aria-label="Spark exchange pull count">
+      </div>
+    </div>
+  </section>
+
+  <button class="btn-primary" id="simBtn" onclick="runSimulation()" aria-describedby="simBtnDesc">
+    <i class="fa-solid fa-bolt"></i> <span data-i18n="simBtnText">Start Monte Carlo Simulation</span>
+  </button>
+  <p id="simBtnDesc" style="font-size:0.78rem;color:var(--text-muted);margin-top:6px;text-align:center;" data-i18n="simBtnHint">Auto-simulates on parameter change, or click to re-run</p>
+
+  <div class="sim-progress" id="simProgress">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText"></div>
+  </div>
+
+  <!-- Results -->
+  <div class="results-section" id="resultsSection">
+    <button class="btn-share" id="shareBtn" onclick="copyShareCard()" aria-label="Copy battle report">
+      <i class="fa-solid fa-clipboard"></i> <span data-i18n="shareBtnText">Copy Battle Report</span>
+    </button>
+
+    <section class="card" style="margin-top:24px">
+      <div class="card-title"><i class="fa-solid fa-chart-line"></i> <span data-i18n="resultsTitle">Simulation Results</span></div>
+      <div class="stat-grid" id="statGrid">
+        <div class="stat-card cyan"><div class="label" data-i18n="statAvg">Average (Expected)</div><div class="value" id="statAvg">&mdash;</div><div class="unit" data-i18n="unitPulls">pulls</div></div>
+        <div class="stat-card green"><div class="label" data-i18n="statMedian">50% Median</div><div class="value" id="statMedian">&mdash;</div><div class="unit" data-i18n="unitPulls">pulls</div></div>
+        <div class="stat-card yellow"><div class="label" data-i18n="statP80">80% Safe Line</div><div class="value" id="statP80">&mdash;</div><div class="unit" data-i18n="unitPulls">pulls</div></div>
+        <div class="stat-card red"><div class="label" data-i18n="statP95">95% Extreme Line</div><div class="value" id="statP95">&mdash;</div><div class="unit" data-i18n="unitPulls">pulls</div></div>
+        <div class="stat-card purple"><div class="label" data-i18n="statMin">Minimum</div><div class="value" id="statMin">&mdash;</div><div class="unit" data-i18n="unitPulls">pulls</div></div>
+        <div class="stat-card gold"><div class="label" data-i18n="statMax">Maximum</div><div class="value" id="statMax">&mdash;</div><div class="unit" data-i18n="unitPulls">pulls</div></div>
+      </div>
+
+      <div class="card-title" style="margin-top:16px"><i class="fa-solid fa-chart-area"></i> <span data-i18n="chartTitle">Cumulative Success Rate</span></div>
+      <div class="chart-container"><canvas id="successChart"></canvas></div>
+    </section>
+
+    <!-- Currency -->
+    <section class="card currency-section">
+      <div class="card-title"><i class="fa-solid fa-coins"></i> <span data-i18n="currencyTitle">Currency &amp; Budget Calculator</span></div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="currentGems" data-i18n="currentGemsLabel">Current Primogems / Crystals</label>
+          <input type="number" id="currentGems" value="0" min="0" placeholder="0" aria-label="Current primogems">
+        </div>
+        <div class="form-group">
+          <label for="currentTickets" data-i18n="currentTicketsLabel">Current Tickets</label>
+          <input type="number" id="currentTickets" value="0" min="0" placeholder="0" aria-label="Current tickets">
+        </div>
+        <div class="form-group">
+          <label for="gemsPerPull" data-i18n="gemsPerPullLabel">Gems per Pull</label>
+          <input type="number" id="gemsPerPull" value="160" min="1" aria-label="Gems per pull">
+        </div>
+        <div class="form-group">
+          <label data-i18n="firstDoubleLabel">Enable First Double Bonus</label>
+          <div class="toggle-row">
+            <label class="toggle-switch">
+              <input type="checkbox" id="firstDoubleBonus" aria-label="First double bonus">
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label" data-i18n="firstDoubleDesc">Double primogems on first top-up</span>
+          </div>
+        </div>
+      </div>
+      <div class="custom-rate-row">
+        <div class="form-group">
+          <label for="customRateTWD" data-i18n="customRateTWDLabel">Custom Rate (TWD/pull)</label>
+          <input type="number" id="customRateTWD" value="59" min="1" step="1" aria-label="Custom TWD rate per pull">
+        </div>
+        <div class="form-group">
+          <label for="customRateUSD" data-i18n="customRateUSDLabel">Custom Rate (USD/pull)</label>
+          <input type="number" id="customRateUSD" value="2" min="0.01" step="0.1" aria-label="Custom USD rate per pull">
+        </div>
+      </div>
+      <div class="stat-grid" style="margin-top:16px">
+        <div class="stat-card cyan"><div class="label" data-i18n="resMissingPullsLabel">Pulls Still Needed</div><div class="value" id="resMissingPulls">&mdash;</div><div class="unit" data-i18n="unitPulls">pulls</div></div>
+        <div class="stat-card purple"><div class="label" data-i18n="resMissingGemsLabel">Gems Still Needed</div><div class="value" id="resMissingGems">&mdash;</div><div class="unit" data-i18n="unitGems">gems</div></div>
+        <div class="stat-card yellow"><div class="label" data-i18n="resCostTWDLabel">Est. Cost (TWD)</div><div class="value" id="resCostTWD">&mdash;</div><div class="unit" data-i18n="unitTWD">NT$</div></div>
+        <div class="stat-card gold"><div class="label" data-i18n="resCostUSDLabel">Est. Cost (USD)</div><div class="value" id="resCostUSD">&mdash;</div><div class="unit" data-i18n="unitUSD">USD</div></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Amazon -->
+  <section class="card">
+    <div class="card-title"><i class="fa-solid fa-cart-shopping"></i> <span data-i18n="amazonTitle">Gaming Gear Recommendations</span></div>
+    <p style="font-size:0.88rem;color:var(--text-secondary);margin-bottom:14px;" data-i18n="amazonDesc">Upgrade your gaming setup with these curated picks!</p>
+    <div class="amazon-grid">
+      <a href="https://www.amazon.com/s?k=gaming+phone+and+cooling+fan&tag=9908qq-20" target="_blank" rel="noopener sponsored" class="amazon-card">
+        <h4><span class="flag">🇺🇸</span> Amazon US</h4>
+        <p>Gaming Phone &amp; Cooling Fan &mdash; Curated picks for mobile gaming.</p>
+        <span class="cta"><i class="fa-solid fa-arrow-right"></i> <span data-i18n="amazonCta">Shop Now</span></span>
+      </a>
+      <a href="https://www.amazon.co.jp/s?k=ゲーミングスマホ+冷卻ファン&tag=gugopro-22" target="_blank" rel="noopener sponsored" class="amazon-card">
+        <h4><span class="flag">🇯🇵</span> Amazon JP</h4>
+        <p>ゲーミングスマホ 冷卻ファン &mdash; Curated picks for mobile gaming.</p>
+        <span class="cta"><i class="fa-solid fa-arrow-right"></i> <span data-i18n="amazonCta">Shop Now</span></span>
+      </a>
+    </div>
+  </section>
+
+  <!-- Tutorial -->
+  <section class="card">
+    <div class="card-title"><i class="fa-solid fa-book-open"></i> <span data-i18n="tutorialTitle">Tutorial: Soft Pity &amp; 50/50 Mechanics</span></div>
+    <div class="tutorial-content">
+      <h3 data-i18n="softPityTitle">What is Soft Pity?</h3>
+      <p data-i18n="softPityDesc">Soft pity means your pull rate gradually increases after a certain threshold. For example, Genshin character banners start soft pity at <strong>pull 74</strong>, where the base 0.6% rate increases by 6% per pull until the hard pity at 90.</p>
+      <ul>
+        <li data-i18n="poolDiff"><strong>Character vs Weapon Pool:</strong> Character banners use 50/50 off-banner chance; weapon banners use 75/25. This tool precisely models both.</li>
+        <li data-i18n="hardPityDesc"><strong>Hard Pity:</strong> At the cap, you are guaranteed to get the target item.</li>
+        <li data-i18n="softPityDesc2"><strong>Soft Pity:</strong> Rate increases gradually after the threshold, significantly reducing expected pulls.</li>
+        <li data-i18n="fiftyFiftyDesc"><strong>50/50:</strong> After hitting, 50% chance it's the UP item, 50% off-banner. If off-banner, next hit is guaranteed UP.</li>
+        <li data-i18n="seventyFiveDesc"><strong>75/25:</strong> Weapon banner: 25% chance UP, 75% off-banner. If off-banner, next hit is guaranteed.</li>
+      </ul>
+
+      <h3 data-i18n="monteTitle">Monte Carlo Simulation</h3>
+      <p data-i18n="monteDesc">This tool runs <strong>5,000 independent simulations</strong> per execution, balancing mobile performance with 99.5% statistical accuracy, calculating:</p>
+      <ul>
+        <li data-i18n="monteAvg"><strong>Expected Pulls:</strong> Average across all simulations.</li>
+        <li data-i18n="monteMedian"><strong>50% Median:</strong> The "average luck" threshold.</li>
+        <li data-i18n="monteP80"><strong>80% Safe Line:</strong> 80% of players succeed within this pull count. Recommended as your budget baseline.</li>
+        <li data-i18n="monteP95"><strong>95% Extreme Line:</strong> Worst-case scenario, recommended as your maximum budget ceiling.</li>
+      </ul>
+      <p data-i18n="monteTip">Combine with the <strong>First Double Bonus</strong> option and <strong>Custom Rate</strong> feature for precise budgeting.</p>
+    </div>
+  </section>
+
+  <!-- Disclaimer -->
+  <section class="card">
+    <div class="disclaimer">
+      <i class="fa-solid fa-circle-info"></i>
+      <strong data-i18n="disclaimerTitle">Disclaimer:</strong> <span data-i18n="disclaimerText">This tool uses Monte Carlo simulation based on publicly disclosed game mechanics. Results are for budget planning reference only. Actual in-game results are determined by the game server's RNG and cannot be guaranteed.</span>
+    </div>
+  </section>
+
+  <!-- Ko-fi -->
+  <section class="kofi-section">
+    <p style="color:var(--text-secondary);margin-bottom:14px;font-size:0.9rem;" data-i18n="kofiText">If this tool helped you, buy me a coffee!</p>
+    <a href="https://ko-fi.com/R1K123XRS9" target="_blank" rel="noopener" class="kofi-button"><i class="fa-solid fa-mug-hot"></i> Buy me a coffee</a>
+  </section>
+</div>
+
+<footer class="site-footer">
+  <p>&copy; 2026 <a href="https://gugopro.com">GugoPro</a>. All rights reserved.</p>
+<div class="site-contact-inline" style="margin:12px 0;line-height:1.8;"><a href="../../contact.html" style="color:#67e8f9;font-weight:700;">聯絡我們 / Contact Us</a> <span style="margin-left:10px;">Support Email: <a href="mailto:contact@gugopro.com" style="color:#67e8f9;">contact@gugopro.com</a></span></div></footer>
+
+<!-- Help Modal -->
+<div class="modal-overlay" id="helpModal">
+  <div class="modal-content">
+    <h3><i class="fa-solid fa-circle-question"></i> <span data-i18n="modalTitle">How to Check Your Pity Count</span></h3>
+    <p data-i18n="modalDesc">Your "pity count" (水位) is the number of pulls since your last 5-star pull on the current banner. Here's how to find it:</p>
+    <ul>
+      <li data-i18n="modalStep1"><strong>Genshin Impact:</strong> Open Wish History from the banner page. Count how many pulls have passed since your last 5-star.</li>
+      <li data-i18n="modalStep2"><strong>Honkai: Star Rail:</strong> Open Warp History from the Warp page. Count pulls since your last 5-star.</li>
+      <li data-i18n="modalStep3"><strong>Wuthering Waves:</strong> Check Echo History / Convoy History. Count pulls since last 5-star echo.</li>
+      <li data-i18n="modalStep4"><strong>Arknights:</strong> Check recruitment history in the Recruitment terminal.</li>
+      <li data-i18n="modalStep5"><strong>Blue Archive / Uma Musume:</strong> These use a spark system (200 pulls = exchange), so pity count is less critical. Just check total pulls on current banner.</li>
+    </ul>
+    <p data-i18n="modalTip">Enter the exact number of pulls since your last 5-star (or 0 if you haven't started pulling yet).</p>
+    <button class="modal-close" onclick="closeHelpModal()" data-i18n="modalClose">Got it!</button>
+  </div>
+</div>
+
+<script>
+// ===== I18N DICTIONARY =====
+var LANGS = [
+  {code:'zh-TW', name:'繁體中文', flag:'🇹🇼'},
+  {code:'zh-HK', name:'繁體中文', flag:'🇭🇰'},
+  {code:'zh-CN', name:'简体中文', flag:'🇨🇳'},
+  {code:'en', name:'English', flag:'🇺🇸'},
+  {code:'ja', name:'日本語', flag:'🇯🇵'},
+  {code:'ko', name:'한국어', flag:'🇰🇷'},
+  {code:'hi', name:'हिन्दी', flag:'🇮🇳'},
+  {code:'pt-BR', name:'Português', flag:'🇧🇷'},
+  {code:'id', name:'Bahasa Indonesia', flag:'🇮🇩'},
+  {code:'bn', name:'বাংলা', flag:'🇧🇩'},
+  {code:'es', name:'Español', flag:'🇪🇸'},
+  {code:'fr', name:'Français', flag:'🇫🇷'},
+  {code:'de', name:'Deutsch', flag:'🇩🇪'},
+  {code:'ru', name:'Русский', flag:'🇷🇺'},
+  {code:'ar', name:'العربية', flag:'🇸🇦'},
+  {code:'vi', name:'Tiếng Việt', flag:'🇻🇳'},
+  {code:'th', name:'ภาษาไทย', flag:'🇹🇭'}
+];
+
+var I18N = {
+  'zh-TW': {
+    backHome:'返回 GugoPro 首頁',
+    heroTitle:'手遊抽卡期望值與保底模擬器',
+    heroSub:'蒙特卡羅 5,000 次精準模擬 · 角色池/武器池切換 · 首儲雙倍 · 自動模擬',
+    selectGame:'選擇遊戲模板',
+    presetGenshin:'原神 / 星鐵 / 鳴潮',
+    presetArknights:'明日方舟',
+    presetBA:'蔚藍檔案 / 賽馬娘',
+    presetCustom:'自訂模式',
+    poolChar:'角色池',
+    poolWeapon:'武器 / 光錐池',
+    targetCountLabel:'目標數量 (命座 / R)',
+    targetOptions:['1 張 (C0 / R0)','2 張 (C1 / R1)','3 張 (C2 / R2)','4 張 (C3 / R3)','5 張 (C4 / R4)','6 張 (C5 / R5)','7 張 (C6 滿命 / R5+)'],
+    currentPullsLabel:'目前水位 (已抽次數)',
+    bigPityLabel:'大保底狀態 (下次必中)',
+    bigPityDesc:'上次歪了，下次必中',
+    baseRateLabel:'基礎機率 (%)',
+    softPityStartLabel:'軟保底開始抽數',
+    softPityRateLabel:'軟保底每抽加成 (%)',
+    hardPityLabel:'硬保底上限 (抽)',
+    offBannerLabel:'歪牌機率',
+    offBannerOptions:['50/50 (歪了下次必中)','75/25 (75% 歪，25% UP)','100% 保證 UP','無歪牌機制'],
+    exchangeLabel:'天井兌換數 (0=無)',
+    simBtnText:'開始蒙特卡羅模擬 (5,000 次)',
+    simBtnHint:'參數變更後會自動模擬，也可手動點擊重新計算',
+    shareBtnText:'📋 複製抽卡分析戰報',
+    shareCopied:'✅ 戰報已複製至剪貼簿！',
+    resultsTitle:'模擬結果摘要',
+    statAvg:'期望抽數 (平均)',
+    statMedian:'🟢 50% 歐非中位數',
+    statP80:'🟡 80% 建議安全儲備',
+    statP95:'🔴 95% 非酋極限線',
+    statMin:'最少抽數',
+    statMax:'最多抽數',
+    unitPulls:'抽',
+    chartTitle:'累積成功率圖表',
+    currencyTitle:'原石 / 課金預算轉換計算器',
+    currentGemsLabel:'現有原石 / 水晶數量',
+    currentTicketsLabel:'已有抽卡券數量',
+    gemsPerPullLabel:'每抽所需原石',
+    firstDoubleLabel:'啟用首儲雙倍優惠',
+    firstDoubleDesc:'首筆課金雙倍原石',
+    customRateTWDLabel:'自訂單價 (TWD/抽)',
+    customRateUSDLabel:'自訂單價 (USD/抽)',
+    resMissingPullsLabel:'尚缺抽數',
+    resMissingGemsLabel:'尚缺原石',
+    resCostTWDLabel:'預估費用 (TWD)',
+    resCostUSDLabel:'預估費用 (USD)',
+    unitGems:'原石',
+    unitTWD:'新台幣',
+    unitUSD:'美金',
+    amazonTitle:'手遊週邊與電競設備推薦',
+    amazonDesc:'抽卡之餘，也別忘了升級你的遊戲設備！以下為精選高畫質遊戲手機與散熱器：',
+    amazonCta:'前往選購',
+    tutorialTitle:'操作教學：軟保底與大小保底機制',
+    softPityTitle:'什麼是軟保底 (Soft Pity)？',
+    softPityDesc:'軟保底是指當你的抽卡次數達到特定門檻後，每次抽卡的機率會逐步提升。例如原神角色池在<strong>第 74 抽</strong>開始，原本 0.6% 的基礎機率會每抽增加 6%，直到第 90 抽的硬保底必定命中。',
+    poolDiff:'<strong>角色池 vs 武器池</strong>：原神角色池 50/50 歪牌、武器池 75/25 歪牌（25% 機率直接命中目標）。本工具精確區分兩者的保底機制。',
+    hardPityDesc:'<strong>硬保底 (Hard Pity)</strong>：達到上限抽數後必定獲得目標角色/武器。',
+    softPityDesc2:'<strong>軟保底 (Soft Pity)</strong>：達到門檻後機率逐步遞增，大幅降低期望抽數。',
+    fiftyFiftyDesc:'<strong>50/50 機制</strong>：命中目標後，有 50% 機率是 UP 角色，50% 機率歪到其他角色。若歪了，下次命中必定為 UP。',
+    seventyFiveDesc:'<strong>75/25 機制</strong>：武器池命中後，有 25% 機率是目標武器，75% 機率歪到其他。歪了下次必定命中。',
+    monteTitle:'如何利用蒙特卡羅模擬計算真實成本？',
+    monteDesc:'蒙特卡羅模擬透過大量隨機抽樣來估算複雜機率分佈。本工具每次執行<strong>5,000 次</strong>獨立抽卡模擬，兼顧手機端極致運算速度與 99.5% 統計精確度，精確計算：',
+    monteAvg:'<strong>期望抽數</strong>：所有模擬結果的平均值。',
+    monteMedian:'<strong>50% 中位數</strong>：代表「一般運氣」的抽數門檻。',
+    monteP80:'<strong>80% 安全線</strong>：80% 的玩家在此抽數內可達成目標，建議作為儲備基準。',
+    monteP95:'<strong>95% 極限線</strong>：極端非酋情況，建議課金規劃的上限參考。',
+    monteTip:'搭配下方的<strong>首儲雙倍</strong>選項與<strong>自訂單價</strong>功能，你可以更精準地估算首次課金後實際可獲得的原石數量，並根據地區行情調整課金單價。',
+    disclaimerTitle:'免責聲明：',
+    disclaimerText:'本工具機率模擬採用蒙特卡羅演算法與各遊戲官方公佈之機制推算，結果僅供抽卡預算規劃參考。實際遊戲內的抽卡結果由遊戲伺服器隨機數生成器決定，本工具無法保證任何特定結果。',
+    kofiText:'如果這個工具對你有幫助，歡迎請我喝杯咖啡 ☕',
+    modalTitle:'如何查詢自己的水位數值？',
+    modalDesc:'「水位」是指你從上次抽到五星角色後，到目前為止在同一卡池上又抽了多少次。以下是查詢方法：',
+    modalStep1:'<strong>原神 (Genshin Impact)：</strong>進入祈願頁面，開啟「祈願記錄」，計算從上次五星到現在的抽數。',
+    modalStep2:'<strong>崩壞：星穹鐵道 (HSR)：</strong>進入躍遷頁面，開啟「躍遷記錄」，計算從上次五星到現在的抽數。',
+    modalStep3:'<strong>鳴潮 (Wuthering Waves)：</strong>檢查聲骸/迴響記錄，計算從上次五星聲骸到現在的抽數。',
+    modalStep4:'<strong>明日方舟 (Arknights)：</strong>在招募終端查看招募歷史記錄。',
+    modalStep5:'<strong>蔚藍檔案 / 賽馬娘：</strong>這兩款遊戲採用天井兌換制度（200 抽兌換），水位參考性較低，只需確認當前卡池的總抽數。',
+    modalTip:'請輸入從上次五星到現在的準確抽數（如果還沒開始抽則輸入 0）。',
+    modalClose:'知道了！',
+    simRunning:'模擬進行中...',
+    simCompleted:'已模擬',
+    simOutOf:'次模擬',
+    shareHeader:'【GugoPro 抽卡分析】',
+    shareGame:'遊戲：',
+    shareTarget:'目標：',
+    sharePity:'現有水位：',
+    shareSims:'模擬次數：5,000 次蒙特卡羅',
+    shareResults:'📊 模擬結果：',
+    shareExpPulls:'• 期望抽數：',
+    shareMedian:'• 🟢 50% 運氣線：',
+    shareP80:'• 🟡 80% 安全線：',
+    shareP95:'• 🔴 95% 極限線：',
+    shareAdvice:'💡 建議：準備 ',
+    shareAdviceEnd:' 抽 可覆蓋 80% 的情況',
+    shareLink:'🔗 gugopro.com',
+    progressText:'準備模擬中...',
+    copyFail:'複製失敗，請手動選取文字複製。',
+    simFirst:'請先執行模擬，才能複製戰報！',
+    reloadSim:'重新模擬 (5,000 次)'
+  },
+  'zh-HK': {
+    backHome:'返回 GugoPro 首頁',
+    heroTitle:'手遊抽卡期望值與保底模擬器',
+    heroSub:'蒙特卡羅 5,000 次精準模擬 · 角色池/武器池切換 · 首儲雙倍 · 自動模擬',
+    selectGame:'選擇遊戲模板',
+    presetGenshin:'原神 / 星鐵 / 鳴潮',
+    presetArknights:'明日方舟',
+    presetBA:'蔚藍檔案 / 賽馬娘',
+    presetCustom:'自訂模式',
+    poolChar:'角色池',
+    poolWeapon:'武器 / 光錐池',
+    targetCountLabel:'目標數量 (命座 / R)',
+    targetOptions:['1 張 (C0 / R0)','2 張 (C1 / R1)','3 張 (C2 / R2)','4 張 (C3 / R3)','5 張 (C4 / R4)','6 張 (C5 / R5)','7 張 (C6 滿命 / R5+)'],
+    currentPullsLabel:'目前水位 (已抽次數)',
+    bigPityLabel:'大保底狀態 (下次必中)',
+    bigPityDesc:'上次歪咗，下次必中',
+    baseRateLabel:'基礎機率 (%)',
+    softPityStartLabel:'軟保底開始抽數',
+    softPityRateLabel:'軟保底每抽加成 (%)',
+    hardPityLabel:'硬保底上限 (抽)',
+    offBannerLabel:'歪牌機率',
+    offBannerOptions:['50/50 (歪咗下次必中)','75/25 (75% 歪，25% UP)','100% 保證 UP','冇歪牌機制'],
+    exchangeLabel:'天井兌換數 (0=冇)',
+    simBtnText:'開始蒙特卡羅模擬 (5,000 次)',
+    simBtnHint:'參數變更後會自動模擬，亦可手動點擊重新計算',
+    shareBtnText:'📋 複製抽卡分析戰報',
+    shareCopied:'✅ 戰報已複製到剪貼簿！',
+    resultsTitle:'模擬結果摘要',
+    statAvg:'期望抽數 (平均)',
+    statMedian:'🟢 50% 歐非中位數',
+    statP80:'🟡 80% 建議安全儲備',
+    statP95:'🔴 95% 非酋極限線',
+    statMin:'最少抽數',
+    statMax:'最多抽數',
+    unitPulls:'抽',
+    chartTitle:'累積成功率圖表',
+    currencyTitle:'原石 / 課金預算轉換計算器',
+    currentGemsLabel:'現有原石 / 水晶數量',
+    currentTicketsLabel:'已有抽卡券數量',
+    gemsPerPullLabel:'每抽所需原石',
+    firstDoubleLabel:'啟用首儲雙倍優惠',
+    firstDoubleDesc:'首筆課金雙倍原石',
+    customRateTWDLabel:'自訂單價 (TWD/抽)',
+    customRateUSDLabel:'自訂單價 (USD/抽)',
+    resMissingPullsLabel:'尚缺抽數',
+    resMissingGemsLabel:'尚缺原石',
+    resCostTWDLabel:'預估費用 (TWD)',
+    resCostUSDLabel:'預估費用 (USD)',
+    unitGems:'原石',
+    unitTWD:'港幣 (HKD)',
+    unitUSD:'美金',
+    amazonTitle:'手遊周邊與電競設備推薦',
+    amazonDesc:'抽卡之餘，都唔好忘記升級你嘅遊戲設備！以下為精選高畫質遊戲手機與散熱器：',
+    amazonCta:'前往選購',
+    tutorialTitle:'操作教學：軟保底與大小保底機制',
+    softPityTitle:'乜嘢係軟保底 (Soft Pity)？',
+    softPityDesc:'軟保底係指當你嘅抽卡次數達到特定門檻後，每次抽卡嘅機率會逐步提升。例如原神角色池喺<strong>第 74 抽</strong>開始，原本 0.6% 嘅基礎機率會每抽增加 6%，直到第 90 抽嘅硬保底必定命中。',
+    poolDiff:'<strong>角色池 vs 武器池</strong>：原神角色池 50/50 歪牌、武器池 75/25 歪牌（25% 機率直接命中目標）。本工具精確區分兩者嘅保底機制。',
+    hardPityDesc:'<strong>硬保底 (Hard Pity)</strong>：達到上限抽數後必定獲得目標角色/武器。',
+    softPityDesc2:'<strong>軟保底 (Soft Pity)</strong>：達到門檻後機率逐步遞增，大幅降低期望抽數。',
+    fiftyFiftyDesc:'<strong>50/50 機制</strong>：命中目標後，有 50% 機率係 UP 角色，50% 機率歪到其他角色。若歪咗，下次命中必定為 UP。',
+    seventyFiveDesc:'<strong>75/25 機制</strong>：武器池命中後，有 25% 機率係目標武器，75% 機率歪到其他。歪咗下次必定命中。',
+    monteTitle:'如何利用蒙特卡羅模擬計算真實成本？',
+    monteDesc:'蒙特卡羅模擬透過大量隨機抽樣嚟估算複雜機率分佈。本工具每次執行<strong>5,000 次</strong>獨立抽卡模擬，兼顧手機端極致運算速度與 99.5% 統計精確度，精確計算：',
+    monteAvg:'<strong>期望抽數</strong>：所有模擬結果嘅平均值。',
+    monteMedian:'<strong>50% 中位數</strong>：代表「一般運氣」嘅抽數門檻。',
+    monteP80:'<strong>80% 安全線</strong>：80% 嘅玩家喺呢個抽數內可達成目標，建議作為儲備基準。',
+    monteP95:'<strong>95% 極限線</strong>：極端非酋情況，建議課金規劃嘅上限參考。',
+    monteTip:'搭配下方嘅<strong>首儲雙倍</strong>選項與<strong>自訂單價</strong>功能，你可以更精準咁估算首次課金後實際可獲得嘅原石數量，並根據地區行情調整課金單價。',
+    disclaimerTitle:'免責聲明：',
+    disclaimerText:'本工具機率模擬採用蒙特卡羅演算法與各遊戲官方公佈之機制推算，結果僅供抽卡預算規劃參考。實際遊戲內嘅抽卡結果由遊戲伺服器隨機數生成器決定，本工具無法保證任何特定結果。',
+    kofiText:'如果呢個工具對你有幫助，歡迎請我飲杯咖啡 ☕',
+    modalTitle:'點樣查詢自己嘅水位數值？',
+    modalDesc:'「水位」係指你從上次抽到五星角色後，到目前為止喺同一卡池上又抽咗幾多次。以下係查詢方法：',
+    modalStep1:'<strong>原神 (Genshin Impact)：</strong>進入祈願頁面，開啟「祈願記錄」，計算從上次五星到現在嘅抽數。',
+    modalStep2:'<strong>崩壞：星穹鐵道 (HSR)：</strong>進入躍遷頁面，開啟「躍遷記錄」，計算從上次五星到現在嘅抽數。',
+    modalStep3:'<strong>鳴潮 (Wuthering Waves)：</strong>檢查聲骸/迴響記錄，計算從上次五星聲骸到現在嘅抽數。',
+    modalStep4:'<strong>明日方舟 (Arknights)：</strong>喺招募終端查看招募歷史記錄。',
+    modalStep5:'<strong>蔚藍檔案 / 賽馬娘：</strong>呢兩款遊戲採用天井兌換制度（200 抽兌換），水位參考性較低，只需確認當前卡池嘅總抽數。',
+    modalTip:'請輸入從上次五星到現在嘅準確抽數（如果仲未開始抽就輸入 0）。',
+    modalClose:'知道了！',
+    simRunning:'模擬進行中...',
+    simCompleted:'已模擬',
+    simOutOf:'次模擬',
+    shareHeader:'【GugoPro 抽卡分析】',
+    shareGame:'遊戲：',
+    shareTarget:'目標：',
+    sharePity:'現有水位：',
+    shareSims:'模擬次數：5,000 次蒙特卡羅',
+    shareResults:'📊 模擬結果：',
+    shareExpPulls:'• 期望抽數：',
+    shareMedian:'• 🟢 50% 運氣線：',
+    shareP80:'• 🟡 80% 安全線：',
+    shareP95:'• 🔴 95% 極限線：',
+    shareAdvice:'💡 建議：準備 ',
+    shareAdviceEnd:' 抽 可覆蓋 80% 嘅情況',
+    shareLink:'🔗 gugopro.com',
+    progressText:'準備模擬中...',
+    copyFail:'複製失敗，請手動選取文字複製。',
+    simFirst:'請先執行模擬，先可以複製戰報！',
+    reloadSim:'重新模擬 (5,000 次)'
+  },
+  'zh-CN': {
+    backHome:'返回 GugoPro 首页',
+    heroTitle:'手游抽卡期望值与保底模拟器',
+    heroSub:'蒙特卡洛 5,000 次精准模拟 · 角色池/武器池切换 · 首储双倍 · 自动模拟',
+    selectGame:'选择游戏模板',
+    presetGenshin:'原神 / 星铁 / 鸣潮',
+    presetArknights:'明日方舟',
+    presetBA:'蔚蓝档案 / 赛马娘',
+    presetCustom:'自定义模式',
+    poolChar:'角色池',
+    poolWeapon:'武器 / 光锥池',
+    targetCountLabel:'目标数量 (命座 / R)',
+    targetOptions:['1 张 (C0 / R0)','2 张 (C1 / R1)','3 张 (C2 / R2)','4 张 (C3 / R3)','5 张 (C4 / R4)','6 张 (C5 / R5)','7 张 (C6 满命 / R5+)'],
+    currentPullsLabel:'当前水位 (已抽次数)',
+    bigPityLabel:'大保底状态 (下次必中)',
+    bigPityDesc:'上次歪了，下次必中',
+    baseRateLabel:'基础概率 (%)',
+    softPityStartLabel:'软保底开始抽数',
+    softPityRateLabel:'软保底每抽加成 (%)',
+    hardPityLabel:'硬保底上限 (抽)',
+    offBannerLabel:'歪卡概率',
+    offBannerOptions:['50/50 (歪了下次必中)','75/25 (75% 歪，25% UP)','100% 保证 UP','无歪卡机制'],
+    exchangeLabel:'天井兑换数 (0=无)',
+    simBtnText:'开始蒙特卡洛模拟 (5,000 次)',
+    simBtnHint:'参数变更后会自自自动模拟，也可手动点击重新计算',
+    shareBtnText:'📋 复制抽卡分析战报',
+    shareCopied:'✅ 战报已复制到剪贴板！',
+    resultsTitle:'模拟结果摘要',
+    statAvg:'期望抽数 (平均)',
+    statMedian:'🟢 50% 欧非中位数',
+    statP80:'🟡 80% 建议安全储备',
+    statP95:'🔴 95% 非酋极限线',
+    statMin:'最少抽数',
+    statMax:'最多抽数',
+    unitPulls:'抽',
+    chartTitle:'累积成功率图表',
+    currencyTitle:'原石 / 氪金预算转换计算器',
+    currentGemsLabel:'现有原石 / 水晶数量',
+    currentTicketsLabel:'已有抽卡券数量',
+    gemsPerPullLabel:'每抽所需原石',
+    firstDoubleLabel:'启用首储双倍优惠',
+    firstDoubleDesc:'首笔氪金双倍原石',
+    customRateTWDLabel:'自定义单价 (TWD/抽)',
+    customRateUSDLabel:'自定义单价 (USD/抽)',
+    resMissingPullsLabel:'尚缺抽数',
+    resMissingGemsLabel:'尚缺原石',
+    resCostTWDLabel:'预估费用 (TWD)',
+    resCostUSDLabel:'预估费用 (USD)',
+    unitGems:'原石',
+    unitTWD:'台币',
+    unitUSD:'美元',
+    amazonTitle:'手游周边与电竞设备推荐',
+    amazonDesc:'抽卡之余，也别忘了升级你的游戏设备！以下为精选高品质游戏手机与散热器：',
+    amazonCta:'前往选购',
+    tutorialTitle:'操作教学：软保底与大小保底机制',
+    softPityTitle:'什么是软保底 (Soft Pity)？',
+    softPityDesc:'软保底是指当你的抽卡次数达到特定门槛后，每次抽卡的概率会逐步提升。例如原神角色池在<strong>第 74 抽</strong>开始，原本 0.6% 的基础概率会每抽增加 6%，直到第 90 抽的硬保底必定命中。',
+    poolDiff:'<strong>角色池 vs 武器池</strong>：原神角色池 50/50 歪卡、武器池 75/25 歪卡（25% 概率直接命中目标）。本工具精确区分两者的保底机制。',
+    hardPityDesc:'<strong>硬保底 (Hard Pity)</strong>：达到上限抽数后必定获得目标角色/武器。',
+    softPityDesc2:'<strong>软保底 (Soft Pity)</strong>：达到门槛后概率逐步递增，大幅降低期望抽数。',
+    fiftyFiftyDesc:'<strong>50/50 机制</strong>：命中目标后，有 50% 概率是 UP 角色，50% 概率歪到其他角色。若歪了，下次命中必定为 UP。',
+    seventyFiveDesc:'<strong>75/25 机制</strong>：武器池命中后，有 25% 概率是目标武器，75% 概率歪到其他。歪了下次必定命中。',
+    monteTitle:'如何利用蒙特卡洛模拟计算真实成本？',
+    monteDesc:'蒙特卡洛模拟通过大量随机抽样来估算复杂概率分布。本工具每次执行<strong>5,000 次</strong>独立抽卡模拟，兼顾手机端极致运算速度与 99.5% 统计精确度，精确计算：',
+    monteAvg:'<strong>期望抽数</strong>：所有模拟结果的平均值。',
+    monteMedian:'<strong>50% 中位数</strong>：代表"一般运气"的抽数门槛。',
+    monteP80:'<strong>80% 安全线</strong>：80% 的玩家在此抽数内可达成目标，建议作为储备基准。',
+    monteP95:'<strong>95% 极限线</strong>：极端非酋情况，建议氪金规划的上限参考。',
+    monteTip:'搭配下方的<strong>首储双倍</strong>选项与<strong>自定义单价</strong>功能，你可以更精准地估算首次氪金后实际可获得的原石数量，并根据地区行情调整氪金单价。',
+    disclaimerTitle:'免责声明：',
+    disclaimerText:'本工具概率模拟采用蒙特卡洛算法与各游戏官方公布之机制推算，结果仅供抽卡预算规划参考。实际游戏内的抽卡结果由游戏服务器随机数生成器决定，本工具无法保证任何特定结果。',
+    kofiText:'如果这个工具对你有帮助，欢迎请我喝杯咖啡 ☕',
+    modalTitle:'如何查询自己的水位数值？',
+    modalDesc:'「水位」是指你从上次抽到五星角色后，到目前为止在同一卡池上又抽了多少次。以下是查询方法：',
+    modalStep1:'<strong>原神 (Genshin Impact)：</strong>进入祈愿页面，开启"祈愿记录"，计算从上次五星到现在的抽数。',
+    modalStep2:'<strong>崩坏：星穹铁道 (HSR)：</strong>进入跃迁页面，开启"跃迁记录"，计算从上次五星到现在的抽数。',
+    modalStep3:'<strong>鸣潮 (Wuthering Waves)：</strong>检查声骸/回响记录，计算从上次五星声骸到现在的抽数。',
+    modalStep4:'<strong>明日方舟 (Arknights)：</strong>在招募终端查看招募历史记录。',
+    modalStep5:'<strong>蔚蓝档案 / 赛马娘：</strong>这两款游戏采用天井兑换制度（200 抽兑换），水位参考性较低，只需确认当前卡池的总抽数。',
+    modalTip:'请输入从上次五星到现在的准确抽数（如果还没开始抽则输入 0）。',
+    modalClose:'知道了！',
+    simRunning:'模拟进行中...',
+    simCompleted:'已模拟',
+    simOutOf:'次模拟',
+    shareHeader:'【GugoPro 抽卡分析】',
+    shareGame:'游戏：',
+    shareTarget:'目标：',
+    sharePity:'当前水位：',
+    shareSims:'模拟次数：5,000 次蒙特卡洛',
+    shareResults:'📊 模拟结果：',
+    shareExpPulls:'• 期望抽数：',
+    shareMedian:'• 🟢 50% 运气线：',
+    shareP80:'• 🟡 80% 安全线：',
+    shareP95:'• 🔴 95% 极限线：',
+    shareAdvice:'💡 建议：准备 ',
+    shareAdviceEnd:' 抽 可覆盖 80% 的情况',
+    shareLink:'🔗 gugopro.com',
+    progressText:'准备模拟中...',
+    copyFail:'复制失败，请手动选取文字复制。',
+    simFirst:'请先执行模拟，才能复制战报！',
+    reloadSim:'重新模拟 (5,000 次)'
+  },
+  'en': {
+    backHome:'Back to GugoPro',
+    heroTitle:'Gacha Odds &amp; Pity Simulator',
+    heroSub:'Monte Carlo 5,000 simulations &middot; Character/Weapon Pool &middot; First Double Bonus &middot; Auto-Simulate',
+    selectGame:'Select Game Template',
+    presetGenshin:'Genshin / HSR / Wuthering Waves',
+    presetArknights:'Arknights',
+    presetBA:'Blue Archive / Uma Musume',
+    presetCustom:'Custom',
+    poolChar:'Character Pool',
+    poolWeapon:'Weapon / Light Cone Pool',
+    targetCountLabel:'Target Count (Constellation / R)',
+    targetOptions:['1 copy (C0 / R0)','2 copies (C1 / R1)','3 copies (C2 / R2)','4 copies (C3 / R3)','5 copies (C4 / R4)','6 copies (C5 / R5)','7 copies (C6 Max / R5+)'],
+    currentPullsLabel:'Current Pity Count',
+    bigPityLabel:'Big Pity (Guaranteed Next)',
+    bigPityDesc:'Lost last 50/50, next is guaranteed',
+    baseRateLabel:'Base Rate (%)',
+    softPityStartLabel:'Soft Pity Start',
+    softPityRateLabel:'Soft Pity Rate per Pull (%)',
+    hardPityLabel:'Hard Pity Cap',
+    offBannerLabel:'Off-Banner Chance',
+    offBannerOptions:['50/50 (Lose → Next Guaranteed)','75/25 (75% Off, 25% UP)','100% Guaranteed UP','No Off-Banner'],
+    exchangeLabel:'Spark / Exchange (0=None)',
+    simBtnText:'Start Monte Carlo Simulation (5,000 runs)',
+    simBtnHint:'Auto-simulates on parameter change, or click to re-run',
+    shareBtnText:'📋 Copy Battle Report',
+    shareCopied:'✅ Battle report copied to clipboard!',
+    resultsTitle:'Simulation Results Summary',
+    statAvg:'Average (Expected)',
+    statMedian:'🟢 50% Median',
+    statP80:'🟡 80% Safe Line',
+    statP95:'🔴 95% Extreme Line',
+    statMin:'Minimum',
+    statMax:'Maximum',
+    unitPulls:'pulls',
+    chartTitle:'Cumulative Success Rate',
+    currencyTitle:'Currency &amp; Budget Calculator',
+    currentGemsLabel:'Current Primogems / Crystals',
+    currentTicketsLabel:'Current Tickets',
+    gemsPerPullLabel:'Gems per Pull',
+    firstDoubleLabel:'Enable First Double Bonus',
+    firstDoubleDesc:'Double primogems on first top-up',
+    customRateTWDLabel:'Custom Rate (TWD/pull)',
+    customRateUSDLabel:'Custom Rate (USD/pull)',
+    resMissingPullsLabel:'Pulls Still Needed',
+    resMissingGemsLabel:'Gems Still Needed',
+    resCostTWDLabel:'Est. Cost (TWD)',
+    resCostUSDLabel:'Est. Cost (USD)',
+    unitGems:'gems',
+    unitTWD:'NT$',
+    unitUSD:'USD',
+    amazonTitle:'Gaming Gear Recommendations',
+    amazonDesc:'Upgrade your gaming setup with these curated picks!',
+    amazonCta:'Shop Now',
+    tutorialTitle:'Tutorial: Soft Pity &amp; 50/50 Mechanics',
+    softPityTitle:'What is Soft Pity?',
+    softPityDesc:'Soft pity means your pull rate gradually increases after a certain threshold. For example, Genshin character banners start soft pity at <strong>pull 74</strong>, where the base 0.6% rate increases by 6% per pull until the hard pity at 90.',
+    poolDiff:'<strong>Character vs Weapon Pool:</strong> Character banners use 50/50 off-banner chance; weapon banners use 75/25. This tool precisely models both.',
+    hardPityDesc:'<strong>Hard Pity:</strong> At the cap, you are guaranteed to get the target item.',
+    softPityDesc2:'<strong>Soft Pity:</strong> Rate increases gradually after the threshold, significantly reducing expected pulls.',
+    fiftyFiftyDesc:'<strong>50/50:</strong> After hitting, 50% chance it\'s the UP item, 50% off-banner. If off-banner, next hit is guaranteed UP.',
+    seventyFiveDesc:'<strong>75/25:</strong> Weapon banner: 25% chance UP, 75% off-banner. If off-banner, next hit is guaranteed.',
+    monteTitle:'Monte Carlo Simulation',
+    monteDesc:'This tool runs <strong>5,000 independent simulations</strong> per execution, balancing mobile performance with 99.5% statistical accuracy, calculating:',
+    monteAvg:'<strong>Expected Pulls:</strong> Average across all simulations.',
+    monteMedian:'<strong>50% Median:</strong> The "average luck" threshold.',
+    monteP80:'<strong>80% Safe Line:</strong> 80% of players succeed within this pull count. Recommended as your budget baseline.',
+    monteP95:'<strong>95% Extreme Line:</strong> Worst-case scenario, recommended as your maximum budget ceiling.',
+    monteTip:'Combine with the <strong>First Double Bonus</strong> option and <strong>Custom Rate</strong> feature for precise budgeting.',
+    disclaimerTitle:'Disclaimer:',
+    disclaimerText:'This tool uses Monte Carlo simulation based on publicly disclosed game mechanics. Results are for budget planning reference only. Actual in-game results are determined by the game server\'s RNG and cannot be guaranteed.',
+    kofiText:'If this tool helped you, buy me a coffee!',
+    modalTitle:'How to Check Your Pity Count',
+    modalDesc:'Your "pity count" is the number of pulls since your last 5-star pull on the current banner. Here\'s how to find it:',
+    modalStep1:'<strong>Genshin Impact:</strong> Open Wish History from the banner page. Count pulls since your last 5-star.',
+    modalStep2:'<strong>Honkai: Star Rail:</strong> Open Warp History from the Warp page. Count pulls since your last 5-star.',
+    modalStep3:'<strong>Wuthering Waves:</strong> Check Echo/Convene History. Count pulls since your last 5-star echo.',
+    modalStep4:'<strong>Arknights:</strong> Check recruitment history in the Recruitment terminal.',
+    modalStep5:'<strong>Blue Archive / Uma Musume:</strong> These use a spark system (200 pulls = exchange), so pity count is less critical. Just check total pulls on current banner.',
+    modalTip:'Enter the exact number of pulls since your last 5-star (or 0 if you haven\'t started pulling yet).',
+    modalClose:'Got it!',
+    simRunning:'Simulating...',
+    simCompleted:'Completed',
+    simOutOf:'of',
+    shareHeader:'[GugoPro Gacha Analysis]',
+    shareGame:'Game: ',
+    shareTarget:'Target: ',
+    sharePity:'Current Pity: ',
+    shareSims:'Simulations: 5,000 Monte Carlo runs',
+    shareResults:'📊 Results:',
+    shareExpPulls:'• Expected Pulls: ',
+    shareMedian:'• 🟢 50% Median: ',
+    shareP80:'• 🟡 80% Safe Line: ',
+    shareP95:'• 🔴 95% Extreme: ',
+    shareAdvice:'💡 Recommendation: Prepare ',
+    shareAdviceEnd:' pulls to cover 80% of cases',
+    shareLink:'🔗 gugopro.com',
+    progressText:'Preparing simulation...',
+    copyFail:'Copy failed. Please select and copy manually.',
+    simFirst:'Please run a simulation first!',
+    reloadSim:'Re-run Simulation (5,000 runs)'
+  },
+  'ja': {
+    backHome:'GugoPro ホームに戻る',
+    heroTitle:'ガチャ期待値＆天井シミュレーター',
+    heroSub:'モンテカルロ 5,000 回シミュレーション · キャラ/武器バナー切替 · 初回限定倍率 · 自動シミュレート',
+    selectGame:'ゲームテンプレートを選択',
+    presetGenshin:'原神 / 崩壊スターレイル / 鳴潮',
+    presetArknights:'アークナイツ',
+    presetBA:'ブルーアーカイブ / ウマ娘',
+    presetCustom:'カスタム',
+    poolChar:'キャラバナー',
+    poolWeapon:'武器 / 光円錐バナー',
+    targetCountLabel:'目標数 (凸 / R)',
+    targetOptions:['1 体 (C0 / R0)','2 体 (C1 / R1)','3 体 (C2 / R2)','4 体 (C3 / R3)','5 体 (C4 / R4)','6 体 (C5 / R5)','7 体 (C6 完凸 / R5+)'],
+    currentPullsLabel:'現在の天井カウント',
+    bigPityLabel:'天井状態 (次回確定)',
+    bigPityDesc:'前回ハズレ、次回は確定',
+    baseRateLabel:'基礎確率 (%)',
+    softPityStartLabel:'天井開始カウント',
+    softPityRateLabel:'天井毎抽加算 (%)',
+    hardPityLabel:'天井上限 (抽)',
+    offBannerLabel:'ハズレ確率',
+    offBannerOptions:['50/50 (ハズレ→次回確定)','75/25 (75% ハズレ、25% UP)','100% 確定 UP','ハズレなし'],
+    exchangeLabel:'天井交換数 (0=なし)',
+    simBtnText:'モンテカルロシミュレーション開始 (5,000 回)',
+    simBtnHint:'パラメータ変更時に自動シミュレート、または手動で再計算',
+    shareBtnText:'📋 分析レポートをコピー',
+    shareCopied:'✅ レポートがクリップボードにコピーされました！',
+    resultsTitle:'シミュレーション結果サマリー',
+    statAvg:'期待抽数 (平均)',
+    statMedian:'🟢 50% 中央値',
+    statP80:'🟡 80% 安全ライン',
+    statP95:'🔴 95% 極限ライン',
+    statMin:'最小抽数',
+    statMax:'最大抽数',
+    unitPulls:'抽',
+    chartTitle:'累積成功率グラフ',
+    currencyTitle:'原石 / 課金予算換算ツール',
+    currentGemsLabel:'現在の原石 / クリスタル数',
+    currentTicketsLabel:'現在のチケット数',
+    gemsPerPullLabel:'1 抽あたりの原石',
+    firstDoubleLabel:'初回限定倍率を有効化',
+    firstDoubleDesc:'初回チャージで原石 2 倍',
+    customRateTWDLabel:'カスタム単価 (TWD/抽)',
+    customRateUSDLabel:'カスタム単価 (USD/抽)',
+    resMissingPullsLabel:'不足抽数',
+    resMissingGemsLabel:'不足原石',
+    resCostTWDLabel:'推定費用 (TWD)',
+    resCostUSDLabel:'推定費用 (USD)',
+    unitGems:'原石',
+    unitTWD:'新台幣',
+    unitUSD:'米ドル',
+    amazonTitle:'ゲーミングデバイスのおすすめ',
+    amazonDesc:'ガチャ之余、ゲームデバイスをアップグレードしましょう！厳選したゲーミングスマホと冷却ファンをご紹介：',
+    amazonCta:'今すぐ購入',
+    tutorialTitle:'チュートリアル：天井とハズレメカニクス',
+    softPityTitle:'天井 (Soft Pity) とは？',
+    softPityDesc:'天井とは、抽数がある閾値に達すると、毎抽の確率が段階的に上昇する仕組みです。例えば原神キャラバナーは<strong>74 抽目</strong>から、基礎 0.6% の確率が毎抽 6% ずつ上昇し、90 抽の天井で確定になります。',
+    poolDiff:'<strong>キャラバナー vs 武器バナー：</strong>キャラバナーは 50/50、武器バナーは 75/25 のハズレ確率です。本ツールは両者の天井メカニクスを正確にモデル化します。',
+    hardPityDesc:'<strong>天井 (Hard Pity)：</strong>上限抽数に達すると、対象キャラ/武器が確定で入手できます。',
+    softPityDesc2:'<strong>天井 (Soft Pity)：</strong>閾値到達後、確率が段階的に上昇し、期待抽数を大幅に削減します。',
+    fiftyFiftyDesc:'<strong>50/50 メカニクス：</strong>命中後、50% で UP キャラ、50% でハズレ。ハズレた場合、次回は確定で UP が来ます。',
+    seventyFiveDesc:'<strong>75/25 メカニクス：</strong>武器バナー命中後、25% で目標武器、75% でハズレ。ハズレた場合、次回は確定です。',
+    monteTitle:'モンテカルロシミュレーションでコストを計算する',
+    monteDesc:'本ツールは実行ごとに<strong>5,000 回の独立シミュレーション</strong>を行い、モバイル性能と 99.5% の統計精度を両立させ、以下を計算します：',
+    monteAvg:'<strong>期待抽数：</strong>全シミュレーションの平均値。',
+    monteMedian:'<strong>50% 中央値：</strong>「平均的な運」の閾値。',
+    monteP80:'<strong>80% 安全ライン：</strong>80% のプレイヤーがこの抽数内で目標を達成。予算基準として推奨。',
+    monteP95:'<strong>95% 極限ライン：</strong>最悪ケース、最大予算上限として推奨。',
+    monteTip:'<strong>初回限定倍率</strong>オプションと<strong>カスタム単価</strong>機能を使って、より正確に予算を計算できます。',
+    disclaimerTitle:'免責事項：',
+    disclaimerText:'本ツールはモンテカルロシミュレーションと各ゲームの公式メカニクスに基づいて結果を算出します。結果は予算計画の参考としてのみ使用してください。実際のゲーム内の結果はサーバーの RNG によって決定され、本ツールは一切保証しません。',
+    kofiText:'このツールが役に立った場合は、コーヒーを買ってください！☕',
+    modalTitle:'天井カウントの確認方法',
+    modalDesc:'「天井カウント」は、最後に星 5 を引いてから現在のバナーで何抽引いたかを示します。確認方法：',
+    modalStep1:'<strong>原神：</strong>祈願ページから「祈願履歴」を開き、最後に星 5 を引いてからの抽数を計算。',
+    modalStep2:'<strong>崩壊：スターレイル：</strong>ワープページから「ワープ履歴」を開き、最後に星 5 を引いてからの抽数を計算。',
+    modalStep3:'<strong>鳴潮：</strong>エコー/会議履歴を確認し、最後に星 5 エコーを引いてからの抽数を計算。',
+    modalStep4:'<strong>アークナイツ：</strong>スカウトターミナルでスカウト履歴を確認。',
+    modalStep5:'<strong>ブルーアーカイブ / ウマ娘：</strong>天井交換システム（200 抽＝交換）を採用しているため、天井カウントの重要性は低めです。現在のバナーの総抽数を確認してください。',
+    modalTip:'最後に星 5 を引いてからの正確な抽数を入力してください（まだ引いていない場合は 0 を入力）。',
+    modalClose:'了解！',
+    simRunning:'シミュレーション中...',
+    simCompleted:'完了',
+    simOutOf:'/',
+    shareHeader:'【GugoPro ガチャ分析】',
+    shareGame:'ゲーム：',
+    shareTarget:'目標：',
+    sharePity:'天井カウント：',
+    shareSims:'シミュレーション：モンテカルロ 5,000 回',
+    shareResults:'📊 結果：',
+    shareExpPulls:'• 期待抽数：',
+    shareMedian:'• 🟢 50% 中央値：',
+    shareP80:'• 🟡 80% 安全ライン：',
+    shareP95:'• 🔴 95% 極限ライン：',
+    shareAdvice:'💡 推奨：',
+    shareAdviceEnd:' 抽を準備すると 80% のケースをカバー',
+    shareLink:'🔗 gugopro.com',
+    progressText:'シミュレーション準備中...',
+    copyFail:'コピーに失敗しました。手動で選択してコピーしてください。',
+    simFirst:'まずシミュレーションを実行してください！',
+    reloadSim:'再シミュレーション (5,000 回)'
+  },
+  'ko': {
+    backHome:'GugoPro 홈으로 돌아가기',
+    heroTitle:'가챠 기대값 & 피티 시뮬레이터',
+    heroSub:'몬테카를로 5,000 회 시뮬레이션 · 캐릭터/무기 풀 전환 · 첫 결제 더블 · 자동 시뮬레이션',
+    selectGame:'게임 템플릿 선택',
+    presetGenshin:'원신 / 붕괴: 스타레일 / 명조',
+    presetArknights:'명일방주',
+    presetBA:'블루 아카이브 / 우마무스메',
+    presetCustom:'사용자 정의',
+    poolChar:'캐릭터 풀',
+    poolWeapon:'무기 / 광추 풀',
+    targetCountLabel:'목표 수 (돌파 / R)',
+    targetOptions:['1 개 (C0 / R0)','2 개 (C1 / R1)','3 개 (C2 / R2)','4 개 (C3 / R3)','5 개 (C4 / R4)','6 개 (C5 / R5)','7 개 (C6 최대 / R5+)'],
+    currentPullsLabel:'현재 피티 카운트',
+    bigPityLabel:'대 피티 (다음 확정)',
+    bigPityDesc:'지난번 미확정, 다음은 확정',
+    baseRateLabel:'기본 확률 (%)',
+    softPityStartLabel:'연피티 시작',
+    softPityRateLabel:'연피티 1 회당 증가 (%)',
+    hardPityLabel:'천장上限 (회)',
+    offBannerLabel:'미확정 확률',
+    offBannerOptions:['50/50 (미확정→다음 확정)','75/25 (75% 미확정, 25% UP)','100% 확정 UP','미확정 없음'],
+    exchangeLabel:'교환 수 (0=없음)',
+    simBtnText:'몬테카를로 시뮬레이션 시작 (5,000 회)',
+    simBtnHint:'매개변수 변경 시 자동 시뮬레이션, 또는 수동 재계산',
+    shareBtnText:'📋 분석 보고서 복사',
+    shareCopied:'✅ 보고서가 클립보드에 복사되었습니다!',
+    resultsTitle:'시뮬레이션 결과 요약',
+    statAvg:'기대 횟수 (평균)',
+    statMedian:'🟢 50% 중앙값',
+    statP80:'🟡 80% 안전선',
+    statP95:'🔴 95% 극한선',
+    statMin:'최소 횟수',
+    statMax:'최대 횟수',
+    unitPulls:'회',
+    chartTitle:'누적 성공률 그래프',
+    currencyTitle:'원석 / 결제 예산 환산기',
+    currentGemsLabel:'현재 원석 / 크리스탈 수',
+    currentTicketsLabel:'현재 티켓 수',
+    gemsPerPullLabel:'1 회당 원석',
+    firstDoubleLabel:'첫 결제 더블 보너스 활성화',
+    firstDoubleDesc:'첫 결제 시 원석 2 배',
+    customRateTWDLabel:'커스텀 단가 (TWD/회)',
+    customRateUSDLabel:'커스텀 단가 (USD/회)',
+    resMissingPullsLabel:'부족한 횟수',
+    resMissingGemsLabel:'부족한 원석',
+    resCostTWDLabel:'예상 비용 (TWD)',
+    resCostUSDLabel:'예상 비용 (USD)',
+    unitGems:'원석',
+    unitTWD:'대만달러',
+    unitUSD:'미달러',
+    amazonTitle:'게이밍 기기 추천',
+    amazonDesc:'가챠之余，게임 기기를 업그레이드하세요! 엄선된 게이밍 스마트폰과 쿨링 팬을 소개합니다：',
+    amazonCta:'지금 쇼핑하기',
+    tutorialTitle:'튜토리얼: 연피티 & 미확정 메커니즘',
+    softPityTitle:'연피티 (Soft Pity) 란？',
+    softPityDesc:'연피티는 가챠 횟수가 특정 임계값에 도달하면 매 회 확률이 점진적으로 상승하는 메커니즘입니다. 예를 들어 원신 캐릭터 풀은 <strong>74 회째</strong>부터 기본 0.6% 확률이 매 회 6% 씩 상승하여 90 회 천장에서 확정됩니다。',
+    poolDiff:'<strong>캐릭터 풀 vs 무기 풀：</strong>캐릭터 풀은 50/50 미확정, 무기 풀은 75/25 미확정입니다。本 도구는 양자의 천장 메커니즘을 정확히 모델링합니다。',
+    hardPityDesc:'<strong>천장 (Hard Pity)：</strong>上限 횟수에 도달하면 대상 캐릭터/무기가 확정으로 획득됩니다。',
+    softPityDesc2:'<strong>연피티 (Soft Pity)：</strong>임계값 도달 후 확률이 점진적으로 상승하여 기대 횟수를 대폭 감소시킵니다。',
+    fiftyFiftyDesc:'<strong>50/50 메커니즘：</strong>명중 후 50% 확률로 UP 캐릭터, 50% 확률로 미확정. 미확정 시 다음은 확정으로 UP 입니다。',
+    seventyFiveDesc:'<strong>75/25 메커니즘：</strong>무기 풀 명중 후 25% 확률로 목표 무기, 75% 확률로 미확정. 미확정 시 다음은 확정입니다。',
+    monteTitle:'몬테카를로 시뮬레이션으로 비용 계산하기',
+    monteDesc:'本 도구는 실행마다 <strong>5,000 회 독립 시뮬레이션</strong>을 수행하여 모바일 성능과 99.5% 통계 정확도를 양립시키며, 다음을 계산합니다：',
+    monteAvg:'<strong>기대 횟수：</strong>전체 시뮬레이션의 평균값。',
+    monteMedian:'<strong>50% 중앙값：</strong>"평균적인 운"의 임계값。',
+    monteP80:'<strong>80% 안전선：</strong>80% 의 플레이어가 이 횟수 내에 목표를 달성. 예산 기준으로 권장합니다。',
+    monteP95:'<strong>95% 극한선：</strong>최악의 케이스, 최대 예산 상한선으로 권장합니다。',
+    monteTip:'<strong>첫 결제 더블</strong>옵션과 <strong>커스텀 단가</strong>기능을 사용하여 보다 정확하게 예산을 계산할 수 있습니다。',
+    disclaimerTitle:'면책 조항：',
+    disclaimerText:'本 도구는 몬테카를로 시뮬레이션과 각 게임 공식 메커니즘에 기반하여 결과를 산출합니다. 결과는 예산 계획 참고용으로만 사용하세요. 실제 게임 내 결과는 서버 RNG 에 의해 결정되며, 본 도구는 어떠한 결과도 보장하지 않습니다。',
+    kofiText:'이 도구가 도움이 되었으면, 커피 한 잔 사주세요！☕',
+    modalTitle:'피티 카운트 확인 방법',
+    modalDesc:'"피티 카운트"는 마지막으로 성 5 를 뽑은 후 현재 풀에서 몇 회 뽑았는지를 나타냅니다. 확인 방법：',
+    modalStep1:'<strong>원신：</strong>기원 페이지에서 "기원 기록"을 열고, 마지막으로 성 5 를 뽑은 후부터의 횟수를 계산합니다。',
+    modalStep2:'<strong>붕괴: 스타레일：</strong>워프 페이지에서 "워프 기록"을 열고, 마지막으로 성 5 를 뽑은 후부터의 횟수를 계산합니다。',
+    modalStep3:'<strong>명조：</strong>에코/회향 기록을 확인하고, 마지막으로 성 5 에코를 뽑은 후부터의 횟수를 계산합니다。',
+    modalStep4:'<strong>명일방주：</strong>채용 터미널에서 채용 기록을 확인합니다。',
+    modalStep5:'<strong>블루 아카이브 / 우마무스메：</strong>이 두 게임은 교환 시스템 (200 회=교환) 을 채택하므로 피티 카운트의 중요도는 낮습니다. 현재 풀의 총 횟수를 확인하세요。',
+    modalTip:'마지막으로 성 5 를 뽑은 후부터의 정확한 횟수를 입력하세요 (아직 뽑지 않았다면 0 을 입력)。',
+    modalClose:'알겠습니다!',
+    simRunning:'시뮬레이션 중...',
+    simCompleted:'완료',
+    simOutOf:'/',
+    shareHeader:'[GugoPro 가챠 분석]',
+    shareGame:'게임：',
+    shareTarget:'목표：',
+    sharePity:'현재 피티：',
+    shareSims:'시뮬레이션: 몬테카를로 5,000 회',
+    shareResults:'📊 결과：',
+    shareExpPulls:'• 기대 횟수：',
+    shareMedian:'• 🟢 50% 중앙값：',
+    shareP80:'• 🟡 80% 안전선：',
+    shareP95:'• 🔴 95% 극한선：',
+    shareAdvice:'💡 권장：',
+    shareAdviceEnd:' 회를 준비하면 80% 의 케이스를 커버합니다',
+    shareLink:'🔗 gugopro.com',
+    progressText:'시뮬레이션 준비 중...',
+    copyFail:'복사 실패. 수동으로 선택하여 복사하세요。',
+    simFirst:'먼저 시뮬레이션을 실행하세요！',
+    reloadSim:'재시뮬레이션 (5,000 회)'
+  },
+  'hi': {
+    backHome:'GugoPro होम पर वापस',
+    heroTitle:'गाचा संभाव्यता और पिटी सिम्युलेटर',
+    heroSub:'मोंटे कार्लो 5,000 सिमुलेशन · कैरेक्टर/वीपन पूल · पहला डबल बोनस · ऑटो-सिम',
+    selectGame:'गेम टेम्पलेट चुनें',
+    presetGenshin:'Genshin / HSR / Wuthering Waves',
+    presetArknights:'Arknights',
+    presetBA:'Blue Archive / Uma Musume',
+    presetCustom:'कस्टम',
+    poolChar:'कैरेक्टर पूल',
+    poolWeapon:'वीपन / लाइट कोन पूल',
+    targetCountLabel:'लक्ष्य संख्या (कॉन्सटेलेशन / R)',
+    targetOptions:['1 कॉपी (C0 / R0)','2 कॉपी (C1 / R1)','3 कॉपी (C2 / R2)','4 कॉपी (C3 / R3)','5 कॉपी (C4 / R4)','6 कॉपी (C5 / R5)','7 कॉपी (C6 अधिकतम / R5+)'],
+    currentPullsLabel:'वर्तमान पिटी गणना',
+    bigPityLabel:'बिग पिटी (अगला निश्चित)',
+    bigPityDesc:'पिछला हारा, अगला निश्चित',
+    baseRateLabel:'बेस दर (%)',
+    softPityStartLabel:'सॉफ्ट पिटी शुरुआत',
+    softPityRateLabel:'प्रति पुल सॉफ्ट पिटी दर (%)',
+    hardPityLabel:'हार्ड पिटी सीमा',
+    offBannerLabel:'ऑफ-बैनर संभाव्यता',
+    offBannerOptions:['50/50 (हारा → अगला निश्चित)','75/25 (75% ऑफ, 25% UP)','100% निश्चित UP','कोई ऑफ-बैनर नहीं'],
+    exchangeLabel:'स्पार्क / एक्सचेंज (0=कोई नहीं)',
+    simBtnText:'मोंटे कार्लो सिम्युलेशन शुरू करें (5,000 रन)',
+    simBtnHint:'पैरामीटर बदलने पर ऑटो-सिम, या मैन्युअल री-रन',
+    shareBtnText:'📋 रिपोर्ट कॉपी करें',
+    shareCopied:'✅ रिपोर्ट क्लिपबोर्ड पर कॉपी हुई!',
+    resultsTitle:'सिम्युलेशन परिणाम सारांश',
+    statAvg:'अपेक्षित पुल (औसत)',
+    statMedian:'🟢 50% मध्यमान',
+    statP80:'🟡 80% सुरक्षित रेखा',
+    statP95:'🔴 95% चरम रेखा',
+    statMin:'न्यूनतम',
+    statMax:'अधिकतम',
+    unitPulls:'पुल',
+    chartTitle:'संचित सफलता दर',
+    currencyTitle:'जेम / बजट कैलकुलेटर',
+    currentGemsLabel:'वर्तमान प्राइमोजेम',
+    currentTicketsLabel:'वर्तमान टिकट',
+    gemsPerPullLabel:'प्रति पुल जेम',
+    firstDoubleLabel:'पहला डबल बोनस सक्षम करें',
+    firstDoubleDesc:'पहले टॉप-अप पर जेम डबल',
+    customRateTWDLabel:'कस्टम दर (TWD/पुल)',
+    customRateUSDLabel:'कस्टम दर (USD/पुल)',
+    resMissingPullsLabel:'अभी भी चाहिए पुल',
+    resMissingGemsLabel:'अभी भी चाहिए जेम',
+    resCostTWDLabel:'अनुमानित लागत (TWD)',
+    resCostUSDLabel:'अनुमानित लागत (USD)',
+    unitGems:'जेम',
+    unitTWD:'TWD',
+    unitUSD:'USD',
+    amazonTitle:'गेमिंग गियर अनुशंसाएं',
+    amazonDesc:'ये बेहतरीन गेमिंग डिवाइस से अपने सेटअप को अपग्रेड करें!',
+    amazonCta:'अभी खरीदें',
+    tutorialTitle:'ट्यूटोरियल: सॉफ्ट पिटी और 50/50',
+    softPityTitle:'सॉफ्ट पिटी क्या है?',
+    softPityDesc:'सॉफ्ट पिटी का अर्थ है कि एक निश्चित सीमा के बाद आपकी पुल दर धीरे-धीरे बढ़ती है। उदाहरण के लिए, Genshin कैरेक्टर बैनर <strong>पुल 74</strong> पर सॉफ्ट पिटी शुरू होता है, जहां 0.6% बेस दर प्रति पुल 6% बढ़ती है जब तक 90 पर हार्ड पिटी नहीं हो जाता।',
+    poolDiff:'<strong>कैरेक्टर vs वीपन पूल：</strong>कैरेक्टर बैनर 50/50 ऑफ-बैनर, वीपन बैनर 75/25। यह टूल दोनों को सटीक रूप से मॉडल करता है।',
+    hardPityDesc:'<strong>हार्ड पिटी：</strong>सीमा पर, आपको लक्षित आइटम निश्चित रूप से मिलता है।',
+    softPityDesc2:'<strong>सॉफ्ट पिटी：</strong>सीमा के बाद दर धीरे-धीरे बढ़ती है, अपेक्षित पुल को काफी कम करती है।',
+    fiftyFiftyDesc:'<strong>50/50：</strong>हिट के बाद, 50% संभाव्यता UP आइटम, 50% ऑफ-बैनर। अगर ऑफ-बैनर, अगला हिट निश्चित UP।',
+    seventyFiveDesc:'<strong>75/25：</strong>वीपन बैनर: 25% संभाव्यता UP, 75% ऑफ-बैनर। अगर ऑफ-बैनर, अगला हिट निश्चित।',
+    monteTitle:'मोंटे कार्लो सिम्युलेशन',
+    monteDesc:'यह टूल प्रति निष्पादन <strong>5,000 स्वतंत्र सिम्युलेशन</strong> चलाता है, मोबाइल प्रदर्शन और 99.5% सांख्यिकीय सटीकता को संतुलित करते हुए:',
+    monteAvg:'<strong>अपेक्षित पुल：</strong>सभी सिम्युलेशन का औसत।',
+    monteMedian:'<strong>50% मध्यमान：</strong>"औसत भाग्य" सीमा।',
+    monteP80:'<strong>80% सुरक्षित रेखा：</strong>80% खिलाड़ी इस पुल संख्या में सफल होते हैं। बजट आधार के रूप में अनुशंसित।',
+    monteP95:'<strong>95% चरम रेखा：</strong>सबसे खराब स्थिति, अधिकतम बजट सीमा के रूप में अनुशंसित।',
+    monteTip:'<strong>पहला डबल बोनस</strong> विकल्प और <strong>कस्टम दर</strong> सुविधा का उपयोग करके सटीक बजट बनाएं।',
+    disclaimerTitle:'अस्वीकरण：',
+    disclaimerText:'यह टूल मोंटे कार्लो सिम्युलेशन और सार्वजनिक रूप से घोषित गेम मैकेनिक्स पर आधारित है। परिणाम केवल बजट योजना संदर्भ के लिए हैं।',
+    kofiText:'अगर यह टूल मददगार रहा, तो मुझे एक कॉफी दिलाएं!',
+    modalTitle:'अपनी पिटी गणना कैसे जांचें',
+    modalDesc:'आपकी "पिटी गणना" आपके आखिरी 5-स्टार पुल के बाद से वर्तमान बैनर पर कितनी बार पुल किया है। कैसे जांचें：',
+    modalStep1:'<strong>Genshin Impact：</strong>विश बैनर से विश हिस्ट्री खोलें। आखिरी 5-स्टार से पुल गिनें।',
+    modalStep2:'<strong>Honkai: Star Rail：</strong>वार्प पेज से वार्प हिस्ट्री खोलें। आखिरी 5-स्टार से पुल गिनें।',
+    modalStep3:'<strong>Wuthering Waves：</strong>इको/कन्वीन हिस्ट्री जांचें। आखिरी 5-स्टार इको से पुल गिनें।',
+    modalStep4:'<strong>Arknights：</strong>रिक्लूटमेंट टर्मिनल में रिक्लूटमेंट हिस्ट्री जांचें।',
+    modalStep5:'<strong>Blue Archive / Uma Musume：</strong>ये स्पार्क सिस्टम (200 पुल = एक्सचेंज) का उपयोग करते हैं, इसलिए पिटी गणना कम महत्वपूर्ण है।',
+    modalTip:'आपकी आखिरी 5-स्टार से सटीक पुल संख्या दर्ज करें (अगर अभी तक नहीं खींचा तो 0)।',
+    modalClose:'समझ गया!',
+    simRunning:'सिम्युलेट हो रहा है...',
+    simCompleted:'पूरा',
+    simOutOf:'का',
+    shareHeader:'[GugoPro गचा विश्लेषण]',
+    shareGame:'गेम：',
+    shareTarget:'लक्ष्य：',
+    sharePity:'वर्तमान पिटी：',
+    shareSims:'सिम्युलेशन: 5,000 मोंटे कार्लो रन',
+    shareResults:'📊 परिणाम：',
+    shareExpPulls:'• अपेक्षित पुल：',
+    shareMedian:'• 🟢 50% मध्यमान：',
+    shareP80:'• 🟡 80% सुरक्षित रेखा：',
+    shareP95:'• 🔴 95% चरम रेखा：',
+    shareAdvice:'💡 अनुशंसा：',
+    shareAdviceEnd:' पुल तैयार रखें 80% केस कवर करने के लिए',
+    shareLink:'🔗 gugopro.com',
+    progressText:'सिम्युलेशन तैयार हो रहा है...',
+    copyFail:'कॉपी विफल। कृपया मैन्युअल रूप से चुनें और कॉपी करें।',
+    simFirst:'कृपया पहले सिम्युलेशन चलाएं!',
+    reloadSim:'पुनः सिम्युलेशन (5,000 रन)'
+  },
+  'pt-BR': {
+    backHome:'Voltar ao GugoPro',
+    heroTitle:'Simulador de Gacha e Pity v5',
+    heroSub:'Monte Carlo 5.000 simulações · Banner de Personagem/Arma · Primeiro Top-up Duplo · Auto-Sim',
+    selectGame:'Selecionar Template do Jogo',
+    presetGenshin:'Genshin / HSR / Wuthering Waves',
+    presetArknights:'Arknights',
+    presetBA:'Blue Archive / Uma Musume',
+    presetCustom:'Personalizado',
+    poolChar:'Banner de Personagem',
+    poolWeapon:'Banner de Arma / Cone de Luz',
+    targetCountLabel:'Meta (Constelação / R)',
+    targetOptions:['1 cópia (C0 / R0)','2 cópias (C1 / R1)','3 cópias (C2 / R2)','4 cópias (C3 / R3)','5 cópias (C4 / R4)','6 cópias (C5 / R5)','7 cópias (C6 Máx / R5+)'],
+    currentPullsLabel:'Contagem de Pity Atual',
+    bigPityLabel:'Pity Grande (Próximo Garantido)',
+    bigPityDesc:'Perdeu o último 50/50, próximo é garantido',
+    baseRateLabel:'Taxa Base (%)',
+    softPityStartLabel:'Início do Soft Pity',
+    softPityRateLabel:'Taxa por Pull no Soft Pity (%)',
+    hardPityLabel:'Limite do Hard Pity',
+    offBannerLabel:'Chance de Off-Banner',
+    offBannerOptions:['50/50 (Perdeu → Próximo Garantido)','75/25 (75% Off, 25% UP)','100% Garantido UP','Sem Off-Banner'],
+    exchangeLabel:'Spark / Troca (0=Nenhum)',
+    simBtnText:'Iniciar Simulação Monte Carlo (5.000)',
+    simBtnHint:'Auto-simula ao alterar parâmetros, ou clique para recalcular',
+    shareBtnText:'📋 Copiar Relatório de Análise',
+    shareCopied:'✅ Relatório copiado para a área de transferência!',
+    resultsTitle:'Resumo dos Resultados',
+    statAvg:'Média (Esperado)',
+    statMedian:'🟢 Mediana 50%',
+    statP80:'🟡 Linha Segura 80%',
+    statP95:'🔴 Linha Extrema 95%',
+    statMin:'Mínimo',
+    statMax:'Máximo',
+    unitPulls:'pulls',
+    chartTitle:'Taxa de Sucesso Acumulada',
+    currencyTitle:'Calculadora de Gemas e Orçamento',
+    currentGemsLabel:'Gemas / Cristais Atuais',
+    currentTicketsLabel:'Tickets Atuais',
+    gemsPerPullLabel:'Gemas por Pull',
+    firstDoubleLabel:'Ativar Bônus Duplo do Primeiro Top-up',
+    firstDoubleDesc:'Gemas dobradas no primeiro top-up',
+    customRateTWDLabel:'Taxa Personalizada (TWD/pull)',
+    customRateUSDLabel:'Taxa Personalizada (USD/pull)',
+    resMissingPullsLabel:'Pulls Faltando',
+    resMissingGemsLabel:'Gemas Faltando',
+    resCostTWDLabel:'Custo Estimado (TWD)',
+    resCostUSDLabel:'Custo Estimado (USD)',
+    unitGems:'gemas',
+    unitTWD:'TWD',
+    unitUSD:'USD',
+    amazonTitle:'Recomendações de Equipamentos Gaming',
+    amazonDesc:'Atualize seu setup de jogos com estas escolhas selecionadas!',
+    amazonCta:'Comprar Agora',
+    tutorialTitle:'Tutorial: Soft Pity e Mecânica 50/50',
+    softPityTitle:'O que é Soft Pity?',
+    softPityDesc:'Soft pity significa que sua taxa de pull aumenta gradualmente após um certo limite. Por exemplo, o banner de personagem do Genshin inicia soft pity no <strong>pull 74</strong>, onde a taxa base de 0,6% aumenta 6% por pull até o hard pity em 90.',
+    poolDiff:'<strong>Personagem vs Arma：</strong>Banners de personagem usam 50/50; banners de arma usam 75/25. Esta ferramenta modela ambos com precisão.',
+    hardPityDesc:'<strong>Hard Pity：</strong>No limite, você é garantido de obter o item alvo.',
+    softPityDesc2:'<strong>Soft Pity：</strong>A taxa aumenta gradualmente após o limite, reduzindo significativamente os pulls esperados.',
+    fiftyFiftyDesc:'<strong>50/50：</strong>Após acertar, 50% chance de ser o item UP, 50% off-banner. Se off-banner, o próximo é garantido UP.',
+    seventyFiveDesc:'<strong>75/25：</strong>Banner de arma: 25% chance UP, 75% off-banner. Se off-banner, o próximo é garantido.',
+    monteTitle:'Simulação Monte Carlo',
+    monteDesc:'Esta ferramenta executa <strong>5.000 simulações independentes</strong> por execução, equilibrando desempenho mobile com 99,5% de precisão estatística:',
+    monteAvg:'<strong>Pulls Esperados：</strong>Média de todas as simulações.',
+    monteMedian:'<strong>Mediana 50%：</strong>O limite de "sorte média".',
+    monteP80:'<strong>Linha Segura 80%：</strong>80% dos jogadores conseguem dentro desta contagem. Recomendado como base de orçamento.',
+    monteP95:'<strong>Linha Extrema 95%：</strong>Pior cenário, recomendado como teto máximo de orçamento.',
+    monteTip:'Combine com a opção <strong>Primeiro Top-up Duplo</strong> e a taxa personalizada para orçamento preciso.',
+    disclaimerTitle:'Aviso Legal：',
+    disclaimerText:'Esta ferramenta usa simulação Monte Carlo baseada em mecânicas de jogo divulgadas publicamente. Resultados são apenas para referência de planejamento de orçamento.',
+    kofiText:'Se esta ferramenta te ajudou, me compre um café!',
+    modalTitle:'Como Verificar Sua Contagem de Pity',
+    modalDesc:'Sua "contagem de pity" é o número de pulls desde o último 5-estrelas no banner atual. Como verificar：',
+    modalStep1:'<strong>Genshin Impact：</strong>Abra o Histórico de Desejos na página do banner. Conte os pulls desde o último 5-estrelas.',
+    modalStep2:'<strong>Honkai: Star Rail：</strong>Abra o Histórico de Warp na página de Warp. Conte os pulls desde o último 5-estrelas.',
+    modalStep3:'<strong>Wuthering Waves：</strong>Verifique o Histórico de Echo/Convene. Conte os pulls desde o último 5-estrelas echo.',
+    modalStep4:'<strong>Arknights：</strong>Verifique o histórico de recrutamento no terminal.',
+    modalStep5:'<strong>Blue Archive / Uma Musume：</strong>Usam sistema de spark (200 pulls = troca), então a contagem de pity é menos crítica.',
+    modalTip:'Insira o número exato de pulls desde o último 5-estrelas (ou 0 se ainda não começou).',
+    modalClose:'Entendi!',
+    simRunning:'Simulando...',
+    simCompleted:'Concluído',
+    simOutOf:'de',
+    shareHeader:'[GugoPro Análise de Gacha]',
+    shareGame:'Jogo: ',
+    shareTarget:'Meta: ',
+    sharePity:'Pity Atual: ',
+    shareSims:'Simulações: 5.000 Monte Carlo',
+    shareResults:'📊 Resultados:',
+    shareExpPulls:'• Pulls Esperados: ',
+    shareMedian:'• 🟢 Mediana 50%: ',
+    shareP80:'• 🟡 Linha Segura 80%: ',
+    shareP95:'• 🔴 Linha Extrema 95%: ',
+    shareAdvice:'💡 Recomendação: Prepare ',
+    shareAdviceEnd:' pulls para cobrir 80% dos casos',
+    shareLink:'🔗 gugopro.com',
+    progressText:'Preparando simulação...',
+    copyFail:'Falha ao copiar. Selecione e copie manualmente.',
+    simFirst:'Execute uma simulação primeiro!',
+    reloadSim:'Re-simular (5.000)'
+  },
+  'id': {
+    backHome:'Kembali ke GugoPro',
+    heroTitle:'Simulator Gacha & Pity v5',
+    heroSub:'Monte Carlo 5.000 simulasi · Banner Karakter/Weapon · Bonus Top-up Pertama · Auto-Sim',
+    selectGame:'Pilih Template Game',
+    presetGenshin:'Genshin / HSR / Wuthering Waves',
+    presetArknights:'Arknights',
+    presetBA:'Blue Archive / Uma Musume',
+    presetCustom:'Kustom',
+    poolChar:'Banner Karakter',
+    poolWeapon:'Banner Weapon / Light Cone',
+    targetCountLabel:'Target (Konstelasi / R)',
+    targetOptions:['1 kopi (C0 / R0)','2 kopi (C1 / R1)','3 kopi (C2 / R2)','4 kopi (C3 / R3)','5 kopi (C4 / R4)','6 kopi (C5 / R5)','7 kopi (C6 Maks / R5+)'],
+    currentPullsLabel:'Hitungan Pity Saat Ini',
+    bigPityLabel:'Big Pity (Berikutnya Dijamin)',
+    bigPityDesc:'Kalah 50/50 terakhir, berikutnya dijamin',
+    baseRateLabel:'Base Rate (%)',
+    softPityStartLabel:'Mulai Soft Pity',
+    softPityRateLabel:'Rate per Pull Soft Pity (%)',
+    hardPityLabel:'Batas Hard Pity',
+    offBannerLabel:'Peluang Off-Banner',
+    offBannerOptions:['50/50 (Kalah → Berikutnya Dijamin)','75/25 (75% Off, 25% UP)','100% Dijamin UP','Tanpa Off-Banner'],
+    exchangeLabel:'Spark / Tukar (0=Tidak Ada)',
+    simBtnText:'Mulai Simulasi Monte Carlo (5.000)',
+    simBtnHint:'Otomatis simulasi saat parameter berubah, atau klik untuk re-run',
+    shareBtnText:'📋 Salin Laporan Analisis',
+    shareCopied:'✅ Laporan disalin ke clipboard!',
+    resultsTitle:'Ringkasan Hasil Simulasi',
+    statAvg:'Rata-rata (Ekspektasi)',
+    statMedian:'🟢 Median 50%',
+    statP80:'🟡 Garis Aman 80%',
+    statP95:'🔴 Garis Ekstrem 95%',
+    statMin:'Minimum',
+    statMax:'Maksimum',
+    unitPulls:'pull',
+    chartTitle:'Tingkat Keberhasilan Kumulatif',
+    currencyTitle:'Kalkulator Primogem & Anggaran',
+    currentGemsLabel:'Primogem / Crystal Saat Ini',
+    currentTicketsLabel:'Tiket Saat Ini',
+    gemsPerPullLabel:'Gems per Pull',
+    firstDoubleLabel:'Aktifkan Bonus Top-up Pertama',
+    firstDoubleDesc:'Gems ganda di top-up pertama',
+    customRateTWDLabel:'Rate Kustom (TWD/pull)',
+    customRateUSDLabel:'Rate Kustom (USD/pull)',
+    resMissingPullsLabel:'Pull Yang Masih Kurang',
+    resMissingGemsLabel:'Gems Yang Masih Kurang',
+    resCostTWDLabel:'Estimasi Biaya (TWD)',
+    resCostUSDLabel:'Estimasi Biaya (USD)',
+    unitGems:'gems',
+    unitTWD:'TWD',
+    unitUSD:'USD',
+    amazonTitle:'Rekomendasi Perangkat Gaming',
+    amazonDesc:'Upgrade setup gaming Anda dengan pilihan terbaik ini!',
+    amazonCta:'Beli Sekarang',
+    tutorialTitle:'Tutorial: Soft Pity & Mekanik 50/50',
+    softPityTitle:'Apa itu Soft Pity?',
+    softPityDesc:'Soft pity berarti rate pull Anda meningkat secara bertahap setelah batas tertentu. Contohnya, banner karakter Genshin mulai soft pity di <strong>pull ke-74</strong>, di mana rate base 0,6% meningkat 6% per pull hingga hard pity di 90.',
+    poolDiff:'<strong>Karakter vs Weapon：</strong>Banner karakter 50/50, banner weapon 75/25. Tool ini memodelkan keduanya secara akurat.',
+    hardPityDesc:'<strong>Hard Pity：</strong>Di batas, Anda dijamin mendapat item target.',
+    softPityDesc2:'<strong>Soft Pity：</strong>Rate meningkat bertahap setelah batas, mengurangi pull yang diharapkan secara signifikan.',
+    fiftyFiftyDesc:'<strong>50/50：</strong>Setelah hit, 50% peluang item UP, 50% off-banner. Jika off-banner, hit berikutnya dijamin UP.',
+    seventyFiveDesc:'<strong>75/25：</strong>Banner weapon: 25% peluang UP, 75% off-banner. Jika off-banner, hit berikutnya dijamin.',
+    monteTitle:'Simulasi Monte Carlo',
+    monteDesc:'Tool ini menjalankan <strong>5.000 simulasi independen</strong> per eksekusi, menyeimbangkan performa mobile dengan akurasi statistik 99,5%:',
+    monteAvg:'<strong>Pull Ekspektasi：</strong>Rata-rata semua simulasi.',
+    monteMedian:'<strong>Median 50%：</strong>Ambang batas "keberuntungan rata-rata".',
+    monteP80:'<strong>Garis Aman 80%：</strong>80% pemain berhasil dalam jumlah pull ini. Direkomendasikan sebagai baseline anggaran.',
+    monteP95:'<strong>Garis Ekstrem 95%：</strong>Skenario terburuk, direkomendasikan sebagai batas atas anggaran.',
+    monteTip:'Gabungkan dengan opsi <strong>Bonus Top-up Pertama</strong> dan fitur rate kustom untuk anggaran presisi.',
+    disclaimerTitle:'Penafian：',
+    disclaimerText:'Tool ini menggunakan simulasi Monte Carlo berdasarkan mekanik game yang diumumkan secara publik. Hasil hanya untuk referensi perencanaan anggaran.',
+    kofiText:'Jika tool ini membantu Anda, traktir saya kopi!',
+    modalTitle:'Cara Cek Hitungan Pity Anda',
+    modalDesc:'"Hitungan pity" Anda adalah jumlah pull sejak 5-star terakhir di banner saat ini. Cara cek：',
+    modalStep1:'<strong>Genshin Impact：</strong>Buka Riwayat Wish dari halaman banner. Hitung pull sejak 5-star terakhir.',
+    modalStep2:'<strong>Honkai: Star Rail：</strong>Buka Riwayat Warp dari halaman Warp. Hitung pull sejak 5-star terakhir.',
+    modalStep3:'<strong>Wuthering Waves：</strong>Cek Riwayat Echo/Convene. Hitung pull sejak 5-star echo terakhir.',
+    modalStep4:'<strong>Arknights：</strong>Cek riwayat rekrutmen di terminal.',
+    modalStep5:'<strong>Blue Archive / Uma Musume：</strong>Menggunakan sistem spark (200 pull = tukar), jadi hitungan pity kurang kritis.',
+    modalTip:'Masukkan jumlah pull yang tepat sejak 5-star terakhir (atau 0 jika belum mulai).',
+    modalClose:'Mengerti!',
+    simRunning:'Mensimulasikan...',
+    simCompleted:'Selesai',
+    simOutOf:'dari',
+    shareHeader:'[GugoPro Analisis Gacha]',
+    shareGame:'Game: ',
+    shareTarget:'Target: ',
+    sharePity:'Pity Saat Ini: ',
+    shareSims:'Simulasi: 5.000 Monte Carlo',
+    shareResults:'📊 Hasil:',
+    shareExpPulls:'• Pull Ekspektasi: ',
+    shareMedian:'• 🟢 Median 50%: ',
+    shareP80:'• 🟡 Garis Aman 80%: ',
+    shareP95:'• 🔴 Garis Ekstrem 95%: ',
+    shareAdvice:'💡 Rekomendasi: Siapkan ',
+    shareAdviceEnd:' pull untuk mencakup 80% kasus',
+    shareLink:'🔗 gugopro.com',
+    progressText:'Menyiapkan simulasi...',
+    copyFail:'Gagal menyalin. Pilih dan salin secara manual.',
+    simFirst:'Jalankan simulasi terlebih dahulu!',
+    reloadSim:'Re-simulasi (5.000)'
+  },
+  'bn': {
+    backHome:'GugoPro হোমে ফিরে যান',
+    heroTitle:'গাচা সম্ভাবনা ও পিটি সিমুলেটর',
+    heroSub:'মন্টে কার্লো ৫,০০০ সিমুলেশন · ক্যারেক্টার/ওয়েপন পুল · ফার্স্ট ডবল বোনাস · অটো-সিম',
+    selectGame:'গেম টেমপ্লেট নির্বাচন করুন',
+    presetGenshin:'Genshin / HSR / Wuthering Waves',
+    presetArknights:'Arknights',
+    presetBA:'Blue Archive / Uma Musume',
+    presetCustom:'কাস্টম',
+    poolChar:'ক্যারেক্টার পুল',
+    poolWeapon:'ওয়েপন / লাইট কোন পুল',
+    targetCountLabel:'লক্ষ্য (কনস্টেলেশন / R)',
+    targetOptions:['১ কপি (C0 / R0)','২ কপি (C1 / R1)','৩ কপি (C2 / R2)','৪ কপি (C3 / R3)','৫ কপি (C4 / R4)','৬ কপি (C5 / R5)','৭ কপি (C6 সর্বোচ্চ / R5+)'],
+    currentPullsLabel:'বর্তমান পিটি কাউন্ট',
+    bigPityLabel:'বিগ পিটি (পরবর্তী গ্যারান্টি)',
+    bigPityDesc:'শেষবার হারেন, পরবর্তী গ্যারান্টি',
+    baseRateLabel:'বেস রেট (%)',
+    softPityStartLabel:'সফট পিটি শুরু',
+    softPityRateLabel:'প্রতি পুল সফট পিটি রেট (%)',
+    hardPityLabel:'হার্ড পিটি ক্যাপ',
+    offBannerLabel:'অফ-ব্যানার সম্ভাবনা',
+    offBannerOptions:['৫০/৫০ (হারেন → পরবর্তী গ্যারান্টি)','৭৫/২৫ (৭৫% অফ, ২৫% UP)','১০০% গ্যারান্টি UP','কোন অফ-ব্যানার নেই'],
+    exchangeLabel:'স্পার্ক / এক্সচেঞ্জ (০=নেই)',
+    simBtnText:'মন্টে কার্লো সিমুলেশন শুরু (৫,০০০ রান)',
+    simBtnHint:'প্যারামিটার পরিবর্তনে অটো-সিম, অথবা ম্যানুয়ালি রি-রান',
+    shareBtnText:'📋 রিপোর্ট কপি করুন',
+    shareCopied:'✅ রিপোর্ট ক্লিপবোর্ডে কপি হয়েছে!',
+    resultsTitle:'সিমুলেশন ফলাফল সারাংশ',
+    statAvg:'প্রত্যাশিত পুল (গড়)',
+    statMedian:'🟢 ৫০% মধ্যমা',
+    statP80:'🟡 ৮০% নিরাপদ রেখা',
+    statP95:'🔴 ৯৫% চরম রেখা',
+    statMin:'সর্বনিম্ন',
+    statMax:'সর্বোচ্চ',
+    unitPulls:'পুল',
+    chartTitle:'ক্রমযোজিত সফলতার হার',
+    currencyTitle:'জেম ও বাজেট ক্যালকুলেটর',
+    currentGemsLabel:'বর্তমান প্রাইমোজেম',
+    currentTicketsLabel:'বর্তমান টিকিট',
+    gemsPerPullLabel:'প্রতি পুল জেম',
+    firstDoubleLabel:'ফার্স্ট ডবল বোনাস সক্রিয় করুন',
+    firstDoubleDesc:'প্রথম টপ-আপে জেম ডবল',
+    customRateTWDLabel:'কাস্টম রেট (TWD/পুল)',
+    customRateUSDLabel:'কাস্টম রেট (USD/পুল)',
+    resMissingPullsLabel:'আরও প্রয়োজন পুল',
+    resMissingGemsLabel:'আরও প্রয়োজন জেম',
+    resCostTWDLabel:'আনুমানিক খরচ (TWD)',
+    resCostUSDLabel:'আনুমানিক খরচ (USD)',
+    unitGems:'জেম',
+    unitTWD:'TWD',
+    unitUSD:'USD',
+    amazonTitle:'গেমিং গিয়ার সুপারিশ',
+    amazonDesc:'এই নির্বাচিত ডিভাইস দিয়ে আপনার গেমিং সেটআপ আপগ্রেড করুন!',
+    amazonCta:'এখনই কিনুন',
+    tutorialTitle:'টিউটোরিয়াল: সফট পিটি ও ৫০/৫০',
+    softPityTitle:'সফট পিটি কী?',
+    softPityDesc:'সফট পিটি মানে আপনার পুল রেট একটি নির্দিষ্ট সীমার পর ধীরে ধীরে বাড়ে। উদাহরণস্বরূপ, Genshin ক্যারেক্টার ব্যানার <strong>পুল ৭৪</strong>-এ সফট পিটি শুরু হয়, যেখানে ০.৬% বেস রেট প্রতি পুল ৬% করে বাড়ে ৯০-এর হার্ড পিটি পর্যন্ত।',
+    poolDiff:'<strong>ক্যারেক্টার vs ওয়েপন পুল：</strong>ক্যারেক্টার ব্যানার
+50/50, banner de arma 75/25. Esta herramienta modela ambos con precisión.',
+    hardPityDesc:'<strong>Hard Pity：</strong>Al alcanzar el límite, obtienes el objeto objetivo garantizado.',
+    softPityDesc2:'<strong>Soft Pity：</strong>La tasa aumenta gradualmente después del umbral, reduciendo significativamente los pulls esperados.',
+    fiftyFiftyDesc:'<strong>50/50：</strong>Después de acertar, 50% de probabilidad de ser el objeto UP, 50% off-banner. Si es off-banner, el siguiente es garantizado UP.',
+    seventyFiveDesc:'<strong>75/25：</strong>Banner de arma: 25% de probabilidad UP, 75% off-banner. Si es off-banner, el siguiente es garantizado.',
+    monteTitle:'Simulación Monte Carlo',
+    monteDesc:'Esta herramienta ejecuta <strong>5.000 simulaciones independientes</strong> por ejecución, equilibrando rendimiento móvil con 99,5% de precisión estadística:',
+    monteAvg:'<strong>Pulls Esperados：</strong>Promedio de todas las simulaciones.',
+    monteMedian:'<strong>Mediana 50%：</strong>El umbral de "suerte promedio".',
+    monteP80:'<strong>Línea Segura 80%：</strong>80% de los jugadores lo logran dentro de este número de pulls. Recomendado como base de presupuesto.',
+    monteP95:'<strong>Línea Extrema 95%：</strong>Peor escenario, recomendado como techo máximo de presupuesto.',
+    monteTip:'Combina con la opción <strong>Primer Top-up Doble</strong> y la función de tasa personalizada para un presupuesto preciso.',
+    disclaimerTitle:'Descargo de responsabilidad：',
+    disclaimerText:'Esta herramienta utiliza simulación Monte Carlo basada en mecánicas de juego divulgadas públicamente. Los resultados son solo para referencia de planificación presupuestaria.',
+    kofiText:'¡Si esta herramienta te ayudó, cómprame un café!',
+    modalTitle:'Cómo Verificar Tu Conteo de Pity',
+    modalDesc:'Tu "conteo de pity" es el número de pulls desde tu último 5 estrellas en el banner actual. Cómo verificarlo：',
+    modalStep1:'<strong>Genshin Impact：</strong>Abre el Historial de Deseos desde la página del banner. Cuenta los pulls desde el último 5 estrellas.',
+    modalStep2:'<strong>Honkai: Star Rail：</strong>Abre el Historial de Warp desde la página de Warp. Cuenta los pulls desde el último 5 estrellas.',
+    modalStep3:'<strong>Wuthering Waves：</strong>Revisa el Historial de Eco/Convene. Cuenta los pulls desde el último eco 5 estrellas.',
+    modalStep4:'<strong>Arknights：</strong>Revisa el historial de reclutamiento en el terminal.',
+    modalStep5:'<strong>Blue Archive / Uma Musume：</strong>Usan sistema de spark (200 pulls = intercambio), así que el conteo de pity es menos crítico.',
+    modalTip:'Ingresa el número exacto de pulls desde tu último 5 estrellas (o 0 si aún no has empezado).',
+    modalClose:'¡Entendido!',
+    simRunning:'Simulando...',
+    simCompleted:'Completado',
+    simOutOf:'de',
+    shareHeader:'[GugoPro Análisis de Gacha]',
+    shareGame:'Juego: ',
+    shareTarget:'Objetivo: ',
+    sharePity:'Pity Actual: ',
+    shareSims:'Simulaciones: 5.000 Monte Carlo',
+    shareResults:'📊 Resultados:',
+    shareExpPulls:'• Pulls Esperados: ',
+    shareMedian:'• 🟢 Mediana 50%: ',
+    shareP80:'• 🟡 Línea Segura 80%: ',
+    shareP95:'• 🔴 Línea Extrema 95%: ',
+    shareAdvice:'💡 Recomendación: Prepara ',
+    shareAdviceEnd:' pulls para cubrir el 80% de los casos',
+    shareLink:'🔗 gugopro.com',
+    progressText:'Preparando simulación...',
+    copyFail:'Error al copiar. Selecciona y copia manualmente.',
+    simFirst:'¡Ejecuta una simulación primero!',
+    reloadSim:'Re-simular (5.000)'
+  },
+  'fr': {
+    backHome:'Retour à GugoPro',
+    heroTitle:'Simulateur de Gacha et Pity v5',
+    heroSub:'Monte Carlo 5 000 simulations · Bannière Personnage/Arme · Premier Top-up Double · Auto-Sim',
+    selectGame:'Sélectionner le Modèle de Jeu',
+    presetGenshin:'Genshin / HSR / Wuthering Waves',
+    presetArknights:'Arknights',
+    presetBA:'Blue Archive / Uma Musume',
+    presetCustom:'Personnalisé',
+    poolChar:'Bannière Personnage',
+    poolWeapon:'Bannière Arme / Cône de Lumière',
+    targetCountLabel:'Objectif (Constellation / R)',
+    targetOptions:['1 copie (C0 / R0)','2 copies (C1 / R1)','3 copies (C2 / R2)','4 copies (C3 / R3)','5 copies (C4 / R4)','6 copies (C5 / R5)','7 copies (C6 Max / R5+)'],
+    currentPullsLabel:'Compteur de Pity Actuel',
+    bigPityLabel:'Big Pity (Prochain Garanti)',
+    bigPityDesc:'Perdu le dernier 50/50, le prochain est garanti',
+    baseRateLabel:'Taux de Base (%)',
+    softPityStartLabel:'Début du Soft Pity',
+    softPityRateLabel:'Taux par Pull Soft Pity (%)',
+    hardPityLabel:'Plafond Hard Pity',
+    offBannerLabel:'Chance Hors-Bannière',
+    offBannerOptions:['50/50 (Perdu → Prochain Garanti)','75/25 (75% Hors, 25% UP)','100% Garanti UP','Pas de Hors-Bannière'],
+    exchangeLabel:'Échange / Spark (0=Aucun)',
+    simBtnText:'Lancer la Simulation Monte Carlo (5 000)',
+    simBtnHint:'Simulation automatique lors du changement de paramètres, ou cliquez pour recalculer',
+    shareBtnText:'📋 Copier le Rapport d\'Analyse',
+    shareCopied:'✅ Rapport copié dans le presse-papiers !',
+    resultsTitle:'Résumé des Résultats',
+    statAvg:'Moyenne (Attendu)',
+    statMedian:'🟢 Médiane 50%',
+    statP80:'🟡 Ligne Sûre 80%',
+    statP95:'🔴 Ligne Extrême 95%',
+    statMin:'Minimum',
+    statMax:'Maximum',
+    unitPulls:'pulls',
+    chartTitle:'Taux de Réussite Cumulé',
+    currencyTitle:'Calculateur de Gemmes et Budget',
+    currentGemsLabel:'Gemmes / Cristaux Actuels',
+    currentTicketsLabel:'Tickets Actuels',
+    gemsPerPullLabel:'Gemmes par Pull',
+    firstDoubleLabel:'Activer le Bonus Premier Top-up Double',
+    firstDoubleDesc:'Gemmes doublées au premier top-up',
+    customRateTWDLabel:'Taux Personnalisé (TWD/pull)',
+    customRateUSDLabel:'Taux Personnalisé (USD/pull)',
+    resMissingPullsLabel:'Pulls Manquants',
+    resMissingGemsLabel:'Gemmes Manquantes',
+    resCostTWDLabel:'Coût Estimé (TWD)',
+    resCostUSDLabel:'Coût Estimé (USD)',
+    unitGems:'gemmes',
+    unitTWD:'TWD',
+    unitUSD:'USD',
+    amazonTitle:'Recommandations d\'Équipement Gaming',
+    amazonDesc:'Mettez à niveau votre setup gaming avec ces sélections !',
+    amazonCta:'Acheter Maintenant',
+    tutorialTitle:'Tutoriel : Soft Pity et Mécanique 50/50',
+    softPityTitle:'Qu\'est-ce que le Soft Pity ?',
+    softPityDesc:'Le soft pity signifie que votre taux de pull augmente progressivement après un certain seuil. Par exemple, la bannière personnage de Genshin commence le soft pity au <strong>pull 74</strong>, où le taux de base de 0,6% augmente de 6% par pull jusqu\'au hard pity à 90.',
+    poolDiff:'<strong>Personnage vs Arme :</strong> Les bannières personnage utilisent 50/50 ; les bannières arme utilisent 75/25. Cet outil modélise précisément les deux.',
+    hardPityDesc:'<strong>Hard Pity :</strong> Au plafond, vous êtes garanti d\'obtenir l\'objet cible.',
+    softPityDesc2:'<strong>Soft Pity :</strong> Le taux augmente progressivement après le seuil, réduisant significativement les pulls attendus.',
+    fiftyFiftyDesc:'<strong>50/50 :</strong> Après avoir touché, 50% de chance que ce soit l\'objet UP, 50% hors-bannière. Si hors-bannière, le prochain est garanti UP.',
+    seventyFiveDesc:'<strong>75/25 :</strong> Bannière arme : 25% de chance UP, 75% hors-bannière. Si hors-bannière, le prochain est garanti.',
+    monteTitle:'Simulation Monte Carlo',
+    monteDesc:'Cet outil exécute <strong>5 000 simulations indépendantes</strong> par exécution, équilibrant performance mobile avec 99,5% de précision statistique :',
+    monteAvg:'<strong>Pulls Attendus :</strong> Moyenne de toutes les simulations.',
+    monteMedian:'<strong>Médiane 50% :</strong> Le seuil de "chance moyenne".',
+    monteP80:'<strong>Ligne Sûre 80% :</strong> 80% des joueurs réussissent dans ce nombre de pulls. Recommandé comme base de budget.',
+    monteP95:'<strong>Ligne Extrême 95% :</strong> Pire scénario, recommandé comme plafond maximum de budget.',
+    monteTip:'Combinez avec l\'option <strong>Premier Top-up Double</strong> et la fonction de taux personnalisé pour un budget précis.',
+    disclaimerTitle:'Avertissement :',
+    disclaimerText:'Cet outil utilise une simulation Monte Carlo basée sur les mécaniques de jeu divulguées publiquement. Les résultats sont uniquement à titre de référence pour la planification budgétaire.',
+    kofiText:'Si cet outil vous a aidé, offrez-moi un café !',
+    modalTitle:'Comment Vérifier Votre Compteur de Pity',
+    modalDesc:'Votre "compteur de pity" est le nombre de pulls depuis votre dernier 5 étoiles sur la bannière actuelle. Comment vérifier :',
+    modalStep1:'<strong>Genshin Impact :</strong> Ouvrez l\'Historique des Vœux depuis la page de la bannière. Comptez les pulls depuis le dernier 5 étoiles.',
+    modalStep2:'<strong>Honkai: Star Rail :</strong> Ouvrez l\'Historique de Warp depuis la page de Warp. Comptez les pulls depuis le dernier 5 étoiles.',
+    modalStep3:'<strong>Wuthering Waves :</strong> Vérifiez l\'Historique d\'Écho/Convene. Comptez les pulls depuis le dernier écho 5 étoiles.',
+    modalStep4:'<strong>Arknights :</strong> Vérifiez l\'historique de recrutement dans le terminal.',
+    modalStep5:'<strong>Blue Archive / Uma Musume :</strong> Utilisent un système de spark (200 pulls = échange), donc le compteur de pity est moins critique.',
+    modalTip:'Entrez le nombre exact de pulls depuis votre dernier 5 étoiles (ou 0 si vous n\'avez pas encore commencé).',
+    modalClose:'Compris !',
+    simRunning:'Simulation en cours...',
+    simCompleted:'Terminé',
+    simOutOf:'sur',
+    shareHeader:'[GugoPro Analyse de Gacha]',
+    shareGame:'Jeu : ',
+    shareTarget:'Objectif : ',
+    sharePity:'Pity Actuel : ',
+    shareSims:'Simulations : 5 000 Monte Carlo',
+    shareResults:'📊 Résultats :',
+    shareExpPulls:'• Pulls Attendus : ',
+    shareMedian:'• 🟢 Médiane 50% : ',
+    shareP80:'• 🟡 Ligne Sûre 80% : ',
+    shareP95:'• 🔴 Ligne Extrême 95% : ',
+    shareAdvice:'💡 Recommandation : Préparez ',
+    shareAdviceEnd:' pulls pour couvrir 80% des cas',
+    shareLink:'🔗 gugopro.com',
+    progressText:'Préparation de la simulation...',
+    copyFail:'Échec de la copie. Sélectionnez et copiez manuellement.',
+    simFirst:'Exécutez d\'abord une simulation !',
+    reloadSim:'Re-simuler (5 000)'
+  },
+  'de': {
+    backHome:'Zurück zu GugoPro',
+    heroTitle:'Gacha-Wahrscheinlichkeits- & Pity-Simulator v5',
+    heroSub:'Monte-Carlo 5.000 Simulationen · Charakter/Waffen-Banner · Erster Top-up Doppelt · Auto-Sim',
+    selectGame:'Spielvorlage auswählen',
+    presetGenshin:'Genshin / HSR / Wuthering Waves',
+    presetArknights:'Arknights',
+    presetBA:'Blue Archive / Uma Musume',
+    presetCustom:'Benutzerdefiniert',
+    poolChar:'Charakter-Banner',
+    poolWeapon:'Waffen- / Lichtkegel-Banner',
+    targetCountLabel:'Ziel (Konstellation / R)',
+    targetOptions:['1 Kopie (C0 / R0)','2 Kopien (C1 / R1)','3 Kopien (C2 / R2)','4 Kopien (C3 / R3)','5 Kopien (C4 / R4)','6 Kopien (C5 / R5)','7 Kopien (C6 Max / R5+)'],
+    currentPullsLabel:'Aktueller Pity-Zähler',
+    bigPityLabel:'Big Pity (Nächster Garantiert)',
+    bigPityDesc:'Letztes 50/50 verloren, nächster ist garantiert',
+    baseRateLabel:'Basisrate (%)',
+    softPityStartLabel:'Soft Pity Beginn',
+    softPityRateLabel:'Soft Pity Rate pro Pull (%)',
+    hardPityLabel:'Hard Pity Obergrenze',
+    offBannerLabel:'Off-Banner Chance',
+    offBannerOptions:['50/50 (Verloren → Nächster Garantiert)','75/25 (75% Off, 25% UP)','100% Garantiert UP','Kein Off-Banner'],
+    exchangeLabel:'Exchange / Spark (0=Keiner)',
+    simBtnText:'Monte-Carlo-Simulation starten (5.000)',
+    simBtnHint:'Automatische Simulation bei Parameteränderung, oder klicken zum Neuberechnen',
+    shareBtnText:'📋 Analysebericht kopieren',
+    shareCopied:'✅ Bericht in die Zwischenablage kopiert!',
+    resultsTitle:'Simulationsergebnis-Zusammenfassung',
+    statAvg:'Erwartungswert (Durchschnitt)',
+    statMedian:'🟢 50% Median',
+    statP80:'🟡 80% Sicherheitslinie',
+    statP95:'🔴 95% Extremgrenze',
+    statMin:'Minimum',
+    statMax:'Maximum',
+    unitPulls:'Pulls',
+    chartTitle:'Kumulative Erfolgsrate',
+    currencyTitle:'Edelstein- & Budgetrechner',
+    currentGemsLabel:'Aktuelle Primogems / Kristalle',
+    currentTicketsLabel:'Aktuelle Tickets',
+    gemsPerPullLabel:'Edelsteine pro Pull',
+    firstDoubleLabel:'Ersten Top-up Doppelt aktivieren',
+    firstDoubleDesc:'Doppelte Edelsteine beim ersten Top-up',
+    customRateTWDLabel:'Benutzerdefinierte Rate (TWD/Pull)',
+    customRateUSDLabel:'Benutzerdefinierte Rate (USD/Pull)',
+    resMissingPullsLabel:'Fehlende Pulls',
+    resMissingGemsLabel:'Fehlende Edelsteine',
+    resCostTWDLabel:'Geschätzte Kosten (TWD)',
+    resCostUSDLabel:'Geschätzte Kosten (USD)',
+    unitGems:'Edelsteine',
+    unitTWD:'TWD',
+    unitUSD:'USD',
+    amazonTitle:'Gaming-Ausrüstung Empfehlungen',
+    amazonDesc:'Upgrade dein Gaming-Setup mit diesen精选 Geräten!',
+    amazonCta:'Jetzt kaufen',
+    tutorialTitle:'Anleitung: Soft Pity & 50/50-Mechanik',
+    softPityTitle:'Was ist Soft Pity?',
+    softPityDesc:'Soft Pity bedeutet, dass deine Pull-Rate nach einem bestimmten Schwellenwert schrittweise ansteigt. Zum Beispiel beginnt der Genshin-Charakter-Banner beim <strong>Pull 74</strong> mit Soft Pity, wobei die Basisrate von 0,6% pro Pull um 6% steigt bis zum Hard Pity bei 90.',
+    poolDiff:'<strong>Charakter vs Waffen-Banner：</strong>Charakter-Banner nutzen 50/50, Waffen-Banner 75/25. Dieses Tool modelliert beide präzise.',
+    hardPityDesc:'<strong>Hard Pity：</strong>Bei der Obergrenze ist das Zielobjekt garantiert.',
+    softPityDesc2:'<strong>Soft Pity：</strong>Die Rate steigt nach dem Schwellenwert schrittweise an und reduziert die erwarteten Pulls erheblich.',
+    fiftyFiftyDesc:'<strong>50/50：</strong>Nach einem Treffer 50% Chance auf das UP-Objekt, 50% Off-Banner. Bei Off-Banner ist der nächste garantiert UP.',
+    seventyFiveDesc:'<strong>75/25：</strong>Waffen-Banner: 25% Chance UP, 75% Off-Banner. Bei Off-Banner ist der nächste garantiert.',
+    monteTitle:'Monte-Carlo-Simulation',
+    monteDesc:'Dieses Tool führt <strong>5.000 unabhängige Simulationen</strong> pro Ausführung durch, balanceiert Mobile-Performance mit 99,5% statistischer Genauigkeit:',
+    monteAvg:'<strong>Erwartete Pulls：</strong>Durchschnitt aller Simulationen.',
+    monteMedian:'<strong>50% Median：</strong>Der Schwellenwert für "durchschnittliches Glück".',
+    monteP80:'<strong>80% Sicherheitslinie：</strong>80% der Spieler schaffen es innerhalb dieser Pull-Anzahl. Als Budgetgrundlage empfohlen.',
+    monteP95:'<strong>95% Extremgrenze：</strong>Worst-Case-Szenario, empfohlen als maximale Budgetobergrenze.',
+    monteTip:'Kombiniere mit der Option <strong>Erster Top-up Doppelt</strong> und der benutzerdefinierten Rate für präzises Budgeting.',
+    disclaimerTitle:'Haftungsausschluss：',
+    disclaimerText:'Dieses Tool verwendet Monte-Carlo-Simulation basierend auf öffentlich bekanntgegebenen Spielmechaniken. Ergebnisse dienen nur als Referenz für die Budgetplanung.',
+    kofiText:'Wenn dir dieses Tool geholfen hat, spendiere mir einen Kaffee!',
+    modalTitle:'Wie man seinen Pity-Zähler prüft',
+    modalDesc:'Dein "Pity-Zähler" ist die Anzahl der Pulls seit deinem letzten 5-Sterne auf dem aktuellen Banner. So prüfst du es：',
+    modalStep1:'<strong>Genshin Impact：</strong>Öffne den Wunschverlauf auf der Banner-Seite. Zähle die Pulls seit dem letzten 5-Sterne.',
+    modalStep2:'<strong>Honkai: Star Rail：</strong>Öffne den Warp-Verlauf auf der Warp-Seite. Zähle die Pulls seit dem letzten 5-Sterne.',
+    modalStep3:'<strong>Wuthering Waves：</strong>Prüfe den Echo-/Convene-Verlauf. Zähle die Pulls seit dem letzten 5-Sterne-Echo.',
+    modalStep4:'<strong>Arknights：</strong>Prüfe den Rekrutierungsverlauf im Terminal.',
+    modalStep5:'<strong>Blue Archive / Uma Musume：</strong>Verwenden ein Spark-System (200 Pulls = Tausch), daher ist der Pity-Zähler weniger wichtig.',
+    modalTip:'Gib die genaue Anzahl der Pulls seit deinem letzten 5-Sterne ein (oder 0, wenn du noch nicht angefangen hast).',
+    modalClose:'Verstanden!',
+    simRunning:'Simulation läuft...',
+    simCompleted:'Abgeschlossen',
+    simOutOf:'von',
+    shareHeader:'[GugoPro Gacha-Analyse]',
+    shareGame:'Spiel：',
+    shareTarget:'Ziel：',
+    sharePity:'Aktueller Pity：',
+    shareSims:'Simulationen: 5.000 Monte-Carlo-Läufe',
+    shareResults:'📊 Ergebnisse：',
+    shareExpPulls:'• Erwartete Pulls：',
+    shareMedian:'• 🟢 50% Median：',
+    shareP80:'• 🟡 80% Sicherheitslinie：',
+    shareP95:'• 🔴 95% Extremgrenze：',
+    shareAdvice:'💡 Empfehlung：Bereite ',
+    shareAdviceEnd:' Pulls vor, um 80% der Fälle abzudecken',
+    shareLink:'🔗 gugopro.com',
+    progressText:'Simulation wird vorbereitet...',
+    copyFail:'Kopieren fehlgeschlagen. Bitte manuell auswählen und kopieren.',
+    simFirst:'Führe zuerst eine Simulation aus!',
+    reloadSim:'Erneut simulieren (5.000)'
+  },
+  'ru': {
+    backHome:'Вернуться на GugoPro',
+    heroTitle:'Симулятор Гача-Шансов и Пити v5',
+    heroSub:'Монте-Карло 5 000 симуляций · Баннер Персонаж/Оружие · Первый Топ-ап x2 · Авто-симуляция',
+    selectGame:'Выберите шаблон игры',
+    presetGenshin:'Genshin / HSR / Wuthering Waves',
+    presetArknights:'Arknights',
+    presetBA:'Blue Archive / Uma Musume',
+    presetCustom:'Свой',
+    poolChar:'Баннер Персонажа',
+    poolWeapon:'Баннер Оружия / Конуса Света',
+    targetCountLabel:'Цель (Созвездие / R)',
+    targetOptions:['1 копия (C0 / R0)','2 копии (C1 / R1)','3 копии (C2 / R2)','4 копии (C3 / R3)','5 копий (C4 / R4)','6 копий (C5 / R5)','7 копий (C6 Макс / R5+)'],
+    currentPullsLabel:'Текущий счётчик Пити',
+    bigPityLabel:'Большой Пити (Следующий Гарантирован)',
+    bigPityDesc:'Проиграл последнее 50/50, следующий гарантирован',
+    baseRateLabel:'Базовый шанс (%)',
+    softPityStartLabel:'Начало Мягкого Пити',
+    softPityRateLabel:'Шанс за крутку Мягкого Пити (%)',
+    hardPityLabel:'Жёсткий Пити Кап',
+    offBannerLabel:'Шанс Офф-Баннера',
+    offBannerOptions:['50/50 (Проигрыш → Следующий Гарантирован)','75/25 (75% Офф, 25% UP)','100% Гарантированно UP','Без Офф-Баннера'],
+    exchangeLabel:'Обмен / Спарк (0=Нет)',
+    simBtnText:'Запустить Монте-Карло (5 000 запусков)',
+    simBtnHint:'Авто-симуляция при изменении параметров, или нажмите для пересчёта',
+    shareBtnText:'📋 Скопировать отчёт анализа',
+    shareCopied:'✅ Отчёт скопирован в буфер обмена!',
+    resultsTitle:'Сводка результатов симуляции',
+    statAvg:'Ожидаемые крутки (среднее)',
+    statMedian:'🟢 Медиана 50%',
+    statP80:'🟡 Безопасная линия 80%',
+    statP95:'🔴 Экстремальная линия 95%',
+    statMin:'Минимум',
+    statMax:'Максимум',
+    unitPulls:'круток',
+    chartTitle:'Накопительная частота успеха',
+    currencyTitle:'Калькулятор Кристаллов и Бюджета',
+    currentGemsLabel:'Текущие Примогемы / Кристаллы',
+    currentTicketsLabel:'Текущие билеты',
+    gemsPerPullLabel:'Кристаллов за крутку',
+    firstDoubleLabel:'Включить бонус первого топ-апа x2',
+    firstDoubleDesc:'Двойные кристаллы при первом топ-апе',
+    customRateTWDLabel:'Своя цена (TWD/крутка)',
+    customRateUSDLabel:'Своя цена (USD/крутка)',
+    resMissingPullsLabel:'Не хватает круток',
+    resMissingGemsLabel:'Не хватает кристаллов',
+    resCostTWDLabel:'Примерная стоимость (TWD)',
+    resCostUSDLabel:'Примерная стоимость (USD)',
+    unitGems:'кристаллов',
+    unitTWD:'TWD',
+    unitUSD:'USD',
+    amazonTitle:'Рекомендации игрового оборудования',
+    amazonDesc:'Обновите свой гейминг-сетуп с помощью этих精选 устройств!',
+    amazonCta:'Купить сейчас',
+    tutorialTitle:'Руководство: Мягкий Пити и механика 50/50',
+    softPityTitle:'Что такое мягкий Пити?',
+    softPityDesc:'Мягкий Пити означает, что ваш шанс крутки постепенно увеличивается после определённого порога. Например, баннер персонажа Genshin начинает мягкий Пити на <strong>74-й крутке</strong>, где базовый шанс 0,6% увеличивается на 6% за крутку до жёсткого Пити на 90.',
+    poolDiff:'<strong>Персонаж vs Оружие：</strong>Баннеры персонажей используют 50/50, баннеры оружия 75/25. Этот инструмент точно моделирует оба.',
+    hardPityDesc:'<strong>Жёсткий Пити：</strong>На капе вы гарантированно получаете целевой предмет.',
+    softPityDesc2:'<strong>Мягкий Пити：</strong>Шанс постепенно увеличивается после порога, значительно снижая ожидаемые крутки.',
+    fiftyFiftyDesc:'<strong>50/50：</strong>После попадания 50% шанс UP-предмета, 50% офф-баннер. Если офф-баннер, следующий гарантированно UP.',
+    seventyFiveDesc:'<strong>75/25：</strong>Баннер оружия: 25% шанс UP, 75% офф-баннер. Если офф-баннер, следующий гарантирован.',
+    monteTitle:'Симуляция Монте-Карло',
+    monteDesc:'Этот инструмент выполняет <strong>5 000 независимых симуляций</strong> за запуск, балансируя мобильную производительность с 99,5% статистической точности:',
+    monteAvg:'<strong>Ожидаемые крутки：</strong>Среднее по всем симуляциям.',
+    monteMedian:'<strong>Медиана 50%：</strong>Порог "средней удачи".',
+    monteP80:'<strong>Безопасная линия 80%：</strong>80% игроков достигают цели в пределах этого числа круток. Рекомендуется как основа бюджета.',
+    monteP95:'<strong>Экстремальная линия 95%：</strong>Худший сценарий, рекомендуется как максимальный потолок бюджета.',
+    monteTip:'Комбинируйте с опцией <strong>Первый топ-ап x2</strong> и функцией своей цены для точного бюджетирования.',
+    disclaimerTitle:'Отказ от ответственности：',
+    disclaimerText:'Этот инструмент использует симуляцию Монте-Карло на основе публично раскрытых игровых механик. Результаты предназначены только для справочного планирования бюджета.',
+    kofiText:'Если этот инструмент вам помог, угостите меня кофе!',
+    modalTitle:'Как проверить свой счётчик Пити',
+    modalDesc:'Ваш "счётчик Пити" — это количество круток с последнего 5-звёздочного на текущем баннере. Как проверить：',
+    modalStep1:'<strong>Genshin Impact：</strong>Откройте историю молитв со страницы баннера. Посчитайте крутки с последнего 5-звёздочного.',
+    modalStep2:'<strong>Honkai: Star Rail：</strong>Откройте историю варпов со страницы варпа. Посчитайте крутки с последнего 5-звёздочного.',
+    modalStep3:'<strong>Wuthering Waves：</strong>Проверьте историю эхо/созыва. Посчитайте крутки с последнего 5-звёздочного эхо.',
+    modalStep4:'<strong>Arknights：</strong>Проверьте историю набора в терминале.',
+    modalStep5:'<strong>Blue Archive / Uma Musume：</strong>Используют систему спарка (200 круток = обмен), поэтому счётчик Пити менее критичен.',
+    modalTip:'Введите точное количество круток с последнего 5-звёздочного (или 0, если ещё не начали).',
+    modalClose:'Понятно!',
+    simRunning:'Симуляция...',
+    simCompleted:'Завершено',
+    simOutOf:'из',
+    shareHeader:'[GugoPro Анализ Гача]',
+    shareGame:'Игра：',
+    shareTarget:'Цель：',
+    sharePity:'Текущий Пити：',
+    shareSims:'Симуляции: 5 000 Монте-Карло',
+    shareResults:'📊 Результаты：',
+    shareExpPulls:'• Ожидаемые крутки：',
+    shareMedian:'• 🟢 Медиана 50%：',
+    shareP80:'• 🟡 Безопасная линия 80%：',
+    shareP95:'• 🔴 Экстремальная линия 95%：',
+    shareAdvice:'💡 Рекомендация: Приготовьте ',
+    shareAdviceEnd:' круток, чтобы покрыть 80% случаев',
+    shareLink:'🔗 gugopro.com',
+    progressText:'Подготовка симуляции...',
+    copyFail:'Ошибка копирования. Выберите и скопируйте вручную.',
+    simFirst:'Сначала запустите симуляцию!',
+    reloadSim:'Повторная симуляция (5 000)'
+  },
+  'ar': {
+    backHome:'العودة إلى GugoPro',
+    heroTitle:'محاكي احتمالات السحب والضمان v5',
+    heroSub:'مونت كارلو 5,000 محاكاة · بانر شخصية/سلاح · أول شحن مضاعف · محاكاة تلقائية',
+    selectGame:'اختر قالب اللعبة',
+    presetGenshin:'Genshin / HSR / Wuthering Waves',
+    presetArknights:'Arknights',
+    presetBA:'Blue Archive / Uma Musume',
+    presetCustom:'مخصص',
+    poolChar:'بانر الشخصية',
+    poolWeapon:'بانر السلاح / مخروط الضوء',
+    targetCountLabel:'الهدف (برج / R)',
+    targetOptions:['1 نسخة (C0 / R0)','2 نسخة (C1 / R1)','3 نسخ (C2 / R2)','4 نسخ (C3 / R3)','5 نسخ (C4 / R4)','6 نسخ (C5 / R5)','7 نسخ (C6 الحد الأقصى / R5+)'],
+    currentPullsLabel:'عداد الضمان الحالي',
+    bigPityLabel:'الضمان الكبير (التالي مضمون)',
+    bigPityDesc:'خسرت آخر 50/50، التالي مضمون',
+    baseRateLabel:'معدل أساسي (%)',
+    softPityStartLabel:'بداية الضمان اللين',
+    softPityRateLabel:'معدل الضمان اللين لكل سحب (%)',
+    hardPityLabel:'سقف الضمان الصلب',
+    offBannerLabel:'فرصة خارج البانر',
+    offBannerOptions:['50/50 (خسارة → التالي مضمون)','75/25 (75% خارج، 25% UP)','100% مضمون UP','بدون خارج بانر'],
+    exchangeLabel:'استبدال / سبارك (0=لا يوجد)',
+    simBtnText:'بدء محاكاة مونت كارلو (5,000)',
+    simBtnHint:'محاكاة تلقائية عند تغيير المعلمات، أو انقر لإعادة الحساب',
+    shareBtnText:'📋 نسخ تقرير التحليل',
+    shareCopied:'✅ تم نسخ التقرير إلى الحافظة!',
+    resultsTitle:'ملخص نتائج المحاكاة',
+    statAvg:'المتوسط المتوقع',
+    statMedian:'🟢 الوسيط 50%',
+    statP80:'🟡 خط الأمان 80%',
+    statP95:'🔴 خط الحد الأقصى 95%',
+    statMin:'الحد الأدنى',
+    statMax:'الحد الأقصى',
+    unitPulls:'سحبة',
+    chartTitle:'معدل النجاح التراكمي',
+    currencyTitle:'حاسبة الجواهر والميزانية',
+    currentGemsLabel:'الجواهر / البلورات الحالية',
+    currentTicketsLabel:'التذاكر الحالية',
+    gemsPerPullLabel:'جواهر لكل سحب',
+    firstDoubleLabel:'تفعيل مضاعفة أول شحن',
+    firstDoubleDesc:'جواهر مضاعفة في أول شحن',
+    customRateTWDLabel:'سعر مخصص (TWD/سحب)',
+    customRateUSDLabel:'سعر مخصص (USD/سحب)',
+    resMissingPullsLabel:'سحبات ناقصة',
+    resMissingGemsLabel:'جواهر ناقصة',
+    resCostTWDLabel:'التكلفة التقديرية (TWD)',
+    resCostUSDLabel:'التكلفة التقديرية (USD)',
+    unitGems:'جواهر',
+    unitTWD:'TWD',
+    unitUSD:'USD',
+    amazonTitle:'توصيات معدات الألعاب',
+    amazonDesc:'قم بترقية إعداد الألعاب الخاص بك مع هذه الاختيارات!',
+    amazonCta:'اشترِ الآن',
+    tutorialTitle:'دليل: الضمان اللين وآلية 50/50',
+    softPityTitle:'ما هو الضمان اللين؟',
+    softPityDesc:'الضمان اللين يعني أن معدل السحب يزداد تدريجياً بعد عتبة معينة. على سبيل المثال، بانر شخصية Genshin يبدأ الضمان اللين عند <strong>السحبة 74</strong>، حيث يزداد المعدل الأساسي 0.6% بمقدار 6% لكل سحب حتى الضمان الصلب عند 90.',
+    poolDiff:'<strong>شخصية مقابل سلاح：</strong>بانرات الشخصيات تستخدم 50/50، بانرات الأسلحة 75/25. هذه الأداة تنمذج كلاهما بدقة.',
+    hardPityDesc:'<strong>الضمان الصلب：</strong>عند السقف، يُضمن لك الحصول على العنصر المستهدف.',
+    softPityDesc2:'<strong>الضمان اللين：</strong>يزداد المعدل تدريجياً بعد العتبة، مما يقلل السحبات المتوقعة بشكل كبير.',
+    fiftyFiftyDesc:'<strong>50/50：</strong>بعد الإصابة، 50% احتمال أن يكون العنصر UP، 50% خارج البانر. إذا كان خارج البانر، التالي مضمون UP.',
+    seventyFiveDesc:'<strong>75/25：</strong>بانر السلاح: 25% احتمال UP، 75% خارج البانر. إذا كان خارج البانر، التالي مضمون.',
+    monteTitle:'محاكاة مونت كارلو',
+    monteDesc:'تنفذ هذه الأداة <strong>5,000 محاكاة مستقلة</strong> لكل تنفيذ، مع توازن أداء الهاتف المحمول مع دقة إحصائية 99.5%:',
+    monteAvg:'<strong>السحبات المتوقعة：</strong>متوسط جميع المحاكاة.',
+    monteMedian:'<strong>الوسيط 50%：</strong>عتبة "الحظ العادي".',
+    monteP80:'<strong>خط الأمان 80%：</strong>80% من اللاعبين ينجحون في حدود عدد السحبات هذا. يُوصى به كأساس للميزانية.',
+    monteP95:'<strong>خط الحد الأقصى 95%：</strong>أسوأ سيناريو، يُوصى به كسقف أقصى للميزانية.',
+    monteTip:'اجمع بين خيار <strong>مضاعفة أول شحن</strong> وميزة السعر المخصص لميزانية دقيقة.',
+    disclaimerTitle:'إخلاء المسؤولية：',
+    disclaimerText:'تستخدم هذه الأداة محاكاة مونت كارلو بناءً على آليات اللعبة المعلنة. النتائج فقط كمرجع لتخطيط الميزانية.',
+    kofiText:'إذا ساعدتك هذه الأداة، اشترِ لي قهوة!',
+    modalTitle:'كيفية التحقق من عداد الضمان الخاص بك',
+    modalDesc:'"عداد الضمان" الخاص بك هو عدد السحبات منذ آخر 5 نجوم على البانر الحالي. كيفية التحقق：',
+    modalStep1:'<strong>Genshin Impact：</strong>افتح سجل الأمنيات من صفحة البانر. احسب السحبات منذ آخر 5 نجوم.',
+    modalStep2:'<strong>Honkai: Star Rail：</strong>افتح سجل الـ Warp من صفحة الـ Warp. احسب السحبات منذ آخر 5 نجوم.',
+    modalStep3:'<strong>Wuthering Waves：</strong>تحقق من سجل الصدى/التجمع. احسب السحبات منذ آخر صدى 5 نجوم.',
+    modalStep4:'<strong>Arknights：</strong>تحقق من سجل التجنيد في المحطة.',
+    modalStep5:'<strong>Blue Archive / Uma Musume：</strong>تستخدم نظام السبارك (200 سحبة = تبديل)، لذا عداد الضمان أقل أهمية.',
+    modalTip:'أدخل العدد الدقيق للسحبات منذ آخر 5 نجوم (أو 0 إذا لم تبدأ بعد).',
+    modalClose:'فهمت!',
+    simRunning:'جارٍ المحاكاة...',
+    simCompleted:'مكتمل',
+    simOutOf:'من',
+    shareHeader:'[GugoPro تحليل الغacha]',
+    shareGame:'اللعبة：',
+    shareTarget:'الهدف：',
+    sharePity:'الضمان الحالي：',
+    shareSims:'المحاكاة: 5,000 مونت كارلو',
+    shareResults:'📊 النتائج：',
+    shareExpPulls:'• السحبات المتوقعة：',
+    shareMedian:'• 🟢 الوسيط 50%：',
+    shareP80:'• 🟡 خط الأمان 80%：',
+    shareP95:'• 🔴 خط الحد الأقصى 95%：',
+    shareAdvice:'💡 التوصية: جهّز ',
+    shareAdviceEnd:' سحبة لتغطية 80% من الحالات',
+    shareLink:'🔗 gugopro.com',
+    progressText:'جارٍ إعداد المحاكاة...',
+    copyFail:'فشل النسخ. حدد وانسخ يدوياً.',
+    simFirst:'شغّل محاكاة أولاً!',
+    reloadSim:'إعادة المحاكاة (5,000)'
+  },
+  'vi': {
+    backHome:'Trở về GugoPro',
+    heroTitle:'Máy Mô Phỏng Xác Suất Gacha & Pity v5',
+    heroSub:'Monte Carlo 5.000 lần mô phỏng · Banner Nhân Vật/Vũ Khí · Nhân Đôi Lần Nạp Đầu · Tự Động Mô Phỏng',
+    selectGame:'Chọn Mẫu Game',
+    presetGenshin:'Genshin / HSR / Wuthering Waves',
+    presetArknights:'Arknights',
+    presetBA:'Blue Archive / Uma Musume',
+    presetCustom:'Tùy Chỉnh',
+    poolChar:'Banner Nhân Vật',
+    poolWeapon:'Banner Vũ Khí / Nón Ánh Sáng',
+    targetCountLabel:'Mục Tiêu (Chòm Sao / R)',
+    targetOptions:['1 bản (C0 / R0)','2 bản (C1 / R1)','3 bản (C2 / R2)','4 bản (C3 / R3)','5 bản (C4 / R4)','6 bản (C5 / R5)','7 bản (C6 Tối Đa / R5+)'],
+    currentPullsLabel:'Điểm Pity Hiện Tại',
+    bigPityLabel:'Pity Lớn (Lần Tới Chắc Chắn)',
+    bigPityDesc:'Thua 50/50 lần trước, lần tới chắc chắn',
+    baseRateLabel:'Tỷ Lệ Cơ Bản (%)',
+    softPityStartLabel:'Bắt Đầu Soft Pity',
+    softPityRateLabel:'Tỷ Lệ Soft Pity Mỗi Lần Kéo (%)',
+    hardPityLabel:'Trần Hard Pity',
+    offBannerLabel:'Khả Năng Off-Banner',
+    offBannerOptions:['50/50 (Thua → Lần Tới Chắc Chắn)','75/25 (75% Off, 25% UP)','100% Chắc Chắn UP','Không Có Off-Banner'],
+    exchangeLabel:'Spark / Trao Đổi (0=Không)',
+    simBtnText:'Bắt Đầu Mô Phỏng Monte Carlo (5.000)',
+    simBtnHint:'Tự động mô phỏng khi thay đổi tham số, hoặc nhấn để tính lại',
+    shareBtnText:'📋 Sao Chép Báo Cáo Phân Tích',
+    shareCopied:'✅ Báo cáo đã được sao chép!',
+    resultsTitle:'Tóm Tắt Kết Quả Mô Phỏng',
+    statAvg:'Kỳ Vọng Trung Bình',
+    statMedian:'🟢 Trung Vị 50%',
+    statP80:'🟡 Ngưỡng An Toàn 80%',
+    statP95:'🔴 Ngưỡng Cực Đoan 95%',
+    statMin:'Tối Thiểu',
+    statMax:'Tối Đa',
+    unitPulls:'lần kéo',
+    chartTitle:'Tỷ Lệ Thành Công Tích Lũy',
+    currencyTitle:'Máy Tính Nguyên Thạch & Ngân Sách',
+    currentGemsLabel:'Nguyên Thạch / Pha Lê Hiện Tại',
+    currentTicketsLabel:'Vé Hiện Tại',
+    gemsPerPullLabel:'Nguyên Thạch Mỗi Lần Kéo',
+    firstDoubleLabel:'Bật Nhân Đôi Lần Nạp Đầu',
+    firstDoubleDesc:'Nhân đôi nguyên thạch khi nạp lần đầu',
+    customRateTWDLabel:'Giá Tùy Chỉnh (TWD/lần kéo)',
+    customRateUSDLabel:'Giá Tùy Chỉnh (USD/lần kéo)',
+    resMissingPullsLabel:'Số Lần Kéo Còn Thiếu',
+    resMissingGemsLabel:'Nguyên Thạch Còn Thiếu',
+    resCostTWDLabel:'Chi Phí Ước Tính (TWD)',
+    resCostUSDLabel:'Chi Phí Ước Tính (USD)',
+    unitGems:'nguyên thạch',
+    unitTWD:'TWD',
+    unitUSD:'USD',
+    amazonTitle:'Khuyến Nghị Thiết Bị Gaming',
+    amazonDesc:'Nâng cấp setup gaming của bạn với các lựa chọn精选 này!',
+    amazonCta:'Mua Ngay',
+    tutorialTitle:'Hướng Dẫn: Soft Pity & Cơ Chế 50/50',
+    softPityTitle:'Soft Pity Là Gì?',
+    softPityDesc:'Soft pity nghĩa là tỷ lệ kéo của bạn tăng dần sau một ngưỡng nhất định. Ví dụ, banner nhân vật Genshin bắt đầu soft pity ở <strong>lần kéo 74</strong>, nơi tỷ lệ cơ bản 0.6% tăng 6% mỗi lần kéo cho đến hard pity ở 90.',
+    poolDiff:'<strong>Nhân Vật vs Vũ Khí：</strong>Banner nhân vật dùng 50/50, banner vũ khí 75/25. Công cụ này mô hình hóa chính xác cả hai.',
+    hardPityDesc:'<strong>Hard Pity：</strong>Tại trần, bạn chắc chắn nhận được vật phẩm mục tiêu.',
+    softPityDesc2:'<strong>Soft Pity：</strong>Tỷ lệ tăng dần sau ngưỡng, giảm đáng kể số lần kéo kỳ vọng.',
+    fiftyFiftyDesc:'<strong>50/50：</strong>Sau khi trúng, 50% là vật phẩm UP, 50% off-banner. Nếu off-banner, lần trúng tiếp theo chắc chắn UP.',
+    seventyFiveDesc:'<strong>75/25：</strong>Banner vũ khí: 25% UP, 75% off-banner. Nếu off-banner, lần tiếp theo chắc chắn.',
+    monteTitle:'Mô Phỏng Monte Carlo',
+    monteDesc:'Công cụ này chạy <strong>5.000 mô phỏng độc lập</strong> mỗi lần thực thi, cân bằng hiệu năng mobile với độ chính xác thống kê 99.5%:',
+    monteAvg:'<strong>Số Lần Kéo Kỳ Vọng：</strong>Trung bình của tất cả mô phỏng.',
+    monteMedian:'<strong>Trung Vị 50%：</strong>Ngưỡng "may mắn trung bình".',
+    monteP80:'<strong>Ngưỡng An Toàn 80%：</strong>80% người chơi thành công trong số lần kéo này. Khuyến nghị làm cơ sở ngân sách.',
+    monteP95:'<strong>Ngưỡng Cực Đoan 95%：</strong>Tình huống xấu nhất, khuyến nghị làm trần ngân sách tối đa.',
+    monteTip:'Kết hợp với tùy chọn <strong>Nhân Đôi Lần Nạp Đầu</strong> và tính năng giá tùy chỉnh để lập ngân sách chính xác.',
+    disclaimerTitle:'Miễn Trừ Trách Nhiệm：',
+    disclaimerText:'Công cụ này sử dụng mô phỏng Monte Carlo dựa trên cơ chế game được công bố công khai. Kết quả chỉ mang tính tham khảo cho việc lập kế hoạch ngân sách.',
+    kofiText:'Nếu công cụ này giúp ích cho bạn, mua cho tôi một ly cà phê!',
+    modalTitle:'Cách Kiểm Tra Điểm Pity Của Bạn',
+    modalDesc:'"Điểm pity" của bạn là số lần kéo kể từ 5 sao cuối cùng trên banner hiện tại. Cách kiểm tra：',
+    modalStep1:'<strong>Genshin Impact：</strong>Mở Lịch Sử Cầu Nguyện từ trang banner. Đếm số lần kéo kể từ 5 sao cuối cùng.',
+    modalStep2:'<strong>Honkai: Star Rail：</strong>Mở Lịch Sử Warp từ trang Warp. Đếm số lần kéo kể từ 5 sao cuối cùng.',
+    modalStep3:'<strong>Wuthering Waves：</strong>Kiểm tra Lịch Sử Echo/Convene. Đếm số lần kéo kể từ echo 5 sao cuối cùng.',
+    modalStep4:'<strong>Arknights：</strong>Kiểm tra lịch sử tuyển dụng trong terminal.',
+    modalStep5:'<strong>Blue Archive / Uma Musume：</strong>Sử dụng hệ thống spark (200 lần kéo = trao đổi), nên điểm pity ít quan trọng hơn.',
+    modalTip:'Nhập chính xác số lần kéo kể từ 5 sao cuối cùng (hoặc 0 nếu chưa bắt đầu).',
+    modalClose:'Đã hiểu!',
+    simRunning:'Đang mô phỏng...',
+    simCompleted:'Hoàn thành',
+    simOutOf:'trong',
+    shareHeader:'[GugoPro Phân Tích Gacha]',
+    shareGame:'Game：',
+    shareTarget:'Mục tiêu：',
+    sharePity:'Pity hiện tại：',
+    shareSims:'Mô phỏng: 5.000 Monte Carlo',
+    shareResults:'📊 Kết quả：',
+    shareExpPulls:'• Lần kéo kỳ vọng：',
+    shareMedian:'• 🟢 Trung vị 50%：',
+    shareP80:'• 🟡 Ngưỡng an toàn 80%：',
+    shareP95:'• 🔴 Ngưỡng cực đoan 95%：',
+    shareAdvice:'💡 Khuyến nghị: Chuẩn bị ',
+    shareAdviceEnd:' lần kéo để bao phủ 80% trường hợp',
+    shareLink:'🔗 gugopro.com',
+    progressText:'Đang chuẩn bị mô phỏng...',
+    copyFail:'Sao chép thất bại. Vui lòng chọn và sao chép thủ công.',
+    simFirst:'Hãy chạy mô phỏng trước!',
+    reloadSim:'Mô phỏng lại (5.000)'
+  },
+  'th': {
+    backHome:'กลับไป GugoPro',
+    heroTitle:'เครื่องจำลองโอกาสการสุ่ม & ปิตี้ v5',
+    heroSub:'มอนเต้คาร์โล 5,000 ครั้ง · แบนเนอร์ตัวละคร/อาวุธ · เติมเงินครั้งแรก x2 · อัตโนมัติ',
+    selectGame:'เลือกเทมเพลตเกม',
+    presetGenshin:'Genshin / HSR / Wuthering Waves',
+    presetArknights:'Arknights',
+    presetBA:'Blue Archive / Uma Musume',
+    presetCustom:'กำหนดเอง',
+    poolChar:'แบนเนอร์ตัวละคร',
+    poolWeapon:'แบนเนอร์อาวุธ / คอนไลท์',
+    targetCountLabel:'เป้าหมาย (สัญลักษณ์ / R)',
+    targetOptions:['1 ใบ (C0 / R0)','2 ใบ (C1 / R1)','3 ใบ (C2 / R2)','4 ใบ (C3 / R3)','5 ใบ (C4 / R4)','6 ใบ (C5 / R5)','7 ใบ (C6 เต็ม / R5+)'],
+    currentPullsLabel:'จำนวนปิตี้ปัจจุบัน',
+    bigPityLabel:'ปิตี้ใหญ่ (ครั้งต่อไปการันตี)',
+    bigPityDesc:'แพ้ 50/50 ครั้งก่อน ครั้งต่อไปการันตี',
+    baseRateLabel:'อัตราพื้นฐาน (%)',
+    softPityStartLabel:'เริ่ม Soft Pity',
+    softPityRateLabel:'อัตรา Soft Pity ต่อครั้ง (%)',
+    hardPityLabel:'เพดาน Hard Pity',
+    offBannerLabel:'โอกาส Out of Banner',
+    offBannerOptions:['50/50 (แพ้ → ครั้งต่อไปการันตี)','75/25 (75% ออก, 25% UP)','100% การันตี UP','ไม่มี Out of Banner'],
+    exchangeLabel:'แลก / สปาร์ค (0=ไม่มี)',
+    simBtnText:'เริ่มจำลองมอนเต้คาร์โล (5,000 ครั้ง)',
+    simBtnHint:'จำลองอัตโนมัติเมื่อเปลี่ยนพารามิเตอร์ หรือกดเพื่อคำนวณใหม่',
+    shareBtnText:'📋 คัดลอกรายงานวิเคราะห์',
+    shareCopied:'✅ คัดลอกรายงานแล้ว!',
+    resultsTitle:'สรุปผลจำลอง',
+    statAvg:'ค่าคาดหวังเฉลี่ย',
+    statMedian:'🟢 มัธยฐาน 50%',
+    statP80:'🟡 เส้นปลอดภัย 80%',
+    statP95:'🔴 เส้นสุดขั้ว 95%',
+    statMin:'ต่ำสุด',
+    statMax:'สูงสุด',
+    unitPulls:'ครั้ง',
+    chartTitle:'อัตราความสำเร็จสะสม',
+    currencyTitle:'เครื่องคำนวณเพชร & งบประมาณ',
+    currentGemsLabel:'เพชร / คริสตัลปัจจุบัน',
+    currentTicketsLabel:'ตั๋วปัจจุบัน',
+    gemsPerPullLabel:'เพชรต่อครั้ง',
+    firstDoubleLabel:'เปิดใช้โบนัสเติมเงินครั้งแรก x2',
+    firstDoubleDesc:'เพชรเป็นสองเท่าในการเติมครั้งแรก',
+    customRateTWDLabel:'ราคากำหนดเอง (TWD/ครั้ง)',
+    customRateUSDLabel:'ราคากำหนดเอง (USD/ครั้ง)',
+    resMissingPullsLabel:'ครั้งที่ขาด',
+    resMissingGemsLabel:'เพชรที่ขาด',
+    resCostTWDLabel:'ค่าใช้จ่ายประมาณ (TWD)',
+    resCostUSDLabel:'ค่าใช้จ่ายประมาณ (USD)',
+    unitGems:'เพชร',
+    unitTWD:'TWD',
+    unitUSD:'USD',
+    amazonTitle:'แนะนำอุปกรณ์เกมมิ่ง',
+    amazonDesc:'อัปเกรดชุดเกมมิ่งของคุณด้วยอุปกรณ์ที่เลือกมาแล้ว!',
+    amazonCta:'ซื้อเลย',
+    tutorialTitle:'คู่มือ: Soft Pity & กลไก 50/50',
+    softPityTitle:'Soft Pity คืออะไร?',
+    softPityDesc:'Soft pity หมายถึงอัตราการสุ่มจะเพิ่มขึ้นทีละน้อยหลังจากถึงเกณฑ์ที่กำหนด เช่น แบนเนอร์ตัวละคร Genshin เริ่ม soft pity ที่ <strong>ครั้งที่ 74</strong> โดยอัตราพื้นฐาน 0.6% จะเพิ่มขึ้น 6% ต่อครั้งจนถึง hard pity ที่ 90',
+    poolDiff:'<strong>ตัวละคร vs อาวุธ：</strong>แบนเนอร์ตัวละครใช้ 50/50 แบนเนอร์อาวุธใช้ 75/25 เครื่องมือนี้จำลองทั้งสองอย่างอย่างแม่นยำ',
+    hardPityDesc:'<strong>Hard Pity：</strong>ที่เพดาน จะได้ไอเทมเป้าหมายการันตี',
+    softPityDesc2:'<strong>Soft Pity：</strong>อัตราเพิ่มขึ้นทีละน้อยหลังจากเกณฑ์ ลดจำนวนครั้งที่คาดหวังลงอย่างมาก',
+    fiftyFiftyDesc:'<strong>50/50：</strong>หลังจากสุ่มได้ 50%  chance ไอเทม UP 50% ออกไปอื่น ถ้าออกอื่น ครั้งถัดไปการันตี UP',
+    seventyFiveDesc:'<strong>75/25：</strong>แบนเนอร์อาวุธ: 25%  chance UP 75% ออกไปอื่น ถ้าออกอื่น ครั้งถัดไปการันตี',
+    monteTitle:'การจำลองมอนเต้คาร์โล',
+    monteDesc:'เครื่องมือนี้จำลอง <strong>5,000 ครั้ง</strong> ต่อการรัน ดุลยภาพระหว่างประสิทธิภาพมือถือกับความแม่นยำทางสถิติ 99.5%:',
+    monteAvg:'<strong>ครั้งที่คาดหวัง：</strong>เฉลี่ยของการจำลองทั้งหมด',
+    monteMedian:'<strong>มัธยฐาน 50%：</strong>เกณฑ์ "โชคมั่วๆ"',
+    monteP80:'<strong>เส้นปลอดภัย 80%：</strong>80% ของผู้เล่นสำเร็จภายในจำนวนครั้งนี้ แนะนำเป็นฐานงบประมาณ',
+    monteP95:'<strong>เส้นสุดขั้ว 95%：</strong>กรณีร้ายแรงสุด แนะนำเป็นเพดานงบประมาณสูงสุด',
+    monteTip:'รวมกับตัวเลือก <strong>เติมเงินครั้งแรก x2</strong> และฟีเจอร์ราคากำหนดเองเพื่อวางแผนงบประมาณอย่างแม่นยำ',
+    disclaimerTitle:'ข้อปฏิเสธความรับผิดชอบ：',
+    disclaimerText:'เครื่องมือนี้ใช้การจำลองมอนเต้คาร์โลโดยอิงกลไกเกมที่เปิดเผยสาธารณะ ผลลัพธ์เป็นเพียงการอ้างอิงสำหรับวางแผนงบประมาณ',
+    kofiText:'ถ้าเครื่องมือนี้ช่วยคุณได้ ช่วยซื้อกาแฟให้หน่อยนะ!',
+    modalTitle:'วิธีเช็คจำนวนปิตี้ของคุณ',
+    modalDesc:'"จำนวนปิตี้" คือจำนวนครั้งที่สุ่มนับตั้งแต่ 5 ดาวครั้งสุดท้ายบนแบนเนอร์ปัจจุบัน วิธีเช็ค：',
+    modalStep1:'<strong>Genshin Impact：</strong>เปิดประวัติการอธิษฐานจากหน้าแบนเนอร์ นับจำนวนครั้งตั้งแต่ 5 ดาวครั้งสุดท้าย',
+    modalStep2:'<strong>Honkai: Star Rail：</strong>เปิดประวัติ Warp จากหน้า Warp นับจำนวนครั้งตั้งแต่ 5 ดาวครั้งสุดท้าย',
+    modalStep3:'<strong>Wuthering Waves：</strong>เช็คประวัติ Echo/Convene นับจำนวนครั้งตั้งแต่ echo 5 ดาวครั้งสุดท้าย',
+    modalStep4:'<strong>Arknights：</strong>เช็คประวัติการจ้างในเทอร์มินัล',
+    modalStep5:'<strong>Blue Archive / Uma Musume：</strong>ใช้ระบบสปาร์ค (200 ครั้ง = แลก) ดังนั้นจำนวนปิตี้จึงไม่สำคัญเท่าไหร่',
+    modalTip:'ใส่จำนวนครั้งที่แม่นยำนับตั้งแต่ 5 ดาวครั้งสุดท้าย (หรือ 0 ถ้ายังไม่ได้สุ่ม)',
+    modalClose:'เข้าใจแล้ว!',
+    simRunning:'กำลังจำลอง...',
+    simCompleted:'เสร็จสิ้น',
+    simOutOf:'จาก',
+    shareHeader:'[GugoPro วิเคราะห์กาช่า]',
+    shareGame:'เกม：',
+    shareTarget:'เป้าหมาย：',
+    sharePity:'ปิตี้ปัจจุบัน：',
+    shareSims:'จำลอง: 5,000 ครั้ง มอนเต้คาร์โล',
+    shareResults:'📊 ผลลัพธ์：',
+    shareExpPulls:'• ครั้งที่คาดหวัง：',
+    shareMedian:'• 🟢 มัธยฐาน 50%：',
+    shareP80:'• 🟡 เส้นปลอดภัย 80%：',
+    shareP95:'• 🔴 เส้นสุดขั้ว 95%：',
+    shareAdvice:'💡 แนะนำ: เตรียม ',
+    shareAdviceEnd:' ครั้งเพื่อครอบคลุม 80% ของกรณี',
+    shareLink:'🔗 gugopro.com',
+    progressText:'กำลังเตรียมจำลอง...',
+    copyFail:'คัดลอกไม่สำเร็จ กรุณาเลือกและคัดลอกด้วยตนเอง',
+    simFirst:'กรุณารันจำลองก่อน!',
+    reloadSim:'จำลองใหม่ (5,000 ครั้ง)'
+  }
+};
+// ===== I18N ENGINE =====
+var currentLang = 'zh-TW';
+var lastSimResult = null;
+var successChart = null;
+var debouncedAutoSim = null;
+
+function getT(key) {
+  var dict = I18N[currentLang] || I18N['en'];
+  if (dict[key] !== undefined) return dict[key];
+  if (I18N['en'][key] !== undefined) return I18N['en'][key];
+  return key;
+}
+
+function detectLanguage() {
+  var saved = null;
+  try { saved = localStorage.getItem('gugopro_gacha_lang'); } catch(e) {}
+  if (saved && I18N[saved]) return saved;
+  var nav = navigator.language || navigator.userLanguage || '';
+  var codes = ['zh-TW','zh-HK','zh-CN','en','ja','ko','hi','pt-BR','id','bn','es','fr','de','ru','ar','vi','th'];
+  for (var i = 0; i < codes.length; i++) {
+    if (nav.toLowerCase().indexOf(codes[i].toLowerCase()) === 0) return codes[i];
+  }
+  if (nav.toLowerCase().startsWith('zh')) return 'zh-TW';
+  return 'en';
+}
+
+function setLanguage(lang) {
+  if (!I18N[lang]) lang = 'en';
+  currentLang = lang;
+  try { localStorage.setItem('gugopro_gacha_lang', lang); } catch(e) {}
+  document.documentElement.lang = lang === 'zh-CN' ? 'zh-Hans' : (lang === 'ar' ? 'ar' : (lang.startsWith('zh') ? 'zh-Hant' : lang));
+  document.body.classList.toggle('rtl', lang === 'ar');
+
+  // Update all data-i18n elements
+  var els = document.querySelectorAll('[data-i18n]');
+  els.forEach(function(el) {
+    var key = el.getAttribute('data-i18n');
+    var val = getT(key);
+    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+      el.placeholder = val;
+    } else {
+      el.innerHTML = val;
+    }
+  });
+
+  // Update dynamic elements
+  updateTargetOptions();
+  updateOffBannerOptions();
+  updateLangButton();
+  updateLangDropdown();
+  updateAmazonLinks();
+
+  // Auto re-simulate if we already have results
+  if (lastSimResult) {
+    triggerAutoSimulate();
+  }
+}
+
+function updateTargetOptions() {
+  var sel = document.getElementById('targetCount');
+  var opts = getT('targetOptions');
+  var arr = (typeof opts === 'string') ? opts.split('|') : opts;
+  sel.innerHTML = '';
+  arr.forEach(function(opt, idx) {
+    var o = document.createElement('option');
+    o.value = idx + 1;
+    o.textContent = opt;
+    sel.appendChild(o);
+  });
+  sel.value = sel.dataset.lastValue || '1';
+}
+
+function updateOffBannerOptions() {
+  var sel = document.getElementById('bigPityMode');
+  var opts = getT('offBannerOptions');
+  var arr = (typeof opts === 'string') ? opts.split('|') : opts;
+  sel.innerHTML = '';
+  arr.forEach(function(opt, idx) {
+    var o = document.createElement('option');
+    o.value = ['5050','7525','guaranteed','none'][idx];
+    o.textContent = opt;
+    sel.appendChild(o);
+  });
+  sel.value = sel.dataset.lastValue || '5050';
+}
+
+function updateLangButton() {
+  var langInfo = LANGS.find(function(l) { return l.code === currentLang; });
+  document.getElementById('currentLangName').textContent = langInfo ? langInfo.name : currentLang;
+}
+
+function updateLangDropdown() {
+  var dd = document.getElementById('langDropdown');
+  dd.innerHTML = '';
+  LANGS.forEach(function(l) {
+    var div = document.createElement('div');
+    div.className = 'lang-option' + (l.code === currentLang ? ' active' : '');
+    div.innerHTML = '<span class="flag">' + l.flag + '</span> ' + l.name + ' <small>(' + l.code + ')</small>';
+    div.onclick = function() { setLanguage(l.code); closeLangMenu(); };
+    dd.appendChild(div);
+  });
+}
+
+function updateAmazonLinks() {
+  // Keep Amazon links as-is (they are already set with correct tags)
+}
+
+function toggleLangMenu() {
+  var dd = document.getElementById('langDropdown');
+  dd.classList.toggle('open');
+}
+function closeLangMenu() {
+  document.getElementById('langDropdown').classList.remove('open');
+}
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.lang-selector')) { closeLangMenu(); }
+});
+
+// ===== GAME PRESETS =====
+var PRESETS = {
+  genshin: {
+    nameKey: 'presetGenshin',
+    pool: 'character',
+    baseRate: 0.6, softPityStart: 74, softPityRate: 6.0, hardPity: 90,
+    bigPityMode: '5050', pityExchange: 0,
+    gemsPerPull: 160, bonusPulls: 40, rateTWD: 59, rateUSD: 2
+  },
+  genshin_weapon: {
+    nameKey: 'presetGenshin',
+    pool: 'weapon',
+    baseRate: 0.7, softPityStart: 63, softPityRate: 6.0, hardPity: 80,
+    bigPityMode: '7525', pityExchange: 0,
+    gemsPerPull: 160, bonusPulls: 40, rateTWD: 59, rateUSD: 2
+  },
+  arknights: {
+    nameKey: 'presetArknights',
+    pool: 'character',
+    baseRate: 2.0, softPityStart: 50, softPityRate: 2.0, hardPity: 99,
+    bigPityMode: '5050', pityExchange: 0,
+    gemsPerPull: 600, bonusPulls: 0, rateTWD: 59, rateUSD: 2
+  },
+  bluearchive: {
+    nameKey: 'presetBA',
+    pool: 'character',
+    baseRate: 0.7, softPityStart: 0, softPityRate: 0, hardPity: 200,
+    bigPityMode: 'guaranteed', pityExchange: 200,
+    gemsPerPull: 120, bonusPulls: 0, rateTWD: 59, rateUSD: 2
+  },
+  custom: {
+    nameKey: 'presetCustom',
+    pool: 'custom',
+    baseRate: 0.6, softPityStart: 74, softPityRate: 6.0, hardPity: 90,
+    bigPityMode: '5050', pityExchange: 0,
+    gemsPerPull: 160, bonusPulls: 40, rateTWD: 59, rateUSD: 2
+  }
+};
+
+var currentGame = 'genshin';
+var currentPoolType = 'character';
+
+function loadPreset(game) {
+  currentGame = game;
+  if (game === 'genshin') {
+    currentPoolType = (currentPoolType === 'weapon' || currentPoolType === 'custom') ? 'character' : currentPoolType;
+  }
+  var presetKey = (game === 'genshin' && currentPoolType === 'weapon') ? 'genshin_weapon' : game;
+  var p = PRESETS[presetKey] || PRESETS[game];
+
+  // Update preset buttons
+  document.querySelectorAll('.preset-btn').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.game === game);
+  });
+
+  // Show/hide pool selector
+  var poolSel = document.getElementById('poolSelector');
+  poolSel.style.display = (game === 'genshin') ? 'flex' : 'none';
+  document.querySelectorAll('.pool-btn').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.pool === currentPoolType);
+  });
+
+  // Show/hide custom fields
+  var customFields = document.getElementById('customFields');
+  customFields.classList.toggle('hidden', game !== 'custom');
+
+  // Apply preset values
+  document.getElementById('baseRate').value = p.baseRate;
+  document.getElementById('softPityStart').value = p.softPityStart;
+  document.getElementById('softPityRate').value = p.softPityRate;
+  document.getElementById('hardPity').value = p.hardPity;
+  document.getElementById('bigPityMode').dataset.lastValue = p.bigPityMode;
+  document.getElementById('bigPityMode').value = p.bigPityMode;
+  document.getElementById('pityExchange').value = p.pityExchange;
+  document.getElementById('gemsPerPull').value = p.gemsPerPull;
+  document.getElementById('customRateTWD').value = p.rateTWD;
+  document.getElementById('customRateUSD').value = p.rateUSD;
+
+  saveState();
+  triggerAutoSimulate();
+}
+
+function selectPool(poolType) {
+  currentPoolType = poolType;
+  document.querySelectorAll('.pool-btn').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.pool === poolType);
+  });
+  var presetKey = (currentGame === 'genshin' && poolType === 'weapon') ? 'genshin_weapon' : currentGame;
+  var p = PRESETS[presetKey] || PRESETS[currentGame];
+  document.getElementById('baseRate').value = p.baseRate;
+  document.getElementById('softPityStart').value = p.softPityStart;
+  document.getElementById('softPityRate').value = p.softPityRate;
+  document.getElementById('hardPity').value = p.hardPity;
+  document.getElementById('bigPityMode').dataset.lastValue = p.bigPityMode;
+  document.getElementById('bigPityMode').value = p.bigPityMode;
+  document.getElementById('pityExchange').value = p.pityExchange;
+  saveState();
+  triggerAutoSimulate();
+}
+
+// ===== SIMULATION ENGINE =====
+function singlePull(baseRate, pityCounter, softStart, softRate, hardCap) {
+  var rate = baseRate;
+  if (softStart > 0 && pityCounter >= softStart && pityCounter < hardCap) {
+    rate = baseRate + (pityCounter - softStart + 1) * softRate;
+  }
+  if (pityCounter >= hardCap - 1) rate = 100;
+  if (rate > 100) rate = 100;
+  return Math.random() * 100 < rate;
+}
+
+function simulateOneRun(baseRate, softStart, softRate, hardCap, targetCount, isBigPity, bigPityMode, pityExchange) {
+  var pityCounter = 0;
+  var upCount = 0;
+  var totalPulls = 0;
+  var nextGuaranteed = isBigPity;
+  var exchangeCount = 0;
+
+  while (upCount < targetCount) {
+    totalPulls++;
+    pityCounter++;
+    exchangeCount++;
+
+    if (pityExchange > 0 && exchangeCount >= pityExchange) {
+      upCount++;
+      pityCounter = 0;
+      exchangeCount = 0;
+      nextGuaranteed = (bigPityMode === '5050');
+      continue;
+    }
+
+    if (singlePull(baseRate, pityCounter, softStart, softRate, hardCap)) {
+      // Hit!
+      if (bigPityMode === 'none') {
+        upCount++;
+      } else if (bigPityMode === 'guaranteed') {
+        upCount++;
+      } else if (bigPityMode === '5050') {
+        if (nextGuaranteed) {
+          upCount++;
+          nextGuaranteed = false;
+        } else {
+          if (Math.random() < 0.5) {
+            upCount++;
+          } else {
+            nextGuaranteed = true;
+          }
+        }
+      } else if (bigPityMode === '7525') {
+        if (nextGuaranteed) {
+          upCount++;
+          nextGuaranteed = false;
+        } else {
+          if (Math.random() < 0.25) {
+            upCount++;
+          } else {
+            nextGuaranteed = true;
+          }
+        }
+      }
+      pityCounter = 0;
+    }
+  }
+  return totalPulls;
+}
+
+function runMonteCarlo(baseRate, softStart, softRate, hardCap, targetCount, isBigPity, bigPityMode, pityExchange) {
+  var results = [];
+  for (var i = 0; i < 5000; i++) {
+    results.push(simulateOneRun(baseRate, softStart, softRate, hardCap, targetCount, isBigPity, bigPityMode, pityExchange));
+  }
+  return results;
+}
+
+function getStats(results) {
+  results.sort(function(a,b) { return a - b; });
+  var n = results.length;
+  return {
+    avg: Math.round(results.reduce(function(a,b) { return a + b; }, 0) / n),
+    min: results[0],
+    max: results[n - 1],
+    median: results[Math.floor(n * 0.5)],
+    p80: results[Math.floor(n * 0.8)],
+    p95: results[Math.floor(n * 0.95)],
+    sorted: results
+  };
+}
+
+function getCumulativeData(results) {
+  var sorted = results.slice().sort(function(a,b) { return a-b; });
+  var n = sorted.length;
+  var labels = [];
+  var data = [];
+  var step = Math.max(1, Math.floor(sorted[n-1] / 50));
+  for (var x = 0; x <= sorted[n-1]; x += step) {
+    labels.push(x);
+    var count = 0;
+    for (var i = 0; i < n; i++) {
+      if (sorted[i] <= x) count++;
+    }
+    data.push(Math.round(count / n * 100 * 100) / 100);
+  }
+  // Always include 100%
+  labels.push(sorted[n-1]);
+  data.push(100);
+  return { labels: labels, data: data };
+}
+
+// ===== UI LOGIC =====
+function runSimulation() {
+  var baseRate = parseFloat(document.getElementById('baseRate').value) || 0.6;
+  var softStart = parseInt(document.getElementById('softPityStart').value) || 0;
+  var softRate = parseFloat(document.getElementById('softPityRate').value) || 0;
+  var hardCap = parseInt(document.getElementById('hardPity').value) || 90;
+  var targetCount = parseInt(document.getElementById('targetCount').value) || 1;
+  var isBigPity = document.getElementById('isBigPity').checked;
+  var bigPityMode = document.getElementById('bigPityMode').value;
+  var pityExchange = parseInt(document.getElementById('pityExchange').value) || 0;
+
+  var btn = document.getElementById('simBtn');
+  btn.disabled = true;
+  var progress = document.getElementById('simProgress');
+  progress.classList.add('visible');
+  var fill = document.getElementById('progressFill');
+  var pText = document.getElementById('progressText');
+  fill.style.width = '0%';
+
+  // Async to prevent blocking UI
+  setTimeout(function() {
+    var results = runMonteCarlo(baseRate, softStart, softRate, hardCap, targetCount, isBigPity, bigPityMode, pityExchange);
+    var stats = getStats(results);
+    var cumData = getCumulativeData(results);
+
+    lastSimResult = { stats: stats, cumData: cumData, params: { baseRate: baseRate, targetCount: targetCount } };
+
+    // Update stats
+    document.getElementById('statAvg').textContent = stats.avg;
+    document.getElementById('statMedian').textContent = stats.median;
+    document.getElementById('statP80').textContent = stats.p80;
+    document.getElementById('statP95').textContent = stats.p95;
+    document.getElementById('statMin').textContent = stats.min;
+    document.getElementById('statMax').textContent = stats.max;
+
+    // Update chart
+    updateChart(cumData);
+
+    // Update currency section
+    updateCurrency(stats.p80);
+
+    // Show results
+    document.getElementById('resultsSection').classList.add('visible');
+    progress.classList.remove('visible');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-rotate-right"></i> <span>' + getT('reloadSim') + '</span>';
+  }, 50);
+}
+
+function updateChart(cumData) {
+  if (successChart) successChart.destroy();
+  var ctx = document.getElementById('successChart').getContext('2d');
+  successChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: cumData.labels,
+      datasets: [{
+        label: getT('chartTitle'),
+        data: cumData.data,
+        borderColor: '#6366f1',
+        backgroundColor: 'rgba(99,102,241,0.1)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 0,
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) { return ctx.parsed.y.toFixed(1) + '%'; }
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: getT('unitPulls'), color: '#94a3b8' },
+          grid: { color: 'rgba(255,255,255,0.05)' },
+          ticks: { color: '#94a3b8' }
+        },
+        y: {
+          title: { display: true, text: '%', color: '#94a3b8' },
+          min: 0, max: 100,
+          grid: { color: 'rgba(255,255,255,0.05)' },
+          ticks: { color: '#94a3b8' }
+        }
+      }
+    }
+  });
+}
+
+function updateCurrency(p80Pulls) {
+  var currentPulls = parseInt(document.getElementById('currentPulls').value) || 0;
+  var currentGems = parseInt(document.getElementById('currentGems').value) || 0;
+  var currentTickets = parseInt(document.getElementById('currentTickets').value) || 0;
+  var gemsPerPull = parseInt(document.getElementById('gemsPerPull').value) || 160;
+  var firstDouble = document.getElementById('firstDoubleBonus').checked;
+  var rateTWD = parseFloat(document.getElementById('customRateTWD').value) || 59;
+  var rateUSD = parseFloat(document.getElementById('customRateUSD').value) || 2;
+
+  var neededPulls = p80Pulls - currentPulls - currentTickets;
+  var gemEquivalent = Math.floor((currentGems) / gemsPerPull);
+  neededPulls -= gemEquivalent;
+  if (neededPulls < 0) neededPulls = 0;
+
+  var missingPulls = neededPulls;
+  var missingGems = missingPulls * gemsPerPull;
+
+  // First double bonus: extra 40 pulls worth of gems
+  var bonusPulls = firstDouble ? 40 : 0;
+  if (missingPulls <= bonusPulls) {
+    missingPulls = 0;
+    missingGems = 0;
+  } else {
+    missingPulls -= bonusPulls;
+    missingGems = missingPulls * gemsPerPull;
+  }
+
+  var costTWD = missingPulls * rateTWD;
+  var costUSD = missingPulls * rateUSD;
+
+  document.getElementById('resMissingPulls').textContent = missingPulls;
+  document.getElementById('resMissingGems').textContent = missingGems;
+  document.getElementById('resCostTWD').textContent = '$' + Math.ceil(costTWD).toLocaleString();
+  document.getElementById('resCostUSD').textContent = '$' + costUSD.toFixed(2);
+}
+
+// ===== SHARE CARD =====
+function copyShareCard() {
+  if (!lastSimResult) {
+    alert(getT('simFirst'));
+    return;
+  }
+  var stats = lastSimResult.stats;
+  var gameName = getT(currentGame === 'genshin' ? (currentPoolType === 'weapon' ? 'poolWeapon' : 'poolChar') : (PRESETS[currentGame] ? PRESETS[currentGame].nameKey : 'presetCustom'));
+  var targetText = document.getElementById('targetCount').options[document.getElementById('targetCount').selectedIndex].text;
+  var pityCount = document.getElementById('currentPulls').value;
+
+  var card = getT('shareHeader') + '\n';
+  card += '────────────────\n';
+  card += getT('shareGame') + gameName + '\n';
+  card += getT('shareTarget') + targetText + '\n';
+  card += getT('sharePity') + pityCount + getT('unitPulls') + '\n';
+  card += getT('shareSims') + '\n';
+  card += '────────────────\n';
+  card += getT('shareResults') + '\n';
+  card += getT('shareExpPulls') + stats.avg + getT('unitPulls') + '\n';
+  card += getT('shareMedian') + stats.median + getT('unitPulls') + '\n';
+  card += getT('shareP80') + stats.p80 + getT('unitPulls') + '\n';
+  card += getT('shareP95') + stats.p95 + getT('unitPulls') + '\n';
+  card += '────────────────\n';
+  card += getT('shareAdvice') + stats.p80 + getT('shareAdviceEnd') + '\n';
+  card += getT('shareLink');
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(card).then(function() {
+      showCopySuccess();
+    }).catch(function() {
+      fallbackCopy(card);
+    });
+  } else {
+    fallbackCopy(card);
+  }
+}
+
+function fallbackCopy(text) {
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); showCopySuccess(); }
+  catch(e) { alert(getT('copyFail')); }
+  document.body.removeChild(ta);
+}
+
+function showCopySuccess() {
+  var btn = document.getElementById('shareBtn');
+  btn.classList.add('copied');
+  btn.innerHTML = '<i class="fa-solid fa-check"></i> <span>' + getT('shareCopied') + '</span>';
+  setTimeout(function() {
+    btn.classList.remove('copied');
+    btn.innerHTML = '<i class="fa-solid fa-clipboard"></i> <span>' + getT('shareBtnText') + '</span>';
+  }, 3000);
+}
+
+// ===== HELP MODAL =====
+function openHelpModal() {
+  document.getElementById('helpModal').classList.add('open');
+}
+function closeHelpModal() {
+  document.getElementById('helpModal').classList.remove('open');
+}
+document.getElementById('helpModal').addEventListener('click', function(e) {
+  if (e.target === this) closeHelpModal();
+});
+
+// ===== LOCALSTORAGE =====
+function saveState() {
+  var state = {
+    game: currentGame,
+    pool: currentPoolType,
+    pulls: document.getElementById('currentPulls').value,
+    bigPity: document.getElementById('isBigPity').checked,
+    gems: document.getElementById('currentGems').value,
+    tickets: document.getElementById('currentTickets').value,
+    target: document.getElementById('targetCount').value,
+    firstDouble: document.getElementById('firstDoubleBonus').checked
+  };
+  try { localStorage.setItem('gugopro_gacha_state', JSON.stringify(state)); } catch(e) {}
+}
+
+function loadState() {
+  try {
+    var raw = localStorage.getItem('gugopro_gacha_state');
+    if (!raw) return;
+    var state = JSON.parse(raw);
+    if (state.game && PRESETS[state.game]) {
+      currentGame = state.game;
+      currentPoolType = state.pool || 'character';
+      loadPreset(currentGame);
+      if (state.pool === 'weapon' && currentGame === 'genshin') selectPool('weapon');
+      document.getElementById('currentPulls').value = state.pulls || '0';
+      document.getElementById('isBigPity').checked = state.bigPity || false;
+      document.getElementById('currentGems').value = state.gems || '0';
+      document.getElementById('currentTickets').value = state.tickets || '0';
+      document.getElementById('targetCount').value = state.target || '1';
+      document.getElementById('firstDoubleBonus').checked = state.firstDouble || false;
+    }
+  } catch(e) {}
+}
+
+// ===== DEBOUNCE & AUTO-SIMULATE =====
+function debounce(fn, delay) {
+  var timer = null;
+  return function() {
+    var args = arguments;
+    var ctx = this;
+    clearTimeout(timer);
+    timer = setTimeout(function() { fn.apply(ctx, args); }, delay);
+  };
+}
+
+function triggerAutoSimulate() {
+  clearTimeout(debouncedAutoSim);
+  debouncedAutoSim = setTimeout(function() {
+    runSimulation();
+  }, 200);
+}
+
+function bindAutoSimEvents() {
+  var inputs = ['currentPulls', 'currentGems', 'currentTickets', 'gemsPerPull', 'firstDoubleBonus', 'isBigPity', 'customRateTWD', 'customRateUSD'];
+  inputs.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var evt = el.type === 'checkbox' ? 'change' : 'input';
+    el.addEventListener(evt, debounce(function() { saveState(); triggerAutoSimulate(); }, 200));
+  });
+  document.getElementById('targetCount').addEventListener('change', function() { saveState(); triggerAutoSimulate(); });
+}
+
+// ===== INIT =====
+window.addEventListener('DOMContentLoaded', function() {
+  currentLang = detectLanguage();
+  setLanguage(currentLang);
+  loadState();
+  bindAutoSimEvents();
+  // Auto-run first simulation after a short delay
+  setTimeout(function() { triggerAutoSimulate(); }, 500);
+});
+</script>
+</body>
+</html>
