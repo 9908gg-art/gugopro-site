@@ -52,6 +52,12 @@
         chartRadar: 'Radar & Multi-Dimension Chart',
         chartScatter: 'Scatter & Bubble Analysis',
         chartFunnel: 'Funnel & Conversion Chart',
+        officeQrCode: 'QR Code Quick Generator',
+        officeBarcode: 'Barcode Generator',
+        officeTextImage: 'Text-to-Image Note Maker',
+        officeMarkdown: 'Live Markdown Editor & Preview',
+        officePomodoro: 'Focused Pomodoro Timer',
+        officeJson: 'JSON Formatter & Minifier',
         svgRaster: 'SVG to High-Resolution Image',
         imageMerge: 'Image Merge & Collage',
         imageSplitter: 'Image Grid Splitter',
@@ -108,6 +114,12 @@
         chartRadar: '雷達圖／多維度評估圖',
         chartScatter: '散點圖／氣泡圖分析儀',
         chartFunnel: '漏斗圖／轉化率分析圖',
+        officeQrCode: 'QR Code 快速產生器',
+        officeBarcode: '條形碼／條碼生成器',
+        officeTextImage: '文字轉圖片便簽生成器',
+        officeMarkdown: 'Markdown 即時編輯與預覽器',
+        officePomodoro: '高效番茄鐘工作計時器',
+        officeJson: 'JSON 格式化與壓縮檢視器',
         svgRaster: 'SVG 向量圖轉高清圖',
         imageMerge: '圖片拼接工具',
         imageSplitter: '圖片九宮格／多格分割器',
@@ -166,6 +178,12 @@
         ['converter-chart-radar.html', labels.chartRadar],
         ['converter-chart-scatter.html', labels.chartScatter],
         ['converter-chart-funnel.html', labels.chartFunnel],
+        ['converter-office-qrcode.html', labels.officeQrCode],
+        ['converter-office-barcode.html', labels.officeBarcode],
+        ['converter-office-text-to-image.html', labels.officeTextImage],
+        ['converter-office-markdown-editor.html', labels.officeMarkdown],
+        ['converter-office-pomodoro.html', labels.officePomodoro],
+        ['converter-office-json-formatter.html', labels.officeJson],
         ['converter-svg-raster.html', labels.svgRaster],
         ['converter-image-merge.html', labels.imageMerge],
         ['converter-image-splitter.html', labels.imageSplitter],
@@ -253,7 +271,7 @@
         }
 
         function updateBadges(query) {
-            var totals = { images: 0, 'audio-video': 0, 'document-process': 0, 'document-convert': 0, 'smart-text': 0, security: 0, 'data-charts': 0 };
+            var totals = { images: 0, 'audio-video': 0, 'document-process': 0, 'document-convert': 0, 'smart-text': 0, security: 0, 'data-charts': 0, 'office-tools': 0 };
             var total = 0;
             cards.forEach(function (card) {
                 if (!matchesQuery(card, query)) return;
