@@ -17,6 +17,10 @@
         pdfSplit: 'PDF Page Splitter',
         imageBatch: 'Batch Image Converter',
         subtitlesBatch: 'Batch Subtitle Sync',
+        imageEnhance: 'Image Quality Enhancer',
+        imageCropper: 'ID Photo & Social Cropper',
+        imageBgRemover: 'Solid Background Remover',
+        imageWatermark: 'Privacy Watermark & Mosaic',
         overview: 'All site tools'
     } : {
         hub: '轉檔工具專區',
@@ -32,6 +36,10 @@
         pdfSplit: 'PDF 頁面拆分與提取',
         imageBatch: '多圖批次轉檔與壓縮',
         subtitlesBatch: '字幕批次同步調時器',
+        imageEnhance: '圖片畫質與色彩增強器',
+        imageCropper: '證件照與社群比例裁切器',
+        imageBgRemover: '純色背景去除器',
+        imageWatermark: '圖片隱私浮水印與馬賽克工具',
         overview: '主站工具總覽'
     };
     var home = '../index.html#tools-section';
@@ -49,6 +57,10 @@
         ['converter-pdf-split.html', labels.pdfSplit],
         ['converter-image-batch.html', labels.imageBatch],
         ['converter-subtitles-batch.html', labels.subtitlesBatch],
+        ['converter-image-enhance.html', labels.imageEnhance],
+        ['converter-image-cropper.html', labels.imageCropper],
+        ['converter-image-bgremover.html', labels.imageBgRemover],
+        ['converter-image-watermark.html', labels.imageWatermark],
         [home, labels.overview]
     ];
 
