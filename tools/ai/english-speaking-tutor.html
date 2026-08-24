@@ -2123,8 +2123,44 @@
             return /[\p{L}\p{N}]$/u.test(before) && /^[\p{L}\p{N}]/u.test(after);
         }
 
-        function appendSpeechWordSegments(parent, text, offset = 0) {
+        function appendSpeechWordSegments(parent, text, offset = 0, locale = 'en-US') {
             const source = String(text || '');
+            const appendPlainText = (start, end) => {
+                if (end > start) parent.appendChild(document.createTextNode(source.slice(start, end)));
+            };
+            const appendWord = (start, end) => {
+                if (end <= start) return;
+                const word = document.createElement('span');
+                word.className = 'speaking-word';
+                word.dataset.start = String(offset + start);
+                word.dataset.end = String(offset + end);
+                word.textContent = source.slice(start, end);
+                parent.appendChild(word);
+            };
+
+            if (typeof Intl !== 'undefined' && typeof Intl.Segmenter === 'function') {
+                let semanticSegments = null;
+                try {
+                    const segmenter = new Intl.Segmenter(locale, { granularity: 'word' });
+                    semanticSegments = Array.from(segmenter.segment(source));
+                } catch (error) {
+                    semanticSegments = null;
+                }
+                if (semanticSegments) {
+                    let cursor = 0;
+                    semanticSegments.forEach(segment => {
+                        const start = Number(segment.index);
+                        const end = start + String(segment.segment || '').length;
+                        appendPlainText(cursor, start);
+                        if (segment.isWordLike === true) appendWord(start, end);
+                        else appendPlainText(start, end);
+                        cursor = end;
+                    });
+                    appendPlainText(cursor, source.length);
+                    return;
+                }
+            }
+
             let cursor = 0;
             while (cursor < source.length) {
                 const codePoint = source.codePointAt(cursor);
@@ -2134,14 +2170,14 @@
                     const whitespaceStart = cursor;
                     cursor += charLength;
                     while (cursor < source.length && /\s/u.test(source[cursor])) cursor += 1;
-                    parent.appendChild(document.createTextNode(source.slice(whitespaceStart, cursor)));
+                    appendPlainText(whitespaceStart, cursor);
                     continue;
                 }
 
                 const tokenStart = cursor;
                 const punctuation = TTS_PUNCTUATION_RE.test(char) && !isInternalWordPunctuation(source, cursor);
                 if (punctuation) {
-                    parent.appendChild(document.createTextNode(char));
+                    appendPlainText(cursor, cursor + charLength);
                     cursor += charLength;
                     continue;
                 }
@@ -2158,22 +2194,16 @@
                         cursor += nextLength;
                     }
                 }
-
-                const word = document.createElement('span');
-                word.className = 'speaking-word';
-                word.dataset.start = String(offset + tokenStart);
-                word.dataset.end = String(offset + cursor);
-                word.textContent = source.slice(tokenStart, cursor);
-                parent.appendChild(word);
+                appendWord(tokenStart, cursor);
             }
         }
 
-        function renderSpeechText(messageRoot, text) {
+        function renderSpeechText(messageRoot, text, langCode = 'en-US') {
             const learning = messageRoot?.querySelector('.msg-learning');
             if (!learning) return;
             const source = String(text || '');
             learning.replaceChildren();
-            appendSpeechWordSegments(learning, source, 0);
+            appendSpeechWordSegments(learning, source, 0, resolveSpeechLocale(langCode));
         }
 
         function cancelSpeechBoundaryFrame() {
@@ -2260,7 +2290,8 @@
             if (index === session.lastBoundaryIndex) return;
             const learning = session.root.querySelector('.msg-learning');
             if (!learning) return;
-            const words = session.words || [...learning.querySelectorAll('.speaking-word')];
+            const words = session.words?.length ? session.words : [...learning.querySelectorAll('.speaking-word')];
+            if (!session.words?.length) session.words = words;
             const word = words.find(element => index >= Number(element.dataset.start) && index < Number(element.dataset.end));
             session.lastBoundaryIndex = index;
             if (!word || word === session.activeWord) return;
@@ -2287,10 +2318,11 @@
             const source = String(text || '');
             const root = messageRoot || null;
             const locale = resolveSpeechLocale(langCode);
-            if (root) renderSpeechText(root, source);
+            if (root) renderSpeechText(root, source, langCode);
 
             const utterance = new SpeechSynthesisUtterance(source);
             utterance.lang = locale;
+            const renderedWords = root ? [...root.querySelectorAll('.speaking-word')] : [];
             const voice = getSpeechVoice(locale);
             if (voice) utterance.voice = voice;
             const session = {
@@ -2304,10 +2336,15 @@
                 lastBoundaryAt: null,
                 fallbackStartedAt: performance.now(),
                 fallbackDuration: 0,
-                words: []
+                words: renderedWords
             };
             activeSpeechSession = session;
             if (root) {
+                const firstWord = renderedWords[0];
+                if (firstWord) {
+                    firstWord.classList.add('tts-active-word');
+                    session.activeWord = firstWord;
+                }
                 queueSpeechWordBoundary(session, 0);
                 startSpeechWordFallback(session);
             }
