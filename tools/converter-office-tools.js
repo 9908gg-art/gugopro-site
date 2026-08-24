@@ -99,7 +99,7 @@
         get('office-text-image-render').addEventListener('click', render);
         get('office-text-image-copy').addEventListener('click', function () { if (!lastBlob || !navigator.clipboard || !window.ClipboardItem) { status('office-text-image-status', tr('目前瀏覽器不支援圖片剪貼簿；請改用 PNG 下載。', 'This browser does not support image clipboard; use PNG download.'), 'error'); return; } navigator.clipboard.write([new ClipboardItem({ 'image/png': lastBlob })]).then(function () { status('office-text-image-status', tr('圖片已複製到剪貼簿。', 'Image copied to the clipboard.'), 'success'); }); });
         get('office-text-image-download').addEventListener('click', function () { if (lastBlob && C.downloadBlob) C.downloadBlob(lastBlob, 'gugopro-note.png'); });
-        get('office-text-image-clear').addEventListener('click', function () { input.value = ''; ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, canvas.width, canvas.height); lastBlob = null; get('office-text-image-download').disabled = true; get('office-text-image-copy').disabled = true; progress('office-text-image', 0); status('office-text-image-status', tr('已清除本機內容。', 'Local content cleared.')); });
+        get('office-text-image-clear').addEventListener('click', function () { input.value = ''; var ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, canvas.width, canvas.height); lastBlob = null; get('office-text-image-download').disabled = true; get('office-text-image-copy').disabled = true; progress('office-text-image', 0); status('office-text-image-status', tr('已清除本機內容。', 'Local content cleared.')); });
         render();
     }
 
