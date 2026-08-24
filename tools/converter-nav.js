@@ -63,6 +63,14 @@
         imageSplitter: 'Image Grid Splitter',
         gifMaker: 'GIF Animation Maker',
         imageColorPicker: 'Image Color Picker & Palette',
+        unitLength: 'Length & Distance Converter',
+        unitWeight: 'Weight & Mass Converter',
+        unitArea: 'Area & Land Converter',
+        unitVolume: 'Volume & Capacity Converter',
+        unitTemperature: 'Temperature Scale Converter',
+        unitData: 'Digital Storage & Data Converter',
+        unitSpeed: 'Speed & Pace Converter',
+        unitPressure: 'Pressure Converter',
         contact: 'Contact Us',
         overview: 'All site tools'
     } : {
@@ -125,6 +133,14 @@
         imageSplitter: '圖片九宮格／多格分割器',
         gifMaker: 'GIF 動畫製作器',
         imageColorPicker: '圖片調色盤／顏色吸取器',
+        unitLength: '長度與距離轉換器',
+        unitWeight: '重量與質量轉換器',
+        unitArea: '面積與地坪轉換器',
+        unitVolume: '體積與容量轉換器',
+        unitTemperature: '溫度與溫標轉換器',
+        unitData: '數位儲存與數據流量轉換器',
+        unitSpeed: '速度與配速轉換器',
+        unitPressure: '壓力與氣壓轉換器',
         contact: '聯絡我們',
         overview: '主站工具總覽'
     };
@@ -189,6 +205,14 @@
         ['converter-image-splitter.html', labels.imageSplitter],
         ['converter-gif-maker.html', labels.gifMaker],
         ['converter-image-colorpicker.html', labels.imageColorPicker],
+        ['converter-unit-length.html', labels.unitLength],
+        ['converter-unit-weight.html', labels.unitWeight],
+        ['converter-unit-area.html', labels.unitArea],
+        ['converter-unit-volume.html', labels.unitVolume],
+        ['converter-unit-temperature.html', labels.unitTemperature],
+        ['converter-unit-data.html', labels.unitData],
+        ['converter-unit-speed.html', labels.unitSpeed],
+        ['converter-unit-pressure.html', labels.unitPressure],
         ['../contact.html', labels.contact],
         [home, labels.overview]
     ];
@@ -271,7 +295,7 @@
         }
 
         function updateBadges(query) {
-            var totals = { images: 0, 'audio-video': 0, 'document-process': 0, 'document-convert': 0, 'smart-text': 0, security: 0, 'data-charts': 0, 'office-tools': 0 };
+            var totals = { images: 0, 'audio-video': 0, 'document-process': 0, 'document-convert': 0, 'smart-text': 0, security: 0, 'data-charts': 0, 'office-tools': 0, 'unit-converter': 0 };
             var total = 0;
             cards.forEach(function (card) {
                 if (!matchesQuery(card, query)) return;
