@@ -46,6 +46,12 @@
         cryptoEncode: 'URL / UTF-8 / HTML Codec',
         cryptoChecksum: 'Checksum & Hash Verifier',
         cryptoUuid: 'UUID / CUID Batch Generator',
+        chartBar: 'Bar & Column Chart Builder',
+        chartLine: 'Line & Area Chart Builder',
+        chartPie: 'Pie & Doughnut Chart Builder',
+        chartRadar: 'Radar & Multi-Dimension Chart',
+        chartScatter: 'Scatter & Bubble Analysis',
+        chartFunnel: 'Funnel & Conversion Chart',
         svgRaster: 'SVG to High-Resolution Image',
         imageMerge: 'Image Merge & Collage',
         imageSplitter: 'Image Grid Splitter',
@@ -96,6 +102,12 @@
         cryptoEncode: 'URL／UTF-8／HTML 實體編解碼器',
         cryptoChecksum: '雜湊值比對校驗器',
         cryptoUuid: 'UUID／CUID 批次生成器',
+        chartBar: '柱狀圖／長條圖產生器',
+        chartLine: '折線圖／面積圖繪製器',
+        chartPie: '圓餅圖／環形圖產生器',
+        chartRadar: '雷達圖／多維度評估圖',
+        chartScatter: '散點圖／氣泡圖分析儀',
+        chartFunnel: '漏斗圖／轉化率分析圖',
         svgRaster: 'SVG 向量圖轉高清圖',
         imageMerge: '圖片拼接工具',
         imageSplitter: '圖片九宮格／多格分割器',
@@ -148,6 +160,12 @@
         ['converter-crypto-encode.html', labels.cryptoEncode],
         ['converter-crypto-checksum.html', labels.cryptoChecksum],
         ['converter-crypto-uuid.html', labels.cryptoUuid],
+        ['converter-chart-bar.html', labels.chartBar],
+        ['converter-chart-line.html', labels.chartLine],
+        ['converter-chart-pie.html', labels.chartPie],
+        ['converter-chart-radar.html', labels.chartRadar],
+        ['converter-chart-scatter.html', labels.chartScatter],
+        ['converter-chart-funnel.html', labels.chartFunnel],
         ['converter-svg-raster.html', labels.svgRaster],
         ['converter-image-merge.html', labels.imageMerge],
         ['converter-image-splitter.html', labels.imageSplitter],
@@ -235,7 +253,7 @@
         }
 
         function updateBadges(query) {
-            var totals = { images: 0, 'audio-video': 0, 'document-process': 0, 'document-convert': 0, 'smart-text': 0, security: 0 };
+            var totals = { images: 0, 'audio-video': 0, 'document-process': 0, 'document-convert': 0, 'smart-text': 0, security: 0, 'data-charts': 0 };
             var total = 0;
             cards.forEach(function (card) {
                 if (!matchesQuery(card, query)) return;
