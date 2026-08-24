@@ -1,4 +1,8 @@
-/* GugoPro shared AI quota tracker — same-origin, client-side only. */
+/*
+ * GugoPro Global AI Quota Tracker
+ * Shared by same-origin AI tools.  The counter is intentionally local-only:
+ * it is a UX estimate, not a server-side billing or quota authority.
+ */
 (function (root) {
   'use strict';
 
@@ -22,6 +26,24 @@
     return Number.isFinite(number) && number >= 0 ? number : fallback;
   }
 
+  function normalizeModelUsage(value) {
+    var output = {};
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return output;
+    Object.keys(value).forEach(function (modelName) {
+      var count = toFiniteNonNegative(value[modelName], 0);
+      if (count > 0) output[String(modelName)] = Math.floor(count);
+    });
+    return output;
+  }
+
+  function cloneModelUsage(value) {
+    var output = {};
+    Object.keys(value || {}).forEach(function (modelName) {
+      output[modelName] = value[modelName];
+    });
+    return output;
+  }
+
   function readState() {
     var today = getPacificDate();
     var state = null;
@@ -35,6 +57,7 @@
       state = {
         pacificDate: today,
         usedCount: 0,
+        modelUsage: {},
         dailyLimit: null,
         updatedAt: new Date().toISOString()
       };
@@ -42,7 +65,8 @@
       return state;
     }
 
-    state.usedCount = toFiniteNonNegative(state.usedCount, 0);
+    state.usedCount = Math.floor(toFiniteNonNegative(state.usedCount, 0));
+    state.modelUsage = normalizeModelUsage(state.modelUsage);
     state.dailyLimit = state.dailyLimit === null || state.dailyLimit === undefined
       ? null
       : toFiniteNonNegative(state.dailyLimit, null);
@@ -65,8 +89,10 @@
       storageKey: STORAGE_KEY,
       pacificDate: state.pacificDate,
       usedCount: state.usedCount,
+      modelUsage: cloneModelUsage(state.modelUsage),
       dailyLimit: state.dailyLimit,
       remainingCount: remaining,
+      limitSource: state.limitSource || null,
       updatedAt: state.updatedAt
     };
   }
@@ -89,6 +115,13 @@
     return snapshot(readState());
   }
 
+  function getModelUsage(modelName) {
+    var key = String(modelName || '').trim();
+    if (!key) return 0;
+    var state = readState();
+    return state.modelUsage[key] || 0;
+  }
+
   function setDailyLimit(limit, source) {
     var state = readState();
     var normalized = Number(limit);
@@ -102,11 +135,14 @@
     return emit(state);
   }
 
-  function recordUsage(count) {
+  function recordUsage(count, modelName) {
     var state = readState();
     var increment = Number(count === undefined ? 1 : count);
     if (!Number.isFinite(increment) || increment <= 0) increment = 1;
-    state.usedCount += Math.floor(increment);
+    increment = Math.floor(increment);
+    state.usedCount += increment;
+    var key = String(modelName || '').trim();
+    if (key) state.modelUsage[key] = (state.modelUsage[key] || 0) + increment;
     state.updatedAt = new Date().toISOString();
     writeState(state);
     return emit(state);
@@ -117,6 +153,7 @@
     getPacificDate: getPacificDate,
     resetIfNewPacificDay: resetIfNewPacificDay,
     getSnapshot: getSnapshot,
+    getModelUsage: getModelUsage,
     setDailyLimit: setDailyLimit,
     recordUsage: recordUsage
   };

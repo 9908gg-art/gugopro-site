@@ -1401,7 +1401,7 @@ async function fetchGeminiReading(reading, timer1, timer2) {
   try {
     var apiKey = getGlobalApiKey();
     var responseText = await callGeminiWithRetry(apiKey, systemPrompt, { temperature: 0.75, maxOutputTokens: 4096 });
-    if (window.GugoProGlobalAIQuota) window.GugoProGlobalAIQuota.recordUsage(1);
+    if (window.GugoProGlobalAIQuota) window.GugoProGlobalAIQuota.recordUsage(1, state.geminiModel);
 
     clearTimeout(timer1);
     clearTimeout(timer2);
@@ -1479,7 +1479,7 @@ async function handleFollowUpFlow(question) {
   try {
     var apiKey = getGlobalApiKey();
     var responseText = await callGeminiMultiTurnWithRetry(apiKey, contents, { temperature: 0.75, maxOutputTokens: 2048 });
-    if (window.GugoProGlobalAIQuota) window.GugoProGlobalAIQuota.recordUsage(1);
+    if (window.GugoProGlobalAIQuota) window.GugoProGlobalAIQuota.recordUsage(1, state.geminiModel);
 
     state.chatHistory.push({ role: 'user', content: question });
     state.chatHistory.push({ role: 'model', content: responseText });
