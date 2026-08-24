@@ -13,6 +13,10 @@
         base64: 'Base64 / SVG Codec',
         audio: 'Audio Converter',
         color: 'Color Converter',
+        excelPdf: 'Excel / CSV to PDF',
+        pdfSplit: 'PDF Page Splitter',
+        imageBatch: 'Batch Image Converter',
+        subtitlesBatch: 'Batch Subtitle Sync',
         overview: 'All site tools'
     } : {
         hub: '轉檔工具專區',
@@ -24,6 +28,10 @@
         base64: 'Base64 / SVG 編解碼器',
         audio: '音訊格式轉換器',
         color: '色彩代碼轉換器',
+        excelPdf: 'Excel / CSV 轉 PDF',
+        pdfSplit: 'PDF 頁面拆分與提取',
+        imageBatch: '多圖批次轉檔與壓縮',
+        subtitlesBatch: '字幕批次同步調時器',
         overview: '主站工具總覽'
     };
     var home = '../index.html#tools-section';
@@ -37,6 +45,10 @@
         ['converter-base64.html', labels.base64],
         ['converter-audio.html', labels.audio],
         ['converter-color.html', labels.color],
+        ['converter-excel-pdf.html', labels.excelPdf],
+        ['converter-pdf-split.html', labels.pdfSplit],
+        ['converter-image-batch.html', labels.imageBatch],
+        ['converter-subtitles-batch.html', labels.subtitlesBatch],
         [home, labels.overview]
     ];
 

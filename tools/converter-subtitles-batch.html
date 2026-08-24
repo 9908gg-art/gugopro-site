@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="一次拖入多個 SRT / VTT，統一套用正負毫秒偏移，保留格式或轉成 SRT、VTT、TXT，再用 JSZip 打包。">
+    <title>字幕批次同步調時器 | GugoPro Converter Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/app.css">
+    <link rel="stylesheet" href="converter-base.css">
+    <link rel="stylesheet" href="converter-hub.css">
+</head>
+<body class="converter-page">
+    <header><div class="nav-container">
+        <a href="../index.html#tools-section" class="logo" aria-label="回到 GugoPro 主站首頁"><div class="logo-icon"><i class="fa-solid fa-rocket"></i></div><span class="logo-text">GugoPro</span><span class="logo-tag">生活實用工具</span></a>
+        <div class="tools-selector"><button class="tools-btn" type="button" aria-haspopup="true"><i class="fa-solid fa-screwdriver-wrench"></i> 轉檔工具 <i class="fa-solid fa-caret-down"></i></button><div class="tools-dropdown"></div></div>
+        <div class="nav-actions"><a class="kofi-nav-btn" href="https://ko-fi.com/R1K123XRS9" target="_blank" rel="noopener sponsored"><i class="fa-solid fa-mug-hot"></i> 支持創作</a><a class="converter-home-link" href="../index.html#tools-section"><i class="fa-solid fa-house"></i> 主站首頁</a><a class="converter-language-link" href="../en/tools/converter-subtitles-batch.html"><i class="fa-solid fa-language"></i> English</a></div>
+    </div></header>
+    <section class="hero converter-hero"><div class="hero-badge"><i class="fa-solid fa-clock-rotate-left"></i> Converter Hub / 字幕批次工作流</div><h1>字幕批次同步調時器</h1><p>一次將正負毫秒偏移套用到多個 SRT / VTT，轉換後在瀏覽器打包下載。</p><div class="hero-actions"><a class="converter-button secondary" href="converter-hub.html"><i class="fa-solid fa-arrow-left"></i> 返回 Converter Hub</a><span class="converter-stat"><strong>JSZip</strong> 本地批次同步</span></div></section>
+    <main class="converter-shell"><div class="converter-workbench-wrap"><section class="converter-workbench" aria-labelledby="subtitles-batch-workbench-heading"><div class="converter-section-heading"><div><h2 id="subtitles-batch-workbench-heading">批次同步時間軸</h2><p>一次套用毫秒偏移，保留原格式或批次轉成 SRT、VTT、TXT。</p></div></div><label class="converter-upload-zone" id="subtitles-batch-dropzone" for="subtitles-batch-file"><input id="subtitles-batch-file" type="file" accept=".srt,.vtt,text/plain" multiple><span><i class="fa-solid fa-cloud-arrow-up converter-upload-icon"></i><strong>拖曳多個 SRT / VTT 到這裡</strong><small>或點擊多選檔案 · 轉換後以 JSZip 打包</small></span></label><div class="file-list" id="subtitles-batch-list"></div><div class="converter-form-grid"><div class="converter-control"><label class="converter-label" for="subtitles-batch-offset">時間偏移 (ms)</label><input id="subtitles-batch-offset" type="number" step="1" value="0"></div><div class="converter-control"><label class="converter-label" for="subtitles-batch-target">輸出格式</label><select id="subtitles-batch-target"><option value="same">保留原格式</option><option value="srt">SRT</option><option value="vtt">VTT</option><option value="txt">TXT script</option></select></div></div><div class="converter-progress"><div class="converter-progress-head"><span>批次進度</span><span id="subtitles-batch-progress-label">0%</span></div><div class="converter-progress-track"><div class="converter-progress-bar" id="subtitles-batch-progress-bar"></div></div></div><p class="converter-status" id="subtitles-batch-status" aria-live="polite"></p><div class="converter-actions"><button class="converter-button primary" id="subtitles-batch-run" type="button" disabled><i class="fa-solid fa-clock-rotate-left"></i> 批次同步</button><button class="converter-button secondary" id="subtitles-batch-clear" type="button"><i class="fa-solid fa-rotate-left"></i> 清除</button><button class="converter-button primary" id="subtitles-batch-download" type="button" disabled><i class="fa-solid fa-file-zipper"></i> 下載 ZIP</button></div></section><aside><section class="converter-side-card"><h3><i class="fa-solid fa-circle-info"></i> 時間偏移</h3><p>正毫秒讓字幕延後；負毫秒讓字幕提前。</p></section><section class="converter-side-card"><h3><i class="fa-solid fa-circle-info"></i> 輸出安全</h3><p>新檔名與 ZIP，不會改寫原始字幕。</p></section></aside></div><div id="converter-commerce"></div><!-- ad-sense-editorial -->
+<section class="converter-editorial" aria-labelledby="editorial-heading">
+    <div class="converter-editorial-intro">
+        <span class="converter-editorial-kicker">功能特點與使用指南</span>
+        <h2 id="editorial-heading">這個工具適合什麼工作？</h2>
+        <p>一次拖入多個 SRT / VTT，統一套用正負毫秒偏移，保留格式或轉成 SRT、VTT、TXT，再用 JSZip 打包。</p>
+    </div>
+    <div class="converter-editorial-grid">
+        <section class="converter-guide-card" aria-labelledby="guide-heading">
+            <h3 id="guide-heading"><i class="fa-solid fa-list-check"></i> 3 步快速操作</h3>
+            <ol class="converter-step-list"><li><span>1</span><div>多選或拖入多個字幕檔，確認批次清單。</div></li><li><span>2</span><div>輸入毫秒偏移量並選擇輸出格式。</div></li><li><span>3</span><div>執行批次同步，逐檔檢查狀態並下載 ZIP。</div></li></ol>
+        </section>
+        <section class="converter-privacy-card" aria-labelledby="privacy-heading-editorial">
+            <h3 id="privacy-heading-editorial"><i class="fa-solid fa-shield-halved"></i> 隱私宣告</h3>
+            <p>批次字幕文字與 ZIP 僅在瀏覽器處理，原始檔不會上傳、覆寫或遠端保存。</p>
+            <p class="converter-editorial-note">沒有檔案上傳端點；實際速度取決於裝置效能與瀏覽器支援。</p>
+        </section>
+    </div>
+    <section class="converter-faq" aria-labelledby="faq-heading">
+        <h3 id="faq-heading"><i class="fa-solid fa-circle-question"></i> 常見問題解答</h3>
+        <details><summary>多個字幕會上傳嗎？</summary><p>不會。每個檔案只在瀏覽器本地讀取、轉換與封裝。</p></details><details><summary>正負偏移怎麼使用？</summary><p>正值會讓字幕延後，負值會讓字幕提前；時間軸會限制在不早於 00:00:00 的範圍。</p></details><details><summary>檔案名稱會被覆蓋嗎？</summary><p>不會。輸出會產生新的檔名與 ZIP，原始檔案不會被修改。</p></details>
+    </section>
+</section></main>
+    <footer><a class="converter-footer-support" href="https://ko-fi.com/R1K123XRS9" target="_blank" rel="noopener sponsored"><i class="fa-solid fa-mug-hot"></i> 喜歡這個工具？請在 Ko-fi 支持我們</a><div class="footer-links"><a href="../index.html#tools-section">主站首頁</a><a href="converter-hub.html">轉檔工具</a><a href="../index.html#tools-section">主站工具總覽</a><a href="../privacy.html">隱私權政策</a><a href="../terms.html">服務條款</a></div><p>© 2026 GugoPro. All rights reserved.</p><p class="converter-footer-note">本工具只在瀏覽器本地批次同步字幕。 Amazon、TradingView 與 Ko-fi 連結可能包含合作推廣標記。</p></footer>
+    <script src="converter-nav.js"></script><script src="converter-common.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script><script>(function () {
+    'use strict';
+    var C = window.ConverterCommon, files = [], outputBlob = null;
+    var input = document.getElementById('subtitles-batch-file'), list = document.getElementById('subtitles-batch-list'), offset = document.getElementById('subtitles-batch-offset'), target = document.getElementById('subtitles-batch-target');
+    var status = document.getElementById('subtitles-batch-status'), bar = document.getElementById('subtitles-batch-progress-bar'), label = document.getElementById('subtitles-batch-progress-label'), runBtn = document.getElementById('subtitles-batch-run'), downloadBtn = document.getElementById('subtitles-batch-download');
+    function set(message, kind) { C.setStatus(status, message, kind); }
+    function renderList() { list.innerHTML = files.map(function (file, index) { return '<div class="file-list-item"><i class="fa-solid fa-closed-captioning"></i><span class="file-list-name">' + C.escapeHtml(file.name) + '</span><small>' + C.formatBytes(file.size) + '</small><button type="button" data-remove="' + index + '" aria-label="移除 ' + C.escapeHtml(file.name) + '"><i class="fa-solid fa-xmark"></i></button></div>'; }).join(''); list.querySelectorAll('[data-remove]').forEach(function (button) { button.addEventListener('click', function () { files.splice(Number(button.dataset.remove), 1); renderList(); runBtn.disabled = !files.length; }); }); }
+    function parseTime(value) { var match = String(value).trim().replace(',', '.').match(/^(\d+):(\d{2}):(\d{2})\.(\d{3})$/); if (!match) return 0; return (((Number(match[1]) * 60 + Number(match[2])) * 60 + Number(match[3])) * 1000) + Number(match[4]); }
+    function time(ms, separator) { ms = Math.max(0, Math.round(ms)); var h = Math.floor(ms / 3600000), m = Math.floor((ms % 3600000) / 60000), s = Math.floor((ms % 60000) / 1000), rest = ms % 1000; return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0') + separator + String(rest).padStart(3, '0'); }
+    function parse(text) { var blocks = String(text).replace(/^WEBVTT[^\n]*\n/i, '').replace(/\r/g, '').split(/\n{2,}/), entries = []; blocks.forEach(function (block) { var lines = block.split('\n'), lineIndex = lines.findIndex(function (line) { return /\d{2}:\d{2}:\d{2}[,.]\d{3}\s+-->\s+\d{2}:\d{2}:\d{2}[,.]\d{3}/.test(line); }); if (lineIndex < 0) return; var times = lines[lineIndex].match(/(\d{2}:\d{2}:\d{2}[,.]\d{3})\s+-->\s+(\d{2}:\d{2}:\d{2}[,.]\d{3})(.*)/); if (!times) return; entries.push({ start: parseTime(times[1]), end: parseTime(times[2]), settings: times[3] || '', text: lines.slice(lineIndex + 1).join('\n').trim() }); }); return entries; }
+    function render(entries, mode) { if (mode === 'txt') return entries.map(function (entry) { return entry.text; }).filter(Boolean).join('\n\n') + '\n'; var sep = mode === 'vtt' ? '.' : ',', head = mode === 'vtt' ? 'WEBVTT\n\n' : ''; return head + entries.map(function (entry, index) { return (mode === 'srt' ? String(index + 1) + '\n' : '') + time(entry.start, sep) + ' --> ' + time(entry.end, sep) + (mode === 'vtt' ? entry.settings : '') + '\n' + entry.text; }).join('\n\n') + '\n'; }
+    function addFiles(incoming) { files = files.concat(incoming.filter(function (file) { return /\.(srt|vtt)$/i.test(file.name); })); renderList(); runBtn.disabled = !files.length; set(files.length ? files.length + ' 個字幕檔已就緒，可同步時間偏移。' : '請選擇 SRT 或 VTT 檔案。', files.length ? 'success' : 'error'); }
+    function run() { if (!files.length) return set('請先選擇至少一個字幕檔。', 'error'); if (!window.JSZip) return set('JSZip 尚未準備好，請重新整理頁面。', 'error'); var zip = new JSZip(), shift = Number(offset.value) || 0; runBtn.disabled = true; downloadBtn.disabled = true; files.reduce(function (promise, file, index) { return promise.then(function () { return file.text().then(function (text) { var mode = target.value === 'same' ? (/\.vtt$/i.test(file.name) ? 'vtt' : 'srt') : target.value; var entries = parse(text).map(function (entry) { return { start: entry.start + shift, end: entry.end + shift, settings: entry.settings, text: entry.text }; }); var output = render(entries, mode); var ext = mode === 'txt' ? 'txt' : mode; zip.file(file.name.replace(/\.[^.]+$/, '') + '-synced.' + ext, output); C.setProgress(bar, label, ((index + 1) / files.length) * 70); }); }); }, Promise.resolve()).then(function () { return zip.generateAsync({ type: 'blob' }, function (meta) { C.setProgress(bar, label, 70 + meta.percent * 0.3); }); }).then(function (blob) { outputBlob = blob; C.setProgress(bar, label, 100); set('所有字幕已同步並打包成 ZIP。', 'success'); downloadBtn.disabled = false; runBtn.disabled = false; }).catch(function (error) { C.setProgress(bar, label, 0); set(error.message || '字幕批次轉換失敗。', 'error'); runBtn.disabled = false; }); }
+    C.bindDropzone(document.getElementById('subtitles-batch-dropzone'), input, addFiles); runBtn.addEventListener('click', run); downloadBtn.addEventListener('click', function () { if (outputBlob) C.downloadBlob(outputBlob, 'subtitles-batch-synced.zip'); }); document.getElementById('subtitles-batch-clear').addEventListener('click', function () { files = []; outputBlob = null; list.innerHTML = ''; runBtn.disabled = true; downloadBtn.disabled = true; C.setProgress(bar, label, 0); set('請選擇一個或多個字幕檔。'); });
+}());</script><script>if (window.ConverterCommon) window.ConverterCommon.initCommerce('converter-commerce');</script>
+</body>
+</html>
