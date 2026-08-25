@@ -87,6 +87,13 @@
         financeTrading: 'Trading Breakeven Calculator',
         financeLeverage: 'Leverage Liquidation Calculator',
         financeSalary: 'Salary Tax Calculator',
+        aiTutor: 'Multilingual AI Speaking Tutor',
+        aiTranslator: 'Real-time Bilingual Translator',
+        aiTarot: 'AI Tarot Master',
+        aiQuota: 'Gemini API Quota Monitor',
+        aiAmazon: 'Amazon AI Product Finder',
+        aiNutrition: 'AI Nutritionist & TDEE Planner',
+        aiFitness: 'AI Fitness & Weight Loss Coach',
         contact: 'Contact Us',
         overview: 'All site tools'
     } : {
@@ -173,6 +180,13 @@
         financeTrading: '交易損益兩平試算器',
         financeLeverage: '槓桿強平價格試算器',
         financeSalary: '薪資所得稅試算器',
+        aiTutor: 'AI 多國語言對話導師',
+        aiTranslator: 'AI 同聲傳譯與即時雙語翻譯器',
+        aiTarot: 'AI 塔羅占卜大師',
+        aiQuota: 'Gemini API 官方額度查詢',
+        aiAmazon: 'Amazon AI 智慧選品助手',
+        aiNutrition: 'AI 專屬營養師',
+        aiFitness: 'AI 減肥瘦身教練',
         contact: '聯絡我們',
         overview: '主站工具總覽'
     };
@@ -261,6 +275,13 @@
         ['converter-finance-trading-breakeven.html', labels.financeTrading],
         ['converter-finance-leverage-liquidation.html', labels.financeLeverage],
         ['converter-finance-salary-tax.html', labels.financeSalary],
+        ['/tools/ai/english-speaking-tutor.html', labels.aiTutor],
+        ['/tools/ai/realtime-translator.html', labels.aiTranslator],
+        ['/tools/ai/tarot-master.html', labels.aiTarot],
+        ['https://quota.gugopro.com/', labels.aiQuota],
+        ['/amazon/', labels.aiAmazon],
+        ['/tools/health/tdee-macros-calculator.html', labels.aiNutrition],
+        ['/tools/health/weight-loss-planner.html', labels.aiFitness],
         ['../contact.html', labels.contact],
         [home, labels.overview]
     ];
@@ -319,6 +340,31 @@
         });
     }
 
+    function initFullCardNavigation() {
+        var cards = document.querySelectorAll('.converter-tool-card, .tool-card');
+        Array.prototype.forEach.call(cards, function (card) {
+            if (card.getAttribute('data-full-card-navigation') === 'true') return;
+            var target = card.querySelector('a[href]');
+            if (!target) return;
+            card.setAttribute('data-full-card-navigation', 'true');
+            card.setAttribute('tabindex', '0');
+            card.setAttribute('role', 'link');
+            if (!card.getAttribute('aria-label')) {
+                var heading = card.querySelector('h3, h4');
+                if (heading) card.setAttribute('aria-label', heading.textContent.trim());
+            }
+            card.addEventListener('click', function (event) {
+                if (event.defaultPrevented || event.target.closest('a, button, input, select, textarea, label')) return;
+                target.click();
+            });
+            card.addEventListener('keydown', function (event) {
+                if (event.key !== 'Enter' && event.key !== ' ') return;
+                event.preventDefault();
+                target.click();
+            });
+        });
+    }
+
     function initDashboard() {
         if (!document.body.classList.contains('dashboard-page')) return;
         var input = document.getElementById('converter-search');
@@ -343,7 +389,7 @@
         }
 
         function updateBadges(query) {
-            var totals = { images: 0, 'audio-tools': 0, 'video-tools': 0, 'document-process': 0, 'document-convert': 0, 'smart-text': 0, security: 0, 'data-charts': 0, 'office-tools': 0, 'unit-converter': 0, 'finance-tools': 0 };
+            var totals = { images: 0, 'audio-tools': 0, 'video-tools': 0, 'document-process': 0, 'document-convert': 0, 'smart-text': 0, security: 0, 'data-charts': 0, 'office-tools': 0, 'unit-converter': 0, 'finance-tools': 0, 'ai-tools': 0 };
             var total = 0;
             cards.forEach(function (card) {
                 if (!matchesQuery(card, query)) return;
@@ -416,6 +462,6 @@
         applyFilter();
     }
 
-    function initAll() { initDropdowns(); initHubSearch(); initDashboard(); }
+    function initAll() { initDropdowns(); initHubSearch(); initDashboard(); initFullCardNavigation(); }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initAll); else initAll();
 }());
