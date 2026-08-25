@@ -50,6 +50,13 @@
       return Number.isFinite(quota) ? quota : 0;
     }
 
+    function getModelRpmLimit(model) {
+      const raw = model?.rpm_limit ?? model?.rpmLimit ?? model?.requests_per_minute ?? model?.rpm ?? 0;
+      const match = String(raw).replace(/,/g, '').match(/-?\d+(?:\.\d+)?/);
+      const limit = Number(match ? match[0] : raw);
+      return Number.isFinite(limit) ? limit : 0;
+    }
+
     function isChatModelRecord(model) {
       if (!model || typeof model !== 'object') return false;
       if (model.is_free_tier !== true || model.requires_billing_account === true || model.is_rest_compatible === false) return false;
@@ -75,6 +82,7 @@
         display_name: String(model.display_name || name),
         score: Number.isFinite(Number(model.model_score)) ? Number(model.model_score) : 0,
         dailyQuota: getModelDailyQuota(model),
+        rpmLimit: getModelRpmLimit(model),
         category: String(model.category || ''),
         fine_category_name_zh: String(model.fine_category_name_zh || ''),
         capabilities,
@@ -97,6 +105,7 @@
         }
         existing.score = Math.max(existing.score, item.score);
         existing.dailyQuota = Math.max(existing.dailyQuota || 0, item.dailyQuota || 0);
+        existing.rpmLimit = Math.max(existing.rpmLimit || 0, item.rpmLimit || 0);
         existing.is_verified_live = existing.is_verified_live || item.is_verified_live;
         if ((!existing.display_name || existing.display_name === existing.api_name) && item.display_name) existing.display_name = item.display_name;
         item.capabilities.forEach(capability => { if (!existing.capabilities.includes(capability)) existing.capabilities.push(capability); });
@@ -190,7 +199,22 @@
         body.appendChild(heading);
         const used = getModelUsageCount(model.api_name);
         const quota = Number(model.dailyQuota || 0);
-        appendText(body, 'div', 'model-option-quota', `Daily limit: ${quota} · Used: ${used}`);
+        const rpm = Number(model.rpmLimit || 0);
+        appendText(body, 'div', 'model-option-quota', `RPD: ${quota} · RPM: ${rpm || '—'} · Used: ${used}`);
+        if (quota > 0) {
+          const meter = root.document.createElement('div');
+          meter.className = 'model-quota-bar';
+          meter.setAttribute('role', 'progressbar');
+          meter.setAttribute('aria-label', `${model.display_name} daily quota usage`);
+          meter.setAttribute('aria-valuemin', '0');
+          meter.setAttribute('aria-valuemax', String(quota));
+          meter.setAttribute('aria-valuenow', String(Math.min(quota, Math.max(0, used))));
+          const fill = root.document.createElement('span');
+          fill.className = 'model-quota-fill';
+          fill.style.width = `${Math.min(100, Math.max(0, (used / quota) * 100))}%`;
+          meter.appendChild(fill);
+          body.appendChild(meter);
+        }
         if (quota > 0 && used >= quota) appendText(body, 'div', 'model-busy-badge model-quota-exhausted', 'Quota exhausted today');
         const busy = getBusyLabel(model.api_name);
         if (busy) appendText(body, 'div', 'model-busy-badge', busy);

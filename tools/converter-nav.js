@@ -94,6 +94,8 @@
         aiAmazon: 'Amazon AI Product Finder',
         aiNutrition: 'AI Nutritionist & TDEE Planner',
         aiFitness: 'AI Fitness & Weight Loss Coach',
+        aiZiwei: 'GugoPro AI Ziwei Astrology Master',
+        aiZiwei: 'GugoPro AI Ziwei Astrology Master',
         contact: 'Contact Us',
         overview: 'All site tools'
     } : {
@@ -187,6 +189,8 @@
         aiAmazon: 'Amazon AI 智慧選品助手',
         aiNutrition: 'AI 專屬營養師',
         aiFitness: 'AI 減肥瘦身教練',
+        aiZiwei: 'GugoPro AI 紫微斗數大師',
+        aiZiwei: 'GugoPro AI 紫微斗數大師',
         contact: '聯絡我們',
         overview: '主站工具總覽'
     };
@@ -282,6 +286,7 @@
         ['/amazon/', labels.aiAmazon],
         ['/tools/health/tdee-macros-calculator.html', labels.aiNutrition],
         ['/tools/health/weight-loss-planner.html', labels.aiFitness],
+        [en ? '/en/tools/ai/ziwei-astrology.html' : '/tools/ai/ziwei-astrology.html', labels.aiZiwei],
         ['../contact.html', labels.contact],
         [home, labels.overview]
     ];
