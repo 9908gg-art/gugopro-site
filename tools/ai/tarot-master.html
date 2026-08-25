@@ -6,7 +6,7 @@
     <title id="page-title">AI 塔羅大師 | GugoPro AI 學習工具</title>
 
     <!-- SEO Tags -->
-    <meta name="description" content="GugoPro AI 塔羅大師，支援多占卜教室、韋特塔羅牌陣、動態 Gemini 模型與語音朗讀。">
+    <meta name="description" content="GugoPro AI 塔羅大師，支援多占卜教室、韋特塔羅牌陣、動態 Gemini 模型與多語系介面。">
     <meta name="keywords" content="AI塔羅導師, 英文口說練習, 雙語對照, 語法校正, 情境對話, Gemini AI, 語音辨識, 語言學習工具">
 
     <!-- Google Analytics 4 (GA4) -->
@@ -866,13 +866,20 @@
         .tarot-welcome-card { border-color: rgba(255, 215, 0, 0.28); background: linear-gradient(135deg, rgba(18, 12, 36, 0.82), rgba(41, 18, 64, 0.55)); }
         .tarot-welcome-card h4 { color: #ffd700; }
         .tarot-spread-panel { margin-top: 16px; padding: 14px; background: rgba(10, 8, 22, 0.64); border: 1px solid rgba(255, 215, 0, 0.24); border-radius: 14px; }
-        .tarot-panel-label { display: block; margin-bottom: 8px; color: #ffd700; font-size: 0.76rem; font-weight: 800; letter-spacing: .02em; }
-        .tarot-spread-chips, .tarot-topic-chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
-        .tarot-spread-chip, .tarot-topic-chip { flex: 0 0 auto; border: 1px solid rgba(255,255,255,.15); border-radius: 999px; color: #ddd6fe; background: rgba(255,255,255,.05); padding: 7px 12px; font: inherit; font-size: .78rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
+        .tarot-panel-label { display: block; margin-bottom: 8px; color: #ffd700; font-size: 0.82rem; font-weight: 800; letter-spacing: .02em; }
+        .tarot-topic-label { margin-top: 14px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.08); }
+        .tarot-spread-chips, .tarot-topic-chips { display: flex; flex-wrap: wrap; gap: 8px; overflow: visible; padding-bottom: 4px; }
+        .tarot-spread-chip, .tarot-topic-chip { flex: 1 1 150px; min-width: 140px; border: 1px solid rgba(255,255,255,.15); border-radius: 999px; color: #ddd6fe; background: rgba(255,255,255,.05); padding: 9px 12px; font: inherit; font-size: .78rem; font-weight: 700; cursor: pointer; white-space: normal; text-align: center; line-height: 1.35; }
+        .tarot-spread-chip { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+        .tarot-spread-chip small { color: #a5b4fc; font-size: .64rem; font-weight: 600; line-height: 1.25; }
         .tarot-spread-chip:hover, .tarot-topic-chip:hover { color: #fff; border-color: #ffd700; background: rgba(255,215,0,.12); }
         .tarot-spread-chip.active { color: #160b24; background: #ffd700; border-color: #ffe680; }
         .tarot-topic-chips { margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.08); }
         .tarot-topic-chip { color: #bae6fd; font-weight: 600; }
+        .lang-select-header { appearance: auto; -webkit-appearance: auto; width: auto; min-width: 116px; max-width: 150px; padding: 7px 30px 7px 12px; border: 1px solid var(--glass-border); border-radius: 999px; background: #1a1b23; color: #fff; color-scheme: dark; font: inherit; font-size: .82rem; font-weight: 700; cursor: pointer; }
+        .lang-select-header:focus { border-color: var(--primary-neon); outline: none; box-shadow: 0 0 0 2px rgba(0, 255, 255, .18); }
+        .lang-select-header option { background: #1a1b23; color: #fff; }
+        @media (max-width: 600px) { .tarot-spread-chip, .tarot-topic-chip { min-width: calc(50% - 4px); flex-basis: calc(50% - 4px); padding-left: 9px; padding-right: 9px; } }
         .msg-extra { width: 100%; }
         .inchat-spread-box { margin: 14px 0; padding: 16px 12px; text-align: center; background: rgba(10,8,22,.86); border: 1px solid rgba(255,215,0,.3); border-radius: 12px; box-shadow: inset 0 0 22px rgba(168,85,247,.08); }
         .inchat-spread-header { margin-bottom: 12px; color: #ffd700; font-weight: 800; }
@@ -924,21 +931,10 @@
 
             <div class="header-right">
                 <div class="lang-compact-header">
-                    <button id="btn-lang-toggle" class="btn-lang-toggle" type="button" aria-haspopup="dialog" aria-expanded="false">
-                        <span id="lang-display-label">繁體中文</span>
-                        <i class="fa-solid fa-chevron-down"></i>
-                    </button>
-                    <div id="lang-panel" class="lang-panel" role="dialog" aria-label="Interface language">
-                        <div class="lang-settings-grid">
-                            <div class="lang-box">
-                                <span class="lang-label" data-i18n="interfaceLanguage">介面語言</span>
-                                <select id="interface-lang" class="lang-select" aria-label="Interface language">
-                                    <option value="zh-TW">繁體中文</option><option value="zh-CN">简体中文</option><option value="en-US">English</option><option value="ja-JP">日本語</option><option value="ko-KR">한국어</option><option value="es-ES">Español</option><option value="fr-FR">Français</option><option value="de-DE">Deutsch</option><option value="it-IT">Italiano</option><option value="pt-BR">Português</option><option value="ru-RU">Русский</option><option value="th-TH">ไทย</option><option value="vi-VN">Tiếng Việt</option><option value="id-ID">Bahasa Indonesia</option><option value="hi-IN">हिन्दी</option><option value="ar-SA">العربية</option>
-                                </select>
-                            </div>
-                        </div>
-                        <button id="btn-lang-confirm" class="btn-full btn-send" style="margin-top: 10px; padding: 8px;" data-i18n="apply">套用</button>
-                    </div>
+                    <label class="sr-only" for="interface-lang" data-i18n="interfaceLanguage">介面語言</label>
+                    <select id="interface-lang" class="lang-select lang-select-header" aria-label="Interface language">
+                        <option value="zh-TW">繁體中文</option><option value="zh-CN">简体中文</option><option value="en-US">English</option><option value="ja-JP">日本語</option><option value="ko-KR">한국어</option><option value="es-ES">Español</option><option value="fr-FR">Français</option><option value="de-DE">Deutsch</option><option value="it-IT">Italiano</option><option value="pt-BR">Português</option><option value="ru-RU">Русский</option><option value="th-TH">ไทย</option><option value="vi-VN">Tiếng Việt</option><option value="id-ID">Bahasa Indonesia</option><option value="hi-IN">हिन्दी</option><option value="ar-SA">العربية</option>
+                    </select>
                 </div>
                 <button id="btn-journal" class="btn-nav-tool" type="button"><i class="fa-solid fa-book-open"></i> <span data-i18n="journal">占卜日誌</span></button><button id="btn-menu" style="background:none; border:none; color:#fff; font-size:1.4rem; cursor:pointer; padding: 8px;">
                     <i class="fa-solid fa-bars"></i>
@@ -1743,11 +1739,13 @@
             const container = document.getElementById('chat-container');
             const card = document.createElement('div');
             card.className = 'welcome-card tarot-welcome-card';
-            const spreadButtons = Object.entries(SPREADS).map(([key, spread]) => `<button type="button" class="tarot-spread-chip ${key === tarotSelectedSpread ? 'active' : ''}" data-spread="${key}" onclick="selectTarotSpread('${key}')">${getLocalizedSpreadName(key)} · ${spread.count}</button>`).join('');
-            const topicLabels = interfaceLocale === 'en-US' ? ['Relationships', 'Career decision', 'Daily guidance', 'Financial planning'] : interfaceLocale === 'ja-JP' ? ['恋愛関係', '仕事の決断', '今日の指針', '資金計画'] : interfaceLocale === 'ko-KR' ? ['관계', '커리어 결정', '오늘의 안내', '재정 계획'] : interfaceLocale === 'es-ES' ? ['Relaciones', 'Decisión profesional', 'Guía diaria', 'Plan financiero'] : interfaceLocale === 'fr-FR' ? ['Relations', 'Décision professionnelle', 'Conseil du jour', 'Plan financier'] : interfaceLocale === 'de-DE' ? ['Beziehungen', 'Berufsentscheidung', 'Tagesimpuls', 'Finanzplanung'] : ['感情發展', '事業決策', '今日指引', '財務規劃'];
-            const questions = ['我想了解近期的感情發展與關係走向。', '我目前面臨一個重要的職涯選擇，請給我反思方向。', '請給我今日的整體能量提醒與可以採取的行動。', '我想探索目前財務規劃中的風險與改善方向。'];
-            const topicButtons = questions.map((question, index) => `<button type="button" class="tarot-topic-chip" onclick="quickAsk('${question}')">${topicLabels[index]}</button>`).join('');
-            card.innerHTML = `<h4>${interfaceText('welcome')}</h4><p>${interfaceText('welcomeDescription')}</p><div class="tarot-spread-panel"><span class="tarot-panel-label">${interfaceText('selectSpread')}</span><div class="tarot-spread-chips">${spreadButtons}</div><div class="tarot-topic-chips">${topicButtons}</div></div>`;
+            const spreadButtons = Object.entries(SPREADS).map(([key, spread]) => `<button type="button" class="tarot-spread-chip ${key === tarotSelectedSpread ? 'active' : ''}" data-spread="${key}" onclick="selectTarotSpread('${key}')"><span>${getTarotSpreadIcon(key)} ${getLocalizedSpreadName(key)} · ${spread.count}</span><small>${getLocalizedSpreadSummary(key)}</small></button>`).join('');
+            const quickActions = getLocalizedQuickActions();
+            const topicLabels = quickActions.topics;
+            const questions = quickActions.questions;
+            const topicIcons = ['❤️', '💼', '⚖️', '🔮'];
+            const topicButtons = questions.map((question, index) => `<button type="button" class="tarot-topic-chip" onclick="quickAsk('${question}')">${topicIcons[index]} ${topicLabels[index]}</button>`).join('');
+            card.innerHTML = `<h4>${interfaceText('welcome')}</h4><p>${interfaceText('welcomeDescription')}</p><div class="tarot-spread-panel"><span class="tarot-panel-label">🔮 ${interfaceText('selectSpread')}</span><div class="tarot-spread-chips">${spreadButtons}</div><span class="tarot-panel-label tarot-topic-label">✨ ${getLocalizedQuickTopicLabel()}</span><div class="tarot-topic-chips">${topicButtons}</div></div>`;
             container.appendChild(card);
         }
 
@@ -2070,6 +2068,29 @@
             'fr-FR': { defaultRoom:'Tirage général', newRoom:'Nouveau tirage', newRoomPrompt:'Nom du salon :', roomCount:'messages', loadingModels:'Chargement des modèles gratuits…', refreshingModels:'Actualisation des modèles gratuits…', loadedModels:'Chargés', enabledModels:'actifs', modelsSuffix:'modèles de chat gratuits · mise à jour', currentModel:'Modèle actuel : ', noModel:'Aucun modèle disponible chargé', noEnabled:'Aucun modèle actif. Activez-en au moins un.', quotaLimit:'Limite gratuite du jour', quotaUsed:'Utilisé aujourd’hui', quotaReset:'Réinitialisation dans environ', usedSuffix:'utilisations', remaining:'restantes', dailyLimit:'Limite quotidienne', usedToday:'Utilisé aujourd’hui', enabled:'Actif', disabled:'Inactif', quotaExhausted:'⚠️ Limite du jour atteinte', spreadCards:'cartes', loadingReading:'🌌 Connexion au tirage et préparation de la lecture…', loadingReadingNote:'Veuillez patienter pendant l’interprétation des cartes.', retryReading:'Réessayer', defaultReadingIntro:'Je perçois votre envie d’explorer', readingReady:'Le tirage est prêt. Prenez un instant, puis révélez les cartes ci-dessous.', readingLoading:'Le Maître du Tarot IA consulte le tirage précédent et organise votre suivi…', busyTimeout:'Délai dépassé', unavailableModels:'Aucun modèle gratuit éligible.' },
             'de-DE': { defaultRoom:'Allgemeine Legung', newRoom:'Neue Legung', newRoomPrompt:'Name des Legungsraums:', roomCount:'Nachrichten', loadingModels:'Kostenlose Modelle werden geladen…', refreshingModels:'Kostenlose Modelle werden aktualisiert…', loadedModels:'Geladen', enabledModels:'aktiv', modelsSuffix:'kostenlose Chatmodelle · aktualisiert', currentModel:'Aktuelles Modell: ', noModel:'Kein verfügbares Modell geladen', noEnabled:'Kein Modell ist aktiv. Aktiviere mindestens eines.', quotaLimit:'Heutiges kostenloses Limit', quotaUsed:'Heute verwendet', quotaReset:'Zurücksetzung in etwa', usedSuffix:'Nutzungen', remaining:'verbleibend', dailyLimit:'Tageslimit', usedToday:'Heute verwendet', enabled:'Aktiv', disabled:'Inaktiv', quotaExhausted:'⚠️ Tageslimit erreicht', spreadCards:'Karten', loadingReading:'🌌 Die Legung wird verbunden und vorbereitet…', loadingReadingNote:'Bitte warten, während die Karten gedeutet werden.', retryReading:'Erneut versuchen', defaultReadingIntro:'Ich spüre deinen Wunsch,', readingReady:'zu erkunden. Die Legung ist bereit. Atme kurz durch und decke die Karten unten auf.', readingLoading:'Der KI-Tarotmeister prüft die vorherige Legung und ordnet deine Rückfrage…', busyTimeout:'Zeitüberschreitung', unavailableModels:'Keine passenden kostenlosen Modelle verfügbar.' }
         };
+        const INTERFACE_QUICK_ACTIONS = {
+            'zh-TW': { topics: ['感情發展', '事業決策', '今日指引', '財務規劃'], questions: ['我想了解近期的感情發展與關係走向。', '我目前面臨一個重要的職涯選擇，請給我反思方向。', '請給我今日的整體能量提醒與可以採取的行動。', '我想探索目前財務規劃中的風險與改善方向。'] },
+            'zh-CN': { topics: ['感情发展', '事业决策', '今日指引', '财务规划'], questions: ['我想了解近期的感情发展与关系走向。', '我目前面临一个重要的职业选择，请给我反思方向。', '请给我今日的整体能量提醒与可以采取的行动。', '我想探索目前财务规划中的风险与改善方向。'] },
+            'en-US': { topics: ['Relationships', 'Career decision', 'Daily guidance', 'Financial planning'], questions: ['I want to explore the direction of my recent relationship and emotional life.', 'I am facing an important career choice. Please give me a reflective perspective.', 'Please give me a reminder about today’s overall energy and one practical action.', 'I want to explore risks and improvements in my current financial planning.'] },
+            'ja-JP': { topics: ['恋愛関係', '仕事の決断', '今日の指針', '資金計画'], questions: ['最近の恋愛や人間関係の流れを知りたいです。', '大切な仕事の選択に向き合っています。考えるための視点をください。', '今日の全体的なエネルギーと実践できる行動を教えてください。', '現在の資金計画にあるリスクと改善点を探りたいです。'] },
+            'ko-KR': { topics: ['관계', '커리어 결정', '오늘의 안내', '재정 계획'], questions: ['최근 관계와 감정의 흐름을 탐색하고 싶습니다.', '중요한 커리어 선택을 앞두고 있습니다. 성찰의 관점을 주세요.', '오늘의 전반적인 에너지와 실천할 행동 하나를 알려 주세요.', '현재 재정 계획의 위험과 개선점을 살펴보고 싶습니다.'] },
+            'es-ES': { topics: ['Relaciones', 'Decisión profesional', 'Guía diaria', 'Plan financiero'], questions: ['Quiero explorar el rumbo de mi relación y mi vida emocional reciente.', 'Me enfrento a una decisión profesional importante. Dame una perspectiva para reflexionar.', 'Dame un recordatorio sobre la energía de hoy y una acción práctica.', 'Quiero explorar los riesgos y mejoras de mi planificación financiera actual.'] },
+            'fr-FR': { topics: ['Relations', 'Décision professionnelle', 'Conseil du jour', 'Plan financier'], questions: ['Je souhaite explorer l’évolution récente de ma relation et de ma vie affective.', 'Je fais face à un choix professionnel important. Donnez-moi un angle de réflexion.', 'Donnez-moi un rappel sur l’énergie du jour et une action concrète.', 'Je souhaite explorer les risques et améliorations de ma planification financière.'] },
+            'de-DE': { topics: ['Beziehungen', 'Berufsentscheidung', 'Tagesimpuls', 'Finanzplanung'], questions: ['Ich möchte die Entwicklung meiner aktuellen Beziehung und Gefühlswelt erkunden.', 'Ich stehe vor einer wichtigen Berufsentscheidung. Gib mir eine Perspektive zur Reflexion.', 'Gib mir einen Impuls zur heutigen Energie und eine konkrete Handlung.', 'Ich möchte Risiken und Verbesserungen meiner aktuellen Finanzplanung erkunden.'] },
+            'it-IT': { topics: ['Relazioni', 'Decisione professionale', 'Guida quotidiana', 'Pianificazione finanziaria'], questions: ['Vorrei esplorare l’andamento recente della mia relazione e della mia vita emotiva.', 'Sto affrontando una scelta professionale importante. Dammi una prospettiva di riflessione.', 'Dammi un promemoria sull’energia di oggi e un’azione concreta.', 'Vorrei esplorare rischi e miglioramenti della mia pianificazione finanziaria.'] },
+            'pt-BR': { topics: ['Relacionamentos', 'Decisão profissional', 'Orientação diária', 'Planejamento financeiro'], questions: ['Quero explorar os rumos recentes do meu relacionamento e da minha vida emocional.', 'Estou diante de uma escolha profissional importante. Dê-me uma perspectiva para refletir.', 'Dê-me um lembrete sobre a energia de hoje e uma ação prática.', 'Quero explorar riscos e melhorias no meu planejamento financeiro atual.'] },
+            'ru-RU': { topics: ['Отношения', 'Решение о карьере', 'Совет на день', 'Финансовый план'], questions: ['Я хочу исследовать недавнее развитие моих отношений и эмоциональной жизни.', 'Мне предстоит важный карьерный выбор. Дайте мне направление для размышлений.', 'Дайте напоминание об энергии сегодняшнего дня и одно практическое действие.', 'Я хочу исследовать риски и улучшения в моём финансовом плане.'] },
+            'th-TH': { topics: ['ความสัมพันธ์', 'การตัดสินใจเรื่องงาน', 'คำแนะนำประจำวัน', 'แผนการเงิน'], questions: ['ฉันอยากสำรวจทิศทางความสัมพันธ์และชีวิตด้านอารมณ์ในช่วงที่ผ่านมา', 'ฉันกำลังเผชิญการตัดสินใจเรื่องงานที่สำคัญ ขอแนวคิดเพื่อไตร่ตรอง', 'ขอคำเตือนเกี่ยวกับพลังงานวันนี้และการกระทำที่ทำได้หนึ่งอย่าง', 'ฉันอยากสำรวจความเสี่ยงและการปรับปรุงแผนการเงินปัจจุบัน'] },
+            'vi-VN': { topics: ['Mối quan hệ', 'Quyết định nghề nghiệp', 'Gợi ý hôm nay', 'Kế hoạch tài chính'], questions: ['Tôi muốn tìm hiểu hướng phát triển gần đây của mối quan hệ và cảm xúc của mình.', 'Tôi đang đứng trước một lựa chọn nghề nghiệp quan trọng. Hãy cho tôi góc nhìn để suy ngẫm.', 'Hãy cho tôi lời nhắc về năng lượng hôm nay và một hành động thực tế.', 'Tôi muốn tìm hiểu rủi ro và điểm cải thiện trong kế hoạch tài chính hiện tại.'] },
+            'id-ID': { topics: ['Hubungan', 'Keputusan karier', 'Panduan hari ini', 'Rencana keuangan'], questions: ['Saya ingin mengeksplorasi arah hubungan dan kehidupan emosional saya belakangan ini.', 'Saya menghadapi pilihan karier penting. Berikan sudut pandang untuk refleksi.', 'Berikan pengingat tentang energi hari ini dan satu tindakan praktis.', 'Saya ingin mengeksplorasi risiko dan perbaikan dalam rencana keuangan saya.'] },
+            'hi-IN': { topics: ['रिश्ते', 'करियर निर्णय', 'आज का मार्गदर्शन', 'वित्तीय योजना'], questions: ['मैं अपने हाल के रिश्ते और भावनात्मक जीवन की दिशा को समझना चाहता हूँ।', 'मैं एक महत्वपूर्ण करियर निर्णय के सामने हूँ। चिंतन के लिए दृष्टिकोण दें।', 'आज की ऊर्जा और एक व्यावहारिक कदम के बारे में सुझाव दें।', 'मैं अपनी वर्तमान वित्तीय योजना के जोखिम और सुधार समझना चाहता हूँ।'] },
+            'ar-SA': { topics: ['العلاقات', 'قرار مهني', 'إرشاد اليوم', 'الخطة المالية'], questions: ['أريد استكشاف اتجاه علاقتي وحياتي العاطفية مؤخرًا.', 'أواجه اختيارًا مهنيًا مهمًا. امنحني منظورًا للتأمل.', 'أعطني تذكيرًا بطاقة اليوم وخطوة عملية واحدة.', 'أريد استكشاف المخاطر والتحسينات في خطتي المالية الحالية.'] }
+        };
+
+        function getLocalizedQuickActions() {
+            return INTERFACE_QUICK_ACTIONS[interfaceLocale] || INTERFACE_QUICK_ACTIONS['en-US'];
+        }
+
         const INTERFACE_STATIC = {
             'zh-TW': { recommendation:'塔羅與自我探索推薦書單：', amazonUS:'美國亞馬遜 (Amazon US)', amazonJP:'日本亞馬遜 (Amazon JP)', coffee:'Buy me a coffee', contact:'聯絡我們 / Contact Us', support:'Support: contact@gugopro.com', privacy:'Privacy Policy / 隱私政策', terms:'Terms / 服務條款', feedback:'意見回饋與 Bug 回報，歡迎透過 Email 聯絡我們。', disclaimer:'免責聲明：本工具的 AI 解讀由模型即時處理，僅供娛樂與自我反思參考。', apiTitle:'設定您的 API Key', apiDescription:'本工具使用 Google Gemini AI。請輸入您的 API Key 以開始占卜。', apiTutorial:'👉 還沒有 API Key？點此觀看教學', apiPlaceholder:'貼上您的 Gemini API Key', apiSave:'儲存並開始', roomOpsTitle:'教室操作', roomOpsDesc:'請選擇要操作的教室：', roomOpsConfirm:'確認執行', cancel:'取消' },
             'zh-CN': { recommendation:'塔罗与自我探索推荐书单：', amazonUS:'美国亚马逊 (Amazon US)', amazonJP:'日本亚马逊 (Amazon JP)', coffee:'Buy me a coffee', contact:'联系我们 / Contact Us', support:'Support: contact@gugopro.com', privacy:'Privacy Policy / 隐私政策', terms:'Terms / 服务条款', feedback:'意见反馈与 Bug 回报，欢迎通过 Email 联系我们。', disclaimer:'免责声明：本工具的 AI 解读由模型即时处理，仅供娱乐与自我反思参考。', apiTitle:'设置您的 API Key', apiDescription:'本工具使用 Google Gemini AI。请输入您的 API Key 以开始占卜。', apiTutorial:'👉 还没有 API Key？点击此处查看教程', apiPlaceholder:'粘贴您的 Gemini API Key', apiSave:'保存并开始', roomOpsTitle:'教室操作', roomOpsDesc:'请选择要操作的教室：', roomOpsConfirm:'确认执行', cancel:'取消' },
@@ -2123,9 +2144,39 @@
                 'ko-KR': { timeline:'시간 흐름 3장', daily:'오늘의 한 장', choice:'양자택일 스프레드', love:'관계 스프레드', celtic:'켈틱 크로스' },
                 'es-ES': { timeline:'Línea temporal de tres cartas', daily:'Guía diaria', choice:'Tirada de dos opciones', love:'Tirada de relaciones', celtic:'Cruz celta' },
                 'fr-FR': { timeline:'Ligne du temps à trois cartes', daily:'Conseil du jour', choice:'Tirage à deux choix', love:'Tirage relationnel', celtic:'Croix celtique' },
-                'de-DE': { timeline:'Drei-Karten-Zeitlinie', daily:'Tagesimpuls', choice:'Zwei-Wahl-Legung', love:'Beziehungslegung', celtic:'Keltisches Kreuz' }
+                'de-DE': { timeline:'Drei-Karten-Zeitlinie', daily:'Tagesimpuls', choice:'Zwei-Wahl-Legung', love:'Beziehungslegung', celtic:'Keltisches Kreuz' },
+                'it-IT': { timeline:'Linea temporale a tre carte', daily:'Guida quotidiana', choice:'Scelta tra due opzioni', love:'Tiraggio relazionale', celtic:'Croce celtica' },
+                'pt-BR': { timeline:'Linha do tempo de três cartas', daily:'Orientação diária', choice:'Escolha entre duas opções', love:'Tiragem de relacionamento', celtic:'Cruz celta' },
+                'ru-RU': { timeline:'Временная линия из трёх карт', daily:'Совет на день', choice:'Выбор из двух вариантов', love:'Расклад на отношения', celtic:'Кельтский крест' },
+                'th-TH': { timeline:'ไพ่สามใบตามลำดับเวลา', daily:'คำแนะนำประจำวัน', choice:'ทางเลือกสองทาง', love:'ความสัมพันธ์', celtic:'กางเขนเซลติก' },
+                'vi-VN': { timeline:'Dòng thời gian ba lá', daily:'Gợi ý hằng ngày', choice:'Trải bài hai lựa chọn', love:'Trải bài quan hệ', celtic:'Thập tự Celtic' },
+                'id-ID': { timeline:'Garis waktu tiga kartu', daily:'Panduan harian', choice:'Pilihan dua arah', love:'Hubungan', celtic:'Salib Celtic' },
+                'hi-IN': { timeline:'तीन कार्ड की समयरेखा', daily:'दैनिक मार्गदर्शन', choice:'दो विकल्पों की रीडिंग', love:'रिश्तों की रीडिंग', celtic:'सेल्टिक क्रॉस' },
+                'ar-SA': { timeline:'خط زمني من ثلاث بطاقات', daily:'إرشاد يومي', choice:'اختيار بين خيارين', love:'قراءة العلاقات', celtic:'الصليب السلتي' }
             };
             return names[interfaceLocale]?.[spreadKey] || SPREADS[spreadKey]?.name || spreadKey;
+        }
+
+        function getTarotSpreadIcon(spreadKey) {
+            return { timeline:'🌟', daily:'🔮', choice:'⚖️', love:'💕', celtic:'🔯' }[spreadKey] || '✦';
+        }
+
+        function getLocalizedSpreadSummary(spreadKey) {
+            const summaries = {
+                'zh-TW': { timeline:'過去／現在／未來', daily:'每日指引／是非題', choice:'現狀／選項 A／選項 B', love:'我／對方／阻礙／發展', celtic:'深度十張牌解讀' },
+                'zh-CN': { timeline:'过去／现在／未来', daily:'每日指引／是非题', choice:'现状／选项 A／选项 B', love:'我／对方／阻碍／发展', celtic:'深度十张牌解读' },
+                'en-US': { timeline:'past / present / future', daily:'daily guidance', choice:'present / option A / option B', love:'you / other person / obstacles / direction', celtic:'deep ten-card reading' },
+                'ja-JP': { timeline:'過去・現在・未来', daily:'今日の指針・二択', choice:'現状・A・B', love:'自分・相手・障害・展開', celtic:'10枚の深いリーディング' },
+                'ko-KR': { timeline:'과거 / 현재 / 미래', daily:'오늘의 안내', choice:'현재 / 선택 A / 선택 B', love:'나 / 상대 / 장애물 / 흐름', celtic:'10장 심층 리딩' },
+                'es-ES': { timeline:'pasado / presente / futuro', daily:'guía diaria', choice:'presente / opción A / opción B', love:'tú / otra persona / obstáculos / rumbo', celtic:'lectura profunda de diez cartas' },
+                'fr-FR': { timeline:'passé / présent / futur', daily:'conseil du jour', choice:'présent / option A / option B', love:'vous / l’autre / obstacles / évolution', celtic:'tirage approfondi de dix cartes' },
+                'de-DE': { timeline:'Vergangenheit / Gegenwart / Zukunft', daily:'Tagesimpuls', choice:'Jetzt / Option A / Option B', love:'du / andere Person / Hindernisse / Richtung', celtic:'tiefe Legung mit zehn Karten' }
+            };
+            return summaries[interfaceLocale]?.[spreadKey] || summaries['en-US'][spreadKey];
+        }
+
+        function getLocalizedQuickTopicLabel() {
+            return ({ 'zh-TW':'熱門主題', 'zh-CN':'热门主题', 'en-US':'Popular topics', 'ja-JP':'人気のテーマ', 'ko-KR':'인기 주제', 'es-ES':'Temas populares', 'fr-FR':'Thèmes populaires', 'de-DE':'Beliebte Themen', 'it-IT':'Temi popolari', 'pt-BR':'Temas populares', 'ru-RU':'Популярные темы', 'th-TH':'หัวข้อยอดนิยม', 'vi-VN':'Chủ đề phổ biến', 'id-ID':'Topik populer', 'hi-IN':'लोकप्रिय विषय', 'ar-SA':'المواضيع الشائعة' })[interfaceLocale] || 'Popular topics';
         }
 
         function applyInterfaceLocale() {
@@ -2146,17 +2197,18 @@
 
         function initInterfaceLocalePanel() {
             interfaceLocale = loadInterfaceLocale();
-            const button = document.getElementById('btn-lang-toggle');
-            const panel = document.getElementById('lang-panel');
             const select = document.getElementById('interface-lang');
-            const confirm = document.getElementById('btn-lang-confirm');
-            if (!button || !panel || !select || !confirm) { applyInterfaceLocale(); return; }
+            if (!select) { applyInterfaceLocale(); return; }
             applyInterfaceLocale();
-            button.setAttribute('aria-expanded', 'false');
-            button.onclick = event => { event.stopPropagation(); const open = !panel.classList.contains('active'); panel.classList.toggle('active', open); button.setAttribute('aria-expanded', String(open)); };
-            panel.onclick = event => event.stopPropagation();
-            confirm.onclick = () => { interfaceLocale = normalizeInterfaceLocale(select.value); localStorage.setItem(TAROT_INTERFACE_LOCALE_KEY, interfaceLocale); applyInterfaceLocale(); panel.classList.remove('active'); button.setAttribute('aria-expanded', 'false'); switchRoom(activeRoomId); showToast(interfaceText('interfaceLanguage') + ': ' + getInterfaceLanguageName()); };
-            document.addEventListener('click', () => { panel.classList.remove('active'); button.setAttribute('aria-expanded', 'false'); });
+            select.onchange = () => {
+                const nextLocale = normalizeInterfaceLocale(select.value);
+                if (nextLocale === interfaceLocale) return;
+                interfaceLocale = nextLocale;
+                localStorage.setItem(TAROT_INTERFACE_LOCALE_KEY, interfaceLocale);
+                applyInterfaceLocale();
+                switchRoom(activeRoomId);
+                showToast(interfaceText('interfaceLanguage') + ': ' + getInterfaceLanguageName());
+            };
         }
 
         function getTarotRoom() {
@@ -2212,9 +2264,9 @@
 
         function tarotActionHtml(reading) {
             return `<div class="tarot-action-bar">
-                <button class="tarot-action-btn" type="button" onclick="copyTarotReport('${reading.instanceId}')">複製解牌</button>
-                <button class="tarot-action-btn" type="button" onclick="saveTarotJournal('${reading.instanceId}')">儲存日誌</button>
-                <button class="tarot-action-btn" type="button" onclick="focusChatInput()">繼續追問</button>
+                <button class="tarot-action-btn" type="button" onclick="copyTarotReport('${reading.instanceId}')">${interfaceText('copy')}</button>
+                <button class="tarot-action-btn" type="button" onclick="saveTarotJournal('${reading.instanceId}')">${interfaceText('saveJournal')}</button>
+                <button class="tarot-action-btn" type="button" onclick="focusChatInput()">${interfaceText('followUp')}</button>
             </div>`;
         }
 
@@ -2249,15 +2301,30 @@
             return { id: `tarot-reading-${reading.instanceId}`, role: 'tutor', learning: intro, my: '', correction: null, extraHtml: buildTarotExtraHtml(reading, 'pending'), tarotReading: reading };
         }
 
+        const TAROT_PROMPT_TEXT = {
+            'zh-TW': { role:'你是一位擁有 20 年經驗的專業塔羅心靈導師。', answer:'請以', answerEnd:'回答。', question:'問題', spread:'牌陣', cards:'牌卡', upright:'正位', reversed:'逆位', keywords:'核心關鍵字', followUp:'使用者進一步追問', format:'請用以下三個標題組織回答：\\n🌟 一、整體能量概述\\n🔍 二、各位置牌卡深度剖析\\n💡 三、具體行動建議。只輸出解讀文字，不要輸出 JSON。', follow:'請緊密結合先前牌面與對話脈絡回答。請保持同理、具體與可執行，並提醒這是自我反思用途，不要宣稱確定預言。只輸出回答文字。' },
+            'zh-CN': { role:'你是一位拥有 20 年经验的专业塔罗心灵导师。', answer:'请用', answerEnd:'回答。', question:'问题', spread:'牌阵', cards:'牌卡', upright:'正位', reversed:'逆位', keywords:'核心关键词', followUp:'用户进一步追问', format:'请用以下三个标题组织回答：\\n🌟 一、整体能量概述\\n🔍 二、各位置牌卡深度剖析\\n💡 三、具体行动建议。只输出解读文字，不要输出 JSON。', follow:'请紧密结合先前牌面与对话脉络回答。保持同理、具体且可执行，并提醒这是自我反思用途，不要宣称确定预言。只输出回答文字。' },
+            'en-US': { role:'You are an experienced professional tarot guide with 20 years of practice.', answer:'Respond in ', answerEnd:'.', question:'Question', spread:'Spread', cards:'Cards', upright:'Upright', reversed:'Reversed', keywords:'key themes', followUp:'User follow-up question', format:'Organize the response under these headings:\\n🌟 1. Overall energy\\n🔍 2. In-depth card analysis by position\\n💡 3. Concrete action steps. Output only the reading text, not JSON.', follow:'Connect the answer closely to the previous cards and conversation. Be empathetic, specific, and practical. Remind the user that this is for self-reflection and do not claim certain predictions. Output only the answer text.' },
+            'ja-JP': { role:'あなたは20年の経験を持つプロのタロット・リフレクションガイドです。', answer:'', answerEnd:'の言語で回答してください。', question:'質問', spread:'スプレッド', cards:'カード', upright:'正位置', reversed:'逆位置', keywords:'キーワード', followUp:'ユーザーからの追加質問', format:'次の見出しで回答してください：\\n🌟 1. 全体のエネルギー\\n🔍 2. 各位置のカード分析\\n💡 3. 具体的な行動。JSONではなく、リーディング本文だけを出力してください。', follow:'前のカードと会話の流れに結び付け、共感的で具体的かつ実行しやすく回答してください。これは自己探求のための内容であり、確定的な予言はしないでください。回答本文だけを出力してください。' },
+            'ko-KR': { role:'당신은 20년 경력의 전문 타로 성찰 가이드입니다.', answer:'', answerEnd:' 언어로 답변하세요.', question:'질문', spread:'스프레드', cards:'카드', upright:'정방향', reversed:'역방향', keywords:'핵심 키워드', followUp:'사용자의 추가 질문', format:'다음 제목으로 답변하세요:\\n🌟 1. 전체 에너지\\n🔍 2. 위치별 카드 분석\\n💡 3. 구체적인 행동. JSON이 아닌 리딩 본문만 출력하세요.', follow:'이전 카드와 대화 맥락을 긴밀히 연결해 공감적이고 구체적이며 실행 가능하게 답하세요. 자기 성찰을 위한 내용이며 확정적 예언을 하지 마세요. 답변 본문만 출력하세요.' },
+            'es-ES': { role:'Eres un guía profesional de tarot y reflexión con 20 años de experiencia.', answer:'Responde en ', answerEnd:'.', question:'Pregunta', spread:'Tirada', cards:'Cartas', upright:'Derecha', reversed:'Invertida', keywords:'temas clave', followUp:'Pregunta de seguimiento del usuario', format:'Organiza la respuesta con estos títulos:\\n🌟 1. Energía general\\n🔍 2. Análisis profundo por posición\\n💡 3. Pasos de acción concretos. Devuelve solo el texto de la lectura, no JSON.', follow:'Conecta la respuesta con las cartas y la conversación anteriores. Sé empático, concreto y práctico; recuerda que es para autorreflexión y no afirmes predicciones seguras. Devuelve solo el texto.' },
+            'fr-FR': { role:'Vous êtes un guide professionnel du tarot et de la réflexion, avec 20 ans d’expérience.', answer:'Répondez en ', answerEnd:'.', question:'Question', spread:'Tirage', cards:'Cartes', upright:'À l’endroit', reversed:'À l’envers', keywords:'mots-clés', followUp:'Question complémentaire de l’utilisateur', format:'Structurez la réponse avec ces titres :\\n🌟 1. Énergie générale\\n🔍 2. Analyse détaillée par position\\n💡 3. Actions concrètes. Produisez uniquement le texte du tirage, pas de JSON.', follow:'Reliez la réponse aux cartes et à la conversation précédentes. Soyez empathique, précis et pratique ; rappelez qu’il s’agit d’introspection et n’affirmez pas de prédictions certaines. Produisez uniquement le texte.' },
+            'de-DE': { role:'Du bist ein professioneller Tarot- und Reflexionsbegleiter mit 20 Jahren Erfahrung.', answer:'Antworte auf ', answerEnd:'.', question:'Frage', spread:'Legung', cards:'Karten', upright:'Aufrecht', reversed:'Umgekehrt', keywords:'Kernbegriffe', followUp:'Rückfrage des Nutzers', format:'Strukturiere die Antwort mit diesen Überschriften:\\n🌟 1. Gesamtenergie\\n🔍 2. Tiefenanalyse nach Position\\n💡 3. Konkrete Schritte. Gib nur den Deutungstext aus, kein JSON.', follow:'Beziehe die Antwort eng auf die vorherigen Karten und den Gesprächskontext. Sei einfühlsam, konkret und umsetzbar; erinnere daran, dass dies der Selbstreflexion dient, und behaupte keine sicheren Vorhersagen. Gib nur den Antworttext aus.' }
+        };
+
+        function getTarotPromptText() { return TAROT_PROMPT_TEXT[interfaceLocale] || TAROT_PROMPT_TEXT['en-US']; }
+
         function buildTarotInitialPrompt(reading, room) {
             const targetName = getInterfaceLanguageName();
-            const cardDescriptions = reading.drawnCards.map(d => `[${d.position}]：${d.card.name} (${d.card.en}) — ${d.reversed ? '逆位' : '正位'} — 核心關鍵字：${d.reversed ? d.card.r : d.card.u}`).join('\n');
-            return `你是一位擁有 20 年經驗的專業塔羅心靈導師，請以${targetName}回答。請根據問題與抽出的牌陣，提供客觀、溫暖、深刻且具體可行的心理反思與行動建議。這是娛樂與自我反思用途，不要宣稱確定預言，也不要提供醫療、法律或投資保證。\n\n【問題】${reading.question}\n【牌陣】${SPREADS[reading.spreadKey].name}\n【牌卡】\n${cardDescriptions}\n\n請用以下三個標題組織回答：\n🌟 一、整體能量概述\n🔍 二、各位置牌卡深度剖析\n💡 三、具體行動建議。只輸出解讀文字，不要輸出 JSON。`;
+            const p = getTarotPromptText();
+            const cardDescriptions = reading.drawnCards.map((d, index) => `[${index + 1}] ${d.card.en} — ${d.reversed ? p.reversed : p.upright}`).join('\\n');
+            return `${p.role} ${p.answer}${targetName}${p.answerEnd} Provide an objective, warm, thoughtful, and practical reflection based on the question and the drawn spread. This is for entertainment and self-reflection only; do not claim certain predictions or provide medical, legal, or investment guarantees.\\n\\n[${p.question}] ${reading.question}\\n[${p.spread}] ${getLocalizedSpreadName(reading.spreadKey)}\\n[${p.cards}]\\n${cardDescriptions}\\n\\n${p.format}`;
         }
 
         function buildTarotFollowUpPrompt(question, room) {
             const targetName = getInterfaceLanguageName();
-            return `【使用者進一步追問】${question}\n\n請以${targetName}作為專業塔羅心靈導師，緊密結合先前牌面與對話脈絡回答。請保持同理、具體與可執行，並提醒這是自我反思用途，不要宣稱確定預言。只輸出回答文字。`;
+            const p = getTarotPromptText();
+            return `[${p.followUp}] ${question}\\n\\n${p.role} ${p.answer}${targetName}${p.answerEnd} ${p.follow}`;
         }
 
         async function callTarotModel(contents, generationConfig, onModelAttempt = null) {
@@ -2378,7 +2445,8 @@
             scrollToLatestMessage(loadingId);
             isSendingMessage = true;
             apiKeyForRequest = getGeminiApiKey();
-            const context = room.history.slice(-12).map(turn => `${turn.role === 'user' ? '使用者' : '塔羅導師'}：${turn.content}`).join('\n');
+            const contextLabels = ({ 'zh-TW': { user:'使用者', guide:'塔羅導師' }, 'zh-CN': { user:'用户', guide:'塔罗导师' }, 'ja-JP': { user:'ユーザー', guide:'タロットガイド' }, 'ko-KR': { user:'사용자', guide:'타로 가이드' }, 'es-ES': { user:'Usuario', guide:'Guía de tarot' }, 'fr-FR': { user:'Utilisateur', guide:'Guide tarot' }, 'de-DE': { user:'Nutzer', guide:'Tarot-Begleiter' }, 'it-IT': { user:'Utente', guide:'Guida dei tarocchi' }, 'pt-BR': { user:'Usuário', guide:'Guia de tarô' }, 'ru-RU': { user:'Пользователь', guide:'Таролог' }, 'th-TH': { user:'ผู้ใช้', guide:'ผู้นำทางไพ่ทาโรต์' }, 'vi-VN': { user:'Người dùng', guide:'Hướng dẫn tarot' }, 'id-ID': { user:'Pengguna', guide:'Pemandu tarot' }, 'hi-IN': { user:'उपयोगकर्ता', guide:'टैरो मार्गदर्शक' }, 'ar-SA': { user:'المستخدم', guide:'مرشد التاروت' } })[interfaceLocale] || { user:'User', guide:'Tarot guide' };
+            const context = room.history.slice(-12).map(turn => `${turn.role === 'user' ? contextLabels.user : contextLabels.guide}: ${turn.content}`).join('\n');
             try {
                 const contents = [{ role: 'user', parts: [{ text: `${context}\n\n${buildTarotFollowUpPrompt(question, room)}` }] }];
                 const responseText = await callTarotModel(contents, { temperature: 0.75, maxOutputTokens: 2048 });
@@ -2496,7 +2564,7 @@
             let journal = []; try { journal = JSON.parse(localStorage.getItem(TAROT_JOURNAL_KEY) || '[]'); } catch (_) { journal = []; }
             const entryId = `reading-${reading.instanceId}`;
             journal = journal.filter(entry => entry.id !== entryId);
-            journal.unshift({ id: entryId, date: new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' }), question: reading.question, spreadName: SPREADS[reading.spreadKey]?.name || '', cards: reading.drawnCards.map(draw => `${draw.card.name}${draw.reversed ? '(逆)' : '(正)'}`).join('、'), report: reading.reportText });
+            journal.unshift({ id: entryId, date: new Date().toLocaleString(interfaceLocale || 'en-US'), question: reading.question, spreadName: getLocalizedSpreadName(reading.spreadKey), cards: reading.drawnCards.map((draw, index) => `${index + 1}. ${draw.card.en} (${draw.reversed ? interfaceText('reversed') : interfaceText('upright')})`).join(' · '), report: reading.reportText });
             localStorage.setItem(TAROT_JOURNAL_KEY, JSON.stringify(journal.slice(0, 50)));
         }
 
@@ -2514,8 +2582,9 @@
             const room = getTarotRoom();
             const reading = room?.messages.find(message => message.tarotReading?.instanceId === instanceId)?.tarotReading || room?.pendingReading;
             if (!reading) return;
-            const text = `【GugoPro AI 塔羅解讀】\n問題：${reading.question}\n牌陣：${SPREADS[reading.spreadKey]?.name || ''}\n${reading.drawnCards.map(draw => `${draw.position}：${draw.card.name}${draw.reversed ? '（逆位）' : '（正位）'}`).join('\n')}\n\n${reading.reportText || ''}`;
-            if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).then(() => showToast('已複製塔羅解讀')); else showToast('請手動選取內容複製');
+            const p = getTarotPromptText();
+            const text = `${p.cards}: ${getLocalizedSpreadName(reading.spreadKey)}\n${p.question}: ${reading.question}\n${reading.drawnCards.map((draw, index) => `${index + 1}. ${draw.card.en} (${draw.reversed ? p.reversed : p.upright})`).join('\n')}\n\n${reading.reportText || ''}`;
+            if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).then(() => showToast(interfaceText('copy') + ' ✓')); else showToast(interfaceText('copy'));
         };
 
         window.saveTarotJournal = function(instanceId) {
@@ -2523,9 +2592,9 @@
             const reading = room?.messages.find(message => message.tarotReading?.instanceId === instanceId)?.tarotReading;
             if (!reading) return;
             let journal = []; try { journal = JSON.parse(localStorage.getItem(TAROT_JOURNAL_KEY) || '[]'); } catch (_) { journal = []; }
-            journal.unshift({ id: Date.now(), date: new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' }), question: reading.question, spreadName: SPREADS[reading.spreadKey]?.name || '', cards: reading.drawnCards.map(draw => `${draw.card.name}${draw.reversed ? '(逆)' : '(正)'}`).join('、'), report: reading.reportText });
+            journal.unshift({ id: Date.now(), date: new Date().toLocaleString(interfaceLocale || 'en-US'), question: reading.question, spreadName: getLocalizedSpreadName(reading.spreadKey), cards: reading.drawnCards.map((draw, index) => `${index + 1}. ${draw.card.en} (${draw.reversed ? interfaceText('reversed') : interfaceText('upright')})`).join(' · '), report: reading.reportText });
             localStorage.setItem(TAROT_JOURNAL_KEY, JSON.stringify(journal.slice(0, 50)));
-            showToast('已儲存至本地占卜日誌');
+            showToast(interfaceText('saveJournal') + ' ✓');
         };
 
 
