@@ -975,7 +975,7 @@
         <div class="menu-section">
             <div class="menu-title">
                 <span data-i18n="rooms">占卜教室</span>
-                <button id="btn-new-room" class="btn-room-action btn-add-classroom" title="建立新占卜" aria-label="建立新占卜"><i class="fa-solid fa-plus"></i><span data-i18n="addRoom">建立新占卜</span></button>
+                <button id="btn-new-room" class="btn-room-action btn-add-classroom" title="建立新占卜" aria-label="建立新占卜" data-i18n-title="addRoom"><i class="fa-solid fa-plus"></i><span data-i18n="addRoom">建立新占卜</span></button>
             </div>
             <div id="room-list" class="room-list">
                 <!-- Rooms will appear here -->
@@ -1586,7 +1586,7 @@
             option.dataset.model = value;
             option.setAttribute('role', 'listitem');
             option.setAttribute('aria-pressed', String(preferred));
-            option.title = enabled ? `點擊選擇 ${model.display_name}；目前${current ? '正在使用' : preferred ? '為首選' : '非首選'}模型` : `${model.display_name} 已停用`;
+            option.title = enabled ? `${model.display_name} · ${interfaceText('enabled')}` : `${model.display_name} · ${interfaceText('disabled')}`;
             option.addEventListener('click', () => {
                 if (enabled) setPreferredModel(value);
             });
@@ -1618,8 +1618,8 @@
             toggle.checked = enabled;
             toggle.setAttribute('role', 'switch');
             toggle.setAttribute('aria-checked', String(enabled));
-            toggle.setAttribute('aria-label', `啟用 ${model.display_name}`);
-            toggle.title = enabled ? `停用 ${model.display_name}` : `啟用 ${model.display_name}`;
+            toggle.setAttribute('aria-label', `${interfaceText('enabled')} ${model.display_name}`);
+            toggle.title = `${enabled ? interfaceText('disabled') : interfaceText('enabled')} ${model.display_name}`;
             toggle.addEventListener('click', (event) => event.stopPropagation());
             toggle.addEventListener('change', (event) => {
                 event.stopPropagation();
