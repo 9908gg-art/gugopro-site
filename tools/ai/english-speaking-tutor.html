@@ -583,38 +583,6 @@
             gap: 10px;
         }
 
-        .input-options {
-            display: flex;
-            justify-content: flex-start;
-            align-items: center;
-            padding: 0 5px;
-        }
-
-        .input-mode-toggle {
-            display: flex;
-            background: var(--glass-bg);
-            border-radius: 20px;
-            padding: 2px;
-            border: 1px solid var(--glass-border);
-        }
-
-        .mode-btn {
-            padding: 4px 12px;
-            border-radius: 18px;
-            border: none;
-            background: none;
-            color: var(--text-dim);
-            font-size: 0.75rem;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .mode-btn.active {
-            background: var(--primary-neon);
-            color: #000;
-            font-weight: 600;
-        }
-
         .main-input-group {
             display: flex;
             gap: 10px;
@@ -909,10 +877,7 @@
     <div id="app-main">
         <header id="main-header">
             <div class="header-left">
-                <a href="https://gugopro.com" class="btn-back-home">
-                    <i class="fa-solid fa-house"></i> 返回 GugoPro
-                </a>
-                <div class="logo-text">AI Language Tutor</div>
+                <div class="logo-text">Gugo 語言導師</div>
             </div>
             
             <div class="header-right">
@@ -1007,12 +972,6 @@
                     </div>
                 </div>
 
-                <div class="input-options">
-                    <div class="input-mode-toggle">
-                        <button id="mode-target" class="mode-btn active" onclick="setInputMode('target')">🗣️ 學習語言</button>
-                        <button id="mode-my" class="mode-btn" onclick="setInputMode('my')">🗣️ 母語</button>
-                    </div>
-                </div>
 
                 <div class="main-input-group">
                     <button id="btn-mic" class="btn-circle btn-mic"><i class="fa-solid fa-microphone"></i></button>
@@ -1050,7 +1009,9 @@
             <div class="menu-title">全域設定</div>
             <button id="btn-config" class="menu-item"><i class="fa-solid fa-key"></i> 變更 Gemini API Key</button>
         </div>
-
+        <div class="menu-section">
+            <a href="https://gugopro.com" target="_blank" rel="noopener" class="menu-item"><i class="fa-solid fa-globe"></i> 前往 GugoPro 官網</a>
+        </div>
         <div class="menu-section model-settings-section">
             <div class="menu-title">
                 <span>模型設定 / Model Settings</span>
@@ -1162,7 +1123,6 @@
         let isSendingMessage = false;
         let recognition = null;
         let isRecording = false;
-        let inputMode = 'target'; // 'target' or 'my'
         let baseText = '';
         let textAfterCursor = '';
 
@@ -1715,7 +1675,7 @@
                 <ul>
                     <li><i class="fa-solid fa-microphone"></i> 點擊麥克風用語音輸入，或直接打字</li>
                     <li><i class="fa-solid fa-comments"></i> 你可以要求特定主題對話練習（如：旅遊、點餐、商務）</li>
-                    <li><i class="fa-solid fa-language"></i> 頂部標籤可切換母語/學習語言</li>
+                    <li><i class="fa-solid fa-language"></i> 頂部語言選單可設定對話語言</li>
                     <li><i class="fa-solid fa-gear"></i> 右上角選單可管理教室和設定</li>
                 </ul>
             `;
@@ -1990,12 +1950,6 @@
             updateLangDisplay();
         };
 
-        function setInputMode(mode) {
-            inputMode = mode;
-            document.getElementById('mode-target').classList.toggle('active', mode === 'target');
-            document.getElementById('mode-my').classList.toggle('active', mode === 'my');
-            document.getElementById('user-text').placeholder = mode === 'target' ? '使用學習語言說話或輸入...' : '使用母語說話或輸入...';
-        }
 
         // --- Chat Logic ---
         function createGeminiApiError(status, model, attemptedModels = [], metadata = {}) {
@@ -2051,7 +2005,7 @@
             textInput.value = '';
             const myLang = retryRequest?.myLang || document.getElementById('my-lang').value;
             const targetLang = retryRequest?.targetLang || document.getElementById('target-lang').value;
-            const inputLang = retryRequest?.inputLang || (inputMode === 'target' ? targetLang : myLang);
+            const inputLang = retryRequest?.inputLang || 'auto';
             const msgId = retryRequest?.msgId || 'msg-' + Date.now();
             const existingUserEl = document.querySelector(`[data-id="${msgId}"]`);
 
@@ -2127,7 +2081,7 @@
         async function callGemini(userInput, myLangCode, targetLangCode, inputLangCode, apiKey, onModelAttempt = null) {
             const myLang = LANG_NAMES[myLangCode];
             const targetLang = LANG_NAMES[targetLangCode];
-            const inputLang = LANG_NAMES[inputLangCode];
+            const inputLang = inputLangCode === 'auto' ? '自動辨識輸入語言' : (LANG_NAMES[inputLangCode] || inputLangCode);
             const room = chatRooms.find(r => r.id === activeRoomId);
             const historyContext = room.messages.slice(-10).map(h => `${h.role === 'user' ? 'Student' : 'Tutor'}: ${h.learning} (${h.my})`).join('\\n');
 
@@ -2365,7 +2319,7 @@
             if (isRecording) {
                 stopRecording();
             } else {
-                recognition.lang = inputMode === 'target' ? document.getElementById('target-lang').value : document.getElementById('my-lang').value;
+                recognition.lang = document.getElementById('target-lang').value;
                 recognition.start();
             }
         };
