@@ -748,6 +748,32 @@
             opacity: 0.55;
             cursor: wait;
         }
+        .speech-voice-guide {
+            display: grid;
+            gap: 6px;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255, 255, 255, 0.16);
+            color: #fde68a;
+            font-size: 0.78rem;
+            line-height: 1.45;
+            text-align: left;
+        }
+        .speech-voice-guide[hidden] { display: none; }
+        .speech-voice-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .speech-voice-links a {
+            color: #bfdbfe;
+            text-decoration: underline;
+            font-weight: 700;
+        }
+        .speech-voice-guide .btn-tool {
+            justify-self: start;
+            margin-left: 0;
+        }
 
         .hidden { display: none !important; }
 
@@ -969,6 +995,16 @@
                 <div id="error-panel" class="error-panel" role="status" aria-live="polite">
                     <span id="error-msg"></span>
                     <button id="btn-retry-model" class="btn-tool">🔄 手動重試</button>
+                    <div id="speech-voice-guide" class="speech-voice-guide" hidden>
+                        <strong id="speech-voice-guide-title">如何安裝對應語音</strong>
+                        <span id="speech-voice-guide-copy"></span>
+                        <div class="speech-voice-links">
+                            <a href="https://support.microsoft.com/en-us/education/learning-accelerators/download-languages-and-voices-for-immersive-reader-read-mode-and-read-aloud" target="_blank" rel="noopener">Windows：新增文字轉語音語言</a>
+                            <a href="https://support.google.com/accessibility/android/answer/6006983?hl=zh-Hant" target="_blank" rel="noopener">Android：安裝語音資料</a>
+                            <a href="https://support.apple.com/guide/voiceover/change-the-voiceover-voice-unac009/mac" target="_blank" rel="noopener">macOS：下載其他語音</a>
+                        </div>
+                        <button id="btn-speech-voice-recheck" class="btn-tool" type="button">重新檢查語音</button>
+                    </div>
                 </div>
 
                 <div class="input-options">
@@ -2345,14 +2381,19 @@
         let speechBoundaryFrame = null;
         let speechWordFallbackTimer = null;
         let speechSentenceFallbackTimer = null;
+        let missingSpeechLocale = null;
+        const SPEECH_VOICE_WAIT_MS = 1200;
         const SPEECH_WORD_FALLBACK_TICK_MS = 120;
         const SPEECH_WORD_FALLBACK_DELAY_MS = 900;
         const SPEECH_WORD_FALLBACK_IDLE_MS = 1600;
 
         function resolveSpeechLocale(langCode) {
-            const requested = String(langCode || '').trim();
+            const requested = String(langCode || '').trim().replace(/_/g, '-');
             if (!requested) return 'en-US';
-            const base = requested.split('-')[0].toLowerCase();
+            const normalized = requested.toLowerCase();
+            if (TTS_LOCALE_MAP[normalized]) return TTS_LOCALE_MAP[normalized];
+            const base = normalized.split('-')[0];
+            if (requested.includes('-') && TTS_LOCALE_MAP[base]) return requested;
             return TTS_LOCALE_MAP[base] || requested;
         }
 
@@ -2361,15 +2402,49 @@
             return window.speechSynthesis.getVoices().filter(voice => voice && voice.lang);
         }
 
+        function isLikelyMobileSpeechEnvironment() {
+            const userAgent = String(navigator.userAgent || '');
+            return /Android|webOS|iPhone|iPad|iPod|Mobile/i.test(userAgent)
+                || (Number(navigator.maxTouchPoints) > 1 && window.innerWidth < 1024);
+        }
+
         function getSpeechVoice(locale) {
             const voices = getSpeechVoices();
             const normalized = String(locale || 'en-US').toLowerCase();
             const base = normalized.split('-')[0];
             const exact = voices.filter(voice => String(voice.lang).toLowerCase() === normalized);
-            const sameLanguage = voices.filter(voice => String(voice.lang).toLowerCase().split('-')[0] === base);
+            const sameLanguage = /^zh-/i.test(normalized)
+                ? voices.filter(voice => String(voice.lang).toLowerCase() === 'zh')
+                : voices.filter(voice => String(voice.lang).toLowerCase().split('-')[0] === base);
             return exact.find(voice => voice.default) || exact[0]
                 || sameLanguage.find(voice => voice.default) || sameLanguage[0]
                 || null;
+        }
+
+        function waitForSpeechVoices(timeoutMs = SPEECH_VOICE_WAIT_MS) {
+            const currentVoices = getSpeechVoices();
+            if (currentVoices.length || !window.speechSynthesis) return Promise.resolve(currentVoices);
+            return new Promise(resolve => {
+                let settled = false;
+                const finish = () => {
+                    if (settled) return;
+                    settled = true;
+                    clearTimeout(timeoutId);
+                    window.speechSynthesis.removeEventListener?.('voiceschanged', finish);
+                    resolve(getSpeechVoices());
+                };
+                const timeoutId = window.setTimeout(finish, timeoutMs);
+                window.speechSynthesis.addEventListener?.('voiceschanged', finish, { once: true });
+            });
+        }
+
+        async function getSpeechVoiceState(locale) {
+            let voices = getSpeechVoices();
+            if (!voices.length) voices = await waitForSpeechVoices();
+            const voice = getSpeechVoice(locale);
+            if (voice) return { status: 'available', voice, voices };
+            if (!voices.length) return { status: 'missing', voice: null, voices, uncertain: true };
+            return { status: 'missing', voice: null, voices, uncertain: false };
         }
 
         function getCurrentSpeechLanguage() {
@@ -2467,30 +2542,31 @@
             }
         }
 
-        function appendSpeechSentenceSegments(parent, text, offset = 0) {
+        function appendSpeechSentenceSegments(parent, text, offset = 0, locale = null) {
             const source = String(text || '');
             const boundaryMatcher = /[。！？!?]+|\r?\n+/gu;
             let cursor = 0;
             let match;
+            const appendSentence = (start, end) => {
+                if (end <= start) return;
+                const sentence = document.createElement('span');
+                sentence.className = 'tts-sentence';
+                sentence.dataset.start = String(offset + start);
+                sentence.dataset.end = String(offset + end);
+                if (locale) appendSpeechWordSegments(sentence, source.slice(start, end), offset + start, locale);
+                else sentence.textContent = source.slice(start, end);
+                parent.appendChild(sentence);
+            };
             while ((match = boundaryMatcher.exec(source)) !== null) {
                 const end = boundaryMatcher.lastIndex;
-                if (end <= cursor) continue;
-                const sentence = document.createElement('span');
-                sentence.className = 'tts-sentence';
-                sentence.dataset.start = String(offset + cursor);
-                sentence.dataset.end = String(offset + end);
-                sentence.textContent = source.slice(cursor, end);
-                parent.appendChild(sentence);
+                appendSentence(cursor, end);
                 cursor = end;
             }
-            if (cursor < source.length) {
-                const sentence = document.createElement('span');
-                sentence.className = 'tts-sentence';
-                sentence.dataset.start = String(offset + cursor);
-                sentence.dataset.end = String(offset + source.length);
-                sentence.textContent = source.slice(cursor);
-                parent.appendChild(sentence);
-            }
+            appendSentence(cursor, source.length);
+        }
+
+        function isCjkSpeechLocale(locale) {
+            return /^(zh|ko)(?:-|$)/i.test(String(locale || ''));
         }
 
         function renderSpeechText(messageRoot, text, langCode = 'en-US') {
@@ -2501,6 +2577,8 @@
             learning.replaceChildren();
             if (locale.toLowerCase().startsWith('ja')) {
                 appendSpeechSentenceSegments(learning, source, 0);
+            } else if (isCjkSpeechLocale(locale)) {
+                appendSpeechSentenceSegments(learning, source, 0, locale);
             } else {
                 appendSpeechWordSegments(learning, source, 0, locale);
             }
@@ -2564,7 +2642,7 @@
                 const word = words.find(element => targetIndex >= Number(element.dataset.start) && targetIndex < Number(element.dataset.end))
                     || words.find(element => Number(element.dataset.start) >= targetIndex)
                     || words[words.length - 1];
-                queueSpeechBoundary(session, Number(word.dataset.start));
+                queueSpeechBoundary(session, Number(word.dataset.start), 'word');
             }, SPEECH_WORD_FALLBACK_TICK_MS);
         }
 
@@ -2592,7 +2670,7 @@
                 const sentence = sentences.find(element => targetIndex >= Number(element.dataset.start) && targetIndex < Number(element.dataset.end))
                     || sentences.find(element => Number(element.dataset.start) >= targetIndex)
                     || sentences[sentences.length - 1];
-                queueSpeechBoundary(session, Number(sentence.dataset.start));
+                queueSpeechBoundary(session, Number(sentence.dataset.start), 'sentence');
             }, SPEECH_WORD_FALLBACK_TICK_MS);
         }
 
@@ -2627,6 +2705,16 @@
             resetSpeechVisuals();
         }
 
+        function activateSpeechElement(session, target, activeClass) {
+            const learning = session?.root?.querySelector('.msg-learning');
+            if (!learning || !target) return;
+            learning.querySelectorAll('.tts-active-word, .tts-active-sentence').forEach(element => {
+                element.classList.remove('tts-active-word', 'tts-active-sentence');
+            });
+            target.classList.add(activeClass);
+            session.activeElement = target;
+        }
+
         function applySpeechBoundary(session, charIndex) {
             if (!session?.root) return;
             const index = Math.max(0, Number(charIndex) || 0);
@@ -2644,16 +2732,16 @@
             const target = segments.find(element => index >= Number(element.dataset.start) && index < Number(element.dataset.end));
             session.lastBoundaryIndex = index;
             if (!target || target === session.activeElement) return;
-            learning.querySelectorAll('.tts-active-word, .tts-active-sentence').forEach(element => {
-                element.classList.remove('tts-active-word', 'tts-active-sentence');
-            });
-            target.classList.add(activeClass);
-            session.activeElement = target;
+            activateSpeechElement(session, target, activeClass);
         }
 
         function queueSpeechBoundary(session, charIndex) {
             if (!session || !activeSpeechSession || activeSpeechSession.id !== session.id) return;
             session.pendingBoundaryIndex = Math.max(0, Number(charIndex) || 0);
+            if (session.mode === 'sentence') {
+                applySpeechBoundary(session, session.pendingBoundaryIndex);
+                return;
+            }
             if (speechBoundaryFrame !== null) return;
             speechBoundaryFrame = requestAnimationFrame(() => {
                 speechBoundaryFrame = null;
@@ -2662,7 +2750,7 @@
             });
         }
 
-        function speak(text, langCode, messageRoot = null) {
+        async function speak(text, langCode, messageRoot = null) {
             if (!window.speechSynthesis || typeof SpeechSynthesisUtterance === 'undefined') return;
             stopSpeech();
             const sessionId = speechSessionId;
@@ -2671,10 +2759,21 @@
             const locale = resolveSpeechLocale(langCode);
             if (root) renderSpeechText(root, source, langCode);
 
-            const voice = getSpeechVoice(locale);
+            const mobileEnvironment = isLikelyMobileSpeechEnvironment();
+            const mobileVoice = mobileEnvironment ? getSpeechVoice(locale) : null;
+            const voiceState = mobileEnvironment
+                ? { status: mobileVoice ? 'available' : 'unknown', voice: mobileVoice }
+                : await getSpeechVoiceState(locale);
+            if (sessionId !== speechSessionId) return;
+            if (voiceState.status === 'missing') {
+                if (root) restoreSpeechText(root);
+                showSpeechVoiceUnavailable(locale);
+                return;
+            }
+            const voice = voiceState.voice;
             const utterance = new SpeechSynthesisUtterance(source);
             utterance.lang = locale;
-            const sentenceMode = locale.toLowerCase().startsWith('ja');
+            const sentenceMode = /^(?:ja|zh|ko)(?:-|$)/i.test(locale);
             const renderedWords = root ? [...root.querySelectorAll('.speaking-word')] : [];
             const renderedSentences = root ? [...root.querySelectorAll('.tts-sentence')] : [];
             if (voice) utterance.voice = voice;
@@ -2701,8 +2800,12 @@
                     session.activeElement = firstElement;
                 }
                 queueSpeechBoundary(session, 0);
-                if (sentenceMode) startSpeechSentenceFallback(session);
-                else startSpeechWordFallback(session);
+                if (sentenceMode) {
+                    // CJK boundary events are used as-is; without them, keep the first sentence stable instead of guessing.
+                    session.cjkBoundaryFallback = 'stable-first-sentence';
+                } else {
+                    startSpeechWordFallback(session);
+                }
             }
             utterance.onboundary = event => {
                 if (!activeSpeechSession || activeSpeechSession.id !== sessionId) return;
@@ -2714,7 +2817,8 @@
                     session.boundarySeen = true;
                     session.lastBoundaryAt = performance.now();
                 }
-                queueSpeechBoundary(session, boundaryIndex);
+                if (session.mode === 'sentence') applySpeechBoundary(session, boundaryIndex);
+                else queueSpeechBoundary(session, boundaryIndex);
             };
             utterance.onstart = () => {
                 if (activeSpeechSession?.id === sessionId) {
@@ -2724,7 +2828,10 @@
                 }
             };
             utterance.onend = () => finishSpeechSession(sessionId);
-            utterance.onerror = () => finishSpeechSession(sessionId);
+            utterance.onerror = () => {
+                finishSpeechSession(sessionId);
+                if (!mobileEnvironment) showSpeechVoiceUnavailable(locale);
+            };
             utterance.onpause = () => {
                 if (activeSpeechSession?.id === sessionId) resetSpeechVisuals();
             };
@@ -2739,6 +2846,33 @@
         };
 
         // --- Helpers ---
+        function showSpeechVoiceUnavailable(locale) {
+            missingSpeechLocale = locale;
+            const languageName = LANG_NAMES[locale] || locale;
+            showError(`此電腦目前沒有可用的 ${languageName} 語音（${locale}），為避免誤用其他語言，已暫停朗讀。`, { busy: false, showRetryButton: false });
+            const guide = document.getElementById('speech-voice-guide');
+            const copy = document.getElementById('speech-voice-guide-copy');
+            if (copy) copy.textContent = `請先在系統安裝 ${languageName} 的文字轉語音 voice，安裝完成後按「重新檢查語音」，再點擊訊息上的喇叭播放。`;
+            if (guide) guide.hidden = false;
+        }
+
+        async function recheckSpeechVoice() {
+            const locale = missingSpeechLocale || resolveSpeechLocale(getCurrentSpeechLanguage());
+            const state = await getSpeechVoiceState(locale);
+            if (state.status === 'available') {
+                missingSpeechLocale = null;
+                hideError();
+                return true;
+            }
+            if (isLikelyMobileSpeechEnvironment()) {
+                missingSpeechLocale = null;
+                hideError();
+                return false;
+            }
+            showSpeechVoiceUnavailable(locale);
+            return false;
+        }
+
         function clearRetryCountdown() {
             if (retryCountdownTimer !== null) {
                 clearInterval(retryCountdownTimer);
@@ -2751,6 +2885,8 @@
             const panel = document.getElementById('error-panel');
             const message = document.getElementById('error-msg');
             const retryButton = document.getElementById('btn-retry-model');
+            const voiceGuide = document.getElementById('speech-voice-guide');
+            if (voiceGuide) voiceGuide.hidden = true;
             panel.classList.toggle('busy', Boolean(options.busy));
             message.textContent = msg;
             panel.style.display = 'block';
@@ -2792,10 +2928,13 @@
         function hideError() {
             clearRetryCountdown();
             const panel = document.getElementById('error-panel');
+            const voiceGuide = document.getElementById('speech-voice-guide');
+            if (voiceGuide) voiceGuide.hidden = true;
             panel.classList.remove('busy');
             panel.style.display = 'none';
         }
 
+        document.getElementById('btn-speech-voice-recheck').onclick = recheckSpeechVoice;
         async function handleManualRetry() {
             if (isSendingMessage || retryCountdownTimer !== null) return;
             const retryRequest = pendingRetryRequest;
