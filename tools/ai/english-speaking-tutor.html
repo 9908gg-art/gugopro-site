@@ -798,17 +798,66 @@
         }
 
         @media (min-width: 1024px) {
-            body { overflow: hidden; }
-            #app-main { height: 100vh; min-height: 100vh; }
-            #chat-container {
-                flex: 1 1 auto;
-                min-height: 0;
-                height: auto;
-                max-width: 1180px;
-                padding: 40px 28px 190px;
-                overflow-y: auto;
+            html, body { height: 100%; min-height: 100%; }
+            body {
+                height: 100dvh;
+                min-height: 100dvh;
+                overflow: hidden;
+                flex-direction: row;
+                align-items: stretch;
+                overscroll-behavior: none;
             }
-            .bottom-controls { flex-shrink: 0; }
+            #app-main {
+                flex: 1 1 auto;
+                min-width: 0;
+                width: auto;
+                height: 100dvh;
+                min-height: 0;
+                overflow: hidden;
+            }
+            #chat-container {
+                flex: 1 1 0;
+                min-height: 0;
+                height: 0;
+                max-width: 1180px;
+                padding: 40px 28px 34px;
+                overflow-y: auto;
+                overscroll-behavior: contain;
+                scrollbar-gutter: stable;
+            }
+            .bottom-controls {
+                position: relative;
+                inset: auto;
+                flex: 0 0 auto;
+                width: 100%;
+            }
+            .input-wrapper { max-width: 1180px; }
+            .side-menu {
+                position: relative !important;
+                inset: auto !important;
+                top: auto !important;
+                right: auto !important;
+                width: var(--sidebar-width);
+                min-width: var(--sidebar-width);
+                height: 100dvh;
+                max-height: 100dvh;
+                overflow-y: auto;
+                overflow-x: hidden;
+                overscroll-behavior: contain;
+                scrollbar-gutter: stable;
+                transform: none !important;
+                transition: width 0.3s, min-width 0.3s, padding 0.3s;
+            }
+            .side-menu.collapsed {
+                width: 0;
+                min-width: 0;
+                overflow: hidden;
+                padding-left: 0;
+                padding-right: 0;
+                border-left: none;
+            }
+            .side-menu:not(.collapsed) { scroll-behavior: auto; }
+            .side-menu .menu-close { position: sticky; top: 0; z-index: 2; }
         }
 
         @media (max-width: 600px) {
@@ -1655,6 +1704,7 @@
         }
 
         function switchRoom(roomId) {
+            stopSpeech();
             activeRoomId = roomId;
             const room = chatRooms.find(r => r.id === roomId);
             if (!room) return;
@@ -1663,10 +1713,25 @@
             document.getElementById('target-lang').value = room.language.learning;
             updateLangDisplay();
             
+            const defaultSpeechLang = room.language.learning || 'en-US';
+            room.messages = (Array.isArray(room.messages) ? room.messages : []).map(message => {
+                if (message && !message.speechLang) {
+                    return { ...message, speechLang: defaultSpeechLang };
+                }
+                return message;
+            });
+
             const container = document.getElementById('chat-container');
             container.innerHTML = '';
             addWelcomeCard();
-            room.messages.forEach(m => addMessageToUI(m.role, m.learning, m.my, m.correction, m.id));
+            room.messages.forEach(m => addMessageToUI(
+                m.role,
+                m.learning,
+                m.my,
+                m.correction,
+                m.id,
+                m.speechLang || defaultSpeechLang
+            ));
             
             renderRoomList();
             saveRoomsToLocal();
@@ -1733,8 +1798,11 @@
         }
 
         function openDrawer() {
+            const desktop = window.innerWidth >= 1024;
             setDrawerOpen(true);
-            if (!drawerHistoryEntryActive) {
+            if (desktop) {
+                menu.scrollTop = 0;
+            } else if (!drawerHistoryEntryActive) {
                 history.pushState({ ...(history.state || {}), drawerOpen: true, gugoproDrawerOpen: true }, '', window.location.href);
                 drawerHistoryEntryActive = true;
             }
@@ -1971,7 +2039,7 @@
                 }
 
                 const room = chatRooms.find(r => r.id === activeRoomId);
-                room.messages.push({ id: msgId, role: 'user', learning: response.user_learning, my: response.user_my });
+                room.messages.push({ id: msgId, role: 'user', learning: response.user_learning, my: response.user_my, speechLang: targetLang });
 
                 if (window.GugoProGlobalAIQuota) {
                     window.GugoProGlobalAIQuota.recordUsage(1, currentModel);
@@ -1980,8 +2048,8 @@
                 }
 
                 const tutorId = 'tutor-' + Date.now();
-                addMessageToUI('tutor', response.tutor_learning, response.tutor_my, response.correction, tutorId);
-                room.messages.push({ id: tutorId, role: 'tutor', learning: response.tutor_learning, my: response.tutor_my, correction: response.correction });
+                addMessageToUI('tutor', response.tutor_learning, response.tutor_my, response.correction, tutorId, targetLang);
+                room.messages.push({ id: tutorId, role: 'tutor', learning: response.tutor_learning, my: response.tutor_my, correction: response.correction, speechLang: targetLang });
 
                 speak(response.tutor_learning, targetLang, document.querySelector(`[data-id="${tutorId}"]`));
                 saveRoomsToLocal();
@@ -2135,13 +2203,13 @@
             throw finalError;
         }
 
-        function addMessageToUI(role, learning, my, correction, id) {
+        function addMessageToUI(role, learning, my, correction, id, speechLang = null) {
             const container = document.getElementById('chat-container');
             const div = document.createElement('div');
             div.className = `message message-${role}`;
             div.setAttribute('data-id', id);
             const activeRoom = chatRooms.find(room => room.id === activeRoomId);
-            const messageSpeechLang = activeRoom?.language?.learning || document.getElementById('target-lang')?.value || 'en-US';
+            const messageSpeechLang = speechLang || activeRoom?.language?.learning || document.getElementById('target-lang')?.value || 'en-US';
             div.dataset.speechLang = messageSpeechLang;
             div.innerHTML = `
                 <div class="msg-learning">${learning}</div>
@@ -2273,9 +2341,13 @@
             return TTS_LOCALE_MAP[base] || requested;
         }
 
+        function getSpeechVoices() {
+            if (!window.speechSynthesis || typeof window.speechSynthesis.getVoices !== 'function') return [];
+            return window.speechSynthesis.getVoices().filter(voice => voice && voice.lang);
+        }
+
         function getSpeechVoice(locale) {
-            if (!window.speechSynthesis || typeof window.speechSynthesis.getVoices !== 'function') return null;
-            const voices = window.speechSynthesis.getVoices().filter(voice => voice && voice.lang);
+            const voices = getSpeechVoices();
             const normalized = String(locale || 'en-US').toLowerCase();
             const base = normalized.split('-')[0];
             const exact = voices.filter(voice => String(voice.lang).toLowerCase() === normalized);
@@ -2283,6 +2355,15 @@
             return exact.find(voice => voice.default) || exact[0]
                 || sameLanguage.find(voice => voice.default) || sameLanguage[0]
                 || null;
+        }
+
+        function showSpeechVoiceUnavailable(locale) {
+            const languageName = LANG_NAMES[locale] || locale;
+            showError(`此裝置的瀏覽器沒有可用的 ${languageName} 語音（${locale}），為避免誤用其他語言，已暫停朗讀；請在系統或瀏覽器安裝對應語音後再試。`, { busy: false, showRetryButton: false });
+            window.setTimeout(() => {
+                const message = document.getElementById('error-msg');
+                if (message?.textContent.includes(`（${locale}）`)) hideError();
+            }, 6000);
         }
 
         function getCurrentSpeechLanguage() {
@@ -2584,12 +2665,19 @@
             const locale = resolveSpeechLocale(langCode);
             if (root) renderSpeechText(root, source, langCode);
 
+            const availableVoices = getSpeechVoices();
+            const voice = getSpeechVoice(locale);
+            if (availableVoices.length > 0 && !voice) {
+                restoreSpeechText(root);
+                showSpeechVoiceUnavailable(locale);
+                return;
+            }
+
             const utterance = new SpeechSynthesisUtterance(source);
             utterance.lang = locale;
             const sentenceMode = locale.toLowerCase().startsWith('ja');
             const renderedWords = root ? [...root.querySelectorAll('.speaking-word')] : [];
             const renderedSentences = root ? [...root.querySelectorAll('.tts-sentence')] : [];
-            const voice = getSpeechVoice(locale);
             if (voice) utterance.voice = voice;
             const session = {
                 id: sessionId,
