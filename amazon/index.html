@@ -229,6 +229,24 @@ body.theme-jp .btn-facet-jump { background: linear-gradient(135deg, #FF3366, #C7
 .btn-send:hover { filter: brightness(1.15); }
 .btn-send:disabled { opacity: 0.4; cursor: not-allowed; }
 
+/* Unified error panel: visible for 503/429/500/timeout and retry states */
+.error-panel { display:none; background:rgba(245,158,11,.12); color:#fcd34d; border:1px solid rgba(245,158,11,.45); box-shadow:0 8px 24px rgba(0,0,0,.18); padding:10px 12px; border-radius:10px; margin:0 auto 10px; max-width:800px; font-size:.82rem; font-weight:600; line-height:1.5; }
+.error-panel.busy { background:rgba(14,165,233,.12); color:#bae6fd; border-color:rgba(14,165,233,.45); }
+.error-panel button { border:1px solid rgba(255,255,255,.24); background:rgba(255,255,255,.12); color:#fff; padding:4px 12px; font-size:.8rem; border-radius:6px; margin-left:10px; font-weight:700; cursor:pointer; }
+.error-panel button:disabled { opacity:.55; cursor:wait; }
+
+/* Per-room practical product research brief */
+.research-brief-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.research-field { display:grid; gap:4px; color:var(--text-muted); font-size:.68rem; }
+.research-field.full { grid-column:1 / -1; }
+.research-field input { width:100%; min-width:0; padding:7px 8px; border:1px solid var(--border-card); border-radius:8px; background:rgba(0,0,0,.28); color:#fff; font:inherit; font-size:.74rem; outline:none; }
+.research-field input:focus { border-color:var(--accent); }
+.research-save-status { color:#86efac; font-size:.63rem; font-weight:600; text-transform:none; letter-spacing:0; }
+.research-actions { display:flex; gap:7px; margin-top:9px; }
+.research-actions button { flex:1; min-width:0; padding:7px 8px; border:1px solid rgba(0,168,225,.3); border-radius:8px; background:rgba(0,168,225,.08); color:#bae6fd; font:inherit; font-size:.68rem; font-weight:700; cursor:pointer; }
+.research-actions button:hover { border-color:var(--accent); background:rgba(0,168,225,.16); color:#fff; }
+@media (max-width:600px) { .research-brief-grid { grid-template-columns:1fr; } .research-field.full { grid-column:auto; } .research-actions { flex-direction:column; } }
+
 /* Filter Drawer */
 .drawer-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 200; display: none; }
 .drawer-overlay.open { display: block; }
@@ -391,6 +409,10 @@ body.theme-jp .btn-facet-jump { background: linear-gradient(135deg, #FF3366, #C7
 </div>
 <!-- Input Bar -->
 <div class="input-bar-wrapper">
+  <div id="error-panel" class="error-panel" role="status" aria-live="polite">
+    <span id="error-msg"></span>
+    <button id="btn-retry-model" type="button">🔄 手動重試</button>
+  </div>
   <div class="input-bar" style="max-width:800px; margin:0 auto; padding-left:12px; padding-right:12px;">
     <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none;">
     <button class="input-btn btn-camera" onclick="document.getElementById('camera-input').click()" title="拍照/上傳圖片"><i class="fa-solid fa-camera"></i></button>
@@ -419,6 +441,16 @@ body.theme-jp .btn-facet-jump { background: linear-gradient(135deg, #FF3366, #C7
     <p id="global-ai-quota-reset" class="global-ai-quota-reset" aria-live="polite">配額重置倒數：計算中…</p>
     <div id="global-ai-quota-pill" class="global-ai-quota-pill" aria-live="polite"><div class="global-ai-quota-item">📊 今日免費用量上限<strong id="global-ai-quota-limit">讀取中…</strong></div><div class="global-ai-quota-item">⚡ 今日已使用量<strong id="global-ai-quota-used">讀取中…</strong></div></div>
     <div id="model-options" class="model-options" role="list" aria-label="免費模型清單，使用開關控制"></div>
+  </div>
+  <div class="filter-group research-brief-section">
+    <div class="filter-group-title"><span><i class="fa-solid fa-bullseye"></i> 進階研究條件</span><span id="research-save-status" class="research-save-status">本地儲存</span></div>
+    <div class="research-brief-grid">
+      <label class="research-field"><span>預算上限（可選）</span><input id="amazon-budget" type="number" min="0" step="1" inputmode="decimal" placeholder="例如 150"></label>
+      <label class="research-field"><span>主要使用情境</span><input id="amazon-use-case" type="text" maxlength="120" placeholder="例如 小套房／通勤／送禮"></label>
+      <label class="research-field full"><span>必備條件</span><input id="amazon-must-have" type="text" maxlength="180" placeholder="例如 USB-C、低噪音、可退貨"></label>
+      <label class="research-field full"><span>避雷條件</span><input id="amazon-avoid" type="text" maxlength="180" placeholder="例如 易漏水、無保固、耗材昂貴"></label>
+    </div>
+    <div class="research-actions"><button id="btn-copy-research-brief" type="button"><i class="fa-solid fa-copy"></i> 複製研究摘要</button><button id="btn-export-research-brief" type="button"><i class="fa-solid fa-download"></i> 下載 Markdown</button></div>
   </div>
   <div class="filter-group">
     <div class="filter-group-title"><i class="fa-solid fa-truck-fast"></i> Prime 與配送</div>
@@ -496,6 +528,9 @@ var amazonRooms = [];
 var activeAmazonRoomId = '';
 var amazonWelcomeHtml = '';
 var amazonDrawerHistoryActive = false;
+var retryCountdownTimer = null;
+var pendingRetryRequest = null;
+var researchSaveTimer = null;
 
 /* ===== API KEY MANAGEMENT (100% Universal Persistent gugopro_gemini_api_key) ===== */
 function decodeApiKey(raw) {
@@ -623,6 +658,46 @@ function saveAmazonRooms() {
   localStorage.setItem(AMAZON_ROOM_STORAGE_KEY, JSON.stringify({ rooms: amazonRooms, activeRoomId: activeAmazonRoomId }));
 }
 function activeAmazonRoom() { return amazonRooms.find(function(room) { return room.id === activeAmazonRoomId; }) || amazonRooms[0]; }
+function emptyResearchBrief() { return { budget:'', useCase:'', mustHave:'', avoid:'' }; }
+function normaliseResearchBrief(brief) { return Object.assign(emptyResearchBrief(), brief && typeof brief === 'object' ? brief : {}); }
+function getResearchBriefFromForm() {
+  return { budget:(document.getElementById('amazon-budget')?.value || '').trim(), useCase:(document.getElementById('amazon-use-case')?.value || '').trim(), mustHave:(document.getElementById('amazon-must-have')?.value || '').trim(), avoid:(document.getElementById('amazon-avoid')?.value || '').trim() };
+}
+function renderResearchBrief() {
+  var brief = normaliseResearchBrief(activeAmazonRoom()?.research);
+  [['amazon-budget',brief.budget],['amazon-use-case',brief.useCase],['amazon-must-have',brief.mustHave],['amazon-avoid',brief.avoid]].forEach(function(pair) { var input=document.getElementById(pair[0]); if(input) input.value=pair[1] || ''; });
+}
+function saveActiveResearchBrief(showStatus) {
+  var room = activeAmazonRoom(); if (!room) return;
+  room.research = getResearchBriefFromForm(); room.updatedAt = new Date().toISOString(); saveAmazonRooms();
+  var status = document.getElementById('research-save-status'); if (status && showStatus !== false) { status.textContent = '已儲存於本研究室'; clearTimeout(researchSaveTimer); researchSaveTimer = setTimeout(function() { status.textContent = '本地儲存'; }, 1800); }
+}
+function buildResearchContext() {
+  var room = activeAmazonRoom(); if (!room) return '';
+  var brief = normaliseResearchBrief(room.research);
+  var current = getResearchBriefFromForm();
+  if (Object.values(current).some(Boolean)) { brief = current; room.research = brief; saveAmazonRooms(); }
+  var lines = [];
+  if (brief.budget) lines.push('Budget ceiling: ' + brief.budget);
+  if (brief.useCase) lines.push('Primary use case: ' + brief.useCase);
+  if (brief.mustHave) lines.push('Must-have requirements: ' + brief.mustHave);
+  if (brief.avoid) lines.push('Avoid / red flags: ' + brief.avoid);
+  return lines.length ? lines.join('\\n') : '';
+}
+function formatResearchBriefMarkdown() {
+  var room = activeAmazonRoom(); var brief = normaliseResearchBrief(room?.research);
+  var lines = ['# Amazon AI 選品研究摘要', '', '- 研究室：' + (room?.name || '未命名'), '- 目標市場：Amazon ' + (currentMarket === 'jp' ? 'JP' : 'US'), '- 匯出時間：' + new Date().toISOString(), ''];
+  [['預算上限','budget'],['主要使用情境','useCase'],['必備條件','mustHave'],['避雷條件','avoid']].forEach(function(pair) { lines.push('## ' + pair[0]); lines.push(brief[pair[1]] || '未設定'); lines.push(''); });
+  var filters = getSelectedFilters(); lines.push('## 已選商城篩選'); lines.push(filters.length ? filters.map(function(item) { return '- `' + item + '`'; }).join('\\n') : '未選擇額外篩選');
+  return lines.join('\\n');
+}
+function copyAmazonText(text) {
+  var status = document.getElementById('research-save-status');
+  var fallback = function() { var area=document.createElement('textarea'); area.value=text; area.style.position='fixed'; area.style.opacity='0'; document.body.appendChild(area); area.select(); try { document.execCommand('copy'); } catch (_) {} area.remove(); };
+  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).catch(fallback); else fallback();
+  if (status) { status.textContent='已複製研究摘要'; clearTimeout(researchSaveTimer); researchSaveTimer=setTimeout(function(){status.textContent='本地儲存';},1800); }
+}
+function downloadAmazonText(filename, text) { var blob=new Blob([text],{type:'text/markdown;charset=utf-8'}); var url=URL.createObjectURL(blob); var link=document.createElement('a'); link.href=url; link.download=filename; document.body.appendChild(link); link.click(); link.remove(); setTimeout(function(){URL.revokeObjectURL(url);},500); }
 function renderAmazonRooms() {
   var list = document.getElementById('room-list');
   var count = document.getElementById('room-count');
@@ -655,11 +730,11 @@ function loadAmazonRooms() {
   } catch (_) { amazonRooms = []; activeAmazonRoomId = ''; }
   if (!amazonRooms.length) { amazonRooms = [{ id: 'room_' + Date.now(), name: '一般選品研究', messages: [], createdAt: new Date().toISOString() }]; activeAmazonRoomId = amazonRooms[0].id; }
   if (!amazonRooms.some(function(room) { return room.id === activeAmazonRoomId; })) activeAmazonRoomId = amazonRooms[0].id;
-  amazonRooms.forEach(function(room) { if (!Array.isArray(room.messages)) room.messages = []; });
-  saveAmazonRooms(); renderAmazonRooms(); renderAmazonRoomMessages();
+    amazonRooms.forEach(function(room) { if (!Array.isArray(room.messages)) room.messages = []; room.research = normaliseResearchBrief(room.research); });
+  saveAmazonRooms(); renderAmazonRooms(); renderAmazonRoomMessages(); renderResearchBrief();
 }
-function switchAmazonRoom(roomId) { if (!amazonRooms.some(function(room) { return room.id === roomId; })) return; activeAmazonRoomId = roomId; saveAmazonRooms(); renderAmazonRooms(); renderAmazonRoomMessages(); toggleDrawer(false); }
-function createAmazonRoom() { var name = prompt('請輸入新購物研究室名稱：', '新選品研究'); if (!name) return; var room = { id: 'room_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), name: name.trim(), messages: [], createdAt: new Date().toISOString() }; amazonRooms.unshift(room); activeAmazonRoomId = room.id; saveAmazonRooms(); renderAmazonRooms(); renderAmazonRoomMessages(); toggleDrawer(false); }
+function switchAmazonRoom(roomId) { if (!amazonRooms.some(function(room) { return room.id === roomId; })) return; activeAmazonRoomId = roomId; saveAmazonRooms(); renderAmazonRooms(); renderAmazonRoomMessages(); renderResearchBrief(); toggleDrawer(false); }
+function createAmazonRoom() { var name = prompt('請輸入新購物研究室名稱：', '新選品研究'); if (!name) return; var room = { id: 'room_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), name: name.trim(), research: emptyResearchBrief(), messages: [], createdAt: new Date().toISOString() }; amazonRooms.unshift(room); activeAmazonRoomId = room.id; saveAmazonRooms(); renderAmazonRooms(); renderAmazonRoomMessages(); renderResearchBrief(); toggleDrawer(false); }
 function persistAmazonMessage(role, html, photoSrc) { var room = activeAmazonRoom(); if (!room) return; room.messages.push({ role: role, html: html, photoSrc: photoSrc || null, createdAt: new Date().toISOString() }); room.updatedAt = new Date().toISOString(); saveAmazonRooms(); }
 function scrollAmazonMessages(target) { var container = document.getElementById('chat-messages'); if (!container) return; requestAnimationFrame(function() { var top = target ? Math.max(0, target.offsetTop - 20) : container.scrollHeight; container.scrollTo({ top: top, behavior: 'smooth' }); }); }
 
@@ -706,6 +781,37 @@ function showTyping() {
 function removeTyping() {
   var el = document.getElementById('typing-msg');
   if (el) el.remove();
+}
+function clearRetryCountdown() { if (retryCountdownTimer) { clearInterval(retryCountdownTimer); retryCountdownTimer = null; } }
+function showError(msg, options) {
+  options = options || {};
+  clearRetryCountdown();
+  var panel = document.getElementById('error-panel');
+  var message = document.getElementById('error-msg');
+  var retryButton = document.getElementById('btn-retry-model');
+  if (!panel || !message || !retryButton) return;
+  panel.classList.toggle('busy', Boolean(options.busy));
+  message.textContent = msg;
+  panel.style.display = 'block';
+  retryButton.style.display = options.showRetryButton === false ? 'none' : '';
+  retryButton.disabled = Boolean(options.disabled);
+  retryButton.textContent = options.buttonLabel || '🔄 手動重試';
+  var seconds = Number(options.countdownSeconds || 0);
+  if (seconds > 0) {
+    var remaining = Math.ceil(seconds);
+    var updateCountdown = function() {
+      if (remaining > 0) { message.textContent = msg + ' ' + remaining + ' 秒後可按下「手動重試」。'; retryButton.disabled = true; }
+      else { message.textContent = msg + ' 您可以按下「手動重試」。'; retryButton.disabled = false; }
+    };
+    updateCountdown();
+    retryCountdownTimer = setInterval(function() { remaining -= 1; if (remaining <= 0) { clearRetryCountdown(); remaining = 0; } updateCountdown(); }, 1000);
+  }
+}
+function hideError() { clearRetryCountdown(); var panel=document.getElementById('error-panel'); if (panel) { panel.classList.remove('busy'); panel.style.display='none'; } }
+function showModelSwitchNotice(busyModel, nextModel, status) {
+  var busyName = getModelDisplayNameForAmazon(busyModel); var nextName = getModelDisplayNameForAmazon(nextModel);
+  var label = status === 'TIMEOUT' ? '請求超過 10 秒未回應' : 'HTTP ' + status;
+  showError('⚠️ [' + busyName + '] 伺服器目前工作繁忙（' + label + '），系統已自動切換至 [' + nextName + '] 繼續分析…', { busy:true, showRetryButton:false, disabled:true });
 }
 function renderAiFacetCard(aiData, msgId, defaultKeyword) {
   var baseKw = aiData.recommendedBaseKeyword || defaultKeyword || '';
@@ -838,11 +944,13 @@ async function callGemini(userText, imageBase64, imageMime) {
   var languageRule = currentMarket === 'jp'
     ? 'Use Japanese for the recommendedBaseKeyword and Japanese or Traditional Chinese labels.'
     : 'Use English for the recommendedBaseKeyword and English or Traditional Chinese labels.';
+  var researchContext = buildResearchContext();
+  var researchRule = researchContext ? '\\n\\nApply these saved research constraints to the analysis:\\n' + researchContext : '';
   var systemPrompt = 'You are GugoPro Amazon Finder, a practical all-category product research assistant. ' +
     'Find high-margin blue-ocean product angles, infer competitor review pain points, and create listing keyword dimensions. ' +
     'Return ONLY valid JSON with quickGuide, recommendedBaseKeyword, and filterGroups. ' +
     'filterGroups must contain 3 to 5 objects, each with groupTitle and 4 to 8 concise options. ' +
-    'Do not invent live prices, ratings, inventory, or verified product facts. Target market: ' + marketDomain + '. ' + languageRule;
+    'Do not invent live prices, ratings, inventory, or verified product facts. Target market: ' + marketDomain + '. ' + languageRule + researchRule;
   var parts = [{ text: systemPrompt + '\n\nUser request: ' + String(userText || '') }];
   if (imageBase64 && imageMime) parts.push({ inlineData: { mimeType: imageMime, data: imageBase64 } });
   var payload = {
@@ -852,6 +960,11 @@ async function callGemini(userText, imageBase64, imageMime) {
   };
   if (!amazonModelEngine.getModels().length) {
     await amazonModelEngine.refresh({ silent: false });
+    if (!amazonModelEngine.getModels().length) {
+      var catalogError = new Error('站內免費模型清單暫時無法載入，請稍後重試。');
+      catalogError.status = 'CATALOG';
+      throw catalogError;
+    }
   }
   var response = await amazonModelEngine.request(payload, parseAmazonResponse, {
     onAttempt: function(modelName) {
@@ -860,6 +973,7 @@ async function callGemini(userText, imageBase64, imageMime) {
     },
     onSwitch: function(busyModel, nextModel, status) {
       console.info('[Amazon Finder] model fallback', busyModel, '->', nextModel, status);
+      showModelSwitchNotice(busyModel, nextModel, status);
     }
   });
   return response.result;
@@ -880,29 +994,42 @@ function containsJapanese(str) {
   return /[\u3040-\u309F\u30A0-\u30FF]/.test(str);
 }
 
-window.sendMessage = async function() {
+window.sendMessage = async function(retryRequest) {
   if (isProcessing) return;
   var input = document.getElementById('user-input');
-  var text = input.value.trim();
-  if (!text && !pendingImage) return;
+  var request = retryRequest || { text: input.value.trim(), imageBase64: pendingImage, imageMime: pendingImageMime, imagePreview: pendingImagePreview };
+  var text = String(request.text || '').trim();
+  if (!text && !request.imageBase64) return;
   if (!checkApiKey()) return;
   if (text && containsJapanese(text) && currentMarket !== 'jp') switchMarket('jp');
-  isProcessing = true; document.getElementById('btn-send').disabled = true;
-  var displayText = text || '(已上傳圖片，請 AI 分析)';
-  addMessage('user', escapeHtml(displayText), pendingImagePreview);
-  input.value = ''; autoResize(input);
-  var imgData = pendingImage; var imgMime = pendingImageMime; pendingImage = null; pendingImageMime = null; pendingImagePreview = null;
+  isProcessing = true; document.getElementById('btn-send').disabled = true; hideError();
+  if (!retryRequest) {
+    var displayText = text || '(已上傳圖片，請 AI 分析)';
+    addMessage('user', escapeHtml(displayText), pendingImagePreview);
+    input.value = ''; autoResize(input);
+    pendingImage = null; pendingImageMime = null; pendingImagePreview = null;
+  }
   showTyping();
   try {
-    var result = await callGemini(text || '請分析這張圖片中的商品，提供高毛利藍海方向、競品差評痛點與 Listing 關鍵字維度。', imgData, imgMime);
+    var result = await callGemini(text || '請分析這張圖片中的商品，提供高毛利藍海方向、競品差評痛點與 Listing 關鍵字維度。', request.imageBase64, request.imageMime);
     removeTyping();
+    pendingRetryRequest = null;
     var msgId = 'msg-' + Date.now();
     addMessage('ai', renderAiFacetCard(result, msgId, text));
+    hideError();
   } catch (err) {
     removeTyping();
-    var suffix = Array.isArray(err.attemptedModels) && err.attemptedModels.length ? '（已嘗試 ' + err.attemptedModels.length + ' 個模型）' : '';
-    var message = err.status === 'NO_KEY' ? '請先在模型／歷史設定中儲存 Gemini API Key。' : '❌ AI 請求未完成：' + (err.message || '請稍後重試。') + suffix;
-    addMessage('ai', '<span style="color:var(--error);">' + escapeHtml(message) + '</span>');
+    pendingRetryRequest = request;
+    var attempted = Array.isArray(err.attemptedModels) && err.attemptedModels.length ? '（本輪已嘗試 ' + err.attemptedModels.length + ' 個模型）' : '';
+    var status = err.status;
+    var message = '❌ AI 請求未完成，您可以稍後手動重試。';
+    if (status === 'NO_KEY') { pendingRetryRequest = null; message = '請先在模型／歷史設定中儲存 Gemini API Key。'; }
+    else if (err.circuitBreaker || status === 503) message = '⚠️ 免費 AI 模型目前忙碌（503），系統已完成自動輪替；請稍後重試。' + attempted;
+    else if (status === 429) message = '⚠️ 免費 AI 模型請求額度繁忙（429），系統已完成自動輪替；請稍後重試。' + attempted;
+    else if (status === 500) message = '⚠️ AI 模型暫時無法回應（500），系統已完成自動輪替；請稍後重試。' + attempted;
+    else if (status === 'TIMEOUT') message = '⚠️ AI 模型連線逾時（10 秒），系統已完成自動輪替；請稍後重試。' + attempted;
+    else if (status === 'CATALOG') message = '❌ 站內免費模型清單暫時無法載入，請稍後再試。';
+    showError(message, { busy: [503,429,500,'TIMEOUT'].includes(status), countdownSeconds: status === 'NO_KEY' || status === 'CATALOG' ? 0 : 5 });
   }
   isProcessing = false; document.getElementById('btn-send').disabled = false;
 };
@@ -990,6 +1117,13 @@ document.getElementById('user-input').addEventListener('keydown', function(e) {
     sendMessage();
   }
 });
+async function handleAmazonManualRetry() {
+  if (isProcessing || retryCountdownTimer || !pendingRetryRequest) return;
+  var retryRequest = pendingRetryRequest;
+  pendingRetryRequest = null;
+  await amazonModelEngine.refresh({ silent: true });
+  await window.sendMessage(retryRequest);
+}
 
 /* ===== INIT ===== */
 loadAmazonRooms();
@@ -1000,7 +1134,11 @@ checkApiKey();
 amazonModelEngine.init();
 document.getElementById('btn-new-room').addEventListener('click', createAmazonRoom);
 document.getElementById('btn-refresh-models').addEventListener('click', function() { amazonModelEngine.refresh({ silent: false }); });
+document.getElementById('btn-retry-model').addEventListener('click', handleAmazonManualRetry);
 document.querySelectorAll('.amazon-quick-prompt').forEach(function(button) { button.addEventListener('click', function() { window.sendQuickPrompt(button.dataset.prompt); }); });
+['amazon-budget','amazon-use-case','amazon-must-have','amazon-avoid'].forEach(function(id) { var input=document.getElementById(id); if (input) input.addEventListener('input', function() { saveActiveResearchBrief(true); }); });
+document.getElementById('btn-copy-research-brief').addEventListener('click', function() { saveActiveResearchBrief(false); copyAmazonText(formatResearchBriefMarkdown()); });
+document.getElementById('btn-export-research-brief').addEventListener('click', function() { saveActiveResearchBrief(false); downloadAmazonText('amazon-research-brief-' + Date.now() + '.md', formatResearchBriefMarkdown()); });
 window.__amazonFinderTest = {
   getRooms: function() { return amazonRooms; },
   getActiveRoom: function() { return activeAmazonRoom(); },
@@ -1008,7 +1146,12 @@ window.__amazonFinderTest = {
   setModels: function(models) { return amazonModelEngine.setModels(models); },
   prompt: function(text) { return window.sendQuickPrompt(text); },
   openDrawer: function() { return window.toggleDrawer(true); },
-  closeDrawer: function() { return window.toggleDrawer(false); }
+  closeDrawer: function() { return window.toggleDrawer(false); },
+  showError: function(message, options) { return showError(message, options); },
+  hideError: function() { return hideError(); },
+  getResearchBrief: function() { return normaliseResearchBrief(activeAmazonRoom()?.research); },
+  setResearchBrief: function(brief) { var room=activeAmazonRoom(); if (!room) return null; room.research=normaliseResearchBrief(brief); saveAmazonRooms(); renderResearchBrief(); return room.research; },
+  formatResearchBrief: function() { return formatResearchBriefMarkdown(); }
 };
 
 })();
