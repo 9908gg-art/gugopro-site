@@ -81,6 +81,12 @@
         unitData: 'Digital Storage & Data Converter',
         unitSpeed: 'Speed & Pace Converter',
         unitPressure: 'Pressure Converter',
+        financeDca: 'DCA & Compound Calculator',
+        financeMortgage: 'Mortgage Amortization Calculator',
+        financeDividend: 'Dividend Cash Flow Calculator',
+        financeTrading: 'Trading Breakeven Calculator',
+        financeLeverage: 'Leverage Liquidation Calculator',
+        financeSalary: 'Salary Tax Calculator',
         contact: 'Contact Us',
         overview: 'All site tools'
     } : {
@@ -161,6 +167,12 @@
         unitData: '數位儲存與數據流量轉換器',
         unitSpeed: '速度與配速轉換器',
         unitPressure: '壓力與氣壓轉換器',
+        financeDca: '定期定額與複利試算器',
+        financeMortgage: '房貸本息攤還試算器',
+        financeDividend: '股息現金流試算器',
+        financeTrading: '交易損益兩平試算器',
+        financeLeverage: '槓桿強平價格試算器',
+        financeSalary: '薪資所得稅試算器',
         contact: '聯絡我們',
         overview: '主站工具總覽'
     };
@@ -243,6 +255,12 @@
         ['converter-unit-data.html', labels.unitData],
         ['converter-unit-speed.html', labels.unitSpeed],
         ['converter-unit-pressure.html', labels.unitPressure],
+        ['converter-finance-dca-compound.html', labels.financeDca],
+        ['converter-finance-mortgage.html', labels.financeMortgage],
+        ['converter-finance-dividend-target.html', labels.financeDividend],
+        ['converter-finance-trading-breakeven.html', labels.financeTrading],
+        ['converter-finance-leverage-liquidation.html', labels.financeLeverage],
+        ['converter-finance-salary-tax.html', labels.financeSalary],
         ['../contact.html', labels.contact],
         [home, labels.overview]
     ];
@@ -325,7 +343,7 @@
         }
 
         function updateBadges(query) {
-            var totals = { images: 0, 'audio-tools': 0, 'video-tools': 0, 'document-process': 0, 'document-convert': 0, 'smart-text': 0, security: 0, 'data-charts': 0, 'office-tools': 0, 'unit-converter': 0 };
+            var totals = { images: 0, 'audio-tools': 0, 'video-tools': 0, 'document-process': 0, 'document-convert': 0, 'smart-text': 0, security: 0, 'data-charts': 0, 'office-tools': 0, 'unit-converter': 0, 'finance-tools': 0 };
             var total = 0;
             cards.forEach(function (card) {
                 if (!matchesQuery(card, query)) return;
