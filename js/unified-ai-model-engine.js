@@ -414,6 +414,7 @@
     return {
       init, refresh: fetchLatestModel, request, getApiKey, getModels: () => availableModels.slice(), getEnabledModels: () => getEnabledModels().slice(), getQueue: () => getModelQueue().slice(),
       setModels, setModelEnabled, setPreferredModel, setBusyStatus, getModelUsageCount,
+      render: () => { renderModelOptions(); renderCurrentModelStatus(); renderQuota(); },
       getState: () => ({ availableModels: availableModels.slice(), enabledModels: getEnabledModels().slice(), queue: getModelQueue().slice(), currentModel, currentModelIndex, busyStates: Object.fromEntries(busyStates) }),
       constants: { QUOTA_MODELS_URL, GEMINI_MODELS_URL, REQUEST_TIMEOUT_MS }
     };
