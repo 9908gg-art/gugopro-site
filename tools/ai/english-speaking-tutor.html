@@ -177,14 +177,20 @@
         .lang-box { display: flex; flex-direction: column; gap: 2px; }
         .lang-label { font-size: 0.6rem; color: var(--text-dim); text-transform: uppercase; }
         .lang-select {
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            color: var(--text-main);
+            appearance: auto;
+            -webkit-appearance: auto;
+            background: #fff;
+            border: 1px solid #94a3b8;
+            color: #111827;
+            color-scheme: light;
             padding: 4px 6px;
             border-radius: 6px;
             font-size: 0.75rem;
+            font-weight: 600;
             outline: none;
         }
+        .lang-select:focus { border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2); }
+        .lang-select option { background: #fff; color: #111827; font-weight: 600; }
         .btn-swap-mini { background: none; border: none; color: var(--primary-neon); cursor: pointer; padding: 4px; font-size: 0.9rem; }
 
         /* Side Menu */
@@ -356,8 +362,36 @@
             color: var(--text-dim);
             font-size: 0.76rem;
             line-height: 1.5;
-            margin: -2px 0 10px;
+            margin: -2px 0 6px;
         }
+        .model-current-status {
+            color: #fef08a;
+            background: rgba(234, 179, 8, 0.14);
+            border: 1px solid rgba(250, 204, 21, 0.34);
+            border-radius: 8px;
+            padding: 6px 8px;
+            margin: 0 0 8px;
+            font-size: 0.72rem;
+            line-height: 1.4;
+            font-weight: 700;
+        }
+        .global-ai-quota-status,
+        .global-ai-quota-reset {
+            display: block;
+            color: #cbd5e1;
+            font-size: 0.68rem;
+            line-height: 1.4;
+            margin: 0 0 6px;
+        }
+        .global-ai-quota-status.exhausted {
+            color: #fde68a;
+            background: rgba(245, 158, 11, 0.16);
+            border: 1px solid rgba(245, 158, 11, 0.42);
+            border-radius: 8px;
+            padding: 6px 8px;
+            font-weight: 700;
+        }
+        .global-ai-quota-reset { color: #a5f3fc; }
         .model-settings-status.loading { color: var(--primary-neon); }
         .model-settings-status.error { color: #fca5a5; }
         .global-ai-quota-pill { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 0 0 10px; padding: 8px; border: 1px solid rgba(0, 242, 255, 0.18); border-radius: 10px; background: rgba(0, 242, 255, 0.06); }
@@ -385,6 +419,7 @@
         .model-option.is-disabled { opacity: 0.58; border-color: rgba(255,255,255,0.12); }
         .model-option.is-preferred { border-color: rgba(255,230,0,0.72); box-shadow: 0 0 0 1px rgba(255,230,0,0.16); }
         .model-option.is-disabled .model-option-name { text-decoration: line-through; }
+        .model-option.is-current { border-color: rgba(34, 211, 238, 0.78); box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.18); }
         .model-option-control { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
         .model-toggle { position: relative; width: 34px; height: 18px; appearance: none; -webkit-appearance: none; background: rgba(148,163,184,0.35); border: 1px solid rgba(255,255,255,0.22); border-radius: 999px; cursor: pointer; transition: all 0.2s; margin: 0 !important; }
         .model-toggle::after { content: ''; position: absolute; width: 12px; height: 12px; top: 2px; left: 2px; border-radius: 50%; background: #cbd5e1; transition: transform 0.2s, background 0.2s; }
@@ -398,6 +433,7 @@
         .model-score { color: #fcd34d; font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
         .model-option-quota { color: var(--text-dim); font-size: 0.68rem; line-height: 1.35; margin-top: 4px; }
         .model-busy-badge { display: inline-flex; align-items: center; gap: 4px; margin-top: 5px; padding: 2px 6px; border: 1px solid rgba(251, 146, 60, 0.52); border-radius: 999px; color: #fed7aa; background: rgba(194, 65, 12, 0.22); font-size: 0.66rem; line-height: 1.3; }
+        .model-quota-exhausted { border-color: rgba(250, 204, 21, 0.52); color: #fef08a; background: rgba(161, 98, 7, 0.22); }
         .drawer-contact-section { margin-top: 4px; padding: 12px 16px 18px; border-top: 1px solid rgba(255,255,255,0.08); color: var(--text-dim); font-size: 0.68rem; line-height: 1.55; text-align: center; }
         .drawer-contact-section a { color: #67e8f9; text-decoration: none; }
         .drawer-contact-links { display: flex; justify-content: center; flex-wrap: wrap; gap: 5px 10px; }
@@ -479,8 +515,10 @@
 
         .tts-active-sentence,
         .tts-active-word {
-            color: #FFE600 !important;
-            font-weight: 600 !important;
+            color: #FFF200 !important;
+            -webkit-text-fill-color: #FFF200 !important;
+            opacity: 1 !important;
+            font-weight: 800 !important;
             background: transparent !important;
             text-decoration: none !important;
             transition: color 0.2s ease-in-out;
@@ -759,6 +797,20 @@
             font-weight: 600;
         }
 
+        @media (min-width: 1024px) {
+            body { overflow: hidden; }
+            #app-main { height: 100vh; min-height: 100vh; }
+            #chat-container {
+                flex: 1 1 auto;
+                min-height: 0;
+                height: auto;
+                max-width: 1180px;
+                padding: 40px 28px 190px;
+                overflow-y: auto;
+            }
+            .bottom-controls { flex-shrink: 0; }
+        }
+
         @media (max-width: 600px) {
             .message { max-width: 94%; padding: 14px 18px; }
             .msg-learning { font-size: 1.1rem; }
@@ -917,6 +969,9 @@
                 <button id="btn-refresh-models" class="btn-room-action model-refresh-button" title="重新整理免費模型清單" aria-label="重新整理免費模型清單"><i class="fa-solid fa-rotate"></i></button>
             </div>
             <p id="model-settings-status" class="model-settings-status" aria-live="polite">正在載入站內免費模型清單...</p>
+            <p id="model-current-status" class="model-current-status" aria-live="polite">目前使用模型：載入中…</p>
+            <p id="global-ai-quota-status" class="global-ai-quota-status" aria-live="polite"></p>
+            <p id="global-ai-quota-reset" class="global-ai-quota-reset" aria-live="polite">配額重置倒數：計算中…</p>
             <div id="global-ai-quota-pill" class="global-ai-quota-pill" aria-live="polite">
                 <div class="global-ai-quota-item">📊 今日免費用量上限<strong id="global-ai-quota-limit">讀取中…</strong></div>
                 <div class="global-ai-quota-item">⚡ 今日已使用量<strong id="global-ai-quota-used">讀取中…</strong></div>
@@ -1010,6 +1065,7 @@
         let currentModelIndex = 0;
         let currentModel = null;
         let retryCountdownTimer = null;
+        let quotaResetTimer = null;
         let modelCatalogPromise = null;
         let disabledModelPreferences = loadDisabledModelPreferences();
         const MODEL_PREFERENCE_KEY = 'gugopro_ai_tutor_model_preference_v1';
@@ -1040,9 +1096,20 @@
             initLangPanel();
             renderModelOptions();
             renderGlobalAIQuota();
+            renderQuotaResetCountdown();
+            if (quotaResetTimer === null) quotaResetTimer = window.setInterval(renderQuotaResetCountdown, 60000);
             fetchLatestModel({ silent: true });
             window.addEventListener('storage', (event) => {
                 if (event.key === 'gugopro_global_ai_quota_v1') renderGlobalAIQuota();
+                if (event.key === MODEL_PREFERENCE_KEY) {
+                    reconcileCurrentModel();
+                    renderModelOptions();
+                    renderCurrentModelStatus();
+                }
+            });
+            window.addEventListener('gugopro:quota-updated', (event) => {
+                renderGlobalAIQuotaDisplay(event.detail || null);
+                renderModelOptions();
             });
         });
 
@@ -1158,6 +1225,7 @@
             currentModelIndex = Math.max(0, modelQueue.findIndex(item => item.api_name === currentModel));
             setModelSettingsStatus(`已選擇 ${model.display_name}；下次開啟將優先使用此模型。`, '');
             renderModelOptions();
+            renderCurrentModelStatus();
         }
 
         function getEnabledModels() {
@@ -1178,17 +1246,70 @@
             return getEnabledModels().reduce((total, model) => total + Math.max(0, Number(model.dailyQuota) || 0), 0);
         }
 
-        function renderGlobalAIQuota() {
+        function getPacificResetCountdown(now = new Date()) {
+            const formatter = new Intl.DateTimeFormat('en-US', {
+                timeZone: 'America/Los_Angeles',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                timeZoneName: 'longOffset'
+            });
+            const parts = Object.fromEntries(formatter.formatToParts(now).map(part => [part.type, part.value]));
+            const year = Number(parts.year);
+            const month = Number(parts.month);
+            const day = Number(parts.day);
+            const offsetMatch = String(parts.timeZoneName || '').match(/GMT([+-])(\d{1,2})(?::(\d{2}))?/);
+            const offsetMinutes = offsetMatch
+                ? (offsetMatch[1] === '-' ? -1 : 1) * (Number(offsetMatch[2]) * 60 + Number(offsetMatch[3] || 0))
+                : -480;
+            const nextPacificMidnightUtc = Date.UTC(year, month - 1, day + 1, 0, 0, 0) - offsetMinutes * 60 * 1000;
+            return Math.max(0, nextPacificMidnightUtc - now.getTime());
+        }
+
+        function renderQuotaResetCountdown() {
+            const resetEl = document.getElementById('global-ai-quota-reset');
+            if (!resetEl) return;
+            const totalMinutes = Math.ceil(getPacificResetCountdown() / 60000);
+            const hours = Math.floor(totalMinutes / 60);
+            const minutes = totalMinutes % 60;
+            resetEl.textContent = `配額重置倒數：約 ${hours} 小時 ${minutes} 分鐘`;
+        }
+
+        function renderCurrentModelStatus() {
+            const status = document.getElementById('model-current-status');
+            if (!status) return;
+            if (!currentModel) {
+                status.textContent = '目前使用模型：尚未載入可用模型';
+                return;
+            }
+            const busyLabel = getModelBusyLabel(currentModel);
+            status.textContent = `目前使用模型：${getModelDisplayName(currentModel)}${busyLabel ? ` · ${busyLabel}` : ''}`;
+        }
+
+        function renderGlobalAIQuotaDisplay(snapshot = null) {
             const tracker = window.GugoProGlobalAIQuota;
             const limitEl = document.getElementById('global-ai-quota-limit');
             const usedEl = document.getElementById('global-ai-quota-used');
+            const statusEl = document.getElementById('global-ai-quota-status');
             if (!tracker || !limitEl || !usedEl) return;
+            const current = snapshot || tracker.getSnapshot();
+            limitEl.textContent = current.dailyLimit === null ? '暫無可用額度' : `${current.dailyLimit} 次`;
+            usedEl.textContent = `${current.usedCount} 次 / 剩餘 ${current.remainingCount === null ? '—' : `${current.remainingCount} 次`}`;
+            if (statusEl) {
+                const exhausted = current.dailyLimit !== null && current.remainingCount !== null && current.remainingCount <= 0;
+                statusEl.classList.toggle('exhausted', exhausted);
+                statusEl.textContent = exhausted ? '⚠️ 今日免費模型額度已用完，請等待重置後再使用。' : '';
+            }
+            renderQuotaResetCountdown();
+        }
+
+        function renderGlobalAIQuota() {
+            const tracker = window.GugoProGlobalAIQuota;
+            if (!tracker) return;
             tracker.resetIfNewPacificDay();
             const limit = getEnabledDailyQuota();
             tracker.setDailyLimit(limit, 'quota.gugopro.com enabled chat models');
-            const snapshot = tracker.getSnapshot();
-            limitEl.textContent = snapshot.dailyLimit === null ? '暫無可用額度' : `${snapshot.dailyLimit} 次`;
-            usedEl.textContent = `${snapshot.usedCount} 次 / 剩餘 ${snapshot.remainingCount === null ? '—' : `${snapshot.remainingCount} 次`}`;
+            renderGlobalAIQuotaDisplay(tracker.getSnapshot());
         }
 
         async function fetchQuotaModelsWithTimeout() {
@@ -1288,6 +1409,7 @@
                 modelBusyStates.set(apiName, { status: String(status), updatedAt: Date.now() });
             }
             renderModelOptions();
+            renderCurrentModelStatus();
         }
 
         function getModelBusyLabel(apiName) {
@@ -1308,12 +1430,13 @@
         function createModelOption(model, value) {
             const enabled = isModelEnabled(value);
             const preferred = getSavedModelPreference() === value;
+            const current = currentModel === value;
             const option = document.createElement('div');
-            option.className = `model-option ${enabled ? '' : 'is-disabled'} ${preferred ? 'is-preferred' : ''}`.trim();
+            option.className = `model-option ${enabled ? '' : 'is-disabled'} ${preferred ? 'is-preferred' : ''} ${current ? 'is-current' : ''}`.trim();
             option.dataset.model = value;
             option.setAttribute('role', 'listitem');
             option.setAttribute('aria-pressed', String(preferred));
-            option.title = enabled ? `點擊選擇 ${model.display_name}；目前${preferred ? '為' : '非'}首選模型` : `${model.display_name} 已停用`;
+            option.title = enabled ? `點擊選擇 ${model.display_name}；目前${current ? '正在使用' : preferred ? '為首選' : '非首選'}模型` : `${model.display_name} 已停用`;
             option.addEventListener('click', () => {
                 if (enabled) setPreferredModel(value);
             });
@@ -1325,7 +1448,12 @@
             appendModelText(heading, 'strong', 'model-option-name', model.display_name);
             appendModelText(heading, 'span', 'model-score', `⭐ ${Number(model.score || 0).toFixed(1)}`);
             body.appendChild(heading);
-            appendModelText(body, 'div', 'model-option-quota', `每日上限：${Number(model.dailyQuota || 0)} 次 · 今日已用：${getModelUsageCount(value)} 次`);
+            const modelUsed = getModelUsageCount(value);
+            const modelQuota = Number(model.dailyQuota || 0);
+            appendModelText(body, 'div', 'model-option-quota', `每日上限：${modelQuota} 次 · 今日已用：${modelUsed} 次`);
+            if (modelQuota > 0 && modelUsed >= modelQuota) {
+                appendModelText(body, 'div', 'model-busy-badge model-quota-exhausted', '⚠️ 今日額度已用完');
+            }
             const busyLabel = getModelBusyLabel(value);
             if (busyLabel) appendModelText(body, 'div', 'model-busy-badge', busyLabel);
             option.appendChild(body);
@@ -1377,6 +1505,7 @@
                 setModelSettingsStatus(`已${enabled ? '啟用' : '停用'} ${getModelDisplayName(apiName)}；目前有 ${enabledModels.length} 個模型可供輪替。`, '');
             }
             renderModelOptions();
+            renderCurrentModelStatus();
             renderGlobalAIQuota();
         }
 
@@ -1389,6 +1518,15 @@
                 enabledModels.unshift(preferredModel);
             }
             return enabledModels;
+        }
+
+        function activateNextModel(modelName, modelIndex) {
+            if (!modelName) return;
+            currentModel = modelName;
+            currentModelIndex = Number.isFinite(Number(modelIndex)) ? Number(modelIndex) : 0;
+            persistModelPreference(modelName);
+            renderModelOptions();
+            renderCurrentModelStatus();
         }
 
         async function fetchLatestModel({ silent = false } = {}) {
@@ -1407,6 +1545,7 @@
                     currentModelIndex = Math.max(0, modelQueue.findIndex(model => model.api_name === currentModel));
                     lastModelCatalogUpdatedAt = new Date();
                     renderModelOptions();
+                    renderCurrentModelStatus();
                     renderGlobalAIQuota();
 
                     const updated = lastModelCatalogUpdatedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -1427,6 +1566,7 @@
                     currentModel = null;
                     currentModelIndex = 0;
                     renderModelOptions();
+                    renderCurrentModelStatus();
                     setModelSettingsStatus('站內模型清單暫時無法載入，請按右側重新整理。', 'error');
                     if (!silent) showError('❌ 站內免費模型清單暫時無法載入，請稍後再試。');
                     return [];
@@ -1464,6 +1604,7 @@
                 if (room) {
                     room.language.my = my;
                     room.language.learning = target;
+                    stopSpeech();
                     updateLangDisplay();
                     saveRoomsToLocal();
                 }
@@ -1935,6 +2076,7 @@
                 currentModelIndex = modelIndex;
                 currentModel = modelName;
                 renderModelOptions();
+                renderCurrentModelStatus();
                 if (typeof onModelAttempt === 'function') onModelAttempt(modelName, modelIndex, candidateModels.length);
                 const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelName)}:generateContent?key=${encodeURIComponent(apiKey)}`;
                 console.log(`[GugoPro Gemini] Endpoint (${modelIndex + 1}/${candidateModels.length}):`, endpoint);
@@ -1948,8 +2090,10 @@
                         if (!rawText) throw new Error('Gemini API 回傳空白內容。');
                         currentModelIndex = modelIndex;
                         currentModel = modelName;
+                        if (modelIndex > 0 || getSavedModelPreference() !== modelName) persistModelPreference(modelName);
                         modelBusyStates.delete(modelName);
                         renderModelOptions();
+                        renderCurrentModelStatus();
                         hideError();
                         return JSON.parse(rawText.replace(/```json|```/g, '').trim());
                     }
@@ -1959,7 +2103,9 @@
                     if (res.status !== 503 && res.status !== 'TIMEOUT') allModelsBusy = false;
                     if (res.status === 503 || res.status === 429 || res.status === 500) {
                         if (modelIndex < candidateModels.length - 1) {
-                            showModelSwitchNotice(modelName, candidateModels[modelIndex + 1], res.status);
+                            const nextModel = candidateModels[modelIndex + 1];
+                            activateNextModel(nextModel, modelIndex + 1);
+                            showModelSwitchNotice(modelName, nextModel, res.status);
                             continue;
                         }
                         break;
@@ -1971,7 +2117,9 @@
                         if (error.status === 503 || error.status === 'TIMEOUT') setModelBusyStatus(modelName, error.status);
                         if (error.status !== 503 && error.status !== 'TIMEOUT') allModelsBusy = false;
                         if (modelIndex < candidateModels.length - 1) {
-                            showModelSwitchNotice(modelName, candidateModels[modelIndex + 1], error.status);
+                            const nextModel = candidateModels[modelIndex + 1];
+                            activateNextModel(nextModel, modelIndex + 1);
+                            showModelSwitchNotice(modelName, nextModel, error.status);
                             continue;
                         }
                         break;
@@ -1992,6 +2140,9 @@
             const div = document.createElement('div');
             div.className = `message message-${role}`;
             div.setAttribute('data-id', id);
+            const activeRoom = chatRooms.find(room => room.id === activeRoomId);
+            const messageSpeechLang = activeRoom?.language?.learning || document.getElementById('target-lang')?.value || 'en-US';
+            div.dataset.speechLang = messageSpeechLang;
             div.innerHTML = `
                 <div class="msg-learning">${learning}</div>
                 <div class="msg-my">${my}</div>
@@ -2124,12 +2275,19 @@
 
         function getSpeechVoice(locale) {
             if (!window.speechSynthesis || typeof window.speechSynthesis.getVoices !== 'function') return null;
-            const voices = window.speechSynthesis.getVoices();
-            const normalized = locale.toLowerCase();
+            const voices = window.speechSynthesis.getVoices().filter(voice => voice && voice.lang);
+            const normalized = String(locale || 'en-US').toLowerCase();
             const base = normalized.split('-')[0];
-            return voices.find(voice => String(voice.lang || '').toLowerCase() === normalized)
-                || voices.find(voice => String(voice.lang || '').toLowerCase().split('-')[0] === base)
+            const exact = voices.filter(voice => String(voice.lang).toLowerCase() === normalized);
+            const sameLanguage = voices.filter(voice => String(voice.lang).toLowerCase().split('-')[0] === base);
+            return exact.find(voice => voice.default) || exact[0]
+                || sameLanguage.find(voice => voice.default) || sameLanguage[0]
                 || null;
+        }
+
+        function getCurrentSpeechLanguage() {
+            const room = chatRooms.find(item => item.id === activeRoomId);
+            return room?.language?.learning || document.getElementById('target-lang')?.value || 'en-US';
         }
 
         function isSingleCharacterScript(char) {
@@ -2489,7 +2647,8 @@
         window.speakMessage = (btn) => {
             const msgDiv = btn.closest('.message');
             const text = msgDiv.querySelector('.msg-learning').textContent;
-            speak(text, document.getElementById('target-lang').value, msgDiv);
+            const speechLang = msgDiv.dataset.speechLang || getCurrentSpeechLanguage();
+            speak(text, speechLang, msgDiv);
         };
 
         // --- Helpers ---
