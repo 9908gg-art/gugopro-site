@@ -822,6 +822,9 @@
                 max-width: 1180px;
                 padding: 40px 28px 34px;
                 overflow-y: auto;
+                overflow-x: hidden;
+                scroll-padding-top: 40px;
+                scroll-padding-bottom: 34px;
                 overscroll-behavior: contain;
                 scrollbar-gutter: stable;
             }
@@ -2242,16 +2245,28 @@
             const target = messageId
                 ? messages.find(message => message.dataset.id === String(messageId))
                 : messages[messages.length - 1];
+            const containerStyle = getComputedStyle(container);
+            const usesInternalScroll = containerStyle.overflowY === 'auto' || containerStyle.overflowY === 'scroll';
             requestAnimationFrame(() => {
+                if (target && usesInternalScroll) {
+                    const containerRect = container.getBoundingClientRect();
+                    const targetRect = target.getBoundingClientRect();
+                    const marginTop = parseFloat(getComputedStyle(target).scrollMarginTop) || 40;
+                    const targetTop = container.scrollTop + targetRect.top - containerRect.top - marginTop;
+                    const maxScrollTop = Math.max(0, container.scrollHeight - container.clientHeight);
+                    container.scrollTo({ top: Math.min(Math.max(0, targetTop), maxScrollTop), behavior: 'auto' });
+                    return;
+                }
                 if (target) {
-                    const marginTop = parseFloat(getComputedStyle(target).scrollMarginTop) || 88;
+                    const marginTop = parseFloat(getComputedStyle(target).scrollMarginTop) || 76;
                     const targetTop = target.getBoundingClientRect().top + window.scrollY - marginTop;
                     const scrollElement = document.scrollingElement || document.documentElement;
                     const maxScrollTop = Math.max(0, scrollElement.scrollHeight - window.innerHeight);
                     window.scrollTo({ top: Math.min(Math.max(0, targetTop), maxScrollTop), behavior: 'auto' });
                     return;
                 }
-                window.scrollTo({ top: 0, behavior: 'auto' });
+                if (usesInternalScroll) container.scrollTo({ top: 0, behavior: 'auto' });
+                else window.scrollTo({ top: 0, behavior: 'auto' });
             });
         }
 
@@ -2355,15 +2370,6 @@
             return exact.find(voice => voice.default) || exact[0]
                 || sameLanguage.find(voice => voice.default) || sameLanguage[0]
                 || null;
-        }
-
-        function showSpeechVoiceUnavailable(locale) {
-            const languageName = LANG_NAMES[locale] || locale;
-            showError(`此裝置的瀏覽器沒有可用的 ${languageName} 語音（${locale}），為避免誤用其他語言，已暫停朗讀；請在系統或瀏覽器安裝對應語音後再試。`, { busy: false, showRetryButton: false });
-            window.setTimeout(() => {
-                const message = document.getElementById('error-msg');
-                if (message?.textContent.includes(`（${locale}）`)) hideError();
-            }, 6000);
         }
 
         function getCurrentSpeechLanguage() {
@@ -2665,14 +2671,7 @@
             const locale = resolveSpeechLocale(langCode);
             if (root) renderSpeechText(root, source, langCode);
 
-            const availableVoices = getSpeechVoices();
             const voice = getSpeechVoice(locale);
-            if (availableVoices.length > 0 && !voice) {
-                restoreSpeechText(root);
-                showSpeechVoiceUnavailable(locale);
-                return;
-            }
-
             const utterance = new SpeechSynthesisUtterance(source);
             utterance.lang = locale;
             const sentenceMode = locale.toLowerCase().startsWith('ja');
