@@ -124,8 +124,8 @@
   function setEmptyState(isEmpty) {
     var empty = $('pdf-empty-state');
     var frame = $('pdf-page-frame');
-    if (empty) empty.hidden = !isEmpty;
-    if (frame) frame.hidden = isEmpty;
+    if (empty) { empty.hidden = !isEmpty; empty.style.display = isEmpty ? 'grid' : 'none'; }
+    if (frame) { frame.hidden = isEmpty; frame.style.display = isEmpty ? 'none' : 'inline-block'; }
   }
 
   function makeCanvas(width, height, className) {
@@ -513,6 +513,7 @@
       var pdfjs = await ensurePdfJs();
       var buffer = await readBuffer(file);
       state.pdf = await pdfjs.getDocument({ data: buffer }).promise;
+      setEmptyState(false);
       state.pageOrder = Array.from({ length: state.pdf.numPages }, function (_, index) { return index + 1; });
       var thumbEmpty = $('pdf-thumb-empty');
       if (thumbEmpty) thumbEmpty.hidden = true;
