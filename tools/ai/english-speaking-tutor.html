@@ -1163,6 +1163,10 @@
 
 
 
+
+
+
+
 <style id="gugo-capsule-dock-style">
 /* GugoPro Gemini-style capsule composer */
 .bottom-controls {
@@ -1198,11 +1202,11 @@
 .capsule-dock #user-text:focus { box-shadow: none !important; }
 .capsule-voice-button {
     position: relative;
-    flex: 0 0 42px;
-    width: 42px !important;
-    min-width: 42px !important;
-    height: 42px !important;
-    min-height: 42px !important;
+    flex: 0 0 68px;
+    width: 68px !important;
+    min-width: 68px !important;
+    height: 68px !important;
+    min-height: 68px !important;
     padding: 0 !important;
     border: 1px solid rgba(255,255,255,.12) !important;
     border-radius: 50% !important;
@@ -1212,6 +1216,10 @@
     background: rgba(255,255,255,.075) !important;
     color: #fff !important;
     cursor: pointer;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
     transition: transform .16s ease, background .16s ease, box-shadow .16s ease;
 }
 .capsule-voice-button:hover { background: rgba(255,255,255,.16) !important; transform: translateY(-1px); }
@@ -1222,7 +1230,7 @@
     display: block;
     max-width: none !important;
     overflow: visible;
-    font-size: 24px !important;
+    font-size: 38px !important;
     line-height: 1;
     white-space: nowrap;
 }
@@ -1230,8 +1238,8 @@
     position: absolute;
     right: -1px;
     bottom: -1px;
-    width: 15px;
-    height: 15px;
+    width: 22px;
+    height: 22px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1239,7 +1247,7 @@
     border-radius: 50%;
     background: #596273;
     color: #fff;
-    font-size: 8px;
+    font-size: 11px;
 }
 .capsule-voice-button.learning-speech { border-color: rgba(255,193,7,.45) !important; }
 .capsule-voice-button.learning-speech .capsule-mic-badge { background: #e2a800; color: #16120a; }
@@ -1254,6 +1262,7 @@
 .capsule-actions #btn-material-import-inline { background: transparent !important; color: #d5dbe6; }
 .capsule-actions #btn-send { background: #e8edf5 !important; color: #1b2029 !important; }
 .study-plan-summary { display: none !important; }
+.capsule-language-strip, .composer-language-strip, .speech-language-strip, #capsule-language-strip, #composer-language-summary, #speech-language-summary { display: none !important; }
 .room-card-main { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 4px; }
 .room-study-badge { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: rgba(211,221,235,.62); font-size: .68rem; line-height: 1.1; }
 .room-study-action { flex: 0 0 auto; opacity: .72; }
@@ -1262,11 +1271,13 @@
 @media (max-width: 640px) {
     .bottom-controls { padding-left: 8px; padding-right: 8px; }
     .main-input-group.dual-stt-composer.capsule-dock { gap: 4px; padding: 5px 6px; border-radius: 26px !important; }
-    .capsule-voice-button { flex-basis: 38px; width: 38px !important; min-width: 38px !important; height: 38px !important; min-height: 38px !important; }
-    .capsule-voice-button .speech-button-language { font-size: 21px !important; }
-    .capsule-voice-button .capsule-mic-badge { width: 13px; height: 13px; font-size: 7px; border-width: 1px; }
-    .capsule-actions .btn-circle { flex-basis: 36px; width: 36px !important; min-width: 36px !important; height: 36px !important; min-height: 36px !important; }
+    .capsule-voice-button { flex-basis: 64px; width: 64px !important; min-width: 64px !important; height: 64px !important; min-height: 64px !important; }
+    .capsule-voice-button .speech-button-language { font-size: 34px !important; }
+    .capsule-voice-button .capsule-mic-badge { width: 21px; height: 21px; font-size: 10px; border-width: 2px; }
+    .capsule-actions { gap: 6px; }
+    .capsule-actions .btn-circle { flex-basis: 40px; width: 40px !important; min-width: 40px !important; height: 40px !important; min-height: 40px !important; }
     .capsule-dock #user-text { padding: 8px 2px; max-height: 142px; }
+    .capsule-dock > .capsule-voice-button { flex-basis: 64px; width: 64px !important; min-width: 64px !important; height: 64px !important; min-height: 64px !important; }
 }
 </style>
 </head>
@@ -1378,16 +1389,18 @@
 
                 <div class="main-input-group dual-stt-composer capsule-dock">
                     <button id="btn-mic" class="btn-circle btn-mic dual-speech-button capsule-voice-button learning-speech" type="button" aria-label="學習語言發話與發音評分">
-                        <span class="speech-button-icon">🎙️</span><span class="speech-button-role">練習評分</span><span id="learning-speech-label" class="speech-button-language">🇬🇧</span><span class="capsule-mic-badge"><i class="fa-solid fa-microphone"></i></span>
+                        <span id="learning-speech-label" class="speech-button-language">🇬🇧</span><span class="capsule-mic-badge"><i class="fa-solid fa-microphone"></i></span>
                     </button>
-                    <textarea id="user-text" rows="1" maxlength="8000" placeholder="輸入訊息或點擊兩側國旗語音…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" data-lpignore="true"></textarea>
+                    <textarea id="user-text" rows="1" maxlength="8000" placeholder="輸入訊息或說話… (Enter 送出)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" data-lpignore="true"></textarea>
+                    <button id="btn-mic-my" class="btn-circle dual-speech-button capsule-voice-button native-speech" type="button" aria-label="母語提問，不進行發音評分">
+                        <span id="native-speech-label" class="speech-button-language">🇹🇼</span><span class="capsule-mic-badge"><i class="fa-solid fa-microphone"></i></span>
+                    </button>
                     <div class="capsule-actions" aria-label="附加與發送">
-                        <button id="btn-mic-my" class="btn-circle dual-speech-button capsule-voice-button native-speech" type="button" aria-label="母語提問，不進行發音評分">
-                            <span class="speech-button-icon">🗣️</span><span class="speech-button-role">母語提問</span><span id="native-speech-label" class="speech-button-language">🇹🇼</span><span class="capsule-mic-badge"><i class="fa-solid fa-microphone"></i></span>
-                        </button>
                         <button id="btn-material-import-inline" class="btn-circle btn-material" type="button" title="導入學習教材" aria-label="導入學習教材"><i class="fa-solid fa-paperclip"></i></button>
                         <button id="btn-send" class="btn-circle btn-send" type="button" aria-label="發送"><i class="fa-solid fa-paper-plane"></i></button>
                     </div>
+                </div>
+                </div>
                 </div>
             </div>
         </div>
@@ -4823,8 +4836,9 @@
     function stopActiveSession() {
         const session = activeSession;
         if (!session) return;
-        if (window.GugoProNativeSpeech?.isNativeSpeechAvailable?.() && typeof nativeRecognition !== 'undefined' && nativeRecognition) {
-            nativeRecognition.stopRecognition().catch(() => {});
+        const native = window.GugoProNativeSpeech?.isNativeSpeechAvailable?.() ? window.GugoProNativeSpeech : null;
+        if (native) {
+            native.stopRecognition().catch(() => {});
         } else if (typeof recognition !== 'undefined' && recognition) {
             try { recognition.stop(); } catch (_) {}
         }
@@ -4931,6 +4945,10 @@
 
 
 
+
+
+
+
 <script id="gugo-capsule-dock-modes-js">
 // GugoPro Gemini-style Capsule Dock + three speech modes
 (() => {
@@ -5015,7 +5033,7 @@
             motherButton.title = `${selectedLabel('my-lang', motherLocale)}語音提問，不進行發音評分（${motherLocale}）`;
             motherButton.setAttribute('aria-label', `${selectedLabel('my-lang', motherLocale)}語音提問，不進行發音評分`);
         }
-        if (input) input.placeholder = `輸入訊息或點擊${targetFlag}/${motherFlag}語音…`;
+        if (input) input.placeholder = '輸入訊息或說話… (Enter 送出)';
         return { targetLocale, motherLocale };
     }
     window.GugoUpdateCapsuleLanguageLabels = updateCapsuleLabels;
@@ -5053,7 +5071,7 @@
         button.onpointerdown = event => {
             if (getMode() !== 'hold') return;
             event.preventDefault();
-            button.setPointerCapture?.(event.pointerId);
+            try { button.setPointerCapture?.(event.pointerId); } catch (_) {}
             start(role);
         };
         button.onpointerup = event => {
