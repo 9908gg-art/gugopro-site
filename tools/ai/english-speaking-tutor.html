@@ -985,6 +985,13 @@
             #user-text { min-height: 38px; padding-left: 10px; padding-right: 10px; }
         }
     </style>
+<style id="gugo-stt-locale-scroll-guard-style">
+/* GugoPro STT locale and touch gesture guard */
+.msg-learning .vocab-token {
+    user-select: none;
+    -webkit-user-select: none;
+}
+</style>
 <style id="gugo-token-span-engine-style">
 /* GugoPro Token Span Engine v3: compact word selection and translation popover */
 .msg-learning .vocab-token {
@@ -2788,7 +2795,7 @@
             if (isRecording) {
                 stopRecording();
             } else {
-                recognition.lang = document.getElementById('target-lang').value;
+                recognition.lang = window.GugoProSpeechLocale?.getCurrentLearningLocale?.() || document.getElementById('target-lang').value;
                 recognition.start();
             }
         };
@@ -3744,6 +3751,145 @@
     document.addEventListener('DOMContentLoaded', bindExperienceUI);
 })();
     </script>
+<script id="gugo-stt-locale-scroll-guard-js">
+// GugoPro STT Locale Binding + Header Sync + Scroll Gesture Guard
+(() => {
+    if (window.__gugoSttLocaleScrollGuardV1) return;
+    window.__gugoSttLocaleScrollGuardV1 = true;
+
+    const BCP47_LOCALES = Object.freeze({
+        en: 'en-US', 'en-US': 'en-US',
+        zh: 'zh-TW', 'zh-TW': 'zh-TW', 'zh-CN': 'zh-CN',
+        ja: 'ja-JP', 'ja-JP': 'ja-JP',
+        ko: 'ko-KR', 'ko-KR': 'ko-KR',
+        fr: 'fr-FR', 'fr-FR': 'fr-FR',
+        de: 'de-DE', 'de-DE': 'de-DE',
+        es: 'es-ES', 'es-ES': 'es-ES',
+        th: 'th-TH', 'th-TH': 'th-TH',
+        vi: 'vi-VN', 'vi-VN': 'vi-VN',
+        id: 'id-ID', 'id-ID': 'id-ID',
+        pt: 'pt-BR', 'pt-BR': 'pt-BR',
+        it: 'it-IT', 'it-IT': 'it-IT',
+        ru: 'ru-RU', 'ru-RU': 'ru-RU',
+        ar: 'ar-SA', 'ar-SA': 'ar-SA',
+        hi: 'hi-IN', 'hi-IN': 'hi-IN',
+        ms: 'ms-MY', 'ms-MY': 'ms-MY',
+        nl: 'nl-NL', 'nl-NL': 'nl-NL',
+        pl: 'pl-PL', 'pl-PL': 'pl-PL',
+        tr: 'tr-TR', 'tr-TR': 'tr-TR'
+    });
+
+    function normalizeLocale(value) {
+        const requested = String(value || '').trim().replace(/_/g, '-');
+        if (!requested) return 'en-US';
+        const exact = BCP47_LOCALES[requested] || BCP47_LOCALES[requested.toLowerCase()];
+        if (exact) return exact;
+        const base = requested.split('-')[0].toLowerCase();
+        return BCP47_LOCALES[base] || requested;
+    }
+
+    function getCurrentLearningLocale() {
+        const selected = document.getElementById('target-lang')?.value;
+        const room = typeof getActiveRoom === 'function' ? getActiveRoom() : null;
+        return normalizeLocale(selected || room?.language?.learning || 'en-US');
+    }
+
+    window.GugoProSpeechLocale = Object.freeze({
+        map: BCP47_LOCALES,
+        normalize: normalizeLocale,
+        getCurrentLearningLocale
+    });
+
+    function optionLabel(select, fallback) {
+        const option = select?.options?.[select.selectedIndex];
+        const label = String(option?.textContent || '').trim();
+        return label || String(fallback || '');
+    }
+
+    function syncHeaderLanguageBadge() {
+        const mySelect = document.getElementById('my-lang');
+        const targetSelect = document.getElementById('target-lang');
+        const badge = document.getElementById('lang-display-label');
+        if (!mySelect || !targetSelect || !badge) return null;
+        const myCode = mySelect.value || 'zh-TW';
+        const targetCode = targetSelect.value || 'en-US';
+        const myLabel = optionLabel(mySelect, normalizeLocale(myCode));
+        const targetLabel = optionLabel(targetSelect, normalizeLocale(targetCode));
+        badge.textContent = `${myLabel} → ${targetLabel}`;
+        const button = document.getElementById('btn-lang-toggle');
+        if (button) {
+            button.dataset.myLang = myCode;
+            button.dataset.targetLang = targetCode;
+            button.dataset.targetLocale = normalizeLocale(targetCode);
+            button.setAttribute('aria-label', `${myLabel} → ${targetLabel}`);
+            button.title = `目前語言：${myLabel} → ${targetLabel}；語音辨識：${normalizeLocale(targetCode)}`;
+        }
+        const mic = document.getElementById('btn-mic');
+        if (mic) mic.dataset.sttLocale = normalizeLocale(targetCode);
+        return { myCode, targetCode, myLabel, targetLabel, targetLocale: normalizeLocale(targetCode) };
+    }
+
+    window.gugoSyncLanguageHeader = syncHeaderLanguageBadge;
+
+    function wrapLanguageFunction(name) {
+        try {
+            if (typeof window[name] === 'function' && !window[`__gugoWrapped_${name}`]) {
+                const original = window[name];
+                window[name] = function(...args) {
+                    const result = original.apply(this, args);
+                    syncHeaderLanguageBadge();
+                    return result;
+                };
+                window[`__gugoWrapped_${name}`] = true;
+                return;
+            }
+            if (name === 'updateLangDisplay' && typeof updateLangDisplay === 'function' && !window.__gugoWrappedUpdateLangDisplayLexical) {
+                const original = updateLangDisplay;
+                updateLangDisplay = function(...args) {
+                    const result = original(...args);
+                    syncHeaderLanguageBadge();
+                    return result;
+                };
+                window.__gugoWrappedUpdateLangDisplayLexical = true;
+            }
+            if (name === 'switchRoom' && typeof switchRoom === 'function' && !window.__gugoWrappedSwitchRoomLexical) {
+                const original = switchRoom;
+                switchRoom = function(...args) {
+                    const result = original(...args);
+                    syncHeaderLanguageBadge();
+                    return result;
+                };
+                window.__gugoWrappedSwitchRoomLexical = true;
+            }
+        } catch (error) {
+            console.warn(`語言同步 wrapper ${name} 建立失敗:`, error);
+        }
+    }
+
+    function bindLanguageSync() {
+        ['my-lang', 'target-lang'].forEach(id => {
+            const select = document.getElementById(id);
+            if (!select || select.dataset.gugoLanguageSyncBound === '1') return;
+            select.dataset.gugoLanguageSyncBound = '1';
+            select.addEventListener('change', syncHeaderLanguageBadge);
+            select.addEventListener('input', syncHeaderLanguageBadge);
+        });
+        wrapLanguageFunction('updateLangDisplay');
+        wrapLanguageFunction('switchRoom');
+        syncHeaderLanguageBadge();
+    }
+
+    // Scroll Gesture Guard is implemented in the Token Span Engine's touch handler.
+    // Keeping one owner for touch events prevents duplicate popovers and duplicate selection state.
+
+    function initialize() {
+        bindLanguageSync();
+        setTimeout(bindLanguageSync, 0);
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initialize, { once: true });
+    else initialize();
+})();
+</script>
 <script id="gugo-token-span-engine-js">
 // GugoPro Token Span Engine v3
 (() => {
@@ -4176,31 +4322,59 @@
     document.addEventListener('touchstart', event => {
         const token = tokenFromTarget(event.target);
         if (!token) return;
-        const touch = event.changedTouches?.[0];
+        const touch = event.changedTouches?.[0] || event.touches?.[0];
         if (!touch) return;
-        event.preventDefault();
+        // Wait for direction before preventDefault so native vertical scrolling remains available.
         clearTokenSelection();
         activeLearning = token.closest('.msg-learning');
-        activeGesture = { type: 'touch', learning: activeLearning };
+        activeGesture = {
+            type: 'touch', mode: 'pending', learning: activeLearning,
+            startX: touch.clientX, startY: touch.clientY,
+            lastX: touch.clientX, lastY: touch.clientY
+        };
         lastPoint = { x: touch.clientX, y: touch.clientY };
         addToken(token);
-    }, { capture: true, passive: false });
+    }, { capture: true, passive: true });
 
     document.addEventListener('touchmove', event => {
         if (!activeGesture || activeGesture.type !== 'touch') return;
         const touch = event.touches?.[0] || event.changedTouches?.[0];
         if (!touch) return;
+        const dx = touch.clientX - activeGesture.startX;
+        const dy = touch.clientY - activeGesture.startY;
+        const absX = Math.abs(dx);
+        const absY = Math.abs(dy);
+        activeGesture.lastX = touch.clientX;
+        activeGesture.lastY = touch.clientY;
+        lastPoint = { x: touch.clientX, y: touch.clientY };
+        if (activeGesture.mode === 'pending' && (absX > 10 || absY > 10)) {
+            if (absY > 10 && absY > absX) {
+                activeGesture.mode = 'scroll';
+                clearTokenSelection();
+                activeGesture = null;
+                // Do not preventDefault: release native history scrolling immediately.
+                return;
+            }
+            if (absX > 10 && absX > absY) activeGesture.mode = 'select';
+        }
+        if (activeGesture.mode !== 'select') return;
         event.preventDefault();
         const token = tokenFromPoint(touch.clientX, touch.clientY);
-        lastPoint = { x: touch.clientX, y: touch.clientY };
         addTokenRange(token);
     }, { capture: true, passive: false });
 
     document.addEventListener('touchend', event => {
         if (!activeGesture || activeGesture.type !== 'touch') return;
-        const touch = event.changedTouches?.[0];
+        const gesture = activeGesture;
+        const touch = event.changedTouches?.[0] || event.touches?.[0];
+        if (gesture.mode === 'scroll') {
+            activeGesture = null;
+            clearTokenSelection();
+            return;
+        }
         event.preventDefault();
-        finishGesture(touch?.clientX, touch?.clientY);
+        // finishGesture owns cleanup and opens the popover for tap or horizontal selection.
+        finishGesture(touch?.clientX || gesture.lastX, touch?.clientY || gesture.lastY);
     }, { capture: true, passive: false });
 
     document.addEventListener('touchcancel', () => {
