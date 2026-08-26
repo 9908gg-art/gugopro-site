@@ -1080,6 +1080,83 @@
     .vocab-popover button { min-height: 32px; }
 }
 </style>
+
+
+
+
+<style id="gugo-dual-stt-pronunciation-style">
+/* GugoPro dual-language speech composer and pronunciation feedback */
+#chat-container .msg-learning,
+#chat-container .msg-bubble,
+#chat-container .message,
+#chat-container .message * {
+    -webkit-user-select: none !important;
+    user-select: none !important;
+    -webkit-touch-callout: none !important;
+}
+.dual-stt-composer {
+    display: flex !important;
+    align-items: flex-end;
+    gap: 8px;
+}
+.dual-speech-buttons,
+.composer-actions {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    flex: 0 0 auto;
+}
+.dual-speech-button {
+    width: 62px !important;
+    min-width: 62px !important;
+    height: 42px !important;
+    min-height: 42px !important;
+    padding: 3px 4px !important;
+    border-radius: 12px !important;
+    display: inline-flex !important;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    line-height: 1.05;
+    border: 1px solid rgba(255,255,255,.14) !important;
+    background: rgba(255,255,255,.09) !important;
+    color: #fff !important;
+}
+.dual-speech-button .speech-button-icon { font-size: 15px; }
+.dual-speech-button .speech-button-role { font-size: 9px; opacity: .75; }
+.dual-speech-button .speech-button-language { max-width: 58px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 9px; }
+.dual-speech-button.learning-speech { border-color: rgba(255,193,7,.56) !important; }
+.dual-speech-button.native-speech { border-color: rgba(94,190,255,.44) !important; }
+.dual-speech-button.recording { color: #ffe082 !important; border-color: #ffd54f !important; box-shadow: 0 0 0 3px rgba(255,193,7,.16); }
+.dual-stt-composer #user-text { flex: 1 1 auto; min-width: 0; }
+.dual-stt-composer .composer-actions .btn-material,
+.dual-stt-composer .composer-actions #btn-send { width: 40px !important; min-width: 40px !important; height: 40px !important; }
+.pronunciation-score {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 7px;
+    font-size: .76rem;
+}
+.pronunciation-score-badge { padding: 4px 8px; border-radius: 999px; font-weight: 700; }
+.pronunciation-score-good .pronunciation-score-badge { color: #d9ffe4; background: rgba(33, 160, 82, .28); border: 1px solid rgba(89, 220, 127, .5); }
+.pronunciation-score-ok .pronunciation-score-badge { color: #fff2b6; background: rgba(255, 193, 7, .22); border: 1px solid rgba(255, 213, 79, .52); }
+.pronunciation-score-low .pronunciation-score-badge { color: #ffd8d8; background: rgba(203, 65, 65, .25); border: 1px solid rgba(255, 112, 112, .5); }
+.pronunciation-retry { border: 1px solid rgba(255,255,255,.22); background: rgba(255,255,255,.1); color: #fff; border-radius: 999px; padding: 4px 8px; cursor: pointer; font-size: .72rem; }
+.pronunciation-retry:hover { background: rgba(255,255,255,.18); }
+@media (max-width: 640px) {
+    .dual-stt-composer { gap: 5px; }
+    .dual-speech-buttons, .composer-actions { gap: 4px; }
+    .dual-speech-button { width: 48px !important; min-width: 48px !important; height: 40px !important; min-height: 40px !important; border-radius: 10px !important; }
+    .dual-speech-button .speech-button-language { max-width: 44px; font-size: 8px; }
+    .dual-speech-button .speech-button-role { font-size: 8px; }
+    .dual-stt-composer .composer-actions .btn-material,
+    .dual-stt-composer .composer-actions #btn-send { width: 38px !important; min-width: 38px !important; height: 38px !important; }
+}
+</style>
 </head>
 <body>
 
@@ -1190,11 +1267,20 @@
                 </div>
 
 
-                <div class="main-input-group">
-                    <button id="btn-material-import-inline" class="btn-circle btn-material" type="button" title="導入學習教材" aria-label="導入學習教材"><i class="fa-solid fa-paperclip"></i></button>
-                    <button id="btn-mic" class="btn-circle btn-mic"><i class="fa-solid fa-microphone"></i></button>
-                    <textarea id="user-text" rows="1" maxlength="8000" placeholder="說話或輸入…（Enter 發送，Shift＋Enter 換行）" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" data-lpignore="true"></textarea>
-                    <button id="btn-send" class="btn-circle btn-send"><i class="fa-solid fa-paper-plane"></i></button>
+                <div class="main-input-group dual-stt-composer">
+                    <div class="dual-speech-buttons" aria-label="雙語語音輸入">
+                        <button id="btn-mic" class="btn-circle btn-mic dual-speech-button learning-speech" type="button" aria-label="學習語言發話與發音評分">
+                            <span class="speech-button-icon">🎙️</span><span class="speech-button-role">練習評分</span><span id="learning-speech-label" class="speech-button-language">學習語言</span>
+                        </button>
+                        <button id="btn-mic-my" class="btn-circle dual-speech-button native-speech" type="button" aria-label="母語提問，不進行發音評分">
+                            <span class="speech-button-icon">🗣️</span><span class="speech-button-role">母語提問</span><span id="native-speech-label" class="speech-button-language">母語</span>
+                        </button>
+                    </div>
+                    <textarea id="user-text" rows="1" maxlength="8000" placeholder="點擊學習語言練習口說評分，或點擊母語／打字直接提問…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" data-lpignore="true"></textarea>
+                    <div class="composer-actions" aria-label="附加與發送">
+                        <button id="btn-material-import-inline" class="btn-circle btn-material" type="button" title="導入學習教材" aria-label="導入學習教材"><i class="fa-solid fa-paperclip"></i></button>
+                        <button id="btn-send" class="btn-circle btn-send" type="button" aria-label="發送"><i class="fa-solid fa-paper-plane"></i></button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2197,7 +2283,8 @@
                 m.my,
                 m.correction,
                 m.id,
-                m.speechLang || defaultSpeechLang
+                m.speechLang || defaultSpeechLang,
+                m.pronunciation || null
             ));
             
             room.material = normalizeMaterial(room.material);
@@ -2480,11 +2567,13 @@
             const inputLang = retryRequest?.inputLang || 'auto';
             const msgId = retryRequest?.msgId || 'msg-' + Date.now();
             const existingUserEl = document.querySelector(`[data-id="${msgId}"]`);
+            const pronunciationForMessage = window.GugoProPendingPronunciation || null;
+            window.GugoProPendingPronunciation = null;
 
             if (existingUserEl) {
                 existingUserEl.querySelector('.msg-my').textContent = '正在處理...';
             } else {
-                addMessageToUI('user', content, '正在處理...', null, msgId);
+                addMessageToUI('user', content, '正在處理...', null, msgId, null, pronunciationForMessage);
             }
             pendingRetryRequest = null;
             isSendingMessage = true;
@@ -2500,11 +2589,14 @@
                 const userMsgEl = document.querySelector(`[data-id="${msgId}"]`);
                 if (userMsgEl) {
                     userMsgEl.querySelector('.msg-learning').textContent = response.user_learning;
+                    userMsgEl.querySelector('.msg-learning').dataset.rawText = response.user_learning;
+                    userMsgEl.querySelector('.msg-learning').dataset.rawText = response.user_learning;
+                    userMsgEl.querySelector('.msg-learning').dataset.rawText = response.user_learning;
                     userMsgEl.querySelector('.msg-my').textContent = response.user_my;
                 }
 
                 const room = chatRooms.find(r => r.id === activeRoomId);
-                room.messages.push({ id: msgId, role: 'user', learning: response.user_learning, my: response.user_my, speechLang: targetLang });
+                room.messages.push({ id: msgId, role: 'user', learning: response.user_learning, my: response.user_my, speechLang: targetLang, pronunciation: pronunciationForMessage || null });
 
                 if (window.GugoProGlobalAIQuota) {
                     window.GugoProGlobalAIQuota.recordUsage(1, currentModel);
@@ -2672,7 +2764,7 @@
             throw finalError;
         }
 
-        function addMessageToUI(role, learning, my, correction, id, speechLang = null) {
+        function addMessageToUI(role, learning, my, correction, id, speechLang = null, pronunciation = null) {
             const container = document.getElementById('chat-container');
             const div = document.createElement('div');
             div.className = `message message-${role}`;
@@ -2688,6 +2780,12 @@
                     <button class="btn-msg-action btn-msg-delete" onclick="deleteMessage('${id}')"><i class="fa-solid fa-trash-can"></i></button>
                 </div>
             `;
+            if (pronunciation && role === 'user') {
+                const score = typeof pronunciation === 'object' ? pronunciation : null;
+                if (score && typeof window.GugoRenderPronunciationScore === 'function') {
+                    div.insertAdjacentHTML('beforeend', window.GugoRenderPronunciationScore(score, id));
+                }
+            }
             if (correction && correction !== "null" && correction.trim() !== "") {
                 const cDiv = document.createElement('div');
                 cDiv.className = 'correction-box';
@@ -4444,6 +4542,260 @@
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initialize, { once: true });
     else initialize();
+})();
+</script>
+
+
+
+
+<script id="gugo-dual-stt-pronunciation-js">
+// GugoPro Dual-language STT + pronunciation scoring + retry
+(() => {
+    if (window.__gugoDualSttPronunciationV1) return;
+    window.__gugoDualSttPronunciationV1 = true;
+
+    const LOCALES = Object.freeze({
+        en: 'en-US', 'en-US': 'en-US', zh: 'zh-TW', 'zh-TW': 'zh-TW', 'zh-CN': 'zh-CN',
+        ja: 'ja-JP', 'ja-JP': 'ja-JP', ko: 'ko-KR', 'ko-KR': 'ko-KR', fr: 'fr-FR', 'fr-FR': 'fr-FR',
+        de: 'de-DE', 'de-DE': 'de-DE', es: 'es-ES', 'es-ES': 'es-ES', th: 'th-TH', 'th-TH': 'th-TH',
+        vi: 'vi-VN', 'vi-VN': 'vi-VN', id: 'id-ID', 'id-ID': 'id-ID', pt: 'pt-BR', 'pt-BR': 'pt-BR',
+        it: 'it-IT', 'it-IT': 'it-IT', ru: 'ru-RU', 'ru-RU': 'ru-RU', ar: 'ar-SA', 'ar-SA': 'ar-SA',
+        hi: 'hi-IN', 'hi-IN': 'hi-IN', ms: 'ms-MY', 'ms-MY': 'ms-MY', nl: 'nl-NL', 'nl-NL': 'nl-NL',
+        pl: 'pl-PL', 'pl-PL': 'pl-PL', tr: 'tr-TR', 'tr-TR': 'tr-TR'
+    });
+    const FLAGS = { 'en-US':'🇺🇸', 'zh-TW':'🇹🇼', 'zh-CN':'🇨🇳', 'ja-JP':'🇯🇵', 'ko-KR':'🇰🇷', 'fr-FR':'🇫🇷', 'de-DE':'🇩🇪', 'es-ES':'🇪🇸', 'th-TH':'🇹🇭', 'vi-VN':'🇻🇳', 'id-ID':'🇮🇩', 'pt-BR':'🇧🇷', 'it-IT':'🇮🇹', 'ru-RU':'🇷🇺', 'ar-SA':'🇸🇦', 'hi-IN':'🇮🇳', 'ms-MY':'🇲🇾', 'nl-NL':'🇳🇱', 'pl-PL':'🇵🇱', 'tr-TR':'🇹🇷' };
+    const normalize = value => String(value || '').replace(/\s+/g, ' ').trim();
+    const locale = value => {
+        const raw = String(value || '').trim().replace(/_/g, '-');
+        if (!raw) return 'en-US';
+        return LOCALES[raw] || LOCALES[raw.toLowerCase()] || LOCALES[raw.split('-')[0].toLowerCase()] || raw;
+    };
+    const optionLabel = id => {
+        const select = document.getElementById(id);
+        return String(select?.options?.[select.selectedIndex]?.textContent || select?.value || '').trim();
+    };
+    const currentLearningLocale = () => window.GugoProSpeechLocale?.getCurrentLearningLocale?.() || locale(document.getElementById('target-lang')?.value || 'en-US');
+    const currentMotherLocale = () => locale(document.getElementById('my-lang')?.value || 'zh-TW');
+
+    function updateComposerLanguageUI() {
+        const targetLocale = currentLearningLocale();
+        const motherLocale = currentMotherLocale();
+        const targetLabel = optionLabel('target-lang') || targetLocale;
+        const motherLabel = optionLabel('my-lang') || motherLocale;
+        const learningEl = document.getElementById('learning-speech-label');
+        const nativeEl = document.getElementById('native-speech-label');
+        const input = document.getElementById('user-text');
+        const learningButton = document.getElementById('btn-mic');
+        const nativeButton = document.getElementById('btn-mic-my');
+        if (learningEl) learningEl.textContent = `${FLAGS[targetLocale] || '🌐'} ${targetLabel}`;
+        if (nativeEl) nativeEl.textContent = `${FLAGS[motherLocale] || '🌐'} ${motherLabel}`;
+        if (learningButton) {
+            learningButton.dataset.sttLocale = targetLocale;
+            learningButton.title = `${targetLabel}（${targetLocale}）語音辨識與發音評分`;
+            learningButton.setAttribute('aria-label', `${targetLabel}語音辨識與發音評分`);
+        }
+        if (nativeButton) {
+            nativeButton.dataset.sttLocale = motherLocale;
+            nativeButton.title = `${motherLabel}（${motherLocale}）語音提問，不進行發音評分`;
+            nativeButton.setAttribute('aria-label', `${motherLabel}語音提問，不進行發音評分`);
+        }
+        if (input) input.placeholder = `點擊「${targetLabel}」練習口說評分，或點擊「${motherLabel}」／打字直接提問…`;
+        return { targetLocale, motherLocale, targetLabel, motherLabel };
+    }
+
+    function wordTokens(text) { return normalize(text).toLowerCase().match(/[\p{L}\p{N}']+/gu) || []; }
+    function levenshtein(a, b) {
+        const left = Array.from(a || ''), right = Array.from(b || '');
+        if (!left.length) return right.length;
+        if (!right.length) return left.length;
+        let prev = Array.from({ length: right.length + 1 }, (_, i) => i);
+        for (let i = 0; i < left.length; i++) {
+            const row = [i + 1];
+            for (let j = 0; j < right.length; j++) row.push(Math.min(row[j] + 1, prev[j + 1] + 1, prev[j] + (left[i] === right[j] ? 0 : 1)));
+            prev = row;
+        }
+        return prev[right.length];
+    }
+    function scorePronunciation(target, spoken, confidence) {
+        const spokenText = normalize(spoken);
+        if (!spokenText) return { score: 0, band: 'low', label: '需要再試一次', confidence: 0 };
+        const confidenceScore = Number.isFinite(Number(confidence)) && Number(confidence) > 0 ? Math.round(Math.min(1, Number(confidence)) * 100) : 76;
+        const tokens = wordTokens(spokenText);
+        const repeatedPenalty = /(\b[\p{L}\p{N}']+\b)(?:\s+\1){2,}/iu.test(spokenText) ? 18 : 0;
+        const textFeature = Math.max(0, Math.min(100, 52 + Math.min(32, tokens.length * 5) + (/[.!?。！？]$/.test(spokenText) ? 5 : 0) - repeatedPenalty));
+        let score = Math.round(confidenceScore * 0.65 + textFeature * 0.35);
+        if (target) {
+            const targetTokens = wordTokens(target);
+            const spokenTokens = wordTokens(spokenText);
+            const distance = levenshtein(targetTokens.join(' '), spokenTokens.join(' '));
+            const similarity = targetTokens.length ? Math.max(0, Math.round((1 - distance / Math.max(targetTokens.join(' ').length, spokenTokens.join(' ').length, 1)) * 100)) : textFeature;
+            score = Math.round(confidenceScore * 0.55 + similarity * 0.45);
+        }
+        score = Math.max(0, Math.min(100, score));
+        return { score, confidence: confidenceScore, band: score >= 85 ? 'good' : score >= 70 ? 'ok' : 'low', label: score >= 85 ? '優秀' : score >= 70 ? '良好' : '需要練習' };
+    }
+    window.GugoProScorePronunciation = scorePronunciation;
+
+    function renderScore(score, messageId) {
+        if (!score) return '';
+        return `<div class="pronunciation-score pronunciation-score-${score.band}" data-pronunciation-score="${score.score}"><span class="pronunciation-score-badge">🎯 發音精準度：${score.score} 分（${score.label}）</span><button type="button" class="pronunciation-retry" data-message-id="${String(messageId || '').replace(/"/g, '')}">🔄 重新挑戰</button></div>`;
+    }
+    window.GugoRenderPronunciationScore = renderScore;
+
+    function updateMessageScore(messageId, score) {
+        const root = document.querySelector(`[data-id="${String(messageId || '').replace(/"/g, '')}"]`);
+        if (!root) return;
+        const old = root.querySelector('.pronunciation-score');
+        if (old) old.outerHTML = renderScore(score, messageId);
+        else root.insertAdjacentHTML('beforeend', renderScore(score, messageId));
+        const room = typeof chatRooms !== 'undefined' ? chatRooms.find(item => item.id === activeRoomId) : null;
+        const message = room?.messages?.find(item => String(item.id) === String(messageId));
+        if (message) { message.pronunciation = score; if (typeof saveRoomsToLocal === 'function') saveRoomsToLocal(); }
+    }
+
+    let activeSession = null;
+    let sessionCounter = 0;
+    function setDualRecording(role, active) {
+        document.querySelectorAll('.dual-speech-button').forEach(button => button.classList.toggle('recording', active && button.id === (role === 'learning' ? 'btn-mic' : 'btn-mic-my')));
+        if (typeof setRecordingVisual === 'function') setRecordingVisual(Boolean(active && role === 'learning'));
+        if (typeof isRecording !== 'undefined') isRecording = Boolean(active);
+    }
+    function composeInput(baseText, transcript) {
+        const base = normalize(baseText);
+        const latest = normalize(transcript);
+        if (!base) return latest;
+        if (!latest) return base;
+        return /\s$/.test(String(baseText || '')) ? `${baseText}${latest}` : `${base} ${latest}`;
+    }
+    function updateSpeechInput(session, transcript) {
+        session.latestTranscript = normalize(transcript);
+        const input = document.getElementById('user-text');
+        if (!input || session.challengeMessageId) return;
+        input.value = composeInput(session.baseText, session.latestTranscript);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    function finalizeSession(session) {
+        if (!session || session.finalized) return;
+        session.finalized = true;
+        const transcript = normalize(session.latestTranscript);
+        setDualRecording(session.role, false);
+        if (activeSession?.id === session.id) activeSession = null;
+        if (!transcript) return;
+        if (session.role === 'learning') {
+            const score = scorePronunciation(session.challengeTarget, transcript, session.confidence);
+            if (session.challengeMessageId) {
+                updateMessageScore(session.challengeMessageId, score);
+                const input = document.getElementById('user-text');
+                if (input) input.value = session.originalInput;
+                return;
+            }
+            window.GugoProPendingPronunciation = score;
+        }
+        if (!session.challengeMessageId && typeof sendMessage === 'function') {
+            const input = document.getElementById('user-text');
+            if (input?.value.trim()) setTimeout(() => sendMessage(), 0);
+        }
+    }
+    function stopActiveSession() {
+        const session = activeSession;
+        if (!session) return;
+        if (window.GugoProNativeSpeech?.isNativeSpeechAvailable?.() && typeof nativeRecognition !== 'undefined' && nativeRecognition) {
+            nativeRecognition.stopRecognition().catch(() => {});
+        } else if (typeof recognition !== 'undefined' && recognition) {
+            try { recognition.stop(); } catch (_) {}
+        }
+        setTimeout(() => finalizeSession(session), 350);
+    }
+    function startSession(role, challengeMessageId = null, challengeTarget = '') {
+        if (activeSession) { stopActiveSession(); return; }
+        if (role !== 'learning') window.GugoProPendingPronunciation = null;
+        const info = updateComposerLanguageUI();
+        const input = document.getElementById('user-text');
+        const speechLocale = role === 'learning' ? info.targetLocale : info.motherLocale;
+        const session = {
+            id: ++sessionCounter, role, speechLocale, baseText: challengeMessageId ? '' : String(input?.value || ''), originalInput: String(input?.value || ''),
+            challengeMessageId, challengeTarget: normalize(challengeTarget), latestTranscript: '', confidence: null, finalized: false
+        };
+        activeSession = session;
+        setDualRecording(role, true);
+        const native = window.GugoProNativeSpeech?.isNativeSpeechAvailable?.() ? window.GugoProNativeSpeech : null;
+        if (native) {
+            native.startRecognition({
+                language: speechLocale,
+                partialResults: true,
+                onStart: () => setDualRecording(role, true),
+                onResult: (transcript) => updateSpeechInput(session, transcript),
+                onEnd: () => finalizeSession(session),
+                onError: error => { console.error('Dual native STT error:', error); finalizeSession(session); if (typeof showError === 'function') showError('❌ 語音辨識無法啟動，請確認麥克風權限與語音服務。', { showRetryButton: false }); }
+            }).then(result => { if (!result?.started) finalizeSession(session); });
+            return;
+        }
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition || typeof recognition === 'undefined' || !recognition) {
+            setDualRecording(role, false);
+            document.getElementById('modal-stt-guide')?.style.setProperty('display', 'flex');
+            return;
+        }
+        recognition.lang = speechLocale;
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.onstart = () => setDualRecording(role, true);
+        recognition.onresult = event => {
+            const result = event.results?.[event.resultIndex]?.[0];
+            if (!result) return;
+            session.confidence = Number(result.confidence) || session.confidence;
+            // Each browser result replaces the previous transcript; never concatenate partial guesses.
+            updateSpeechInput(session, result.transcript);
+        };
+        recognition.onerror = error => { console.warn('Dual Web STT error:', error); finalizeSession(session); };
+        recognition.onend = () => finalizeSession(session);
+        try { recognition.start(); } catch (error) { finalizeSession(session); }
+    }
+    window.GugoStartDualSpeech = startSession;
+
+    function getMessageTarget(messageId) {
+        const root = document.querySelector(`[data-id="${String(messageId || '').replace(/"/g, '')}"]`);
+        const learning = root?.querySelector('.msg-learning');
+        return { root, text: normalize(learning?.dataset?.rawText || learning?.textContent || '') };
+    }
+
+    function bind() {
+        updateComposerLanguageUI();
+        ['my-lang', 'target-lang'].forEach(id => document.getElementById(id)?.addEventListener('change', updateComposerLanguageUI));
+        const chat = document.getElementById('chat-container');
+        if (chat && chat.dataset.nativeCalloutGuardBound !== '1') {
+            chat.dataset.nativeCalloutGuardBound = '1';
+            chat.addEventListener('contextmenu', event => event.preventDefault(), true);
+        }
+        const learningButton = document.getElementById('btn-mic');
+        if (learningButton && learningButton.dataset.dualSttBound !== '1') {
+            learningButton.dataset.dualSttBound = '1';
+            learningButton.onclick = event => { event.preventDefault(); startSession('learning'); };
+        }
+        const motherButton = document.getElementById('btn-mic-my');
+        if (motherButton && motherButton.dataset.dualSttBound !== '1') {
+            motherButton.dataset.dualSttBound = '1';
+            motherButton.onclick = event => { event.preventDefault(); startSession('mother'); };
+        }
+        document.addEventListener('click', event => {
+            const retry = event.target.closest?.('.pronunciation-retry');
+            if (!retry) return;
+            event.preventDefault();
+            const messageId = retry.dataset.messageId;
+            const target = getMessageTarget(messageId);
+            startSession('learning', messageId, target.text);
+        }, true);
+        try {
+            if (typeof switchRoom === 'function' && !window.__gugoDualSwitchWrapped) {
+                const original = switchRoom;
+                switchRoom = function(...args) { const result = original(...args); updateComposerLanguageUI(); return result; };
+                window.__gugoDualSwitchWrapped = true;
+            }
+        } catch (_) {}
+        setTimeout(updateComposerLanguageUI, 0);
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind, { once: true });
+    else bind();
 })();
 </script>
 </body>
