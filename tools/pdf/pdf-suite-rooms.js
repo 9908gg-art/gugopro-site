@@ -14,7 +14,7 @@
   function safeName(value) { return text(value || 'pdf-room').replace(/[^a-z0-9_-]+/gi, '-').replace(/^-+|-+$/g, '').slice(0, 50) || 'pdf-room'; }
 
   function getDefaultRoom() {
-    return { id: 'pdf_room_' + Date.now(), name: '一般 PDF 分析', createdAt: new Date().toISOString(), messages: [], pdf: null };
+    return { id: 'pdf_room_' + Date.now(), name: '一般 PDF 分析', createdAt: new Date().toISOString(), messages: [], pdf: null, taskRule: '', taskSummary: '尚未設定核心任務條件' };
   }
 
   function normalizePdfRecord(pdf) {
@@ -38,14 +38,16 @@
       id: text(item.id || 'pdf_room_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7)),
       name: text(item.name || 'PDF 分析房間').slice(0, 80),
       createdAt: item.createdAt || new Date().toISOString(),
-      messages: Array.isArray(item.messages) ? item.messages.map(function (message) { return { role: message.role === 'assistant' ? 'assistant' : 'user', text: text(message.text || message.content || '').slice(0, 30000), createdAt: message.createdAt || new Date().toISOString() }; }).filter(function (message) { return message.text; }) : [],
-      pdf: normalizePdfRecord(item.pdf)
+      messages: Array.isArray(item.messages) ? item.messages.map(function (message, index) { return { id: text(message.id || 'pdf_msg_legacy_' + index + '_' + Math.random().toString(36).slice(2, 7)), role: message.role === 'assistant' ? 'assistant' : 'user', text: text(message.text || message.content || '').slice(0, 30000), createdAt: message.createdAt || new Date().toISOString() }; }).filter(function (message) { return message.text; }) : [],
+      pdf: normalizePdfRecord(item.pdf),
+      taskRule: text(item.taskRule || '').slice(0, 12000),
+      taskSummary: text(item.taskSummary || (item.taskRule ? '已保存自訂任務規則' : '尚未設定核心任務條件')).slice(0, 240)
     };
   }
 
   function saveRooms() {
     try {
-      root.localStorage.setItem(ROOM_STORAGE_KEY, JSON.stringify({ version: 1, activeRoomId: activeRoomId, rooms: rooms }));
+      root.localStorage.setItem(ROOM_STORAGE_KEY, JSON.stringify({ version: 2, activeRoomId: activeRoomId, rooms: rooms }));
     } catch (error) {
       console.warn('[GugoPro PDF Rooms] localStorage 寫入失敗:', error);
       showRoomNotice('房間文字層或對話較大，瀏覽器 localStorage 暫時無法完整保存。', 'error');
@@ -75,7 +77,9 @@
   function renderRoomName() {
     var room = getActiveRoom();
     var nameEl = $('pdf-room-name');
-    if (nameEl) nameEl.textContent = room ? room.name : 'PDF 分析房間';
+    if (nameEl) nameEl.textContent = room ? room.name : '自訂 AI 任務專家';
+    var ruleSummary = $('pdf-project-rule-summary');
+    if (ruleSummary) ruleSummary.textContent = room && room.taskSummary ? room.taskSummary : '尚未設定核心任務條件';
   }
 
   function renderRoomList() {
@@ -99,7 +103,7 @@
       var strong = document.createElement('strong');
       strong.textContent = room.name;
       var meta = document.createElement('small');
-      meta.textContent = (room.pdf ? 'PDF 文字層 · ' : '') + room.messages.length + ' 則對話';
+      meta.textContent = (room.pdf ? 'PDF 文字層 · ' : '') + room.messages.length + ' 則對話' + (room.taskRule ? ' · 已設定任務' : '');
       copy.appendChild(strong); copy.appendChild(meta); main.appendChild(icon); main.appendChild(copy);
       var actions = document.createElement('div');
       actions.className = 'pdf-room-actions';
@@ -138,11 +142,15 @@
     (room.messages || []).forEach(function (message) {
       var node = document.createElement('div');
       node.className = 'pdf-chat-msg ' + message.role;
+      node.dataset.messageId = message.id;
+      var head = document.createElement('div'); head.className = 'pdf-chat-msg-head';
       var label = document.createElement('strong');
       label.textContent = message.role === 'user' ? 'You' : 'GugoPro AI';
-      var body = document.createElement('p');
-      body.textContent = message.text;
-      node.appendChild(label); node.appendChild(body); log.appendChild(node);
+      var remove = document.createElement('button'); remove.type = 'button'; remove.className = 'pdf-chat-delete'; remove.title = '刪除訊息'; remove.setAttribute('aria-label', '刪除訊息'); remove.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
+      remove.addEventListener('click', function () { deleteMessage(room.id, message.id); });
+      head.appendChild(label); head.appendChild(remove);
+      var body = document.createElement('p'); body.textContent = message.text;
+      node.appendChild(head); node.appendChild(body); log.appendChild(node);
     });
     log.scrollTop = log.scrollHeight;
   }
@@ -183,7 +191,7 @@
     var name = root.prompt('請輸入新 PDF 分析房間名稱：', '新房間');
     if (!name || !name.trim()) return;
     saveRuntimeForActiveRoom();
-    var room = { id: 'pdf_room_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), name: name.trim().slice(0, 80), createdAt: new Date().toISOString(), messages: [], pdf: null };
+    var room = { id: 'pdf_room_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), name: name.trim().slice(0, 80), createdAt: new Date().toISOString(), messages: [], pdf: null, taskRule: '', taskSummary: '尚未設定核心任務條件' };
     rooms.push(room); saveRooms(); renderRoomList(); switchRoom(room.id, true);
   }
 
@@ -193,6 +201,41 @@
     var name = root.prompt('重新命名 PDF 分析房間：', room.name);
     if (!name || !name.trim()) return;
     room.name = name.trim().slice(0, 80); saveRooms(); renderRoomList(); renderRoomName();
+  }
+
+  function deleteMessage(roomId, messageId) {
+    var room = rooms.find(function (item) { return item.id === (roomId || activeRoomId); });
+    var id = text(messageId);
+    if (!room || !id) return false;
+    var before = room.messages.length;
+    room.messages = room.messages.filter(function (message) { return message.id !== id; });
+    if (room.messages.length === before) return false;
+    saveRooms(); renderRoomList(); if (room.id === activeRoomId) renderRoomHistory(room);
+    showRoomNotice('已刪除一則對話訊息。', 'success');
+    return true;
+  }
+
+  function openTaskRuleEditor() {
+    var room = getActiveRoom(); var modal = $('pdf-task-rule-modal');
+    if (!room || !modal) return;
+    if ($('pdf-task-project-name')) $('pdf-task-project-name').value = room.name || '';
+    if ($('pdf-task-rule')) $('pdf-task-rule').value = room.taskRule || '';
+    if ($('pdf-task-summary')) $('pdf-task-summary').value = room.taskSummary || '';
+    modal.classList.add('is-open'); $('pdf-task-rule')?.focus();
+  }
+
+  function saveTaskRule() {
+    var room = getActiveRoom(); if (!room) return;
+    var name = text($('pdf-task-project-name') && $('pdf-task-project-name').value).trim();
+    var rule = text($('pdf-task-rule') && $('pdf-task-rule').value).trim();
+    var summary = text($('pdf-task-summary') && $('pdf-task-summary').value).trim();
+    if (!rule) { showRoomNotice('請先寫下這個專案要固定執行的核心任務條件。', 'error'); return; }
+    room.name = (name || room.name || '自訂 AI 任務專家').slice(0, 80);
+    room.taskRule = rule.slice(0, 12000);
+    room.taskSummary = (summary || rule.replace(/\s+/g, ' ').slice(0, 120)).slice(0, 240);
+    saveRooms(); renderRoomName(); renderRoomList();
+    var modal = $('pdf-task-rule-modal'); if (modal) modal.classList.remove('is-open');
+    showRoomNotice('已保存「' + room.name + '」的核心任務規則。', 'success');
   }
 
   function deleteRooms(ids) {
@@ -304,9 +347,11 @@
   function handleRoomMessage(payload) {
     if (restoringRoom || !payload || !payload.text) return;
     var room = getActiveRoom(); if (!room) return;
-    room.messages.push({ role: payload.role === 'assistant' ? 'assistant' : 'user', text: text(payload.text).slice(0, 30000), createdAt: new Date().toISOString() });
+    var messageId = text(payload.messageId || 'pdf_msg_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8));
+    room.messages = room.messages.filter(function (message) { return message.id !== messageId; });
+    room.messages.push({ id: messageId, role: payload.role === 'assistant' ? 'assistant' : 'user', text: text(payload.text).slice(0, 30000), createdAt: new Date().toISOString() });
     if (room.messages.length > 60) room.messages = room.messages.slice(-60);
-    saveRooms(); renderRoomList();
+    saveRooms(); renderRoomList(); if (room.id === activeRoomId) renderRoomHistory(room);
   }
 
   function bind() {
@@ -322,7 +367,10 @@
     if ($('pdf-room-ops-confirm')) $('pdf-room-ops-confirm').addEventListener('click', confirmRoomOperation);
     if ($('pdf-room-import')) $('pdf-room-import').addEventListener('click', function () { $('pdf-room-import-input').click(); });
     if ($('pdf-room-import-input')) $('pdf-room-import-input').addEventListener('change', function () { importRooms(this.files && this.files[0]); });
-    document.querySelectorAll('[data-close-modal="pdf-room-ops-modal"]').forEach(function (button) { button.addEventListener('click', closeRoomOps); });
+    $('pdf-project-run')?.addEventListener('click', function () { if (root.GugoProPdfSuite && root.GugoProPdfSuite.executeTask) root.GugoProPdfSuite.executeTask(); });
+    $('pdf-project-rule')?.addEventListener('click', openTaskRuleEditor);
+    $('pdf-task-rule-save')?.addEventListener('click', saveTaskRule);
+    document.querySelectorAll('[data-close-modal="pdf-room-ops-modal"], [data-close-modal="pdf-task-rule-modal"]').forEach(function (button) { button.addEventListener('click', function () { var modal = $(button.dataset.closeModal); if (modal) modal.classList.remove('is-open'); }); });
     if ($('pdf-drawer-save-key')) $('pdf-drawer-save-key').addEventListener('click', async function () { var key = text($('pdf-drawer-api-key').value).trim(); if (!key) return showRoomNotice('請先貼上 Gemini API key。', 'error'); localStorage.setItem('gugopro_gemini_api_key', key); localStorage.setItem('gemini_api_key', key); $('pdf-drawer-api-status').textContent = 'Key 已保存在本機。'; if (root.GugoProPdfSuiteAI && root.GugoProPdfSuiteAI.refresh) await root.GugoProPdfSuiteAI.refresh({ silent: false }); });
     if ($('pdf-model-refresh')) $('pdf-model-refresh').addEventListener('click', function () { if (root.GugoProPdfSuiteAI && root.GugoProPdfSuiteAI.refresh) root.GugoProPdfSuiteAI.refresh({ silent: false }); });
     root.addEventListener('gugopro:pdf-loaded', handlePdfLoaded);
@@ -337,6 +385,6 @@
   }
 
   function init() { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind); else bind(); }
-  root.GugoProPdfRooms = { getRooms: function () { return rooms.slice(); }, getActiveRoom: getActiveRoom, switchRoom: switchRoom, createRoom: createRoom, openDrawer: openDrawer, closeDrawer: closeDrawer, saveRooms: saveRooms };
+  root.GugoProPdfRooms = { getRooms: function () { return rooms.slice(); }, getActiveRoom: getActiveRoom, switchRoom: switchRoom, createRoom: createRoom, openDrawer: openDrawer, closeDrawer: closeDrawer, saveRooms: saveRooms, deleteMessage: deleteMessage, openTaskRuleEditor: openTaskRuleEditor, saveTaskRule: saveTaskRule };
   init();
 })(window);

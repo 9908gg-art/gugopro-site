@@ -64,7 +64,7 @@
     var node = $('pdf-status');
     if (!node) return;
     node.textContent = value || '';
-    node.className = 'pdf-status ' + (kind || '');
+    node.className = 'pdf-status-inline ' + (kind || '');
   }
 
   function setProgress(value) {
@@ -165,7 +165,7 @@
     frame.appendChild(signatureLayer);
   }
 
-  function drawPath(context, item, width, height) {
+  function drawPath(context, item, width, height, pixelRatio) {
     if (item.type === 'text') {
       var textValue = String(item.text || '').trim(); if (!textValue) return;
       context.save(); context.fillStyle = item.color || '#ff9e6b'; context.globalAlpha = .95;
@@ -180,7 +180,7 @@
     context.lineCap = 'round';
     context.lineJoin = 'round';
     context.strokeStyle = item.color || '#ff9e6b';
-    context.lineWidth = Math.max(2, (Number(item.width) || 4) * Math.max(width, height) / 1000);
+    context.lineWidth = Math.max(.55, Number(item.width) || 4) * (Number(pixelRatio) || 1);
     if (item.type === 'highlight') {
       context.globalAlpha = .28;
       context.lineWidth *= 3.5;
@@ -215,7 +215,7 @@
     var items = state.annotations[pageNumber] || [];
     var context = canvas.getContext('2d');
     context.clearRect(0, 0, canvas.width, canvas.height);
-    items.forEach(function (item) { drawPath(context, item, canvas.width, canvas.height); });
+    items.forEach(function (item) { drawPath(context, item, canvas.width, canvas.height, canvas.width / Math.max(1, canvas.clientWidth || canvas.width)); });
     state.annotationImages[pageNumber] = canvas.toDataURL('image/png');
   }
 
@@ -315,6 +315,11 @@
     var overlay = makeCanvas(viewport.width, viewport.height, 'pdf-annotation-canvas');
     overlay.setAttribute('aria-label', 'PDF annotation canvas');
     frame.appendChild(overlay);
+    var signatureLayer = document.createElement('div');
+    signatureLayer.id = 'pdf-signature-layer';
+    signatureLayer.className = 'pdf-signature-layer';
+    signatureLayer.setAttribute('aria-label', 'Signature overlays');
+    frame.appendChild(signatureLayer);
     state.renderedWidth = viewport.width;
     state.renderedHeight = viewport.height;
     renderAnnotationLayer(overlay, state.currentPage);
@@ -356,8 +361,9 @@
       var rect = canvas.getBoundingClientRect();
       start.points.push({ x: Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)), y: Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height)) });
       context.clearRect(0, 0, canvas.width, canvas.height);
-      (state.annotations[pageNumber] || []).forEach(function (item) { drawPath(context, item, canvas.width, canvas.height); });
-      drawPath(context, start, canvas.width, canvas.height);
+      var pixelRatio = canvas.width / Math.max(1, rect.width);
+      (state.annotations[pageNumber] || []).forEach(function (item) { drawPath(context, item, canvas.width, canvas.height, pixelRatio); });
+      drawPath(context, start, canvas.width, canvas.height, pixelRatio);
     };
     canvas.onpointerup = function () {
       if (!start) return;
@@ -372,9 +378,11 @@
     };
   }
 
+  var thumbnailRenderToken = 0;
   async function renderThumbnails() {
     var container = $('pdf-thumbnails');
     if (!container || !state.pdf) return;
+    var renderToken = ++thumbnailRenderToken;
     container.replaceChildren();
     var emptyState = $('pdf-thumb-empty');
     if (emptyState) emptyState.hidden = true;
@@ -383,6 +391,7 @@
     for (var index = 0; index < state.pageOrder.length; index += 1) {
       var pageNumber = state.pageOrder[index];
       var page = await state.pdf.getPage(pageNumber);
+      if (renderToken !== thumbnailRenderToken) return;
       var baseViewport = page.getViewport({ scale: 1, rotation: getPageDisplayRotation(pageNumber) });
       var scale = Math.min(0.22, 116 / baseViewport.width);
       var viewport = page.getViewport({ scale: scale, rotation: getPageDisplayRotation(pageNumber) });
@@ -401,6 +410,7 @@
       }
       canvas.getContext('2d');
       page.render({ canvasContext: canvas.getContext('2d'), viewport: viewport });
+      if (renderToken !== thumbnailRenderToken) return;
       thumb.addEventListener('click', function (event) {
         if (event.target && event.target.classList && event.target.classList.contains('pdf-thumb-check')) return;
         state.currentPage = Number(this.dataset.page);
@@ -673,7 +683,7 @@
         var pageNumber = state.pageOrder[index]; var page = await state.pdf.getPage(pageNumber); var viewport = page.getViewport({ scale: 1.6, rotation: getPageDisplayRotation(pageNumber) }); var canvas = makeCanvas(viewport.width, viewport.height); await page.render({ canvasContext: canvas.getContext('2d'), viewport: viewport }).promise;
         var data = canvas.toDataURL(format === 'jpg' ? 'image/jpeg' : 'image/png', format === 'jpg' ? .9 : undefined); zip.file('page-' + String(pageNumber).padStart(3, '0') + '.' + format, data.split(',')[1], { base64: true }); setProgress(((index + 1) / state.pageOrder.length) * 82);
       }
-      var blob = await zip.generateAsync({ type: 'blob' }); downloadBlob(blob, safeName(state.file.name) + '-images.zip'); setProgress(100); setStatus('已產生 ' + state.pageOrder.length + ' 張 ' + format.toUpperCase() + ' 圖片並打包 ZIP。', 'success');
+      var blob = await zip.generateAsync({ type: 'blob' }); downloadBlob(blob, safeName(state.file.name) + '-' + format + '-images.zip'); setProgress(100); setStatus('已產生 ' + state.pageOrder.length + ' 張 ' + format.toUpperCase() + ' 圖片並打包 ZIP。', 'success');
     } catch (error) { setStatus('轉圖片失敗：' + (error.message || 'Canvas 匯出失敗。'), 'error'); setProgress(0); }
     state.busy = false;
   }
@@ -785,14 +795,17 @@
 
   async function requestAi(prompt, options) {
     options = options || {};
-    var context = await getAiContext();
     if (!aiEngine || !aiEngine.getApiKey()) { if (typeof window.GugoProPdfRooms?.openDrawer === 'function') window.GugoProPdfRooms.openDrawer(false); throw new Error('NO_KEY'); }
+    var context = await getAiContext();
     var activeRoom = window.GugoProPdfRooms && window.GugoProPdfRooms.getActiveRoom ? window.GugoProPdfRooms.getActiveRoom() : null;
     var historyContext = activeRoom && Array.isArray(activeRoom.messages) ? activeRoom.messages.slice(-10).map(function (item) { return (item.role === 'user' ? 'User' : 'Assistant') + ': ' + item.text; }).join('\n') : '';
+    var taskRule = activeRoom && activeRoom.taskRule ? String(activeRoom.taskRule).trim() : '';
     if (!aiEngine.getModels().length) await aiEngine.refresh({ silent: false });
     if (!aiEngine.getEnabledModels().length) throw new Error('目前沒有可用的免費文字模型，請打開模型設定檢查。');
-    var payload = { contents: [{ role: 'user', parts: [{ text: prompt + (historyContext ? '\n\n本分析房間最近對話：\n' + historyContext : '') + '\n\n文件文字（每段含頁碼標記）：\n' + context }] }], systemInstruction: { parts: [{ text: '你是 GugoPro AI PDF 助手。只根據提供的文件文字回答；若證據不足，明確說明。回答使用繁體中文，引用來源時使用 [第 N 頁]。不要把法律審閱結果當作律師意見。' }] }, generationConfig: { temperature: options.temperature == null ? .35 : options.temperature, maxOutputTokens: options.maxOutputTokens || 4096 } };
-    var response = await aiEngine.request(payload, function (data) { return getAiText(data); }, { onAttempt: function (model) { setStatus('AI 正在使用 ' + model + ' 分析…', 'loading'); }, onSwitch: function (busy, next, status) { setStatus('模型忙碌（' + status + '），切換到 ' + next + '…', 'loading'); } });
+    var systemText = '你是 GugoPro AI PDF 助手。只根據提供的文件文字回答；若證據不足，明確說明。回答使用繁體中文，引用來源時使用 [第 N 頁]。不要把法律審閱結果當作律師意見。' + (taskRule ? '\n\n目前自訂 AI 專案的核心任務條件（優先遵守）：\n' + taskRule : '');
+    var taskPrompt = taskRule ? '\n\n請同時遵守目前專案核心任務條件：\n' + taskRule : '';
+    var payload = { contents: [{ role: 'user', parts: [{ text: prompt + taskPrompt + (historyContext ? '\n\n本分析房間最近對話：\n' + historyContext : '') + '\n\n文件文字（每段含頁碼標記）：\n' + context }] }], systemInstruction: { parts: [{ text: systemText }] }, generationConfig: { temperature: options.temperature == null ? .35 : options.temperature, maxOutputTokens: options.maxOutputTokens || 4096 } };
+    var response = await aiEngine.request(payload, function (data) { return getAiText(data); }, { onAttempt: function (model) { setStatus('AI 正在使用 ' + model + ' 分析…', 'loading'); }, onSwitch: function (busy, next, status) { var code = status === 'TIMEOUT' ? 'Timeout' : status; var nextName = next || '下一個可用模型'; var notice = '⚠️ 當前模型繁忙 (' + code + ')，已自動為您無縫切換至 ' + nextName + ' 繼續處理'; setStatus(notice, 'loading'); toast(notice); } });
     return response.result;
   }
 
@@ -807,16 +820,24 @@
     try { log.scrollTo({ top: log.scrollHeight, behavior: 'smooth' }); } catch (_) { log.scrollTop = log.scrollHeight; }
   }
 
-  function appendChat(role, value) {
+  function appendChat(role, value, messageId) {
     var log = $('pdf-chat-log'); if (!log) return null;
     var node = document.createElement('div'); node.className = 'pdf-chat-msg ' + role;
-    node.innerHTML = '<strong>' + (role === 'user' ? 'You' : 'GugoPro AI') + '</strong>' + markdownToHtml(String(value == null ? '' : value));
+    if (messageId) node.dataset.messageId = messageId;
+    var label = document.createElement('strong'); label.textContent = role === 'user' ? 'You' : 'GugoPro AI';
+    var actions = document.createElement('span'); actions.className = 'pdf-chat-msg-actions';
+    var remove = document.createElement('button'); remove.type = 'button'; remove.className = 'pdf-chat-delete'; remove.title = '刪除訊息'; remove.setAttribute('aria-label', '刪除訊息'); remove.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
+    remove.addEventListener('click', function (event) { event.preventDefault(); event.stopPropagation(); var id = node.dataset.messageId; if (id && window.GugoProPdfRooms && window.GugoProPdfRooms.deleteMessage) window.GugoProPdfRooms.deleteMessage(null, id); else node.remove(); });
+    actions.appendChild(remove); node.appendChild(label); node.appendChild(actions);
+    var body = document.createElement('div'); body.className = 'pdf-chat-msg-body'; body.innerHTML = markdownToHtml(String(value == null ? '' : value)); node.appendChild(body);
     log.appendChild(node); scrollChatToLatest(node); return node;
   }
 
   function updateChatMessage(node, value) {
     if (!node) return;
-    node.innerHTML = '<strong>GugoPro AI</strong>' + markdownToHtml(String(value == null ? '' : value));
+    var body = node.querySelector('.pdf-chat-msg-body');
+    if (body) body.innerHTML = markdownToHtml(String(value == null ? '' : value));
+    else node.innerHTML = '<strong>GugoPro AI</strong><div class="pdf-chat-msg-body">' + markdownToHtml(String(value == null ? '' : value)) + '</div>';
     scrollChatToLatest(node);
   }
 
@@ -844,17 +865,19 @@
     var question = retryText || String(input && input.value ? input.value : '').trim();
     if (!question) return;
     var isRetry = Boolean(retryText);
+    var userMessageId = 'pdf_msg_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+    var assistantMessageId = userMessageId + '_assistant';
     if (!isRetry) {
-      appendChat('user', question);
+      appendChat('user', question, userMessageId);
       if (input) { input.value = ''; input.style.height = ''; input.dispatchEvent(new Event('input', { bubbles: true })); }
     }
     var button = $('pdf-chat-send'); if (button) button.disabled = true;
-    var pendingNode = appendChat('assistant', '正在分析文件，整理頁碼引用…');
+    var pendingNode = appendChat('assistant', '正在分析文件，整理頁碼引用…', assistantMessageId);
     if (pendingNode) pendingNode.classList.add('is-pending');
     try {
       var answer = await requestAi('使用文件內容回答這個問題：' + question + '\n請用 3–7 點條列，並在每一點後標出頁碼。');
       hideAiError(); updateChatMessage(pendingNode, answer || 'AI 沒有回傳內容。'); if (pendingNode) pendingNode.classList.remove('is-pending');
-      try { window.dispatchEvent(new CustomEvent('gugopro:pdf-room-message', { detail: { role: 'user', text: question } })); window.dispatchEvent(new CustomEvent('gugopro:pdf-room-message', { detail: { role: 'assistant', text: answer || 'AI 沒有回傳內容。' } })); } catch (_) {}
+      try { window.dispatchEvent(new CustomEvent('gugopro:pdf-room-message', { detail: { role: 'user', text: question, messageId: userMessageId } })); window.dispatchEvent(new CustomEvent('gugopro:pdf-room-message', { detail: { role: 'assistant', text: answer || 'AI 沒有回傳內容。', messageId: assistantMessageId } })); } catch (_) {}
     } catch (error) {
       if (pendingNode) pendingNode.remove();
       if (error.message === 'NO_KEY') showAiError('請先在右上角 ≡ 選單設定 Gemini API key。', false);
@@ -888,6 +911,30 @@
     extractAllText(false).then(function () { $('pdf-translate-input').value = state.pageTexts[state.currentPage] || ''; switchAiTab('translate'); });
   }
 
+  async function executeTask() {
+    var room = window.GugoProPdfRooms && window.GugoProPdfRooms.getActiveRoom ? window.GugoProPdfRooms.getActiveRoom() : null;
+    if (!room || !String(room.taskRule || '').trim()) {
+      if (window.GugoProPdfRooms && window.GugoProPdfRooms.openTaskRuleEditor) window.GugoProPdfRooms.openTaskRuleEditor();
+      return toast('請先保存這個專案的核心任務規則。');
+    }
+    switchAiTab('chat');
+    var executionId = 'pdf_task_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+    var progressText = '🚀 正在依據【' + room.name + '】自訂規則分析當前 PDF 文件…';
+    var node = appendChat('assistant', progressText, executionId);
+    if (node) node.classList.add('is-pending');
+    try {
+      var answer = await requestAi('請立即執行這個自訂 AI 專案任務。先按照核心任務條件逐項分析整份文件，再以條列方式輸出發現、證據頁碼、優先級與可採取的下一步。', { maxOutputTokens: 5000 });
+      updateChatMessage(node, answer || '專案任務沒有回傳內容。'); if (node) node.classList.remove('is-pending');
+      window.dispatchEvent(new CustomEvent('gugopro:pdf-room-message', { detail: { role: 'assistant', text: answer || '專案任務沒有回傳內容。', messageId: executionId } }));
+      setStatus('「' + room.name + '」專案任務已完成。', 'success');
+    } catch (error) {
+      if (node) node.remove();
+      if (error.message === 'NO_KEY') showAiError('請先在右上角 ≡ 選單設定 Gemini API key。', false);
+      else if ([503, 429, 500, 'TIMEOUT'].includes(error.status)) showAiError('AI 模型目前忙碌或逾時，系統會自動輪替；', true);
+      else showAiError('專案任務未完成：' + (error.message || '連線失敗。'), false);
+    }
+  }
+
   async function handleAiKeySave() {
     var key = String($('pdf-key-input').value || '').trim(); if (!key) return;
     localStorage.setItem('gugopro_gemini_api_key', key); localStorage.setItem('gemini_api_key', key); closeKeyModal(); toast('Gemini API key 已儲存在本機'); if (aiEngine) await aiEngine.refresh({ silent: true });
@@ -901,7 +948,7 @@
     var context = canvas.getContext('2d'); var drawing = false; var last = null;
     function position(event) { var rect = canvas.getBoundingClientRect(); return { x: (event.clientX - rect.left) * canvas.width / rect.width, y: (event.clientY - rect.top) * canvas.height / rect.height }; }
     canvas.addEventListener('pointerdown', function (event) { drawing = true; last = position(event); canvas.setPointerCapture(event.pointerId); });
-    canvas.addEventListener('pointermove', function (event) { if (!drawing) return; var point = position(event); context.strokeStyle = '#122033'; context.lineWidth = 3; context.lineCap = 'round'; context.beginPath(); context.moveTo(last.x, last.y); context.lineTo(point.x, point.y); context.stroke(); last = point; });
+    canvas.addEventListener('pointermove', function (event) { if (!drawing) return; var point = position(event); var rect = canvas.getBoundingClientRect(); var brushSize = Math.max(1, Math.min(20, Number(($('signature-width') || {}).value) || 1)); context.strokeStyle = '#122033'; context.lineWidth = brushSize * (canvas.width / Math.max(1, rect.width)); context.lineCap = 'round'; context.beginPath(); context.moveTo(last.x, last.y); context.lineTo(point.x, point.y); context.stroke(); last = point; });
     canvas.addEventListener('pointerup', function () { drawing = false; last = null; });
     $('signature-clear').addEventListener('click', function () { context.clearRect(0, 0, canvas.width, canvas.height); });
     $('signature-save').addEventListener('click', function () { state.signatureImage = canvas.toDataURL('image/png'); $('signature-modal').classList.remove('is-open'); var id = 'sig_' + Date.now(); if (!state.signatures[state.currentPage]) state.signatures[state.currentPage] = []; state.signatures[state.currentPage].push({ id: id, dataUrl: state.signatureImage, x: .32, y: .72, w: .3, h: .12, rotation: 0 }); state.activeSignatureId = id; renderMainPage(); toast('簽名已放置，可拖曳、縮放或雙擊旋轉'); });
@@ -927,18 +974,18 @@
     $('pdf-zoom-out').addEventListener('click', function () { state.fitMode = 'manual'; state.zoom = Math.max(.25, state.zoom - .1); renderMainPage(); });
     $('pdf-zoom-in').addEventListener('click', function () { state.fitMode = 'manual'; state.zoom = Math.min(2.5, state.zoom + .1); renderMainPage(); });
     $('pdf-fit-select').addEventListener('change', function () { state.fitMode = this.value; renderMainPage(); });
-    $('pdf-rotate-left').addEventListener('click', function () { rotatePages(-90); }); $('pdf-rotate-right').addEventListener('click', function () { rotatePages(90); }); $('pdf-rotate-180').addEventListener('click', function () { rotatePages(180); });
+    $('pdf-rotate-left')?.addEventListener('click', function () { rotatePages(-90); }); $('pdf-rotate-right')?.addEventListener('click', function () { rotatePages(90); }); $('pdf-rotate-180')?.addEventListener('click', function () { rotatePages(180); });
     $('pdf-night-mode').addEventListener('click', function () { document.body.classList.toggle('pdf-night-reading'); this.classList.toggle('is-active'); toast(document.body.classList.contains('pdf-night-reading') ? '已開啟夜間閱讀' : '已關閉夜間閱讀'); });
     $('pdf-delete-pages').addEventListener('click', function () { if (!state.pdf) return toast(messages.choosePdf); var pages = getSelectedOrCurrentPages(); if (pages.length >= state.pageOrder.length) return setStatus('至少保留一頁，無法全部刪除。', 'error'); state.pageOrder = state.pageOrder.filter(function (page) { return !pages.includes(page); }); state.selectedPages.clear(); state.currentPage = state.pageOrder[0]; renderThumbnails(); renderMainPage(); updateSelectionStatus(); toast('已刪除 ' + pages.length + ' 頁（輸出時套用）'); });
     $('pdf-export-pages').addEventListener('click', function () { var pages = state.selectedPages.size ? state.pageOrder.filter(function (page) { return state.selectedPages.has(page); }) : state.pageOrder; exportPdf(pages, safeName(state.file && state.file.name) + '-extracted.pdf'); });
     $('pdf-save').addEventListener('click', function () { exportPdf(state.pageOrder, safeName(state.file && state.file.name) + '-edited.pdf'); });
-    $('pdf-clear').addEventListener('click', function () {       state.file = null; state.pdf = null; state.pageOrder = []; state.selectedPages.clear(); var thumbEmpty = $('pdf-thumb-empty'); if (thumbEmpty) thumbEmpty.hidden = false; $('pdf-file-name').textContent = '尚未開啟 PDF'; $('pdf-file-meta').textContent = '拖放檔案即可開始'; $('pdf-reader-status').innerHTML = '<i class="fa-solid fa-lock"></i> 等待檔案'; $('pdf-thumbnails').replaceChildren(); $('pdf-outline-list').innerHTML = '<div class="pdf-sidebar-empty"><i class="fa-regular fa-compass"></i><span>載入 PDF 後顯示目錄。</span></div>'; clearReaderFrame(); setEmptyState(true); setStatus(messages.empty); setProgress(0); });
+    $('pdf-clear').addEventListener('click', function () {       thumbnailRenderToken += 1; state.file = null; state.pdf = null; state.pageOrder = []; state.selectedPages.clear(); state.crop = { top: 0, right: 0, bottom: 0, left: 0 }; var thumbEmpty = $('pdf-thumb-empty'); if (thumbEmpty) thumbEmpty.hidden = false; $('pdf-file-name').textContent = '尚未開啟 PDF'; $('pdf-file-meta').textContent = '拖放檔案即可開始'; $('pdf-reader-status').innerHTML = '<i class="fa-solid fa-lock"></i> 等待檔案'; $('pdf-thumbnails').replaceChildren(); $('pdf-outline-list').innerHTML = '<div class="pdf-sidebar-empty"><i class="fa-regular fa-compass"></i><span>載入 PDF 後顯示目錄。</span></div>'; clearReaderFrame(); setEmptyState(true); setStatus(messages.empty); setProgress(0); });
     $('pdf-add-signature').addEventListener('click', function () { $('signature-modal').classList.add('is-open'); });
     $('pdf-delete-signature').addEventListener('click', function () { var signature = selectedSignature(); if (!signature) return toast('請先點選簽名'); state.signatures[state.currentPage] = (state.signatures[state.currentPage] || []).filter(function (item) { return item.id !== signature.id; }); state.activeSignatureId = null; renderMainPage(); });
     $('pdf-signature-rotate-left').addEventListener('click', function () { var signature = selectedSignature(); if (!signature) return toast('請先點選簽名'); signature.rotation = (signature.rotation - 15 + 360) % 360; renderMainPage(); });
     $('pdf-signature-rotate-right').addEventListener('click', function () { var signature = selectedSignature(); if (!signature) return toast('請先點選簽名'); signature.rotation = (signature.rotation + 15) % 360; renderMainPage(); });
-    $('pdf-download-current').addEventListener('click', function () { renderAllImages('png'); }); $('pdf-download-jpg').addEventListener('click', function () { renderAllImages('jpg'); });
-    $('pdf-images-to-pdf').addEventListener('click', imagesToPdf); $('pdf-merge-run').addEventListener('click', mergePdfs); $('pdf-lock-run').addEventListener('click', encryptCurrentPdf);
+    $('pdf-download-current')?.addEventListener('click', function () { renderAllImages('png'); }); $('pdf-download-jpg')?.addEventListener('click', function () { renderAllImages('jpg'); });
+    $('pdf-images-to-pdf')?.addEventListener('click', imagesToPdf); $('pdf-merge-run')?.addEventListener('click', mergePdfs); $('pdf-merge-pick')?.addEventListener('click', function () { $('merge-input')?.click(); }); $('pdf-images-pick')?.addEventListener('click', function () { $('images-input')?.click(); }); $('pdf-lock-run')?.addEventListener('click', encryptCurrentPdf);
     $('pdf-unlock-run')?.addEventListener('click', function () { $('unlock-input')?.click(); }); $('unlock-input')?.addEventListener('change', function () { decryptLockPackage(this.files && this.files[0]); this.value = ''; });
     $('pdf-insert-page')?.addEventListener('click', function () { $('insert-input')?.click(); }); $('insert-input')?.addEventListener('change', function () { insertPdfPages(this.files); this.value = ''; });
     $('pdf-crop-run')?.addEventListener('click', function () { var margin = Math.max(0, Math.min(240, Number(($('crop-margin') || {}).value) || 0)); if (!state.pdf) return toast(messages.choosePdf); state.crop = { top: margin, right: margin, bottom: margin, left: margin }; toast(margin ? '已設定四邊各裁切 ' + margin + ' pt，匯出時套用。' : '已清除裁切設定。'); });
@@ -949,6 +996,16 @@
 
   function parseRange(value, max) {
     var output = []; String(value || '').split(',').forEach(function (token) { var clean = token.trim(); if (!clean) return; if (/^\d+\s*-\s*\d+$/.test(clean)) { var parts = clean.split('-').map(Number); var start = Math.min(parts[0], parts[1]); var end = Math.max(parts[0], parts[1]); for (var i = start; i <= end; i += 1) if (i >= 1 && i <= max && !output.includes(i)) output.push(i); } else if (/^\d+$/.test(clean)) { var page = Number(clean); if (page >= 1 && page <= max && !output.includes(page)) output.push(page); } }); return output;
+  }
+
+  function bindPopovers() {
+    var openPopover = null;
+    function closePopover(panel) { if (!panel) return; panel.hidden = true; var toggle = document.querySelector('[data-popover-target="' + panel.id + '"]'); if (toggle) toggle.setAttribute('aria-expanded', 'false'); if (openPopover === panel) openPopover = null; }
+    function closeAll() { qsa('.pdf-toolbar-popover').forEach(closePopover); }
+    qsa('[data-popover-target]').forEach(function (toggle) { toggle.addEventListener('click', function (event) { event.stopPropagation(); var panel = $(toggle.dataset.popoverTarget); if (!panel) return; var opening = panel.hidden; closeAll(); if (opening) { panel.hidden = false; toggle.setAttribute('aria-expanded', 'true'); openPopover = panel; } }); });
+    qsa('[data-popover-close]').forEach(function (button) { button.addEventListener('click', function () { closePopover($(button.dataset.popoverClose)); }); });
+    document.addEventListener('click', function (event) { if (openPopover && !event.target.closest('.pdf-popover-wrap')) closeAll(); });
+    document.addEventListener('keydown', function (event) { if (event.key === 'Escape') closeAll(); });
   }
 
   function bindAi() {
@@ -968,11 +1025,11 @@
 
   function bindSidebar() {
     qsa('[data-sidebar]').forEach(function (button) { button.addEventListener('click', function () { setSidebarTab(button.dataset.sidebar); }); });
-    qsa('[data-dock-action]').forEach(function (button) { button.addEventListener('click', function () { var action = button.dataset.dockAction; if (action === 'ai') { $('pdf-ai-pane').classList.toggle('is-mobile-open'); button.classList.toggle('is-active'); } else if (action === 'tools') { $('pdf-utility-panel').scrollIntoView({ behavior: 'smooth' }); } else if (action === 'thumbs') { $('pdf-sidebar').style.display = 'flex'; $('pdf-sidebar').scrollIntoView({ behavior: 'smooth' }); } else if (action === 'signature') { $('signature-modal').classList.add('is-open'); } }); });
+    qsa('[data-dock-action]').forEach(function (button) { button.addEventListener('click', function () { var action = button.dataset.dockAction; if (action === 'ai') { $('pdf-ai-pane').classList.toggle('is-mobile-open'); button.classList.toggle('is-active'); } else if (action === 'tools') { document.querySelector('[data-popover-target="pdf-convert-popover"]')?.click(); } else if (action === 'thumbs') { $('pdf-sidebar').style.display = 'flex'; $('pdf-sidebar').scrollIntoView({ behavior: 'smooth' }); } else if (action === 'signature') { document.querySelector('[data-popover-target="pdf-annotate-popover"]')?.click(); $('signature-modal').classList.add('is-open'); } }); });
   }
 
   function init() {
-    addFileInputListeners(); bindToolbar(); bindAi(); bindSidebar(); initSignaturePad(); initAi(); setEmptyState(true); renderNotesPanel();
+    addFileInputListeners(); bindPopovers(); bindToolbar(); bindAi(); bindSidebar(); initSignaturePad(); initAi(); setEmptyState(true); renderNotesPanel();
     $('pdf-page-input').value = '1'; $('pdf-total-pages').textContent = '0';
     window.addEventListener('resize', function () { if (state.pdf && state.fitMode !== 'manual') renderMainPage(); });
     window.addEventListener('error', function (event) { if (event && event.message && /pdf/i.test(event.message)) setStatus('前端 PDF 模組錯誤：' + event.message, 'error'); });
@@ -986,6 +1043,6 @@
     state.file = snapshot.file || null; state.pdf = snapshot.pdf; state.pageOrder = Array.isArray(snapshot.pageOrder) ? snapshot.pageOrder.slice() : []; state.currentPage = Number(snapshot.currentPage) || state.pageOrder[0] || 1; state.pageRotations = Object.assign({}, snapshot.pageRotations || {}); state.pageTexts = Object.assign({}, snapshot.pageTexts || {}); state.textReady = Boolean(snapshot.textReady); state.zoom = Number(snapshot.zoom) || .92; state.fitMode = snapshot.fitMode || 'fit-width'; state.tool = snapshot.tool || 'select'; state.annotations = JSON.parse(JSON.stringify(snapshot.annotations || {})); state.annotationImages = Object.assign({}, snapshot.annotationImages || {}); state.signatures = JSON.parse(JSON.stringify(snapshot.signatures || {})); state.activeSignatureId = snapshot.activeSignatureId || null; state.outline = JSON.parse(JSON.stringify(snapshot.outline || []));
     setEmptyState(false); $('pdf-file-name').textContent = state.file ? state.file.name : 'PDF 文字層備份'; $('pdf-file-meta').textContent = state.pageOrder.length + ' 頁 · 本機房間內容'; $('pdf-total-pages').textContent = state.pageOrder.length; $('pdf-page-count-badge').textContent = state.pageOrder.length + ' 頁'; if ($('pdf-thumb-empty')) $('pdf-thumb-empty').hidden = true; await renderThumbnails(); await renderOutline(); await renderMainPage(); renderNotesPanel();
   }
-  window.GugoProPdfSuite = { loadPdf: loadPdf, extractAllText: extractAllText, getSnapshot: getSnapshot, restoreSnapshot: restoreSnapshot, clearViewer: function () { if ($('pdf-clear')) $('pdf-clear').click(); }, switchAiTab: switchAiTab, getState: function () { return state; } };
+  window.GugoProPdfSuite = { loadPdf: loadPdf, extractAllText: extractAllText, getSnapshot: getSnapshot, restoreSnapshot: restoreSnapshot, clearViewer: function () { if ($('pdf-clear')) $('pdf-clear').click(); }, switchAiTab: switchAiTab, executeTask: executeTask, getState: function () { return state; } };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
