@@ -497,6 +497,7 @@
       setProgress(4 + ((index + 1) / state.pageOrder.length) * 86);
     }
     state.textReady = true;
+    try { window.dispatchEvent(new CustomEvent('gugopro:pdf-text-extracted', { detail: getSnapshot ? getSnapshot() : { file: state.file, pageTexts: state.pageTexts, pageOrder: state.pageOrder, currentPage: state.currentPage } })); } catch (_) {}
     setProgress(100);
     var total = all.join('\n\n');
     if (!total.replace(/\[第[^\]]+\頁\]/g, '').trim()) {
@@ -527,6 +528,7 @@
       await renderMainPage();
       renderNotesPanel();
       $('pdf-page-count-badge').textContent = state.pdf.numPages + ' 頁';
+      try { window.dispatchEvent(new CustomEvent('gugopro:pdf-loaded', { detail: { file: state.file.name, pages: state.pageOrder.length } })); } catch (_) {}
     } catch (error) {
       state.pdf = null; setEmptyState(true); setProgress(0); setStatus('PDF 讀取失敗：' + (error.message || '格式不受支援。'), 'error');
     }
@@ -697,26 +699,31 @@
   function initAi() {
     if (!window.GugoProUnifiedAI || !window.GugoProGlobalAIQuota) return;
     aiEngine = window.GugoProUnifiedAI.create({ storagePrefix: 'gugopro_ai_pdf_suite', disabledKey: 'gugopro_ai_pdf_suite_disabled_models_v1', preferenceKey: 'gugopro_ai_pdf_suite_model_preference_v1', elements: { modelOptions: 'model-options', modelSettingsStatus: 'model-settings-status', modelCurrentStatus: 'model-current-status', quotaStatus: 'global-ai-quota-status', quotaReset: 'global-ai-quota-reset', quotaLimit: 'global-ai-quota-limit', quotaUsed: 'global-ai-quota-used' }, quotaSource: 'quota.gugopro.com enabled PDF chat models' });
+    window.GugoProPdfSuiteAI = aiEngine;
     aiEngine.init();
   }
 
-  function openKeyModal() { $('pdf-key-modal').classList.add('is-open'); $('pdf-key-input').focus(); }
-  function closeKeyModal() { $('pdf-key-modal').classList.remove('is-open'); }
+  function openKeyModal() { if ($('pdf-drawer-api-key')) { if (aiEngine) $('pdf-drawer-api-key').value = aiEngine.getApiKey(); if (window.GugoProPdfRooms) window.GugoProPdfRooms.openDrawer(false); } }
+  function closeKeyModal() { var modal = $('pdf-key-modal'); if (modal) modal.classList.remove('is-open'); }
 
   async function getAiContext() {
-    if (!state.pdf) throw new Error('請先載入 PDF。');
-    var text = await extractAllText(false);
-    if (!text.replace(/\[第[^\]]+\頁\]/g, '').trim()) throw new Error('目前 PDF 沒有文字層，無法進行文字 AI 分析。');
+    var text = '';
+    if (state.pdf) text = await extractAllText(false);
+    if (!text && typeof window.GugoProPdfRoomContext === 'function') text = window.GugoProPdfRoomContext();
+    if (!text) throw new Error('請先載入 PDF，或切換到已保存文字層的分析房間。');
+    if (!text.replace(/\[第[^\]]+頁\]/g, '').trim()) throw new Error('目前 PDF 沒有文字層，無法進行文字 AI 分析。');
     return text.slice(0, 90000);
   }
 
   async function requestAi(prompt, options) {
     options = options || {};
     var context = await getAiContext();
-    if (!aiEngine || !aiEngine.getApiKey()) { openKeyModal(); throw new Error('NO_KEY'); }
+    if (!aiEngine || !aiEngine.getApiKey()) { if (typeof window.GugoProPdfRooms?.openDrawer === 'function') window.GugoProPdfRooms.openDrawer(false); throw new Error('NO_KEY'); }
+    var activeRoom = window.GugoProPdfRooms && window.GugoProPdfRooms.getActiveRoom ? window.GugoProPdfRooms.getActiveRoom() : null;
+    var historyContext = activeRoom && Array.isArray(activeRoom.messages) ? activeRoom.messages.slice(-10).map(function (item) { return (item.role === 'user' ? 'User' : 'Assistant') + ': ' + item.text; }).join('\n') : '';
     if (!aiEngine.getModels().length) await aiEngine.refresh({ silent: false });
     if (!aiEngine.getEnabledModels().length) throw new Error('目前沒有可用的免費文字模型，請打開模型設定檢查。');
-    var payload = { contents: [{ role: 'user', parts: [{ text: prompt + '\n\n文件文字（每段含頁碼標記）：\n' + context }] }], systemInstruction: { parts: [{ text: '你是 GugoPro AI PDF 助手。只根據提供的文件文字回答；若證據不足，明確說明。回答使用繁體中文，引用來源時使用 [第 N 頁]。不要把法律審閱結果當作律師意見。' }] }, generationConfig: { temperature: options.temperature == null ? .35 : options.temperature, maxOutputTokens: options.maxOutputTokens || 4096 } };
+    var payload = { contents: [{ role: 'user', parts: [{ text: prompt + (historyContext ? '\n\n本分析房間最近對話：\n' + historyContext : '') + '\n\n文件文字（每段含頁碼標記）：\n' + context }] }], systemInstruction: { parts: [{ text: '你是 GugoPro AI PDF 助手。只根據提供的文件文字回答；若證據不足，明確說明。回答使用繁體中文，引用來源時使用 [第 N 頁]。不要把法律審閱結果當作律師意見。' }] }, generationConfig: { temperature: options.temperature == null ? .35 : options.temperature, maxOutputTokens: options.maxOutputTokens || 4096 } };
     var response = await aiEngine.request(payload, function (data) { return getAiText(data); }, { onAttempt: function (model) { setStatus('AI 正在使用 ' + model + ' 分析…', 'loading'); }, onSwitch: function (busy, next, status) { setStatus('模型忙碌（' + status + '），切換到 ' + next + '…', 'loading'); } });
     return response.result;
   }
@@ -731,10 +738,37 @@
     var node = document.createElement('div'); node.className = 'pdf-chat-msg ' + role; node.innerHTML = '<strong>' + (role === 'user' ? 'You' : 'GugoPro AI') + '</strong>' + markdownToHtml(text); log.appendChild(node); log.scrollTop = log.scrollHeight;
   }
 
-  async function handleChat() {
-    var input = $('pdf-chat-input'); var question = String(input.value || '').trim(); if (!question) return;
-    appendChat('user', question); input.value = ''; var button = $('pdf-chat-send'); button.disabled = true;
-    try { var answer = await requestAi('使用文件內容回答這個問題：' + question + '\n請用 3–7 點條列，並在每一點後標出頁碼。'); appendChat('assistant', answer || 'AI 沒有回傳內容。'); } catch (error) { if (error.message !== 'NO_KEY') appendChat('assistant', '目前無法完成分析：' + error.message); } finally { button.disabled = false; }
+  var pendingChatRetry = null;
+  var retryTimer = null;
+  function showAiError(message, busy, retryQuestion) {
+    var panel = $('pdf-ai-error-panel'); var messageEl = $('pdf-ai-error-msg'); var retry = $('pdf-ai-retry');
+    if (!panel || !messageEl) return;
+    if (retryQuestion) pendingChatRetry = retryQuestion;
+    messageEl.textContent = message;
+    panel.className = 'pdf-ai-error-panel is-visible' + (busy ? ' busy' : '');
+    if (retry) { retry.style.display = retryQuestion ? '' : 'none'; retry.disabled = Boolean(retryQuestion); }
+    clearInterval(retryTimer);
+    if (retryQuestion) {
+      var remaining = 5;
+      messageEl.textContent = message + ' ' + remaining + ' 秒後可重試。';
+      retryTimer = setInterval(function () { remaining -= 1; if (remaining <= 0) { clearInterval(retryTimer); retry.disabled = false; messageEl.textContent = message + ' 您可以手動重試。'; } else messageEl.textContent = message + ' ' + remaining + ' 秒後可重試。'; }, 1000);
+    }
+  }
+  function hideAiError() { var panel = $('pdf-ai-error-panel'); if (panel) panel.classList.remove('is-visible'); clearInterval(retryTimer); pendingChatRetry = null; }
+
+  async function handleChat(retryQuestion) {
+    var input = $('pdf-chat-input'); var question = String(retryQuestion || input.value || '').trim(); if (!question) return;
+    var isRetry = Boolean(retryQuestion); if (!isRetry) { appendChat('user', question); input.value = ''; }
+    var button = $('pdf-chat-send'); button.disabled = true;
+    try {
+      var answer = await requestAi('使用文件內容回答這個問題：' + question + '\n請用 3–7 點條列，並在每一點後標出頁碼。');
+      hideAiError(); appendChat('assistant', answer || 'AI 沒有回傳內容。');
+      try { window.dispatchEvent(new CustomEvent('gugopro:pdf-room-message', { detail: { role: 'user', text: question } })); window.dispatchEvent(new CustomEvent('gugopro:pdf-room-message', { detail: { role: 'assistant', text: answer || 'AI 沒有回傳內容。' } })); } catch (_) {}
+    } catch (error) {
+      if (error.message === 'NO_KEY') showAiError('請先在右上角 ≡ 選單設定 Gemini API key。', false);
+      else if ([503, 429, 500, 'TIMEOUT'].includes(error.status)) showAiError('AI 模型目前忙碌或逾時，系統已依導師架構自動輪替；', true, question);
+      else { showAiError('目前無法完成分析：' + (error.message || '連線失敗。'), false); appendChat('assistant', '目前無法完成分析：' + (error.message || '連線失敗。')); }
+    } finally { button.disabled = false; }
   }
 
   async function handleSummary() {
@@ -823,10 +857,11 @@
   function bindAi() {
     qsa('[data-ai-tab]').forEach(function (button) { button.addEventListener('click', function () { switchAiTab(button.dataset.aiTab); }); });
     qsa('[data-ai-prompt]').forEach(function (button) { button.addEventListener('click', function () { $('pdf-chat-input').value = button.dataset.aiPrompt; $('pdf-chat-input').focus(); }); });
-    $('pdf-chat-send').addEventListener('click', handleChat); $('pdf-chat-input').addEventListener('keydown', function (event) { if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') handleChat(); });
-    $('pdf-summary-run').addEventListener('click', handleSummary); $('pdf-risk-run').addEventListener('click', handleRisk); $('pdf-translate-run').addEventListener('click', handleTranslate); $('pdf-translate-current').addEventListener('click', populateCurrentPageText);
-    $('pdf-open-models').addEventListener('click', openModelDrawer); $('pdf-open-key').addEventListener('click', openKeyModal); $('pdf-key-save').addEventListener('click', handleAiKeySave); $('pdf-model-refresh').addEventListener('click', function () { if (aiEngine) aiEngine.refresh({ silent: false }); });
-    $('pdf-model-close').addEventListener('click', closeModelDrawer); $('pdf-key-close').addEventListener('click', closeKeyModal);
+    $('pdf-chat-send')?.addEventListener('click', handleChat); $('pdf-chat-input')?.addEventListener('keydown', function (event) { if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') handleChat(); });
+    $('pdf-ai-retry')?.addEventListener('click', function () { if (pendingChatRetry) handleChat(pendingChatRetry); });
+    $('pdf-summary-run')?.addEventListener('click', handleSummary); $('pdf-risk-run')?.addEventListener('click', handleRisk); $('pdf-translate-run')?.addEventListener('click', handleTranslate); $('pdf-translate-current')?.addEventListener('click', populateCurrentPageText);
+    $('pdf-open-models')?.addEventListener('click', function () { if (window.GugoProPdfRooms) window.GugoProPdfRooms.openDrawer(true); });
+    $('pdf-model-close')?.addEventListener('click', closeModelDrawer); $('pdf-key-close')?.addEventListener('click', closeKeyModal);
     qsa('.pdf-model-drawer, .pdf-modal').forEach(function (overlay) { overlay.addEventListener('click', function (event) { if (event.target === overlay) overlay.classList.remove('is-open'); }); });
   }
 
@@ -842,6 +877,14 @@
     window.addEventListener('error', function (event) { if (event && event.message && /pdf/i.test(event.message)) setStatus('前端 PDF 模組錯誤：' + event.message, 'error'); });
   }
 
-  window.GugoProPdfSuite = { loadPdf: loadPdf, extractAllText: extractAllText, getState: function () { return state; } };
+  function getSnapshot() {
+    return { file: state.file, pdf: state.pdf, pageOrder: state.pageOrder.slice(), currentPage: state.currentPage, pageRotations: Object.assign({}, state.pageRotations), pageTexts: Object.assign({}, state.pageTexts), textReady: state.textReady, zoom: state.zoom, fitMode: state.fitMode, tool: state.tool, annotations: JSON.parse(JSON.stringify(state.annotations || {})), annotationImages: Object.assign({}, state.annotationImages), signatures: JSON.parse(JSON.stringify(state.signatures || {})), activeSignatureId: state.activeSignatureId, outline: JSON.parse(JSON.stringify(state.outline || {})) };
+  }
+  async function restoreSnapshot(snapshot) {
+    if (!snapshot || !snapshot.pdf) { clearReaderFrame(); setEmptyState(true); return; }
+    state.file = snapshot.file || null; state.pdf = snapshot.pdf; state.pageOrder = Array.isArray(snapshot.pageOrder) ? snapshot.pageOrder.slice() : []; state.currentPage = Number(snapshot.currentPage) || state.pageOrder[0] || 1; state.pageRotations = Object.assign({}, snapshot.pageRotations || {}); state.pageTexts = Object.assign({}, snapshot.pageTexts || {}); state.textReady = Boolean(snapshot.textReady); state.zoom = Number(snapshot.zoom) || .92; state.fitMode = snapshot.fitMode || 'fit-width'; state.tool = snapshot.tool || 'select'; state.annotations = JSON.parse(JSON.stringify(snapshot.annotations || {})); state.annotationImages = Object.assign({}, snapshot.annotationImages || {}); state.signatures = JSON.parse(JSON.stringify(snapshot.signatures || {})); state.activeSignatureId = snapshot.activeSignatureId || null; state.outline = JSON.parse(JSON.stringify(snapshot.outline || []));
+    setEmptyState(false); $('pdf-file-name').textContent = state.file ? state.file.name : 'PDF 文字層備份'; $('pdf-file-meta').textContent = state.pageOrder.length + ' 頁 · 本機房間內容'; $('pdf-total-pages').textContent = state.pageOrder.length; $('pdf-page-count-badge').textContent = state.pageOrder.length + ' 頁'; if ($('pdf-thumb-empty')) $('pdf-thumb-empty').hidden = true; await renderThumbnails(); await renderOutline(); await renderMainPage(); renderNotesPanel();
+  }
+  window.GugoProPdfSuite = { loadPdf: loadPdf, extractAllText: extractAllText, getSnapshot: getSnapshot, restoreSnapshot: restoreSnapshot, clearViewer: function () { if ($('pdf-clear')) $('pdf-clear').click(); }, switchAiTab: switchAiTab, getState: function () { return state; } };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();

@@ -23,7 +23,7 @@
       <div class="pdf-nav-actions">
         <a class="pdf-nav-link" href="../converter-hub.html"><i class="fa-solid fa-grid-2"></i><span>工具 Hub</span></a>
         <a class="pdf-nav-link" href="../../en/tools/pdf/pdf-suite.html"><i class="fa-solid fa-language"></i><span>English</span></a>
-        <button class="pdf-nav-button" type="button" id="pdf-open-key"><i class="fa-solid fa-key"></i><span>設定 AI Key</span></button>
+        <button class="pdf-drawer-trigger" type="button" id="pdf-drawer-open" aria-label="開啟 AI 助手與房間設定"><span aria-hidden="true">≡</span><span class="pdf-drawer-trigger-label">AI / 房間</span></button>
       </div>
     </nav>
   </header>
@@ -100,7 +100,7 @@
           <div class="pdf-empty-state" id="pdf-empty-state">
             <i class="fa-solid fa-file-arrow-up"></i>
             <h2>拖入 PDF，立即開始</h2>
-            <p>支援大型本機 PDF。先從閱讀、縮圖、目錄或標註開始，所有頁面處理都在你的瀏覽器完成。</p>
+            <p>支援大型本機 PDF，所有閱讀與編輯都在瀏覽器完成。</p>
             <div class="pdf-empty-actions"><button class="pdf-action-button primary" type="button" id="pdf-empty-open"><i class="fa-solid fa-folder-open"></i> 選擇檔案</button><span class="pdf-context-note">PDF.js + pdf-lib · 不上傳</span></div>
           </div>
           <div class="pdf-page-frame tool-select" id="pdf-page-frame" hidden></div>
@@ -113,10 +113,13 @@
           <div class="pdf-ai-title"><span class="pdf-ai-orb"><i class="fa-solid fa-sparkles"></i></span><div><strong>GugoPro AI 助手</strong><span>Gemini · 引用頁碼 · 本機文字層</span></div></div>
           <div class="pdf-ai-head-actions"><button class="pdf-mini-button" type="button" id="pdf-open-models"><i class="fa-solid fa-sliders"></i> 模型</button><button class="pdf-mini-button" type="button" id="pdf-ai-close-mobile" aria-label="關閉 AI 面板"><i class="fa-solid fa-xmark"></i></button></div>
         </div>
+
+        <div class="pdf-room-strip"><div><span>目前分析房間</span><strong id="pdf-room-name">一般 PDF 分析</strong></div><button class="pdf-mini-button" type="button" id="pdf-room-new-inline" title="建立新房間"><i class="fa-solid fa-plus"></i> 新房間</button></div>
         <div class="pdf-ai-tabs" role="tablist" aria-label="AI 功能">
           <button class="pdf-ai-tab is-active" type="button" data-ai-tab="chat">ChatPDF</button><button class="pdf-ai-tab" type="button" data-ai-tab="summary">摘要</button><button class="pdf-ai-tab" type="button" data-ai-tab="risk">合約</button><button class="pdf-ai-tab" type="button" data-ai-tab="translate">翻譯</button>
         </div>
         <div class="pdf-ai-body">
+<div class="pdf-ai-error-panel" id="pdf-ai-error-panel" role="status" aria-live="polite"><span id="pdf-ai-error-msg"></span><button type="button" id="pdf-ai-retry">手動重試</button></div>
           <div class="pdf-ai-view" data-ai-view="chat">
             <div class="pdf-ai-scroll" id="pdf-chat-scroll">
               <div class="pdf-ai-welcome"><strong>先問我這份文件</strong><p>我會以文字層回答，並在重點後標註 [第 N 頁]。若是掃描影像 PDF，請先使用 OCR 工具建立文字層。</p><div class="pdf-ai-chips"><button class="pdf-ai-chip" type="button" data-ai-prompt="請用三點摘要這份文件的重點，附上頁碼。">摘要重點</button><button class="pdf-ai-chip" type="button" data-ai-prompt="這份文件有哪些重要日期、金額或期限？">找日期與金額</button><button class="pdf-ai-chip" type="button" data-ai-prompt="請列出文件中的待辦事項與負責對象。">找待辦</button></div></div>
@@ -160,7 +163,10 @@
     </section>
   </main>
 
-  <nav class="pdf-bottom-dock" aria-label="行動版工具列">
+
+
+  <footer class="pdf-compliance-footer"><div><strong>GugoPro AI PDF 全能工作站</strong><span>文件在瀏覽器本機解析，零伺服器儲存；AI 功能只在使用者主動設定 Key 後直接請求 Gemini。</span></div><nav aria-label="合規連結"><a href="../../privacy.html">Privacy Policy</a><a href="../../terms.html">Terms of Service</a><a href="../../disclaimer.html">免責聲明</a><a href="mailto:contact@gugopro.com">contact@gugopro.com</a></nav><small>© 2026 GugoPro. All rights reserved.</small></footer>
+<nav class="pdf-bottom-dock" aria-label="行動版工具列">
     <button class="pdf-dock-button" type="button" data-dock-action="thumbs"><i class="fa-solid fa-grip"></i><span>頁面</span></button><button class="pdf-dock-button" type="button" data-dock-action="tools"><i class="fa-solid fa-sliders"></i><span>工具</span></button><button class="pdf-dock-button" type="button" data-dock-action="signature"><i class="fa-solid fa-signature"></i><span>簽名</span></button><button class="pdf-dock-button" type="button" data-dock-action="ai"><i class="fa-solid fa-sparkles"></i><span>AI</span></button><button class="pdf-dock-button" type="button" id="pdf-dock-open"><i class="fa-solid fa-folder-open"></i><span>開啟</span></button>
   </nav>
 
@@ -171,16 +177,25 @@
     <div class="pdf-modal-card"><div class="pdf-modal-head"><h2 id="signature-modal-title">建立手寫簽名</h2><button class="pdf-close" type="button" data-close-modal="signature-modal" aria-label="關閉"><i class="fa-solid fa-xmark"></i></button></div><p>使用滑鼠或手機手指繪製，也可以上傳透明 PNG 印章。儲存後拖曳到頁面位置。</p><canvas id="signature-pad" width="720" height="220" style="display:block;width:100%;height:auto;border:1px solid #b9c8d4;border-radius:10px;background:#fff;touch-action:none"></canvas><div class="pdf-button-row"><button class="pdf-action-button" type="button" id="signature-clear"><i class="fa-solid fa-eraser"></i> 清除</button><label class="pdf-action-button"><i class="fa-solid fa-upload"></i> 上傳 PNG<input id="signature-upload" type="file" accept="image/png,image/jpeg" hidden></label><button class="pdf-action-button primary" type="button" id="signature-save"><i class="fa-solid fa-check"></i> 放置簽名</button></div></div>
   </div>
 
-  <div class="pdf-modal" id="pdf-key-modal" role="dialog" aria-modal="true" aria-labelledby="pdf-key-title"><div class="pdf-modal-card"><div class="pdf-modal-head"><h2 id="pdf-key-title">設定 Gemini API key</h2><button class="pdf-close" type="button" id="pdf-key-close" aria-label="關閉"><i class="fa-solid fa-xmark"></i></button></div><p>AI 請求從瀏覽器直接送往 Google Gemini。Key 只儲存在本機 localStorage；GugoPro 不會代為上傳或代管。</p><input class="pdf-key-input" id="pdf-key-input" type="password" autocomplete="off" placeholder="AIza…"><div class="pdf-button-row"><button class="pdf-action-button primary" type="button" id="pdf-key-save"><i class="fa-solid fa-floppy-disk"></i> 儲存並載入模型</button></div></div></div>
 
-  <div class="pdf-model-drawer" id="pdf-model-drawer" role="dialog" aria-modal="true" aria-labelledby="pdf-model-title"><div class="pdf-drawer-card"><div class="pdf-drawer-head"><h2 id="pdf-model-title">AI 模型與 Quota</h2><button class="pdf-close" type="button" id="pdf-model-close" aria-label="關閉"><i class="fa-solid fa-xmark"></i></button></div><p>清單由 quota.gugopro.com 動態更新。可關閉模型、選擇優先模型，請求忙碌時引擎會自動 fallback。</p><p class="model-current-status" id="model-current-status">目前使用模型：載入中…</p><p class="global-ai-quota-status" id="global-ai-quota-status" aria-live="polite"></p><p class="global-ai-quota-reset" id="global-ai-quota-reset">配額重置倒數：計算中…</p><div class="global-ai-quota-pill" id="global-ai-quota-pill"><div class="global-ai-quota-item"><span>今日免費用量上限</span><strong id="global-ai-quota-limit">讀取中…</strong></div><div class="global-ai-quota-item"><span>今日已使用量</span><strong id="global-ai-quota-used">讀取中…</strong></div></div><div class="model-options" id="model-options" role="list" aria-label="免費模型清單"></div><p class="model-settings-status" id="model-settings-status">正在讀取模型清單…</p><div class="pdf-button-row"><button class="pdf-action-button" type="button" id="pdf-model-refresh"><i class="fa-solid fa-rotate"></i> 更新模型</button><a class="pdf-action-button" href="https://quota.gugopro.com/" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square"></i> 開啟 Quota</a></div></div></div>
-
+  <div class="pdf-drawer-overlay" id="pdf-drawer-overlay"></div>
+  <aside class="pdf-side-menu" id="pdf-side-menu" aria-label="AI 助手與房間設定" aria-hidden="true">
+    <button class="pdf-drawer-close" type="button" id="pdf-drawer-close" aria-label="關閉選單"><i class="fa-solid fa-xmark"></i></button>
+    <section class="pdf-drawer-section"><div class="pdf-drawer-section-title"><span>PDF 分析房間</span><button class="pdf-drawer-add" type="button" id="pdf-room-new"><i class="fa-solid fa-plus"></i><span>建立新房間</span></button></div><div class="pdf-room-list" id="pdf-room-list" role="list" aria-label="PDF 分析房間清單"></div></section>
+    <section class="pdf-drawer-section"><div class="pdf-drawer-section-title">房間進階操作</div><button class="pdf-drawer-menu-item" type="button" id="pdf-room-export"><i class="fa-solid fa-file-export"></i> 匯出選取房間</button><button class="pdf-drawer-menu-item" type="button" id="pdf-room-export-all"><i class="fa-solid fa-box-archive"></i> 匯出全部房間</button><button class="pdf-drawer-menu-item" type="button" id="pdf-room-import"><i class="fa-solid fa-upload"></i> 匯入房間備份</button><button class="pdf-drawer-menu-item danger" type="button" id="pdf-room-delete"><i class="fa-solid fa-trash-can"></i> 清除或刪除房間</button></section>
+    <section class="pdf-drawer-section pdf-drawer-model-section"><div class="pdf-drawer-section-title"><span>模型設定 / Model Settings</span><button class="pdf-drawer-refresh" type="button" id="pdf-model-refresh" aria-label="重新整理免費模型清單"><i class="fa-solid fa-rotate"></i></button></div><p class="model-settings-status" id="model-settings-status" aria-live="polite">正在讀取模型清單…</p><p class="model-current-status" id="model-current-status" aria-live="polite">目前使用模型：載入中…</p><p class="global-ai-quota-status" id="global-ai-quota-status" aria-live="polite"></p><p class="global-ai-quota-reset" id="global-ai-quota-reset">配額重置倒數：計算中…</p><div class="global-ai-quota-pill" aria-live="polite"><div class="global-ai-quota-item"><span>今日免費用量上限</span><strong id="global-ai-quota-limit">讀取中…</strong></div><div class="global-ai-quota-item"><span>今日已使用量</span><strong id="global-ai-quota-used">讀取中…</strong></div></div><div class="model-options" id="model-options" role="list" aria-label="免費模型清單"></div><p class="pdf-drawer-hint">點擊模型卡片設為首選；Toggle 可獨立停用模型。RPD/RPM 與進度條來自 quota.gugopro.com。</p></section>
+    <section class="pdf-drawer-section pdf-drawer-byok"><div class="pdf-drawer-section-title">自備 Gemini API Key（BYOK）</div><p>Key 只儲存在目前瀏覽器的 localStorage，請勿貼入公開或共用裝置。</p><a class="pdf-drawer-help-link" href="../../tools/tutorials/how-to-get-gemini-api-key.html" target="_blank" rel="noopener">查看 API Key 教學</a><input id="pdf-drawer-api-key" type="password" autocomplete="off" placeholder="貼上您的 Gemini API Key"><button class="pdf-drawer-save-key" type="button" id="pdf-drawer-save-key"><i class="fa-solid fa-key"></i> 儲存並載入模型</button><span class="pdf-drawer-api-status" id="pdf-drawer-api-status" aria-live="polite"></span></section>
+    <section class="pdf-drawer-section pdf-drawer-recommendations"><div class="pdf-drawer-section-title">精選支援</div><a class="pdf-amazon-link" href="https://www.amazon.com/s?k=pdf+document+management+books&tag=9908qq-20" target="_blank" rel="noopener sponsored"><i class="fa-brands fa-amazon"></i> Amazon US · 文件管理書單</a><a class="pdf-amazon-link" href="https://www.amazon.co.jp/s?k=PDF+%E3%83%93%E3%82%B8%E3%83%8D%E3%82%B9%E6%9B%B8%E7%B1%8D&tag=gugopro-22" target="_blank" rel="noopener sponsored"><i class="fa-brands fa-amazon"></i> Amazon JP · PDF 工作書單</a><a class="pdf-kofi-link" href="https://ko-fi.com/R1K123XRS9" target="_blank" rel="noopener sponsored"><i class="fa-solid fa-mug-hot"></i> 支持 GugoPro · Ko-fi</a></section>
+    <section class="pdf-drawer-contact"><div class="pdf-drawer-contact-links"><a href="../../contact.html">聯絡我們</a><a href="mailto:contact@gugopro.com">contact@gugopro.com</a></div><div class="pdf-drawer-contact-links"><a href="../../privacy.html">Privacy Policy</a><span>·</span><a href="../../terms.html">Terms of Service</a></div><p>文件與 AI 分析採本機優先設計；AI 回答僅供文件閱讀輔助，不構成法律意見。</p><small>© 2026 GugoPro. All rights reserved.</small></section>
+  </aside>
+  <div class="pdf-modal" id="pdf-room-ops-modal" role="dialog" aria-modal="true" aria-labelledby="pdf-room-ops-title"><div class="pdf-modal-card"><div class="pdf-modal-head"><h2 id="pdf-room-ops-title">房間操作</h2><button class="pdf-close" type="button" data-close-modal="pdf-room-ops-modal" aria-label="關閉"><i class="fa-solid fa-xmark"></i></button></div><p id="pdf-room-ops-desc">請選擇要操作的房間。</p><div class="pdf-room-ops-list" id="pdf-room-ops-list"></div><div class="pdf-button-row"><button class="pdf-action-button primary" type="button" id="pdf-room-ops-confirm">確認執行</button><button class="pdf-action-button" type="button" data-close-modal="pdf-room-ops-modal">取消</button></div></div></div><input id="pdf-room-import-input" type="file" accept="application/json,.json" hidden>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="../../js/global-ai-quota.js"></script>
   <script src="../../js/unified-ai-model-engine.js"></script>
   <script src="pdf-suite.js"></script>
+  <script src="pdf-suite-rooms.js"></script>
   <script>
     (function(){
       document.getElementById('pdf-empty-open').addEventListener('click', function(){ document.getElementById('pdf-file-input').click(); });
