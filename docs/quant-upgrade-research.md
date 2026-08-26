@@ -69,3 +69,7 @@ Phase 2 的真實公開 fixture 是 FRED 官方 `fredgraph.csv` 的 `SP500` 序�
 新增公開頁 `academy/research/quant-lab.html` 與 `quant-lab.js`。頁面預設只讀取版本庫 fixture，也支援使用者選擇本機 FRED-style CSV；本機檔案不會上傳。畫面明示 dataset、snapshot、as-of、source adjustment、缺漏 counts、feature values、成本／執行／benchmark contract、held-out split、equity curve 與限制；讀取或參數驗證失敗會清空結果。`academy/research/index.html`、首頁 quant research section 與 sitemap 皆有唯一工作台入口，生成器 `build_quant_upgrade.py` 已加入冪等補入邏輯。
 
 本地 QA 首次發現瀏覽器 runtime 未攜帶頂層 `snapshotId`；修正後預設 fixture 成功渲染 `研究完成`、261／251／10、231 trainable labels、4 windows、平均超額 `-1.01%` 與完整表格／曲線，且沒有 console error。後續驗證還會涵蓋 invalid CSV、insufficient rows、參數關係、390px RWD、既有研究頁與 Academy 首頁 link parity。
+
+## Phase 2 production evidence（a185637，2026-08-26）
+
+GitHub Pages run `32975986090` 對 commit `a185637ab828d4c046cc69c98b716a22adb95584` 完成成功。正式工作台 `https://gugopro.com/academy/research/quant-lab.html?qa=a185637` 成功載入並執行預設 fixture；DOM 顯示 `研究完成`、snapshot `sha256:60a9cfa243bcf1a4ded04b59a43aac6cc0b9e74a4cd1c0e65473e78d1e532369`、as-of `2025-08-26 → 2026-08-25`、261／251／10 source counts、231 trainable labels、4 held-out windows 與平均超額 `-1.01%`。正式研究索引保留四個未啟用 source cards、三個 unavailable dataset cards 與唯一 Phase 2 link；正式 Academy 首頁保留 22 個課程、14 個工具與唯一 quant-lab link。正式頁 console view 無錯誤輸出；390×844 headless screenshot 的初始窄版頁面無水平裁切。這些結果仍只是單一約一年 fixture 的 baseline 描述，沒有推廣模型、即時資料或交易指示。
