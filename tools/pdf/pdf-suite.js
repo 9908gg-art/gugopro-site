@@ -126,9 +126,11 @@
   function setEmptyState(isEmpty) {
     var empty = $('pdf-empty-state');
     var frame = $('pdf-page-frame');
+    var stack = $('pdf-continuous-stack');
     var shell = $('pdf-app-shell');
     if (empty) { empty.hidden = !isEmpty; empty.style.display = isEmpty ? 'grid' : 'none'; }
     if (frame) { frame.hidden = isEmpty; frame.style.display = isEmpty ? 'none' : 'inline-block'; }
+    if (stack) { stack.hidden = isEmpty || !isMobileReader(); stack.style.display = isEmpty ? 'none' : (isMobileReader() ? 'flex' : 'none'); }
     if (shell) shell.classList.toggle('is-document-loaded', !isEmpty);
     if (document.body) document.body.classList.toggle('pdf-document-loaded', !isEmpty);
   }
