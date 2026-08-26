@@ -432,6 +432,13 @@
         .model-option-name { color: var(--text-main); font-size: 0.82rem; font-weight: 700; overflow-wrap: anywhere; }
         .model-score { color: #fcd34d; font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
         .model-option-quota { color: var(--text-dim); font-size: 0.68rem; line-height: 1.35; margin-top: 4px; }
+        .model-quota-meters { display: grid; gap: 5px; margin-top: 7px; }
+        .model-quota-row { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; align-items: center; gap: 6px; color: var(--text-dim); font-size: 0.62rem; }
+        .model-quota-label { color: #a5f3fc; font-weight: 700; }
+        .model-quota-track { height: 5px; overflow: hidden; border-radius: 999px; background: rgba(148,163,184,0.22); }
+        .model-quota-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--primary-neon), var(--secondary-neon)); transition: width 0.25s ease; }
+        .model-quota-fill.is-exhausted { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+        .model-quota-value { min-width: 62px; color: #cbd5e1; text-align: right; white-space: nowrap; }
         .model-busy-badge { display: inline-flex; align-items: center; gap: 4px; margin-top: 5px; padding: 2px 6px; border: 1px solid rgba(251, 146, 60, 0.52); border-radius: 999px; color: #fed7aa; background: rgba(194, 65, 12, 0.22); font-size: 0.66rem; line-height: 1.3; }
         .model-quota-exhausted { border-color: rgba(250, 204, 21, 0.52); color: #fef08a; background: rgba(161, 98, 7, 0.22); }
         .drawer-contact-section { margin-top: 4px; padding: 12px 16px 18px; border-top: 1px solid rgba(255,255,255,0.08); color: var(--text-dim); font-size: 0.68rem; line-height: 1.55; text-align: center; }
@@ -751,6 +758,16 @@
             margin-left: 0;
         }
 
+        .markdown-line { margin: 0 0 8px; }
+        .markdown-line:last-child { margin-bottom: 0; }
+        .markdown-table-wrap { width: 100%; overflow-x: auto; margin: 8px 0 2px; border: 1px solid rgba(255,255,255,0.14); border-radius: 10px; }
+        .markdown-table { width: 100%; min-width: 360px; border-collapse: collapse; font-size: 0.82rem; }
+        .markdown-table th, .markdown-table td { padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.12); text-align: left; vertical-align: top; }
+        .markdown-table th { color: var(--primary-neon); background: rgba(0,242,255,0.07); font-weight: 700; }
+        .markdown-table tr:last-child td { border-bottom: 0; }
+        .msg-learning code { color: #fcd34d; background: rgba(0,0,0,0.26); padding: 1px 4px; border-radius: 4px; }
+        .msg-learning a { color: #67e8f9; text-decoration: underline; }
+
         .hidden { display: none !important; }
 
         /* Room Ops Modal Specific */
@@ -879,6 +896,25 @@
             .btn-add-classroom i { font-size: 1.28rem; }
         }
 
+        /* Android safe-area insets: preserve touch targets above status/navigation bars. */
+        header {
+            padding-top: max(12px, calc(12px + env(safe-area-inset-top, 0px)));
+        }
+        .menu-close {
+            top: max(15px, calc(15px + env(safe-area-inset-top, 0px)));
+        }
+        .side-menu {
+            padding-top: max(60px, calc(60px + env(safe-area-inset-top, 0px)));
+            padding-bottom: max(20px, calc(20px + env(safe-area-inset-bottom, 0px)));
+        }
+        .bottom-controls {
+            padding-bottom: max(20px, calc(20px + env(safe-area-inset-bottom, 0px)));
+        }
+        .modal-content {
+            margin-top: env(safe-area-inset-top, 0px);
+            margin-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
         /* Custom Learning Materials */
         .web-only-nav { display: flex; align-items: center; gap: 6px; color: var(--text-main); text-decoration: none; font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
         .web-only-nav:hover { color: var(--primary-neon); }
@@ -894,8 +930,8 @@
         .material-paste { width: 100%; min-height: 120px; resize: vertical; padding: 12px; border: 1px solid var(--glass-border); border-radius: 12px; background: rgba(0,0,0,0.3); color: var(--text-main); font: 0.85rem/1.55 'Inter', 'Noto Sans TC', sans-serif; }
         .material-meta { color: var(--text-dim); font-size: 0.78rem; line-height: 1.45; margin-bottom: 10px; }
         .material-file-note { color: var(--text-dim); font-size: 0.75rem; line-height: 1.45; margin: 8px 0 12px; }
-
-        /* GugoPro Tutor Experience v2 */
+    
+                /* GugoPro Tutor Experience v2 */
         :root {
             --tutor-bubble: rgba(14, 165, 233, 0.11);
             --tutor-bubble-border: rgba(14, 165, 233, 0.30);
@@ -1088,8 +1124,6 @@
     .vocab-popover button { min-height: 32px; }
 }
 </style>
-
-
 
 
 <style id="gugo-dual-stt-pronunciation-style">
@@ -1501,6 +1535,7 @@ html, body { background: #0A0B10 !important; }
             <div class="menu-title">全域設定</div>
             <button id="btn-config" class="menu-item"><i class="fa-solid fa-key"></i> 變更 Gemini API Key</button>
         </div>
+
         <div class="menu-section">
             <a href="https://gugopro.com" target="_blank" rel="noopener" class="menu-item"><i class="fa-solid fa-globe"></i> 前往 GugoPro 官網</a>
         </div>
@@ -1693,6 +1728,57 @@ html, body { background: #0A0B10 !important; }
             'hi-IN': 'हिन्दी', 'ms-MY': 'Bahasa Melayu', 'nl-NL': 'Nederlands',
             'pl-PL': 'Polski', 'tr-TR': 'Türkçe'
         };
+
+        // --- Safe Markdown renderer (including responsive tables) ---
+        function escapeTutorHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
+        }
+
+        function renderTutorInlineMarkdown(value) {
+            return escapeTutorHtml(value)
+                .replace(/`([^`]+)`/g, '<code>$1</code>')
+                .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+                .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+        }
+
+        function isTutorTableSeparator(line) {
+            return /^\s*\|?\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(String(line || ''));
+        }
+
+        function tutorTableCells(line) {
+            const trimmed = String(line || '').trim().replace(/^\|/, '').replace(/\|$/, '');
+            return trimmed.split('|').map(cell => cell.trim());
+        }
+
+        function renderTutorMarkdown(value) {
+            const source = String(value ?? '');
+            if (!source.trim()) return '';
+            const lines = source.split(/\r?\n/);
+            const output = [];
+            for (let index = 0; index < lines.length; index += 1) {
+                const line = lines[index];
+                if (line.includes('|') && isTutorTableSeparator(lines[index + 1])) {
+                    const header = tutorTableCells(line);
+                    const rows = [];
+                    index += 2;
+                    while (index < lines.length && lines[index].includes('|') && lines[index].trim()) {
+                        rows.push(tutorTableCells(lines[index]));
+                        index += 1;
+                    }
+                    index -= 1;
+                    output.push(`<div class="markdown-table-wrap"><table class="markdown-table"><thead><tr>${header.map(cell => `<th>${renderTutorInlineMarkdown(cell)}</th>`).join('')}</tr></thead><tbody>${rows.map(row => `<tr>${header.map((_, cellIndex) => `<td>${renderTutorInlineMarkdown(row[cellIndex] || '')}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`);
+                    continue;
+                }
+                if (!line.trim()) { output.push('<br>'); continue; }
+                if (/^###\s+/.test(line)) { output.push(`<h5>${renderTutorInlineMarkdown(line.replace(/^###\s+/, ''))}</h5>`); continue; }
+                if (/^##\s+/.test(line)) { output.push(`<h4>${renderTutorInlineMarkdown(line.replace(/^##\s+/, ''))}</h4>`); continue; }
+                if (/^#\s+/.test(line)) { output.push(`<h3>${renderTutorInlineMarkdown(line.replace(/^#\s+/, ''))}</h3>`); continue; }
+                if (/^[-*]\s+/.test(line)) { output.push(`<p class="markdown-line">• ${renderTutorInlineMarkdown(line.replace(/^[-*]\s+/, ''))}</p>`); continue; }
+                output.push(`<p class="markdown-line">${renderTutorInlineMarkdown(line)}</p>`);
+            }
+            return output.join('');
+        }
 
         const isNativeApp = Boolean(window.Capacitor?.isNativePlatform?.());
         document.documentElement.classList.toggle('native-platform', isNativeApp);
@@ -1951,6 +2037,12 @@ html, body { background: #0A0B10 !important; }
                 display_name: String(model.display_name || name),
                 score: Number.isFinite(Number(model.model_score)) ? Number(model.model_score) : 0,
                 dailyQuota: getModelDailyQuota(model),
+                rpd: String(model.rpd || ''),
+                rpdCurrent: parseQuotaMetric(model.rpd_current) ?? 0,
+                rpdLimit: parseQuotaMetric(model.rpd_limit) ?? getModelDailyQuota(model),
+                rpm: String(model.rpm || ''),
+                rpmCurrent: parseQuotaMetric(model.rpm_current) ?? 0,
+                rpmLimit: parseQuotaMetric(model.rpm_limit),
                 category: String(model.category || ''),
                 fine_category: String(model.fine_category || ''),
                 fine_category_name_zh: String(model.fine_category_name_zh || ''),
@@ -1971,6 +2063,10 @@ html, body { background: #0A0B10 !important; }
                         ...model,
                         categoryLabels: model.category ? [model.category] : [],
                         dailyQuota: model.dailyQuota || 0,
+                        rpdCurrent: model.rpdCurrent || 0,
+                        rpdLimit: model.rpdLimit ?? model.dailyQuota ?? 0,
+                        rpmCurrent: model.rpmCurrent || 0,
+                        rpmLimit: model.rpmLimit ?? null,
                         fineCategoryLabels: model.fine_category_name_zh ? [model.fine_category_name_zh] : [],
                         capabilities: [...model.capabilities]
                     });
@@ -1978,6 +2074,10 @@ html, body { background: #0A0B10 !important; }
                 }
                 existing.score = Math.max(existing.score, model.score);
                 existing.dailyQuota = Math.max(existing.dailyQuota || 0, model.dailyQuota || 0);
+                existing.rpdCurrent = Math.max(existing.rpdCurrent || 0, model.rpdCurrent || 0);
+                existing.rpdLimit = Math.max(existing.rpdLimit || 0, model.rpdLimit || 0);
+                existing.rpmCurrent = Math.max(existing.rpmCurrent || 0, model.rpmCurrent || 0);
+                if (model.rpmLimit !== null && model.rpmLimit !== undefined) existing.rpmLimit = Math.max(existing.rpmLimit || 0, model.rpmLimit);
                 existing.is_verified_live = existing.is_verified_live || model.is_verified_live;
                 if (!existing.display_name || existing.display_name === existing.api_name) existing.display_name = model.display_name;
                 if (model.category && !existing.categoryLabels.includes(model.category)) existing.categoryLabels.push(model.category);
@@ -2009,6 +2109,69 @@ html, body { background: #0A0B10 !important; }
             if (!tracker || !apiName) return 0;
             if (typeof tracker.getModelUsage === 'function') return tracker.getModelUsage(apiName);
             return tracker.getSnapshot?.().modelUsage?.[apiName] || 0;
+        }
+
+        function parseQuotaMetric(value) {
+            const match = String(value ?? '').replace(/,/g, '').match(/-?\d+(?:\.\d+)?/);
+            const number = Number(match ? match[0] : NaN);
+            return Number.isFinite(number) ? number : null;
+        }
+
+        const MODEL_RPM_USAGE_KEY = 'gugopro_ai_tutor_rpm_usage_v1';
+
+        function getLocalRPMUsage(apiName) {
+            const now = Date.now();
+            try {
+                const state = JSON.parse(localStorage.getItem(MODEL_RPM_USAGE_KEY) || '{}');
+                const recent = Array.isArray(state?.[apiName]) ? state[apiName].filter(timestamp => now - Number(timestamp) < 60000) : [];
+                state[apiName] = recent;
+                localStorage.setItem(MODEL_RPM_USAGE_KEY, JSON.stringify(state));
+                return recent.length;
+            } catch (_) {
+                return 0;
+            }
+        }
+
+        function recordLocalRPMUsage(apiName) {
+            if (!apiName) return;
+            const now = Date.now();
+            try {
+                const state = JSON.parse(localStorage.getItem(MODEL_RPM_USAGE_KEY) || '{}');
+                const recent = Array.isArray(state?.[apiName]) ? state[apiName].filter(timestamp => now - Number(timestamp) < 60000) : [];
+                recent.push(now);
+                state[apiName] = recent.slice(-120);
+                localStorage.setItem(MODEL_RPM_USAGE_KEY, JSON.stringify(state));
+            } catch (_) { /* local quota meter is best-effort only */ }
+        }
+
+        function getModelQuotaMetric(model, prefix, localUsed = 0) {
+            if (!model) return null;
+            const currentValue = parseQuotaMetric(model[`${prefix}Current`]);
+            const limitValue = parseQuotaMetric(model[`${prefix}Limit`]);
+            const current = Math.max(0, Number(currentValue ?? 0), Number(localUsed || 0));
+            const limit = limitValue === null || limitValue < 0 ? null : Math.max(0, limitValue);
+            if (limit === null && current === 0 && !String(model[prefix] || '').trim()) return null;
+            return { current, limit };
+        }
+
+        function appendModelQuotaMeter(parent, model, prefix, localUsed = 0) {
+            const metric = getModelQuotaMetric(model, prefix, localUsed);
+            if (!metric) return;
+            const row = document.createElement('div');
+            row.className = 'model-quota-row';
+            appendModelText(row, 'span', 'model-quota-label', prefix.toUpperCase());
+            const track = document.createElement('div');
+            track.className = 'model-quota-track';
+            const fill = document.createElement('div');
+            fill.className = 'model-quota-fill';
+            const percent = metric.limit && metric.limit > 0 ? Math.min(100, (metric.current / metric.limit) * 100) : 0;
+            fill.style.width = `${percent}%`;
+            if (metric.limit !== null && metric.current >= metric.limit) fill.classList.add('is-exhausted');
+            track.appendChild(fill);
+            row.appendChild(track);
+            const limitLabel = metric.limit === null ? '不限額' : metric.limit;
+            appendModelText(row, 'span', 'model-quota-value', `${metric.current} / ${limitLabel}`);
+            parent.appendChild(row);
         }
 
         function setModelBusyStatus(apiName, status) {
@@ -2061,6 +2224,11 @@ html, body { background: #0A0B10 !important; }
             const modelUsed = getModelUsageCount(value);
             const modelQuota = Number(model.dailyQuota || 0);
             appendModelText(body, 'div', 'model-option-quota', `每日上限：${modelQuota} 次 · 今日已用：${modelUsed} 次`);
+            const quotaMeters = document.createElement('div');
+            quotaMeters.className = 'model-quota-meters';
+            appendModelQuotaMeter(quotaMeters, model, 'rpd', modelUsed);
+            appendModelQuotaMeter(quotaMeters, model, 'rpm', getLocalRPMUsage(value));
+            if (quotaMeters.childElementCount > 0) body.appendChild(quotaMeters);
             if (modelQuota > 0 && modelUsed >= modelQuota) {
                 appendModelText(body, 'div', 'model-busy-badge model-quota-exhausted', '⚠️ 今日額度已用完');
             }
@@ -2783,10 +2951,11 @@ html, body { background: #0A0B10 !important; }
 
                 const userMsgEl = document.querySelector(`[data-id="${msgId}"]`);
                 if (userMsgEl) {
-                    userMsgEl.querySelector('.msg-learning').textContent = response.user_learning;
-                    userMsgEl.querySelector('.msg-learning').dataset.rawText = response.user_learning;
-                    userMsgEl.querySelector('.msg-learning').dataset.rawText = response.user_learning;
-                    userMsgEl.querySelector('.msg-learning').dataset.rawText = response.user_learning;
+                    const learningElement = userMsgEl.querySelector('.msg-learning');
+                    if (learningElement) {
+                        learningElement.dataset.rawText = String(response.user_learning || '');
+                        learningElement.innerHTML = renderTutorMarkdown(response.user_learning);
+                    }
                     userMsgEl.querySelector('.msg-my').textContent = response.user_my;
                 }
 
@@ -2897,6 +3066,7 @@ html, body { background: #0A0B10 !important; }
             for (let modelIndex = 0; modelIndex < candidateModels.length; modelIndex++) {
                 const modelName = candidateModels[modelIndex];
                 attemptedModels.push(modelName);
+                recordLocalRPMUsage(modelName);
                 currentModelIndex = modelIndex;
                 currentModel = modelName;
                 renderModelOptions();
@@ -2968,14 +3138,21 @@ html, body { background: #0A0B10 !important; }
             const messageSpeechLang = speechLang || activeRoom?.language?.learning || document.getElementById('target-lang')?.value || 'en-US';
             div.dataset.speechLang = messageSpeechLang;
             div.innerHTML = `
-                <div class="msg-learning">${learning}</div>
-                <div class="msg-my">${my}</div>
+                <div class="msg-learning"></div>
+                <div class="msg-my"></div>
                 <div class="msg-actions">
                     <button class="btn-msg-action" onclick="speakMessage(this)" aria-label="朗讀 AI 訊息" title="朗讀 AI 訊息"><i class="fa-solid fa-volume-high"></i></button>
                     ${role === 'tutor' ? '<button class="btn-msg-action btn-msg-stop" onclick="return stopMessageSpeech(this)" aria-label="停止語音朗讀" title="停止語音朗讀" disabled><i class="fa-solid fa-stop"></i></button>' : ''}
                     <button class="btn-msg-action btn-msg-delete" onclick="deleteMessage('${id}')" aria-label="刪除訊息" title="刪除訊息"><i class="fa-solid fa-trash-can"></i></button>
                 </div>
             `;
+            const learningElement = div.querySelector('.msg-learning');
+            const myElement = div.querySelector('.msg-my');
+            if (learningElement) {
+                learningElement.dataset.rawText = String(learning || '');
+                learningElement.innerHTML = renderTutorMarkdown(learning);
+            }
+            if (myElement) myElement.textContent = String(my || '');
             if (pronunciation && role === 'user') {
                 const score = typeof pronunciation === 'object' ? pronunciation : null;
                 if (score && typeof window.GugoRenderPronunciationScore === 'function') {
@@ -3344,7 +3521,10 @@ html, body { background: #0A0B10 !important; }
 
         function restoreSpeechText(messageRoot) {
             const element = messageRoot?.querySelector('.msg-learning');
-            if (element) element.replaceChildren(document.createTextNode(element.textContent));
+            if (element) {
+                const originalText = element.dataset.rawText || element.textContent;
+                element.innerHTML = renderTutorMarkdown(originalText);
+            }
         }
 
         function resetSpeechVisuals() {
@@ -3437,13 +3617,63 @@ html, body { background: #0A0B10 !important; }
         }
 
         async function speak(text, langCode, messageRoot = null) {
-            if (!window.speechSynthesis || typeof SpeechSynthesisUtterance === 'undefined') return;
+            const nativeTts = window.GugoProNativeSpeech?.isNativeTtsAvailable?.() ? window.GugoProNativeSpeech : null;
+            if (!nativeTts && (!window.speechSynthesis || typeof SpeechSynthesisUtterance === 'undefined')) return;
             stopSpeech();
             const sessionId = speechSessionId;
             const source = String(text || '');
             const root = messageRoot || null;
             const locale = resolveSpeechLocale(langCode);
             if (root) renderSpeechText(root, source, langCode);
+
+            if (nativeTts) {
+                const sentenceMode = /^(?:ja|zh|ko)(?:-|$)/i.test(locale);
+                const renderedWords = root ? [...root.querySelectorAll('.speaking-word')] : [];
+                const renderedSentences = root ? [...root.querySelectorAll('.tts-sentence')] : [];
+                const session = {
+                    id: sessionId, root, text: source, lastBoundaryIndex: -1, pendingBoundaryIndex: null,
+                    activeElement: null, boundarySeen: false, lastBoundaryAt: null, fallbackStartedAt: performance.now(),
+                    fallbackDuration: 0, mode: sentenceMode ? 'sentence' : 'word', words: renderedWords, sentences: renderedSentences
+                };
+                activeSpeechSession = session;
+                setTtsButtonState(root, true);
+                if (root) {
+                    const firstElement = sentenceMode ? renderedSentences[0] : renderedWords[0];
+                    if (firstElement) {
+                        firstElement.classList.add(sentenceMode ? 'tts-active-sentence' : 'tts-active-word');
+                        session.activeElement = firstElement;
+                    }
+                    queueSpeechBoundary(session, 0);
+                    if (!sentenceMode) startSpeechWordFallback(session);
+                }
+                const nativeResult = await nativeTts.speak(source, locale, {
+                    onStart: () => {
+                        if (activeSpeechSession?.id === sessionId) {
+                            session.fallbackStartedAt = performance.now();
+                            session.boundarySeen = false;
+                            session.lastBoundaryAt = null;
+                        }
+                    },
+                    onBoundary: (start) => {
+                        if (!activeSpeechSession || activeSpeechSession.id !== sessionId) return;
+                        session.boundarySeen = true;
+                        session.lastBoundaryAt = performance.now();
+                        if (session.mode === 'sentence') applySpeechBoundary(session, start);
+                        else queueSpeechBoundary(session, start);
+                    },
+                    onEnd: () => finishSpeechSession(sessionId),
+                    onError: (error) => {
+                        console.warn('Native TTS Error:', error);
+                        finishSpeechSession(sessionId);
+                        showSpeechVoiceUnavailable(locale);
+                    }
+                });
+                if (!nativeResult?.spoken && activeSpeechSession?.id === sessionId) {
+                    finishSpeechSession(sessionId);
+                    showSpeechVoiceUnavailable(locale);
+                }
+                return;
+            }
 
             const mobileEnvironment = isLikelyMobileSpeechEnvironment();
             const mobileVoice = mobileEnvironment ? getSpeechVoice(locale) : null;
@@ -3635,6 +3865,8 @@ html, body { background: #0A0B10 !important; }
         document.getElementById('btn-retry-model').onclick = handleManualRetry;
         document.getElementById('btn-send').onclick = sendMessage;
         document.getElementById('user-text').onkeydown = (e) => { if(e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); sendMessage(); } };
+    
+
 
 
 
@@ -4695,8 +4927,6 @@ html, body { background: #0A0B10 !important; }
     else initialize();
 })();
 </script>
-
-
 
 
 <script id="gugo-dual-stt-pronunciation-js">
