@@ -49,3 +49,7 @@ After review, the Kelly tool was changed to start with blank user-specific field
 - 最終本地研究頁回歸（`phase1-final-local`）：桌面 DOM 顯示 `已載入本地契約`、registry/catalog 皆為 1.0.0、4 個 source cards、3 個 dataset cards、3 個 `尚未啟用` quality badges、4 個官方來源連結、Console errors=[]；desktop scrollWidth=1265、viewport=1280。
 - 研究頁同源 390px iframe 回歸：clientWidth=375、scrollWidth=375、4 個 source cards、3 個 dataset cards、`已載入本地契約`、3 個 unavailable badges。
 - 最終 Academy 首頁回歸：`#quant-lab` 唯一存在，`href="research/"` 研究層入口在量化研究區段出現一次，仍有 22 個課程章節與 14 個工具；新增入口卡片文字為「公開資料研究層／來源登錄、資料契約、快照 hash、as-of 與品質狀態」。
+
+## Phase 0–1 研究層正式站回歸（2026-08-26）
+
+GitHub Pages run `32971531128` 對 commit `1fb70ab169baeb64d01175d5db5109af332aa7f4` 建置與 deploy 均成功。正式網址為 `https://gugopro.com/academy/research/index.html?qa=1fb70ab`。Browser DOM 回報 title 正確、catalog status 為「已載入本地契約」、registry／catalog 版本皆為 1.0.0、4 個 source cards、3 個 dataset cards、3 個 unavailable badges、4 個官方來源連結、desktop scrollWidth=1265／viewport=1280，Console errors=[]。資料目錄只顯示 metadata 與未啟用狀態，未把任何尚未取得的數值渲染成觀測值。
