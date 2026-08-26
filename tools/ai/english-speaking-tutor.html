@@ -1167,6 +1167,10 @@
 
 
 
+
+
+
+
 <style id="gugo-capsule-dock-style">
 /* GugoPro Gemini-style capsule composer */
 .bottom-controls {
@@ -1174,11 +1178,20 @@
     background: transparent !important;
 }
 .input-wrapper { width: min(100%, 980px); margin: 0 auto; }
+.capsule-composer-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 7px;
+    width: min(100%, 1120px);
+    margin: 0 auto;
+}
 .main-input-group.dual-stt-composer.capsule-dock {
     display: flex !important;
     align-items: flex-end;
     gap: 7px;
-    width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
+    width: auto;
     padding: 6px 8px;
     border: 1px solid rgba(255,255,255,.14) !important;
     border-radius: 30px !important;
@@ -1255,7 +1268,7 @@
 .capsule-voice-button.native-speech .capsule-mic-badge { background: #537ca4; }
 .capsule-voice-button.recording { background: rgba(255,193,7,.2) !important; box-shadow: 0 0 0 4px rgba(255,193,7,.13); }
 .capsule-voice-button.recording .capsule-mic-badge { background: #ffd54f; color: #211900; }
-.capsule-dock.capsule-dock-expanded .capsule-voice-button { display: none !important; }
+.capsule-composer-row.capsule-composer-expanded .capsule-voice-button { display: none !important; }
 .capsule-dock.capsule-dock-expanded { border-radius: 22px !important; }
 .capsule-actions { display: flex; align-items: center; gap: 3px; flex: 0 0 auto; }
 .capsule-actions .btn-circle { flex: 0 0 38px; width: 38px !important; min-width: 38px !important; height: 38px !important; min-height: 38px !important; }
@@ -1270,6 +1283,7 @@
 .capsule-speech-mode-description { display: block; margin-top: 7px; color: var(--text-dim); font-size: .72rem; line-height: 1.4; }
 @media (max-width: 640px) {
     .bottom-controls { padding-left: 8px; padding-right: 8px; }
+    .capsule-composer-row { gap: 4px; width: 100%; }
     .main-input-group.dual-stt-composer.capsule-dock { gap: 4px; padding: 5px 6px; border-radius: 26px !important; }
     .capsule-voice-button { flex-basis: 64px; width: 64px !important; min-width: 64px !important; height: 64px !important; min-height: 64px !important; }
     .capsule-voice-button .speech-button-language { font-size: 34px !important; }
@@ -1277,7 +1291,6 @@
     .capsule-actions { gap: 6px; }
     .capsule-actions .btn-circle { flex-basis: 40px; width: 40px !important; min-width: 40px !important; height: 40px !important; min-height: 40px !important; }
     .capsule-dock #user-text { padding: 8px 2px; max-height: 142px; }
-    .capsule-dock > .capsule-voice-button { flex-basis: 64px; width: 64px !important; min-width: 64px !important; height: 64px !important; min-height: 64px !important; }
 }
 </style>
 </head>
@@ -1387,20 +1400,20 @@
                 </div>
 
 
-                <div class="main-input-group dual-stt-composer capsule-dock">
+                <div class="capsule-composer-row">
                     <button id="btn-mic" class="btn-circle btn-mic dual-speech-button capsule-voice-button learning-speech" type="button" aria-label="學習語言發話與發音評分">
                         <span id="learning-speech-label" class="speech-button-language">🇬🇧</span><span class="capsule-mic-badge"><i class="fa-solid fa-microphone"></i></span>
                     </button>
-                    <textarea id="user-text" rows="1" maxlength="8000" placeholder="輸入訊息或說話… (Enter 送出)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" data-lpignore="true"></textarea>
+                    <div class="main-input-group dual-stt-composer capsule-dock">
+                        <textarea id="user-text" rows="1" maxlength="8000" placeholder="輸入訊息或說話… (Enter 送出)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" data-lpignore="true"></textarea>
+                        <div class="capsule-actions" aria-label="發送與附加">
+                            <button id="btn-send" class="btn-circle btn-send" type="button" aria-label="發送"><i class="fa-solid fa-paper-plane"></i></button>
+                            <button id="btn-material-import-inline" class="btn-circle btn-material" type="button" title="導入學習教材" aria-label="導入學習教材"><i class="fa-solid fa-paperclip"></i></button>
+                        </div>
+                    </div>
                     <button id="btn-mic-my" class="btn-circle dual-speech-button capsule-voice-button native-speech" type="button" aria-label="母語提問，不進行發音評分">
                         <span id="native-speech-label" class="speech-button-language">🇹🇼</span><span class="capsule-mic-badge"><i class="fa-solid fa-microphone"></i></span>
                     </button>
-                    <div class="capsule-actions" aria-label="附加與發送">
-                        <button id="btn-material-import-inline" class="btn-circle btn-material" type="button" title="導入學習教材" aria-label="導入學習教材"><i class="fa-solid fa-paperclip"></i></button>
-                        <button id="btn-send" class="btn-circle btn-send" type="button" aria-label="發送"><i class="fa-solid fa-paper-plane"></i></button>
-                    </div>
-                </div>
-                </div>
                 </div>
             </div>
         </div>
@@ -1619,8 +1632,6 @@
         let isSendingMessage = false;
         let recognition = null;
         let isRecording = false;
-        let baseText = '';
-        let textAfterCursor = '';
 
         const LANG_NAMES = {
             'zh-TW': '繁體中文', 'zh-CN': '简体中文', 'en-US': 'English',
@@ -1640,7 +1651,6 @@
             initChatSystem();
             initMaterialEngine();
             checkApiKey();
-            initSpeechRecognition();
             initLangPanel();
             renderModelOptions();
             renderGlobalAIQuota();
@@ -2127,7 +2137,7 @@
         }
 
         function checkApiKey() {
-            if (!getGeminiApiKey()) {
+            if (!getGeminiApiKey() && !window.__gugoApiModalDismissedByBack) {
                 document.getElementById('modal-api').style.display = 'flex';
             }
         }
@@ -2525,6 +2535,7 @@
         document.getElementById('btn-refresh-models').onclick = () => fetchLatestModel({ silent: false });
 
         document.getElementById('btn-config').onclick = () => {
+            window.__gugoApiModalDismissedByBack = false;
             document.getElementById('api-key-input').value = getGeminiApiKey();
             document.getElementById('modal-api').style.display = 'flex';
             closeMenu();
@@ -2967,69 +2978,7 @@
             });
         }
 
-        // --- Speech Recognition (Native Web Speech API) ---
-        function initSpeechRecognition() {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRecognition) {
-                console.warn("Speech Recognition API not supported in this browser.");
-                return;
-            }
-            recognition = new SpeechRecognition();
-            recognition.continuous = true;
-            recognition.interimResults = true;
-            
-            recognition.onstart = () => {
-                isRecording = true;
-                document.getElementById('btn-mic').classList.add('recording');
-                baseText = document.getElementById('user-text').value;
-                
-                const input = document.getElementById('user-text');
-                const pos = input.selectionStart || input.value.length;
-                textAfterCursor = input.value.substring(pos);
-                // We'll append at the end as per request: "追加到輸入框現有文字的最後面"
-            };
-            
-            recognition.onresult = (event) => {
-                const input = document.getElementById('user-text');
-                let transcript = '';
-                
-                for (let i = event.resultIndex; i < event.results.length; i++) {
-                    transcript += event.results[i][0].transcript;
-                }
-                
-                // Cumulative append at the end of baseText
-                input.value = baseText + transcript;
-            };
-            
-            recognition.onerror = (event) => {
-                console.error("Speech Recognition Error:", event.error);
-                stopRecording();
-            };
-            
-            recognition.onend = () => {
-                stopRecording();
-            };
-        }
-
-        function stopRecording() {
-            isRecording = false;
-            document.getElementById('btn-mic').classList.remove('recording');
-            if (recognition) recognition.stop();
-        }
-
-        document.getElementById('btn-mic').onclick = () => {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRecognition) {
-                document.getElementById('modal-stt-guide').style.display = 'flex';
-                return;
-            }
-            if (isRecording) {
-                stopRecording();
-            } else {
-                recognition.lang = window.GugoProSpeechLocale?.getCurrentLearningLocale?.() || document.getElementById('target-lang').value;
-                recognition.start();
-            }
-        };
+        // Speech input is owned exclusively by the dual-language session engine.
 
         const TTS_LOCALE_MAP = Object.freeze({
             'en': 'en-US', 'zh': 'zh-TW', 'ja': 'ja-JP', 'ko': 'ko-KR', 'fr': 'fr-FR', 'de': 'de-DE',
@@ -4798,10 +4747,8 @@
         if (session.silenceTimer) { clearTimeout(session.silenceTimer); session.silenceTimer = null; }
         session.state = 'recording';
         session.latestTranscript = normalize(transcript);
-        const input = document.getElementById('user-text');
-        if (!input || session.challengeMessageId) return;
-        input.value = composeInput(session.baseText, session.latestTranscript);
-        input.dispatchEvent(new Event('input', { bubbles: true }));
+        // Voice transcripts stay in the session only; they must never overwrite or leak into the composer.
+        // The final message is built from session.baseText + session.latestTranscript on explicit stop.
     }
     function clearSpeechTimers(session) {
         if (!session) return;
@@ -4833,7 +4780,7 @@
         }
         if (!session.challengeMessageId && typeof sendMessage === 'function') {
             const input = document.getElementById('user-text');
-            const speechContent = normalize(input?.value || composeInput(session.baseText, session.latestTranscript));
+            const speechContent = normalize(composeInput(session.baseText, session.latestTranscript));
             if (speechContent) {
                 if (typeof window.GugoResetComposer === 'function') window.GugoResetComposer(input);
                 else if (input) { input.value = ''; input.style.height = 'auto'; }
@@ -4900,10 +4847,12 @@
     }
     function startWebRecognition(session) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition || typeof recognition === 'undefined' || !recognition || session.finalized || session.stopRequested || activeSession?.id !== session.id) {
+        if (!SpeechRecognition || session.finalized || session.stopRequested || activeSession?.id !== session.id) {
             if (!session.finalized && !session.stopRequested) finalizeSession(session);
             return;
         }
+        if (!recognition) recognition = new SpeechRecognition();
+        if (!recognition) recognition = new SpeechRecognition();
         session.state = 'recording';
         recognition.lang = session.speechLocale;
         recognition.continuous = true;
@@ -5019,6 +4968,13 @@
 
 
 
+
+
+
+
+
+
+
 <script id="gugo-capsule-dock-modes-js">
 // GugoPro Gemini-style Capsule Dock + three speech modes
 (() => {
@@ -5052,7 +5008,9 @@
         if (!dock || !input) return;
         const value = String(input.value || '');
         const expanded = value.length > 10 || /\r?\n/.test(value);
+        const row = dock.closest('.capsule-composer-row');
         dock.classList.toggle('capsule-dock-expanded', expanded);
+        row?.classList.toggle('capsule-composer-expanded', expanded);
         input.dataset.capsuleLayout = expanded ? 'expanded' : 'idle';
     }
     window.GugoSyncCapsuleLayout = syncCapsuleLayout;
@@ -5191,6 +5149,20 @@
     window.__gugoAndroidBackHandlerV1 = true;
     window.GugoHandleAndroidBack = function() {
         try {
+            const topModal = [...document.querySelectorAll('.modal-overlay')].find(item => {
+                const style = getComputedStyle(item);
+                const visibleByClass = item.classList.contains('open') || item.classList.contains('active');
+                const visibleByStyle = style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
+                return visibleByClass || visibleByStyle;
+            });
+            if (topModal) {
+                if (topModal.id === 'modal-api') window.__gugoApiModalDismissedByBack = true;
+                const close = topModal.querySelector('[id$="-close"], .modal-close, .modal-cancel, [data-close-nutrition]');
+                if (close) close.click();
+                topModal.classList.remove('open', 'active');
+                topModal.style.removeProperty('display');
+                return true;
+            }
             const menu = document.getElementById('side-menu');
             const overlay = document.getElementById('side-menu-overlay');
             const drawerOpen = menu && (menu.classList.contains('active') ||
@@ -5216,10 +5188,11 @@
                 const visibleByStyle = style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
                 return visibleByClass || visibleByStyle;
             });
-            if (openModal) {
+                if (openModal) {
+                if (openModal.id === 'modal-api') window.__gugoApiModalDismissedByBack = true;
                 const close = openModal.querySelector('[id$="-close"], .modal-close, .modal-cancel, [data-close-nutrition]');
                 if (close) close.click();
-                else openModal.classList.remove('open', 'active');
+                openModal.classList.remove('open', 'active');
                 openModal.style.removeProperty('display');
                 return true;
             }
