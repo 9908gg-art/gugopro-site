@@ -1157,6 +1157,12 @@
     .dual-stt-composer .composer-actions #btn-send { width: 38px !important; min-width: 38px !important; height: 38px !important; }
 }
 </style>
+
+
+
+
+
+
 <style id="gugo-capsule-dock-style">
 /* GugoPro Gemini-style capsule composer */
 .bottom-controls {
@@ -1241,6 +1247,8 @@
 .capsule-voice-button.native-speech .capsule-mic-badge { background: #537ca4; }
 .capsule-voice-button.recording { background: rgba(255,193,7,.2) !important; box-shadow: 0 0 0 4px rgba(255,193,7,.13); }
 .capsule-voice-button.recording .capsule-mic-badge { background: #ffd54f; color: #211900; }
+.capsule-dock.capsule-dock-expanded .capsule-voice-button { display: none !important; }
+.capsule-dock.capsule-dock-expanded { border-radius: 22px !important; }
 .capsule-actions { display: flex; align-items: center; gap: 3px; flex: 0 0 auto; }
 .capsule-actions .btn-circle { flex: 0 0 38px; width: 38px !important; min-width: 38px !important; height: 38px !important; min-height: 38px !important; }
 .capsule-actions #btn-material-import-inline { background: transparent !important; color: #d5dbe6; }
@@ -4807,6 +4815,7 @@
     }
     function finishWithOptionalDelay(session) {
         if (!session || session.finalized) return;
+        session.state = 'waiting';
         if (window.GugoSpeechMode !== 'smart') { finalizeSession(session); return; }
         clearTimeout(session.silenceTimer);
         session.silenceTimer = setTimeout(() => finalizeSession(session), 2500);
@@ -4822,14 +4831,17 @@
         setTimeout(() => finishWithOptionalDelay(session), 350);
     }
     function startSession(role, challengeMessageId = null, challengeTarget = '') {
-        if (activeSession) { stopActiveSession(); return; }
+        if (activeSession) {
+            if (activeSession.state === 'waiting') finalizeSession(activeSession);
+            else { stopActiveSession(); return; }
+        }
         if (role !== 'learning') window.GugoProPendingPronunciation = null;
         const info = updateComposerLanguageUI();
         const input = document.getElementById('user-text');
         const speechLocale = role === 'learning' ? info.targetLocale : info.motherLocale;
         const session = {
             id: ++sessionCounter, role, speechLocale, baseText: challengeMessageId ? '' : String(input?.value || ''), originalInput: String(input?.value || ''),
-            challengeMessageId, challengeTarget: normalize(challengeTarget), latestTranscript: '', confidence: null, finalized: false
+            challengeMessageId, challengeTarget: normalize(challengeTarget), latestTranscript: '', confidence: null, state: 'recording', silenceTimer: null, finalized: false
         };
         activeSession = session;
         setDualRecording(role, true);
@@ -4913,6 +4925,12 @@
     else bind();
 })();
 </script>
+
+
+
+
+
+
 <script id="gugo-capsule-dock-modes-js">
 // GugoPro Gemini-style Capsule Dock + three speech modes
 (() => {
@@ -4940,13 +4958,26 @@
     window.GugoSpeechMode = getMode();
     window.GugoGetSpeechMode = getMode;
 
+    function syncCapsuleLayout() {
+        const dock = document.querySelector('.capsule-dock');
+        const input = document.getElementById('user-text');
+        if (!dock || !input) return;
+        const value = String(input.value || '');
+        const expanded = value.length > 10 || /\r?\n/.test(value);
+        dock.classList.toggle('capsule-dock-expanded', expanded);
+        input.dataset.capsuleLayout = expanded ? 'expanded' : 'idle';
+    }
+    window.GugoSyncCapsuleLayout = syncCapsuleLayout;
+
     function resetComposer(input) {
         if (!input) return;
         input.value = '';
         input.style.height = 'auto';
+        syncCapsuleLayout();
         requestAnimationFrame(() => {
             const max = window.innerWidth <= 1023 ? 142 : 168;
             input.style.height = `${Math.min(input.scrollHeight, max)}px`;
+            syncCapsuleLayout();
         });
     }
     window.GugoResetComposer = resetComposer;
@@ -5053,8 +5084,9 @@
         const input = document.getElementById('user-text');
         if (input && input.dataset.capsuleInputBound !== '1') {
             input.dataset.capsuleInputBound = '1';
-            input.addEventListener('input', () => { if (!window.GugoSpeechSessionActive) localStorage.removeItem('gugopro_ai_tutor_pending_pronunciation_v1'); });
+            input.addEventListener('input', () => { if (!window.GugoSpeechSessionActive) localStorage.removeItem('gugopro_ai_tutor_pending_pronunciation_v1'); syncCapsuleLayout(); });
         }
+        syncCapsuleLayout();
         setTimeout(updateCapsuleLabels, 0);
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind, { once: true });
