@@ -7,3 +7,5 @@
 390×844 視覺 QA：配置工具首屏的導覽、標題、說明、標籤與資產輸入表清楚，表格以內容區橫向閱讀避免壓縮欄位；文章首屏的標題、導覽膠囊、先看結論卡片與回工具 CTA 可辨識，章節導覽可橫向閱讀，未見文字重疊或頁面內容裁切。
 
 DOM diagnostics：本地配置工具頁 `scrollWidth=1265`、`clientWidth=1265`、`body.scrollWidth=1265`，無水平溢位；resource diagnostics 未發現符合 API／quote／market／WebSocket 的外部行情請求，狀態為 `status ok`。
+
+Production QA：GitHub Pages run `32986537436` 對 `392dd85485ec034a32b6625b8451e8d3d88ffb9e` completed success。正式 `https://gugopro.com/academy/tools/portfolio-rebalancer.html?qa=392dd85` 可執行預設案例，狀態為計算完成、3 列配置結果、6 張 metrics、下載按鈕啟用；resource diagnostics 未發現 API／quote／market／WebSocket 外部行情請求。
