@@ -186,10 +186,10 @@
       context.lineWidth *= 3.5;
       context.strokeStyle = item.color || '#ffd166';
     } else if (item.type === 'underline') {
-      context.lineWidth = Math.max(2, context.lineWidth * .65);
+      context.lineWidth = Math.max(.55, context.lineWidth * .65);
       context.globalAlpha = .9;
     } else if (item.type === 'strike') {
-      context.lineWidth = Math.max(2, context.lineWidth * .6);
+      context.lineWidth = Math.max(.55, context.lineWidth * .6);
       context.globalAlpha = .9;
     }
     context.beginPath();
@@ -295,9 +295,12 @@
     });
   }
 
+  var mainRenderToken = 0;
   async function renderMainPage() {
     if (!state.pdf) return;
+    var renderToken = ++mainRenderToken;
     var page = await state.pdf.getPage(state.currentPage);
+    if (renderToken !== mainRenderToken) return;
     var rotation = getPageDisplayRotation(state.currentPage);
     var scale = getPageScale(page);
     var viewport = page.getViewport({ scale: scale, rotation: rotation });
@@ -312,6 +315,7 @@
     var canvas = makeCanvas(viewport.width, viewport.height, 'pdf-page-canvas');
     frame.appendChild(canvas);
     await page.render({ canvasContext: canvas.getContext('2d'), viewport: viewport }).promise;
+    if (renderToken !== mainRenderToken) return;
     var overlay = makeCanvas(viewport.width, viewport.height, 'pdf-annotation-canvas');
     overlay.setAttribute('aria-label', 'PDF annotation canvas');
     frame.appendChild(overlay);
@@ -532,10 +536,76 @@
     return total;
   }
 
+  var pendingTaskAction = null;
+  var IS_EN = document.documentElement.lang === 'en';
+  var TASK_PROMPTS = IS_EN ? {
+    summary: 'Organize the core conclusions, key data, important dates, and action items in this PDF. Use clear Markdown sections and cite a page for every finding.',
+    risk: 'Review contract risks: penalties, auto-renewal, disclaimers, unilateral changes, non-compete, payment, and termination clauses. Mark severity, evidence pages, and human-review suggestions.',
+    translate: 'Create a bilingual summary of this document, preserving proper nouns, numbers, clause numbers, and page citations. If the document is not Chinese, prioritize Traditional Chinese.',
+    diff: 'Compare the current PDF with the selected comparison version. List added, deleted, and modified clauses or data, explain material impact, and cite pages.',
+    data: 'Extract all important financial data, tables, units, periods, and fields from the PDF into structured Markdown tables. Preserve source pages and flag suspected contradictions.',
+    quiz: 'Generate a learning quiz from this document: 5 multiple-choice questions and 3 short-answer questions, with correct answers, brief explanations, and page citations.',
+    compliance: 'Run a compliance and security scan for personal data, confidential information, unauthorized terms, data exposure, and legal or security risks. List evidence pages and remediation suggestions by severity.'
+  } : {
+    summary: '請整理這份 PDF 的核心結論、關鍵數據、重要日期與待辦事項；以清楚的 Markdown 小節輸出，所有發現附上頁碼。',
+    risk: '請進行合約風險審閱，逐項檢查違約金、自動續約、免責、單方變更、競業、付款與終止條款，標示風險等級、證據頁碼與人工覆核建議。',
+    translate: '請把目前文件的重點整理成雙語對照摘要，保留專有名詞、數字、條款編號與頁碼；若文件不是中文，優先翻譯為繁體中文。',
+    diff: '請比較目前 PDF 與使用者選取的比較版本，列出新增、刪除、修改的條款或數據，並指出可能造成的實質影響與頁碼。',
+    data: '請擷取 PDF 中所有重要財務數據、表格、單位、期間與欄位，轉成結構化 Markdown 表格；保留來源頁碼並指出疑似矛盾。',
+    quiz: '請根據文件生成一組適合學習的問答測驗，包含 5 題單選題與 3 題問答題，附正確答案、簡短解析與頁碼。',
+    compliance: '請執行合規與資安審查，掃描個人資料、機密資訊、未授權條款、資料外洩與潛在法律風險，依嚴重程度列出證據頁碼與處理建議。'
+  };
+
+  async function extractTextFromPdfFile(file) {
+    if (!file) return '';
+    var pdfjs = await ensurePdfJs();
+    var document = await pdfjs.getDocument({ data: await readBuffer(file) }).promise;
+    var pages = [];
+    for (var pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
+      var page = await document.getPage(pageNumber);
+      var content = await page.getTextContent();
+      var lines = (content.items || []).map(function (item) { return String(item.str || '').trim(); }).filter(Boolean);
+      pages.push('[比較文件第 ' + pageNumber + ' 頁]\n' + lines.join(' '));
+    }
+    return pages.join('\\n\\n').slice(0, 90000);
+  }
+
+  async function runTaskMatrixAction(action, comparisonFile) {
+    action = String(action || '').toLowerCase();
+    if (!TASK_PROMPTS[action]) return;
+    if (action === 'diff' && !comparisonFile) {
+      pendingTaskAction = action;
+      var diffInput = $('pdf-diff-input');
+      if (diffInput) { diffInput.value = ''; diffInput.click(); }
+      else toast('請選擇比較用的第二份 PDF。');
+      return;
+    }
+    switchAiTab('task');
+    var taskId = 'pdf_task_action_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+    var labelMap = IS_EN ? { summary: 'Summary', risk: 'Contract risk', translate: 'Translation', diff: 'Diff check', data: 'Data extraction', quiz: 'Quiz', compliance: 'Compliance scan' } : { summary: '摘要', risk: '合約風控', translate: '翻譯', diff: '差異比對', data: '數據提煉', quiz: '問答測驗', compliance: '合規資安' };
+    var node = appendChat('assistant', IS_EN ? 'Running “' + labelMap[action] + '”…' : '正在執行「' + labelMap[action] + '」任務…', taskId);
+    if (node) node.classList.add('is-pending');
+    qsa('[data-task-action]').forEach(function (button) { button.classList.toggle('is-active', button.dataset.taskAction === action); });
+    try {
+      var comparisonText = comparisonFile ? await extractTextFromPdfFile(comparisonFile) : '';
+      var prompt = TASK_PROMPTS[action] + (comparisonText ? (IS_EN ? '\n\nComparison version text:\n' : '\n\n比較版本文字如下：\n') + comparisonText : '') + (IS_EN ? '\n\nReply in English in the active custom task room and cite pages.' : '\n\n請把結果直接回覆在目前自訂任務房間，使用繁體中文並附頁碼。');
+      var answer = await requestAi(prompt, { maxOutputTokens: action === 'quiz' ? 4200 : 5000 });
+      var emptyAnswer = IS_EN ? 'The task returned no content.' : '任務沒有回傳內容。';
+      updateChatMessage(node, answer || emptyAnswer); if (node) node.classList.remove('is-pending');
+      window.dispatchEvent(new CustomEvent('gugopro:pdf-room-message', { detail: { role: 'assistant', text: answer || emptyAnswer, messageId: taskId } }));
+      setStatus(IS_EN ? labelMap[action] + ' completed.' : '「' + labelMap[action] + '」任務已完成。', 'success');
+    } catch (error) {
+      if (node) node.remove();
+      if (error.message === 'NO_KEY') showAiError(IS_EN ? 'Open ⚙️ Settings in the AI rail and add a Gemini API key.' : '請先在 AI 側欄右上角的「⚙️ 設定」輸入 Gemini API key。', false);
+      else if ([503, 429, 500, 'TIMEOUT'].includes(error.status)) showAiError(IS_EN ? 'The AI model is busy or timed out; automatic fallback is active.' : 'AI 模型目前忙碌或逾時，系統會自動輪替；', true);
+      else showAiError((IS_EN ? labelMap[action] + ' failed: ' : '「' + labelMap[action] + '」任務未完成：') + (error.message || (IS_EN ? 'Connection failed.' : '連線失敗。')), false);
+    }
+  }
+
   async function loadPdf(file) {
     if (!isPdf(file)) { setStatus(messages.choosePdf, 'error'); return; }
     setStatus(messages.loading, 'loading'); setProgress(3); setEmptyState(false);
-    state.file = file; state.pdf = null; state.pageTexts = {}; state.textReady = false; state.pageRotations = {}; state.selectedPages.clear(); state.annotations = {}; state.annotationImages = {}; state.signatures = {}; state.currentPage = 1;
+    mainRenderToken += 1; state.file = file; state.pdf = null; state.pageTexts = {}; state.textReady = false; state.pageRotations = {}; state.selectedPages.clear(); state.annotations = {}; state.annotationImages = {}; state.signatures = {}; state.currentPage = 1;
     try {
       var pdfjs = await ensurePdfJs();
       var buffer = await readBuffer(file);
@@ -880,7 +950,7 @@
       try { window.dispatchEvent(new CustomEvent('gugopro:pdf-room-message', { detail: { role: 'user', text: question, messageId: userMessageId } })); window.dispatchEvent(new CustomEvent('gugopro:pdf-room-message', { detail: { role: 'assistant', text: answer || 'AI 沒有回傳內容。', messageId: assistantMessageId } })); } catch (_) {}
     } catch (error) {
       if (pendingNode) pendingNode.remove();
-      if (error.message === 'NO_KEY') showAiError('請先在右上角 ≡ 選單設定 Gemini API key。', false);
+      if (error.message === 'NO_KEY') showAiError('請先在 AI 側欄右上角的「⚙️ 設定」輸入 Gemini API key。', false);
       else if ([503, 429, 500, 'TIMEOUT'].includes(error.status)) showAiError('AI 模型目前忙碌或逾時，系統已依導師架構自動輪替；', true, question);
       else { showAiError('目前無法完成分析：' + (error.message || '連線失敗。'), false); appendChat('assistant', '目前無法完成分析：' + (error.message || '連線失敗。')); }
     } finally { if (button) button.disabled = false; }
@@ -917,21 +987,21 @@
       if (window.GugoProPdfRooms && window.GugoProPdfRooms.openTaskRuleEditor) window.GugoProPdfRooms.openTaskRuleEditor();
       return toast('請先保存這個專案的核心任務規則。');
     }
-    switchAiTab('chat');
+    switchAiTab('task');
     var executionId = 'pdf_task_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-    var progressText = '🚀 正在依據【' + room.name + '】自訂規則分析當前 PDF 文件…';
+    var progressText = IS_EN ? '🚀 Running the saved rules for “' + room.name + '” on the current PDF…' : '🚀 正在依據【' + room.name + '】自訂規則分析當前 PDF 文件…';
     var node = appendChat('assistant', progressText, executionId);
     if (node) node.classList.add('is-pending');
     try {
-      var answer = await requestAi('請立即執行這個自訂 AI 專案任務。先按照核心任務條件逐項分析整份文件，再以條列方式輸出發現、證據頁碼、優先級與可採取的下一步。', { maxOutputTokens: 5000 });
-      updateChatMessage(node, answer || '專案任務沒有回傳內容。'); if (node) node.classList.remove('is-pending');
-      window.dispatchEvent(new CustomEvent('gugopro:pdf-room-message', { detail: { role: 'assistant', text: answer || '專案任務沒有回傳內容。', messageId: executionId } }));
-      setStatus('「' + room.name + '」專案任務已完成。', 'success');
+            var executionPrompt = IS_EN ? 'Run this custom AI project now. Analyze the whole document according to the saved core task rule, then output findings, evidence pages, priorities, and next actions as a concise Markdown report.' : '請立即執行這個自訂 AI 專案任務。先按照核心任務條件逐項分析整份文件，再以條列方式輸出發現、證據頁碼、優先級與可採取的下一步。';
+      var answer = await requestAi(executionPrompt, { maxOutputTokens: 5000 }); var emptyAnswer = IS_EN ? 'The project returned no content.' : '專案任務沒有回傳內容。'; updateChatMessage(node, answer || emptyAnswer); if (node) node.classList.remove('is-pending');
+      window.dispatchEvent(new CustomEvent('gugopro:pdf-room-message', { detail: { role: 'assistant', text: answer || emptyAnswer, messageId: executionId } }));
+      setStatus(IS_EN ? 'Project task completed.' : '「' + room.name + '」專案任務已完成。', 'success');
     } catch (error) {
       if (node) node.remove();
-      if (error.message === 'NO_KEY') showAiError('請先在右上角 ≡ 選單設定 Gemini API key。', false);
-      else if ([503, 429, 500, 'TIMEOUT'].includes(error.status)) showAiError('AI 模型目前忙碌或逾時，系統會自動輪替；', true);
-      else showAiError('專案任務未完成：' + (error.message || '連線失敗。'), false);
+      if (error.message === 'NO_KEY') showAiError(IS_EN ? 'Open ⚙️ Settings in the AI rail and add a Gemini API key.' : '請先在 AI 側欄右上角的「⚙️ 設定」輸入 Gemini API key。', false);
+      else if ([503, 429, 500, 'TIMEOUT'].includes(error.status)) showAiError(IS_EN ? 'The AI model is busy or timed out; automatic fallback is active.' : 'AI 模型目前忙碌或逾時，系統會自動輪替；', true);
+      else showAiError((IS_EN ? 'Project task failed: ' : '專案任務未完成：') + (error.message || (IS_EN ? 'Connection failed.' : '連線失敗。')), false);
     }
   }
 
@@ -943,16 +1013,51 @@
   function openModelDrawer() { $('pdf-model-drawer').classList.add('is-open'); if (aiEngine) aiEngine.refresh({ silent: true }); }
   function closeModelDrawer() { $('pdf-model-drawer').classList.remove('is-open'); }
 
+  var SIGNATURE_LIBRARY_KEY = 'gugopro_pdf_signature_library_v1';
+  function getSignatureLibrary() {
+    try { var saved = JSON.parse(localStorage.getItem(SIGNATURE_LIBRARY_KEY) || '[]'); return Array.isArray(saved) ? saved.filter(function (item) { return typeof item === 'string' && item.indexOf('data:image/') === 0; }).slice(0, 5) : []; } catch (_) { return []; }
+  }
+  function saveSignatureToLibrary(dataUrl) {
+    if (!dataUrl || dataUrl.indexOf('data:image/') !== 0) return;
+    var library = [dataUrl].concat(getSignatureLibrary().filter(function (item) { return item !== dataUrl; })).slice(0, 5);
+    try { localStorage.setItem(SIGNATURE_LIBRARY_KEY, JSON.stringify(library)); toast('簽名已儲存至本機常用簽名庫'); } catch (_) { toast('簽名太大，無法寫入本機儲存空間。'); }
+  }
+  function loadSignatureIntoPad(dataUrl) {
+    var canvas = $('signature-pad'); if (!canvas || !dataUrl) return;
+    var context = canvas.getContext('2d'); var image = new Image();
+    image.onload = function () { context.clearRect(0, 0, canvas.width, canvas.height); var scale = Math.min(canvas.width / image.width, canvas.height / image.height) * .82; var width = image.width * scale; var height = image.height * scale; context.drawImage(image, (canvas.width - width) / 2, (canvas.height - height) / 2, width, height); };
+    image.src = dataUrl;
+  }
+  function signatureCenterPlacement(width, height) {
+    var frame = $('pdf-page-frame'); var stage = $('pdf-reader-stage');
+    if (!frame || !stage) return { x: (1 - width) / 2, y: (1 - height) / 2 };
+    var frameRect = frame.getBoundingClientRect(); var stageRect = stage.getBoundingClientRect();
+    var x = (stageRect.left + stageRect.width / 2 - frameRect.left) / Math.max(1, frameRect.width) - width / 2;
+    var y = (stageRect.top + stageRect.height / 2 - frameRect.top) / Math.max(1, frameRect.height) - height / 2;
+    return { x: Math.max(0, Math.min(1 - width, x)), y: Math.max(0, Math.min(1 - height, y)) };
+  }
+  function addSignatureData(dataUrl) {
+    state.signatureImage = dataUrl;
+    $('signature-modal').classList.remove('is-open');
+    var width = .3; var height = .12; var placement = signatureCenterPlacement(width, height); var id = 'sig_' + Date.now();
+    if (!state.signatures[state.currentPage]) state.signatures[state.currentPage] = [];
+    state.signatures[state.currentPage].push({ id: id, dataUrl: dataUrl, x: placement.x, y: placement.y, w: width, h: height, rotation: 0 });
+    state.activeSignatureId = id; renderMainPage(); toast('簽名已放置於目前可視 PDF 中央，可拖曳、縮放或雙擊旋轉');
+  }
   function initSignaturePad() {
     var canvas = $('signature-pad'); if (!canvas) return;
     var context = canvas.getContext('2d'); var drawing = false; var last = null;
-    function position(event) { var rect = canvas.getBoundingClientRect(); return { x: (event.clientX - rect.left) * canvas.width / rect.width, y: (event.clientY - rect.top) * canvas.height / rect.height }; }
-    canvas.addEventListener('pointerdown', function (event) { drawing = true; last = position(event); canvas.setPointerCapture(event.pointerId); });
-    canvas.addEventListener('pointermove', function (event) { if (!drawing) return; var point = position(event); var rect = canvas.getBoundingClientRect(); var brushSize = Math.max(1, Math.min(20, Number(($('signature-width') || {}).value) || 1)); context.strokeStyle = '#122033'; context.lineWidth = brushSize * (canvas.width / Math.max(1, rect.width)); context.lineCap = 'round'; context.beginPath(); context.moveTo(last.x, last.y); context.lineTo(point.x, point.y); context.stroke(); last = point; });
-    canvas.addEventListener('pointerup', function () { drawing = false; last = null; });
+    function position(event) { var rect = canvas.getBoundingClientRect(); return { x: (event.clientX - rect.left) * canvas.width / Math.max(1, rect.width), y: (event.clientY - rect.top) * canvas.height / Math.max(1, rect.height) }; }
+    function brushSize() { return Math.max(1, Math.min(20, Number(($('signature-width') || {}).value) || 1)); }
+    function begin(event) { drawing = true; last = position(event); if (canvas.setPointerCapture) canvas.setPointerCapture(event.pointerId); }
+    function move(event) { if (!drawing || !last) return; var point = position(event); var rect = canvas.getBoundingClientRect(); context.strokeStyle = '#122033'; context.lineWidth = brushSize() * (canvas.width / Math.max(1, rect.width)); context.lineCap = 'round'; context.lineJoin = 'round'; context.beginPath(); context.moveTo(last.x, last.y); context.lineTo(point.x, point.y); context.stroke(); last = point; }
+    function end() { drawing = false; last = null; }
+    canvas.addEventListener('pointerdown', begin); canvas.addEventListener('pointermove', move); canvas.addEventListener('pointerup', end); canvas.addEventListener('pointercancel', end);
+    $('pdf-add-signature')?.addEventListener('click', function () { $('signature-modal').classList.add('is-open'); var saved = getSignatureLibrary()[0]; if (saved) loadSignatureIntoPad(saved); });
     $('signature-clear').addEventListener('click', function () { context.clearRect(0, 0, canvas.width, canvas.height); });
-    $('signature-save').addEventListener('click', function () { state.signatureImage = canvas.toDataURL('image/png'); $('signature-modal').classList.remove('is-open'); var id = 'sig_' + Date.now(); if (!state.signatures[state.currentPage]) state.signatures[state.currentPage] = []; state.signatures[state.currentPage].push({ id: id, dataUrl: state.signatureImage, x: .32, y: .72, w: .3, h: .12, rotation: 0 }); state.activeSignatureId = id; renderMainPage(); toast('簽名已放置，可拖曳、縮放或雙擊旋轉'); });
-    $('signature-upload').addEventListener('change', function () { var file = this.files && this.files[0]; if (!file) return; var reader = new FileReader(); reader.onload = function () { state.signatureImage = reader.result; $('signature-modal').classList.remove('is-open'); var id = 'sig_' + Date.now(); if (!state.signatures[state.currentPage]) state.signatures[state.currentPage] = []; state.signatures[state.currentPage].push({ id: id, dataUrl: state.signatureImage, x: .32, y: .72, w: .3, h: .12, rotation: 0 }); state.activeSignatureId = id; renderMainPage(); }; reader.readAsDataURL(file); });
+    $('signature-save-library').addEventListener('click', function () { saveSignatureToLibrary(canvas.toDataURL('image/png')); });
+    $('signature-save').addEventListener('click', function () { addSignatureData(canvas.toDataURL('image/png')); });
+    $('signature-upload').addEventListener('change', function () { var file = this.files && this.files[0]; if (!file) return; var reader = new FileReader(); reader.onload = function () { addSignatureData(String(reader.result || '')); }; reader.readAsDataURL(file); this.value = ''; });
   }
 
   function selectedSignature() { return (state.signatures[state.currentPage] || []).find(function (item) { return item.id === state.activeSignatureId; }); }
@@ -962,6 +1067,7 @@
     var zone = $('pdf-upload-zone') || $('pdf-empty-state'); if (zone) { ['dragenter', 'dragover'].forEach(function (eventName) { zone.addEventListener(eventName, function (event) { event.preventDefault(); zone.classList.add('is-dragover'); }); }); ['dragleave', 'drop'].forEach(function (eventName) { zone.addEventListener(eventName, function (event) { event.preventDefault(); zone.classList.remove('is-dragover'); }); }); zone.addEventListener('drop', function (event) { var file = event.dataTransfer.files && event.dataTransfer.files[0]; if (file) loadPdf(file); }); zone.addEventListener('click', function (event) { if (event.target.closest('button')) return; pdfInput.click(); }); }
     var imageInput = $('images-input'); imageInput.addEventListener('change', function () { state.imageFiles = Array.prototype.slice.call(this.files || []); renderFileList($('images-list'), state.imageFiles, 'fa-regular fa-image'); });
     var mergeInput = $('merge-input'); mergeInput.addEventListener('change', function () { state.mergeFiles = Array.prototype.slice.call(this.files || []).filter(isPdf); renderFileList($('merge-list'), state.mergeFiles, 'fa-solid fa-file-pdf'); });
+    var diffInput = $('pdf-diff-input'); if (diffInput) diffInput.addEventListener('change', function () { var file = this.files && this.files[0]; var action = pendingTaskAction || 'diff'; pendingTaskAction = null; this.value = ''; if (file) runTaskMatrixAction(action, file); });
   }
 
   function bindToolbar() {
@@ -1016,8 +1122,11 @@
       if (event.isComposing) return;
       if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); handleChat(); }
     });
+    $('pdf-chat-input')?.addEventListener('input', function () { this.style.height = 'auto'; this.style.height = Math.min(132, Math.max(28, this.scrollHeight)) + 'px'; });
+    if ($('pdf-chat-input')) $('pdf-chat-input').dispatchEvent(new Event('input', { bubbles: true }));
     $('pdf-ai-retry')?.addEventListener('click', function () { if (pendingChatRetry) handleChat(pendingChatRetry); });
     $('pdf-summary-run')?.addEventListener('click', handleSummary); $('pdf-risk-run')?.addEventListener('click', handleRisk); $('pdf-translate-run')?.addEventListener('click', handleTranslate); $('pdf-translate-current')?.addEventListener('click', populateCurrentPageText);
+    qsa('[data-task-action]').forEach(function (button) { button.addEventListener('click', function () { runTaskMatrixAction(button.dataset.taskAction); }); });
     $('pdf-open-models')?.addEventListener('click', function () { if (window.GugoProPdfRooms) window.GugoProPdfRooms.openDrawer(true); });
     $('pdf-model-close')?.addEventListener('click', closeModelDrawer); $('pdf-key-close')?.addEventListener('click', closeKeyModal);
     qsa('.pdf-model-drawer, .pdf-modal').forEach(function (overlay) { overlay.addEventListener('click', function (event) { if (event.target === overlay) overlay.classList.remove('is-open'); }); });
@@ -1025,7 +1134,7 @@
 
   function bindSidebar() {
     qsa('[data-sidebar]').forEach(function (button) { button.addEventListener('click', function () { setSidebarTab(button.dataset.sidebar); }); });
-    qsa('[data-dock-action]').forEach(function (button) { button.addEventListener('click', function () { var action = button.dataset.dockAction; if (action === 'ai') { $('pdf-ai-pane').classList.toggle('is-mobile-open'); button.classList.toggle('is-active'); } else if (action === 'tools') { document.querySelector('[data-popover-target="pdf-convert-popover"]')?.click(); } else if (action === 'thumbs') { $('pdf-sidebar').style.display = 'flex'; $('pdf-sidebar').scrollIntoView({ behavior: 'smooth' }); } else if (action === 'signature') { document.querySelector('[data-popover-target="pdf-annotate-popover"]')?.click(); $('signature-modal').classList.add('is-open'); } }); });
+    qsa('[data-dock-action]').forEach(function (button) { button.addEventListener('click', function () { var action = button.dataset.dockAction; if (action === 'ai') { $('pdf-ai-pane').classList.toggle('is-mobile-open'); button.classList.toggle('is-active'); } else if (action === 'tools') { document.querySelector('[data-popover-target="pdf-convert-popover"]')?.click(); } else if (action === 'thumbs') { $('pdf-sidebar').style.display = 'flex'; $('pdf-sidebar').scrollIntoView({ behavior: 'smooth' }); } else if (action === 'signature') { document.querySelector('[data-popover-target="pdf-annotate-popover"]')?.click(); $('pdf-add-signature')?.click(); } }); });
   }
 
   function init() {
@@ -1043,6 +1152,6 @@
     state.file = snapshot.file || null; state.pdf = snapshot.pdf; state.pageOrder = Array.isArray(snapshot.pageOrder) ? snapshot.pageOrder.slice() : []; state.currentPage = Number(snapshot.currentPage) || state.pageOrder[0] || 1; state.pageRotations = Object.assign({}, snapshot.pageRotations || {}); state.pageTexts = Object.assign({}, snapshot.pageTexts || {}); state.textReady = Boolean(snapshot.textReady); state.zoom = Number(snapshot.zoom) || .92; state.fitMode = snapshot.fitMode || 'fit-width'; state.tool = snapshot.tool || 'select'; state.annotations = JSON.parse(JSON.stringify(snapshot.annotations || {})); state.annotationImages = Object.assign({}, snapshot.annotationImages || {}); state.signatures = JSON.parse(JSON.stringify(snapshot.signatures || {})); state.activeSignatureId = snapshot.activeSignatureId || null; state.outline = JSON.parse(JSON.stringify(snapshot.outline || []));
     setEmptyState(false); $('pdf-file-name').textContent = state.file ? state.file.name : 'PDF 文字層備份'; $('pdf-file-meta').textContent = state.pageOrder.length + ' 頁 · 本機房間內容'; $('pdf-total-pages').textContent = state.pageOrder.length; $('pdf-page-count-badge').textContent = state.pageOrder.length + ' 頁'; if ($('pdf-thumb-empty')) $('pdf-thumb-empty').hidden = true; await renderThumbnails(); await renderOutline(); await renderMainPage(); renderNotesPanel();
   }
-  window.GugoProPdfSuite = { loadPdf: loadPdf, extractAllText: extractAllText, getSnapshot: getSnapshot, restoreSnapshot: restoreSnapshot, clearViewer: function () { if ($('pdf-clear')) $('pdf-clear').click(); }, switchAiTab: switchAiTab, executeTask: executeTask, getState: function () { return state; } };
+  window.GugoProPdfSuite = { loadPdf: loadPdf, extractAllText: extractAllText, getSnapshot: getSnapshot, restoreSnapshot: restoreSnapshot, clearViewer: function () { if ($('pdf-clear')) $('pdf-clear').click(); }, switchAiTab: switchAiTab, executeTask: executeTask, runTaskMatrixAction: runTaskMatrixAction, getSignatureLibrary: getSignatureLibrary, getState: function () { return state; } };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
