@@ -11,12 +11,12 @@
 <body class="quant-page">
 <main class="tool-page"><div class="tool-crumb"><a href="../">← 回到 GugoPro Academy</a><span>風險管理 · 個人輸入 · 不構成建議</span></div>
 <div class="tool-layout"><section class="panel"><div class="eyebrow">Quant lab · Risk budget</div><h1>Kelly 風險預算</h1><p>以你已結束交易的統計摘要，將「優勢」轉成上限與保守分數 Kelly。若勝率、盈虧比或樣本不穩定，輸出不應被當成自動下單比例。</p>
-<label for="win">勝率（%）</label><input id="win" type="number" min="0.01" max="99.99" step="0.1" value="50">
-<label for="avgwin">平均獲利（R）</label><input id="avgwin" type="number" min="0.01" step="0.01" value="1.5">
-<label for="avgloss">平均虧損（R）</label><input id="avgloss" type="number" min="0.01" step="0.01" value="1">
+<label for="win">勝率（%）</label><input id="win" type="number" min="0.01" max="99.99" step="0.1" placeholder="貼入已結束交易摘要">
+<label for="avgwin">平均獲利（R）</label><input id="avgwin" type="number" min="0.01" step="0.01" placeholder="例如 1.8R">
+<label for="avgloss">平均虧損（R）</label><input id="avgloss" type="number" min="0.01" step="0.01" placeholder="例如 1R">
 <label for="fraction">分數 Kelly</label><select id="fraction"><option value="1">Full Kelly（研究上限）</option><option value="0.5" selected>Half Kelly</option><option value="0.25">Quarter Kelly</option></select>
-<label for="account">帳戶資金（元）</label><input id="account" type="number" min="0" step="1" value="100000">
-<label for="stop">單筆停損距離（%）</label><input id="stop" type="number" min="0.01" max="100" step="0.1" value="5">
+<label for="account">帳戶資金（元）</label><input id="account" type="number" min="0" step="1" placeholder="填入自己的帳戶基準">
+<label for="stop">單筆停損距離（%）</label><input id="stop" type="number" min="0.01" max="100" step="0.1" placeholder="填入自己的停損假設">
 <button class="calc" id="calc" type="button">計算風險預算</button><div class="status" id="status" aria-live="polite">輸入以你的已結束交易為基礎的摘要；頁面不儲存紀錄。</div>
 <div class="formula-note"><strong>公式：</strong>b＝平均獲利 R ÷ 平均虧損 R；Full Kelly＝p−(1−p)÷b；分數 Kelly＝Full Kelly×fraction。部位金額再以帳戶×風險比例與停損距離估算，沒有納入跳空、滑價、相關性與保證金規則。</div></section>
 <section class="result"><div class="eyebrow">Risk budget</div><h2>理論上限與保守比例</h2><div class="result-big" id="fractionKelly">—</div><div class="sub" id="edge">等待計算</div>
@@ -26,4 +26,4 @@
 <script src="../academy.js"></script><script>
 const $=id=>document.getElementById(id),fmt=(n,d=2)=>Number.isFinite(n)?n.toFixed(d):'—';
 function calc(){const p=+$('win').value/100,w=+$('avgwin').value,l=+$('avgloss').value,f=+$('fraction').value,acct=+$('account').value,stop=+$('stop').value/100;if(![p,w,l,f,acct,stop].every(Number.isFinite)||p<=0||p>=1||w<=0||l<=0||f<=0||acct<0||stop<=0){for(const id of ['fractionKelly','fullKelly','ratio','riskBudget','position'])$(id).textContent='—';$('edge').textContent='等待有效輸入';$('chart').innerHTML='';$('status').textContent='輸入錯誤：請填入 0–100% 的勝率、正數 R 倍數、資金與停損距離。';$('status').className='status error';return}const b=w/l,full=p-(1-p)/b,frac=Math.max(0,full*f),budget=acct*frac,pos=stop?budget/stop:0;$('fractionKelly').textContent=fmt(frac*100,2)+'%';$('fullKelly').textContent=fmt(full*100,2)+'%';$('ratio').textContent=fmt(b,2)+' R';$('riskBudget').textContent='NT$ '+Math.round(budget).toLocaleString('zh-TW');$('position').textContent='NT$ '+Math.round(pos).toLocaleString('zh-TW');$('edge').textContent=full>0?'輸入統計呈現正 Kelly；仍需做樣本外與壓力測試。':'輸入統計的 Full Kelly 不為正；不要用負數結果製造槓桿。';const scale=Math.max(Math.abs(full),Math.abs(frac),.01);$('chart').innerHTML='<i style="height:'+Math.max(5,Math.max(0,full)/scale*145)+'px" title="Full Kelly"></i><i style="height:'+Math.max(5,frac/scale*145)+'px" title="Fractional Kelly"></i>';$('status').textContent='計算完成：結果只反映輸入的交易紀錄摘要與停損假設。';$('status').className='status ok'}
-$('calc').addEventListener('click',calc);calc();</script></body></html>
+$('calc').addEventListener('click',calc);</script></body></html>
