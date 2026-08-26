@@ -1232,29 +1232,63 @@
     $('pdf-mobile-ai')?.addEventListener('click', function () { var pane = $('pdf-ai-pane'); setMobileAi(!pane || !pane.classList.contains('is-mobile-open')); });
     $('pdf-mobile-ai-close')?.addEventListener('click', function () { setMobileAi(false); });
     $('pdf-sidebar-close-mobile')?.addEventListener('click', function () { setMobileSidebar(false); });
-    var stage = $('pdf-reader-stage'); var startX = 0; var startY = 0; var pinch = null; var pinchFrame = 0;
+    var stage = $('pdf-reader-stage'); var startX = 0; var startY = 0; var pinch = null; var pinchFrame = 0; var gestureWasPinch = false;
     function renderPinchFrame() { pinchFrame = 0; if (pinch) renderMainPage(); }
-    if (stage) {
+    function schedulePinchRender() { if (!pinchFrame) pinchFrame = window.requestAnimationFrame ? window.requestAnimationFrame(renderPinchFrame) : setTimeout(renderPinchFrame, 16); }
+    function updatePinch(first, second, event) {
+      if (!pinch) return;
+      if (event && event.cancelable) event.preventDefault();
+      var ratio = distanceBetween(first, second) / Math.max(1, pinch.distance);
+      state.fitMode = 'manual'; state.zoom = Math.max(.25, Math.min(4, pinch.zoom * ratio));
+      schedulePinchRender();
+    }
+    function finishTouchSwipe(point) {
+      if (!point || gestureWasPinch || state.tool !== 'select') return;
+      var dx = point.clientX - startX; var dy = point.clientY - startY;
+      if (Math.abs(dx) > 52 && Math.abs(dx) > Math.abs(dy) * 1.25) navigatePage(dx < 0 ? 1 : -1);
+    }
+    if (stage && window.PointerEvent) {
+      var pointers = new Map();
+      function endPointer(event) {
+        var point = pointers.get(event.pointerId) || event;
+        pointers.delete(event.pointerId);
+        if (pointers.size < 2) pinch = null;
+        if (!pointers.size) { finishTouchSwipe(point); gestureWasPinch = false; }
+      }
+      stage.addEventListener('pointerdown', function (event) {
+        if (event.pointerType !== 'touch') return;
+        pointers.set(event.pointerId, { clientX: event.clientX, clientY: event.clientY });
+        if (pointers.size === 1) { startX = event.clientX; startY = event.clientY; }
+        if (pointers.size >= 2) {
+          var points = Array.from(pointers.values());
+          pinch = { distance: distanceBetween(points[0], points[1]), zoom: Math.max(.25, state.zoom || .92) };
+          gestureWasPinch = true;
+        }
+      }, { passive: false });
+      stage.addEventListener('pointermove', function (event) {
+        if (event.pointerType !== 'touch' || !pointers.has(event.pointerId)) return;
+        pointers.set(event.pointerId, { clientX: event.clientX, clientY: event.clientY });
+        if (pinch && pointers.size >= 2) { var points = Array.from(pointers.values()); updatePinch(points[0], points[1], event); }
+      }, { passive: false });
+      stage.addEventListener('pointerup', endPointer, { passive: true });
+      stage.addEventListener('pointercancel', endPointer, { passive: true });
+      stage.addEventListener('pointerleave', function (event) { if (event.pointerType === 'touch' && pointers.has(event.pointerId) && pinch) endPointer(event); }, { passive: true });
+    } else if (stage) {
       stage.addEventListener('touchstart', function (event) {
         var touches = event.touches || [];
-        if (touches.length >= 2) pinch = { distance: distanceBetween(touches[0], touches[1]), zoom: Math.max(.25, state.zoom || .92) };
+        if (touches.length >= 2) { pinch = { distance: distanceBetween(touches[0], touches[1]), zoom: Math.max(.25, state.zoom || .92) }; gestureWasPinch = true; }
         else { var touch = event.changedTouches && event.changedTouches[0]; if (touch) { startX = touch.clientX; startY = touch.clientY; } }
       }, { passive: true });
       stage.addEventListener('touchmove', function (event) {
         var touches = event.touches || [];
-        if (!pinch || touches.length < 2) return;
-        event.preventDefault();
-        var ratio = distanceBetween(touches[0], touches[1]) / Math.max(1, pinch.distance);
-        state.fitMode = 'manual'; state.zoom = Math.max(.25, Math.min(2.5, pinch.zoom * ratio));
-        if (!pinchFrame) pinchFrame = window.requestAnimationFrame ? window.requestAnimationFrame(renderPinchFrame) : setTimeout(renderPinchFrame, 16);
+        if (pinch && touches.length >= 2) updatePinch(touches[0], touches[1], event);
       }, { passive: false });
       stage.addEventListener('touchend', function (event) {
+        var touch = event.changedTouches && event.changedTouches[0];
         if (!event.touches || event.touches.length < 2) pinch = null;
-        var touch = event.changedTouches && event.changedTouches[0]; if (!touch || state.tool !== 'select' || event.touches.length) return;
-        var dx = touch.clientX - startX; var dy = touch.clientY - startY;
-        if (Math.abs(dx) > 52 && Math.abs(dx) > Math.abs(dy) * 1.25) navigatePage(dx < 0 ? 1 : -1);
+        if (!event.touches || !event.touches.length) { finishTouchSwipe(touch); gestureWasPinch = false; }
       }, { passive: true });
-      stage.addEventListener('touchcancel', function () { pinch = null; }, { passive: true });
+      stage.addEventListener('touchcancel', function () { pinch = null; gestureWasPinch = false; }, { passive: true });
     }
   }
 
