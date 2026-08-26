@@ -51,3 +51,7 @@
 GitHub Pages run `32988763305` 對 commit `aa2387ba9ec16beef2a1622a18b9be1a293a21d0` 已完成 `success`。正式工具 `https://gugopro.com/academy/tools/risk-return-drawdown.html?qa=aa2387b` 實測價格序列 `100,110,104,88,98,112` 與單筆 R:R 案例，回報累積報酬 12.00%、MDD -20.00%、MDD 金額 NT$ 22,000、恢復期 2 期、R:R 3.00R，產生 6 筆 path rows、7 個 SVG children，且 performance resource 沒有 API／quote／market／WebSocket 請求。
 
 正式文章 `https://gugopro.com/articles/investment/06-sharpe-mdd-risk-control.html?qa=aa2387b` 已公開，標題、六個主導航章節、額外完整案例、4 個 References、風報比／風險分析／既有工具 CTA 均可見；正式文章頁 console 檢視為無輸出，沒有新增 JavaScript error。
+
+## Final production evidence
+
+QA evidence commit `99f5216c5196a6f496248cecbf012ea90c777403` 對應的 Pages run `32989013126` 已完成 `success`。在 `?qa=99f5216` cache-busted 正式工具頁執行同一組價格／R:R smoke test，回報累積報酬 12.00%、MDD -20.00%、MDD 金額 NT$ 22,000、恢復期 2 期、R:R 3.00R、6 筆回撤路徑列；performance resource 仍無 API／quote／market／WebSocket 請求。
