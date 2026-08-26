@@ -25,6 +25,8 @@
     renderedHeight: 0,
     imageFiles: [],
     mergeFiles: [],
+    insertFiles: [],
+    crop: { top: 0, right: 0, bottom: 0, left: 0 },
     busy: false,
     outline: []
   };
@@ -164,6 +166,14 @@
   }
 
   function drawPath(context, item, width, height) {
+    if (item.type === 'text') {
+      var textValue = String(item.text || '').trim(); if (!textValue) return;
+      context.save(); context.fillStyle = item.color || '#ff9e6b'; context.globalAlpha = .95;
+      context.font = '700 ' + Math.max(14, (Number(item.size) || 18) * Math.max(width, height) / 1000) + 'px Inter, sans-serif';
+      var lines = textValue.split(/\n/); var lineHeight = Math.max(18, (Number(item.size) || 18) * Math.max(width, height) / 1000 * 1.3);
+      lines.forEach(function (line, index) { context.fillText(line, (Number(item.x) || 0) * width, ((Number(item.y) || 0) * height) + index * lineHeight); });
+      context.restore(); return;
+    }
     var points = item.points || [];
     if (points.length < 2) return;
     context.save();
@@ -332,7 +342,13 @@
       if (state.tool === 'select') return;
       event.preventDefault();
       var rect = canvas.getBoundingClientRect();
-      start = { points: [{ x: (event.clientX - rect.left) / rect.width, y: (event.clientY - rect.top) / rect.height }], color: $('annotation-color') ? $('annotation-color').value : '#ff9e6b', type: state.tool, width: Number(($('annotation-width') || {}).value) || 5 };
+      var startPoint = { x: Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)), y: Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height)) };
+      if (state.tool === 'text') {
+        var textValue = window.prompt('輸入要放在 PDF 上的文字：', '文字註記');
+        if (textValue && textValue.trim()) { if (!state.annotations[pageNumber]) state.annotations[pageNumber] = []; state.annotations[pageNumber].push({ type: 'text', x: startPoint.x, y: startPoint.y, text: textValue.trim().slice(0, 500), color: $('annotation-color') ? $('annotation-color').value : '#ff9e6b', size: Number(($('annotation-width') || {}).value) * 3 + 12 }); renderAnnotationLayer(canvas, pageNumber); renderNotesPanel(); toast('文字註記已加入本頁'); }
+        return;
+      }
+      start = { points: [startPoint], color: $('annotation-color') ? $('annotation-color').value : '#ff9e6b', type: state.tool, width: Number(($('annotation-width') || {}).value) || 5 };
       canvas.setPointerCapture(event.pointerId);
     };
     canvas.onpointermove = function (event) {
@@ -588,6 +604,13 @@
         } else page.drawText(text, { x: Math.max(16, (width - textWidth) / 2), y: height / 2, size: size, font: font, color: color, opacity: opacity, rotate: PDFLib.degrees(angle) });
       });
     }
+    var cropMargin = Math.max(0, Math.min(240, Number(($('crop-margin') || {}).value) || 0));
+    if (cropMargin) pages.forEach(function (page) {
+      var width = page.getWidth(); var height = page.getHeight();
+      var horizontal = Math.min(cropMargin, Math.max(0, (width - 12) / 2));
+      var vertical = Math.min(cropMargin, Math.max(0, (height - 12) / 2));
+      page.setCropBox(horizontal, vertical, Math.max(12, width - horizontal * 2), Math.max(12, height - vertical * 2));
+    });
     for (var index = 0; index < outputInfo.pageNumbers.length; index += 1) {
       var pageNumber = outputInfo.pageNumbers[index]; var page = pages[index];
       var imageData = state.annotationImages[pageNumber];
@@ -671,6 +694,51 @@
   function base64FromBytes(bytes) { var binary = ''; var chunk = 0x8000; for (var i = 0; i < bytes.length; i += chunk) binary += String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i + chunk, bytes.length))); return btoa(binary); }
   function bytesFromBase64(value) { var binary = atob(value); var bytes = new Uint8Array(binary.length); for (var i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i); return bytes; }
 
+  async function insertPdfPages(files) {
+    if (!state.pdf || !state.file) return toast(messages.choosePdf);
+    var list = Array.prototype.slice.call(files || []).filter(isPdf);
+    if (!list.length) return setStatus('請選擇要插入的 PDF。', 'error');
+    if (state.busy) return;
+    state.busy = true; setStatus('正在插入 PDF 頁面…', 'loading'); setProgress(8);
+    try {
+      var PDFLib = requirePdfLib(); var output = await PDFLib.PDFDocument.create();
+      var base = await PDFLib.PDFDocument.load(await readBuffer(state.file));
+      var original = await output.copyPages(base, state.pageOrder.map(function (page) { return page - 1; }));
+      original.forEach(function (page, index) { var pageNumber = state.pageOrder[index]; var rotation = (page.getRotation().angle || 0) + getRotation(pageNumber); if (rotation) page.setRotation(PDFLib.degrees(rotation % 360)); output.addPage(page); });
+      for (var i = 0; i < list.length; i += 1) { var source = await PDFLib.PDFDocument.load(await readBuffer(list[i])); var pages = await output.copyPages(source, source.getPageIndices()); pages.forEach(function (page) { output.addPage(page); }); setProgress(25 + ((i + 1) / list.length) * 45); }
+      var bytes = await output.save(); var inserted = new File([bytes], safeName(state.file.name) + '-inserted.pdf', { type: 'application/pdf' });
+      await loadPdf(inserted); setStatus('已插入 ' + list.length + ' 個 PDF 的頁面，視覺閱讀已切換至新檔案。', 'success'); toast('插入頁面完成');
+    } catch (error) { setStatus('插入失敗：' + (error.message || 'PDF 格式不受支援。'), 'error'); setProgress(0); }
+    state.busy = false;
+  }
+
+  async function compressCurrentPdf() {
+    if (!state.pdf || !state.file) return toast(messages.choosePdf);
+    if (state.busy) return; state.busy = true; setStatus('正在本機重整 PDF 結構並壓縮…', 'loading'); setProgress(10);
+    try {
+      var PDFLib = requirePdfLib(); var document = await PDFLib.PDFDocument.load(await readBuffer(state.file)); setProgress(55);
+      var bytes = await document.save({ useObjectStreams: true, addDefaultPage: false, objectsPerTick: 20 });
+      downloadBlob(new Blob([bytes], { type: 'application/pdf' }), safeName(state.file.name) + '-compressed.pdf'); setProgress(100); setStatus('已完成本機結構壓縮並下載 PDF；圖片不會重新取樣。', 'success'); toast('壓縮 PDF 已下載');
+    } catch (error) { setStatus('壓縮失敗：' + (error.message || '格式不受支援。'), 'error'); setProgress(0); }
+    state.busy = false;
+  }
+
+  async function decryptLockPackage(file) {
+    if (!file) return;
+    var passphrase = String(($('lock-password') || {}).value || '');
+    if (passphrase.length < 6) return setStatus('請先輸入建立鎖定包時使用的至少 6 個字元密碼。', 'error');
+    if (!window.crypto || !window.crypto.subtle) return setStatus('此瀏覽器不支援 Web Crypto。', 'error');
+    setStatus('正在以本機密碼解密鎖定包…', 'loading');
+    try {
+      var packageData = JSON.parse(await file.text());
+      if (packageData.format !== 'GugoPro PDF Lock v1') throw new Error('這不是 GugoPro PDF Lock v1 鎖定包。');
+      var salt = bytesFromBase64(packageData.salt); var iv = bytesFromBase64(packageData.iv); var material = await crypto.subtle.importKey('raw', new TextEncoder().encode(passphrase), 'PBKDF2', false, ['deriveKey']);
+      var key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: salt, iterations: 100000, hash: 'SHA-256' }, material, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+      var decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, key, bytesFromBase64(packageData.ciphertext));
+      downloadBlob(new Blob([decrypted], { type: 'application/pdf' }), packageData.fileName || 'gugopro-unlocked.pdf'); setStatus('鎖定包已在本機解密並下載 PDF。', 'success'); toast('解密完成');
+    } catch (error) { setStatus('解密失敗：密碼錯誤或鎖定包損壞。', 'error'); }
+  }
+
   async function encryptCurrentPdf() {
     if (!state.pdf || !state.file) return toast(messages.choosePdf);
     var passphrase = String(($('lock-password') || {}).value || '');
@@ -733,9 +801,23 @@
     qsa('.pdf-ai-view').forEach(function (view) { view.hidden = view.dataset.aiView !== name; });
   }
 
-  function appendChat(role, text) {
+  function scrollChatToLatest(node) {
     var log = $('pdf-chat-log'); if (!log) return;
-    var node = document.createElement('div'); node.className = 'pdf-chat-msg ' + role; node.innerHTML = '<strong>' + (role === 'user' ? 'You' : 'GugoPro AI') + '</strong>' + markdownToHtml(text); log.appendChild(node); log.scrollTop = log.scrollHeight;
+    try { if (node && node.scrollIntoView) node.scrollIntoView({ behavior: 'smooth', block: 'end' }); } catch (_) {}
+    try { log.scrollTo({ top: log.scrollHeight, behavior: 'smooth' }); } catch (_) { log.scrollTop = log.scrollHeight; }
+  }
+
+  function appendChat(role, value) {
+    var log = $('pdf-chat-log'); if (!log) return null;
+    var node = document.createElement('div'); node.className = 'pdf-chat-msg ' + role;
+    node.innerHTML = '<strong>' + (role === 'user' ? 'You' : 'GugoPro AI') + '</strong>' + markdownToHtml(String(value == null ? '' : value));
+    log.appendChild(node); scrollChatToLatest(node); return node;
+  }
+
+  function updateChatMessage(node, value) {
+    if (!node) return;
+    node.innerHTML = '<strong>GugoPro AI</strong>' + markdownToHtml(String(value == null ? '' : value));
+    scrollChatToLatest(node);
   }
 
   var pendingChatRetry = null;
@@ -757,18 +839,28 @@
   function hideAiError() { var panel = $('pdf-ai-error-panel'); if (panel) panel.classList.remove('is-visible'); clearInterval(retryTimer); pendingChatRetry = null; }
 
   async function handleChat(retryQuestion) {
-    var input = $('pdf-chat-input'); var question = String(retryQuestion || input.value || '').trim(); if (!question) return;
-    var isRetry = Boolean(retryQuestion); if (!isRetry) { appendChat('user', question); input.value = ''; }
-    var button = $('pdf-chat-send'); button.disabled = true;
+    var input = $('pdf-chat-input');
+    var retryText = typeof retryQuestion === 'string' ? retryQuestion.trim() : '';
+    var question = retryText || String(input && input.value ? input.value : '').trim();
+    if (!question) return;
+    var isRetry = Boolean(retryText);
+    if (!isRetry) {
+      appendChat('user', question);
+      if (input) { input.value = ''; input.style.height = ''; input.dispatchEvent(new Event('input', { bubbles: true })); }
+    }
+    var button = $('pdf-chat-send'); if (button) button.disabled = true;
+    var pendingNode = appendChat('assistant', '正在分析文件，整理頁碼引用…');
+    if (pendingNode) pendingNode.classList.add('is-pending');
     try {
       var answer = await requestAi('使用文件內容回答這個問題：' + question + '\n請用 3–7 點條列，並在每一點後標出頁碼。');
-      hideAiError(); appendChat('assistant', answer || 'AI 沒有回傳內容。');
+      hideAiError(); updateChatMessage(pendingNode, answer || 'AI 沒有回傳內容。'); if (pendingNode) pendingNode.classList.remove('is-pending');
       try { window.dispatchEvent(new CustomEvent('gugopro:pdf-room-message', { detail: { role: 'user', text: question } })); window.dispatchEvent(new CustomEvent('gugopro:pdf-room-message', { detail: { role: 'assistant', text: answer || 'AI 沒有回傳內容。' } })); } catch (_) {}
     } catch (error) {
+      if (pendingNode) pendingNode.remove();
       if (error.message === 'NO_KEY') showAiError('請先在右上角 ≡ 選單設定 Gemini API key。', false);
       else if ([503, 429, 500, 'TIMEOUT'].includes(error.status)) showAiError('AI 模型目前忙碌或逾時，系統已依導師架構自動輪替；', true, question);
       else { showAiError('目前無法完成分析：' + (error.message || '連線失敗。'), false); appendChat('assistant', '目前無法完成分析：' + (error.message || '連線失敗。')); }
-    } finally { button.disabled = false; }
+    } finally { if (button) button.disabled = false; }
   }
 
   async function handleSummary() {
@@ -847,6 +939,11 @@
     $('pdf-signature-rotate-right').addEventListener('click', function () { var signature = selectedSignature(); if (!signature) return toast('請先點選簽名'); signature.rotation = (signature.rotation + 15) % 360; renderMainPage(); });
     $('pdf-download-current').addEventListener('click', function () { renderAllImages('png'); }); $('pdf-download-jpg').addEventListener('click', function () { renderAllImages('jpg'); });
     $('pdf-images-to-pdf').addEventListener('click', imagesToPdf); $('pdf-merge-run').addEventListener('click', mergePdfs); $('pdf-lock-run').addEventListener('click', encryptCurrentPdf);
+    $('pdf-unlock-run')?.addEventListener('click', function () { $('unlock-input')?.click(); }); $('unlock-input')?.addEventListener('change', function () { decryptLockPackage(this.files && this.files[0]); this.value = ''; });
+    $('pdf-insert-page')?.addEventListener('click', function () { $('insert-input')?.click(); }); $('insert-input')?.addEventListener('change', function () { insertPdfPages(this.files); this.value = ''; });
+    $('pdf-crop-run')?.addEventListener('click', function () { var margin = Math.max(0, Math.min(240, Number(($('crop-margin') || {}).value) || 0)); if (!state.pdf) return toast(messages.choosePdf); state.crop = { top: margin, right: margin, bottom: margin, left: margin }; toast(margin ? '已設定四邊各裁切 ' + margin + ' pt，匯出時套用。' : '已清除裁切設定。'); });
+    $('pdf-compress-run')?.addEventListener('click', compressCurrentPdf);
+    $('pdf-page-flow')?.addEventListener('change', function () { var stage = $('pdf-reader-stage'); if (stage) stage.classList.toggle('is-horizontal-flow', this.value === 'horizontal'); setStatus(this.value === 'horizontal' ? '已切換橫向翻頁檢視。' : '已切換縱向翻頁檢視。', 'success'); });
     $('pdf-split-run').addEventListener('click', function () { if (!state.pdf) return toast(messages.choosePdf); var raw = String($('split-range').value || '').trim(); var result = parseRange(raw, state.pageOrder.length); if (!result.length) return setStatus('請輸入有效頁碼範圍，例如 1-3,5。', 'error'); exportPdf(result, safeName(state.file.name) + '-split.pdf'); });
   }
 
@@ -857,7 +954,11 @@
   function bindAi() {
     qsa('[data-ai-tab]').forEach(function (button) { button.addEventListener('click', function () { switchAiTab(button.dataset.aiTab); }); });
     qsa('[data-ai-prompt]').forEach(function (button) { button.addEventListener('click', function () { $('pdf-chat-input').value = button.dataset.aiPrompt; $('pdf-chat-input').focus(); }); });
-    $('pdf-chat-send')?.addEventListener('click', handleChat); $('pdf-chat-input')?.addEventListener('keydown', function (event) { if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') handleChat(); });
+    $('pdf-chat-send')?.addEventListener('click', function () { handleChat(); });
+    $('pdf-chat-input')?.addEventListener('keydown', function (event) {
+      if (event.isComposing) return;
+      if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); handleChat(); }
+    });
     $('pdf-ai-retry')?.addEventListener('click', function () { if (pendingChatRetry) handleChat(pendingChatRetry); });
     $('pdf-summary-run')?.addEventListener('click', handleSummary); $('pdf-risk-run')?.addEventListener('click', handleRisk); $('pdf-translate-run')?.addEventListener('click', handleTranslate); $('pdf-translate-current')?.addEventListener('click', populateCurrentPageText);
     $('pdf-open-models')?.addEventListener('click', function () { if (window.GugoProPdfRooms) window.GugoProPdfRooms.openDrawer(true); });

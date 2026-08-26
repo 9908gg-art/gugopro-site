@@ -380,3 +380,56 @@ body.pdf-night-reading .pdf-page-frame .pdf-signature-stamp { filter: invert(1) 
   .pdf-compliance-footer small { width: 100%; }
   .pdf-empty-state p { max-width: 29ch; text-wrap: balance; }
 }
+
+/* Full-bleed workstation layout: the page frame stays fixed while each work surface scrolls independently. */
+@media (min-width: 768px) {
+  html, body.pdf-suite-page { width: 100%; height: 100%; overflow: hidden; }
+  body.pdf-suite-page { display: flex; flex-direction: column; }
+  .pdf-site-header { flex: 0 0 auto; }
+  .pdf-site-nav, .pdf-suite-intro, .pdf-app-shell, .pdf-compliance-footer { width: 100%; max-width: none; }
+  .pdf-site-nav { padding-right: 16px; padding-left: 16px; }
+  .pdf-suite-intro { flex: 0 0 auto; padding: 12px 16px 9px; }
+  .pdf-suite-intro-row { align-items: center; }
+  .pdf-app-shell { display: flex; min-height: 0; flex: 1 1 auto; flex-direction: column; padding: 0 16px 8px; }
+  .pdf-app-toolbar { position: static; flex: 0 0 auto; margin-bottom: 8px; }
+  .pdf-workspace { min-height: 0; flex: 1 1 auto; grid-template-columns: minmax(220px, 275px) minmax(0, 1fr) minmax(305px, 380px); }
+  .pdf-sidebar, .pdf-reader-panel, .pdf-ai-pane { min-height: 0; }
+  .pdf-sidebar-content, .pdf-reader-stage, .pdf-ai-scroll { overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
+  .pdf-reader-stage { min-height: 0; }
+  .pdf-ai-pane { min-height: 0; }
+  .pdf-utility-panel { flex: 0 0 auto; max-height: min(148px, 18vh); overflow: auto; scrollbar-gutter: stable; }
+  .pdf-utility-panel[aria-label="批次 PDF 工具"], .pdf-utility-panel[aria-label="Batch PDF tools"] { max-height: min(104px, 13vh); }
+  .pdf-compliance-footer { flex: 0 0 auto; padding: 8px 16px 10px; }
+}
+
+/* Chat presentation and composing surface. */
+.pdf-chat-msg.is-pending { border-style: dashed; opacity: .82; }
+.pdf-chat-msg.is-pending strong::after { content: ' · live'; color: var(--pdf-yellow); font-size: .58rem; }
+.pdf-ai-error-panel { align-items: center; }
+
+@media (max-width: 767px) {
+  html, body.pdf-suite-page { min-height: 100%; overflow-x: hidden; }
+  body.pdf-suite-page { overflow-y: auto; }
+  .pdf-app-shell { min-height: 0; }
+  .pdf-ai-pane.is-mobile-open { inset: 57px 8px calc(72px + env(safe-area-inset-bottom)); display: flex; min-height: 0; }
+  .pdf-ai-pane.is-mobile-open .pdf-ai-head { display: none; }
+  .pdf-ai-pane.is-mobile-open .pdf-room-strip { display: none; }
+  .pdf-ai-pane.is-mobile-open .pdf-ai-tabs { position: sticky; top: 0; z-index: 3; flex: 0 0 auto; padding-top: 8px; background: rgba(13,20,32,.98); }
+  .pdf-ai-pane.is-mobile-open .pdf-ai-body { min-height: 0; flex: 1 1 auto; }
+  .pdf-ai-pane.is-mobile-open .pdf-ai-view { padding: 8px; }
+  .pdf-ai-pane.is-mobile-open .pdf-ai-scroll { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+  .pdf-ai-pane.is-mobile-open .pdf-ai-composer { position: sticky; bottom: 0; z-index: 4; margin: 8px -8px 0; padding: 8px 8px calc(4px + env(safe-area-inset-bottom)); background: linear-gradient(180deg, rgba(13,20,32,.15), rgba(13,20,32,.98) 22%); }
+  .pdf-ai-pane.is-mobile-open .pdf-ai-composer textarea { min-height: 48px; max-height: 96px; resize: none; }
+  .pdf-bottom-dock { bottom: max(8px, env(safe-area-inset-bottom)); }
+  .pdf-bottom-dock:has(.pdf-dock-button.is-active) { padding-top: 4px; padding-bottom: 4px; }
+  .pdf-ai-pane.is-mobile-open ~ * { visibility: hidden; }
+}
+
+@supports not selector(:has(*)) {
+  @media (max-width: 767px) {
+    .pdf-bottom-dock { padding-top: 4px; padding-bottom: 4px; }
+  }
+}
+
+.pdf-reader-stage.is-horizontal-flow { place-items: start; padding-inline: 24px; }
+.pdf-reader-stage.is-horizontal-flow .pdf-page-frame { margin-inline: 8px; }

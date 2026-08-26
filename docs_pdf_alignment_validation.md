@@ -59,3 +59,37 @@ Chromium 輸出只有 sandbox 的 UPower D-Bus 環境警告，未見 PDF Suite �
 對齊 commit `e7ead26` 推送後，Pages build `32924690297` 完成 success；正式頁一度先顯示舊的「設定 AI Key」是 CDN/browser cache 尚未更新。追加 cache-bust commit `387fece`，為雙語 HTML 的 PDF Suite CSS/JS/rooms engine 加上 `?v=e7ead26`，Pages build `32924837913` 完成 success。
 
 最終正式中文 URL `https://gugopro.com/tools/pdf/pdf-suite.html?alignment=387fece` 已回傳新版 drawer trigger `#pdf-drawer-open`、房間與 BYOK DOM；production computed style 確認 `#pdf-ai-error-panel` 初始 `display:none`，資產 URL 為版本化 CSS/JS，沒有殘留 `Set AI Key` 或舊 key modal。正式頁可正常取得 HTML。
+
+## ChatPDF PointerEvent 修復驗證
+
+在本地頁面輸入「請找出文件中的待辦事項」並觸發 Enter：送出後 `textarea.value` 為空，聊天記錄包含完整真實問題，完全不含 `[object PointerEvent]`；無 API key 時正確開啟標準 Quota/BYOK drawer 並顯示設定提示，沒有送出無效 Gemini 請求。
+
+
+## PDF 功能覆核 fixture
+
+以同源三頁 searchable fixture 注入本機檔案選擇器後，PDF.js 成功載入 3 頁，頁序為 `[1,2,3]`，產生 3 張縮圖並擷取 3 頁文字層；聊天區未出現 `[object PointerEvent]`。
+
+
+## 新增 parity 操作驗證
+
+本地 fixture 實測壓縮按鈕成功攔截下載檔名 `pdf-parity-fixture-compressed.pdf`，進度到 100%。旋轉右轉更新目前頁為 90°；翻頁方向切換為橫向並加入 `is-horizontal-flow`；24pt 裁切設定成功寫入操作狀態；Text Annotation pointerdown 透過瀏覽器 prompt 產生 1 筆文字註記並更新畫布，toast 顯示「文字註記已加入本頁」。
+
+
+## 插入與解密驗證
+
+Insert pages 實測成功：在 3 頁 PDF 插入 1 頁 PDF 後重建為 `pdf-parity-fixture-inserted.pdf`，viewer 重新載入 4 頁、4 張縮圖且狀態顯示插入完成。AES-GCM 解密實測使用本機既有測試鎖定包與短期測試密碼，成功下載 `pdf-suite-fixture-locked.pdf`，進度為 100%。
+
+
+## Viewport 版面驗證
+
+Desktop 1440×900 截圖確認頁面採 full-bleed 100vh：header、簡潔 hero、toolbar、三欄工作區、工具區與 footer 同屏；中間 PDF stage、左側 sidebar、右側 AI scroll 各自保有內部滾動，外層頁面不產生垂直滑動。Mobile 390×844 截圖確認 hero 完全隱藏，header 後直接進入核心 toolbar；單欄 reader 佔主要空間，Bottom Dock 固定於安全區上方，無水平溢出。
+
+
+## Mobile AI overlay 驗證
+
+在 virtual-time 充分等待後，以 390×844 開啟 AI dock，截圖確認 `pdf-ai-pane.is-mobile-open` 會覆蓋主要工作區；hero、reader 與 AI header/room strip 被收合，ChatPDF/Summary/Contract/Translate tabs 直接置頂，對話內容區占大部分視窗，composer 固定在底部安全區上方，Bottom Dock 保留 AI active state。第一次截圖因 headless capture 過早未觸發固定延遲，改用 virtual-time budget 後重測成功。
+
+
+## ChatPDF 快捷鍵驗證
+
+本地鍵盤測試通過：Shift+Enter 保留輸入內容以便換行；Ctrl+Enter 送出後清空 textarea，對話區出現「Ctrl 快捷鍵測試」真實文字；無 API key 時顯示標準設定提示，對話內容完全不含 `[object PointerEvent]`。
