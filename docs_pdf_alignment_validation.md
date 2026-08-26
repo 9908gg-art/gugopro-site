@@ -93,3 +93,8 @@ Desktop 1440×900 截圖確認頁面採 full-bleed 100vh：header、簡潔 hero�
 ## ChatPDF 快捷鍵驗證
 
 本地鍵盤測試通過：Shift+Enter 保留輸入內容以便換行；Ctrl+Enter 送出後清空 textarea，對話區出現「Ctrl 快捷鍵測試」真實文字；無 API key 時顯示標準設定提示，對話內容完全不含 `[object PointerEvent]`。
+
+## 正式站 production 驗證
+
+Pages run `32932576786` 對應 commit `2bf5ae8` 已完成 success。正式中文 URL `https://gugopro.com/tools/pdf/pdf-suite.html?verify=2bf5ae8` 的 production DOM 已提供文字註記、裁切、插入頁面、壓縮 PDF、AES-GCM 解密與既有閱讀/標註/簽名工具；實際 CSS/JS URL 均帶 `?v=feature-parity-20260826`。直接 fetch production JS 確認含 `typeof retryQuestion === 'string'` PointerEvent 防護、plain click handler、Enter/Shift+Enter handler，以及 `insertPdfPages`、`compressCurrentPdf`、`decryptLockPackage`。
+
