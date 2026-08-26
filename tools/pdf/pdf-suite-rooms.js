@@ -7,6 +7,7 @@
   var runtimeByRoom = new Map();
   var restoringRoom = false;
   var currentRoomOperation = '';
+  var editingRoomId = null;
   var REQUEST_TIMEOUT_MS = 10000;
   var IS_EN = root.document && root.document.documentElement && root.document.documentElement.lang === 'en';
   var DEFAULT_TASK_ROOMS = IS_EN ? [
@@ -25,20 +26,17 @@
   function text(value) { return String(value == null ? '' : value); }
   function safeName(value) { return text(value || 'pdf-room').replace(/[^a-z0-9_-]+/gi, '-').replace(/^-+|-+$/g, '').slice(0, 50) || 'pdf-room'; }
 
-  function makeDefaultTaskRoom(definition) {
-    return { id: definition.id, name: definition.name, createdAt: new Date().toISOString(), messages: [], pdf: null, taskRule: definition.rule, taskSummary: definition.summary };
+  function makeGeneralRoom() {
+    return { id: 'pdf_general_analysis', name: IS_EN ? 'General PDF Analysis' : '一般 PDF 分析房間', createdAt: new Date().toISOString(), messages: [], pdf: null, taskRule: '', taskSummary: IS_EN ? 'Ask questions about the current document or define your own rule.' : '直接詢問目前文件，或建立自己的核心任務規則。' };
   }
 
-  function getDefaultRoom() {
-    return makeDefaultTaskRoom(DEFAULT_TASK_ROOMS[0]);
-  }
+  function getDefaultRoom() { return makeGeneralRoom(); }
 
-  function ensureDefaultTaskRooms() {
-    DEFAULT_TASK_ROOMS.forEach(function (definition) {
-      var existing = rooms.find(function (room) { return room.id === definition.id; });
-      if (!existing) rooms.push(makeDefaultTaskRoom(definition));
-      else if (!existing.messages.length && !existing.pdf && (/^(任務[一二三四]|Task [1-4])/.test(existing.name) || /^(快速整理|找出高風險|將表格|掃描個資|Summarize|Find high-risk|Turn tables|Scan personal)/.test(existing.taskSummary))) { existing.name = definition.name; existing.taskRule = definition.rule; existing.taskSummary = definition.summary; }
-    });
+  function ensureGeneralTaskRoom() {
+    var general = rooms.find(function (room) { return room.id === 'pdf_general_analysis'; });
+    if (!general) { rooms.unshift(makeGeneralRoom()); return; }
+    if (!general.messages.length && !general.pdf && !general.taskRule) { general.name = IS_EN ? 'General PDF Analysis' : '一般 PDF 分析房間'; general.taskSummary = IS_EN ? 'Ask questions about the current document or define your own rule.' : '直接詢問目前文件，或建立自己的核心任務規則。'; }
+    rooms = [general].concat(rooms.filter(function (room) { return room.id !== general.id; }));
   }
 
   function normalizePdfRecord(pdf) {
@@ -82,10 +80,12 @@
     var saved = null;
     try { saved = JSON.parse(root.localStorage.getItem(ROOM_STORAGE_KEY) || 'null'); } catch (_) { saved = null; }
     rooms = Array.isArray(saved) ? saved.map(normalizeRoom) : (Array.isArray(saved && saved.rooms) ? saved.rooms.map(normalizeRoom) : []);
-    var legacyEmpty = rooms.find(function (room) { return room.name === '一般 PDF 分析' && !room.taskRule && !room.pdf && !room.messages.length; });
-    if (legacyEmpty) { rooms = rooms.filter(function (room) { return room.id !== legacyEmpty.id; }); if (saved && saved.activeRoomId === legacyEmpty.id) saved.activeRoomId = DEFAULT_TASK_ROOMS[0].id; }
+    var legacyGeneral = rooms.find(function (room) { return (room.name === '一般 PDF 分析' || room.name === '一般 PDF 分析房間' || room.name === 'General PDF Analysis') && !room.taskRule && !room.pdf && !room.messages.length; });
+    if (legacyGeneral) { legacyGeneral.id = 'pdf_general_analysis'; legacyGeneral.name = IS_EN ? 'General PDF Analysis' : '一般 PDF 分析房間'; }
+    var presetDefinitions = DEFAULT_TASK_ROOMS.reduce(function (map, definition) { map[definition.id] = definition; return map; }, {});
+    rooms = rooms.filter(function (room) { var preset = presetDefinitions[room.id]; return !(preset && !room.messages.length && !room.pdf && room.taskRule === preset.rule); });
     if (!rooms.length) rooms = [getDefaultRoom()];
-    ensureDefaultTaskRooms();
+    ensureGeneralTaskRoom();
     activeRoomId = (saved && saved.activeRoomId && rooms.some(function (room) { return room.id === saved.activeRoomId; })) ? saved.activeRoomId : rooms[0].id;
     saveRooms();
   }
@@ -104,33 +104,31 @@
   function renderRoomName() {
     var room = getActiveRoom();
     var nameEl = $('pdf-room-name');
-    if (nameEl) nameEl.textContent = room ? room.name : '自訂 AI 任務專家';
+    if (nameEl) nameEl.textContent = room ? room.name : (IS_EN ? 'Custom AI Task Workspace' : '自訂 AI 任務專家');
+    var roomSelect = $('pdf-task-room-select'); if (roomSelect && room) roomSelect.value = room.id;
     var ruleSummary = $('pdf-project-rule-summary');
-    if (ruleSummary) ruleSummary.textContent = room && room.taskSummary ? room.taskSummary : '尚未設定核心任務條件';
+    if (ruleSummary) ruleSummary.textContent = room && room.taskSummary ? room.taskSummary : (IS_EN ? 'No core task rule saved' : '尚未設定核心任務條件');
   }
 
   function renderTaskRoomList() {
-    var list = $('pdf-task-room-list');
-    if (!list) return;
-    list.replaceChildren();
-    rooms.forEach(function (room) {
-      var item = document.createElement('div');
-      item.className = 'pdf-task-room-card' + (room.id === activeRoomId ? ' is-active' : '');
-      item.dataset.roomId = room.id;
-      item.setAttribute('role', 'listitem');
-      var main = document.createElement('button');
-      main.className = 'pdf-task-room-main'; main.type = 'button'; main.title = '切換至 ' + room.name;
-      main.addEventListener('click', function () { switchRoom(room.id); });
-      var icon = document.createElement('i'); icon.className = 'fa-solid fa-bolt';
-      var copy = document.createElement('span'); copy.className = 'pdf-task-room-copy';
-      var name = document.createElement('strong'); name.textContent = room.name;
-      var summary = document.createElement('small'); summary.textContent = room.taskSummary || (room.taskRule ? '已設定任務規則' : '尚未設定任務規則');
-      copy.appendChild(name); copy.appendChild(summary); main.appendChild(icon); main.appendChild(copy);
-      var actions = document.createElement('div'); actions.className = 'pdf-task-room-actions';
-      var rename = document.createElement('button'); rename.className = 'pdf-task-room-action'; rename.type = 'button'; rename.title = '重新命名'; rename.setAttribute('aria-label', '重新命名'); rename.innerHTML = '<i class="fa-solid fa-pen"></i>'; rename.addEventListener('click', function (event) { event.stopPropagation(); renameRoom(room.id); });
-      var remove = document.createElement('button'); remove.className = 'pdf-task-room-action'; remove.type = 'button'; remove.title = '刪除房間'; remove.setAttribute('aria-label', '刪除房間'); remove.innerHTML = '<i class="fa-solid fa-trash"></i>'; remove.addEventListener('click', function (event) { event.stopPropagation(); deleteRooms([room.id]); });
-      actions.appendChild(rename); actions.appendChild(remove); item.appendChild(main); item.appendChild(actions); list.appendChild(item);
-    });
+    var select = $('pdf-task-room-select');
+    if (select) {
+      select.replaceChildren();
+      rooms.forEach(function (room) {
+        var option = document.createElement('option'); option.value = room.id; option.textContent = room.name; select.appendChild(option);
+      });
+      var createOption = document.createElement('option'); createOption.value = '__new_custom_task__'; createOption.textContent = IS_EN ? '＋ Create a custom task room…' : '＋ 新增自訂任務房間…'; select.appendChild(createOption);
+      select.value = activeRoomId || (rooms[0] && rooms[0].id) || '';
+      if (!select.dataset.bound) {
+        select.dataset.bound = 'true';
+        select.addEventListener('change', function () {
+          if (this.value === '__new_custom_task__') { this.value = activeRoomId || ''; createRoom(); return; }
+          switchRoom(this.value);
+        });
+      }
+    }
+    var legacyList = $('pdf-task-room-list');
+    if (legacyList) { legacyList.replaceChildren(); legacyList.hidden = true; }
   }
 
   function renderRoomList() {
@@ -145,7 +143,7 @@
       var main = document.createElement('button');
       main.className = 'pdf-room-main';
       main.type = 'button';
-      main.title = '切換至 ' + room.name;
+      main.title = (IS_EN ? 'Switch to ' : '切換至 ') + room.name;
       main.addEventListener('click', function () { switchRoom(room.id); });
       var icon = document.createElement('i');
       icon.className = 'fa-regular fa-comments';
@@ -154,15 +152,15 @@
       var strong = document.createElement('strong');
       strong.textContent = room.name;
       var meta = document.createElement('small');
-      meta.textContent = (room.pdf ? 'PDF 文字層 · ' : '') + room.messages.length + ' 則對話' + (room.taskRule ? ' · 已設定任務' : '');
+      meta.textContent = (room.pdf ? (IS_EN ? 'PDF text layer · ' : 'PDF 文字層 · ') : '') + room.messages.length + (IS_EN ? ' messages' : ' 則對話') + (room.taskRule ? (IS_EN ? ' · task saved' : ' · 已設定任務') : '');
       copy.appendChild(strong); copy.appendChild(meta); main.appendChild(icon); main.appendChild(copy);
       var actions = document.createElement('div');
       actions.className = 'pdf-room-actions';
       var rename = document.createElement('button');
-      rename.className = 'pdf-room-action'; rename.type = 'button'; rename.title = '重新命名'; rename.innerHTML = '<i class="fa-solid fa-pen"></i>';
+      rename.className = 'pdf-room-action'; rename.type = 'button'; rename.title = IS_EN ? 'Rename' : '重新命名'; rename.setAttribute('aria-label', rename.title); rename.innerHTML = '<i class="fa-solid fa-pen"></i>';
       rename.addEventListener('click', function (event) { event.stopPropagation(); renameRoom(room.id); });
       var remove = document.createElement('button');
-      remove.className = 'pdf-room-action'; remove.type = 'button'; remove.title = '刪除房間'; remove.innerHTML = '<i class="fa-solid fa-trash"></i>';
+      remove.className = 'pdf-room-action'; remove.type = 'button'; remove.title = IS_EN ? 'Delete room' : '刪除房間'; remove.setAttribute('aria-label', remove.title); remove.innerHTML = '<i class="fa-solid fa-trash"></i>';
       remove.addEventListener('click', function (event) { event.stopPropagation(); deleteRooms([room.id]); });
       actions.appendChild(rename); actions.appendChild(remove); item.appendChild(main); item.appendChild(actions); list.appendChild(item);
     });
@@ -239,20 +237,21 @@
     closeDrawer();
   }
 
-  function createRoom() {
-    var name = root.prompt('請輸入新的自訂 AI 任務專家名稱：', '新任務專家');
-    if (!name || !name.trim()) return;
-    saveRuntimeForActiveRoom();
-    var room = { id: 'pdf_room_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), name: name.trim().slice(0, 80), createdAt: new Date().toISOString(), messages: [], pdf: null, taskRule: '', taskSummary: '尚未設定核心任務條件' };
-    rooms.push(room); saveRooms(); renderRoomList(); switchRoom(room.id, true);
+  function prepareTaskRuleEditor(room) {
+    var modal = $('pdf-task-rule-modal'); if (!modal) return;
+    var target = room || { name: '', taskRule: '', taskSummary: '' };
+    if ($('pdf-task-project-name')) $('pdf-task-project-name').value = target.name || '';
+    if ($('pdf-task-rule')) $('pdf-task-rule').value = target.taskRule || '';
+    if ($('pdf-task-summary')) $('pdf-task-summary').value = target.taskSummary || '';
+    modal.classList.add('is-open'); ($('pdf-task-project-name') || $('pdf-task-rule'))?.focus();
   }
+
+  function createRoom() { editingRoomId = null; closeDrawer(); prepareTaskRuleEditor(null); }
 
   function renameRoom(roomId) {
     var room = rooms.find(function (item) { return item.id === roomId; });
     if (!room) return;
-    var name = root.prompt('重新命名 PDF 分析房間：', room.name);
-    if (!name || !name.trim()) return;
-    room.name = name.trim().slice(0, 80); saveRooms(); renderRoomList(); renderRoomName();
+    editingRoomId = roomId; closeDrawer(); prepareTaskRuleEditor(room);
   }
 
   function deleteMessage(roomId, messageId) {
@@ -267,28 +266,25 @@
     return true;
   }
 
-  function openTaskRuleEditor() {
-    var room = getActiveRoom(); var modal = $('pdf-task-rule-modal');
-    if (!room || !modal) return;
-    if ($('pdf-task-project-name')) $('pdf-task-project-name').value = room.name || '';
-    if ($('pdf-task-rule')) $('pdf-task-rule').value = room.taskRule || '';
-    if ($('pdf-task-summary')) $('pdf-task-summary').value = room.taskSummary || '';
-    modal.classList.add('is-open'); $('pdf-task-rule')?.focus();
-  }
+  function openTaskRuleEditor() { var room = getActiveRoom(); if (!room) return; editingRoomId = room.id; prepareTaskRuleEditor(room); }
 
   function saveTaskRule() {
-    var room = getActiveRoom(); if (!room) return;
+    var room = editingRoomId ? rooms.find(function (item) { return item.id === editingRoomId; }) : null;
     var name = text($('pdf-task-project-name') && $('pdf-task-project-name').value).trim();
     var rule = text($('pdf-task-rule') && $('pdf-task-rule').value).trim();
     var summary = text($('pdf-task-summary') && $('pdf-task-summary').value).trim();
-    if (!rule) { showRoomNotice('請先寫下這個專案要固定執行的核心任務條件。', 'error'); return; }
-    room.name = (name || room.name || '自訂 AI 任務專家').slice(0, 80);
+    if (!name) { showRoomNotice(IS_EN ? 'Enter a name for this custom task room.' : '請先輸入自訂任務房間名稱。', 'error'); return; }
+    if (!rule) { showRoomNotice(IS_EN ? 'Write the core task rule for this workspace first.' : '請先寫下這個專案要固定執行的核心任務條件。', 'error'); return; }
+    if (!room) { saveRuntimeForActiveRoom(); room = { id: 'pdf_room_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), name: name.slice(0, 80), createdAt: new Date().toISOString(), messages: [], pdf: null, taskRule: '', taskSummary: '' }; rooms.push(room); activeRoomId = room.id; }
+    room.name = name.slice(0, 80);
     room.taskRule = rule.slice(0, 12000);
     room.taskSummary = (summary || rule.replace(/\s+/g, ' ').slice(0, 120)).slice(0, 240);
-    saveRooms(); renderRoomName(); renderRoomList();
+    editingRoomId = room.id; saveRooms(); renderRoomName(); renderRoomList();
     var modal = $('pdf-task-rule-modal'); if (modal) modal.classList.remove('is-open');
-    showRoomNotice('已保存「' + room.name + '」的核心任務規則。', 'success');
+    renderRoomHistory(room); showRoomNotice((IS_EN ? 'Saved “' : '已保存「') + room.name + (IS_EN ? '” as a custom task rule.' : '」的核心任務規則。'), 'success');
   }
+
+  function deleteActiveRoom() { if (activeRoomId) deleteRooms([activeRoomId]); }
 
   function deleteRooms(ids) {
     var selected = ids.filter(function (id) { return rooms.some(function (room) { return room.id === id; }); });
@@ -318,7 +314,7 @@
     rooms.forEach(function (room) {
       var label = document.createElement('label'); label.className = 'pdf-room-op-item';
       var input = document.createElement('input'); input.type = operation === 'export' ? 'checkbox' : 'checkbox'; input.name = 'pdf-room-op-select'; input.value = room.id;
-      var span = document.createElement('span'); span.textContent = room.name + '（' + room.messages.length + ' 則對話' + (room.pdf ? ' · 含文字層' : '') + '）';
+      var span = document.createElement('span'); span.textContent = IS_EN ? room.name + ' (' + room.messages.length + ' messages' + (room.pdf ? ' · text layer' : '') + ')' : room.name + '（' + room.messages.length + ' 則對話' + (room.pdf ? ' · 含文字層' : '') + '）';
       label.appendChild(input); label.appendChild(span); list.appendChild(label);
     });
     modal.classList.add('is-open'); closeDrawer();
@@ -420,6 +416,7 @@
     if ($('pdf-room-import-input')) $('pdf-room-import-input').addEventListener('change', function () { importRooms(this.files && this.files[0]); });
     $('pdf-project-run')?.addEventListener('click', function () { if (root.GugoProPdfSuite && root.GugoProPdfSuite.executeTask) root.GugoProPdfSuite.executeTask(); });
     $('pdf-project-rule')?.addEventListener('click', openTaskRuleEditor);
+    $('pdf-room-delete-inline')?.addEventListener('click', deleteActiveRoom);
     $('pdf-task-rule-save')?.addEventListener('click', saveTaskRule);
     document.querySelectorAll('[data-close-modal="pdf-room-ops-modal"], [data-close-modal="pdf-task-rule-modal"]').forEach(function (button) { button.addEventListener('click', function () { var modal = $(button.dataset.closeModal); if (modal) modal.classList.remove('is-open'); }); });
     if ($('pdf-drawer-save-key')) $('pdf-drawer-save-key').addEventListener('click', async function () { var key = text($('pdf-drawer-api-key').value).trim(); if (!key) return showRoomNotice('請先貼上 Gemini API key。', 'error'); localStorage.setItem('gugopro_gemini_api_key', key); localStorage.setItem('gemini_api_key', key); $('pdf-drawer-api-status').textContent = 'Key 已保存在本機。'; if (root.GugoProPdfSuiteAI && root.GugoProPdfSuiteAI.refresh) await root.GugoProPdfSuiteAI.refresh({ silent: false }); });
@@ -427,7 +424,7 @@
     root.addEventListener('gugopro:pdf-loaded', handlePdfLoaded);
     root.addEventListener('gugopro:pdf-text-extracted', function (event) { handleTextExtracted(event.detail || {}); });
     root.addEventListener('gugopro:pdf-room-message', function (event) { handleRoomMessage(event.detail || {}); });
-    root.addEventListener('keydown', function (event) { if (event.key === 'Escape') { closeDrawer(); closeRoomOps(); } });
+    root.addEventListener('keydown', function (event) { if (event.key === 'Escape') { closeDrawer(); closeRoomOps(); var taskModal = $('pdf-task-rule-modal'); if (taskModal) taskModal.classList.remove('is-open'); } });
     var apiKey = root.GugoProPdfSuiteAI && root.GugoProPdfSuiteAI.getApiKey ? root.GugoProPdfSuiteAI.getApiKey() : '';
     if ($('pdf-drawer-api-key') && apiKey) $('pdf-drawer-api-key').value = apiKey;
     var room = getActiveRoom();
@@ -436,6 +433,6 @@
   }
 
   function init() { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind); else bind(); }
-  root.GugoProPdfRooms = { getRooms: function () { return rooms.slice(); }, getActiveRoom: getActiveRoom, switchRoom: switchRoom, createRoom: createRoom, openDrawer: openDrawer, closeDrawer: closeDrawer, saveRooms: saveRooms, deleteMessage: deleteMessage, openTaskRuleEditor: openTaskRuleEditor, saveTaskRule: saveTaskRule };
+  root.GugoProPdfRooms = { getRooms: function () { return rooms.slice(); }, getActiveRoom: getActiveRoom, switchRoom: switchRoom, createRoom: createRoom, deleteActiveRoom: deleteActiveRoom, openDrawer: openDrawer, closeDrawer: closeDrawer, saveRooms: saveRooms, deleteMessage: deleteMessage, openTaskRuleEditor: openTaskRuleEditor, saveTaskRule: saveTaskRule };
   init();
 })(window);

@@ -329,10 +329,11 @@
     renderAnnotationLayer(overlay, state.currentPage);
     var rotations = qsa('[data-page-rotation]');
     rotations.forEach(function (node) { node.textContent = getPageDisplayRotation(state.currentPage) + '°'; });
-    var pageCurrent = $('pdf-current-page');
+    var pageCurrent = $('pdf-page-input') || $('pdf-current-page');
     if (pageCurrent) pageCurrent.value = String(state.currentPage);
     var pageTotal = $('pdf-total-pages');
     if (pageTotal) pageTotal.textContent = String(state.pageOrder.length || state.pdf.numPages);
+    syncMobilePageControls();
     var zoomLabel = $('pdf-zoom-label');
     if (zoomLabel) zoomLabel.textContent = Math.round(scale * 100) + '%';
     bindAnnotationCanvas(overlay, state.currentPage);
@@ -580,19 +581,19 @@
       else toast('請選擇比較用的第二份 PDF。');
       return;
     }
-    switchAiTab('task');
-    var taskId = 'pdf_task_action_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+    switchAiTab('preset');
+    var taskId = 'pdf_preset_action_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
     var labelMap = IS_EN ? { summary: 'Summary', risk: 'Contract risk', translate: 'Translation', diff: 'Diff check', data: 'Data extraction', quiz: 'Quiz', compliance: 'Compliance scan' } : { summary: '摘要', risk: '合約風控', translate: '翻譯', diff: '差異比對', data: '數據提煉', quiz: '問答測驗', compliance: '合規資安' };
-    var node = appendChat('assistant', IS_EN ? 'Running “' + labelMap[action] + '”…' : '正在執行「' + labelMap[action] + '」任務…', taskId);
+    var empty = $('pdf-preset-output-empty'); if (empty) empty.hidden = true;
+    var node = appendChat('assistant', IS_EN ? 'Running “' + labelMap[action] + '”…' : '正在執行「' + labelMap[action] + '」任務…', taskId, 'pdf-preset-log');
     if (node) node.classList.add('is-pending');
     qsa('[data-task-action]').forEach(function (button) { button.classList.toggle('is-active', button.dataset.taskAction === action); });
     try {
       var comparisonText = comparisonFile ? await extractTextFromPdfFile(comparisonFile) : '';
-      var prompt = TASK_PROMPTS[action] + (comparisonText ? (IS_EN ? '\n\nComparison version text:\n' : '\n\n比較版本文字如下：\n') + comparisonText : '') + (IS_EN ? '\n\nReply in English in the active custom task room and cite pages.' : '\n\n請把結果直接回覆在目前自訂任務房間，使用繁體中文並附頁碼。');
-      var answer = await requestAi(prompt, { maxOutputTokens: action === 'quiz' ? 4200 : 5000 });
+      var prompt = TASK_PROMPTS[action] + (comparisonText ? (IS_EN ? '\n\nComparison version text:\n' : '\n\n比較版本文字如下：\n') + comparisonText : '') + (IS_EN ? '\n\nReply in English in the preset tools result area, cite pages, and do not change any custom task room.' : '\n\n請直接回覆在預設工具結果區，使用繁體中文並附頁碼；不要修改或保存任何自訂任務房間。');
+      var answer = await requestAi(prompt, { maxOutputTokens: action === 'quiz' ? 4200 : 5000, ignoreRoomContext: true });
       var emptyAnswer = IS_EN ? 'The task returned no content.' : '任務沒有回傳內容。';
-      updateChatMessage(node, answer || emptyAnswer); if (node) node.classList.remove('is-pending');
-      window.dispatchEvent(new CustomEvent('gugopro:pdf-room-message', { detail: { role: 'assistant', text: answer || emptyAnswer, messageId: taskId } }));
+      updateChatMessage(node, answer || emptyAnswer, 'pdf-preset-log'); if (node) node.classList.remove('is-pending');
       setStatus(IS_EN ? labelMap[action] + ' completed.' : '「' + labelMap[action] + '」任務已完成。', 'success');
     } catch (error) {
       if (node) node.remove();
@@ -867,7 +868,7 @@
     options = options || {};
     if (!aiEngine || !aiEngine.getApiKey()) { if (typeof window.GugoProPdfRooms?.openDrawer === 'function') window.GugoProPdfRooms.openDrawer(false); throw new Error('NO_KEY'); }
     var context = await getAiContext();
-    var activeRoom = window.GugoProPdfRooms && window.GugoProPdfRooms.getActiveRoom ? window.GugoProPdfRooms.getActiveRoom() : null;
+    var activeRoom = !options.ignoreRoomContext && window.GugoProPdfRooms && window.GugoProPdfRooms.getActiveRoom ? window.GugoProPdfRooms.getActiveRoom() : null;
     var historyContext = activeRoom && Array.isArray(activeRoom.messages) ? activeRoom.messages.slice(-10).map(function (item) { return (item.role === 'user' ? 'User' : 'Assistant') + ': ' + item.text; }).join('\n') : '';
     var taskRule = activeRoom && activeRoom.taskRule ? String(activeRoom.taskRule).trim() : '';
     if (!aiEngine.getModels().length) await aiEngine.refresh({ silent: false });
@@ -884,31 +885,31 @@
     qsa('.pdf-ai-view').forEach(function (view) { view.hidden = view.dataset.aiView !== name; });
   }
 
-  function scrollChatToLatest(node) {
-    var log = $('pdf-chat-log'); if (!log) return;
+  function scrollChatToLatest(node, targetLog) {
+    var log = targetLog || $('pdf-chat-log'); if (!log) return;
     try { if (node && node.scrollIntoView) node.scrollIntoView({ behavior: 'smooth', block: 'end' }); } catch (_) {}
     try { log.scrollTo({ top: log.scrollHeight, behavior: 'smooth' }); } catch (_) { log.scrollTop = log.scrollHeight; }
   }
 
-  function appendChat(role, value, messageId) {
-    var log = $('pdf-chat-log'); if (!log) return null;
+  function appendChat(role, value, messageId, targetLogId) {
+    var log = $(targetLogId || 'pdf-chat-log'); if (!log) return null;
     var node = document.createElement('div'); node.className = 'pdf-chat-msg ' + role;
     if (messageId) node.dataset.messageId = messageId;
     var label = document.createElement('strong'); label.textContent = role === 'user' ? 'You' : 'GugoPro AI';
     var actions = document.createElement('span'); actions.className = 'pdf-chat-msg-actions';
     var remove = document.createElement('button'); remove.type = 'button'; remove.className = 'pdf-chat-delete'; remove.title = '刪除訊息'; remove.setAttribute('aria-label', '刪除訊息'); remove.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
-    remove.addEventListener('click', function (event) { event.preventDefault(); event.stopPropagation(); var id = node.dataset.messageId; if (id && window.GugoProPdfRooms && window.GugoProPdfRooms.deleteMessage) window.GugoProPdfRooms.deleteMessage(null, id); else node.remove(); });
+    remove.addEventListener('click', function (event) { event.preventDefault(); event.stopPropagation(); var id = node.dataset.messageId; if (targetLogId) node.remove(); else if (id && window.GugoProPdfRooms && window.GugoProPdfRooms.deleteMessage) window.GugoProPdfRooms.deleteMessage(null, id); else node.remove(); });
     actions.appendChild(remove); node.appendChild(label); node.appendChild(actions);
     var body = document.createElement('div'); body.className = 'pdf-chat-msg-body'; body.innerHTML = markdownToHtml(String(value == null ? '' : value)); node.appendChild(body);
-    log.appendChild(node); scrollChatToLatest(node); return node;
+    log.appendChild(node); scrollChatToLatest(node, log); return node;
   }
 
-  function updateChatMessage(node, value) {
+  function updateChatMessage(node, value, targetLogId) {
     if (!node) return;
     var body = node.querySelector('.pdf-chat-msg-body');
     if (body) body.innerHTML = markdownToHtml(String(value == null ? '' : value));
     else node.innerHTML = '<strong>GugoPro AI</strong><div class="pdf-chat-msg-body">' + markdownToHtml(String(value == null ? '' : value)) + '</div>';
-    scrollChatToLatest(node);
+    scrollChatToLatest(node, $(targetLogId || 'pdf-chat-log'));
   }
 
   var pendingChatRetry = null;
@@ -1132,13 +1133,58 @@
     qsa('.pdf-model-drawer, .pdf-modal').forEach(function (overlay) { overlay.addEventListener('click', function (event) { if (event.target === overlay) overlay.classList.remove('is-open'); }); });
   }
 
+  function syncMobilePageControls() {
+    var current = $('pdf-mobile-current-page'); var total = $('pdf-mobile-total-pages'); var input = $('pdf-mobile-page-input');
+    if (current) current.textContent = String(state.currentPage || 1);
+    if (total) total.textContent = String(state.pageOrder.length || (state.pdf && state.pdf.numPages) || 0);
+    if (input) { input.value = String(state.currentPage || 1); input.max = String(state.pageOrder.length || (state.pdf && state.pdf.numPages) || 1); }
+  }
+
+  function navigatePage(delta) {
+    if (!state.pdf) return toast(messages.choosePdf);
+    var index = state.pageOrder.indexOf(state.currentPage); if (index < 0) index = 0;
+    var nextIndex = Math.max(0, Math.min(state.pageOrder.length - 1, index + delta));
+    if (nextIndex === index) return toast(delta < 0 ? '已經是第一頁' : '已經是最後一頁');
+    state.currentPage = state.pageOrder[nextIndex]; renderMainPage(); renderThumbnails(); syncMobilePageControls();
+  }
+
+  function setMobileSidebar(open) {
+    var sidebar = $('pdf-sidebar'); var button = document.querySelector('[data-dock-action="thumbs"]');
+    if (!sidebar) return;
+    sidebar.classList.toggle('is-mobile-open', Boolean(open));
+    sidebar.setAttribute('aria-hidden', open ? 'false' : 'true');
+    if (button) button.classList.toggle('is-active', Boolean(open));
+  }
+
+  function setMobileTools(open) {
+    var sheet = $('pdf-mobile-tools-sheet'); if (!sheet) return;
+    sheet.hidden = !open; document.body.classList.toggle('pdf-mobile-tools-open', Boolean(open));
+  }
+
+  function bindMobileReaderControls() {
+    $('pdf-mobile-page-prev')?.addEventListener('click', function () { navigatePage(-1); });
+    $('pdf-mobile-page-next')?.addEventListener('click', function () { navigatePage(1); });
+    $('pdf-mobile-page-input')?.addEventListener('change', function () { if (!state.pdf) return toast(messages.choosePdf); var page = Number(this.value); if (state.pageOrder.includes(page)) { state.currentPage = page; renderMainPage(); renderThumbnails(); syncMobilePageControls(); } else { this.value = String(state.currentPage); toast('請輸入有效頁碼'); } });
+    $('pdf-empty-open')?.addEventListener('click', function () { $('pdf-file-input')?.click(); });
+    $('pdf-dock-open')?.addEventListener('click', function () { $('pdf-file-input')?.click(); });
+    $('pdf-sidebar-close-mobile')?.addEventListener('click', function () { setMobileSidebar(false); });
+    $('pdf-mobile-tools-close')?.addEventListener('click', function () { setMobileTools(false); });
+    qsa('[data-mobile-popover]').forEach(function (button) { button.addEventListener('click', function (event) { event.preventDefault(); event.stopPropagation(); setMobileTools(false); var toggle = document.querySelector('[data-popover-target="' + button.dataset.mobilePopover + '"]'); if (toggle) toggle.click(); }); });
+    var stage = $('pdf-reader-stage'); var startX = 0; var startY = 0;
+    if (stage) {
+      stage.addEventListener('touchstart', function (event) { var touch = event.changedTouches && event.changedTouches[0]; if (touch) { startX = touch.clientX; startY = touch.clientY; } }, { passive: true });
+      stage.addEventListener('touchend', function (event) { var touch = event.changedTouches && event.changedTouches[0]; if (!touch || state.tool !== 'select') return; var dx = touch.clientX - startX; var dy = touch.clientY - startY; if (Math.abs(dx) > 52 && Math.abs(dx) > Math.abs(dy) * 1.25) navigatePage(dx < 0 ? 1 : -1); }, { passive: true });
+    }
+  }
+
   function bindSidebar() {
     qsa('[data-sidebar]').forEach(function (button) { button.addEventListener('click', function () { setSidebarTab(button.dataset.sidebar); }); });
-    qsa('[data-dock-action]').forEach(function (button) { button.addEventListener('click', function () { var action = button.dataset.dockAction; if (action === 'ai') { $('pdf-ai-pane').classList.toggle('is-mobile-open'); button.classList.toggle('is-active'); } else if (action === 'tools') { document.querySelector('[data-popover-target="pdf-convert-popover"]')?.click(); } else if (action === 'thumbs') { $('pdf-sidebar').style.display = 'flex'; $('pdf-sidebar').scrollIntoView({ behavior: 'smooth' }); } else if (action === 'signature') { document.querySelector('[data-popover-target="pdf-annotate-popover"]')?.click(); $('pdf-add-signature')?.click(); } }); });
+    qsa('[data-dock-action]').forEach(function (button) { button.addEventListener('click', function () { var action = button.dataset.dockAction; if (action === 'ai') { setMobileSidebar(false); var pane = $('pdf-ai-pane'); var open = !pane.classList.contains('is-mobile-open'); pane.classList.toggle('is-mobile-open', open); button.classList.toggle('is-active', open); } else if (action === 'tools') { setMobileSidebar(false); setMobileTools(true); } else if (action === 'thumbs') { setMobileTools(false); setMobileSidebar(true); } else if (action === 'signature') { setMobileSidebar(false); document.querySelector('[data-popover-target="pdf-annotate-popover"]')?.click(); $('pdf-add-signature')?.click(); } }); });
+    bindMobileReaderControls();
   }
 
   function init() {
-    addFileInputListeners(); bindPopovers(); bindToolbar(); bindAi(); bindSidebar(); initSignaturePad(); initAi(); setEmptyState(true); renderNotesPanel();
+    addFileInputListeners(); bindPopovers(); bindToolbar(); bindAi(); bindSidebar(); initSignaturePad(); initAi(); setEmptyState(true); syncMobilePageControls(); renderNotesPanel();
     $('pdf-page-input').value = '1'; $('pdf-total-pages').textContent = '0';
     window.addEventListener('resize', function () { if (state.pdf && state.fitMode !== 'manual') renderMainPage(); });
     window.addEventListener('error', function (event) { if (event && event.message && /pdf/i.test(event.message)) setStatus('前端 PDF 模組錯誤：' + event.message, 'error'); });
