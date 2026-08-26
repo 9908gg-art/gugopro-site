@@ -1,2 +1,84 @@
-<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>資產配置再平衡表｜GugoPro Academy</title><style>:root{--bg:#f5f7fb;--s:#fff;--i:#142033;--m:#637083;--b:#dfe5ee;--a:#356ae6;--t:#10a891;--r:#e36b54}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--i);font:16px/1.6 system-ui,"Noto Sans TC",sans-serif}.wrap{max-width:1000px;margin:auto;padding:26px 20px}.top{display:flex;justify-content:space-between;margin-bottom:34px}.brand{font-weight:800}.back,.action{color:var(--a);font-weight:750}.layout{display:grid;grid-template-columns:320px 1fr;gap:20px}.panel,.result{background:var(--s);border:1px solid var(--b);border-radius:18px;padding:25px;box-shadow:0 18px 45px #15264d12}.eyebrow{font-size:12px;color:var(--t);font-weight:800;letter-spacing:.13em;text-transform:uppercase}h1{font-size:32px;line-height:1.2;margin:8px 0 10px}h2{font-size:20px;margin:0 0 16px}label{display:block;font-size:13px;color:var(--m);font-weight:700;margin:15px 0 6px}input{width:100%;padding:11px;border:1px solid var(--b);border-radius:8px;font:inherit;background:var(--bg);color:var(--i)}button{width:100%;border:0;background:var(--a);color:#fff;padding:12px;border-radius:9px;font-weight:800;cursor:pointer;margin-top:20px}.total{font-size:30px;font-weight:850;color:var(--a);margin-bottom:18px}.row{display:grid;grid-template-columns:1.1fr .8fr .8fr .9fr;gap:8px;align-items:center;padding:13px 0;border-bottom:1px solid var(--b);font-size:14px}.head{font-size:12px;color:var(--m);font-weight:750}.buy{color:var(--t);font-weight:800}.sell{color:var(--r);font-weight:800}.bar{height:10px;background:#e9edf4;border-radius:99px;overflow:hidden;margin:17px 0}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--a),var(--t));width:0}.note{font-size:13px;color:var(--m);margin-top:22px}@media(max-width:760px){.layout{grid-template-columns:1fr}.row{grid-template-columns:1.1fr .7fr .8fr .9fr;font-size:12px}}
-</style></head><body><div class="wrap"><div class="top"><a class="brand" href="../">GugoPro Academy</a><a class="back" href="../">← 回到課程</a></div><div class="layout"><section class="panel"><div class="eyebrow">Interactive lab · 02</div><h1>配置與再平衡</h1><p>輸入目前持倉與目標權重，找出需要補強或減碼的部位。再平衡不是追逐報酬，而是把風險拉回計畫。</p><label>總資產（元）</label><input id="total" type="number" value="1000000" min="0"><label>股票目前市值</label><input id="eq" type="number" value="620000"><label>股票目標權重（%）</label><input id="eqt" type="number" value="60"><label>債券目前市值</label><input id="bd" type="number" value="280000"><label>債券目標權重（%）</label><input id="bdt" type="number" value="30"><label>現金目前市值</label><input id="cash" type="number" value="100000"><label>現金目標權重（%）</label><input id="casht" type="number" value="10"><button id="calc">更新配置</button></section><section class="result"><div class="eyebrow">Rebalance plan</div><h2>配置偏離與行動建議</h2><div class="total" id="sum">—</div><div class="bar"><i id="bar"></i></div><div class="row head"><span>資產</span><span>目前權重</span><span>目標權重</span><span>建議金額</span></div><div id="rows"></div><p class="note">建議金額為理論差額，未考慮稅務、交易費、流動性與最小交易單位。請先設定可接受的偏離範圍再執行。</p></section></div></div><script>const $=id=>document.getElementById(id),money=n=>'NT$ '+Math.round(n).toLocaleString('zh-TW');function calc(){let t=+$('total').value||0;let data=[['股票',+$('eq').value||0,+$('eqt').value||0],['債券',+$('bd').value||0,+$('bdt').value||0],['現金',+$('cash').value||0,+$('casht').value||0]];let total=data.reduce((s,x)=>s+x[1],0)||1;$('sum').textContent=money(total);$('bar').style.width=Math.min(100,total/t*100)+'%';$('rows').innerHTML=data.map(x=>{let cur=x[1]/total*100,diff=t*x[2]/100-x[1];return `<div class="row"><strong>${x[0]}</strong><span>${cur.toFixed(1)}%</span><span>${x[2].toFixed(1)}%</span><span class="${diff>=0?'buy':'sell'}">${diff>=0?'買入 ':'減碼 '}${money(Math.abs(diff))}</span></div>`}).join('')}$('calc').onclick=calc;calc();</script></body></html>
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>資產配置與動態再平衡工具｜GugoPro Academy</title>
+  <meta name="description" content="以使用者輸入的資產市值與目標權重，計算目前偏離、理論調整額、漂移門檻、新資金優先與交易摩擦。純前端、透明公式、不抓即時行情。">
+  <meta name="keywords" content="資產配置,動態再平衡,投資組合,漂移門檻,交易成本,分散投資">
+  <link rel="canonical" href="https://gugopro.com/academy/tools/portfolio-rebalancer.html">
+  <link rel="stylesheet" href="../academy.css">
+  <link rel="stylesheet" href="portfolio-rebalancer.css">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"資產配置與動態再平衡工具","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"以使用者輸入的目前市值與目標權重，檢查配置偏離、動態再平衡規則與交易摩擦。","url":"https://gugopro.com/academy/tools/portfolio-rebalancer.html"}</script>
+</head>
+<body class="allocation-tool-page">
+  <header class="nav"><div class="shell navin"><a class="brand" href="../">GugoPro <span>Academy</span></a><button class="theme" data-theme type="button">切換深色</button></div></header>
+  <main class="allocation-shell">
+    <div class="tool-crumb"><a href="../lessons/15-retirement-cashflow.html">← 回到學院課程</a><span>Portfolio design · 純前端 · 不抓即時行情</span></div>
+    <header class="tool-hero" id="tool-title">
+      <div class="eyebrow">Portfolio design · Dynamic rebalance</div>
+      <h1>資產配置與動態再平衡</h1>
+      <p>輸入同一評估時點的目前市值與目標權重，檢查偏離幅度，並比較完整回到目標、漂移門檻與新資金優先三種規則。結果是理論計算，不代表已成交或適合所有人。</p>
+      <div class="badge-row"><span>Target weights</span><span>Drift bands</span><span>Cash-first</span><span>Client-side</span></div>
+    </header>
+    <nav class="article-jump" aria-label="工具章節導覽"><a href="#inputs">輸入配置</a><a href="#rules">再平衡規則</a><a href="#results">結果與差額</a><a href="#limits">限制與來源</a></nav>
+
+    <div class="tool-layout allocation-layout">
+      <section class="panel input-panel" id="inputs">
+        <div class="section-kicker">01 · Portfolio input</div>
+        <h2>目前資產與目標配置</h2>
+        <p class="helper">請使用同一日期、同一幣別與同一估值口徑。目標權重必須合計 100%；不輸入假行情，零值資產也必須保留其目標權重。</p>
+        <div class="table-wrap input-table-wrap">
+          <table class="asset-input-table">
+            <thead><tr><th scope="col">資產名稱</th><th scope="col">目前市值</th><th scope="col">目標權重</th><th scope="col"><span class="sr-only">操作</span></th></tr></thead>
+            <tbody id="asset-rows"></tbody>
+          </table>
+        </div>
+        <div class="input-actions"><button id="add-asset" class="button secondary" type="button">新增資產列</button><button id="reset" class="button ghost" type="button">恢復預設</button></div>
+        <div class="field-grid compact-fields">
+          <label for="contribution">本次新增投入資金（元）<input id="contribution" type="number" min="0" step="1" value="0"></label>
+          <label for="rebalance-mode">再平衡規則<select id="rebalance-mode"><option value="full">完整回到目標權重</option><option value="threshold">漂移門檻：只調整超標資產</option><option value="cash-first">新資金優先補低配</option></select></label>
+          <label for="threshold">偏離門檻（百分點）<input id="threshold" type="number" min="0" max="100" step="0.1" value="5"></label>
+          <label for="fee-rate">交易費率（%）<input id="fee-rate" type="number" min="0" max="10" step="0.01" value="0.15"></label>
+          <label for="minimum-fee">最低單筆費用（元）<input id="minimum-fee" type="number" min="0" step="1" value="20"></label>
+          <label for="tax-rate">賣出稅費率（%）<input id="tax-rate" type="number" min="0" max="10" step="0.01" value="0"></label>
+        </div>
+        <div class="mode-help" id="mode-help" aria-live="polite"></div>
+        <button id="calculate" class="button primary" type="button">計算配置與再平衡</button>
+        <div id="status" class="status" aria-live="polite">尚未計算；輸入與結果只留在目前瀏覽器頁面。</div>
+      </section>
+
+      <section class="panel rules-panel" id="rules">
+        <div class="section-kicker">02 · Decision rules</div>
+        <h2>先寫規則，再看差額</h2>
+        <div class="rule-cards">
+          <article><strong>完整回到目標</strong><p>用總市值加上新增資金重新計算目標市值，顯示每個資產的理論買入或減碼額。</p></article>
+          <article><strong>漂移門檻</strong><p>以「百分點」比較目前權重與目標權重；沒有超過門檻的資產不被標記為必須交易。</p></article>
+          <article><strong>新資金優先</strong><p>先把新增資金按低配缺口分配；資金不足的剩餘缺口仍保留，不假設已完成交易。</p></article>
+        </div>
+        <div class="formula-note"><strong>公式：</strong><br>目前權重＝目前市值 ÷ 目前總市值<br>目標市值＝（目前總市值＋新增資金）× 目標權重<br>理論調整額＝目標市值 − 目前市值<br>偏離百分點＝目前權重 − 目標權重</div>
+        <div class="note-box"><strong>百分點不是百分比。</strong>目標 60%、目前 66% 代表偏離 +6 個百分點；它不是「相對超配 10%」的同一個概念。</div>
+      </section>
+
+      <section class="result result-panel" id="results">
+        <div class="section-kicker">03 · Allocation output</div>
+        <div class="result-heading"><div><h2>配置偏離與理論行動</h2><p class="helper">買入／減碼是模型差額標籤，不是下單指令；成本與稅費是使用者輸入的教育假設。</p></div><button id="download" class="button secondary" type="button" disabled>下載本機結果</button></div>
+        <div id="summary" class="metric-grid"></div>
+        <div class="visual allocation-visual"><h3>目前權重與目標權重</h3><div id="allocation-chart" class="allocation-chart" role="img" aria-label="目前權重與目標權重比較圖"></div><div class="chart-legend"><span><i class="legend-current"></i>目前權重</span><span><i class="legend-target"></i>目標位置</span></div></div>
+        <div class="table-wrap result-table-wrap"><table class="result-table"><thead><tr><th scope="col">資產</th><th scope="col">目前權重</th><th scope="col">目標權重</th><th scope="col">偏離</th><th scope="col">目標市值</th><th scope="col">理論行動</th><th scope="col">估算後權重</th></tr></thead><tbody id="allocation-rows"></tbody></table></div>
+        <div class="cost-box"><h3>交易摩擦與剩餘資金</h3><div id="cost-summary" class="cost-grid"></div></div>
+      </section>
+    </div>
+
+    <section class="source-box" id="limits">
+      <div class="section-kicker">04 · Sources & limits</div>
+      <h2>資料來源與模型邊界</h2>
+      <p>Investor.gov 將資產配置與再平衡視為需要結合投資期限與風險承受度的決策；SEC 的入門指南列出賣出超配、把新資金導向低配與調整持續投入三種常見方式，並提醒交易費與稅務後果；FINRA 也指出分散、配置與再平衡處理的是不同層次的風險管理問題。<sup><a href="https://www.investor.gov/introduction-investing/getting-started/asset-allocation" target="_blank" rel="noopener">[1]</a> <a href="https://www.investor.gov/additional-resources/general-resources/publications-research/info-sheets/beginners-guide-asset" target="_blank" rel="noopener">[2]</a> <a href="https://www.finra.org/investors/investing/investing-basics/asset-allocation-diversification" target="_blank" rel="noopener">[3]</a></sup></p>
+      <p>本工具不驗證基金底層持倉、相關性、流動性、稅務身分、帳戶限制、交易時段、最小交易單位或資產品質；也不判定任何目標權重是否適合個人。交易成本僅是使用者輸入的簡化估算，不能替代券商費率、交易稅、資本利得稅或專業意見。</p>
+      <p class="disclaimer">本頁是 deterministic educational model，不是歷史回測、Monte Carlo、報酬預測、資產配置建議或交易指令。請先覆核資料日期、幣別、權重、費用與適用法規。This is research and analysis only, not personalized financial advice.</p>
+    </section>
+  </main>
+  <script src="../academy.js"></script>
+  <script src="portfolio-rebalancer.js"></script>
+</body>
+</html>
