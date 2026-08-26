@@ -4712,8 +4712,8 @@
         const input = document.getElementById('user-text');
         const learningButton = document.getElementById('btn-mic');
         const nativeButton = document.getElementById('btn-mic-my');
-        if (learningEl) learningEl.textContent = `${FLAGS[targetLocale] || '🌐'} ${targetLabel}`;
-        if (nativeEl) nativeEl.textContent = `${FLAGS[motherLocale] || '🌐'} ${motherLabel}`;
+        if (learningEl) learningEl.textContent = FLAGS[targetLocale] || '🌐';
+        if (nativeEl) nativeEl.textContent = FLAGS[motherLocale] || '🌐';
         if (learningButton) {
             learningButton.dataset.sttLocale = targetLocale;
             learningButton.title = `${targetLabel}（${targetLocale}）語音辨識與發音評分`;
@@ -4724,7 +4724,7 @@
             nativeButton.title = `${motherLabel}（${motherLocale}）語音提問，不進行發音評分`;
             nativeButton.setAttribute('aria-label', `${motherLabel}語音提問，不進行發音評分`);
         }
-        if (input) input.placeholder = `點擊「${targetLabel}」練習口說評分，或點擊「${motherLabel}」／打字直接提問…`;
+        if (input) input.placeholder = '輸入訊息或說話… (Enter 送出)';
         return { targetLocale, motherLocale, targetLabel, motherLabel };
     }
 
@@ -4784,6 +4784,7 @@
         document.querySelectorAll('.dual-speech-button').forEach(button => button.classList.toggle('recording', active && button.id === (role === 'learning' ? 'btn-mic' : 'btn-mic-my')));
         if (typeof setRecordingVisual === 'function') setRecordingVisual(Boolean(active && role === 'learning'));
         if (typeof isRecording !== 'undefined') isRecording = Boolean(active);
+        window.GugoSpeechSessionActive = Boolean(active);
     }
     function composeInput(baseText, transcript) {
         const base = normalize(baseText);
@@ -4793,18 +4794,32 @@
         return /\s$/.test(String(baseText || '')) ? `${baseText}${latest}` : `${base} ${latest}`;
     }
     function updateSpeechInput(session, transcript) {
+        if (!session || session.finalized) return;
+        if (session.silenceTimer) { clearTimeout(session.silenceTimer); session.silenceTimer = null; }
+        session.state = 'recording';
         session.latestTranscript = normalize(transcript);
         const input = document.getElementById('user-text');
         if (!input || session.challengeMessageId) return;
         input.value = composeInput(session.baseText, session.latestTranscript);
         input.dispatchEvent(new Event('input', { bubbles: true }));
     }
+    function clearSpeechTimers(session) {
+        if (!session) return;
+        if (session.silenceTimer) { clearTimeout(session.silenceTimer); session.silenceTimer = null; }
+        if (session.restartTimer) { clearTimeout(session.restartTimer); session.restartTimer = null; }
+    }
     function finalizeSession(session) {
         if (!session || session.finalized) return;
         session.finalized = true;
-        const transcript = normalize(session.latestTranscript);
+        session.stopRequested = true;
+        session.state = 'finalized';
+        clearSpeechTimers(session);
         setDualRecording(session.role, false);
         if (activeSession?.id === session.id) activeSession = null;
+        if (session.challengeMessageId) {
+            document.querySelectorAll(`.pronunciation-retry[data-message-id="${String(session.challengeMessageId).replace(/"/g, '')}"]`).forEach(button => { button.disabled = false; button.dataset.busy = '0'; });
+        }
+        const transcript = normalize(session.latestTranscript);
         if (!transcript) return;
         if (session.role === 'learning') {
             const score = scorePronunciation(session.challengeTarget, transcript, session.confidence);
@@ -4818,7 +4833,7 @@
         }
         if (!session.challengeMessageId && typeof sendMessage === 'function') {
             const input = document.getElementById('user-text');
-            const speechContent = normalize(input?.value || '');
+            const speechContent = normalize(input?.value || composeInput(session.baseText, session.latestTranscript));
             if (speechContent) {
                 if (typeof window.GugoResetComposer === 'function') window.GugoResetComposer(input);
                 else if (input) { input.value = ''; input.style.height = 'auto'; }
@@ -4826,23 +4841,88 @@
             }
         }
     }
-    function finishWithOptionalDelay(session) {
+    function restartRecognition(session) {
+        if (!session || session.finalized || session.stopRequested || activeSession?.id !== session.id || session.restartTimer) return;
+        session.state = 'restarting';
+        session.restartTimer = setTimeout(() => {
+            session.restartTimer = null;
+            if (session.finalized || session.stopRequested || activeSession?.id !== session.id) return;
+            const native = window.GugoProNativeSpeech?.isNativeSpeechAvailable?.() ? window.GugoProNativeSpeech : null;
+            if (native) { startNativeRecognition(session); return; }
+            startWebRecognition(session);
+        }, 140);
+    }
+    function finishWithOptionalDelay(session, explicitStop = false) {
         if (!session || session.finalized) return;
+        if (explicitStop || session.stopRequested) { finalizeSession(session); return; }
+        if (window.GugoSpeechMode === 'hold' || window.GugoSpeechMode === 'tap') {
+            restartRecognition(session);
+            return;
+        }
         session.state = 'waiting';
-        if (window.GugoSpeechMode !== 'smart') { finalizeSession(session); return; }
         clearTimeout(session.silenceTimer);
         session.silenceTimer = setTimeout(() => finalizeSession(session), 2500);
     }
     function stopActiveSession() {
         const session = activeSession;
-        if (!session) return;
+        if (!session || session.finalized) return;
+        session.stopRequested = true;
+        session.state = 'stopping';
+        clearSpeechTimers(session);
         const native = window.GugoProNativeSpeech?.isNativeSpeechAvailable?.() ? window.GugoProNativeSpeech : null;
         if (native) {
             native.stopRecognition().catch(() => {});
         } else if (typeof recognition !== 'undefined' && recognition) {
             try { recognition.stop(); } catch (_) {}
         }
-        setTimeout(() => finishWithOptionalDelay(session), 350);
+        setTimeout(() => { if (!session.finalized) finalizeSession(session); }, 450);
+    }
+    window.GugoStopDualSpeech = stopActiveSession;
+    function startNativeRecognition(session) {
+        const native = window.GugoProNativeSpeech?.isNativeSpeechAvailable?.() ? window.GugoProNativeSpeech : null;
+        if (!native || session.finalized || session.stopRequested || activeSession?.id !== session.id) return;
+        session.state = 'recording';
+        native.startRecognition({
+            language: session.speechLocale,
+            partialResults: true,
+            onStart: () => setDualRecording(session.role, true),
+            onResult: transcript => updateSpeechInput(session, transcript),
+            onEnd: () => finishWithOptionalDelay(session),
+            onError: error => {
+                if (session.finalized) return;
+                console.error('Dual native STT error:', error);
+                finalizeSession(session);
+                if (typeof showError === 'function') showError('❌ 語音辨識無法啟動，請確認麥克風權限與語音服務。', { showRetryButton: false });
+            }
+        }).then(result => {
+            if (!result?.started && !session.finalized) finalizeSession(session);
+        });
+    }
+    function startWebRecognition(session) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition || typeof recognition === 'undefined' || !recognition || session.finalized || session.stopRequested || activeSession?.id !== session.id) {
+            if (!session.finalized && !session.stopRequested) finalizeSession(session);
+            return;
+        }
+        session.state = 'recording';
+        recognition.lang = session.speechLocale;
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.onstart = () => setDualRecording(session.role, true);
+        recognition.onresult = event => {
+            const result = event.results?.[event.resultIndex]?.[0];
+            if (!result) return;
+            session.confidence = Number(result.confidence) || session.confidence;
+            updateSpeechInput(session, result.transcript);
+        };
+        recognition.onerror = error => {
+            if (session.finalized) return;
+            console.warn('Dual Web STT error:', error);
+            finalizeSession(session);
+        };
+        recognition.onend = () => finishWithOptionalDelay(session);
+        try { recognition.start(); }
+        catch (error) { restartRecognition(session); }
     }
     function startSession(role, challengeMessageId = null, challengeTarget = '') {
         if (activeSession) {
@@ -4854,43 +4934,26 @@
         const input = document.getElementById('user-text');
         const speechLocale = role === 'learning' ? info.targetLocale : info.motherLocale;
         const session = {
-            id: ++sessionCounter, role, speechLocale, baseText: challengeMessageId ? '' : String(input?.value || ''), originalInput: String(input?.value || ''),
-            challengeMessageId, challengeTarget: normalize(challengeTarget), latestTranscript: '', confidence: null, state: 'recording', silenceTimer: null, finalized: false
+            id: ++sessionCounter,
+            role,
+            speechLocale,
+            baseText: challengeMessageId ? '' : String(input?.value || ''),
+            originalInput: String(input?.value || ''),
+            challengeMessageId,
+            challengeTarget: normalize(challengeTarget),
+            latestTranscript: '',
+            confidence: null,
+            state: 'recording',
+            silenceTimer: null,
+            restartTimer: null,
+            stopRequested: false,
+            finalized: false
         };
         activeSession = session;
         setDualRecording(role, true);
         const native = window.GugoProNativeSpeech?.isNativeSpeechAvailable?.() ? window.GugoProNativeSpeech : null;
-        if (native) {
-            native.startRecognition({
-                language: speechLocale,
-                partialResults: true,
-                onStart: () => setDualRecording(role, true),
-                onResult: (transcript) => updateSpeechInput(session, transcript),
-                onEnd: () => finishWithOptionalDelay(session),
-                onError: error => { console.error('Dual native STT error:', error); finalizeSession(session); if (typeof showError === 'function') showError('❌ 語音辨識無法啟動，請確認麥克風權限與語音服務。', { showRetryButton: false }); }
-            }).then(result => { if (!result?.started) finalizeSession(session); });
-            return;
-        }
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition || typeof recognition === 'undefined' || !recognition) {
-            setDualRecording(role, false);
-            document.getElementById('modal-stt-guide')?.style.setProperty('display', 'flex');
-            return;
-        }
-        recognition.lang = speechLocale;
-        recognition.continuous = window.GugoSpeechMode === 'smart';
-        recognition.interimResults = true;
-        recognition.onstart = () => setDualRecording(role, true);
-        recognition.onresult = event => {
-            const result = event.results?.[event.resultIndex]?.[0];
-            if (!result) return;
-            session.confidence = Number(result.confidence) || session.confidence;
-            // Each browser result replaces the previous transcript; never concatenate partial guesses.
-            updateSpeechInput(session, result.transcript);
-        };
-        recognition.onerror = error => { console.warn('Dual Web STT error:', error); finalizeSession(session); };
-        recognition.onend = () => finishWithOptionalDelay(session);
-        try { recognition.start(); } catch (error) { finalizeSession(session); }
+        if (native) startNativeRecognition(session);
+        else startWebRecognition(session);
     }
     window.GugoStartDualSpeech = startSession;
 
@@ -4920,11 +4983,18 @@
         }
         document.addEventListener('click', event => {
             const retry = event.target.closest?.('.pronunciation-retry');
-            if (!retry) return;
+            if (!retry || retry.dataset.busy === '1') return;
             event.preventDefault();
+            event.stopImmediatePropagation();
+            retry.dataset.busy = '1';
+            retry.disabled = true;
             const messageId = retry.dataset.messageId;
             const target = getMessageTarget(messageId);
-            startSession('learning', messageId, target.text);
+            const launch = () => startSession('learning', messageId, target.text);
+            if (window.GugoSpeechSessionActive) {
+                window.GugoStopDualSpeech?.();
+                setTimeout(launch, 520);
+            } else launch();
         }, true);
         try {
             if (typeof switchRoom === 'function' && !window.__gugoDualSwitchWrapped) {
@@ -5066,7 +5136,9 @@
         button.dataset.capsuleModeBound = '1';
         button.onclick = event => {
             event.preventDefault();
-            if (getMode() !== 'hold') start(role);
+            if (getMode() === 'hold') return;
+            if (window.GugoSpeechSessionActive) window.GugoStopDualSpeech?.();
+            else start(role);
         };
         button.onpointerdown = event => {
             if (getMode() !== 'hold') return;
@@ -5077,12 +5149,12 @@
         button.onpointerup = event => {
             if (getMode() !== 'hold') return;
             event.preventDefault();
-            if (typeof window.GugoStartDualSpeech === 'function') window.GugoStartDualSpeech(role);
+            window.GugoStopDualSpeech?.();
         };
         button.onpointercancel = event => {
             if (getMode() !== 'hold') return;
             event.preventDefault();
-            if (typeof window.GugoStartDualSpeech === 'function') window.GugoStartDualSpeech(role);
+            window.GugoStopDualSpeech?.();
         };
     }
 
@@ -5109,6 +5181,53 @@
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind, { once: true });
     else bind();
+})();
+</script>
+
+<script id="gugo-android-back-handler-js">
+// Android system Back closes the topmost app UI before allowing Activity exit.
+(() => {
+    if (window.__gugoAndroidBackHandlerV1) return;
+    window.__gugoAndroidBackHandlerV1 = true;
+    window.GugoHandleAndroidBack = function() {
+        try {
+            const menu = document.getElementById('side-menu');
+            const overlay = document.getElementById('side-menu-overlay');
+            const drawerOpen = menu && (menu.classList.contains('active') ||
+                (window.innerWidth >= 1024 && !menu.classList.contains('collapsed')));
+            if (drawerOpen) {
+                document.getElementById('btn-menu-close')?.click();
+                if (menu.classList.contains('active') || (window.innerWidth >= 1024 && !menu.classList.contains('collapsed'))) {
+                    menu.classList.remove('active');
+                    menu.classList.add('collapsed');
+                    overlay?.classList.remove('active');
+                }
+                return true;
+            }
+            const langPanel = document.getElementById('lang-panel');
+            if (langPanel && (langPanel.classList.contains('active') || langPanel.classList.contains('open'))) {
+                document.getElementById('btn-lang-toggle')?.click();
+                langPanel.classList.remove('active', 'open');
+                return true;
+            }
+            const openModal = [...document.querySelectorAll('.modal-overlay')].find(item => {
+                const style = getComputedStyle(item);
+                const visibleByClass = item.classList.contains('open') || item.classList.contains('active');
+                const visibleByStyle = style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
+                return visibleByClass || visibleByStyle;
+            });
+            if (openModal) {
+                const close = openModal.querySelector('[id$="-close"], .modal-close, .modal-cancel, [data-close-nutrition]');
+                if (close) close.click();
+                else openModal.classList.remove('open', 'active');
+                openModal.style.removeProperty('display');
+                return true;
+            }
+        } catch (error) {
+            console.warn('Android Back UI handler failed:', error);
+        }
+        return false;
+    };
 })();
 </script>
 </body>
