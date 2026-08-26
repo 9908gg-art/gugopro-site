@@ -164,9 +164,11 @@
     return ((getRotation(pageNumber) % 360) + 360) % 360;
   }
 
-  function getPageScale(page) {
+  function getPageScale(page, pageNumber) {
     var stage = $('pdf-reader-stage');
-    var base = page.getViewport({ scale: 1, rotation: getPageDisplayRotation(state.currentPage) });
+    var rotationPage = Number(pageNumber) || state.currentPage;
+    var base = page.getViewport({ scale: 1, rotation: getPageDisplayRotation(rotationPage) });
+    if (!stage) return state.zoom;
     if (state.fitMode === 'fit-width') {
       return Math.max(.25, Math.min(2.25, (stage.clientWidth - 24) / base.width));
     }
@@ -181,11 +183,14 @@
 
   function clearReaderFrame() {
     var frame = $('pdf-page-frame');
-    if (!frame) return;
-    frame.replaceChildren();
-    var signatureLayer = document.createElement('div');
-    signatureLayer.id = 'pdf-signature-layer';
-    frame.appendChild(signatureLayer);
+    if (frame) {
+      frame.replaceChildren();
+      var signatureLayer = document.createElement('div');
+      signatureLayer.id = 'pdf-signature-layer';
+      frame.appendChild(signatureLayer);
+    }
+    var stack = $('pdf-continuous-stack');
+    if (stack) stack.replaceChildren();
   }
 
   function drawPath(context, item, width, height, pixelRatio) {
@@ -242,8 +247,8 @@
     state.annotationImages[pageNumber] = canvas.toDataURL('image/png');
   }
 
-  function addSignatureOverlay(signature, pageNumber) {
-    var layer = $('pdf-signature-layer');
+  function addSignatureOverlay(signature, pageNumber, targetLayer, targetFrame) {
+    var layer = targetLayer || $('pdf-signature-layer');
     if (!layer) return;
     var stamp = document.createElement('div');
     stamp.className = 'pdf-signature-stamp' + (signature.id === state.activeSignatureId ? ' is-active' : '');
@@ -271,7 +276,7 @@
       if (event.target === handle) return;
       event.preventDefault();
       state.activeSignatureId = signature.id;
-      var frame = $('pdf-page-frame');
+      var frame = targetFrame || $('pdf-page-frame');
       var rect = frame.getBoundingClientRect();
       var startX = event.clientX; var startY = event.clientY;
       var initialX = signature.x; var initialY = signature.y;
@@ -292,7 +297,7 @@
 
     handle.addEventListener('pointerdown', function (event) {
       event.preventDefault(); event.stopPropagation();
-      var frame = $('pdf-page-frame'); var rect = frame.getBoundingClientRect();
+      var frame = targetFrame || $('pdf-page-frame'); var rect = frame.getBoundingClientRect();
       var startX = event.clientX; var startY = event.clientY;
       var initialW = signature.w; var initialH = signature.h;
       function move(moveEvent) {
@@ -318,14 +323,130 @@
     });
   }
 
+  function isMobileReader() {
+    return Boolean(window.matchMedia && window.matchMedia('(max-width: 767px)').matches);
+  }
+
+  function syncZoomLabel(value) {
+    var zoomLabel = $('pdf-zoom-label');
+    if (zoomLabel) zoomLabel.textContent = Math.round((Number(value) || 0) * 100) + '%';
+  }
+
+  function appendRenderedPage(page, pageNumber, fragment, renderToken) {
+    var rotation = getPageDisplayRotation(pageNumber);
+    var scale = getPageScale(page, pageNumber);
+    var viewport = page.getViewport({ scale: scale, rotation: rotation });
+    var pageFrame = document.createElement('div');
+    var isCurrent = Number(pageNumber) === Number(state.currentPage);
+    pageFrame.className = 'pdf-continuous-page' + (isCurrent ? ' is-current' : '') + (state.tool === 'select' ? ' tool-select' : '');
+    pageFrame.dataset.page = String(pageNumber);
+    pageFrame.style.width = Math.ceil(viewport.width) + 'px';
+    pageFrame.style.height = Math.ceil(viewport.height) + 'px';
+    pageFrame.setAttribute('aria-label', 'PDF page ' + pageNumber);
+    var outputScale = getRenderPixelRatio(viewport.width, viewport.height);
+    var canvas = makeDpiCanvas(viewport.width, viewport.height, 'pdf-page-canvas', outputScale);
+    pageFrame.appendChild(canvas);
+    var renderContext = { canvasContext: canvas.getContext('2d'), viewport: viewport };
+    if (outputScale !== 1) renderContext.transform = [outputScale, 0, 0, outputScale, 0, 0];
+    return page.render(renderContext).promise.then(function () {
+      if (renderToken !== mainRenderToken) return null;
+      var overlay = makeDpiCanvas(viewport.width, viewport.height, 'pdf-annotation-canvas', outputScale);
+      overlay.setAttribute('aria-label', 'PDF annotation canvas, page ' + pageNumber);
+      if (!isCurrent) overlay.style.pointerEvents = 'none';
+      pageFrame.appendChild(overlay);
+      var signatureLayer = document.createElement('div');
+      signatureLayer.className = 'pdf-signature-layer';
+      signatureLayer.setAttribute('aria-label', 'Signature overlays, page ' + pageNumber);
+      pageFrame.appendChild(signatureLayer);
+      renderAnnotationLayer(overlay, pageNumber);
+      if (isCurrent) bindAnnotationCanvas(overlay, pageNumber);
+      (state.signatures[pageNumber] || []).forEach(function (signature) { addSignatureOverlay(signature, pageNumber, signatureLayer, pageFrame); });
+      pageFrame.addEventListener('click', function (event) {
+        if (event.target && event.target.closest && event.target.closest('.pdf-annotation-canvas, .pdf-signature-stamp')) return;
+        if (state.currentPage !== Number(pageNumber)) { state.currentPage = Number(pageNumber); renderMainPage(); }
+      });
+      fragment.appendChild(pageFrame);
+      return { viewport: viewport, pageFrame: pageFrame, scale: scale, pageNumber: pageNumber };
+    });
+  }
+
+  var continuousObserver = null;
+  async function renderContinuousPages(renderToken) {
+    var stack = $('pdf-continuous-stack');
+    if (!stack || !state.pdf) return;
+    var fragment = document.createDocumentFragment();
+    var currentViewport = null;
+    var currentScale = state.zoom;
+    for (var index = 0; index < state.pageOrder.length; index += 1) {
+      var pageNumber = state.pageOrder[index];
+      var page = await state.pdf.getPage(pageNumber);
+      if (renderToken !== mainRenderToken) return;
+      var result = await appendRenderedPage(page, pageNumber, fragment, renderToken);
+      if (renderToken !== mainRenderToken) return;
+      if (result && Number(pageNumber) === Number(state.currentPage)) { currentViewport = result.viewport; currentScale = result.scale; }
+    }
+    if (state.fitMode !== 'manual') state.zoom = currentScale;
+    stack.replaceChildren(fragment);
+    stack.style.transform = 'none';
+    stack.dataset.renderZoom = String(state.zoom);
+    var stage = $('pdf-reader-stage');
+    function activatePage(pageNumber) {
+      var number = Number(pageNumber);
+      if (!number) return;
+      state.currentPage = number;
+      qsa('.pdf-continuous-page', stack).forEach(function (node) {
+        var active = Number(node.dataset.page) === number;
+        node.classList.toggle('is-current', active);
+        var canvas = node.querySelector('.pdf-annotation-canvas');
+        if (canvas) { canvas.style.pointerEvents = active && state.tool !== 'select' ? 'auto' : 'none'; if (active) bindAnnotationCanvas(canvas, number); }
+      });
+      syncMobilePageControls();
+      var pageCurrent = $('pdf-page-input'); if (pageCurrent) pageCurrent.value = String(number);
+      qsa('.pdf-thumb').forEach(function (thumb) { thumb.classList.toggle('is-current', Number(thumb.dataset.page) === number); });
+    }
+    if (continuousObserver) continuousObserver.disconnect();
+    continuousObserver = null;
+    if (stage && window.IntersectionObserver) {
+      continuousObserver = new IntersectionObserver(function (entries) {
+        var visible = entries.filter(function (entry) { return entry.isIntersecting; }).sort(function (a, b) { return b.intersectionRatio - a.intersectionRatio; })[0];
+        if (visible) activatePage(visible.target.dataset.page);
+      }, { root: stage, threshold: [0.35, 0.6, 0.85] });
+      qsa('.pdf-continuous-page', stack).forEach(function (node) { continuousObserver.observe(node); });
+    }
+    var active = stack.querySelector('.pdf-continuous-page.is-current');
+    if (active) active.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    if (currentViewport) { state.renderedWidth = currentViewport.width; state.renderedHeight = currentViewport.height; }
+    syncMobilePageControls();
+    syncZoomLabel(state.zoom);
+  }
+
   var mainRenderToken = 0;
   async function renderMainPage() {
     if (!state.pdf) return;
     var renderToken = ++mainRenderToken;
     var page = await state.pdf.getPage(state.currentPage);
     if (renderToken !== mainRenderToken) return;
+    if (isMobileReader()) {
+      var mobileFrame = $('pdf-page-frame');
+      var mobileStack = $('pdf-continuous-stack');
+      if (mobileFrame) { mobileFrame.hidden = true; mobileFrame.style.display = 'none'; }
+      if (mobileStack) { mobileStack.hidden = false; mobileStack.style.display = 'flex'; }
+      await renderContinuousPages(renderToken);
+      if (renderToken !== mainRenderToken) return;
+      var mobilePageCurrent = $('pdf-page-input');
+      if (mobilePageCurrent) mobilePageCurrent.value = String(state.currentPage);
+      var mobilePageTotal = $('pdf-total-pages');
+      if (mobilePageTotal) mobilePageTotal.textContent = String(state.pageOrder.length || state.pdf.numPages);
+      syncMobilePageControls();
+      qsa('.pdf-thumb').forEach(function (thumb) { thumb.classList.toggle('is-current', Number(thumb.dataset.page) === state.currentPage); });
+      return;
+    }
+    var desktopFrame = $('pdf-page-frame');
+    var desktopStack = $('pdf-continuous-stack');
+    if (desktopFrame) { desktopFrame.hidden = false; desktopFrame.style.display = 'inline-block'; }
+    if (desktopStack) { desktopStack.hidden = true; desktopStack.style.display = 'none'; desktopStack.replaceChildren(); }
     var rotation = getPageDisplayRotation(state.currentPage);
-    var scale = getPageScale(page);
+    var scale = getPageScale(page, state.currentPage);
     if (state.fitMode !== 'manual') state.zoom = scale;
     var viewport = page.getViewport({ scale: scale, rotation: rotation });
     var frame = $('pdf-page-frame');
@@ -361,13 +482,10 @@
     var pageTotal = $('pdf-total-pages');
     if (pageTotal) pageTotal.textContent = String(state.pageOrder.length || state.pdf.numPages);
     syncMobilePageControls();
-    var zoomLabel = $('pdf-zoom-label');
-    if (zoomLabel) zoomLabel.textContent = Math.round(scale * 100) + '%';
+    syncZoomLabel(scale);
     bindAnnotationCanvas(overlay, state.currentPage);
-    (state.signatures[state.currentPage] || []).forEach(function (signature) { addSignatureOverlay(signature, state.currentPage); });
-    qsa('.pdf-thumb').forEach(function (thumb) {
-      thumb.classList.toggle('is-current', Number(thumb.dataset.page) === state.currentPage);
-    });
+    (state.signatures[state.currentPage] || []).forEach(function (signature) { addSignatureOverlay(signature, state.currentPage, signatureLayer, frame); });
+    qsa('.pdf-thumb').forEach(function (thumb) { thumb.classList.toggle('is-current', Number(thumb.dataset.page) === state.currentPage); });
   }
 
   function bindAnnotationCanvas(canvas, pageNumber) {
@@ -1100,8 +1218,52 @@
     var diffInput = $('pdf-diff-input'); if (diffInput) diffInput.addEventListener('change', function () { var file = this.files && this.files[0]; var action = pendingTaskAction || 'diff'; pendingTaskAction = null; this.value = ''; if (file) runTaskMatrixAction(action, file); });
   }
 
+  function bindToolbarTouchLabels() {
+    var toolbar = qs('.pdf-app-toolbar');
+    if (!toolbar || toolbar.dataset.touchLabelsBound) return;
+    toolbar.dataset.touchLabelsBound = 'true';
+    var label = document.createElement('div');
+    label.className = 'pdf-toolbar-touch-label';
+    label.setAttribute('role', 'status');
+    label.setAttribute('aria-live', 'polite');
+    label.hidden = true;
+    document.body.appendChild(label);
+    var hideTimer = 0;
+    function toolAt(event) {
+      var target = event && Number.isFinite(event.clientX) ? document.elementFromPoint(event.clientX, event.clientY) : event && event.target;
+      return target && target.closest ? target.closest('.pdf-app-toolbar .pdf-tool, .pdf-app-toolbar .pdf-tool-select') : null;
+    }
+    function nameFor(tool) {
+      if (!tool) return '';
+      return tool.getAttribute('aria-label') || tool.title || (tool.querySelector('.pdf-tool-label') && tool.querySelector('.pdf-tool-label').textContent.trim()) || tool.textContent.trim();
+    }
+    function show(tool) {
+      var name = nameFor(tool); if (!name) return;
+      var rect = tool.getBoundingClientRect();
+      label.textContent = name;
+      label.style.left = Math.max(10, Math.min(window.innerWidth - 10, rect.left + rect.width / 2)) + 'px';
+      label.style.top = Math.min(window.innerHeight - 36, rect.bottom + 6) + 'px';
+      label.hidden = false;
+      window.requestAnimationFrame(function () { label.classList.add('is-visible'); });
+      clearTimeout(hideTimer);
+    }
+    function hideSoon() {
+      clearTimeout(hideTimer);
+      hideTimer = setTimeout(function () { label.classList.remove('is-visible'); label.hidden = true; }, 180);
+    }
+    toolbar.addEventListener('pointerdown', function (event) { if (event.pointerType === 'touch') show(toolAt(event)); }, { passive: true });
+    toolbar.addEventListener('pointermove', function (event) { if (event.pointerType === 'touch') show(toolAt(event)); }, { passive: true });
+    toolbar.addEventListener('pointerup', hideSoon, { passive: true });
+    toolbar.addEventListener('pointercancel', hideSoon, { passive: true });
+    toolbar.addEventListener('touchstart', function (event) { show(toolAt(event.touches && event.touches[0])); }, { passive: true });
+    toolbar.addEventListener('touchmove', function (event) { show(toolAt(event.touches && event.touches[0])); }, { passive: true });
+    toolbar.addEventListener('touchend', hideSoon, { passive: true });
+    toolbar.addEventListener('touchcancel', hideSoon, { passive: true });
+  }
+
   function bindToolbar() {
     qsa('[data-pdf-tool]').forEach(function (button) { button.addEventListener('click', function () { state.tool = button.dataset.pdfTool; qsa('[data-pdf-tool]').forEach(function (node) { node.classList.toggle('is-active', node === button); }); if (state.pdf) renderMainPage(); }); });
+    bindToolbarTouchLabels();
     $('pdf-open-button').addEventListener('click', function () { $('pdf-file-input').click(); });
     $('pdf-fullscreen').addEventListener('click', function () { var shell = $('pdf-app-shell'); if (document.fullscreenElement) document.exitFullscreen(); else if (shell.requestFullscreen) shell.requestFullscreen(); });
     $('pdf-page-prev').addEventListener('click', function () { if (state.pdf) { state.currentPage = state.pageOrder[Math.max(0, state.pageOrder.indexOf(state.currentPage) - 1)]; renderMainPage(); renderThumbnails(); } });
@@ -1136,9 +1298,26 @@
 
   function bindPopovers() {
     var openPopover = null;
-    function closePopover(panel) { if (!panel) return; panel.hidden = true; var toggle = document.querySelector('[data-popover-target="' + panel.id + '"]'); if (toggle) toggle.setAttribute('aria-expanded', 'false'); if (openPopover === panel) openPopover = null; }
+    function closePopover(panel) { if (!panel) return; panel.hidden = true; var toggle = document.querySelector('[data-popover-target="' + panel.id + '"]'); if (toggle) { toggle.setAttribute('aria-expanded', 'false'); toggle.classList.remove('is-active'); } if (openPopover === panel) openPopover = null; }
     function closeAll() { qsa('.pdf-toolbar-popover').forEach(closePopover); }
-    qsa('[data-popover-target]').forEach(function (toggle) { toggle.addEventListener('click', function (event) { event.stopPropagation(); var panel = $(toggle.dataset.popoverTarget); if (!panel) return; var opening = panel.hidden; closeAll(); if (opening) { panel.hidden = false; toggle.setAttribute('aria-expanded', 'true'); openPopover = panel; } }); });
+    qsa('[data-popover-target]').forEach(function (toggle) {
+      toggle.setAttribute('aria-controls', toggle.dataset.popoverTarget);
+      toggle.addEventListener('click', function (event) {
+        event.stopPropagation();
+        var panel = $(toggle.dataset.popoverTarget); if (!panel) return;
+        var opening = panel.hidden;
+        closeAll();
+        if (opening) {
+          panel.hidden = false;
+          panel.scrollTop = 0;
+          toggle.setAttribute('aria-expanded', 'true');
+          toggle.classList.add('is-active');
+          openPopover = panel;
+          var label = toggle.getAttribute('aria-label') || toggle.title || toggle.textContent.trim();
+          toast((IS_EN ? 'Opened: ' : '已開啟：') + label);
+        }
+      });
+    });
     qsa('[data-popover-close]').forEach(function (button) { button.addEventListener('click', function () { closePopover($(button.dataset.popoverClose)); }); });
     document.addEventListener('click', function (event) { if (openPopover && !event.target.closest('.pdf-popover-wrap')) closeAll(); });
     document.addEventListener('keydown', function (event) { if (event.key === 'Escape') closeAll(); });
@@ -1234,7 +1413,30 @@
     $('pdf-mobile-ai-close')?.addEventListener('click', function () { setMobileAi(false); });
     $('pdf-sidebar-close-mobile')?.addEventListener('click', function () { setMobileSidebar(false); });
     var stage = $('pdf-reader-stage'); var startX = 0; var startY = 0; var pinch = null; var pinchFrame = 0; var gestureWasPinch = false;
-    function renderPinchFrame() { pinchFrame = 0; if (pinch) renderMainPage(); }
+    function pinchSurface() { return isMobileReader() ? $('pdf-continuous-stack') : $('pdf-page-frame'); }
+    function resetPinchVisual(surface) {
+      if (!surface) return;
+      surface.style.transform = 'none';
+      surface.style.transformOrigin = '';
+      surface.style.marginBottom = '';
+      surface.style.marginRight = '';
+    }
+    function renderPinchFrame() {
+      pinchFrame = 0;
+      if (!pinch) return;
+      var surface = pinchSurface();
+      var baseZoom = Math.max(.25, Number(surface && surface.dataset.renderZoom) || pinch.zoom || .92);
+      var visualScale = Math.max(.25, Math.min(4, state.zoom / baseZoom));
+      if (surface) {
+        surface.style.transformOrigin = 'top center';
+        surface.style.transform = 'scale(' + visualScale + ')';
+        var surfaceHeight = surface.offsetHeight || 0;
+        var surfaceWidth = surface.offsetWidth || 0;
+        surface.style.marginBottom = Math.max(0, (visualScale - 1) * surfaceHeight) + 'px';
+        surface.style.marginRight = Math.max(0, (visualScale - 1) * surfaceWidth / 2) + 'px';
+      }
+      syncZoomLabel(state.zoom);
+    }
     function schedulePinchRender() { if (!pinchFrame) pinchFrame = window.requestAnimationFrame ? window.requestAnimationFrame(renderPinchFrame) : setTimeout(renderPinchFrame, 16); }
     function updatePinch(first, second, event) {
       if (!pinch) return;
@@ -1242,6 +1444,13 @@
       var ratio = distanceBetween(first, second) / Math.max(1, pinch.distance);
       state.fitMode = 'manual'; state.zoom = Math.max(.25, Math.min(4, pinch.zoom * ratio));
       schedulePinchRender();
+    }
+    function commitPinch() {
+      if (!pinch) return;
+      pinch = null;
+      var surface = pinchSurface();
+      resetPinchVisual(surface);
+      if (state.pdf) renderMainPage();
     }
     function finishTouchSwipe(point) {
       if (!point || gestureWasPinch || state.tool !== 'select') return;
@@ -1251,9 +1460,9 @@
     if (stage && window.PointerEvent) {
       var pointers = new Map();
       function endPointer(event) {
-        var point = pointers.get(event.pointerId) || event;
+        var point = { clientX: event.clientX, clientY: event.clientY };
         pointers.delete(event.pointerId);
-        if (pointers.size < 2) pinch = null;
+        if (pointers.size < 2 && pinch) commitPinch();
         if (!pointers.size) { finishTouchSwipe(point); gestureWasPinch = false; }
       }
       stage.addEventListener('pointerdown', function (event) {
@@ -1286,10 +1495,10 @@
       }, { passive: false });
       stage.addEventListener('touchend', function (event) {
         var touch = event.changedTouches && event.changedTouches[0];
-        if (!event.touches || event.touches.length < 2) pinch = null;
+        if ((!event.touches || event.touches.length < 2) && pinch) commitPinch();
         if (!event.touches || !event.touches.length) { finishTouchSwipe(touch); gestureWasPinch = false; }
       }, { passive: true });
-      stage.addEventListener('touchcancel', function () { pinch = null; gestureWasPinch = false; }, { passive: true });
+      stage.addEventListener('touchcancel', function () { if (pinch) { var surface = pinchSurface(); pinch = null; resetPinchVisual(surface); if (state.pdf) renderMainPage(); } gestureWasPinch = false; }, { passive: true });
     }
   }
 
