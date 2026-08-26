@@ -45,3 +45,9 @@
 `academy/index.html` 的互動決策工具數量由 14 更新為實際 15，並新增第三輪工具卡片；文章索引文案同步更新。`sitemap.xml` 中既有文章網址的 lastmod 更新為 2026-08-27，新工具網址加入且文章／工具各只出現一次； XML parse 與第三輪 validator 均通過。
 
 截至此階段，與第三輪直接相關的檢查全部通過；`verify_pages.py` 的既有 Amazon `subcategories` schema mismatch 已在前一段記錄，沒有修改資料檔或以假資料繞過。
+
+## Production regression
+
+GitHub Pages run `32988763305` 對 commit `aa2387ba9ec16beef2a1622a18b9be1a293a21d0` 已完成 `success`。正式工具 `https://gugopro.com/academy/tools/risk-return-drawdown.html?qa=aa2387b` 實測價格序列 `100,110,104,88,98,112` 與單筆 R:R 案例，回報累積報酬 12.00%、MDD -20.00%、MDD 金額 NT$ 22,000、恢復期 2 期、R:R 3.00R，產生 6 筆 path rows、7 個 SVG children，且 performance resource 沒有 API／quote／market／WebSocket 請求。
+
+正式文章 `https://gugopro.com/articles/investment/06-sharpe-mdd-risk-control.html?qa=aa2387b` 已公開，標題、六個主導航章節、額外完整案例、4 個 References、風報比／風險分析／既有工具 CTA 均可見；正式文章頁 console 檢視為無輸出，沒有新增 JavaScript error。
