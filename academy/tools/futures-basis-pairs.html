@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>臺指期／富台期期現價差工具｜GugoPro Academy</title>
+<meta name="description" content="輸入同一時間查證的現貨、近月與次月期貨報價，計算 Basis、年化期現價差、轉倉價差與名目損益。">
+<link rel="canonical" href="https://academy.gugopro.com/tools/futures-basis-pairs.html">
+<link rel="stylesheet" href="../academy.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"臺指期／富台期期現價差工具","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"以使用者輸入拆解現貨、近月與次月期貨的期現價差和轉倉影響。","url":"https://academy.gugopro.com/tools/futures-basis-pairs.html"}</script>
+</head>
+<body class="quant-page">
+<main class="tool-page"><div class="tool-crumb"><a href="../">← 回到 GugoPro Academy</a><span>衍生品研究 · 同時間輸入 · 非即時報價</span></div>
+<div class="tool-layout"><section class="panel"><div class="eyebrow">Quant lab · Futures basis</div><h1>臺指期／富台期期現價差</h1><p>把同一時點的現貨參考、近月與次月期貨報價放在同一個單位中，拆解 Basis、期限結構與簡化名目損益。請按實際交易所契約規格修改乘數。</p>
+<label for="spot">現貨／指數參考值</label><input id="spot" type="number" min="0" step="0.01" placeholder="貼入查證值">
+<label for="front">近月期貨價格</label><input id="front" type="number" min="0" step="0.01" placeholder="貼入查證值">
+<label for="next">次月期貨價格</label><input id="next" type="number" min="0" step="0.01" placeholder="貼入查證值">
+<label for="days">近月距到期日（天）</label><input id="days" type="number" min="1" max="365" step="1" value="30">
+<label for="multiplier">每點乘數（元）</label><input id="multiplier" type="number" min="0.01" step="0.01" value="200">
+<label for="contracts">近月口數（研究用）</label><input id="contracts" type="number" min="0" step="1" value="1">
+<button class="calc" id="calc" type="button">拆解期現與轉倉價差</button><div class="status" id="status" aria-live="polite">請輸入同一時間、同一標的口徑的三個價格。</div>
+<div class="formula-note"><strong>公式：</strong>Basis＝近月期貨−現貨；Basis%＝Basis÷現貨；簡化年化 Basis＝Basis%×365÷距到期天數；Calendar spread＝次月−近月。這些是研究拆解，不是保證收斂或套利收益。</div></section>
+<section class="result"><div class="eyebrow">Basis decomposition</div><h2>期現與期限結構</h2><div class="result-big" id="basis">—</div><div class="sub" id="shape">等待有效輸入</div>
+<div class="metric-grid"><div class="metric"><span class="sub">Basis %</span><b id="basisPct">—</b></div><div class="metric"><span class="sub">年化 Basis</span><b id="annualBasis">—</b></div><div class="metric"><span class="sub">轉倉價差</span><b id="calendar">—</b></div><div class="metric"><span class="sub">名目 Basis 金額</span><b id="notional">—</b></div></div>
+<div class="visual"><h3>價差結構（點數）</h3><div class="bar-chart" id="chart"><i style="height:6px"></i></div><div class="axis"><span>現貨 0</span><span>Basis</span><span>Calendar spread</span></div></div>
+<div class="source-box"><strong>契約與資料限制：</strong>臺指期 TX 的契約大小與交易時段應以 <a href="https://www.taifex.com.tw/enl/eng2/tX" target="_blank" rel="noopener">TAIFEX 官方規格</a>核對；富台期與其他指數期貨的乘數、幣別、到期與交易時段不可直接套用。工具不抓即時報價，避免把不同時間或不同合約誤配成可交易的價差。</div></section></div></main>
+<script src="../academy.js"></script><script>
+const $=id=>document.getElementById(id),fmt=(n,d=2)=>Number.isFinite(n)?n.toFixed(d):'—';
+function calc(){const s=+$('spot').value,f=+$('front').value,n=+$('next').value,d=+$('days').value,m=+$('multiplier').value,q=+$('contracts').value;if(![s,f,n,d,m,q].every(Number.isFinite)||s<=0||d<=0||m<=0||q<0){$('status').textContent='輸入錯誤：請填入有效的同口徑價格、天數、乘數與口數。';$('status').className='status error';return}const b=f-s,p=b/s*100,a=p*365/d,cal=n-f; $('basis').textContent=fmt(b)+' 點';$('basisPct').textContent=fmt(p,3)+'%';$('annualBasis').textContent=fmt(a,2)+'%';$('calendar').textContent=fmt(cal)+' 點';$('notional').textContent='NT$ '+Math.round(b*m*q).toLocaleString('zh-TW');$('shape').textContent=cal>0?'次月高於近月：正價差／Contango 研究標籤':cal<0?'次月低於近月：逆價差／Backwardation 研究標籤':'次月與近月相同：期限價差為 0';const span=Math.max(Math.abs(b),Math.abs(cal),1);$('chart').innerHTML='<i style="height:'+Math.max(5,Math.abs(b)/span*145)+'px" title="Basis"></i><i style="height:'+Math.max(5,Math.abs(cal)/span*145)+'px" title="Calendar spread"></i>';$('status').textContent='計算完成：請再核對乘數、幣別、到期日與同時點資料。';$('status').className='status ok'}
+$('calc').addEventListener('click',calc);</script></body></html>
