@@ -140,6 +140,23 @@
     return canvas;
   }
 
+  function getRenderPixelRatio(width, height) {
+    var ratio = Math.min(3, Math.max(1, Number(window.devicePixelRatio) || 1));
+    var maxPixels = 12000000;
+    var pixels = Math.max(1, Number(width) || 1) * Math.max(1, Number(height) || 1) * ratio * ratio;
+    if (pixels > maxPixels) ratio = Math.max(1, Math.sqrt(maxPixels / (Math.max(1, Number(width) || 1) * Math.max(1, Number(height) || 1))));
+    return ratio;
+  }
+
+  function makeDpiCanvas(width, height, className, pixelRatio) {
+    var ratio = Math.max(1, Number(pixelRatio) || 1);
+    var canvas = makeCanvas(width * ratio, height * ratio, className);
+    canvas.style.width = Math.ceil(width) + 'px';
+    canvas.style.height = Math.ceil(height) + 'px';
+    canvas.dataset.pixelRatio = String(ratio);
+    return canvas;
+  }
+
   function getRotation(pageNumber) { return Number(state.pageRotations[pageNumber] || 0); }
 
   function getPageDisplayRotation(pageNumber) {
@@ -318,11 +335,14 @@
     frame.style.height = Math.ceil(viewport.height) + 'px';
     frame.style.transform = 'none';
     frame.replaceChildren();
-    var canvas = makeCanvas(viewport.width, viewport.height, 'pdf-page-canvas');
+    var outputScale = getRenderPixelRatio(viewport.width, viewport.height);
+    var canvas = makeDpiCanvas(viewport.width, viewport.height, 'pdf-page-canvas', outputScale);
     frame.appendChild(canvas);
-    await page.render({ canvasContext: canvas.getContext('2d'), viewport: viewport }).promise;
+    var renderContext = { canvasContext: canvas.getContext('2d'), viewport: viewport };
+    if (outputScale !== 1) renderContext.transform = [outputScale, 0, 0, outputScale, 0, 0];
+    await page.render(renderContext).promise;
     if (renderToken !== mainRenderToken) return;
-    var overlay = makeCanvas(viewport.width, viewport.height, 'pdf-annotation-canvas');
+    var overlay = makeDpiCanvas(viewport.width, viewport.height, 'pdf-annotation-canvas', outputScale);
     overlay.setAttribute('aria-label', 'PDF annotation canvas');
     frame.appendChild(overlay);
     var signatureLayer = document.createElement('div');
@@ -410,7 +430,8 @@
       thumb.className = 'pdf-thumb' + (pageNumber === state.currentPage ? ' is-current' : '') + (state.selectedPages.has(pageNumber) ? ' is-selected' : '');
       thumb.dataset.page = String(pageNumber);
       thumb.draggable = true;
-      var canvas = makeCanvas(viewport.width, viewport.height, 'pdf-thumb-canvas');
+      var thumbScale = getRenderPixelRatio(viewport.width, viewport.height);
+      var canvas = makeDpiCanvas(viewport.width, viewport.height, 'pdf-thumb-canvas', thumbScale);
       thumb.appendChild(canvas);
       var footer = document.createElement('div'); footer.className = 'pdf-thumb-footer';
       var label = document.createElement('span'); label.className = 'pdf-thumb-page'; label.textContent = 'P.' + pageNumber;
@@ -419,8 +440,9 @@
       if (getPageDisplayRotation(pageNumber)) {
         var rotated = document.createElement('span'); rotated.className = 'pdf-thumb-overlay'; rotated.textContent = getPageDisplayRotation(pageNumber) + '°'; thumb.appendChild(rotated);
       }
-      canvas.getContext('2d');
-      page.render({ canvasContext: canvas.getContext('2d'), viewport: viewport });
+      var thumbRenderContext = { canvasContext: canvas.getContext('2d'), viewport: viewport };
+      if (thumbScale !== 1) thumbRenderContext.transform = [thumbScale, 0, 0, thumbScale, 0, 0];
+      page.render(thumbRenderContext);
       if (renderToken !== thumbnailRenderToken) return;
       thumb.addEventListener('click', function (event) {
         if (event.target && event.target.classList && event.target.classList.contains('pdf-thumb-check')) return;
@@ -1154,22 +1176,37 @@
     state.currentPage = state.pageOrder[nextIndex]; renderMainPage(); renderThumbnails(); syncMobilePageControls();
   }
 
-  function setMobileSidebar(open) {
+  function syncMobileOverlayHistory(open, options) {
+    if (!window.history || !window.history.replaceState) return;
+    var fromPopState = options && options.fromPopState;
+    var skipHistory = options && options.skipHistory;
+    var hasOverlayEntry = Boolean(window.history.state && window.history.state.pdfSuiteOverlay);
+    if (open && !hasOverlayEntry) {
+      window.history.pushState(Object.assign({}, window.history.state || {}, { pdfSuiteOverlay: true }), '', window.location.href);
+    } else if (!open && !fromPopState && !skipHistory && hasOverlayEntry) {
+      window.history.back();
+    }
+  }
+
+  function setMobileSidebar(open, options) {
     var sidebar = $('pdf-sidebar'); var button = $('pdf-mobile-thumbnails');
     if (!sidebar) return;
+    if (open) setMobileAi(false, { skipHistory: true });
     sidebar.classList.toggle('is-mobile-open', Boolean(open));
     sidebar.setAttribute('aria-hidden', open ? 'false' : 'true');
     if (button) button.classList.toggle('is-active', Boolean(open));
+    syncMobileOverlayHistory(Boolean(open), options);
   }
 
-  function setMobileAi(open) {
+  function setMobileAi(open, options) {
     var pane = $('pdf-ai-pane');
     if (!pane) return;
-    setMobileSidebar(false);
+    if (open) setMobileSidebar(false, { skipHistory: true });
     pane.classList.toggle('is-mobile-open', Boolean(open));
     pane.setAttribute('aria-hidden', open ? 'false' : 'true');
     var button = $('pdf-mobile-ai');
     if (button) button.classList.toggle('is-active', Boolean(open));
+    syncMobileOverlayHistory(Boolean(open), options);
   }
 
   function distanceBetween(first, second) {
@@ -1178,11 +1215,20 @@
   }
 
   function bindMobileReaderControls() {
+    if (window.history && window.history.replaceState) {
+      var initialHistoryState = Object.assign({}, window.history.state || {});
+      delete initialHistoryState.pdfSuiteOverlay;
+      window.history.replaceState(initialHistoryState, '', window.location.href);
+      window.addEventListener('popstate', function () {
+        setMobileSidebar(false, { skipHistory: true, fromPopState: true });
+        setMobileAi(false, { skipHistory: true, fromPopState: true });
+      });
+    }
     $('pdf-mobile-page-prev')?.addEventListener('click', function () { navigatePage(-1); });
     $('pdf-mobile-page-next')?.addEventListener('click', function () { navigatePage(1); });
     $('pdf-mobile-page-input')?.addEventListener('change', function () { if (!state.pdf) return toast(messages.choosePdf); var page = Number(this.value); if (state.pageOrder.includes(page)) { state.currentPage = page; renderMainPage(); renderThumbnails(); syncMobilePageControls(); } else { this.value = String(state.currentPage); toast('請輸入有效頁碼'); } });
     $('pdf-empty-open')?.addEventListener('click', function () { $('pdf-file-input')?.click(); });
-    $('pdf-mobile-thumbnails')?.addEventListener('click', function () { setMobileAi(false); setMobileSidebar(true); });
+    $('pdf-mobile-thumbnails')?.addEventListener('click', function () { setMobileSidebar(true); });
     $('pdf-mobile-ai')?.addEventListener('click', function () { var pane = $('pdf-ai-pane'); setMobileAi(!pane || !pane.classList.contains('is-mobile-open')); });
     $('pdf-mobile-ai-close')?.addEventListener('click', function () { setMobileAi(false); });
     $('pdf-sidebar-close-mobile')?.addEventListener('click', function () { setMobileSidebar(false); });
