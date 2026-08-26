@@ -25,6 +25,10 @@ required = [
     'academy/tools/portfolio-rebalancer.html',
     'academy/tools/margin-of-safety.html',
     'academy/tools/var-calculator.html',
+    'academy/tools/retirement-cashflow.html',
+    'academy/tools/retirement-cashflow.js',
+    'academy/tools/retirement-cashflow.css',
+    'academy/lessons/retirement-cashflow.css',
 ]
 missing_required = [p for p in required if not (root / p).exists()]
 print(f'academy_html={len(files)}')
