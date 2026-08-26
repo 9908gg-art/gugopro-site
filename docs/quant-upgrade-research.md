@@ -53,3 +53,7 @@ After review, the Kelly tool was changed to start with blank user-specific field
 ## Phase 0–1 研究層正式站回歸（2026-08-26）
 
 GitHub Pages run `32971531128` 對 commit `1fb70ab169baeb64d01175d5db5109af332aa7f4` 建置與 deploy 均成功。正式網址為 `https://gugopro.com/academy/research/index.html?qa=1fb70ab`。Browser DOM 回報 title 正確、catalog status 為「已載入本地契約」、registry／catalog 版本皆為 1.0.0、4 個 source cards、3 個 dataset cards、3 個 unavailable badges、4 個官方來源連結、desktop scrollWidth=1265／viewport=1280，Console errors=[]。資料目錄只顯示 metadata 與未啟用狀態，未把任何尚未取得的數值渲染成觀測值。
+
+## Phase 0–1 最終正式站驗證（1855bf2，2026-08-26）
+
+最後文件證據提交為 `1855bf24c1c918fff7a58e2cc707ca18d1585fd8`；GitHub Pages run `32971733416` 的 build、deploy、report-build-status 均成功。正式研究頁 `https://gugopro.com/academy/research/index.html?qa=1855bf2` 的 browser DOM 回報 `catalogStatus=已載入本地契約`、registry/catalog 均為 1.0.0、4 個 source cards、3 個 dataset cards、3 個 unavailable badges、4 個官方連結、desktop scrollWidth=1265／viewport=1280、Console errors=[]。本次提交後的 repo 工作樹保持乾淨。
