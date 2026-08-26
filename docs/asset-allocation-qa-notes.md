@@ -9,3 +9,5 @@
 DOM diagnostics：本地配置工具頁 `scrollWidth=1265`、`clientWidth=1265`、`body.scrollWidth=1265`，無水平溢位；resource diagnostics 未發現符合 API／quote／market／WebSocket 的外部行情請求，狀態為 `status ok`。
 
 Production QA：GitHub Pages run `32986537436` 對 `392dd85485ec034a32b6625b8451e8d3d88ffb9e` completed success。正式 `https://gugopro.com/academy/tools/portfolio-rebalancer.html?qa=392dd85` 可執行預設案例，狀態為計算完成、3 列配置結果、6 張 metrics、下載按鈕啟用；resource diagnostics 未發現 API／quote／market／WebSocket 外部行情請求。
+
+Final production QA：`https://gugopro.com/academy/tools/portfolio-rebalancer.html?qa=a23cdfc` 執行預設案例成功，狀態為計算完成、結果列數 3、metrics 6、下載按鈕啟用，外部行情 resource diagnostics 為空。
