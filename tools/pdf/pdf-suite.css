@@ -29,6 +29,7 @@ button { cursor: pointer; }
 button:disabled { cursor: not-allowed; opacity: .48; }
 
 .pdf-site-header { position: sticky; top: 0; z-index: 50; border-bottom: 1px solid var(--pdf-line); background: rgba(7,11,19,.88); backdrop-filter: blur(18px); }
+.pdf-suite-page.pdf-document-loaded .pdf-site-header { display: none; }
 .pdf-site-nav { display: flex; align-items: center; justify-content: space-between; gap: 20px; max-width: 1500px; margin: auto; padding: 12px 22px; }
 .pdf-brand { display: inline-flex; align-items: center; gap: 11px; color: #fff; text-decoration: none; }
 .pdf-brand-mark { display: grid; place-items: center; width: 35px; height: 35px; border-radius: 11px; color: #07111a; background: linear-gradient(135deg, var(--pdf-cyan), #c5f4ff); box-shadow: 0 9px 25px rgba(98,203,255,.22); }
@@ -68,7 +69,11 @@ button:disabled { cursor: not-allowed; opacity: .48; }
 .pdf-sidebar-tab { display: grid; place-items: center; gap: 3px; min-height: 51px; border: 0; border-radius: 9px; color: var(--pdf-muted); background: transparent; font-size: .68rem; font-weight: 800; }
 .pdf-sidebar-tab i { font-size: .95rem; }
 .pdf-sidebar-tab:hover, .pdf-sidebar-tab.is-active { color: #fff; background: rgba(98,203,255,.11); }
+.pdf-sidebar-tab[data-sidebar="thumbs"] { color: #ffd166; }
+.pdf-sidebar-tab[data-sidebar="thumbs"] i { color: #ffad66; }
+.pdf-sidebar-tab[data-sidebar="thumbs"].is-active { color: #fff7dc; border: 1px solid rgba(255,209,102,.42); background: linear-gradient(145deg, rgba(255,209,102,.2), rgba(255,158,107,.12)); box-shadow: 0 0 0 2px rgba(255,209,102,.06); }
 .pdf-sidebar-tab.is-active i { color: var(--pdf-cyan); }
+.pdf-sidebar-tab[data-sidebar="thumbs"].is-active i { color: #ffd166; }
 .pdf-sidebar-content { flex: 1; min-height: 0; overflow: auto; padding: 11px; }
 .pdf-sidebar-view[hidden] { display: none; }
 .pdf-sidebar-empty { display: grid; place-items: center; min-height: 230px; padding: 20px; color: var(--pdf-muted); text-align: center; font-size: .78rem; line-height: 1.6; }
@@ -694,10 +699,14 @@ body.pdf-night-reading .pdf-page-frame .pdf-signature-stamp { filter: invert(1) 
   .pdf-app-shell.is-document-loaded .pdf-page-frame canvas.pdf-page-canvas,
   .pdf-app-shell.is-document-loaded .pdf-annotation-canvas { max-width: none; }
   .pdf-mobile-page-bar { grid-template-columns: 58px minmax(0, 1fr) 58px; gap: 5px; padding: 6px; }
-  .pdf-mobile-page-action { display: grid; place-items: center; align-content: center; gap: 3px; min-width: 0; min-height: 42px; padding: 4px; border: 1px solid var(--pdf-line); border-radius: 8px; color: var(--pdf-cyan); background: rgba(98,203,255,.08); font-size: .58rem; font-weight: 900; }
-  .pdf-mobile-page-action i { font-size: .9rem; }
+  .pdf-mobile-page-action { display: grid; place-items: center; align-content: center; gap: 3px; min-width: 0; min-height: 48px; padding: 4px; border: 1px solid var(--pdf-line-strong); border-radius: 9px; font-size: .6rem; font-weight: 900; box-shadow: 0 7px 18px rgba(0,0,0,.18); transition: transform 150ms ease, filter 150ms ease, box-shadow 150ms ease; }
+  .pdf-mobile-page-action i { font-size: 1rem; }
   .pdf-mobile-page-action span { overflow: hidden; max-width: 100%; text-overflow: ellipsis; white-space: nowrap; }
-  .pdf-mobile-page-action.is-active { color: #071018; border-color: var(--pdf-cyan); background: var(--pdf-cyan); }
+  .pdf-mobile-page-action:hover, .pdf-mobile-page-action:focus-visible { filter: brightness(1.08); box-shadow: 0 0 0 3px rgba(255,255,255,.09), 0 9px 22px rgba(0,0,0,.25); outline: 0; }
+  .pdf-mobile-page-action#pdf-mobile-thumbnails { color: #16120a; border-color: #ffd166; background: linear-gradient(145deg, #ffd166, #ffad66); box-shadow: 0 8px 20px rgba(255,174,91,.2); }
+  .pdf-mobile-page-action#pdf-mobile-ai { color: #100b20; border-color: #c4b5fd; background: linear-gradient(145deg, #c4b5fd, #8ea7ff); box-shadow: 0 8px 20px rgba(142,167,255,.22); }
+  .pdf-mobile-page-action#pdf-mobile-thumbnails.is-active { color: #fff; border-color: #fff0b0; background: linear-gradient(145deg, #e68b3f, #b86731); }
+  .pdf-mobile-page-action#pdf-mobile-ai.is-active { color: #fff; border-color: #e7ddff; background: linear-gradient(145deg, #7164d8, #4c63b5); }
   .pdf-mobile-page-controls { display: grid; grid-template-columns: 42px minmax(58px, 1fr) 64px 42px; align-items: center; gap: 5px; min-width: 0; }
   .pdf-mobile-page-controls > span { min-width: 0; overflow: hidden; color: var(--pdf-muted); font-size: .65rem; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
   .pdf-mobile-page-controls > span strong { color: #fff; }

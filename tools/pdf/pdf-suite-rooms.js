@@ -211,6 +211,7 @@
     var room = getActiveRoom();
     if (room && room.pdf) {
       var shell = $('pdf-app-shell'); if (shell) shell.classList.add('is-document-loaded');
+      if (document.body) document.body.classList.add('pdf-document-loaded');
       $('pdf-file-name').textContent = room.pdf.fileName + '（文字層備份）';
       $('pdf-file-meta').textContent = '本機文字層已保存；重新選擇原 PDF 可恢復視覺閱讀';
       if ($('pdf-reader-status')) $('pdf-reader-status').innerHTML = '<i class="fa-solid fa-file-lines"></i> 文字層就緒';

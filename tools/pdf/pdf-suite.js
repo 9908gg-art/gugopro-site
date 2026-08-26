@@ -130,6 +130,7 @@
     if (empty) { empty.hidden = !isEmpty; empty.style.display = isEmpty ? 'grid' : 'none'; }
     if (frame) { frame.hidden = isEmpty; frame.style.display = isEmpty ? 'none' : 'inline-block'; }
     if (shell) shell.classList.toggle('is-document-loaded', !isEmpty);
+    if (document.body) document.body.classList.toggle('pdf-document-loaded', !isEmpty);
   }
 
   function makeCanvas(width, height, className) {
