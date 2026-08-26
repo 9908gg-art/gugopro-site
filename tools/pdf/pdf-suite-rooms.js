@@ -83,7 +83,7 @@
     var legacyGeneral = rooms.find(function (room) { return (room.name === '一般 PDF 分析' || room.name === '一般 PDF 分析房間' || room.name === 'General PDF Analysis') && !room.taskRule && !room.pdf && !room.messages.length; });
     if (legacyGeneral) { legacyGeneral.id = 'pdf_general_analysis'; legacyGeneral.name = IS_EN ? 'General PDF Analysis' : '一般 PDF 分析房間'; }
     var presetDefinitions = DEFAULT_TASK_ROOMS.reduce(function (map, definition) { map[definition.id] = definition; return map; }, {});
-    rooms = rooms.filter(function (room) { var preset = presetDefinitions[room.id]; return !(preset && !room.messages.length && !room.pdf && room.taskRule === preset.rule); });
+    rooms = rooms.filter(function (room) { var preset = presetDefinitions[room.id]; return !(preset && !room.messages.length && !room.pdf); });
     if (!rooms.length) rooms = [getDefaultRoom()];
     ensureGeneralTaskRoom();
     activeRoomId = (saved && saved.activeRoomId && rooms.some(function (room) { return room.id === saved.activeRoomId; })) ? saved.activeRoomId : rooms[0].id;
