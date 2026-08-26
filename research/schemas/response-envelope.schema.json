@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gugopro.com/research/schemas/response-envelope.schema.json",
+  "title": "GugoPro Research Response Envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status", "data", "provenance", "warnings", "errors", "schema_version"],
+  "properties": {
+    "status": {"type": "string", "enum": ["ok", "partial", "stale", "error"]},
+    "data": {},
+    "provenance": {"$ref": "provenance.schema.json"},
+    "warnings": {"type": "array", "items": {"type": "string"}},
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "message"],
+        "properties": {
+          "code": {"type": "string", "pattern": "^[A-Z0-9_:-]+$"},
+          "message": {"type": "string", "minLength": 1},
+          "retryable": {"type": "boolean"}
+        }
+      }
+    },
+    "schema_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "error"}}},
+      "then": {"properties": {"data": {"const": null}, "errors": {"minItems": 1}}}
+    },
+    {
+      "if": {"properties": {"status": {"enum": ["ok", "partial", "stale"]}}},
+      "then": {"properties": {"errors": {"maxItems": 0}}}
+    }
+  ]
+}

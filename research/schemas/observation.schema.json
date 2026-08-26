@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gugopro.com/research/schemas/observation.schema.json",
+  "title": "GugoPro Research Normalized Observation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "dataset_id",
+    "source_id",
+    "entity",
+    "observation_time",
+    "as_of_date",
+    "retrieved_at",
+    "frequency",
+    "timezone",
+    "currency",
+    "adjustment",
+    "value",
+    "unit",
+    "vintage",
+    "raw_snapshot_id",
+    "quality_flags",
+    "license_ref",
+    "schema_version"
+  ],
+  "properties": {
+    "dataset_id": {"type": "string", "minLength": 3, "pattern": "^[A-Za-z0-9_.:-]+$"},
+    "source_id": {"type": "string", "minLength": 2, "pattern": "^[A-Za-z0-9_.:-]+$"},
+    "entity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["symbol", "exchange", "cik"],
+      "properties": {
+        "symbol": {"type": ["string", "null"]},
+        "exchange": {"type": ["string", "null"]},
+        "cik": {"type": ["string", "null"], "pattern": "^[0-9]{10}$"}
+      }
+    },
+    "observation_time": {"type": "string", "format": "date-time"},
+    "as_of_date": {"type": "string", "format": "date"},
+    "retrieved_at": {"type": "string", "format": "date-time"},
+    "frequency": {"type": "string", "enum": ["intraday", "daily", "weekly", "monthly", "quarterly", "annual", "event_driven", "not_applicable"]},
+    "timezone": {"type": "string", "minLength": 1},
+    "currency": {"type": "string", "minLength": 1},
+    "adjustment": {"type": "string", "enum": ["adjusted", "unadjusted", "as_reported", "source_defined", "not_applicable"]},
+    "value": {"type": ["number", "null"]},
+    "unit": {"type": "string", "minLength": 1},
+    "vintage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["realtime_start", "realtime_end"],
+      "properties": {
+        "realtime_start": {"type": ["string", "null"], "format": "date"},
+        "realtime_end": {"type": ["string", "null"], "format": "date"}
+      }
+    },
+    "raw_snapshot_id": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "quality_flags": {"type": "array", "items": {"type": "string", "enum": ["missing_source_value", "duplicate_key", "non_monotonic_time", "unit_mismatch", "currency_mismatch", "timezone_unknown", "adjustment_unknown", "stale", "partial", "source_warning", "parser_warning"]}},
+    "license_ref": {"type": "string", "minLength": 3},
+    "schema_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"}
+  }
+}

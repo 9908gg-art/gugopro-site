@@ -36,3 +36,16 @@ The production Quant Research article loaded successfully with five chapter anch
 ## Blank-start safety refinement
 
 After review, the Kelly tool was changed to start with blank user-specific fields and no automatic calculation. Its initial status is instructional and all result metrics are `—`; the Half Kelly selector remains a parameter choice, not a result. A subsequent test-only input run still returned Full Kelly 30.00%, Fractional Kelly 15.00%, NT$30,000 risk budget and NT$750,000 stop-distance position cap. Invalid input now clears all five metrics and the chart before showing the error state.
+
+## Phase 0–1 公開資料研究層本地實作回歸（2026-08-26）
+
+- 新增 `research/source-registry.json`、`research/datasets/catalog.json`、`research/schemas/`、`research/fixtures/`、`research/README.md`、`scripts/verify_research_contract.py`、`scripts/ingest_public_data.py` 與 `academy/research/` 研究入口。
+- Source registry 已登錄 4 個來源（FRED、SEC EDGAR、TAIFEX 契約規格、CME futures education）；dataset catalog 已登錄 `fred:DGS10`、`sec:submissions`、`taifex:TX:specification` 三個 dataset。因 live adapter、伺服器憑證與授權核准尚未部署，四個 source 的 `enabled` 與三個 dataset 的 `quality_status` 均誠實維持未啟用／不可用。
+- FRED 官方 fixture `research/fixtures/fred-DGS10.csv` 取自 2026-08-18 至 2026-08-24 的官方 `fredgraph.csv` 回應，SHA-256 為 `7cdd03b0863d17a1deed3a63e97181bbe02971cb9007808c92ce14524255884d`。fixture ingestion 成功解析 5 rows、回傳 `status=ok`／`quality_status=fresh`；無 `FRED_API_KEY` 的 live ingestion 以 exit code 2 回傳 `MISSING_SERVER_CREDENTIAL`、`status=error`、`data=null`、`quality_status=unavailable`。
+- `python3 scripts/verify_research_contract.py` 通過：sources=4、datasets=3、observation_fixtures=ok、response_fixtures=ok、secret_scan=ok。既有 `verify_quant_upgrade.py`、`verify_academy.py`、Python compile、Node syntax 與 `git diff --check` 也通過；現有 Academy 驗證為 39 個 HTML，未發現 missing links 或 missing required。
+- 本地 `academy/research/index.html` DOM 回歸顯示「已載入本地契約」、4 張 source cards、3 張 dataset cards、3 個 `尚未啟用` badge、4 個官方來源連結、Console errors=[]；同源 390px iframe 回報 clientWidth=375、scrollWidth=375、4 source cards、3 dataset cards、status 已載入本地契約。
+- Academy 首頁已由生成器冪等補入唯一 `href="research/"` 公開資料研究層入口，保留 22 個課程章節、14 個工具與唯一 `#quant-lab`。連續執行生成器兩次後 `research_entry_count=1`、`quant_lab_count=1`。
+
+- 最終本地研究頁回歸（`phase1-final-local`）：桌面 DOM 顯示 `已載入本地契約`、registry/catalog 皆為 1.0.0、4 個 source cards、3 個 dataset cards、3 個 `尚未啟用` quality badges、4 個官方來源連結、Console errors=[]；desktop scrollWidth=1265、viewport=1280。
+- 研究頁同源 390px iframe 回歸：clientWidth=375、scrollWidth=375、4 個 source cards、3 個 dataset cards、`已載入本地契約`、3 個 unavailable badges。
+- 最終 Academy 首頁回歸：`#quant-lab` 唯一存在，`href="research/"` 研究層入口在量化研究區段出現一次，仍有 22 個課程章節與 14 個工具；新增入口卡片文字為「公開資料研究層／來源登錄、資料契約、快照 hash、as-of 與品質狀態」。
