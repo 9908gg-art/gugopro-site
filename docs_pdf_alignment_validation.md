@@ -53,3 +53,9 @@ Chromium 輸出只有 sandbox 的 UPower D-Bus 環境警告，未見 PDF Suite �
 ## 英文手機 390×844
 
 最新英文截圖 `/home/ubuntu/pdf_suite_mobile_en_alignment.png` 為 390×844：header 後直接呈現 PDF toolbar，英文 hero 完整隱藏，reader 以單欄顯示，Bottom Dock 顯示 Pages、Tools、Sign、AI、Open，且視覺上沒有水平溢出或孤字折行。
+
+## 正式部署驗證
+
+對齊 commit `e7ead26` 推送後，Pages build `32924690297` 完成 success；正式頁一度先顯示舊的「設定 AI Key」是 CDN/browser cache 尚未更新。追加 cache-bust commit `387fece`，為雙語 HTML 的 PDF Suite CSS/JS/rooms engine 加上 `?v=e7ead26`，Pages build `32924837913` 完成 success。
+
+最終正式中文 URL `https://gugopro.com/tools/pdf/pdf-suite.html?alignment=387fece` 已回傳新版 drawer trigger `#pdf-drawer-open`、房間與 BYOK DOM；production computed style 確認 `#pdf-ai-error-panel` 初始 `display:none`，資產 URL 為版本化 CSS/JS，沒有殘留 `Set AI Key` 或舊 key modal。正式頁可正常取得 HTML。
