@@ -99,3 +99,8 @@
 ## 安全輸出驗證
 - 英文版三頁 fixture 填入測試密碼 `test1234` 後點擊 AES-GCM lock，頁面狀態顯示已產生本機 AES-GCM 鎖定包，未出現 JavaScript 錯誤。
 - 鎖定包輸出使用 PBKDF2 + AES-GCM，下載內容為帶有 salt、iv 與 ciphertext 的 JSON package；密碼不寫入檔案。
+
+## 正式站部署驗證
+- 推送 commit `0897f43` 後，第一次開啟自訂網域時短暫回傳 GitHub Pages 404；經 GitHub API 確認 Pages 狀態當時為 `building`，不是檔案缺失。
+- 最新 Pages Actions run `32916726983` 已以 `success` 完成，`head_sha` 對應 `0897f43ad589b819fe0072aa5ce1bb99c0d24810`。
+- 重新整理並加 cache-busting query 後，正式中文 `https://gugopro.com/tools/pdf/pdf-suite.html` 與英文 `https://gugopro.com/en/tools/pdf/pdf-suite.html` 均回傳新版頁面；正式頁面標題、三欄閱讀器、AI panel、簽名、轉檔與本機處理文案可見。
