@@ -76,6 +76,16 @@
     }
   }
 
+  var saveTimer = 0;
+  function scheduleSaveRooms() {
+    if (saveTimer) return;
+    saveTimer = root.setTimeout(function () { saveTimer = 0; saveRooms(); }, 140);
+  }
+  function flushScheduledSave() {
+    if (saveTimer) { root.clearTimeout(saveTimer); saveTimer = 0; }
+    saveRooms();
+  }
+
   function loadRooms() {
     var saved = null;
     try { saved = JSON.parse(root.localStorage.getItem(ROOM_STORAGE_KEY) || 'null'); } catch (_) { saved = null; }
@@ -152,7 +162,7 @@
       var strong = document.createElement('strong');
       strong.textContent = room.name;
       var meta = document.createElement('small');
-      meta.textContent = (room.pdf ? (IS_EN ? 'PDF text layer · ' : 'PDF 文字層 · ') : '') + room.messages.length + (IS_EN ? ' messages' : ' 則對話') + (room.taskRule ? (IS_EN ? ' · task saved' : ' · 已設定任務') : '');
+      meta.textContent = roomMessageMeta(room);
       copy.appendChild(strong); copy.appendChild(meta); main.appendChild(icon); main.appendChild(copy);
       var actions = document.createElement('div');
       actions.className = 'pdf-room-actions';
@@ -185,24 +195,50 @@
     };
   }
 
+  function roomMessageMeta(room) {
+    return (room.pdf ? (IS_EN ? 'PDF text layer · ' : 'PDF 文字層 · ') : '') + room.messages.length + (IS_EN ? ' messages' : ' 則對話') + (room.taskRule ? (IS_EN ? ' · task saved' : ' · 已設定任務') : '');
+  }
+
+  function createRoomHistoryNode(room, message) {
+    var node = document.createElement('div');
+    node.className = 'pdf-chat-msg ' + message.role;
+    node.dataset.messageId = message.id;
+    var head = document.createElement('div'); head.className = 'pdf-chat-msg-head';
+    var label = document.createElement('strong');
+    label.textContent = message.role === 'user' ? 'You' : 'GugoPro AI';
+    var remove = document.createElement('button'); remove.type = 'button'; remove.className = 'pdf-chat-delete'; remove.title = IS_EN ? 'Delete message' : '刪除訊息'; remove.setAttribute('aria-label', remove.title); remove.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
+    remove.addEventListener('click', function () { deleteMessage(room.id, message.id); });
+    head.appendChild(label); head.appendChild(remove);
+    var body = document.createElement('p'); body.textContent = message.text;
+    node.appendChild(head); node.appendChild(body);
+    return node;
+  }
+
   function renderRoomHistory(room) {
     var log = $('pdf-chat-log');
     if (!log) return;
-    log.replaceChildren();
-    (room.messages || []).forEach(function (message) {
-      var node = document.createElement('div');
-      node.className = 'pdf-chat-msg ' + message.role;
-      node.dataset.messageId = message.id;
-      var head = document.createElement('div'); head.className = 'pdf-chat-msg-head';
-      var label = document.createElement('strong');
-      label.textContent = message.role === 'user' ? 'You' : 'GugoPro AI';
-      var remove = document.createElement('button'); remove.type = 'button'; remove.className = 'pdf-chat-delete'; remove.title = '刪除訊息'; remove.setAttribute('aria-label', '刪除訊息'); remove.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
-      remove.addEventListener('click', function () { deleteMessage(room.id, message.id); });
-      head.appendChild(label); head.appendChild(remove);
-      var body = document.createElement('p'); body.textContent = message.text;
-      node.appendChild(head); node.appendChild(body); log.appendChild(node);
-    });
+    var fragment = document.createDocumentFragment();
+    (room.messages || []).forEach(function (message) { fragment.appendChild(createRoomHistoryNode(room, message)); });
+    log.replaceChildren(fragment);
     log.scrollTop = log.scrollHeight;
+  }
+
+  function appendRoomHistoryMessage(room, message) {
+    var log = $('pdf-chat-log');
+    if (!log || !room || room.id !== activeRoomId) return;
+    var existing = Array.prototype.slice.call(log.querySelectorAll('[data-message-id]')).find(function (node) { return node.dataset.messageId === message.id; });
+    var node = createRoomHistoryNode(room, message);
+    if (existing) existing.replaceWith(node); else log.appendChild(node);
+    var keep = new Set(room.messages.map(function (item) { return item.id; }));
+    Array.prototype.slice.call(log.querySelectorAll('[data-message-id]')).forEach(function (item) { if (!keep.has(item.dataset.messageId)) item.remove(); });
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function refreshRoomListItem(room) {
+    if (!room) return;
+    var item = Array.prototype.slice.call(document.querySelectorAll('.pdf-room-item')).find(function (node) { return node.dataset.roomId === room.id; });
+    var meta = item && item.querySelector('.pdf-room-copy small');
+    if (meta) meta.textContent = roomMessageMeta(room);
   }
 
   function clearPdfForRoom() {
@@ -377,12 +413,8 @@
     if (!api || !room) return;
     setTimeout(async function () {
       try {
+        // extractAllText dispatches gugopro:pdf-text-extracted; handleTextExtracted is the single persistence path.
         await api.extractAllText(false);
-        var snapshot = api.getSnapshot ? api.getSnapshot() : null;
-        if (!snapshot || !snapshot.file) return;
-        runtimeByRoom.set(room.id, snapshot);
-        room.pdf = { fileName: snapshot.file.name, fileSize: snapshot.file.size, pageTexts: snapshot.pageTexts, pageOrder: snapshot.pageOrder, currentPage: snapshot.currentPage, savedAt: new Date().toISOString() };
-        setRoomContext(room); saveRooms(); renderRoomName(); renderRoomList();
       } catch (error) { console.warn('[GugoPro PDF Rooms] PDF 文字層保存失敗:', error); }
     }, 0);
   }
@@ -399,9 +431,10 @@
     var room = getActiveRoom(); if (!room) return;
     var messageId = text(payload.messageId || 'pdf_msg_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8));
     room.messages = room.messages.filter(function (message) { return message.id !== messageId; });
-    room.messages.push({ id: messageId, role: payload.role === 'assistant' ? 'assistant' : 'user', text: text(payload.text).slice(0, 30000), createdAt: new Date().toISOString() });
+    var savedMessage = { id: messageId, role: payload.role === 'assistant' ? 'assistant' : 'user', text: text(payload.text).slice(0, 30000), createdAt: new Date().toISOString() };
+    room.messages.push(savedMessage);
     if (room.messages.length > 60) room.messages = room.messages.slice(-60);
-    saveRooms(); renderRoomList(); if (room.id === activeRoomId) renderRoomHistory(room);
+    scheduleSaveRooms(); refreshRoomListItem(room); appendRoomHistoryMessage(room, savedMessage);
   }
 
   function bind() {
@@ -421,11 +454,12 @@
     $('pdf-room-delete-inline')?.addEventListener('click', deleteActiveRoom);
     $('pdf-task-rule-save')?.addEventListener('click', saveTaskRule);
     document.querySelectorAll('[data-close-modal="pdf-room-ops-modal"], [data-close-modal="pdf-task-rule-modal"]').forEach(function (button) { button.addEventListener('click', function () { var modal = $(button.dataset.closeModal); if (modal) modal.classList.remove('is-open'); }); });
-    if ($('pdf-drawer-save-key')) $('pdf-drawer-save-key').addEventListener('click', async function () { var key = text($('pdf-drawer-api-key').value).trim(); if (!key) return showRoomNotice('請先貼上 Gemini API key。', 'error'); localStorage.setItem('gugopro_gemini_api_key', key); localStorage.setItem('gemini_api_key', key); $('pdf-drawer-api-status').textContent = 'Key 已保存在本機。'; if (root.GugoProPdfSuiteAI && root.GugoProPdfSuiteAI.refresh) await root.GugoProPdfSuiteAI.refresh({ silent: false }); });
-    if ($('pdf-model-refresh')) $('pdf-model-refresh').addEventListener('click', function () { if (root.GugoProPdfSuiteAI && root.GugoProPdfSuiteAI.refresh) root.GugoProPdfSuiteAI.refresh({ silent: false }); });
+    if ($('pdf-drawer-save-key')) $('pdf-drawer-save-key').addEventListener('click', async function () { var key = text($('pdf-drawer-api-key').value).trim(); if (!key) return showRoomNotice('請先貼上 Gemini API key。', 'error'); localStorage.setItem('gugopro_gemini_api_key', key); localStorage.setItem('gemini_api_key', key); $('pdf-drawer-api-status').textContent = 'Key 已保存在本機。'; if (root.GugoProPdfSuiteAI && root.GugoProPdfSuiteAI.refresh) await root.GugoProPdfSuiteAI.refresh({ silent: false, force: true }); });
+    if ($('pdf-model-refresh')) $('pdf-model-refresh').addEventListener('click', function () { if (root.GugoProPdfSuiteAI && root.GugoProPdfSuiteAI.refresh) root.GugoProPdfSuiteAI.refresh({ silent: false, force: true }); });
     root.addEventListener('gugopro:pdf-loaded', handlePdfLoaded);
     root.addEventListener('gugopro:pdf-text-extracted', function (event) { handleTextExtracted(event.detail || {}); });
     root.addEventListener('gugopro:pdf-room-message', function (event) { handleRoomMessage(event.detail || {}); });
+    root.addEventListener('pagehide', flushScheduledSave);
     root.addEventListener('keydown', function (event) { if (event.key === 'Escape') { closeDrawer(); closeRoomOps(); var taskModal = $('pdf-task-rule-modal'); if (taskModal) taskModal.classList.remove('is-open'); } });
     var apiKey = root.GugoProPdfSuiteAI && root.GugoProPdfSuiteAI.getApiKey ? root.GugoProPdfSuiteAI.getApiKey() : '';
     if ($('pdf-drawer-api-key') && apiKey) $('pdf-drawer-api-key').value = apiKey;

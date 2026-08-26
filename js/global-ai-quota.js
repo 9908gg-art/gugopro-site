@@ -108,7 +108,7 @@
   }
 
   function resetIfNewPacificDay() {
-    return emit(readState());
+    return snapshot(readState());
   }
 
   function getSnapshot() {
@@ -127,7 +127,7 @@
     var normalized = Number(limit);
     normalized = Number.isFinite(normalized) && normalized > 0 ? Math.floor(normalized) : null;
     var normalizedSource = source ? String(source) : state.limitSource;
-    if (state.dailyLimit === normalized && state.limitSource === normalizedSource) return emit(state);
+    if (state.dailyLimit === normalized && state.limitSource === normalizedSource) return snapshot(state);
     state.dailyLimit = normalized;
     state.updatedAt = new Date().toISOString();
     if (normalizedSource) state.limitSource = normalizedSource;

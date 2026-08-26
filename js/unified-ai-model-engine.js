@@ -8,6 +8,7 @@
   const QUOTA_MODELS_URL = 'https://quota.gugopro.com/gemini_rate_limits.json';
   const GEMINI_MODELS_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
   const REQUEST_TIMEOUT_MS = 10000;
+  const CATALOG_TTL_MS = 5 * 60 * 1000;
   const MODEL_TEXT_CAPABILITIES = new Set(['text_generation', 'chat_dialog']);
   const MODEL_EXCLUDED_TOKENS = /embedding|aqa|tts|speech|audio|live|ocr|image[_-]?gen|robotics|computer[-_]?use|deep[-_]?research|veo|lyria/i;
 
@@ -30,6 +31,7 @@
     let catalogPromise = null;
     let lastCatalogUpdatedAt = null;
     let syncingQuota = false;
+    let modelOptionsSignature = '';
 
     function el(name) {
       const id = config.elements[name] || name;
@@ -173,9 +175,22 @@
       return node;
     }
 
+    function getModelOptionsSignature() {
+      return JSON.stringify({
+        models: availableModels.map(model => [model.api_name, model.display_name, model.score, model.dailyQuota, model.rpmLimit, getModelUsageCount(model.api_name)]),
+        disabled: [...disabledModels].sort(),
+        preferred: getSavedPreference(),
+        current: currentModel,
+        busy: [...busyStates.entries()].map(([name, state]) => [name, state.status]).sort((a, b) => a[0].localeCompare(b[0]))
+      });
+    }
+
     function renderModelOptions() {
       const container = el('modelOptions');
       if (!container) return;
+      const signature = getModelOptionsSignature();
+      if (signature === modelOptionsSignature) return;
+      modelOptionsSignature = signature;
       container.replaceChildren();
       if (!availableModels.length) {
         appendText(container, 'p', 'model-empty', 'No eligible free chat models loaded yet. Refresh to retry.');
@@ -315,8 +330,9 @@
       } finally { root.clearTimeout(timer); }
     }
 
-    async function fetchLatestModel({ silent = false } = {}) {
+    async function fetchLatestModel({ silent = false, force = false } = {}) {
       if (catalogPromise) return catalogPromise;
+      if (!force && availableModels.length && lastCatalogUpdatedAt && Date.now() - lastCatalogUpdatedAt.getTime() < CATALOG_TTL_MS) return availableModels.slice();
       setModelSettingsStatus('Loading the dynamic free Gemini model catalog…', 'loading');
       catalogPromise = (async () => {
         try {

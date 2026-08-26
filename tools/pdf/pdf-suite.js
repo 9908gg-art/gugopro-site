@@ -192,7 +192,7 @@
       frame.appendChild(signatureLayer);
     }
     var stack = $('pdf-continuous-stack');
-    if (stack) stack.replaceChildren();
+    if (stack) { stack.replaceChildren(); delete stack.dataset.renderKey; delete stack.dataset.renderZoom; }
   }
 
   function drawPath(context, item, width, height, pixelRatio) {
@@ -334,6 +334,33 @@
     if (zoomLabel) zoomLabel.textContent = Math.round((Number(value) || 0) * 100) + '%';
   }
 
+  function getContinuousRenderKey() {
+    var stage = $('pdf-reader-stage');
+    return [state.pageOrder.join(','), JSON.stringify(state.pageRotations), state.zoom.toFixed(4), state.fitMode, state.tool, stage ? stage.clientWidth : 0, stage ? stage.clientHeight : 0].join('|');
+  }
+
+  function syncContinuousActivePage(pageNumber) {
+    var stack = $('pdf-continuous-stack');
+    var number = Number(pageNumber);
+    if (!stack || !number) return null;
+    state.currentPage = number;
+    var active = null;
+    qsa('.pdf-continuous-page', stack).forEach(function (node) {
+      var isActive = Number(node.dataset.page) === number;
+      node.classList.toggle('is-current', isActive);
+      var canvas = node.querySelector('.pdf-annotation-canvas');
+      if (canvas) {
+        canvas.style.pointerEvents = isActive && state.tool !== 'select' ? 'auto' : 'none';
+        if (isActive) bindAnnotationCanvas(canvas, number);
+      }
+      if (isActive) active = node;
+    });
+    syncMobilePageControls();
+    var pageCurrent = $('pdf-page-input'); if (pageCurrent) pageCurrent.value = String(number);
+    qsa('.pdf-thumb').forEach(function (thumb) { thumb.classList.toggle('is-current', Number(thumb.dataset.page) === number); });
+    return active;
+  }
+
   function appendRenderedPage(page, pageNumber, fragment, renderToken) {
     var rotation = getPageDisplayRotation(pageNumber);
     var scale = getPageScale(page, pageNumber);
@@ -376,6 +403,13 @@
   async function renderContinuousPages(renderToken) {
     var stack = $('pdf-continuous-stack');
     if (!stack || !state.pdf) return;
+    var cachedKey = getContinuousRenderKey();
+    if (stack.dataset.renderKey === cachedKey && stack.children.length === state.pageOrder.length) {
+      var cachedActive = syncContinuousActivePage(state.currentPage);
+      if (cachedActive) cachedActive.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      syncZoomLabel(state.zoom);
+      return;
+    }
     var fragment = document.createDocumentFragment();
     var currentViewport = null;
     var currentScale = state.zoom;
@@ -391,20 +425,10 @@
     stack.replaceChildren(fragment);
     stack.style.transform = 'none';
     stack.dataset.renderZoom = String(state.zoom);
+    stack.dataset.renderKey = getContinuousRenderKey();
     var stage = $('pdf-reader-stage');
     function activatePage(pageNumber) {
-      var number = Number(pageNumber);
-      if (!number) return;
-      state.currentPage = number;
-      qsa('.pdf-continuous-page', stack).forEach(function (node) {
-        var active = Number(node.dataset.page) === number;
-        node.classList.toggle('is-current', active);
-        var canvas = node.querySelector('.pdf-annotation-canvas');
-        if (canvas) { canvas.style.pointerEvents = active && state.tool !== 'select' ? 'auto' : 'none'; if (active) bindAnnotationCanvas(canvas, number); }
-      });
-      syncMobilePageControls();
-      var pageCurrent = $('pdf-page-input'); if (pageCurrent) pageCurrent.value = String(number);
-      qsa('.pdf-thumb').forEach(function (thumb) { thumb.classList.toggle('is-current', Number(thumb.dataset.page) === number); });
+      syncContinuousActivePage(pageNumber);
     }
     if (continuousObserver) continuousObserver.disconnect();
     continuousObserver = null;
@@ -426,8 +450,6 @@
   async function renderMainPage() {
     if (!state.pdf) return;
     var renderToken = ++mainRenderToken;
-    var page = await state.pdf.getPage(state.currentPage);
-    if (renderToken !== mainRenderToken) return;
     if (isMobileReader()) {
       var mobileFrame = $('pdf-page-frame');
       var mobileStack = $('pdf-continuous-stack');
@@ -443,6 +465,8 @@
       qsa('.pdf-thumb').forEach(function (thumb) { thumb.classList.toggle('is-current', Number(thumb.dataset.page) === state.currentPage); });
       return;
     }
+    var page = await state.pdf.getPage(state.currentPage);
+    if (renderToken !== mainRenderToken) return;
     var desktopFrame = $('pdf-page-frame');
     var desktopStack = $('pdf-continuous-stack');
     if (desktopFrame) { desktopFrame.hidden = false; desktopFrame.style.display = 'inline-block'; }
@@ -569,7 +593,6 @@
         if (event.target && event.target.classList && event.target.classList.contains('pdf-thumb-check')) return;
         state.currentPage = Number(this.dataset.page);
         renderMainPage();
-        renderThumbnails();
       });
       check.addEventListener('change', function (event) {
         var number = Number(this.closest('.pdf-thumb').dataset.page);
@@ -614,7 +637,7 @@
       var node = document.createElement('div'); node.className = 'pdf-note-item'; node.dataset.page = entry.page;
       var title = entry.item.type === 'highlight' ? '螢光筆' : entry.item.type === 'underline' ? '底線' : entry.item.type === 'strike' ? '刪除線' : '畫筆';
       node.innerHTML = '<strong>' + escapeHtml(title) + ' · 第 ' + entry.page + ' 頁</strong><span>點擊返回標註位置 · ' + escapeHtml(entry.item.color || '') + '</span>';
-      node.addEventListener('click', function () { state.currentPage = entry.page; setSidebarTab('thumbs'); renderMainPage(); renderThumbnails(); });
+      node.addEventListener('click', function () { state.currentPage = entry.page; setSidebarTab('thumbs'); renderMainPage(); });
       list.appendChild(node);
     });
   }
@@ -636,7 +659,7 @@
         var button = document.createElement('button'); button.type = 'button'; button.className = 'pdf-outline-item depth-' + Math.min(depth, 2); button.textContent = item.title || '未命名章節';
         button.addEventListener('click', async function (target) {
           var page = await resolveOutlinePage(target);
-          if (page) { state.currentPage = page; renderMainPage(); renderThumbnails(); }
+          if (page) { state.currentPage = page; renderMainPage(); }
         }.bind(null, item));
         list.appendChild(button);
         if (item.items && item.items.length) await addItems(item.items, depth + 1);
@@ -1268,9 +1291,9 @@
     bindToolbarTouchLabels();
     $('pdf-open-button').addEventListener('click', function () { $('pdf-file-input').click(); });
     $('pdf-fullscreen').addEventListener('click', function () { var shell = $('pdf-app-shell'); if (document.fullscreenElement) document.exitFullscreen(); else if (shell.requestFullscreen) shell.requestFullscreen(); });
-    $('pdf-page-prev').addEventListener('click', function () { if (state.pdf) { state.currentPage = state.pageOrder[Math.max(0, state.pageOrder.indexOf(state.currentPage) - 1)]; renderMainPage(); renderThumbnails(); } });
-    $('pdf-page-next').addEventListener('click', function () { if (state.pdf) { state.currentPage = state.pageOrder[Math.min(state.pageOrder.length - 1, state.pageOrder.indexOf(state.currentPage) + 1)]; renderMainPage(); renderThumbnails(); } });
-    $('pdf-page-input').addEventListener('change', function () { var page = Number(this.value); if (state.pageOrder.includes(page)) { state.currentPage = page; renderMainPage(); renderThumbnails(); } });
+    $('pdf-page-prev').addEventListener('click', function () { if (state.pdf) { state.currentPage = state.pageOrder[Math.max(0, state.pageOrder.indexOf(state.currentPage) - 1)]; renderMainPage(); } });
+    $('pdf-page-next').addEventListener('click', function () { if (state.pdf) { state.currentPage = state.pageOrder[Math.min(state.pageOrder.length - 1, state.pageOrder.indexOf(state.currentPage) + 1)]; renderMainPage(); } });
+    $('pdf-page-input').addEventListener('change', function () { var page = Number(this.value); if (state.pageOrder.includes(page)) { state.currentPage = page; renderMainPage(); } });
     $('pdf-zoom-out').addEventListener('click', function () { state.fitMode = 'manual'; state.zoom = Math.max(.25, state.zoom - .1); renderMainPage(); });
     $('pdf-zoom-in').addEventListener('click', function () { state.fitMode = 'manual'; state.zoom = Math.min(2.5, state.zoom + .1); renderMainPage(); });
     $('pdf-fit-select').addEventListener('change', function () { state.fitMode = this.value; renderMainPage(); });
@@ -1355,7 +1378,7 @@
     var index = state.pageOrder.indexOf(state.currentPage); if (index < 0) index = 0;
     var nextIndex = Math.max(0, Math.min(state.pageOrder.length - 1, index + delta));
     if (nextIndex === index) return toast(delta < 0 ? '已經是第一頁' : '已經是最後一頁');
-    state.currentPage = state.pageOrder[nextIndex]; renderMainPage(); renderThumbnails(); syncMobilePageControls();
+    state.currentPage = state.pageOrder[nextIndex]; renderMainPage(); syncMobilePageControls();
   }
 
   function syncMobileOverlayHistory(open, options) {
@@ -1408,7 +1431,7 @@
     }
     $('pdf-mobile-page-prev')?.addEventListener('click', function () { navigatePage(-1); });
     $('pdf-mobile-page-next')?.addEventListener('click', function () { navigatePage(1); });
-    $('pdf-mobile-page-input')?.addEventListener('change', function () { if (!state.pdf) return toast(messages.choosePdf); var page = Number(this.value); if (state.pageOrder.includes(page)) { state.currentPage = page; renderMainPage(); renderThumbnails(); syncMobilePageControls(); } else { this.value = String(state.currentPage); toast('請輸入有效頁碼'); } });
+    $('pdf-mobile-page-input')?.addEventListener('change', function () { if (!state.pdf) return toast(messages.choosePdf); var page = Number(this.value); if (state.pageOrder.includes(page)) { state.currentPage = page; renderMainPage(); syncMobilePageControls(); } else { this.value = String(state.currentPage); toast('請輸入有效頁碼'); } });
     $('pdf-empty-open')?.addEventListener('click', function () { $('pdf-file-input')?.click(); });
     $('pdf-mobile-thumbnails')?.addEventListener('click', function () { setMobileSidebar(true); });
     $('pdf-mobile-ai')?.addEventListener('click', function () { var pane = $('pdf-ai-pane'); setMobileAi(!pane || !pane.classList.contains('is-mobile-open')); });
