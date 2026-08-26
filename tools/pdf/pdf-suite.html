@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="GugoPro AI PDF 全能工作站：在瀏覽器本機閱讀、整理、標註、簽名、轉檔、加浮水印與用 Gemini AI 分析 PDF。">
+  <meta name="theme-color" content="#070b13">
+  <title>GugoPro AI PDF 全能工作站｜AI PDF Suite</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700;800&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="pdf-suite.css">
+</head>
+<body class="pdf-suite-page">
+  <header class="pdf-site-header">
+    <nav class="pdf-site-nav" aria-label="GugoPro PDF Suite navigation">
+      <a class="pdf-brand" href="../../index.html#tools-section" aria-label="返回 GugoPro 主站">
+        <span class="pdf-brand-mark"><i class="fa-solid fa-file-pdf"></i></span>
+        <span class="pdf-brand-copy"><strong>GugoPro AI PDF</strong><small>All-in-one local workstation</small></span>
+      </a>
+      <div class="pdf-nav-actions">
+        <a class="pdf-nav-link" href="../converter-hub.html"><i class="fa-solid fa-grid-2"></i><span>工具 Hub</span></a>
+        <a class="pdf-nav-link" href="../../en/tools/pdf/pdf-suite.html"><i class="fa-solid fa-language"></i><span>English</span></a>
+        <button class="pdf-nav-button" type="button" id="pdf-open-key"><i class="fa-solid fa-key"></i><span>設定 AI Key</span></button>
+      </div>
+    </nav>
+  </header>
+
+  <section class="pdf-suite-intro" aria-labelledby="pdf-suite-title">
+    <div class="pdf-suite-intro-row">
+      <div>
+        <p class="pdf-kicker">GugoPro flagship document workstation</p>
+        <h1 id="pdf-suite-title">把 PDF，變成你的 <span>AI 工作台</span></h1>
+        <p>閱讀、整理、註記、簽名、轉檔與文件理解集中在一個介面。檔案在瀏覽器本機處理，Gemini AI 只在你主動設定 API key 後分析文字層。</p>
+      </div>
+      <div class="pdf-privacy-badge"><i class="fa-solid fa-shield-halved"></i> 零伺服器上傳 · 本機優先</div>
+    </div>
+  </section>
+
+  <main class="pdf-app-shell" id="pdf-app-shell">
+    <section class="pdf-app-toolbar" aria-label="PDF 閱讀與編輯工具列">
+      <div class="pdf-toolbar-group">
+        <button class="pdf-tool primary" type="button" id="pdf-open-button"><i class="fa-solid fa-folder-open pdf-tool-icon"></i><span class="pdf-tool-label">開啟 PDF</span></button>
+        <button class="pdf-tool outline" type="button" id="pdf-save"><i class="fa-solid fa-download pdf-tool-icon"></i><span class="pdf-tool-label">匯出編輯版</span></button>
+        <button class="pdf-tool outline" type="button" id="pdf-clear"><i class="fa-solid fa-rotate-left pdf-tool-icon"></i><span class="pdf-tool-label">清除</span></button>
+      </div>
+      <div class="pdf-toolbar-group">
+        <button class="pdf-tool is-active" type="button" data-pdf-tool="select" title="選取/閱讀"><i class="fa-solid fa-arrow-pointer pdf-tool-icon"></i><span class="pdf-tool-label">選取</span></button>
+        <button class="pdf-tool" type="button" data-pdf-tool="highlight" title="螢光筆"><i class="fa-solid fa-highlighter pdf-tool-icon"></i><span class="pdf-tool-label">螢光筆</span></button>
+        <button class="pdf-tool" type="button" data-pdf-tool="underline" title="底線"><i class="fa-solid fa-underline pdf-tool-icon"></i><span class="pdf-tool-label">底線</span></button>
+        <button class="pdf-tool" type="button" data-pdf-tool="strike" title="刪除線"><i class="fa-solid fa-strikethrough pdf-tool-icon"></i><span class="pdf-tool-label">刪除線</span></button>
+        <button class="pdf-tool" type="button" data-pdf-tool="draw" title="畫筆"><i class="fa-solid fa-pen pdf-tool-icon"></i><span class="pdf-tool-label">畫筆</span></button>
+      </div>
+      <div class="pdf-toolbar-group">
+        <button class="pdf-tool" type="button" id="pdf-rotate-left" title="向左旋轉"><i class="fa-solid fa-rotate-left pdf-tool-icon"></i><span class="pdf-tool-label">左轉</span></button>
+        <button class="pdf-tool" type="button" id="pdf-rotate-right" title="向右旋轉"><i class="fa-solid fa-rotate-right pdf-tool-icon"></i><span class="pdf-tool-label">右轉</span></button><button class="pdf-tool" type="button" id="pdf-rotate-180" title="旋轉 180 度"><i class="fa-solid fa-arrows-rotate pdf-tool-icon"></i><span class="pdf-tool-label">180°</span></button>
+        <button class="pdf-tool" type="button" id="pdf-add-signature" title="新增手寫簽名"><i class="fa-solid fa-signature pdf-tool-icon"></i><span class="pdf-tool-label">簽名</span></button>
+      </div>
+      <div class="pdf-toolbar-group">
+        <button class="pdf-tool" type="button" id="pdf-zoom-out" title="縮小"><i class="fa-solid fa-minus pdf-tool-icon"></i></button>
+        <span class="pdf-zoom-label" id="pdf-zoom-label">92%</span>
+        <button class="pdf-tool" type="button" id="pdf-zoom-in" title="放大"><i class="fa-solid fa-plus pdf-tool-icon"></i></button>
+        <select class="pdf-tool-select" id="pdf-fit-select" aria-label="縮放模式"><option value="fit-width">寬度</option><option value="fit-page">整頁</option><option value="fit-height">高度</option><option value="manual">手動</option></select>
+      </div>
+      <div class="pdf-toolbar-group">
+        <button class="pdf-tool outline" type="button" id="pdf-night-mode" title="切換閱讀模式"><i class="fa-solid fa-moon pdf-tool-icon"></i><span class="pdf-tool-label">夜間閱讀</span></button><button class="pdf-tool outline" type="button" id="pdf-fullscreen" title="全螢幕閱讀"><i class="fa-solid fa-expand pdf-tool-icon"></i><span class="pdf-tool-label">全螢幕</span></button>
+      </div>
+    </section>
+
+    <section class="pdf-workspace" aria-label="PDF 三欄工作區">
+      <aside class="pdf-panel pdf-sidebar" id="pdf-sidebar" aria-label="PDF 導覽側欄">
+        <div class="pdf-sidebar-tabs" role="tablist" aria-label="側欄檢視">
+          <button class="pdf-sidebar-tab is-active" type="button" data-sidebar="thumbs" role="tab"><i class="fa-solid fa-grip"></i><span>縮圖</span></button>
+          <button class="pdf-sidebar-tab" type="button" data-sidebar="outline" role="tab"><i class="fa-solid fa-list-tree"></i><span>目錄</span></button>
+          <button class="pdf-sidebar-tab" type="button" data-sidebar="notes" role="tab"><i class="fa-regular fa-note-sticky"></i><span>註記</span></button>
+        </div>
+        <div class="pdf-sidebar-content">
+          <div class="pdf-sidebar-view" data-sidebar-view="thumbs">
+            <div class="pdf-file-row" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;color:var(--pdf-muted);font-size:.68rem"><span>頁面縮圖</span><strong id="pdf-thumb-status">0 頁</strong></div>
+            <div class="pdf-thumbnails" id="pdf-thumbnails"></div>
+            <div class="pdf-sidebar-empty" id="pdf-thumb-empty"><i class="fa-regular fa-images"></i><span>載入 PDF 後，這裡會顯示所有頁面。可勾選多頁，再拖曳縮圖調整順序。</span></div>
+          </div>
+          <div class="pdf-sidebar-view" data-sidebar-view="outline" hidden>
+            <div class="pdf-outline-list" id="pdf-outline-list"><div class="pdf-sidebar-empty"><i class="fa-regular fa-compass"></i><span>載入 PDF 後顯示目錄。</span></div></div>
+          </div>
+          <div class="pdf-sidebar-view" data-sidebar-view="notes" hidden>
+            <div id="pdf-notes-list"><div class="pdf-sidebar-empty"><i class="fa-regular fa-note-sticky"></i><span>標註會依頁碼出現在這裡。</span></div></div>
+          </div>
+        </div>
+      </aside>
+
+      <section class="pdf-reader-panel" aria-label="PDF 閱讀器">
+        <div class="pdf-reader-head">
+          <div class="pdf-reader-title"><strong id="pdf-file-name">尚未開啟 PDF</strong><span id="pdf-file-meta">拖放檔案即可開始</span></div>
+          <div class="pdf-reader-status" id="pdf-reader-status"><i class="fa-solid fa-lock"></i> 等待檔案</div>
+        </div>
+        <div class="pdf-reader-stage" id="pdf-reader-stage">
+          <div class="pdf-empty-state" id="pdf-empty-state">
+            <i class="fa-solid fa-file-arrow-up"></i>
+            <h2>拖入 PDF，立即開始</h2>
+            <p>支援大型本機 PDF。先從閱讀、縮圖、目錄或標註開始，所有頁面處理都在你的瀏覽器完成。</p>
+            <div class="pdf-empty-actions"><button class="pdf-action-button primary" type="button" id="pdf-empty-open"><i class="fa-solid fa-folder-open"></i> 選擇檔案</button><span class="pdf-context-note">PDF.js + pdf-lib · 不上傳</span></div>
+          </div>
+          <div class="pdf-page-frame tool-select" id="pdf-page-frame" hidden></div>
+        </div>
+        <div class="pdf-reader-foot"><button type="button" id="pdf-page-prev" aria-label="上一頁"><i class="fa-solid fa-chevron-left"></i></button><input class="pdf-page-input" id="pdf-page-input" type="number" min="1" value="1" aria-label="目前頁碼"><span>/ <strong id="pdf-total-pages">0</strong></span><button type="button" id="pdf-page-next" aria-label="下一頁"><i class="fa-solid fa-chevron-right"></i></button><span class="pdf-context-note" id="pdf-page-count-badge">讀取後顯示頁數</span></div>
+      </section>
+
+      <aside class="pdf-panel pdf-ai-pane" id="pdf-ai-pane" aria-label="AI 智慧助手">
+        <div class="pdf-ai-head">
+          <div class="pdf-ai-title"><span class="pdf-ai-orb"><i class="fa-solid fa-sparkles"></i></span><div><strong>GugoPro AI 助手</strong><span>Gemini · 引用頁碼 · 本機文字層</span></div></div>
+          <div class="pdf-ai-head-actions"><button class="pdf-mini-button" type="button" id="pdf-open-models"><i class="fa-solid fa-sliders"></i> 模型</button><button class="pdf-mini-button" type="button" id="pdf-ai-close-mobile" aria-label="關閉 AI 面板"><i class="fa-solid fa-xmark"></i></button></div>
+        </div>
+        <div class="pdf-ai-tabs" role="tablist" aria-label="AI 功能">
+          <button class="pdf-ai-tab is-active" type="button" data-ai-tab="chat">ChatPDF</button><button class="pdf-ai-tab" type="button" data-ai-tab="summary">摘要</button><button class="pdf-ai-tab" type="button" data-ai-tab="risk">合約</button><button class="pdf-ai-tab" type="button" data-ai-tab="translate">翻譯</button>
+        </div>
+        <div class="pdf-ai-body">
+          <div class="pdf-ai-view" data-ai-view="chat">
+            <div class="pdf-ai-scroll" id="pdf-chat-scroll">
+              <div class="pdf-ai-welcome"><strong>先問我這份文件</strong><p>我會以文字層回答，並在重點後標註 [第 N 頁]。若是掃描影像 PDF，請先使用 OCR 工具建立文字層。</p><div class="pdf-ai-chips"><button class="pdf-ai-chip" type="button" data-ai-prompt="請用三點摘要這份文件的重點，附上頁碼。">摘要重點</button><button class="pdf-ai-chip" type="button" data-ai-prompt="這份文件有哪些重要日期、金額或期限？">找日期與金額</button><button class="pdf-ai-chip" type="button" data-ai-prompt="請列出文件中的待辦事項與負責對象。">找待辦</button></div></div>
+              <div class="pdf-chat-log" id="pdf-chat-log"></div>
+            </div>
+            <div class="pdf-ai-composer"><textarea id="pdf-chat-input" placeholder="問問這份 PDF…（Ctrl / Cmd + Enter 送出）"></textarea><div class="pdf-ai-composer-row"><span class="pdf-context-note">回答會標出文件頁碼</span><button class="pdf-ai-send" id="pdf-chat-send" type="button"><i class="fa-solid fa-arrow-up"></i> 送出</button></div></div>
+          </div>
+          <div class="pdf-ai-view" data-ai-view="summary" hidden><div class="pdf-ai-scroll" id="pdf-summary-output"><div class="pdf-summary-card"><h3>Executive Summary</h3><p>按下按鈕，生成核心結論、關鍵數據與重要待辦事項。</p></div></div><div class="pdf-button-row"><button class="pdf-action-button orange" type="button" id="pdf-summary-run"><i class="fa-solid fa-wand-magic-sparkles"></i> 生成繁中摘要</button></div></div>
+          <div class="pdf-ai-view" data-ai-view="risk" hidden><div class="pdf-ai-scroll" id="pdf-risk-output"><div class="pdf-risk-card medium"><h3>Contract Risk Reviewer</h3><p>針對違約金、自動續約、免責、單方變更、競業與終止條款提出預警，結果僅供文件閱讀輔助。</p></div></div><div class="pdf-button-row"><button class="pdf-action-button red" type="button" id="pdf-risk-run"><i class="fa-solid fa-triangle-exclamation"></i> 掃描風險</button></div></div>
+          <div class="pdf-ai-view" data-ai-view="translate" hidden><div class="pdf-ai-scroll"><div class="pdf-ai-form"><label>目標語言<select id="pdf-translate-language"><option>繁體中文</option><option>English</option><option>日本語</option></select></label><label>原文段落<textarea id="pdf-translate-input" placeholder="貼上段落，或先按下方按鈕擷取目前頁文字"></textarea></label><button class="pdf-action-button" type="button" id="pdf-translate-current"><i class="fa-solid fa-file-lines"></i> 擷取目前頁文字</button><label>雙語對照結果<div class="pdf-translate-card pdf-translate-output" id="pdf-translate-output">翻譯結果會顯示在這裡。</div></label></div></div><div class="pdf-button-row"><button class="pdf-action-button orange" type="button" id="pdf-translate-run"><i class="fa-solid fa-language"></i> 開始翻譯</button></div></div>
+        </div>
+      </aside>
+    </section>
+
+    <div class="pdf-utility-panel" id="pdf-utility-panel">
+      <section class="pdf-utility-card">
+        <h3><i class="fa-solid fa-pen-fancy"></i> 標註與簽名</h3>
+        <div class="pdf-control-grid"><label>顏色<input id="annotation-color" type="color" value="#ff9e6b" aria-label="標註顏色"></label><label>筆畫<input id="annotation-width" type="number" min="1" max="20" value="5"></label></div>
+        <div class="pdf-button-row"><button class="pdf-action-button" type="button" id="pdf-signature-rotate-left"><i class="fa-solid fa-rotate-left"></i> 簽名左轉</button><button class="pdf-action-button" type="button" id="pdf-signature-rotate-right"><i class="fa-solid fa-rotate-right"></i> 右轉</button><button class="pdf-action-button red" type="button" id="pdf-delete-signature"><i class="fa-solid fa-trash"></i> 移除簽名</button></div>
+        <p class="pdf-helper">選擇螢光筆、底線、刪除線或畫筆後，在中間頁面拖曳。簽名可移動、縮放，雙擊可旋轉。</p>
+      </section>
+      <section class="pdf-utility-card">
+        <h3><i class="fa-solid fa-layer-group"></i> 頁面組織</h3>
+        <div class="pdf-control-grid"><label>目前選取<span id="pdf-selection-status" class="pdf-helper">可勾選多頁操作</span></label><label>分割範圍<input id="split-range" type="text" placeholder="1-3,5"></label></div>
+        <div class="pdf-button-row"><button class="pdf-action-button" type="button" id="pdf-delete-pages"><i class="fa-solid fa-file-circle-minus"></i> 刪除選取</button><button class="pdf-action-button" type="button" id="pdf-export-pages"><i class="fa-solid fa-file-export"></i> 提取選取</button><button class="pdf-action-button" type="button" id="pdf-split-run"><i class="fa-solid fa-scissors"></i> 依範圍分割</button></div>
+        <p class="pdf-helper">在縮圖側欄勾選頁面，拖曳可排序。未勾選時，提取與刪除預設作用於目前頁。</p>
+      </section>
+      <section class="pdf-utility-card">
+        <h3><i class="fa-solid fa-file-arrow-down"></i> 轉檔、浮水印與安全</h3>
+        <div class="pdf-control-grid"><label>浮水印文字<input id="watermark-text" type="text" placeholder="Confidential"></label><label>透明度<input id="watermark-opacity" type="number" min="4" max="80" value="16"></label><label>角度<input id="watermark-angle" type="number" min="-180" max="180" value="35"></label><label>密碼（≥6 字）<input id="lock-password" type="password" placeholder="本機鎖定包密碼"></label></div>
+        <div class="pdf-control-grid"><label class="pdf-checkline"><input id="watermark-repeat" type="checkbox"> 全頁平鋪</label><label>色彩<input id="watermark-color" type="color" value="#ff9e6b"></label><label>字級<input id="watermark-size" type="number" min="10" max="100" value="34"></label></div>
+        <div class="pdf-button-row"><button class="pdf-action-button" type="button" id="pdf-download-current"><i class="fa-solid fa-file-image"></i> PNG ZIP</button><button class="pdf-action-button" type="button" id="pdf-download-jpg"><i class="fa-solid fa-images"></i> JPG ZIP</button><button class="pdf-action-button orange" type="button" id="pdf-lock-run"><i class="fa-solid fa-lock"></i> AES-GCM 鎖定包</button></div>
+        <p class="pdf-helper">輸出時會套用頁面旋轉、標註、簽名與浮水印。安全功能建立本機 AES-GCM 鎖定包，並非伺服器端加密。</p>
+      </section>
+    </div>
+
+    <section class="pdf-utility-panel" aria-label="批次 PDF 工具">
+      <section class="pdf-utility-card"><h3><i class="fa-solid fa-object-group"></i> 多檔 PDF 合併</h3><input id="merge-input" type="file" accept="application/pdf,.pdf" multiple><div id="merge-list" class="pdf-chat-log"></div><div class="pdf-button-row"><button class="pdf-action-button primary" type="button" id="pdf-merge-run"><i class="fa-solid fa-code-merge"></i> 合併並下載</button></div></section>
+      <section class="pdf-utility-card"><h3><i class="fa-regular fa-images"></i> 多圖合成 PDF</h3><input id="images-input" type="file" accept="image/png,image/jpeg" multiple><div id="images-list" class="pdf-chat-log"></div><div class="pdf-button-row"><button class="pdf-action-button primary" type="button" id="pdf-images-to-pdf"><i class="fa-solid fa-file-pdf"></i> 合成並下載</button></div></section>
+      <section class="pdf-utility-card"><h3><i class="fa-solid fa-circle-info"></i> 本機處理狀態</h3><div class="pdf-status" id="pdf-status">請先拖入或選擇 PDF。</div><div class="pdf-progress"><span id="pdf-progress-bar"></span></div><p class="pdf-helper">PDF.js 負責分頁渲染與文字擷取；pdf-lib 負責頁面輸出。檔案不會上傳。</p></section>
+    </section>
+  </main>
+
+  <nav class="pdf-bottom-dock" aria-label="行動版工具列">
+    <button class="pdf-dock-button" type="button" data-dock-action="thumbs"><i class="fa-solid fa-grip"></i><span>頁面</span></button><button class="pdf-dock-button" type="button" data-dock-action="tools"><i class="fa-solid fa-sliders"></i><span>工具</span></button><button class="pdf-dock-button" type="button" data-dock-action="signature"><i class="fa-solid fa-signature"></i><span>簽名</span></button><button class="pdf-dock-button" type="button" data-dock-action="ai"><i class="fa-solid fa-sparkles"></i><span>AI</span></button><button class="pdf-dock-button" type="button" id="pdf-dock-open"><i class="fa-solid fa-folder-open"></i><span>開啟</span></button>
+  </nav>
+
+  <input id="pdf-file-input" type="file" accept="application/pdf,.pdf" hidden>
+  <div class="pdf-toast" id="pdf-toast" role="status" aria-live="polite"></div>
+
+  <div class="pdf-modal" id="signature-modal" role="dialog" aria-modal="true" aria-labelledby="signature-modal-title">
+    <div class="pdf-modal-card"><div class="pdf-modal-head"><h2 id="signature-modal-title">建立手寫簽名</h2><button class="pdf-close" type="button" data-close-modal="signature-modal" aria-label="關閉"><i class="fa-solid fa-xmark"></i></button></div><p>使用滑鼠或手機手指繪製，也可以上傳透明 PNG 印章。儲存後拖曳到頁面位置。</p><canvas id="signature-pad" width="720" height="220" style="display:block;width:100%;height:auto;border:1px solid #b9c8d4;border-radius:10px;background:#fff;touch-action:none"></canvas><div class="pdf-button-row"><button class="pdf-action-button" type="button" id="signature-clear"><i class="fa-solid fa-eraser"></i> 清除</button><label class="pdf-action-button"><i class="fa-solid fa-upload"></i> 上傳 PNG<input id="signature-upload" type="file" accept="image/png,image/jpeg" hidden></label><button class="pdf-action-button primary" type="button" id="signature-save"><i class="fa-solid fa-check"></i> 放置簽名</button></div></div>
+  </div>
+
+  <div class="pdf-modal" id="pdf-key-modal" role="dialog" aria-modal="true" aria-labelledby="pdf-key-title"><div class="pdf-modal-card"><div class="pdf-modal-head"><h2 id="pdf-key-title">設定 Gemini API key</h2><button class="pdf-close" type="button" id="pdf-key-close" aria-label="關閉"><i class="fa-solid fa-xmark"></i></button></div><p>AI 請求從瀏覽器直接送往 Google Gemini。Key 只儲存在本機 localStorage；GugoPro 不會代為上傳或代管。</p><input class="pdf-key-input" id="pdf-key-input" type="password" autocomplete="off" placeholder="AIza…"><div class="pdf-button-row"><button class="pdf-action-button primary" type="button" id="pdf-key-save"><i class="fa-solid fa-floppy-disk"></i> 儲存並載入模型</button></div></div></div>
+
+  <div class="pdf-model-drawer" id="pdf-model-drawer" role="dialog" aria-modal="true" aria-labelledby="pdf-model-title"><div class="pdf-drawer-card"><div class="pdf-drawer-head"><h2 id="pdf-model-title">AI 模型與 Quota</h2><button class="pdf-close" type="button" id="pdf-model-close" aria-label="關閉"><i class="fa-solid fa-xmark"></i></button></div><p>清單由 quota.gugopro.com 動態更新。可關閉模型、選擇優先模型，請求忙碌時引擎會自動 fallback。</p><p class="model-current-status" id="model-current-status">目前使用模型：載入中…</p><p class="global-ai-quota-status" id="global-ai-quota-status" aria-live="polite"></p><p class="global-ai-quota-reset" id="global-ai-quota-reset">配額重置倒數：計算中…</p><div class="global-ai-quota-pill" id="global-ai-quota-pill"><div class="global-ai-quota-item"><span>今日免費用量上限</span><strong id="global-ai-quota-limit">讀取中…</strong></div><div class="global-ai-quota-item"><span>今日已使用量</span><strong id="global-ai-quota-used">讀取中…</strong></div></div><div class="model-options" id="model-options" role="list" aria-label="免費模型清單"></div><p class="model-settings-status" id="model-settings-status">正在讀取模型清單…</p><div class="pdf-button-row"><button class="pdf-action-button" type="button" id="pdf-model-refresh"><i class="fa-solid fa-rotate"></i> 更新模型</button><a class="pdf-action-button" href="https://quota.gugopro.com/" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square"></i> 開啟 Quota</a></div></div></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="../../js/global-ai-quota.js"></script>
+  <script src="../../js/unified-ai-model-engine.js"></script>
+  <script src="pdf-suite.js"></script>
+  <script>
+    (function(){
+      document.getElementById('pdf-empty-open').addEventListener('click', function(){ document.getElementById('pdf-file-input').click(); });
+      document.getElementById('pdf-dock-open').addEventListener('click', function(){ document.getElementById('pdf-file-input').click(); });
+      document.getElementById('pdf-ai-close-mobile').addEventListener('click', function(){ document.getElementById('pdf-ai-pane').classList.remove('is-mobile-open'); document.querySelector('[data-dock-action="ai"]').classList.remove('is-active'); });
+      document.querySelectorAll('[data-close-modal]').forEach(function(button){ button.addEventListener('click', function(){ var modal=document.getElementById(button.dataset.closeModal); if(modal) modal.classList.remove('is-open'); }); });
+    }());
+  </script>
+</body>
+</html>
