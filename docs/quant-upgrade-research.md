@@ -57,3 +57,15 @@ GitHub Pages run `32971531128` 對 commit `1fb70ab169baeb64d01175d5db5109af332aa
 ## Phase 0–1 最終正式站驗證（1855bf2，2026-08-26）
 
 最後文件證據提交為 `1855bf24c1c918fff7a58e2cc707ca18d1585fd8`；GitHub Pages run `32971733416` 的 build、deploy、report-build-status 均成功。正式研究頁 `https://gugopro.com/academy/research/index.html?qa=1855bf2` 的 browser DOM 回報 `catalogStatus=已載入本地契約`、registry/catalog 均為 1.0.0、4 個 source cards、3 個 dataset cards、3 個 unavailable badges、4 個官方連結、desktop scrollWidth=1265／viewport=1280、Console errors=[]。本次提交後的 repo 工作樹保持乾淨。
+
+## Phase 2 特徵與回測引擎（2026-08-26）
+
+Phase 2 新增 `research/features/feature_engineering.py`、`research/features/labels.py`、`research/backtest/backtest_engine.py`、`scripts/run_phase2_research.py` 與 `scripts/verify_phase2_research.py`。工程層以 stdlib 為主，將 dated close CSV 解析、來源缺漏處理、point-in-time features、future realized-volatility labels、train-only tercile cutoffs、next-bar moving-average baseline 與 expanding walk-forward evaluation 分開，並以 feature／label／backtest JSON Schema 固定欄位契約。這一階段沒有訓練或發布 ML classifier。
+
+Phase 2 的真實公開 fixture 是 FRED 官方 `fredgraph.csv` 的 `SP500` 序列，as-of 範圍 `2025-08-26` 至 `2026-08-25`，原始 261 calendar rows；10 個空值來源觀測被明確排除且不插值，完整 close rows 為 251。fixture SHA-256 是 `sha256:60a9cfa243bcf1a4ded04b59a43aac6cc0b9e74a4cd1c0e65473e78d1e532369`，來源 URL 與 retrieval note 在 `research/fixtures/fred-SP500.manifest.txt`。FRED source registry 仍為未啟用，因此此 fixture 是可追溯的測試輸入，不是 live feed 或 current quote。
+
+固定 baseline 為 fast MA 20、slow MA 60、10 bps turnover cost、long-only 0／1；signal 在 close t 形成、next bar t+1 才執行。walk-forward 採 train 120 rows、test 40 rows、censor gap 1，共 4 個 held-out windows。對同一 fixture 與固定設定，平均超額報酬為 `-1.0111836840835026%`，四個測試窗中勝過 buy-and-hold 的數量為 0；此負結果原樣保留，沒有為了改善結果而調參、刪除不利窗或把 future labels 帶入 features。這個結果只描述一個約一年、單一指數 fixture 的 baseline 行為，不足以支持策略有效性或未來報酬推論。
+
+新增公開頁 `academy/research/quant-lab.html` 與 `quant-lab.js`。頁面預設只讀取版本庫 fixture，也支援使用者選擇本機 FRED-style CSV；本機檔案不會上傳。畫面明示 dataset、snapshot、as-of、source adjustment、缺漏 counts、feature values、成本／執行／benchmark contract、held-out split、equity curve 與限制；讀取或參數驗證失敗會清空結果。`academy/research/index.html`、首頁 quant research section 與 sitemap 皆有唯一工作台入口，生成器 `build_quant_upgrade.py` 已加入冪等補入邏輯。
+
+本地 QA 首次發現瀏覽器 runtime 未攜帶頂層 `snapshotId`；修正後預設 fixture 成功渲染 `研究完成`、261／251／10、231 trainable labels、4 windows、平均超額 `-1.01%` 與完整表格／曲線，且沒有 console error。後續驗證還會涵蓋 invalid CSV、insufficient rows、參數關係、390px RWD、既有研究頁與 Academy 首頁 link parity。

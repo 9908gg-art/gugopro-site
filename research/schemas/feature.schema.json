@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gugopro.com/research/schemas/feature.schema.json",
+  "title": "GugoPro Point-in-Time Feature Row",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["dataset_id", "source_id", "feature_as_of", "available_at", "timezone", "currency", "adjustment", "snapshot_id", "feature_version", "schema_version", "price", "return_1d", "abs_return_1d", "realized_vol_20", "vol_zscore_60", "drawdown", "missing_rate_20", "quality_flags"],
+  "properties": {
+    "dataset_id": {"type": "string", "minLength": 3, "pattern": "^[A-Za-z0-9_.:-]+$"},
+    "source_id": {"type": "string", "minLength": 2, "pattern": "^[A-Za-z0-9_.:-]+$"},
+    "feature_as_of": {"type": "string", "format": "date"},
+    "available_at": {"type": "string", "format": "date"},
+    "timezone": {"type": "string", "minLength": 1},
+    "currency": {"type": "string", "minLength": 1},
+    "adjustment": {"type": "string", "enum": ["adjusted", "unadjusted", "as_reported", "source_defined", "not_applicable"]},
+    "snapshot_id": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "feature_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "schema_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "price": {"type": ["number", "null"]},
+    "return_1d": {"type": ["number", "null"]},
+    "abs_return_1d": {"type": ["number", "null"]},
+    "realized_vol_20": {"type": ["number", "null"]},
+    "vol_zscore_60": {"type": ["number", "null"]},
+    "drawdown": {"type": ["number", "null"]},
+    "missing_rate_20": {"type": "number", "minimum": 0, "maximum": 1},
+    "quality_flags": {"type": "array", "items": {"type": "string", "enum": ["missing_source_value", "partial", "non_monotonic_time", "unit_mismatch", "currency_mismatch", "timezone_unknown", "adjustment_unknown"]}}
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gugopro.com/research/schemas/backtest-result.schema.json",
+  "title": "GugoPro Research Backtest Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["backtest_version", "config", "splits", "contract"],
+  "properties": {
+    "backtest_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "config": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fast_window", "slow_window", "cost_bps", "annualization"],
+      "properties": {
+        "fast_window": {"type": "integer", "minimum": 2},
+        "slow_window": {"type": "integer", "minimum": 3},
+        "cost_bps": {"type": "number", "minimum": 0},
+        "annualization": {"type": "integer", "minimum": 1}
+      }
+    },
+    "splits": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["split_id", "train_start", "train_end", "test_start", "test_end", "censor_gap", "test_as_of_start", "test_as_of_end", "total_return", "benchmark_total_return", "max_drawdown", "entry_count"],
+        "properties": {
+          "split_id": {"type": "string", "minLength": 2},
+          "train_start": {"type": "integer", "minimum": 0},
+          "train_end": {"type": "integer", "minimum": 1},
+          "test_start": {"type": "integer", "minimum": 1},
+          "test_end": {"type": "integer", "minimum": 2},
+          "censor_gap": {"type": "integer", "minimum": 0},
+          "test_as_of_start": {"type": "string", "format": "date"},
+          "test_as_of_end": {"type": "string", "format": "date"},
+          "total_return": {"type": "number"},
+          "benchmark_total_return": {"type": "number"},
+          "max_drawdown": {"type": "number"},
+          "entry_count": {"type": "integer", "minimum": 0}
+        }
+      }
+    },
+    "contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["split", "censor_gap", "test_is_held_out", "parameter_fitting", "execution", "position", "transaction_cost", "benchmark", "limitations"],
+      "properties": {
+        "split": {"type": "string", "enum": ["expanding", "rolling"]},
+        "censor_gap": {"type": "integer", "minimum": 0},
+        "test_is_held_out": {"type": "boolean", "const": true},
+        "parameter_fitting": {"type": "string", "minLength": 2},
+        "execution": {"type": "string", "minLength": 2},
+        "position": {"type": "string", "minLength": 2},
+        "transaction_cost": {"type": "string", "minLength": 2},
+        "benchmark": {"type": "string", "minLength": 2},
+        "limitations": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 2}}
+      }
+    }
+  }
+}

@@ -230,13 +230,17 @@ def patch_academy_home():
     tool_add = tool_anchor + '<div class="tool"><small>12 / 量化研究</small><h3>波動度 Z-Score</h3><a href="tools/volatility-zscore.html">分析波動位置 →</a></div><div class="tool"><small>13 / 期貨</small><h3>臺指期／富台期期現價差</h3><a href="tools/futures-basis-pairs.html">拆解 Basis 與轉倉 →</a></div><div class="tool"><small>14 / 風控</small><h3>Kelly 風險預算</h3><a href="tools/kelly-risk-budget.html">計算分數 Kelly →</a></div>'
     if 'tools/volatility-zscore.html' not in text:
         text = text.replace(tool_anchor, tool_add)
-    quant_section = '<section class="section" id="quant-lab"><div class="sectionhead"><div><div class="eyebrow">Quant research desk</div><h2>把研究假設寫成可複盤的流程</h2><p class="lead">量化工具不會替你製造行情；它要求你提供資料口徑、假設與失效條件，再把公式與限制完整攤開。</p></div></div><div class="source-grid"><a href="../articles/investment/15-quant-research-workflow.html"><strong>15 · 量化研究工作流</strong><span>5MA 扣抵、波動 Z-Score、樣本外回測與檢查表。</span></a><a href="../articles/investment/16-futures-pairs-basis.html"><strong>16 · 臺指期／富台期配對</strong><span>契約單位、Basis、期限結構、避險口數與轉倉。</span></a><a href="tools/kelly-risk-budget.html"><strong>研究配套：Kelly 風險預算</strong><span>以交易紀錄摘要檢查 Full／Fractional Kelly 的敏感度。</span></a><a href="research/"><strong>公開資料研究層</strong><span>來源登錄、資料契約、快照 hash、as-of 與品質狀態。</span></a></div></section>'
+    quant_section = '<section class="section" id="quant-lab"><div class="sectionhead"><div><div class="eyebrow">Quant research desk</div><h2>把研究假設寫成可複盤的流程</h2><p class="lead">量化工具不會替你製造行情；它要求你提供資料口徑、假設與失效條件，再把公式與限制完整攤開。</p></div></div><div class="source-grid"><a href="../articles/investment/15-quant-research-workflow.html"><strong>15 · 量化研究工作流</strong><span>5MA 扣抵、波動 Z-Score、樣本外回測與檢查表。</span></a><a href="../articles/investment/16-futures-pairs-basis.html"><strong>16 · 臺指期／富台期配對</strong><span>契約單位、Basis、期限結構、避險口數與轉倉。</span></a><a href="tools/kelly-risk-budget.html"><strong>研究配套：Kelly 風險預算</strong><span>以交易紀錄摘要檢查 Full／Fractional Kelly 的敏感度。</span></a><a href="research/"><strong>公開資料研究層</strong><span>來源登錄、資料契約、快照 hash、as-of 與品質狀態。</span></a><a href="research/quant-lab.html"><strong>Phase 2 特徵與回測</strong><span>波動特徵、next-bar 基準、成本與 walk-forward windows。</span></a></div></section>'
     if 'id="quant-lab"' not in text:
         text = text.replace('</div></section><section class="section sources" id="sources">', '</div></section>' + quant_section + '<section class="section sources" id="sources">')
     elif 'href="research/"' not in text:
         research_link = '<a href="research/"><strong>公開資料研究層</strong><span>來源登錄、資料契約、快照 hash、as-of 與品質狀態。</span></a>'
         marker = '<a href="tools/kelly-risk-budget.html"><strong>研究配套：Kelly 風險預算</strong><span>以交易紀錄摘要檢查 Full／Fractional Kelly 的敏感度。</span></a>'
         text = text.replace(marker, marker + research_link, 1)
+    elif 'href="research/quant-lab.html"' not in text:
+        quant_link = '<a href="research/quant-lab.html"><strong>Phase 2 特徵與回測</strong><span>波動特徵、next-bar 基準、成本與 walk-forward windows。</span></a>'
+        marker = '<a href="research/"><strong>公開資料研究層</strong><span>來源登錄、資料契約、快照 hash、as-of 與品質狀態。</span></a>'
+        text = text.replace(marker, marker + quant_link, 1)
     path.write_text(text, encoding="utf-8")
 
 
@@ -269,6 +273,20 @@ def patch_article_links():
         path.write_text(text, encoding="utf-8")
 
 
+def patch_research_index():
+    path = ACADEMY / "research" / "index.html"
+    text = path.read_text(encoding="utf-8")
+    phase2_section = '''    <section class="research-section phase2-entry" id="phase2-quant-lab" aria-labelledby="phase2-title">
+      <div class="section-heading"><div><div class="eyebrow">Phase 2 · Features &amp; backtest</div><h2 id="phase2-title">特徵與回測研究工作台</h2></div><p>以帶日期、可追溯的序列做特徵工程與 held-out 基準回測；不提供買賣訊號。</p></div>
+      <div class="link-grid"><a href="./quant-lab.html"><strong>開啟量化特徵與回測工作台</strong><span>查看波動特徵、缺漏計數、next-bar 成交口徑、交易成本與 walk-forward windows。</span></a><a href="../../articles/investment/15-quant-research-workflow.html"><strong>先讀研究方法</strong><span>理解資料口徑、樣本外切分與避免未來資訊洩漏。</span></a></div>
+    </section>
+
+'''
+    if 'id="phase2-quant-lab"' not in text:
+        text = text.replace('    <footer class="research-footer">', phase2_section + '    <footer class="research-footer">', 1)
+    path.write_text(text, encoding="utf-8")
+
+
 def patch_sitemap():
     path = ROOT / "sitemap.xml"
     text = path.read_text(encoding="utf-8")
@@ -278,6 +296,7 @@ def patch_sitemap():
         '<url><loc>https://gugopro.com/articles/investment/16-futures-pairs-basis.html</loc><lastmod>2026-08-26</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>',
         '<url><loc>https://academy.gugopro.com/tools/volatility-zscore.html</loc><lastmod>2026-08-26</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>',
         '<url><loc>https://academy.gugopro.com/tools/futures-basis-pairs.html</loc><lastmod>2026-08-26</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>',
+        '<url><loc>https://gugopro.com/academy/research/quant-lab.html</loc><lastmod>2026-08-26</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>',
     ]
     for entry in additions:
         if entry not in text:
@@ -299,6 +318,7 @@ def main():
     patch_academy_home()
     patch_article_index()
     patch_article_links()
+    patch_research_index()
     patch_sitemap()
     add_json_entry()
     print("quant upgrade: 3 tools, 2 articles, academy navigation, links, registry and sitemap updated")
