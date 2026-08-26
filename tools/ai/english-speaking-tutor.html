@@ -4802,6 +4802,7 @@
         if (!session) return;
         if (session.silenceTimer) { clearTimeout(session.silenceTimer); session.silenceTimer = null; }
         if (session.restartTimer) { clearTimeout(session.restartTimer); session.restartTimer = null; }
+        if (session.startTimer) { clearTimeout(session.startTimer); session.startTimer = null; }
     }
     function finalizeSession(session) {
         if (!session || session.finalized) return;
@@ -4811,7 +4812,7 @@
         clearSpeechTimers(session);
         setDualRecording(session.role, false);
         if (activeSession?.id === session.id) activeSession = null;
-        if (session.challengeMessageId) setRetryBusy(session.challengeMessageId, false);
+        if (session.challengeMessageId && typeof setRetryBusy === 'function') setRetryBusy(session.challengeMessageId, false);
         const transcript = normalize(session.latestTranscript);
         if (!transcript) return;
         if (session.role === 'learning') {
@@ -4874,21 +4875,40 @@
     function startNativeRecognition(session) {
         const native = window.GugoProNativeSpeech?.isNativeSpeechAvailable?.() ? window.GugoProNativeSpeech : null;
         if (!native || session.finalized || session.stopRequested || activeSession?.id !== session.id) return;
-        session.state = 'recording';
+        session.state = 'starting';
+        session.startTimer = setTimeout(() => {
+            session.startTimer = null;
+            if (session.finalized || activeSession?.id !== session.id || session.state !== 'starting') return;
+            native.stopRecognition().catch(() => {});
+            finalizeSession(session);
+            if (typeof showError === 'function') showError('❌ 語音服務啟動逾時，請檢查網路、麥克風權限或稍後重試。', { showRetryButton: false });
+        }, 10000);
         native.startRecognition({
             language: session.speechLocale,
             partialResults: true,
-            onStart: () => setDualRecording(session.role, true),
+            onStart: () => {
+                if (session.startTimer) { clearTimeout(session.startTimer); session.startTimer = null; }
+                session.state = 'recording';
+                setDualRecording(session.role, true);
+            },
             onResult: transcript => updateSpeechInput(session, transcript),
             onEnd: () => finishWithOptionalDelay(session),
             onError: error => {
+                if (session.startTimer) { clearTimeout(session.startTimer); session.startTimer = null; }
                 if (session.finalized) return;
                 console.error('Dual native STT error:', error);
                 finalizeSession(session);
-                if (typeof showError === 'function') showError('❌ 語音辨識無法啟動，請確認麥克風權限與語音服務。', { showRetryButton: false });
+                if (typeof showError === 'function') showError('❌ 語音辨識無法啟動，請確認網路、麥克風權限與語音服務。', { showRetryButton: false });
             }
         }).then(result => {
+            if (session.startTimer) { clearTimeout(session.startTimer); session.startTimer = null; }
             if (!result?.started && !session.finalized) finalizeSession(session);
+        }).catch(error => {
+            if (session.startTimer) { clearTimeout(session.startTimer); session.startTimer = null; }
+            if (session.finalized) return;
+            console.error('Dual native STT start rejection:', error);
+            finalizeSession(session);
+            if (typeof showError === 'function') showError('❌ 語音服務無法連線，請檢查網路後再試。', { showRetryButton: false });
         });
     }
     function startWebRecognition(session) {
