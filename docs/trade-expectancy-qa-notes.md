@@ -37,3 +37,7 @@
 `verify_trade_expectancy.py` 已通過：Academy 實際工具數量 16、淨獲利 +2.9355R、淨虧損 -1.0585R、每筆期望 -0.0600R、損益兩平勝率 26.5023%、external fetch none。`verify_academy.py`、`verify_research_contract.py`、`verify_quant_upgrade.py`、Node syntax、JSON parse、HTML parser、sitemap XML 與 `git diff --check` 均通過；Academy missing links 0，required files 0。
 
 已完成待辦的本地驗證：console 沒有 JavaScript error／warning；桌面 document scrollWidth 1,265px 小於 viewport 1,280px；390×844 截圖顯示單欄 RWD，輸入表單與結果區沒有水平破版。production deployment 與 Telegram 通知將在 commit／Pages success 後完成。
+
+## Production regression
+
+GitHub Pages run `32995582242` 對 commit `4130ac2e79123e2176af73328fd54183d73f28e5` 已完成 `success`。在 `https://gugopro.com/academy/tools/trade-expectancy.html?qa=4130ac2` 正式頁執行預設 3R 成本案例，輸出期望值 -0.0600R、淨獲利 +2.9355R、淨虧損 -1.0585R、損益兩平勝率 26.50%、評估期間期望 NT$ -1,200.00、2 筆結果列；performance resource 為空，沒有 API／quote／market／WebSocket 請求。
