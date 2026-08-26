@@ -1181,11 +1181,19 @@
 
 
 
+
+
+
+
+
+
 <style id="gugo-capsule-dock-style">
 /* GugoPro Gemini-style capsule composer */
+html, body { background: #0A0B10 !important; }
 .bottom-controls {
     padding: 8px 12px max(8px, env(safe-area-inset-bottom));
-    background: transparent !important;
+    background: linear-gradient(180deg, rgba(10,11,16,.94), rgba(10,11,16,1)) !important;
+    border-top: 1px solid rgba(255,255,255,.08);
 }
 .input-wrapper { width: min(100%, 980px); margin: 0 auto; }
 .capsule-composer-row {
@@ -1196,6 +1204,7 @@
     margin: 0 auto;
 }
 .main-input-group.dual-stt-composer.capsule-dock {
+    position: relative;
     display: flex !important;
     align-items: flex-end;
     gap: 7px;
@@ -1223,6 +1232,33 @@
 }
 .capsule-dock #user-text::placeholder { color: rgba(219,225,235,.58); }
 .capsule-dock #user-text:focus { box-shadow: none !important; }
+.speech-composer-status {
+    position: absolute;
+    top: 4px;
+    left: 12px;
+    right: 92px;
+    z-index: 2;
+    overflow: hidden;
+    color: #ffd54f;
+    font-size: .72rem;
+    font-weight: 700;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    pointer-events: none;
+}
+.speech-composer-status[data-state="idle"] { display: none; }
+.speech-composer-status[data-state="starting"],
+.speech-composer-status[data-state="reconnecting"] { color: #8ecbff; }
+.speech-composer-status[data-state="stopping"] { color: #cbd5e1; }
+.speech-composer-status[data-state="error"] { color: #fda4af; }
+.capsule-dock.has-speech-status #user-text { padding-top: 25px; }
+.capsule-composer-row button {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+.capsule-composer-row button:active { transform: scale(.96); }
+.capsule-composer-row button:focus-visible { outline: 2px solid #ffd54f; outline-offset: 2px; }
 .capsule-voice-button {
     position: relative;
     flex: 0 0 68px;
@@ -1239,7 +1275,7 @@
     background: rgba(255,255,255,.075) !important;
     color: #fff !important;
     cursor: pointer;
-    touch-action: none;
+    touch-action: none !important;
     user-select: none;
     -webkit-user-select: none;
     -webkit-touch-callout: none;
@@ -1278,6 +1314,8 @@
 .capsule-voice-button.native-speech .capsule-mic-badge { background: #537ca4; }
 .capsule-voice-button.recording { background: rgba(255,193,7,.2) !important; box-shadow: 0 0 0 4px rgba(255,193,7,.13); }
 .capsule-voice-button.recording .capsule-mic-badge { background: #ffd54f; color: #211900; }
+.capsule-voice-button.speech-state-active { box-shadow: 0 0 0 4px rgba(255,213,79,.16), 0 0 18px rgba(255,193,7,.18); }
+.capsule-actions button { min-width: 40px; min-height: 40px; }
 .capsule-composer-row.capsule-composer-expanded .capsule-voice-button { display: none !important; }
 .capsule-dock.capsule-dock-expanded { border-radius: 22px !important; }
 .capsule-actions { display: flex; align-items: center; gap: 3px; flex: 0 0 auto; }
@@ -1293,6 +1331,7 @@
 .capsule-speech-mode-description { display: block; margin-top: 7px; color: var(--text-dim); font-size: .72rem; line-height: 1.4; }
 @media (max-width: 640px) {
     .bottom-controls { padding-left: 8px; padding-right: 8px; }
+    .speech-composer-status { left: 10px; right: 86px; font-size: .68rem; }
     .capsule-composer-row { gap: 4px; width: 100%; }
     .main-input-group.dual-stt-composer.capsule-dock { gap: 4px; padding: 5px 6px; border-radius: 26px !important; }
     .capsule-voice-button { flex-basis: 64px; width: 64px !important; min-width: 64px !important; height: 64px !important; min-height: 64px !important; }
@@ -1416,6 +1455,7 @@
                         <span id="learning-speech-label" class="speech-button-language">🇬🇧</span><span class="capsule-mic-badge"><i class="fa-solid fa-microphone"></i></span>
                     </button>
                     <div class="main-input-group dual-stt-composer capsule-dock">
+                        <div id="speech-composer-status" class="speech-composer-status" data-state="idle" aria-live="polite" aria-atomic="true"></div>
                         <textarea id="user-text" rows="1" maxlength="8000" placeholder="輸入訊息或說話… (Enter 送出)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" data-lpignore="true"></textarea>
                         <div class="capsule-actions" aria-label="發送與附加">
                             <button id="btn-send" class="btn-circle btn-send" type="button" aria-label="發送"><i class="fa-solid fa-paper-plane"></i></button>
@@ -3594,7 +3634,7 @@
 
         document.getElementById('btn-retry-model').onclick = handleManualRetry;
         document.getElementById('btn-send').onclick = sendMessage;
-        document.getElementById('user-text').onkeypress = (e) => { if(e.key === 'Enter') sendMessage(); };
+        document.getElementById('user-text').onkeydown = (e) => { if(e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); sendMessage(); } };
 
 
 
@@ -4785,6 +4825,7 @@
         if (typeof setRecordingVisual === 'function') setRecordingVisual(Boolean(active && role === 'learning'));
         if (typeof isRecording !== 'undefined') isRecording = Boolean(active);
         window.GugoSpeechSessionActive = Boolean(active);
+        if (active && typeof window.GugoSetSpeechComposerState === 'function') window.GugoSetSpeechComposerState('recording', role);
     }
     function composeInput(baseText, transcript) {
         const base = normalize(baseText);
@@ -4806,6 +4847,7 @@
         if (session.silenceTimer) { clearTimeout(session.silenceTimer); session.silenceTimer = null; }
         if (session.restartTimer) { clearTimeout(session.restartTimer); session.restartTimer = null; }
         if (session.startTimer) { clearTimeout(session.startTimer); session.startTimer = null; }
+        if (session.sendTimer) { clearTimeout(session.sendTimer); session.sendTimer = null; }
     }
     function abortSession(session, message = '') {
         if (!session || session.finalized) return;
@@ -4816,6 +4858,10 @@
         setDualRecording(session.role, false);
         if (activeSession?.id === session.id) activeSession = null;
         if (session.challengeMessageId && typeof setRetryBusy === 'function') setRetryBusy(session.challengeMessageId, false);
+        if (typeof window.GugoSetSpeechComposerState === 'function') {
+            window.GugoSetSpeechComposerState('error', session.role, message || '語音無法使用，請稍後再試。');
+            setTimeout(() => { if (!activeSession || activeSession.id !== session.id) window.GugoSetSpeechComposerState('idle'); }, 900);
+        }
         if (message && typeof showError === 'function') showError(message, { showRetryButton: false });
     }
     function finalizeSession(session) {
@@ -4828,13 +4874,17 @@
         if (activeSession?.id === session.id) activeSession = null;
         if (session.challengeMessageId && typeof setRetryBusy === 'function') setRetryBusy(session.challengeMessageId, false);
         const transcript = normalize(session.latestTranscript);
-        if (!transcript) return;
+        if (!transcript) {
+            window.GugoSetSpeechComposerState?.('idle');
+            return;
+        }
         if (session.role === 'learning') {
             const score = scorePronunciation(session.challengeTarget, transcript, session.confidence);
             if (session.challengeMessageId) {
                 updateMessageScore(session.challengeMessageId, score);
                 const input = document.getElementById('user-text');
                 if (input) input.value = session.originalInput;
+                window.GugoSetSpeechComposerState?.('idle');
                 return;
             }
             window.GugoProPendingPronunciation = score;
@@ -4845,13 +4895,19 @@
             if (speechContent) {
                 if (typeof window.GugoResetComposer === 'function') window.GugoResetComposer(input);
                 else if (input) { input.value = ''; input.style.height = 'auto'; }
-                setTimeout(() => sendMessage({ content: speechContent, inputLang: session.speechLocale }), 0);
+                session.sendTimer = setTimeout(() => {
+                    session.sendTimer = null;
+                    window.GugoSetSpeechComposerState?.('sending', session.role, '正在送出語音…');
+                    sendMessage({ content: speechContent, inputLang: session.speechLocale });
+                    setTimeout(() => window.GugoSetSpeechComposerState?.('idle'), 120);
+                }, 120);
             }
         }
     }
     function restartRecognition(session) {
         if (!session || session.finalized || session.stopRequested || activeSession?.id !== session.id || session.restartTimer) return;
         session.restartAttempts = (session.restartAttempts || 0) + 1;
+        window.GugoSetSpeechComposerState?.('reconnecting', session.role);
         if (session.restartAttempts > 3) {
             abortSession(session, '❌ 語音服務暫時無法使用，請檢查網路或稍後再試。');
             return;
@@ -4869,10 +4925,12 @@
         if (!session || session.finalized) return;
         if (explicitStop || session.stopRequested) { finalizeSession(session); return; }
         if (window.GugoSpeechMode === 'hold' || window.GugoSpeechMode === 'tap') {
+            window.GugoSetSpeechComposerState?.('reconnecting', session.role);
             restartRecognition(session);
             return;
         }
         session.state = 'waiting';
+        window.GugoSetSpeechComposerState?.('waiting', session.role);
         clearTimeout(session.silenceTimer);
         session.silenceTimer = setTimeout(() => finalizeSession(session), 2500);
     }
@@ -4881,6 +4939,7 @@
         if (!session || session.finalized) return;
         session.stopRequested = true;
         session.state = 'stopping';
+        window.GugoSetSpeechComposerState?.('stopping', session.role);
         clearSpeechTimers(session);
         const native = window.GugoProNativeSpeech?.isNativeSpeechAvailable?.() ? window.GugoProNativeSpeech : null;
         if (native) {
@@ -4895,12 +4954,12 @@
         const native = window.GugoProNativeSpeech?.isNativeSpeechAvailable?.() ? window.GugoProNativeSpeech : null;
         if (!native || session.finalized || session.stopRequested || activeSession?.id !== session.id) return;
         session.state = 'starting';
+        window.GugoSetSpeechComposerState?.('starting', session.role);
         session.startTimer = setTimeout(() => {
             session.startTimer = null;
             if (session.finalized || activeSession?.id !== session.id || session.state !== 'starting') return;
             native.stopRecognition().catch(() => {});
-            finalizeSession(session);
-            if (typeof showError === 'function') showError('❌ 語音服務啟動逾時，請檢查網路、麥克風權限或稍後重試。', { showRetryButton: false });
+            abortSession(session, '❌ 語音服務啟動逾時，請檢查網路、麥克風權限或稍後重試。');
         }, 10000);
         native.startRecognition({
             language: session.speechLocale,
@@ -5004,6 +5063,7 @@
             state: 'recording',
             silenceTimer: null,
             restartTimer: null,
+            sendTimer: null,
             stopRequested: false,
             finalized: false
         };
@@ -5178,6 +5238,12 @@
     };
 })();
 </script>
+
+
+
+
+
+
 <script id="gugo-capsule-dock-modes-js">
 // GugoPro Gemini-style Capsule Dock + three speech modes
 (() => {
@@ -5264,9 +5330,45 @@
             motherButton.title = `${selectedLabel('my-lang', motherLocale)}語音提問，不進行發音評分（${motherLocale}）`;
             motherButton.setAttribute('aria-label', `${selectedLabel('my-lang', motherLocale)}語音提問，不進行發音評分`);
         }
-        if (input) input.placeholder = '輸入訊息或說話… (Enter 送出)';
+        if (input && !window.GugoSpeechSessionActive) input.placeholder = '輸入訊息或說話… (Enter 送出)';
         return { targetLocale, motherLocale };
     }
+    const SPEECH_STATUS_TEXT = {
+        idle: '',
+        starting: '正在啟動語音…',
+        recording: '正在錄音…',
+        waiting: '語音暫停，等待你繼續說…',
+        reconnecting: '語音暫時中斷，正在重新連線…',
+        stopping: '正在整理語音…',
+        sending: '正在送出語音…',
+        error: '語音無法使用，請稍後再試。'
+    };
+    function setSpeechComposerState(state = 'idle', role = '', customText = '') {
+        const safeState = Object.prototype.hasOwnProperty.call(SPEECH_STATUS_TEXT, state) ? state : 'idle';
+        const status = document.getElementById('speech-composer-status');
+        const dock = document.querySelector('.capsule-dock');
+        const input = document.getElementById('user-text');
+        const learning = document.getElementById('btn-mic');
+        const mother = document.getElementById('btn-mic-my');
+        if (status) {
+            status.dataset.state = safeState;
+            status.textContent = customText || SPEECH_STATUS_TEXT[safeState];
+        }
+        if (dock) dock.classList.toggle('has-speech-status', safeState !== 'idle');
+        [learning, mother].forEach(button => {
+            if (!button) return;
+            const active = safeState !== 'idle' && safeState !== 'error' && ((role === 'learning' && button === learning) || (role === 'mother' && button === mother));
+            button.classList.toggle('speech-state-active', active);
+            button.setAttribute('aria-pressed', active ? 'true' : 'false');
+            button.setAttribute('aria-busy', active ? 'true' : 'false');
+        });
+        if (input) {
+            input.placeholder = safeState === 'idle' ? '輸入訊息或說話… (Enter 送出)' : (customText || SPEECH_STATUS_TEXT[safeState]);
+            input.setAttribute('aria-busy', safeState === 'starting' || safeState === 'recording' || safeState === 'reconnecting' || safeState === 'stopping' || safeState === 'sending' ? 'true' : 'false');
+        }
+        if (safeState === 'idle') window.GugoSyncCapsuleLayout?.();
+    }
+    window.GugoSetSpeechComposerState = setSpeechComposerState;
     window.GugoUpdateCapsuleLanguageLabels = updateCapsuleLabels;
 
     function updateModeDescription(mode = getMode()) {
@@ -5294,6 +5396,7 @@
         window.GugoSpeechMode = getMode();
         if (window.GugoSpeechSessionActive) return false;
         if (typeof window.GugoStartDualSpeech !== 'function') return false;
+        setSpeechComposerState('starting', role, `正在啟動${role === 'learning' ? '學習語言' : '母語'}語音…`);
         window.GugoStartDualSpeech(role);
         return true;
     }
@@ -5305,6 +5408,7 @@
         event?.stopPropagation?.();
         holdPointerId = null;
         holdButton = null;
+        setSpeechComposerState('stopping');
         window.GugoStopDualSpeech?.();
     }
     function bindSpeechButton(button, role) {
@@ -5314,7 +5418,7 @@
             event.preventDefault();
             event.stopImmediatePropagation?.();
             if (getMode() === 'hold') return false;
-            if (window.GugoSpeechSessionActive) window.GugoStopDualSpeech?.();
+            if (window.GugoSpeechSessionActive) { setSpeechComposerState('stopping'); window.GugoStopDualSpeech?.(); }
             else start(role);
             return false;
         };
@@ -5356,8 +5460,35 @@
         setTimeout(() => document.getElementById('btn-study-plan')?.click(), 0);
     };
 
+    function bindComposerFeedback() {
+        const sendButton = document.getElementById('btn-send');
+        if (sendButton && sendButton.dataset.composerFeedbackBound !== '1') {
+            sendButton.dataset.composerFeedbackBound = '1';
+            const originalSend = sendButton.onclick;
+            sendButton.onclick = event => {
+                const input = document.getElementById('user-text');
+                if (!String(input?.value || '').trim()) return originalSend?.call(sendButton, event);
+                setSpeechComposerState('sending', '', '正在送出訊息…');
+                const result = originalSend?.call(sendButton, event);
+                Promise.resolve(result).catch(() => {}).finally(() => setTimeout(() => setSpeechComposerState('idle'), 250));
+                return result;
+            };
+        }
+        const fileInput = document.getElementById('file-material-import');
+        if (fileInput && fileInput.dataset.composerFeedbackBound !== '1') {
+            fileInput.dataset.composerFeedbackBound = '1';
+            fileInput.addEventListener('change', () => setSpeechComposerState('idle'));
+            window.addEventListener?.('focus', () => { if (!window.GugoSpeechSessionActive) setSpeechComposerState('idle'); });
+        }
+        const materialButton = document.getElementById('btn-material-import-inline');
+        if (materialButton && materialButton.dataset.composerFeedbackBound !== '1') {
+            materialButton.dataset.composerFeedbackBound = '1';
+            materialButton.addEventListener('click', () => setSpeechComposerState('starting', '', '正在開啟教材…'));
+        }
+    }
     function bind() {
         ensureSpeechModePanel();
+        bindComposerFeedback();
         updateCapsuleLabels();
         updateModeDescription();
         ['my-lang', 'target-lang'].forEach(id => document.getElementById(id)?.addEventListener('change', updateCapsuleLabels));
