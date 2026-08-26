@@ -23,3 +23,9 @@ The 390×844 tool screenshot shows the dark Academy header, article return link,
 - Percentage-withdrawal regression: selecting `資產百分比提領` updated the explanatory copy and rendered `資產百分比提領 4.0%`. The ledger showed first-year withdrawal 400,000 and second-year withdrawal 404,000 from 4% of the prior year-start balance, while the result summary and comparison table updated without stale fixed-dollar labels.
 
 - Final local article navigation regression: the `收入分層` chapter link changed the URL fragment to `#income-layers` and positioned the corresponding section in view. The page exposes six meaningful chapter links, the new income-layer content, the pressure-test CTA, references, and the tool sidebar.
+
+## Production deployment QA
+
+GitHub Pages run `32984738991` completed with `success` for commit `d9ae158e855d0bb69c5b69a55d5546393c0af7a9`. The cache-busted production article at `https://gugopro.com/academy/lessons/15-retirement-cashflow.html?qa=d9ae158` exposes the six chapter links, the added income-layer section, references, and the retirement-tool CTAs. The production deployment path is the repo's actual `/academy/` route; no claim is made that the legacy `academy.gugopro.com` root is the same deployment.
+
+The cache-busted production tool at `https://gugopro.com/academy/tools/retirement-cashflow.html?qa=d9ae158` executed the default model successfully. It displayed the completed state, 4.0% initial withdrawal, 2.94% real return, 5,973,900 displayed nominal ending balance, 36.0-month reserve runway, the canvas chart, annual ledger, three sequence paths, and the source/limitation links. The production page had no visible runtime failure.
