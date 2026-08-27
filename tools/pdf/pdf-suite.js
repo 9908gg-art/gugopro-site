@@ -28,6 +28,7 @@
     activeTextSelection: null,
     activeEditorAction: 'edit',
     editorMode: false,
+    mobileSubdock: '',
     annotationImages: {},
     signatures: {},
     activeSignatureId: null,
@@ -249,6 +250,7 @@
     aiBack: { zh: '💡 已返回文件閱讀畫面；可繼續閱讀或使用上方工具列。', en: '💡 Returned to the document reader; continue reading or use the toolbar.' },
     sidebarTab: { zh: '💡 已切換側欄檢視；點擊縮圖可直接跳到該頁。', en: '💡 Sidebar view changed; tap a thumbnail to jump to that page.' },
     universal: { zh: '💡 另存新檔已完成；檔案只在本機建立並下載。', en: '💡 Save As finished; the file was created and downloaded locally.' },
+    universalPanel: { zh: '💡 另存新檔面板已開啟；請選擇輸出格式，再按「另存並下載」。', en: '💡 Save As is open; choose an output format, then select Save and Download.' },
     editorOpen: { zh: '💡 已進入 PDF 編輯模式；請從下方工具列選擇操作。', en: '💡 PDF editing mode is open; choose an action from the tool strip below.' },
     editorClose: { zh: '💡 已離開 PDF 編輯模式；文件內容仍保留在閱讀畫面。', en: '💡 PDF editing mode is closed; the document remains in the reader.' },
     textEdit: { zh: '💡 文字編輯已啟用；請點選 PDF 中的文字區塊修改內容。', en: '💡 Text editing is active; click a text block in the PDF to change it.' },
@@ -258,7 +260,8 @@
     textDeleted: { zh: '💡 文字已移除；可按復原恢復，或按「儲存 PDF」下載。', en: '💡 Text removed; use Undo to restore it or Save PDF to download.' },
     areaHighlight: { zh: '💡 區域高亮已啟用；請在 PDF 上拖曳框選要突出的區域。', en: '💡 Area highlight is active; drag a box over the area to emphasize.' },
     color: { zh: '💡 請選擇下一個標註的顏色；選完即可繼續編輯。', en: '💡 Choose the color for the next annotation, then continue editing.' },
-    fill: { zh: '💡 填寫模式已啟用；請點擊 PDF 位置並輸入文字。', en: '💡 Fill mode is active; click a PDF position and enter text.' }
+    fill: { zh: '💡 填寫模式已啟用；請點擊 PDF 位置並輸入文字。', en: '💡 Fill mode is active; click a PDF position and enter text.' },
+    mobileSubdockClose: { zh: '💡 已返回主工具列；可繼續閱讀或選擇其他文件操作。', en: '💡 Returned to the primary toolbar; continue reading or choose another document action.' }
   };
   function actionGuide(key) {
     var copy = ACTION_GUIDES[key] || ACTION_GUIDES.annotationPanel;
@@ -1406,7 +1409,7 @@
   }
   function resetDocumentState(file) {
     mainRenderToken += 1;
-    state.file = file || null; state.pdf = null; state.documentKind = file ? getDocumentKind(file) : 'pdf'; state.bookmarks = []; state.documentText = ''; state.documentImageDataUrl = ''; state.documentImageWidth = 0; state.documentImageHeight = 0; state.documentImageMime = ''; state.pageOrder = []; state.pageTexts = {}; state.textReady = false; state.pageRotations = {}; state.selectedPages.clear(); state.annotations = {}; state.textEdits = {}; state.activeTextSelection = null; state.activeEditorAction = 'edit'; state.editorMode = false; state.annotationImages = {}; state.signatures = {}; state.currentPage = 1; resetEditHistory();
+    state.file = file || null; state.pdf = null; state.documentKind = file ? getDocumentKind(file) : 'pdf'; state.bookmarks = []; state.documentText = ''; state.documentImageDataUrl = ''; state.documentImageWidth = 0; state.documentImageHeight = 0; state.documentImageMime = ''; state.pageOrder = []; state.pageTexts = {}; state.textReady = false; state.pageRotations = {}; state.selectedPages.clear(); state.annotations = {}; state.textEdits = {}; state.activeTextSelection = null; state.activeEditorAction = 'edit'; state.editorMode = false; state.mobileSubdock = ''; state.annotationImages = {}; state.signatures = {}; state.currentPage = 1; resetEditHistory();
   }
   function renderDocumentPreview() {
     var frame = $('pdf-page-frame'); var stack = $('pdf-continuous-stack');
@@ -1447,7 +1450,7 @@
     try {
       var parsed = await parseDocumentFile(file, state.documentKind); state.documentText = String(parsed.text || '').slice(0, 120000); state.documentImageDataUrl = parsed.imageDataUrl || ''; state.documentImageWidth = Number(parsed.imageWidth) || 0; state.documentImageHeight = Number(parsed.imageHeight) || 0; state.documentImageMime = parsed.imageMime || file.type || ''; state.pageOrder = [1]; state.pageTexts = { 1: state.documentText }; state.textReady = Boolean(state.documentText); state.currentPage = 1; setEmptyState(false); syncToolCapabilities(); var fileName = $('pdf-file-name'); if (fileName) fileName.textContent = file.name; var fileMeta = $('pdf-file-meta'); if (fileMeta) fileMeta.textContent = (IS_EN ? 'Local ' + state.documentKind.toUpperCase() + ' document · ' : '本機 ' + state.documentKind.toUpperCase() + ' 文件 · ') + formatBytes(file.size); var readerStatus = $('pdf-reader-status'); if (readerStatus) readerStatus.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + (IS_EN ? 'Document ready' : '文件就緒'); setStatus(messages.ready, 'success'); if (!state.documentText && state.documentKind !== 'image') setStatus(messages.noText, 'error'); renderDocumentThumbnail(); renderDocumentPreview(); renderNotesPanel(); $('pdf-page-count-badge').textContent = IS_EN ? '1 document' : '1 份文件'; setProgress(100); try { var detail = { file: state.file.name, pages: 1, kind: state.documentKind }; window.dispatchEvent(new CustomEvent('gugopro:document-loaded', { detail: detail })); window.dispatchEvent(new CustomEvent('gugopro:document-text-extracted', { detail: getSnapshot() })); window.dispatchEvent(new CustomEvent('gugopro:pdf-loaded', { detail: detail })); } catch (_) {}
     } catch (error) {
-      state.file = null; state.pdf = null; state.documentKind = 'pdf'; state.documentText = ''; state.documentImageDataUrl = ''; state.documentImageWidth = 0; state.documentImageHeight = 0; state.documentImageMime = ''; state.pageOrder = []; state.pageTexts = {}; state.textReady = false; state.textEdits = {}; state.activeTextSelection = null; state.activeEditorAction = 'edit'; state.editorMode = false; clearReaderFrame(); setEmptyState(true); setProgress(0); syncEditorDock(); syncMobileActionDock(); syncToolCapabilities();
+      state.file = null; state.pdf = null; state.documentKind = 'pdf'; state.documentText = ''; state.documentImageDataUrl = ''; state.documentImageWidth = 0; state.documentImageHeight = 0; state.documentImageMime = ''; state.pageOrder = []; state.pageTexts = {}; state.textReady = false; state.textEdits = {}; state.activeTextSelection = null; state.activeEditorAction = 'edit'; state.editorMode = false; state.mobileSubdock = ''; clearReaderFrame(); setEmptyState(true); setProgress(0); syncEditorDock(); syncMobileActionDock(); syncToolCapabilities();
       var failedName = $('pdf-file-name'); if (failedName) failedName.textContent = IS_EN ? 'No document open' : '尚未開啟文件';
       var failedMeta = $('pdf-file-meta'); if (failedMeta) failedMeta.textContent = IS_EN ? 'Drop a document to begin' : '拖放文件即可開始';
       var failedReader = $('pdf-reader-status'); if (failedReader) failedReader.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> ' + (IS_EN ? 'Waiting for a supported file' : '等待支援的文件');
@@ -1459,7 +1462,7 @@
   async function loadPdf(file) {
     if (!isPdf(file)) { setStatus(messages.choosePdf, 'error'); return; }
     setStatus(messages.loading, 'loading'); setProgress(3); setEmptyState(false);
-    mainRenderToken += 1; state.file = file; state.pdf = null; state.documentKind = 'pdf'; state.bookmarks = []; state.documentText = ''; state.documentImageDataUrl = ''; state.documentImageWidth = 0; state.documentImageHeight = 0; state.documentImageMime = ''; state.pageTexts = {}; state.textReady = false; state.pageRotations = {}; state.selectedPages.clear(); state.annotations = {}; state.textEdits = {}; state.activeTextSelection = null; state.activeEditorAction = 'edit'; state.editorMode = false; state.annotationImages = {}; state.signatures = {}; state.currentPage = 1; resetEditHistory();
+    mainRenderToken += 1; state.file = file; state.pdf = null; state.documentKind = 'pdf'; state.bookmarks = []; state.documentText = ''; state.documentImageDataUrl = ''; state.documentImageWidth = 0; state.documentImageHeight = 0; state.documentImageMime = ''; state.pageTexts = {}; state.textReady = false; state.pageRotations = {}; state.selectedPages.clear(); state.annotations = {}; state.textEdits = {}; state.activeTextSelection = null; state.activeEditorAction = 'edit'; state.editorMode = false; state.mobileSubdock = ''; state.annotationImages = {}; state.signatures = {}; state.currentPage = 1; resetEditHistory();
     try {
       var pdfjs = await ensurePdfJs();
       var buffer = await readBuffer(file);
@@ -2099,7 +2102,7 @@
     state.textEdits = {};
     state.activeTextSelection = null;
     state.activeEditorAction = 'edit';
-    state.editorMode = false;
+    state.editorMode = false; state.mobileSubdock = '';
     state.annotationImages = {};
     state.signatures = {};
     state.activeSignatureId = null;
@@ -2150,17 +2153,136 @@
     if (closeButton) closeButton.click();
   }
 
+  var mobileSubdockActions = {
+    edit: {
+      title: IS_EN ? 'Edit PDF' : '編輯 PDF', icon: 'fa-pen-to-square', capability: 'pdf',
+      actions: [
+        { key: 'text-edit', icon: 'fa-pen-to-square', label: IS_EN ? 'Edit text' : '文字編輯', hint: IS_EN ? 'Tap text' : '點選文字' },
+        { key: 'copy-text', icon: 'fa-copy', label: IS_EN ? 'Copy text' : '複製文字', hint: IS_EN ? 'Tap text' : '點選文字' },
+        { key: 'delete-text', icon: 'fa-trash-can', label: IS_EN ? 'Delete text' : '刪除文字', hint: IS_EN ? 'Tap text' : '點選文字' },
+        { key: 'text', icon: 'fa-font', label: IS_EN ? 'Insert text' : '插入文字', hint: IS_EN ? 'Tap page' : '點一下頁面' },
+        { key: 'undo', icon: 'fa-rotate-left', label: IS_EN ? 'Undo' : '復原', hint: IS_EN ? 'Last edit' : '上一步' },
+        { key: 'redo', icon: 'fa-rotate-right', label: IS_EN ? 'Redo' : '重做', hint: IS_EN ? 'Next edit' : '下一步' },
+        { key: 'save', icon: 'fa-floppy-disk', label: IS_EN ? 'Save PDF' : '儲存 PDF', hint: IS_EN ? 'Download' : '另存下載' }
+      ]
+    },
+    annotate: {
+      title: IS_EN ? 'Annotate' : '註解', icon: 'fa-highlighter', capability: 'pdf',
+      actions: [
+        { key: 'highlight', icon: 'fa-highlighter', label: IS_EN ? 'Highlight' : '螢光筆', hint: IS_EN ? 'Drag to mark' : '拖曳劃記' },
+        { key: 'area-highlight', icon: 'fa-square', label: IS_EN ? 'Area highlight' : '區域高亮', hint: IS_EN ? 'Draw a box' : '框選區域' },
+        { key: 'underline', icon: 'fa-underline', label: IS_EN ? 'Underline' : '底線', hint: IS_EN ? 'Drag a line' : '拖曳劃線' },
+        { key: 'strike', icon: 'fa-strikethrough', label: IS_EN ? 'Strikeout' : '刪除線', hint: IS_EN ? 'Drag a line' : '拖曳劃線' },
+        { key: 'draw', icon: 'fa-pen', label: IS_EN ? 'Draw' : '畫筆', hint: IS_EN ? 'Draw freely' : '自由繪製' },
+        { key: 'text', icon: 'fa-font', label: IS_EN ? 'Text note' : '文字註記', hint: IS_EN ? 'Tap page' : '點一下頁面' },
+        { key: 'color', icon: 'fa-palette', label: IS_EN ? 'Color' : '顏色', hint: IS_EN ? 'Choose color' : '選擇顏色' }
+      ]
+    },
+    signature: {
+      title: IS_EN ? 'Signature' : '簽名', icon: 'fa-signature', capability: 'pdf',
+      actions: [
+        { key: 'signature', icon: 'fa-signature', label: IS_EN ? 'Add signature' : '新增簽名', hint: IS_EN ? 'Create or place' : '建立或放置' },
+        { key: 'rotate-left', icon: 'fa-rotate-left', label: IS_EN ? 'Rotate left' : '左轉', hint: IS_EN ? 'Selected sign' : '目前簽名' },
+        { key: 'rotate-right', icon: 'fa-rotate-right', label: IS_EN ? 'Rotate right' : '右轉', hint: IS_EN ? 'Selected sign' : '目前簽名' },
+        { key: 'delete-signature', icon: 'fa-trash-can', label: IS_EN ? 'Remove sign' : '移除簽名', hint: IS_EN ? 'Selected sign' : '目前簽名' },
+        { key: 'save', icon: 'fa-floppy-disk', label: IS_EN ? 'Save PDF' : '儲存 PDF', hint: IS_EN ? 'Download' : '另存下載' }
+      ]
+    },
+    fill: {
+      title: IS_EN ? 'Fill document' : '填寫文件', icon: 'fa-pen', capability: 'pdf',
+      actions: [
+        { key: 'text', icon: 'fa-font', label: IS_EN ? 'Add text' : '加入文字', hint: IS_EN ? 'Tap a field area' : '點一下欄位位置' },
+        { key: 'signature', icon: 'fa-signature', label: IS_EN ? 'Add signature' : '加入簽名', hint: IS_EN ? 'Place on page' : '放置到頁面' },
+        { key: 'color', icon: 'fa-palette', label: IS_EN ? 'Text color' : '文字顏色', hint: IS_EN ? 'Choose color' : '選擇顏色' },
+        { key: 'save', icon: 'fa-floppy-disk', label: IS_EN ? 'Save PDF' : '儲存 PDF', hint: IS_EN ? 'Download' : '另存下載' }
+      ]
+    },
+    more: {
+      title: IS_EN ? 'More tools' : '更多工具', icon: 'fa-grip', capability: 'document',
+      actions: [
+        { key: 'png', icon: 'fa-file-image', label: IS_EN ? 'PNG ZIP' : 'PNG ZIP', hint: IS_EN ? 'PDF or image' : 'PDF 或圖片', target: 'pdf-download-current', capability: 'image-or-pdf' },
+        { key: 'jpg', icon: 'fa-images', label: IS_EN ? 'JPG ZIP' : 'JPG ZIP', hint: IS_EN ? 'PDF or image' : 'PDF 或圖片', target: 'pdf-download-jpg', capability: 'image-or-pdf' },
+        { key: 'pages', icon: 'fa-layer-group', label: IS_EN ? 'Manage pages' : '管理頁面', hint: IS_EN ? 'Rotate / extract' : '旋轉／提取', target: 'pdf-pages-popover', capability: 'pdf' },
+        { key: 'save-as', icon: 'fa-floppy-disk', label: IS_EN ? 'Save as' : '另存新檔', hint: IS_EN ? 'Choose format' : '選擇格式', target: 'pdf-universal-convert-popover', capability: 'save-as' },
+        { key: 'watermark', icon: 'fa-shield-halved', label: IS_EN ? 'Watermark & security' : '浮水印與安全', hint: IS_EN ? 'PDF tools' : 'PDF 工具', target: 'pdf-convert-popover', capability: 'pdf' },
+        { key: 'night', icon: 'fa-moon', label: IS_EN ? 'Night reading' : '夜間閱讀', hint: IS_EN ? 'Toggle view' : '切換閱讀', target: 'pdf-night-mode', capability: 'always' },
+        { key: 'fullscreen', icon: 'fa-expand', label: IS_EN ? 'Full screen' : '全螢幕', hint: IS_EN ? 'Reading view' : '閱讀檢視', target: 'pdf-fullscreen', capability: 'always' },
+        { key: 'close', icon: 'fa-xmark', label: IS_EN ? 'Close document' : '關閉文件', hint: IS_EN ? 'Back to picker' : '返回選檔', capability: 'document' }
+      ]
+    }
+  };
+
+  function renderMobileSubdock(name) {
+    var dock = $('pdf-mobile-subdock'); var title = $('pdf-mobile-subdock-title'); var tools = $('pdf-mobile-subdock-tools'); var config = mobileSubdockActions[name];
+    if (!dock || !title || !tools || !config) return;
+    title.innerHTML = '<i class="fa-solid ' + config.icon + '"></i><span>' + config.title + '</span>';
+    tools.replaceChildren();
+    config.actions.forEach(function (item) {
+      var button = document.createElement('button'); button.type = 'button'; button.className = 'pdf-mobile-subtool'; button.dataset.mobileSubtool = item.key; button.setAttribute('aria-label', item.label); if (item.target) button.dataset.mobileSubtoolTarget = item.target; if (item.capability) button.dataset.mobileCapability = item.capability;
+      button.innerHTML = '<i class="fa-solid ' + item.icon + '"></i><span>' + item.label + '</span><small>' + item.hint + '</small>';
+      var active = item.key === state.tool || item.key === state.activeEditorAction;
+      button.classList.toggle('is-active', active); button.setAttribute('aria-pressed', active ? 'true' : 'false');
+      if (item.capability) applyToolCapability(button, item.capability);
+      button.addEventListener('click', function (event) { event.stopPropagation(); runMobileSubtool(item, name); }); tools.appendChild(button);
+    });
+    if (!tools.querySelector('.pdf-mobile-subtool:not(.is-format-disabled)')) { var empty = document.createElement('span'); empty.className = 'pdf-mobile-subdock-empty'; empty.textContent = IS_EN ? 'No tools are available for this document.' : '目前文件沒有可用的子工具。'; tools.appendChild(empty); }
+  }
+  function syncMobileSubdock() {
+    var dock = $('pdf-mobile-subdock'); var ad = $('pdf-mobile-ad-slot');
+    if (ad) ad.hidden = !(isMobileReader() && state.file);
+    if (!dock) return;
+    var open = Boolean(isMobileReader() && state.file && state.mobileSubdock);
+    dock.hidden = !open;
+    if (document.body) document.body.classList.toggle('pdf-mobile-subdock-open', open);
+    if (state.mobileSubdock) renderMobileSubdock(state.mobileSubdock);
+  }
+  function closeMobileSubdock() {
+    var name = state.mobileSubdock; state.mobileSubdock = '';
+    if (state.editorMode) { state.editorMode = false; state.activeTextSelection = null; }
+    state.tool = 'select'; qsa('[data-pdf-tool]').forEach(function (node) { node.classList.toggle('is-active', node.dataset.pdfTool === 'select'); });
+    syncEditorDock(); syncMobileActionDock(); syncMobileSubdock();
+    if (state.pdf) renderMainPage();
+    actionGuide(name ? 'mobileSubdockClose' : 'editorClose');
+  }
+  function openMobileSubdock(name) {
+    var config = mobileSubdockActions[name];
+    if (!config || !state.file) { explainUnavailable('document'); return; }
+    if (config.capability === 'pdf' && !state.pdf) { explainUnavailable('pdf'); return; }
+    if (['edit', 'annotate', 'signature', 'fill'].includes(name)) {
+      if (!setEditorMode(true)) return;
+      state.tool = 'select';
+    }
+    state.mobileSubdock = name;
+    renderMobileSubdock(name); syncMobileActionDock(); syncMobileSubdock();
+    toast(IS_EN ? config.title + ' tools are ready. Choose a function below.' : config.title + '工具已開啟，請從下方選擇功能。', { guide: true });
+  }
+  function runMobileSubtool(item, group) {
+    if (item.capability) { var capability = getToolCapability(item.capability); if (!capability.enabled) { explainUnavailable(item.capability); return; } }
+    var key = item.key;
+    if (item.target === 'pdf-pages-popover' || item.target === 'pdf-universal-convert-popover' || item.target === 'pdf-convert-popover') { openToolbarPopoverById(item.target); return; }
+    if (item.target) { var target = $(item.target); if (target) target.click(); return; }
+    if (key === 'close') { closePdf(); return; }
+    if (key === 'undo' || key === 'redo') { if (key === 'undo' ? undoEdit() : redoEdit()) actionGuide(key); return; }
+    if (key === 'rotate-left' || key === 'rotate-right' || key === 'delete-signature') { var targetId = key === 'rotate-left' ? 'pdf-signature-rotate-left' : key === 'rotate-right' ? 'pdf-signature-rotate-right' : 'pdf-delete-signature'; var control = $(targetId); if (control) control.click(); return; }
+    if (key === 'save') { activateEditorAction('save'); return; }
+    if (key === 'signature') { activateEditorAction('signature'); return; }
+    activateEditorAction(key);
+    if (group === 'fill' && key === 'text') actionGuide('fill');
+  }
+
   function syncMobileActionDock() {
     var dock = $('pdf-mobile-action-dock');
     if (!dock) return;
-    dock.hidden = !(isMobileReader() && state.file && !state.editorMode);
+    dock.hidden = !(isMobileReader() && state.file && !state.editorMode && !state.mobileSubdock);
     qsa('[data-mobile-capability]').forEach(function (control) { applyToolCapability(control, control.dataset.mobileCapability); });
+    syncMobileSubdock();
   }
   function syncEditorDock() {
     var dock = $('pdf-editor-dock');
-    if (dock) dock.hidden = !(state.editorMode && state.pdf);
+    if (dock) dock.hidden = isMobileReader() || !(state.editorMode && state.pdf);
     if (document.body) document.body.classList.toggle('pdf-editor-mode', Boolean(state.editorMode && state.pdf));
     qsa('[data-editor-capability]').forEach(function (control) { applyToolCapability(control, control.dataset.editorCapability); });
+    syncMobileSubdock();
   }
   function setEditorMode(enabled) {
     if (enabled && !state.pdf) { explainUnavailable('pdf'); return false; }
@@ -2179,7 +2301,7 @@
     if (action === 'save') { exportPdf(state.pageOrder, safeName(state.file.name) + '-edited.pdf'); return; }
     if (action === 'color') { var color = $('annotation-color'); if (color) color.click(); actionGuide('color'); return; }
     if (action === 'signature') { var signature = $('pdf-add-signature'); if (signature) signature.click(); return; }
-    if (action === 'highlight' || action === 'area-highlight' || action === 'underline' || action === 'strike' || action === 'draw') state.tool = action;
+    if (action === 'highlight' || action === 'area-highlight' || action === 'underline' || action === 'strike' || action === 'draw' || action === 'text') state.tool = action;
     else state.tool = 'select';
     qsa('[data-pdf-tool]').forEach(function (node) { node.classList.toggle('is-active', node.dataset.pdfTool === state.tool); });
     syncAnnotationWidthControl(); renderMainPage(); actionGuide(action === 'text-edit' || action === 'copy-text' || action === 'delete-text' ? action : action);
@@ -2210,16 +2332,10 @@
     bindMobileReaderTopbar();
     $('pdf-text-edit')?.addEventListener('click', function () { setEditorMode(true); });
     $('pdf-editor-close')?.addEventListener('click', function () { setEditorMode(false); });
+    $('pdf-mobile-subdock-back')?.addEventListener('click', closeMobileSubdock);
     qsa('[data-editor-action]').forEach(function (button) { button.addEventListener('click', function () { activateEditorAction(button.dataset.editorAction); }); });
     qsa('[data-mobile-action]').forEach(function (button) {
-      button.addEventListener('click', function () {
-        var action = button.dataset.mobileAction;
-        if (action === 'edit') setEditorMode(true);
-        else if (action === 'annotate') { setEditorMode(true); openToolbarPopoverById('pdf-annotate-popover'); }
-        else if (action === 'signature') { setEditorMode(true); activateEditorAction('signature'); }
-        else if (action === 'fill') { setEditorMode(true); activateEditorAction('text-edit'); actionGuide('fill'); }
-        else if (action === 'more') { var more = qs('#pdf-toolbar-overflow-wrap [data-popover-target]'); if (more) more.click(); else openToolbarPopoverById('pdf-universal-convert-popover'); }
-      });
+      button.addEventListener('click', function () { openMobileSubdock(button.dataset.mobileAction); });
     });
   }
 
@@ -2353,7 +2469,7 @@
       if (closeButton) {
         window.setTimeout(function () { try { closeButton.focus({ preventScroll: true }); } catch (_) {} }, 0);
       }
-      var guideKey = panel.id === 'pdf-annotate-popover' ? 'annotationPanel' : panel.id === 'pdf-pages-popover' ? 'pagesPanel' : panel.id === 'pdf-convert-popover' ? 'convertPanel' : panel.id === 'pdf-universal-convert-popover' ? 'universal' : 'convertPanel';
+      var guideKey = panel.id === 'pdf-annotate-popover' ? 'annotationPanel' : panel.id === 'pdf-pages-popover' ? 'pagesPanel' : panel.id === 'pdf-convert-popover' ? 'convertPanel' : panel.id === 'pdf-universal-convert-popover' ? 'universalPanel' : 'convertPanel';
       actionGuide(guideKey);
     }
     qsa('[data-popover-target]').forEach(function (toggle) {
