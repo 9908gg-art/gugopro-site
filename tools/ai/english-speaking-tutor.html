@@ -6231,16 +6231,24 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         const retry = retryButtonFromEvent(event);
         if (!retry) return;
         const state = prepareRetryButton(retry);
-        if (!state || speechMode() !== 'hold') return;
-        if (retryPointerButton || window.GugoSpeechSessionActive) return;
+        const mode = speechMode();
+        if (!state) return;
+        if (mode === 'hold') {
+            if (retryPointerButton || window.GugoSpeechSessionActive) return;
+            event.preventDefault?.();
+            event.stopPropagation?.();
+            retryPointerId = event?.pointerId ?? event?.changedTouches?.[0]?.identifier ?? null;
+            retryPointerButton = retry;
+            state.pointerDown?.(event);
+            return;
+        }
+        if (mode !== 'tap' && mode !== 'smart') return;
         event.preventDefault?.();
         event.stopPropagation?.();
-        retryPointerId = event?.pointerId ?? event?.changedTouches?.[0]?.identifier ?? null;
-        retryPointerButton = retry;
         state.pointerDown?.(event);
     }
     function handleRetryPointerRelease(event) {
-        if (!retryPointerButton) return;
+        if (speechMode() !== 'hold' || !retryPointerButton) return;
         const pointerId = event?.pointerId ?? event?.changedTouches?.[0]?.identifier ?? null;
         if (retryPointerId !== null && pointerId !== null && String(pointerId) !== String(retryPointerId)) return;
         const retry = retryPointerButton;
@@ -6261,6 +6269,9 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         const state = prepareRetryButton(retry);
         if (state?.suppressNextClick && Date.now() <= Number(state.suppressClickUntil || 0)) {
             state.suppressNextClick = false;
+            event.preventDefault?.();
+            event.stopPropagation?.();
+            event.stopImmediatePropagation?.();
             return;
         }
         event.preventDefault?.();
