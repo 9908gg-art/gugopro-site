@@ -1300,6 +1300,8 @@
 
 
 
+
+
 <style id="gugo-capsule-dock-style">
 /* GugoPro Gemini-style capsule composer */
 html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
@@ -5821,6 +5823,8 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
 
 
 
+
+
 <script id="gugo-capsule-dock-modes-js">
 // GugoPro Gemini-style Capsule Dock + three speech modes
 (() => {
@@ -6136,20 +6140,36 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         }
         const state = {
             button, role, challengeMessageId: config.challengeMessageId || '', challengeTarget: config.challengeTarget || '',
-            beforeStart: config.beforeStart || null, startFailed: config.startFailed || null, pointerId: null, active: false, suppressClickUntil: 0
+            beforeStart: config.beforeStart || null, startFailed: config.startFailed || null, pointerId: null, active: false, suppressClickUntil: 0, suppressNextClick: false
         };
         button.__gugoSpeechControlState = state;
         button.dataset.capsuleModeBound = '1';
         button.onclick = event => {
             event.preventDefault?.();
             event.stopImmediatePropagation?.();
+            if (state.suppressNextClick && Date.now() <= Number(state.suppressClickUntil || 0)) {
+                state.suppressNextClick = false;
+                return false;
+            }
+            state.suppressNextClick = false;
             if (speechMode() === 'hold') return false;
             if (window.GugoSpeechActiveControl === button && window.GugoSpeechSessionActive) stopSpeechControl(button, event);
             else if (!window.GugoSpeechSessionActive) startSpeechControl(button);
             return false;
         };
         const pointerDown = event => {
-            if (speechMode() !== 'hold' || event?.__gugoSpeechHandled) return;
+            const mode = speechMode();
+            if ((mode === 'tap' || mode === 'smart') && !event?.__gugoSpeechHandled) {
+                event.__gugoSpeechHandled = true;
+                event.preventDefault?.();
+                event.stopPropagation?.();
+                state.suppressNextClick = true;
+                state.suppressClickUntil = Date.now() + 2000;
+                if (window.GugoSpeechActiveControl === button && window.GugoSpeechSessionActive) stopSpeechControl(button, event);
+                else if (!window.GugoSpeechSessionActive) startSpeechControl(button);
+                return;
+            }
+            if (mode !== 'hold' || event?.__gugoSpeechHandled) return;
             event.__gugoSpeechHandled = true;
             event.preventDefault?.();
             event.stopPropagation?.();
@@ -6173,7 +6193,13 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         button.onpointercancel = pointerRelease;
         button.onlostpointercapture = pointerRelease;
         button.ontouchstart = event => {
-            if (window.PointerEvent || speechMode() !== 'hold' || event?.__gugoSpeechHandled) return;
+            if (window.PointerEvent || event?.__gugoSpeechHandled) return;
+            const mode = speechMode();
+            if (mode === 'tap' || mode === 'smart') {
+                pointerDown(event);
+                return;
+            }
+            if (mode !== 'hold') return;
             event.__gugoSpeechHandled = true;
             event.preventDefault?.();
             event.stopPropagation?.();
