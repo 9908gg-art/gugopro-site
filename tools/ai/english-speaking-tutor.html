@@ -1249,6 +1249,8 @@
 
 
 
+
+
 <style id="gugo-capsule-dock-style">
 /* GugoPro Gemini-style capsule composer */
 html, body { background: #0A0B10 !important; }
@@ -1414,6 +1416,7 @@ html, body { background: #0A0B10 !important; }
     .capsule-actions { margin-left: auto; }
     .capsule-actions .btn-circle { flex-basis: 40px; width: 40px !important; min-width: 40px !important; height: 40px !important; min-height: 40px !important; }
     .capsule-dock #user-text { min-height: 36px !important; padding: 5px 2px; max-height: 92px; }
+    .capsule-dock #user-text::placeholder { font-size: .78rem; }
     .btn-header-material { width: 36px; height: 36px; min-width: 36px; min-height: 36px; }
 }
 </style>
@@ -5692,6 +5695,8 @@ html, body { background: #0A0B10 !important; }
 
 
 
+
+
 <script id="gugo-capsule-dock-modes-js">
 // GugoPro Gemini-style Capsule Dock + three speech modes
 (() => {
@@ -5797,7 +5802,7 @@ html, body { background: #0A0B10 !important; }
             motherButton.title = `${selectedLabel('my-lang', motherLocale)}語音提問，不進行發音評分（${motherLocale}）`;
             motherButton.setAttribute('aria-label', `${selectedLabel('my-lang', motherLocale)}語音提問，不進行發音評分`);
         }
-        if (input && !window.GugoSpeechSessionActive) input.placeholder = speechInputGuide();
+        if (input && !window.GugoSpeechSessionActive && document.activeElement !== input && !String(input.value || '').trim()) input.placeholder = speechInputGuide();
         return { targetLocale, motherLocale };
     }
     const SPEECH_STATUS_TEXT = {
@@ -5831,7 +5836,7 @@ html, body { background: #0A0B10 !important; }
             button.setAttribute('aria-busy', active ? 'true' : 'false');
         });
         if (input) {
-            input.placeholder = safeState === 'idle' ? speechInputGuide() : stateText;
+            input.placeholder = safeState === 'idle' && document.activeElement !== input && !String(input.value || '').trim() ? speechInputGuide() : '';
             input.setAttribute('aria-busy', safeState === 'starting' || safeState === 'recording' || safeState === 'reconnecting' || safeState === 'stopping' || safeState === 'sending' ? 'true' : 'false');
         }
         if (safeState === 'idle') window.GugoSyncCapsuleLayout?.();
@@ -5866,89 +5871,156 @@ html, body { background: #0A0B10 !important; }
     let holdPointerId = null;
     let holdButton = null;
     let holdPointerType = null;
+    let holdSuppressClickUntil = 0;
     function clearHoldPointerState() {
         holdPointerId = null;
         holdButton = null;
         holdPointerType = null;
     }
-    function start(role) {
-        window.GugoSpeechMode = getMode();
-        if (window.GugoSpeechSessionActive) return false;
+    function speechMode() { return window.GugoGetSpeechMode?.() || window.GugoSpeechMode || getMode(); }
+    function setSpeechControlActive(button, active) {
+        if (!button) return;
+        const state = button.__gugoSpeechControlState;
+        if (state) state.active = Boolean(active);
+        button.dataset.speechControlActive = active ? '1' : '0';
+        button.classList.toggle('speech-state-active', Boolean(active));
+        button.setAttribute('aria-pressed', active ? 'true' : 'false');
+        button.setAttribute('aria-busy', active ? 'true' : 'false');
+    }
+    function clearSpeechControl() {
+        const button = holdButton || window.GugoSpeechActiveControl || null;
+        if (button) setSpeechControlActive(button, false);
+        clearHoldPointerState();
+        holdSuppressClickUntil = 0;
+        window.GugoSpeechActiveControl = null;
+    }
+    window.GugoClearSpeechControl = clearSpeechControl;
+    function startSpeechControl(button) {
+        const state = button?.__gugoSpeechControlState;
+        if (!button || !state || window.GugoSpeechSessionActive) return false;
         if (typeof window.GugoStartDualSpeech !== 'function') return false;
-        setSpeechComposerState('starting', role, `正在啟動${role === 'learning' ? '學習語言' : '母語'}語音…`);
-        window.GugoStartDualSpeech(role);
+        state.beforeStart?.();
+        window.GugoSpeechMode = speechMode();
+        window.GugoSpeechActiveControl = button;
+        setSpeechComposerState('starting', state.role, `正在啟動${state.role === 'learning' ? '學習語言' : '母語'}語音…`);
+        const result = window.GugoStartDualSpeech(state.role, state.challengeMessageId || null, state.challengeTarget || '', button);
+        if (!window.GugoSpeechSessionActive && result !== true && result !== false) {
+            state.startFailed?.();
+            window.GugoSpeechActiveControl = null;
+            return false;
+        }
+        setSpeechControlActive(button, true);
         return true;
     }
-    function stopHeldSpeech(event) {
-        if (getMode() !== 'hold' || !window.GugoSpeechSessionActive) return;
-        const changedTouch = event?.changedTouches?.[0];
-        const pointerId = event?.pointerId ?? changedTouch?.identifier;
-        if (holdPointerId === null && !holdButton) return;
-        if (holdPointerId !== null && pointerId !== undefined && String(pointerId) !== String(holdPointerId)) return;
+    function stopSpeechControl(button, event) {
+        const state = button?.__gugoSpeechControlState;
+        if (!state || !window.GugoSpeechSessionActive || window.GugoSpeechActiveControl !== button) return false;
         event?.preventDefault?.();
         event?.stopPropagation?.();
+        if (speechMode() === 'hold') state.suppressClickUntil = Date.now() + 450;
         clearHoldPointerState();
-        setSpeechComposerState('stopping');
+        setSpeechComposerState('stopping', state.role);
         window.GugoStopDualSpeech?.();
+        return true;
     }
-    function bindSpeechButton(button, role) {
-        if (!button || button.dataset.capsuleModeBound === '1') return;
+    window.GugoStartSpeechControl = startSpeechControl;
+    window.GugoStopSpeechControl = stopSpeechControl;
+    function stopHeldSpeech(event) {
+        if (speechMode() !== 'hold' || !window.GugoSpeechSessionActive || !holdButton) return;
+        const changedTouch = event?.changedTouches?.[0];
+        const pointerId = event?.pointerId ?? changedTouch?.identifier;
+        if (holdPointerId !== null && pointerId !== undefined && String(pointerId) !== String(holdPointerId)) return;
+        stopSpeechControl(holdButton, event);
+    }
+    function bindSpeechControl(button, role, config = {}) {
+        if (!button) return null;
+        const existing = button.__gugoSpeechControlState;
+        if (existing) {
+            Object.assign(existing, config, { role });
+            return existing;
+        }
+        const state = {
+            button, role, challengeMessageId: config.challengeMessageId || '', challengeTarget: config.challengeTarget || '',
+            beforeStart: config.beforeStart || null, startFailed: config.startFailed || null, pointerId: null, active: false, suppressClickUntil: 0
+        };
+        button.__gugoSpeechControlState = state;
         button.dataset.capsuleModeBound = '1';
         button.onclick = event => {
-            event.preventDefault();
+            event.preventDefault?.();
             event.stopImmediatePropagation?.();
-            if (getMode() === 'hold') return false;
-            if (window.GugoSpeechSessionChallengeId) return false;
-            if (window.GugoSpeechSessionActive) { setSpeechComposerState('stopping'); window.GugoStopDualSpeech?.(); }
-            else start(role);
+            if (speechMode() === 'hold') return false;
+            if (window.GugoSpeechActiveControl === button && window.GugoSpeechSessionActive) stopSpeechControl(button, event);
+            else if (!window.GugoSpeechSessionActive) startSpeechControl(button);
             return false;
         };
-        button.onpointerdown = event => {
-            if (getMode() !== 'hold') return;
-            event.preventDefault();
-            event.stopPropagation?.();
-            if (holdPointerId !== null || holdButton || window.GugoSpeechSessionActive || window.GugoSpeechSessionChallengeId) return;
-            holdPointerId = event.pointerId ?? null;
-            holdPointerType = event.pointerType || 'touch';
-            holdButton = button;
-            try { button.setPointerCapture?.(event.pointerId); } catch (_) {}
-            if (!start(role)) clearHoldPointerState();
-        };
-        button.onpointerup = event => {
-            if (getMode() !== 'hold') return;
-            stopHeldSpeech(event);
-        };
-        button.onpointercancel = event => {
-            if (getMode() !== 'hold') return;
-            stopHeldSpeech(event);
-        };
-        button.onlostpointercapture = event => {
-            if (getMode() !== 'hold') return;
-            stopHeldSpeech(event);
-        };
-        // Older Android WebViews without PointerEvent still receive touch events.
-        button.ontouchstart = event => {
-            if (window.PointerEvent || getMode() !== 'hold') return;
-            event.preventDefault();
+        const pointerDown = event => {
+            if (speechMode() !== 'hold' || event?.__gugoSpeechHandled) return;
+            event.__gugoSpeechHandled = true;
+            event.preventDefault?.();
             event.stopPropagation?.();
             if (holdButton || window.GugoSpeechSessionActive) return;
+            state.pointerId = event?.pointerId ?? null;
+            holdPointerId = state.pointerId;
+            holdPointerType = event?.pointerType || 'touch';
             holdButton = button;
+            try { button.setPointerCapture?.(event?.pointerId); } catch (_) {}
+            if (!startSpeechControl(button)) clearHoldPointerState();
+        };
+        const pointerRelease = event => {
+            if (speechMode() !== 'hold') return;
+            if (holdButton !== button && state.pointerId === null) return;
+            stopHeldSpeech(event);
+        };
+        state.pointerDown = pointerDown;
+        state.pointerRelease = pointerRelease;
+        button.onpointerdown = pointerDown;
+        button.onpointerup = pointerRelease;
+        button.onpointercancel = pointerRelease;
+        button.onlostpointercapture = pointerRelease;
+        button.ontouchstart = event => {
+            if (window.PointerEvent || speechMode() !== 'hold' || event?.__gugoSpeechHandled) return;
+            event.__gugoSpeechHandled = true;
+            event.preventDefault?.();
+            event.stopPropagation?.();
+            if (holdButton || window.GugoSpeechSessionActive) return;
+            state.pointerId = event.changedTouches?.[0]?.identifier ?? null;
+            holdPointerId = state.pointerId;
             holdPointerType = 'touch';
-            holdPointerId = event.changedTouches?.[0]?.identifier ?? null;
-            if (!start(role)) clearHoldPointerState();
+            holdButton = button;
+            if (!startSpeechControl(button)) clearHoldPointerState();
         };
-        button.ontouchend = event => {
-            if (window.PointerEvent || getMode() !== 'hold') return;
-            stopHeldSpeech(event);
-        };
-        button.ontouchcancel = event => {
-            if (window.PointerEvent || getMode() !== 'hold') return;
-            stopHeldSpeech(event);
-        };
+        button.ontouchend = event => { if (!window.PointerEvent && speechMode() === 'hold') stopHeldSpeech(event); };
+        button.ontouchcancel = event => { if (!window.PointerEvent && speechMode() === 'hold') stopHeldSpeech(event); };
+        return state;
     }
+    window.GugoBindSpeechControl = bindSpeechControl;
+    function bindSpeechButton(button, role) { bindSpeechControl(button, role); }
     document.addEventListener('pointerup', stopHeldSpeech, true);
     document.addEventListener('pointercancel', stopHeldSpeech, true);
     document.addEventListener('lostpointercapture', stopHeldSpeech, true);
+    document.addEventListener('pointerdown', event => {
+        const retry = event.target?.closest?.('.pronunciation-retry');
+        if (!retry) return;
+        const messageId = String(retry.dataset.messageId || '');
+        const root = document.querySelector(`[data-id="${messageId.replace(/"/g, '')}"]`);
+        const learning = root?.querySelector?.('.msg-learning');
+        const target = String(learning?.dataset?.rawText || learning?.textContent || '').trim();
+        if (!messageId || !target) return;
+        const state = bindSpeechControl(retry, 'learning', {
+            challengeMessageId: messageId,
+            challengeTarget: target,
+            beforeStart: () => window.GugoSetRetryBusy?.(messageId, true),
+            startFailed: () => window.GugoSetRetryBusy?.(messageId, false)
+        });
+        if (speechMode() === 'hold' && state?.pointerDown) state.pointerDown(event);
+    }, true);
+    document.addEventListener('touchstart', event => {
+        if (window.PointerEvent) return;
+        const retry = event.target?.closest?.('.pronunciation-retry');
+        if (!retry) return;
+        const state = retry.__gugoSpeechControlState;
+        if (state?.pointerDown) state.pointerDown(event);
+    }, true);
 
     window.GugoOpenRoomStudy = roomId => {
         const targetId = String(roomId || '');
@@ -5993,7 +6065,9 @@ html, body { background: #0A0B10 !important; }
         const input = document.getElementById('user-text');
         if (input && input.dataset.capsuleInputBound !== '1') {
             input.dataset.capsuleInputBound = '1';
-            input.addEventListener('input', () => { if (!window.GugoSpeechSessionActive) localStorage.removeItem('gugopro_ai_tutor_pending_pronunciation_v1'); syncCapsuleLayout(); });
+            input.addEventListener('focus', () => { input.placeholder = ''; });
+            input.addEventListener('input', () => { input.placeholder = ''; if (!window.GugoSpeechSessionActive) localStorage.removeItem('gugopro_ai_tutor_pending_pronunciation_v1'); syncCapsuleLayout(); });
+            input.addEventListener('blur', () => { if (!window.GugoSpeechSessionActive && !String(input.value || '').trim()) input.placeholder = speechInputGuide(); });
         }
         syncCapsuleLayout();
         setTimeout(updateCapsuleLabels, 0);
