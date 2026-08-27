@@ -57,3 +57,15 @@ Screenshots were generated at 390×844 for all eight locales. Inspection of Engl
 ### Locale-specific hero DOM check
 
 Chromium `--dump-dom` confirmed the following live localized h1/title pairs: zh-TW uses `把市場噪音，變成可執行的決策。`; zh-CN uses `把市场噪音，变成可执行的决策。`; English uses `Address market noise, Turn into actionable decisions.`; Japanese uses `市場ノイズを扱う、実行可能な意思決定にする。`; German uses `Marktrauschen adressieren, In umsetzbare Entscheidungen verwandeln.`; French uses `Traitez le bruit de marché, Transformer en décisions actionnables.`; Spanish uses `Trata el ruido del mercado, Convertir en decisiones accionables.`; Portuguese uses `Trate o ruído de mercado, Transformar em decisões acionáveis.`. Each page returned the expected locale code and the same Academy section counts.
+
+### Production English smoke test
+
+GitHub Pages run `33049628921` for commit `12197986352e8221bff9952d46557f6424958f4e` completed successfully. At `https://gugopro.com/academy/index.html?lang=en&qa=1219798`, the production browser rendered the English hero and all 22 course chapters, 19 tools, quant research desk and Category 13. The runtime loaded `gugopro-i18n.js?v=20260827-i18n1`, `catalog.json`, `en.json`, `phrases.json` and `en.dynamic.json` with HTTP 200. The debug check reported `document.documentElement.lang=en`, selector value `en`, English hero present, Traditional hero absent, and all resource URLs under `/i18n/`.
+
+### Production visual comparison
+
+Production screenshots for all eight locales were captured after Pages success at 1440×900 and 390×844. Visual inspection of `gugopro-production-zh-TW-1440x900.png` and `gugopro-production-en-1440x900.png` confirmed identical header height, hero background geometry, content container, CTA positions, four statistic cards and course-section start. Mobile captures use the same 390px responsive breakpoint and remain free of horizontal clipping; translated text changes line wraps only.
+
+### Production eight-locale DOM smoke test
+
+The retry-protected production validator completed all eight HTTPS pages successfully. Every locale returned the expected `html lang` (`zh-TW`, `zh-CN`, `en`, `ja`, `de`, `fr`, `es`, `pt`), exactly eight language options, 22 course chapters, 19 interactive tools, Category 13 content, and the versioned i18n runtime. The production titles were localized for all eight languages. The initial `resourceHints` field in the diagnostic was intentionally not used as a pass criterion because Chromium's post-JavaScript dump does not serialize performance resource entries; direct browser fetch checks on the English production page returned HTTP 200 for the runtime, catalog, locale, phrase and dynamic resources.
