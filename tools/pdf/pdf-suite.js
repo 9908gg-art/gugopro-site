@@ -19,6 +19,7 @@
     pageRotations: {},
     selectedPages: new Set(),
     pageTexts: {},
+    pdfTextItems: {},
     textReady: false,
     zoom: 0.92,
     fitMode: 'fit-width',
@@ -533,10 +534,35 @@
     var width = Math.max(1, frame.clientWidth); var height = Math.max(1, frame.clientHeight);
     return { x: Math.max(0, Math.min(1, (parseFloat(element.style.left) || 0) / width)), y: Math.max(0, Math.min(1, (parseFloat(element.style.top) || 0) / height)), w: Math.max(.01, Math.min(1, (parseFloat(element.style.width) || 10) / width)), h: Math.max(.01, Math.min(1, (parseFloat(element.style.height) || 12) / height)) };
   }
+  function hidePdfTextContextMenu() {
+    var menu = $('pdf-text-context-menu'); if (menu) { menu.hidden = true; menu.classList.remove('is-visible'); }
+  }
+  function showPdfTextContextMenu(element) {
+    var menu = $('pdf-text-context-menu'); if (!menu || !element) return;
+    menu.hidden = false; menu.classList.add('is-visible'); menu.style.visibility = 'hidden';
+    var rect = element.getBoundingClientRect();
+    if (rect.bottom < 8 || rect.top > window.innerHeight - 8) { try { element.scrollIntoView({ block: 'center', inline: 'nearest' }); } catch (_) {} rect = element.getBoundingClientRect(); }
+    var width = menu.offsetWidth || 212; var height = menu.offsetHeight || 48; var gap = 8;
+    var left = Math.max(8, Math.min(Math.max(8, window.innerWidth - width - 8), rect.left + (rect.width - width) / 2));
+    var top = rect.bottom + gap; if (top + height > window.innerHeight - 8) top = rect.top - height - gap;
+    top = Math.max(8, Math.min(Math.max(8, window.innerHeight - height - 8), top));
+    menu.style.left = left + 'px'; menu.style.top = top + 'px'; menu.style.visibility = 'visible';
+  }
   function selectedPdfTextTarget(pageNumber, itemIndex, original, element) {
-    state.activeTextSelection = { pageNumber: Number(pageNumber), itemIndex: Number(itemIndex), original: String(original || ''), element: element, geometry: textTargetGeometry(element) };
+    state.activeTextSelection = { pageNumber: Number(pageNumber), itemIndex: Number(itemIndex), textOrdinal: Number(element && element.dataset && element.dataset.textOrdinal != null ? element.dataset.textOrdinal : itemIndex), original: String(original || ''), element: element, geometry: textTargetGeometry(element) };
     qsa('.pdf-text-item.is-selected').forEach(function (node) { node.classList.remove('is-selected'); });
     if (element) element.classList.add('is-selected');
+    showPdfTextContextMenu(element);
+  }
+  function runSelectedPdfTextAction(action) {
+    var selected = state.activeTextSelection; if (!selected || !selected.element) return;
+    hidePdfTextContextMenu();
+    if (action === 'edit') { openInlineTextEditor(selected.pageNumber, selected.itemIndex, getTextItemValue(selected.pageNumber, selected.itemIndex, selected.original), selected.element, { kind: 'pdf', textOrdinal: selected.textOrdinal }); return; }
+    if (action === 'copy') { copyTextValue(getTextItemValue(selected.pageNumber, selected.itemIndex, selected.original)); return; }
+    if (action === 'delete') {
+      var current = getTextItemValue(selected.pageNumber, selected.itemIndex, selected.original); recordEditHistory(); upsertTextEdit(selected.pageNumber, selected.itemIndex, Object.assign({ original: String(selected.original || ''), replacement: current, deleted: true, textOrdinal: selected.textOrdinal }, selected.geometry));
+      selected.element.classList.add('is-deleted'); selected.element.textContent = ''; state.activeTextSelection = null; renderNotesPanel(); actionGuide('textDeleted');
+    }
   }
   function getInlineEditorValue(editor) {
     if (!editor || !editor.field) return '';
@@ -556,12 +582,14 @@
     field.style.height = 'auto';
     var height = Math.max(editor.baseHeight || 18, Math.min(220, field.scrollHeight || editor.baseHeight || 18));
     field.style.height = height + 'px';
+    if (editor.target === field) { var width = Math.max(parseFloat(field.style.width) || 0, Math.min(480, Math.max(field.offsetWidth || 0, field.scrollWidth + 8))); if (width > 0) field.style.width = width + 'px'; }
     if (editor.host && editor.host !== field) editor.host.style.height = height + 'px';
   }
   function removeInlineTextEditor(editor) {
     editor = editor || state.inlineTextEditor;
     if (!editor) return;
     if (editor.target) {
+      hidePdfTextContextMenu();
       if (editor.target === editor.field && editor.cancelled) editor.target.textContent = editor.original;
       editor.target.classList.remove('is-inline-editing');
       editor.target.removeAttribute('contenteditable');
@@ -605,7 +633,7 @@
           state.annotations[editor.pageNumber].push({ type: 'text', x: editor.geometry.x, y: editor.geometry.y, text: value.trim(), color: editor.color || '#ff9e6b', size: editor.size || 18 });
         }
       } else {
-        upsertTextEdit(editor.pageNumber, editor.itemIndex, Object.assign({ original: original, replacement: value, deleted: !value.trim() }, editor.geometry));
+        upsertTextEdit(editor.pageNumber, editor.itemIndex, Object.assign({ original: original, replacement: value, deleted: !value.trim(), textOrdinal: editor.textOrdinal }, editor.geometry));
         if (editor.target && editor.target.isConnected) {
           editor.target.textContent = value;
           editor.target.classList.toggle('is-edited', Boolean(value.trim()));
@@ -649,7 +677,7 @@
       top = Math.max(4, Math.min(Math.max(4, frame.clientHeight - baseHeight - 4), top));
       host = document.createElement('span'); host.className = 'pdf-direct-text-editor'; host.style.left = left + 'px'; host.style.top = top + 'px'; host.style.width = editorWidth + 'px'; host.style.minHeight = baseHeight + 'px'; host.contentEditable = 'true'; host.setAttribute('role', 'textbox'); host.setAttribute('aria-multiline', 'true'); host.setAttribute('aria-label', IS_EN ? 'Insert text directly on the PDF' : '直接在 PDF 上插入文字'); host.setAttribute('spellcheck', 'false'); host.setAttribute('autocapitalize', 'sentences'); host.textContent = String(original || ''); frame.appendChild(host); field = host;
     }
-    var editor = { kind: options.kind || 'pdf', pageNumber: Number(pageNumber), itemIndex: Number(itemIndex), original: String(original || ''), target: target, frame: frame, host: host, field: field, geometry: geometry, color: options.color, size: options.size, baseHeight: baseHeight, originalStyle: originalStyle, cancelled: false };
+    var editor = { kind: options.kind || 'pdf', pageNumber: Number(pageNumber), itemIndex: Number(itemIndex), textOrdinal: Number(options.textOrdinal != null ? options.textOrdinal : target && target.dataset && target.dataset.textOrdinal != null ? target.dataset.textOrdinal : itemIndex), original: String(original || ''), target: target, frame: frame, host: host, field: field, geometry: geometry, color: options.color, size: options.size, baseHeight: baseHeight, originalStyle: originalStyle, cancelled: false };
     state.inlineTextEditor = editor;
     if (target) target.classList.add('is-inline-editing');
     field.addEventListener('keydown', function (event) {
@@ -670,16 +698,17 @@
   }
   function handlePdfTextItemClick(event, pageNumber, itemIndex, original, element) {
     if (state.inlineTextEditor && state.inlineTextEditor.target === element) { event.stopPropagation(); return; }
+    if (state.inlineTextEditor && state.inlineTextEditor.target !== element) commitInlineTextEditor({ skipRender: true });
     event.preventDefault(); event.stopPropagation();
     var value = getTextItemValue(pageNumber, itemIndex, original);
     selectedPdfTextTarget(pageNumber, itemIndex, original, element);
     var action = state.activeEditorAction || 'edit';
     if (action === 'copy-text') { copyTextValue(value); return; }
     if (action === 'delete-text') {
-      recordEditHistory(); upsertTextEdit(pageNumber, itemIndex, Object.assign({ original: String(original || ''), replacement: value, deleted: true }, textTargetGeometry(element)));
+      recordEditHistory(); upsertTextEdit(pageNumber, itemIndex, Object.assign({ original: String(original || ''), replacement: value, deleted: true, textOrdinal: Number(element && element.dataset && element.dataset.textOrdinal != null ? element.dataset.textOrdinal : itemIndex) }, textTargetGeometry(element)));
       renderMainPage(); renderNotesPanel(); actionGuide('textDeleted'); return;
     }
-    if (action === 'text-edit' || action === 'edit') openInlineTextEditor(pageNumber, itemIndex, value, element, { kind: 'pdf' });
+    if (action === 'text-edit' || action === 'edit') { showPdfTextContextMenu(element); return; }
   }
   async function renderPdfTextLayer(page, viewport, pageFrame, pageNumber, renderToken) {
     if (!page || !pageFrame || !state.editorMode) return;
@@ -687,6 +716,7 @@
     try { content = await page.getTextContent({ includeMarkedContent: true }); } catch (_) { return; }
     if (renderToken != null && renderToken !== mainRenderToken) return;
     var layer = document.createElement('div'); layer.className = 'pdf-text-layer'; layer.setAttribute('aria-label', IS_EN ? 'Selectable PDF text' : '可選取的 PDF 文字');
+    var textOrdinal = 0;
     (content.items || []).forEach(function (item, itemIndex) {
       var original = String(item.str || ''); if (!original.trim()) return;
       var transform = item.transform || [1, 0, 0, 1, 0, 0];
@@ -696,6 +726,7 @@
       var top = (tx[5] || 0) - fontHeight;
       var span = document.createElement('span'); span.className = 'pdf-text-item'; span.setAttribute('role', 'button'); span.tabIndex = 0; span.textContent = getTextItemValue(pageNumber, itemIndex, original); span.dataset.page = String(pageNumber); span.dataset.textIndex = String(itemIndex); span.setAttribute('aria-label', (IS_EN ? 'PDF text: ' : 'PDF 文字：') + original);
       var edit = getTextEdit(pageNumber, itemIndex); if (edit && edit.deleted) span.classList.add('is-deleted'); else if (edit && edit.replacement !== original) span.classList.add('is-edited');
+      span.dataset.textOrdinal = String(textOrdinal); textOrdinal += 1;
       span.style.left = Math.max(0, tx[4] || 0) + 'px'; span.style.top = Math.max(0, top) + 'px'; span.style.width = Math.max(10, width) + 'px'; span.style.height = Math.max(12, fontHeight * 1.22) + 'px'; span.style.fontSize = Math.max(8, fontHeight * .82) + 'px'; span.style.lineHeight = Math.max(10, fontHeight) + 'px';
       span.style.transform = 'rotate(' + Math.atan2(tx[1] || 0, tx[0] || 1) + 'rad)'; span.style.transformOrigin = 'left top';
       span.addEventListener('click', function (event) { handlePdfTextItemClick(event, pageNumber, itemIndex, original, span); });
@@ -1539,7 +1570,7 @@
   }
   function resetDocumentState(file) {
     mainRenderToken += 1;
-    state.file = file || null; state.pdf = null; state.documentKind = file ? getDocumentKind(file) : 'pdf'; state.bookmarks = []; state.documentText = ''; state.documentImageDataUrl = ''; state.documentImageWidth = 0; state.documentImageHeight = 0; state.documentImageMime = ''; state.pageOrder = []; state.pageTexts = {}; state.textReady = false; state.pageRotations = {}; state.selectedPages.clear(); state.annotations = {}; state.textEdits = {}; state.activeTextSelection = null; state.activeEditorAction = 'edit'; state.editorMode = false; state.mobileSubdock = ''; state.annotationImages = {}; state.signatures = {}; state.currentPage = 1; resetEditHistory();
+    state.file = file || null; state.pdf = null; state.documentKind = file ? getDocumentKind(file) : 'pdf'; state.bookmarks = []; state.documentText = ''; state.documentImageDataUrl = ''; state.documentImageWidth = 0; state.documentImageHeight = 0; state.documentImageMime = ''; state.pageOrder = []; state.pageTexts = {}; state.pdfTextItems = {}; state.textReady = false; state.pageRotations = {}; state.selectedPages.clear(); state.annotations = {}; state.textEdits = {}; state.activeTextSelection = null; state.activeEditorAction = 'edit'; state.editorMode = false; state.mobileSubdock = ''; state.annotationImages = {}; state.signatures = {}; state.currentPage = 1; resetEditHistory();
   }
   function renderDocumentPreview() {
     var frame = $('pdf-page-frame'); var stack = $('pdf-continuous-stack');
@@ -1581,7 +1612,7 @@
     try {
       var parsed = await parseDocumentFile(file, state.documentKind); state.documentText = String(parsed.text || '').slice(0, 120000); state.documentImageDataUrl = parsed.imageDataUrl || ''; state.documentImageWidth = Number(parsed.imageWidth) || 0; state.documentImageHeight = Number(parsed.imageHeight) || 0; state.documentImageMime = parsed.imageMime || file.type || ''; state.pageOrder = [1]; state.pageTexts = { 1: state.documentText }; state.textReady = Boolean(state.documentText); state.currentPage = 1; setEmptyState(false); syncToolCapabilities(); syncMobilePageControls(); var fileName = $('pdf-file-name'); if (fileName) fileName.textContent = file.name; var fileMeta = $('pdf-file-meta'); if (fileMeta) fileMeta.textContent = (IS_EN ? 'Local ' + state.documentKind.toUpperCase() + ' document · ' : '本機 ' + state.documentKind.toUpperCase() + ' 文件 · ') + formatBytes(file.size); var readerStatus = $('pdf-reader-status'); if (readerStatus) readerStatus.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + (IS_EN ? 'Document ready' : '文件就緒'); setStatus(messages.ready, 'success'); if (!state.documentText && state.documentKind !== 'image') setStatus(messages.noText, 'error'); renderDocumentThumbnail(); renderDocumentPreview(); renderNotesPanel(); $('pdf-page-count-badge').textContent = IS_EN ? '1 document' : '1 份文件'; setProgress(100); try { var detail = { file: state.file.name, pages: 1, kind: state.documentKind }; window.dispatchEvent(new CustomEvent('gugopro:document-loaded', { detail: detail })); window.dispatchEvent(new CustomEvent('gugopro:document-text-extracted', { detail: getSnapshot() })); window.dispatchEvent(new CustomEvent('gugopro:pdf-loaded', { detail: detail })); } catch (_) {}
     } catch (error) {
-      state.file = null; state.pdf = null; state.documentKind = 'pdf'; state.documentText = ''; state.documentImageDataUrl = ''; state.documentImageWidth = 0; state.documentImageHeight = 0; state.documentImageMime = ''; state.pageOrder = []; state.pageTexts = {}; state.textReady = false; state.textEdits = {}; state.activeTextSelection = null; state.activeEditorAction = 'edit'; state.editorMode = false; state.mobileSubdock = ''; clearReaderFrame(); setEmptyState(true); setProgress(0); syncEditorDock(); syncMobileActionDock(); syncToolCapabilities();
+      state.file = null; state.pdf = null; state.documentKind = 'pdf'; state.documentText = ''; state.documentImageDataUrl = ''; state.documentImageWidth = 0; state.documentImageHeight = 0; state.documentImageMime = ''; state.pageOrder = []; state.pageTexts = {}; state.pdfTextItems = {}; state.textReady = false; state.textEdits = {}; state.activeTextSelection = null; state.activeEditorAction = 'edit'; state.editorMode = false; state.mobileSubdock = ''; clearReaderFrame(); setEmptyState(true); setProgress(0); syncEditorDock(); syncMobileActionDock(); syncToolCapabilities();
       var failedName = $('pdf-file-name'); if (failedName) failedName.textContent = IS_EN ? 'No document open' : '尚未開啟文件';
       var failedMeta = $('pdf-file-meta'); if (failedMeta) failedMeta.textContent = IS_EN ? 'Drop a document to begin' : '拖放文件即可開始';
       var failedReader = $('pdf-reader-status'); if (failedReader) failedReader.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> ' + (IS_EN ? 'Waiting for a supported file' : '等待支援的文件');
@@ -1594,7 +1625,7 @@
     if (!isPdf(file)) { setStatus(messages.choosePdf, 'error'); return; }
     closeInlineTextEditor(false);
     setStatus(messages.loading, 'loading'); setProgress(3); setEmptyState(false);
-    mainRenderToken += 1; state.file = file; state.pdf = null; state.documentKind = 'pdf'; state.bookmarks = []; state.documentText = ''; state.documentImageDataUrl = ''; state.documentImageWidth = 0; state.documentImageHeight = 0; state.documentImageMime = ''; state.pageTexts = {}; state.textReady = false; state.pageRotations = {}; state.selectedPages.clear(); state.annotations = {}; state.textEdits = {}; state.activeTextSelection = null; state.activeEditorAction = 'edit'; state.editorMode = false; state.mobileSubdock = ''; state.annotationImages = {}; state.signatures = {}; state.currentPage = 1; resetEditHistory();
+    mainRenderToken += 1; state.file = file; state.pdf = null; state.documentKind = 'pdf'; state.bookmarks = []; state.documentText = ''; state.documentImageDataUrl = ''; state.documentImageWidth = 0; state.documentImageHeight = 0; state.documentImageMime = ''; state.pageTexts = {}; state.pdfTextItems = {}; state.textReady = false; state.pageRotations = {}; state.selectedPages.clear(); state.annotations = {}; state.textEdits = {}; state.activeTextSelection = null; state.activeEditorAction = 'edit'; state.editorMode = false; state.mobileSubdock = ''; state.annotationImages = {}; state.signatures = {}; state.currentPage = 1; resetEditHistory();
     try {
       var pdfjs = await ensurePdfJs();
       var buffer = await readBuffer(file);
@@ -1665,32 +1696,155 @@
     if (current) lines.push(current);
     return { lines: lines, size: fittedSize, width: width };
   }
+  function pdfStreamBytes(stream, PDFLib) {
+    if (!stream) return null;
+    try {
+      if (PDFLib.decodePDFRawStream && typeof stream.getContents === 'function') return PDFLib.decodePDFRawStream(stream).decode();
+      if (typeof stream.getUnencodedContents === 'function') return stream.getUnencodedContents();
+      if (typeof stream.getContents === 'function') return stream.getContents();
+    } catch (_) {}
+    return null;
+  }
+  function hexToBytes(hex) {
+    var clean = String(hex || '').replace(/[^0-9a-f]/gi, ''); if (clean.length % 2) clean = '0' + clean;
+    var bytes = new Uint8Array(Math.floor(clean.length / 2)); for (var i = 0; i < bytes.length; i += 1) bytes[i] = parseInt(clean.slice(i * 2, i * 2 + 2), 16) || 0; return bytes;
+  }
+  function bytesToUtf16(bytes) {
+    var offset = bytes.length >= 2 && bytes[0] === 0xfe && bytes[1] === 0xff ? 2 : 0; var value = '';
+    for (var i = offset; i + 1 < bytes.length; i += 2) value += String.fromCharCode((bytes[i] << 8) | bytes[i + 1]);
+    return value;
+  }
+  function hexCode(value) { return String(value || '').replace(/[^0-9a-f]/gi, '').toUpperCase(); }
+  function parseToUnicodeCMap(bytes) {
+    if (!bytes) return null;
+    var source = new TextDecoder('latin1').decode(bytes); var forward = Object.create(null); var reverse = Object.create(null); var codeBytes = 2;
+    var codeSpace = /<([0-9a-f]+)>\s+<([0-9a-f]+)>\s+begincodespacerange([\s\S]*?)endcodespacerange/ig.exec(source);
+    if (codeSpace) { var codeLength = /<([0-9a-f]+)>/i.exec(codeSpace[3]); if (codeLength) codeBytes = Math.max(1, Math.floor(codeLength[1].length / 2)); }
+    function addPair(from, to) { var key = hexCode(from); var text = bytesToUtf16(hexToBytes(to)); if (!text) return; forward[key] = text; if (!Object.prototype.hasOwnProperty.call(reverse, text)) reverse[text] = key.padStart(codeBytes * 2, '0'); }
+    var block; var charPattern = /(\d+)\s+beginbfchar([\s\S]*?)endbfchar/ig;
+    while ((block = charPattern.exec(source))) { var pair; var pairPattern = /<([0-9a-f]+)>\s+<([0-9a-f]+)>/ig; while ((pair = pairPattern.exec(block[2]))) addPair(pair[1], pair[2]); }
+    var rangePattern = /(\d+)\s+beginbfrange([\s\S]*?)endbfrange/ig;
+    while ((block = rangePattern.exec(source))) {
+      var linePattern = /<([0-9a-f]+)>\s+<([0-9a-f]+)>\s+(<([0-9a-f]+)>|\[([^\]]*)\])/ig; var line;
+      while ((line = linePattern.exec(block[2]))) {
+        var start = parseInt(line[1], 16); var end = parseInt(line[2], 16); var width = line[1].length; var destination = line[4] || '';
+        if (line[5] != null) { var list = line[5].match(/<([0-9a-f]+)>/ig) || []; for (var j = 0; j < list.length && start + j <= end; j += 1) addPair((start + j).toString(16).padStart(width, '0'), list[j].slice(1, -1)); }
+        else if (destination) { var base = parseInt(destination, 16); for (var k = 0; start + k <= end; k += 1) addPair((start + k).toString(16).padStart(width, '0'), (base + k).toString(16).padStart(destination.length, '0')); }
+      }
+    }
+    return { forward: forward, reverse: reverse, codeBytes: codeBytes };
+  }
+  function getPageFontMaps(page, PDFLib) {
+    var maps = Object.create(null); if (!page || !page.node || !PDFLib.PDFName || !PDFLib.PDFDict) return maps;
+    try {
+      var resources = page.node.Resources(); var fonts = resources && resources.lookupMaybe(PDFLib.PDFName.of('Font'), PDFLib.PDFDict); if (!fonts) return maps;
+      fonts.keys().forEach(function (fontName) {
+        var dict = fonts.lookupMaybe(fontName, PDFLib.PDFDict); if (!dict) return;
+        var unicode = dict.get(PDFLib.PDFName.of('ToUnicode')); if (unicode && page.node.context && typeof page.node.context.lookup === 'function') unicode = page.node.context.lookup(unicode); var bytes = pdfStreamBytes(unicode, PDFLib); var map = parseToUnicodeCMap(bytes);
+        if (map) { var mapKey = String(fontName.toString ? fontName.toString() : fontName); maps[mapKey] = map; maps[mapKey.charAt(0) === '/' ? mapKey.slice(1) : '/' + mapKey] = map; }
+      });
+    } catch (_) {}
+    return maps;
+  }
+  function skipPdfWhitespace(source, index) {
+    while (index < source.length) { var code = source.charCodeAt(index); if (code === 37) { while (index < source.length && source.charCodeAt(index) !== 10 && source.charCodeAt(index) !== 13) index += 1; } else if (code === 0 || code === 9 || code === 10 || code === 12 || code === 13 || code === 32) index += 1; else break; }
+    return index;
+  }
+  function readPdfToken(source, start) {
+    var index = skipPdfWhitespace(source, start); if (index >= source.length) return null; var first = source[index];
+    if (first === '[') {
+      var children = []; var cursor = index + 1; while (true) { cursor = skipPdfWhitespace(source, cursor); if (cursor >= source.length) break; if (source[cursor] === ']') { cursor += 1; break; } var child = readPdfToken(source, cursor); if (!child) break; children.push(child); cursor = child.end; }
+      return { kind: 'array', start: index, end: cursor, children: children, raw: source.slice(index, cursor) };
+    }
+    if (first === '(') {
+      var depth = 1; var cursorLiteral = index + 1;
+      while (cursorLiteral < source.length && depth) { var code = source.charCodeAt(cursorLiteral); if (code === 92) cursorLiteral += 2; else { if (source[cursorLiteral] === '(') depth += 1; if (source[cursorLiteral] === ')') depth -= 1; cursorLiteral += 1; } }
+      var rawLiteral = source.slice(index, cursorLiteral); return { kind: 'literal', start: index, end: cursorLiteral, raw: rawLiteral };
+    }
+    if (first === '<' && source[index + 1] !== '<') { var hexEnd = source.indexOf('>', index + 1); hexEnd = hexEnd < 0 ? source.length : hexEnd + 1; return { kind: 'hex', start: index, end: hexEnd, raw: source.slice(index, hexEnd) }; }
+    var cursorWord = index; while (cursorWord < source.length && !/[\s\[\]()<>{}]/.test(source[cursorWord])) cursorWord += 1;
+    return { kind: 'word', start: index, end: cursorWord, raw: source.slice(index, cursorWord), value: source.slice(index, cursorWord) };
+  }
+  function tokenizePdfContent(source) { var tokens = []; var cursor = 0; while (cursor < source.length) { var token = readPdfToken(source, cursor); if (!token) break; tokens.push(token); cursor = Math.max(token.end, cursor + 1); } return tokens; }
+  function unescapePdfLiteral(raw) {
+    var value = String(raw || '').slice(1, -1).replace(/\\\\n/g, '\\n').replace(/\\\\r/g, '\\r').replace(/\\\\t/g, '\\t').replace(/\\\\b/g, '\\b').replace(/\\\\f/g, '\\f').replace(/\\\\([()\\\\])/g, '$1');
+    return value.replace(/\\\\([0-7]{1,3})/g, function (_, octal) { return String.fromCharCode(parseInt(octal, 8)); });
+  }
+  function decodePdfTextToken(token, map) {
+    if (!token) return ''; if (token.kind === 'literal') return unescapePdfLiteral(token.raw); if (token.kind !== 'hex') return '';
+    var bytes = hexToBytes(token.raw.slice(1, -1)); if (map) { var text = ''; for (var i = 0; i + map.codeBytes <= bytes.length; i += map.codeBytes) { var key = ''; for (var j = 0; j < map.codeBytes; j += 1) key += bytes[i + j].toString(16).padStart(2, '0'); text += map.forward[key.toUpperCase()] || ''; } if (text) return text; }
+    if (bytes.length >= 2 && bytes[0] === 0xfe && bytes[1] === 0xff) return bytesToUtf16(bytes); var plain = ''; for (var p = 0; p < bytes.length; p += 1) plain += String.fromCharCode(bytes[p]); return plain;
+  }
+  function derivePdfTextMap(original, token) {
+    if (!token || token.kind !== 'hex') return null;
+    var characters = Array.from(String(original || '')); var bytes = hexToBytes(token.raw.slice(1, -1)); if (!characters.length || !bytes.length || bytes.length % characters.length) return null;
+    var codeBytes = bytes.length / characters.length; if (![1, 2, 4].includes(codeBytes)) return null; var forward = Object.create(null); var reverse = Object.create(null);
+    characters.forEach(function (character, index) { var key = ''; for (var j = 0; j < codeBytes; j += 1) key += bytes[index * codeBytes + j].toString(16).padStart(2, '0'); key = key.toUpperCase(); forward[key] = character; if (!Object.prototype.hasOwnProperty.call(reverse, character)) reverse[character] = key; });
+    return { forward: forward, reverse: reverse, codeBytes: codeBytes };
+  }
+  function encodePdfTextToken(text, token, map) {
+    text = String(text == null ? '' : text); if (map) { var encoded = ''; var characters = Array.from(text); for (var i = 0; i < characters.length; i += 1) { var key = map.reverse[characters[i]]; if (!key) return null; encoded += key; } return '<' + encoded.toUpperCase() + '>'; }
+    if (!/^[\u0000-\u007F]*$/.test(text)) return null;
+    if (token && token.kind === 'hex') { var hex = ''; for (var j = 0; j < text.length; j += 1) hex += text.charCodeAt(j).toString(16).padStart(2, '0'); return '<' + hex.toUpperCase() + '>'; }
+    return '(' + text.replace(/[\\\\()]/g, '\\\\$&').replace(/\\n/g, '\\\\n').replace(/\\r/g, '\\\\r') + ')';
+  }
+  function rewritePdfContentStream(source, fontMaps, targets) {
+    var tokens = tokenizePdfContent(source); var replacements = []; var operands = []; var activeFont = null; var ordinal = Number(arguments[3]) || 0; var applied = Object.create(null); var unresolved = [];
+    function maybeReplace(token) {
+      var map = activeFont ? (fontMaps[activeFont] || fontMaps[activeFont.charAt(0) === '/' ? activeFont.slice(1) : '/' + activeFont]) : null; var value = decodePdfTextToken(token, map);
+      var target = targets.find(function (candidate) { return !applied[candidate.key] && candidate.ordinal === ordinal && String(candidate.original || '') === value; });
+      if (!target) target = targets.find(function (candidate) { return !applied[candidate.key] && String(candidate.original || '') === value; });
+      if (!target) target = targets.find(function (candidate) { return !applied[candidate.key] && candidate.ordinal === ordinal; });
+      if (target) { var replacement = target.edit.deleted ? '' : String(target.edit.replacement || ''); var derivedMap = derivePdfTextMap(target.original, token); var encodeMaps = []; if (map) encodeMaps.push(map); Object.keys(fontMaps || {}).forEach(function (fontKey) { if (fontMaps[fontKey] && encodeMaps.indexOf(fontMaps[fontKey]) < 0) encodeMaps.push(fontMaps[fontKey]); }); if (derivedMap) encodeMaps.push(derivedMap); var encoded = null; for (var mapIndex = 0; mapIndex < encodeMaps.length && encoded == null; mapIndex += 1) encoded = encodePdfTextToken(replacement, token, encodeMaps[mapIndex]); if (encoded != null) { replacements.push({ start: token.start, end: token.end, value: encoded }); applied[target.key] = true; target.edit.nativeApplied = true; } else unresolved.push(target); }
+      ordinal += 1;
+    }
+    tokens.forEach(function (token) {
+      if (token.kind === 'word') {
+        var op = token.value;
+        if (op === 'Tf') { var fontOperand = operands.length >= 2 ? operands[operands.length - 2] : null; activeFont = fontOperand && fontOperand.raw ? fontOperand.raw : null; }
+        else if (op === 'Tj' || op === "'" || op === '"') { var stringOperand = operands[operands.length - 1]; if (stringOperand && (stringOperand.kind === 'literal' || stringOperand.kind === 'hex')) maybeReplace(stringOperand); }
+        else if (op === 'TJ') { var arrayOperand = operands[operands.length - 1]; if (arrayOperand && arrayOperand.kind === 'array') arrayOperand.children.forEach(function (child) { if (child.kind === 'literal' || child.kind === 'hex') maybeReplace(child); }); }
+        operands = [];
+      } else operands.push(token);
+    });
+    var output = source; replacements.sort(function (a, b) { return b.start - a.start; }).forEach(function (item) { output = output.slice(0, item.start) + item.value + output.slice(item.end); });
+    targets.forEach(function (target) { if (!applied[target.key] && !unresolved.some(function (item) { return item.key === target.key; })) unresolved.push(target); });
+    return { changed: replacements.length > 0, bytes: new TextEncoder().encode(output), unresolved: unresolved, nextOrdinal: ordinal };
+  }
   async function applyTextEdits(outputInfo) {
     var editsByPage = state.textEdits || {};
     if (!outputInfo || !outputInfo.document || !Object.keys(editsByPage).length) return;
-    var PDFLib = requirePdfLib(); var document = outputInfo.document; var font;
-    try { font = await document.embedFont(PDFLib.StandardFonts.Helvetica); } catch (_) { font = null; }
-    var pages = document.getPages();
+    var PDFLib = requirePdfLib(); var document = outputInfo.document; var pages = document.getPages(); var unresolved = [];
     outputInfo.pageNumbers.forEach(function (pageNumber, pageIndex) {
-      var edits = editsByPage[pageNumber] || []; var page = pages[pageIndex]; if (!page || !edits.length) return;
-      var width = page.getWidth(); var height = page.getHeight();
-      edits.forEach(function (edit) {
-        var x = Math.max(0, Math.min(width, Number(edit.x) * width)); var yTop = Math.max(0, Math.min(height, Number(edit.y) * height));
-        var editWidth = Math.max(8, Math.min(width - x, Number(edit.w) * width)); var editHeight = Math.max(10, Math.min(height - yTop, Number(edit.h) * height));
-        var y = Math.max(0, height - yTop - editHeight);
-        page.drawRectangle({ x: x, y: y, width: editWidth, height: editHeight, color: PDFLib.rgb(1, 1, 1), opacity: 1 });
-        if (!edit.deleted && font && String(edit.replacement || '').trim()) {
-          var size = Math.max(6, Math.min(32, Number(edit.fontSize) || editHeight * .72));
-          var fitted = fitPdfText(font, edit.replacement, Math.max(4, editWidth - 4), size);
-          if (fitted.lines && fitted.lines.length) {
-            var lineHeight = Math.max(fitted.size * 1.2, editHeight * .92); var renderHeight = Math.min(height - yTop, Math.max(editHeight, fitted.lines.length * lineHeight + 4));
-            var maxLineWidth = fitted.lines.reduce(function (max, line) { return Math.max(max, font.widthOfTextAtSize(line, fitted.size)); }, 0); var renderWidth = Math.min(width - x, Math.max(editWidth, maxLineWidth + 4));
-            page.drawRectangle({ x: x, y: Math.max(0, height - yTop - renderHeight), width: Math.max(8, renderWidth), height: Math.max(10, renderHeight), color: PDFLib.rgb(1, 1, 1), opacity: 1 });
-            fitted.lines.forEach(function (line, lineIndex) { try { page.drawText(line, { x: x + 2, y: Math.max(2, height - yTop - 2 - fitted.size - lineIndex * lineHeight), size: fitted.size, font: font, color: PDFLib.rgb(.08, .12, .17) }); } catch (_) {} });
-          }
-        }
+      var edits = (editsByPage[pageNumber] || []).filter(function (edit) { return edit && (edit.deleted || String(edit.replacement || '') !== String(edit.original || '')); });
+      var page = pages[pageIndex]; if (!page || !edits.length) return;
+      var targets = edits.map(function (edit) { return { key: String(pageNumber) + ':' + String(edit.itemIndex), original: String(edit.original || ''), ordinal: Number(edit.textOrdinal != null ? edit.textOrdinal : edit.itemIndex), edit: edit }; });
+      var contents = page.node && page.node.Contents ? page.node.Contents() : null; var streams = [];
+      if (contents && typeof contents.size === 'function') { for (var i = 0; i < contents.size(); i += 1) streams.push(contents.lookup(i)); }
+      else if (contents) streams = [contents];
+      if (!streams.length) { unresolved = unresolved.concat(targets); return; }
+      var refs = []; var pageChanged = false; var fontMaps = getPageFontMaps(page, PDFLib); var ordinalBase = 0;
+      streams.forEach(function (stream) {
+        var bytes = pdfStreamBytes(stream, PDFLib); if (!bytes) { refs.push(stream); return; }
+        var source = new TextDecoder('latin1').decode(bytes); var rewritten = rewritePdfContentStream(source, fontMaps, targets, ordinalBase); ordinalBase = rewritten.nextOrdinal || ordinalBase;
+        if (rewritten.changed) pageChanged = true;
+        refs.push(document.context.register(document.context.flateStream(rewritten.bytes)));
       });
+      if (pageChanged) page.node.set(PDFLib.PDFName.of('Contents'), document.context.obj(refs));
+      targets.forEach(function (target) { if (!target.edit.nativeApplied) unresolved.push(target); });
     });
+    outputInfo.nativeTextEditCount = Object.keys(editsByPage).reduce(function (total, pageNumber) { return total + (editsByPage[pageNumber] || []).filter(function (edit) { return edit && edit.nativeApplied; }).length; }, 0);
+    outputInfo.unresolvedTextEdits = unresolved;
+    if (!unresolved.length) return;
+    var font;
+    try { font = await document.embedFont(PDFLib.StandardFonts.Helvetica); } catch (_) { font = null; }
+    unresolved.forEach(function (target) {
+      var edit = target.edit; var pageIndex = outputInfo.pageNumbers.indexOf(Number(target.pageNumber || String(target.key).split(':')[0])); var page = pageIndex >= 0 ? pages[pageIndex] : null; if (!page) return;
+      var width = page.getWidth(); var height = page.getHeight(); var x = Math.max(0, Math.min(width, Number(edit.x) * width)); var yTop = Math.max(0, Math.min(height, Number(edit.y) * height)); var editWidth = Math.max(8, Math.min(width - x, Number(edit.w) * width)); var editHeight = Math.max(10, Math.min(height - yTop, Number(edit.h) * height)); var y = Math.max(0, height - yTop - editHeight);
+      page.drawRectangle({ x: x, y: y, width: editWidth, height: editHeight, color: PDFLib.rgb(1, 1, 1), opacity: 1 });
+      if (!edit.deleted && font && String(edit.replacement || '').trim()) { var size = Math.max(6, Math.min(32, Number(edit.fontSize) || editHeight * .72)); var fitted = fitPdfText(font, edit.replacement, Math.max(4, editWidth - 4), size); if (fitted.lines && fitted.lines.length) fitted.lines.forEach(function (line, lineIndex) { try { page.drawText(line, { x: x + 2, y: Math.max(2, height - yTop - 2 - fitted.size - lineIndex * Math.max(fitted.size * 1.2, editHeight * .92)), size: fitted.size, font: font, color: PDFLib.rgb(.08, .12, .17) }); } catch (_) {} }); }
+    });
+    setStatus(IS_EN ? 'Some complex PDF text used a compatibility export path.' : '部分複雜 PDF 文字使用相容輸出路徑；一般文字已直接更新原生內容。', 'success');
   }
   function hexColor(value) {
     var raw = String(value || '#ff9e6b').replace('#', ''); if (raw.length === 3) raw = raw.split('').map(function (part) { return part + part; }).join('');
@@ -2465,7 +2619,14 @@
     $('pdf-mobile-redo')?.addEventListener('click', function () { if (redoEdit()) actionGuide('redo'); });
     $('pdf-mobile-save')?.addEventListener('click', function () { if (!state.file) { explainUnavailable('document'); return; } if (state.inlineTextEditor) closeInlineTextEditor(true); if (state.pdf) exportPdf(state.pageOrder, safeName(state.file.name) + '-edited.pdf'); else openToolbarPopoverById('pdf-universal-convert-popover'); });
   }
+  function bindTextContextMenu() {
+    qsa('[data-text-context-action]').forEach(function (button) { button.addEventListener('click', function (event) { event.preventDefault(); event.stopPropagation(); runSelectedPdfTextAction(button.dataset.textContextAction); }); });
+    document.addEventListener('pointerdown', function (event) { var target = event.target; if (target && target.closest && (target.closest('#pdf-text-context-menu') || target.closest('.pdf-text-item'))) return; hidePdfTextContextMenu(); });
+    window.addEventListener('resize', function () { var selected = state.activeTextSelection; var menu = $('pdf-text-context-menu'); if (menu && !menu.hidden && selected && selected.element && selected.element.isConnected) showPdfTextContextMenu(selected.element); });
+    window.addEventListener('scroll', hidePdfTextContextMenu, true);
+  }
   function bindEditorControls() {
+    bindTextContextMenu();
     bindMobileReaderTopbar();
     $('pdf-text-edit')?.addEventListener('click', function () { setEditorMode(true); });
     $('pdf-editor-close')?.addEventListener('click', function () { setEditorMode(false); });
