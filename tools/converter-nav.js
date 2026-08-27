@@ -284,7 +284,7 @@
         ['converter-finance-salary-tax.html', labels.financeSalary],
         ['/tools/ai/english-speaking-tutor.html', labels.aiTutor],
         ['/tools/ai/realtime-translator.html', labels.aiTranslator],
-        ['/tools/ai/tarot-master.html', labels.aiTarot],
+        [en ? '/en/tools/ai/tarot-master.html' : '/tools/ai/tarot-master.html', labels.aiTarot],
         ['https://quota.gugopro.com/', labels.aiQuota],
         ['/amazon/', labels.aiAmazon],
         ['/tools/health/tdee-macros-calculator.html', labels.aiNutrition],
