@@ -5230,6 +5230,22 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         if (!latest) return base;
         return /\s$/.test(String(baseText || '')) ? `${baseText}${latest}` : `${base} ${latest}`;
     }
+    function mergeSegmentTranscript(session, transcript) {
+        const next = normalize(transcript);
+        const existing = normalize(session?.segmentTranscript);
+        if (!next) return existing;
+        if (!existing) return next;
+        if (next === existing || next.startsWith(`${existing} `)) return next;
+        if (existing.endsWith(` ${next}`) || existing === next || existing.includes(next)) return existing;
+        const a = existing.split(/\s+/).filter(Boolean);
+        const b = next.split(/\s+/).filter(Boolean);
+        let overlap = 0;
+        const maxOverlap = Math.min(a.length, b.length);
+        for (let size = maxOverlap; size > 0; size -= 1) {
+            if (a.slice(-size).join(' ') === b.slice(0, size).join(' ')) { overlap = size; break; }
+        }
+        return normalize(`${existing} ${b.slice(overlap).join(' ')}`);
+    }
     function clearSmartCountdown(session) {
         if (!session) return;
         if (session.silenceProbeTimer) { clearTimeout(session.silenceProbeTimer); session.silenceProbeTimer = null; }
@@ -5271,16 +5287,32 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         session.restartAttempts = 0;
         setDualRecording(session.role, true);
     }
-    function updateSpeechInput(session, transcript) {
+    function updateSpeechInput(session, transcript, metadata = {}) {
         if (!session || session.finalized) return;
         if (session.silenceTimer) { clearTimeout(session.silenceTimer); session.silenceTimer = null; }
         clearSmartCountdown(session);
         session.state = 'recording';
         setDualRecording(session.role, true);
         window.GugoSetSpeechComposerState?.('recording', session.role);
-        session.latestTranscript = normalize(transcript);
+        const clean = normalize(transcript);
+        if (session.segmentedSession && session.mode === 'tap') {
+            if (metadata.fullSession === true) {
+                session.segmentTranscript = clean;
+                session.currentSegmentTranscript = '';
+                session.latestTranscript = clean;
+            } else if (metadata.segmentFinal === true) {
+                session.segmentTranscript = mergeSegmentTranscript(session, clean);
+                session.currentSegmentTranscript = '';
+                session.latestTranscript = session.segmentTranscript;
+            } else {
+                session.currentSegmentTranscript = clean;
+                session.latestTranscript = mergeSegmentTranscript(session, clean);
+            }
+        } else {
+            session.latestTranscript = clean;
+        }
         // Voice transcripts stay in the session only; they must never overwrite or leak into the composer.
-        // The final message is built from session.baseText + session.latestTranscript on explicit stop.
+        // Tap segment snapshots are accumulated in the session and sent only on explicit stop.
         if (session.mode === 'smart' && session.latestTranscript) {
             session.silenceProbeTimer = setTimeout(() => {
                 session.silenceProbeTimer = null;
@@ -5325,7 +5357,9 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         window.GugoClearSpeechControl?.();
         if (String(window.GugoSpeechSessionChallengeId || '') === String(session.challengeMessageId || '')) window.GugoSpeechSessionChallengeId = '';
         if (session.challengeMessageId && typeof setRetryBusy === 'function') setRetryBusy(session.challengeMessageId, false);
-        const transcript = normalize(session.latestTranscript);
+        const transcript = normalize(session.segmentedSession && session.mode === 'tap'
+            ? mergeSegmentTranscript({ segmentTranscript: session.segmentTranscript }, session.currentSegmentTranscript || session.latestTranscript)
+            : session.latestTranscript);
         if (!transcript) {
             window.GugoSetSpeechComposerState?.('idle');
             return;
@@ -5436,7 +5470,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 }
                 markSessionRecording(session);
             },
-            onResult: transcript => updateSpeechInput(session, transcript),
+            onResult: (transcript, matches, metadata) => updateSpeechInput(session, transcript, metadata),
             onEnd: () => finishWithOptionalDelay(session),
             onError: error => {
                 if (session.startTimer) { clearTimeout(session.startTimer); session.startTimer = null; }
@@ -5548,6 +5582,8 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             role,
             mode: sessionMode,
             segmentedSession: sessionMode === 'tap',
+            segmentTranscript: '',
+            currentSegmentTranscript: '',
             speechLocale,
             baseText: challengeMessageId ? '' : String(input?.value || ''),
             originalInput: String(input?.value || ''),
