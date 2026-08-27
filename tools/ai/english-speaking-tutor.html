@@ -5256,7 +5256,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 return;
             }
             const seconds = Math.max(1, Math.ceil(remaining / 1000));
-            window.GugoSetSpeechComposerState?.('waiting', session.role, `已偵測到你暫停說話，剩餘 ${seconds} 秒後自動送出；點擊語音按鈕可立即送出`);
+            window.GugoSetSpeechComposerState?.('waiting', session.role, `倒數：${seconds} 秒後自動送出`);
             session.countdownTimer = setTimeout(tick, Math.min(250, Math.max(50, remaining)));
         };
         tick();
@@ -5274,6 +5274,8 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         if (session.silenceTimer) { clearTimeout(session.silenceTimer); session.silenceTimer = null; }
         clearSmartCountdown(session);
         session.state = 'recording';
+        setDualRecording(session.role, true);
+        window.GugoSetSpeechComposerState?.('recording', session.role);
         session.latestTranscript = normalize(transcript);
         // Voice transcripts stay in the session only; they must never overwrite or leak into the composer.
         // The final message is built from session.baseText + session.latestTranscript on explicit stop.
