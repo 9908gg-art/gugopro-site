@@ -1316,3 +1316,85 @@ body.pdf-night-reading .pdf-continuous-page .pdf-signature-stamp { filter: inver
 @media (max-width: 767px) {
   body.pdf-document-loaded .pdf-mobile-reader-topbar #pdf-mobile-help { display: none !important; }
 }
+
+
+/* Human-first direct PDF editing: edit the text layer itself, never a floating form. */
+.pdf-text-item,
+.pdf-direct-text-editor {
+  box-sizing: border-box;
+  font-family: Arial, "Noto Sans TC", sans-serif;
+  caret-color: #071018;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.pdf-text-item.is-inline-editing {
+  z-index: 18;
+  min-width: 12px;
+  padding: 1px 3px;
+  overflow: visible;
+  color: #071018 !important;
+  background: rgba(255, 247, 193, .97) !important;
+  border: 2px solid var(--pdf-cyan) !important;
+  border-radius: 3px;
+  box-shadow: 0 0 0 2px rgba(98, 203, 255, .24), 0 5px 16px rgba(0, 0, 0, .22);
+  outline: 0;
+  opacity: 1 !important;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  cursor: text;
+}
+.pdf-text-item.is-inline-editing:focus {
+  outline: 2px solid rgba(255, 158, 107, .72);
+  outline-offset: 2px;
+}
+.pdf-direct-text-editor {
+  position: absolute;
+  z-index: 19;
+  display: block;
+  min-width: 56px;
+  max-width: min(360px, calc(100% - 12px));
+  padding: 3px 5px;
+  overflow-wrap: anywhere;
+  color: #071018;
+  background: rgba(255, 247, 193, .97);
+  border: 2px solid var(--pdf-cyan);
+  border-radius: 3px;
+  box-shadow: 0 0 0 2px rgba(98, 203, 255, .24), 0 5px 16px rgba(0, 0, 0, .22);
+  outline: 0;
+  white-space: pre-wrap;
+  cursor: text;
+  caret-color: #071018;
+}
+.pdf-direct-text-editor:focus {
+  outline: 2px solid rgba(255, 158, 107, .72);
+  outline-offset: 2px;
+}
+.pdf-inline-text-editor,
+.pdf-inline-text-editor-label,
+.pdf-inline-text-editor-actions {
+  display: none !important;
+}
+@media (max-width: 767px) {
+  .pdf-text-item.is-inline-editing,
+  .pdf-direct-text-editor {
+    max-width: calc(100vw - 28px);
+    font-size: max(16px, 1em) !important;
+    line-height: 1.35 !important;
+  }
+}
+
+.pdf-text-item.is-edited {
+  z-index: 10;
+  color: rgba(8, 22, 35, .94);
+  background: rgba(255, 247, 193, .42);
+  border-color: rgba(255, 158, 107, .68);
+  opacity: 1;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.pdf-text-item.is-edited:hover,
+.pdf-text-item.is-edited:focus-visible {
+  color: #071018;
+  background: rgba(255, 247, 193, .78);
+  border-color: var(--pdf-cyan);
+}
