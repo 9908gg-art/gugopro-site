@@ -1320,6 +1320,16 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
 <style id="gugo-capsule-dock-style">
 /* GugoPro Gemini-style capsule composer */
 html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
@@ -5161,23 +5171,44 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         }
         return prev[right.length];
     }
+    function foldForScoring(value) {
+        return normalize(value).toLocaleLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+    function lcsLength(left, right) {
+        const a = Array.isArray(left) ? left : [];
+        const b = Array.isArray(right) ? right : [];
+        let previous = Array(b.length + 1).fill(0);
+        for (let i = 1; i <= a.length; i += 1) {
+            const current = Array(b.length + 1).fill(0);
+            for (let j = 1; j <= b.length; j += 1) current[j] = a[i - 1] === b[j - 1] ? previous[j - 1] + 1 : Math.max(previous[j], current[j - 1]);
+            previous = current;
+        }
+        return previous[b.length];
+    }
     function scorePronunciation(target, spoken, confidence) {
         const spokenText = normalize(spoken);
-        if (!spokenText) return { score: 0, band: 'low', label: '需要再試一次', confidence: 0 };
-        const confidenceScore = Number.isFinite(Number(confidence)) && Number(confidence) > 0 ? Math.round(Math.min(1, Number(confidence)) * 100) : 76;
-        const tokens = wordTokens(spokenText);
-        const repeatedPenalty = /(\b[\p{L}\p{N}']+\b)(?:\s+\1){2,}/iu.test(spokenText) ? 18 : 0;
-        const textFeature = Math.max(0, Math.min(100, 52 + Math.min(32, tokens.length * 5) + (/[.!?。！？]$/.test(spokenText) ? 5 : 0) - repeatedPenalty));
-        let score = Math.round(confidenceScore * 0.65 + textFeature * 0.35);
-        if (target) {
-            const targetTokens = wordTokens(target);
-            const spokenTokens = wordTokens(spokenText);
-            const distance = levenshtein(targetTokens.join(' '), spokenTokens.join(' '));
-            const similarity = targetTokens.length ? Math.max(0, Math.round((1 - distance / Math.max(targetTokens.join(' ').length, spokenTokens.join(' ').length, 1)) * 100)) : textFeature;
-            score = Math.round(confidenceScore * 0.55 + similarity * 0.45);
+        if (!spokenText) return { score: 0, band: 'low', label: '需要再試一次', confidence: null, confidenceAvailable: false };
+        const targetTokens = wordTokens(foldForScoring(target));
+        const spokenTokens = wordTokens(foldForScoring(spokenText));
+        const recognizerConfidence = Number(confidence);
+        const confidenceAvailable = confidence !== null && confidence !== undefined && Number.isFinite(recognizerConfidence) && recognizerConfidence >= 0 && recognizerConfidence <= 1;
+        const confidenceScore = confidenceAvailable ? Math.round(recognizerConfidence * 100) : null;
+        let similarity = 0;
+        if (targetTokens.length) {
+            const targetJoined = targetTokens.join(' ');
+            const spokenJoined = spokenTokens.join(' ');
+            const distance = levenshtein(targetJoined, spokenJoined);
+            const editSimilarity = Math.max(0, 1 - distance / Math.max(targetJoined.length, spokenJoined.length, 1));
+            const coverage = lcsLength(targetTokens, spokenTokens) / targetTokens.length;
+            const lengthRatio = Math.min(targetTokens.length, spokenTokens.length) / Math.max(targetTokens.length, spokenTokens.length, 1);
+            similarity = Math.round((editSimilarity * 0.45 + coverage * 0.4 + lengthRatio * 0.15) * 100);
+        } else {
+            similarity = Math.min(82, 45 + Math.min(37, spokenTokens.length * 4));
         }
-        score = Math.max(0, Math.min(100, score));
-        return { score, confidence: confidenceScore, band: score >= 85 ? 'good' : score >= 70 ? 'ok' : 'low', label: score >= 85 ? '優秀' : score >= 70 ? '良好' : '需要練習' };
+        const repeatedSpeech = /(\b[\p{L}\p{N}']+\b)(?:\s+\1){2,}/iu.test(spokenText);
+        if (repeatedSpeech && targetTokens.join(' ') !== spokenTokens.join(' ')) similarity = Math.max(0, similarity - 8);
+        const score = Math.max(0, Math.min(100, Math.round(confidenceAvailable ? similarity * 0.75 + confidenceScore * 0.25 : similarity)));
+        return { score, confidence: confidenceScore, confidenceAvailable, band: score >= 85 ? 'good' : score >= 70 ? 'ok' : 'low', label: score >= 85 ? '優秀' : score >= 70 ? '良好' : '需要練習' };
     }
     window.GugoProScorePronunciation = scorePronunciation;
 
@@ -5204,6 +5235,56 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         });
     }
     window.GugoSetRetryBusy = setRetryBusy;
+
+    function retryButtonsFor(messageId) {
+        const key = String(messageId || '');
+        return [...document.querySelectorAll('.pronunciation-retry')].filter(button => String(button.dataset.messageId || '') === key);
+    }
+
+    function setRetryBusy(messageId, busy) {
+        retryButtonsFor(messageId).forEach(button => {
+            button.disabled = false;
+            button.dataset.busy = busy ? '1' : '0';
+            button.setAttribute('aria-busy', busy ? 'true' : 'false');
+            button.setAttribute('aria-label', busy ? '停止重新挑戰語音' : '重新挑戰發音');
+            button.textContent = busy ? '⏹ 停止語音挑戰' : '🔄 重新挑戰';
+            button.classList.toggle('retry-recording', Boolean(busy));
+        });
+    }
+    window.GugoSetRetryBusy = setRetryBusy;
+
+    function retryButtonsFor(messageId) {
+        const key = String(messageId || '');
+        return [...document.querySelectorAll('.pronunciation-retry')].filter(button => String(button.dataset.messageId || '') === key);
+    }
+
+    function setRetryBusy(messageId, busy) {
+        retryButtonsFor(messageId).forEach(button => {
+            button.disabled = false;
+            button.dataset.busy = busy ? '1' : '0';
+            button.setAttribute('aria-busy', busy ? 'true' : 'false');
+            button.setAttribute('aria-label', busy ? '停止重新挑戰語音' : '重新挑戰發音');
+            button.textContent = busy ? '⏹ 停止語音挑戰' : '🔄 重新挑戰';
+            button.classList.toggle('retry-recording', Boolean(busy));
+        });
+    }
+    window.GugoSetRetryBusy = setRetryBusy;
+
+    function retryButtonsFor(messageId) {
+        const key = String(messageId || '');
+        return [...document.querySelectorAll('.pronunciation-retry')].filter(button => String(button.dataset.messageId || '') === key);
+    }
+
+    function setRetryBusy(messageId, busy) {
+        retryButtonsFor(messageId).forEach(button => {
+            button.disabled = false;
+            button.dataset.busy = busy ? '1' : '0';
+            button.setAttribute('aria-busy', busy ? 'true' : 'false');
+            button.setAttribute('aria-label', busy ? '停止重新挑戰語音' : '重新挑戰發音');
+            button.textContent = busy ? '⏹ 停止語音挑戰' : '🔄 重新挑戰';
+            button.classList.toggle('retry-recording', Boolean(busy));
+        });
+    }
 
     function updateMessageScore(messageId, score) {
         const root = document.querySelector(`[data-id="${String(messageId || '').replace(/"/g, '')}"]`);
@@ -5295,10 +5376,10 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             session.countdownTimer = setTimeout(tick, Math.min(250, Math.max(50, remaining)));
         };
         tick();
-        // Keep one replacement recognizer available during the countdown so new
-        // speech can resume the same Smart session, but never schedule another
-        // rollover while this deadline is already active.
-        restartRecognition(session, { silent: true });
+        // Rollover only when the native/browser request has actually ended.
+        // If it is still active, keep it listening during the countdown; opening
+        // a second request here is what caused the end-sound/restart race.
+        if (session.requestActive === false) restartRecognition(session, { silent: true });
     }
     function markSessionRecording(session) {
         if (!session || session.finalized || session.autoFinalizeRequested || session.stopRequested || activeSession?.id !== session.id) return;
@@ -5310,14 +5391,15 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             return;
         }
         session.state = 'recording';
-        if (!session.startCuePlayed) {
-            window.GugoPlaySpeechStartCue?.();
-            session.startCuePlayed = true;
-        }
+        // Recording, Smart countdown, resume, and finalize are intentionally silent.
+        // Audible output is reserved for the AI TTS controls.
         setDualRecording(session.role, true, session.challengeButton);
     }
     function updateSpeechInput(session, transcript, metadata = {}) {
         if (!session || session.finalized) return;
+        const rawConfidence = metadata?.confidence;
+        const confidence = Number(rawConfidence);
+        if (rawConfidence !== null && rawConfidence !== undefined && Number.isFinite(confidence) && confidence >= 0 && confidence <= 1) session.confidence = confidence;
         if (session.silenceTimer) { clearTimeout(session.silenceTimer); session.silenceTimer = null; }
         if (session.restartTimer) { clearTimeout(session.restartTimer); session.restartTimer = null; }
         clearSmartCountdown(session);
@@ -5474,6 +5556,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         const native = window.GugoProNativeSpeech?.isNativeSpeechAvailable?.() ? window.GugoProNativeSpeech : null;
         if (!native || session.finalized || session.autoFinalizeRequested || session.stopRequested || activeSession?.id !== session.id) return;
         session.startPending = true;
+        session.requestActive = false;
         const waitingForSmartResume = session.mode === 'smart' && session.silenceDeadline;
         session.state = waitingForSmartResume ? 'waiting' : 'recording';
         if (!waitingForSmartResume) window.GugoSetSpeechComposerState?.('recording', session.role);
@@ -5489,6 +5572,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             partialResults: true,
             segmentedSession: session.segmentedSession === true,
             onStart: () => {
+                session.requestActive = true;
                 if (session.finalized || session.stopRequested || activeSession?.id !== session.id) {
                     native.stopRecognition().catch(() => {});
                     return;
@@ -5496,8 +5580,9 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 markSessionRecording(session);
             },
             onResult: (transcript, matches, metadata) => updateSpeechInput(session, transcript, metadata),
-            onEnd: () => finishWithOptionalDelay(session),
+            onEnd: () => { session.requestActive = false; finishWithOptionalDelay(session); },
             onError: error => {
+                session.requestActive = false;
                 if (session.startTimer) { clearTimeout(session.startTimer); session.startTimer = null; }
                 if (session.finalized || session.autoFinalizeRequested) return;
                 console.warn('Dual native STT error:', error);
@@ -5531,6 +5616,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             }
         }).then(result => {
             if (result?.started && !session.finalized && activeSession?.id === session.id && session.startPending) {
+                session.requestActive = true;
                 markSessionRecording(session);
             }
             if (!result?.started && !session.finalized) {
@@ -5555,12 +5641,14 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         }
         if (!recognition) recognition = new SpeechRecognition();
         session.startPending = true;
+        session.requestActive = false;
         session.state = 'recording';
         window.GugoSetSpeechComposerState?.('recording', session.role);
         recognition.lang = session.speechLocale;
         recognition.continuous = true;
         recognition.interimResults = true;
         recognition.onstart = () => {
+            session.requestActive = true;
             if (session.finalized || session.stopRequested || activeSession?.id !== session.id) {
                 try { recognition.stop(); } catch (_) {}
                 return;
@@ -5571,10 +5659,12 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             const result = event.results?.[event.resultIndex]?.[0];
             if (!result) return;
             markSessionRecording(session);
-            session.confidence = Number(result.confidence) || session.confidence;
-            updateSpeechInput(session, result.transcript);
+            const rawConfidence = result.confidence;
+            session.confidence = rawConfidence !== null && rawConfidence !== undefined && Number.isFinite(Number(rawConfidence)) ? Number(rawConfidence) : session.confidence;
+            updateSpeechInput(session, result.transcript, { confidence: session.confidence });
         };
         recognition.onerror = error => {
+            session.requestActive = false;
             if (session.finalized) return;
             console.warn('Dual Web STT error:', error);
             if (session.stopRequested) { finalizeSession(session); return; }
@@ -5587,7 +5677,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 abortSession(session, '❌ 瀏覽器語音服務暫時無法使用，請稍後再試。');
             }
         };
-        recognition.onend = () => finishWithOptionalDelay(session);
+        recognition.onend = () => { session.requestActive = false; finishWithOptionalDelay(session); };
         try { recognition.start(); }
         catch (error) { restartRecognition(session); }
     }
@@ -5615,6 +5705,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             originalInput: String(input?.value || ''),
             challengeMessageId,
             challengeButton: challengeButton || null,
+            requestActive: false,
             challengeTarget: normalize(challengeTarget),
             startCuePlayed: false,
             latestTranscript: '',
@@ -5815,6 +5906,16 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
 
 
 
+
+
+
+
+
+
+
+
+
+
 <script id="gugo-capsule-dock-modes-js">
 // GugoPro Gemini-style Capsule Dock + three speech modes
 (() => {
@@ -5881,38 +5982,11 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
     window.GugoGetSmartSilenceMs = () => getSmartSilenceSeconds() * 1000;
     window.GugoSetSmartSilenceSeconds = setSmartSilenceSeconds;
     const START_CUE_KEY = 'gugopro_ai_tutor_speech_start_cue_v1';
-    function getSpeechStartCueEnabled() {
-        return localStorage.getItem(START_CUE_KEY) === '1';
-    }
-    function setSpeechStartCueEnabled(value) {
-        const enabled = value === true || value === '1' || value === 'true';
-        localStorage.setItem(START_CUE_KEY, enabled ? '1' : '0');
-        return enabled;
-    }
-    function playSpeechStartCue() {
-        if (!getSpeechStartCueEnabled()) return false;
-        try {
-            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-            if (!AudioContextClass) return false;
-            const context = window.__gugoSpeechStartCueContext || (window.__gugoSpeechStartCueContext = new AudioContextClass());
-            const now = context.currentTime;
-            const oscillator = context.createOscillator();
-            const gain = context.createGain();
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(880, now);
-            gain.gain.setValueAtTime(0.0001, now);
-            gain.gain.exponentialRampToValueAtTime(0.08, now + 0.008);
-            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
-            oscillator.connect(gain);
-            gain.connect(context.destination);
-            oscillator.start(now);
-            oscillator.stop(now + 0.1);
-            if (context.state === 'suspended') context.resume().catch(() => {});
-            return true;
-        } catch (_) {
-            return false;
-        }
-    }
+    // Recording feedback is intentionally silent. Keep the legacy storage API
+    // harmless for existing installations, but never create audio output.
+    function getSpeechStartCueEnabled() { return false; }
+    function setSpeechStartCueEnabled(_) { localStorage.setItem(START_CUE_KEY, '0'); return false; }
+    function playSpeechStartCue() { return false; }
     window.GugoGetSpeechStartCueEnabled = getSpeechStartCueEnabled;
     window.GugoSetSpeechStartCueEnabled = setSpeechStartCueEnabled;
     window.GugoPlaySpeechStartCue = playSpeechStartCue;
@@ -6077,7 +6151,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         const section = document.createElement('div');
         section.id = 'speech-mode-section';
         section.className = 'menu-section capsule-speech-mode-section';
-        section.innerHTML = `<div class="menu-title">🎙️ 語音操作</div><select id="speech-mode-select" class="lang-select" aria-label="選擇語音操作方式"><option value="tap">點擊開始，再點擊停止</option><option value="smart">自動等待停頓後送出</option></select><label class="speech-silence-setting" for="speech-silence-seconds">自動等待秒數 <input id="speech-silence-seconds" type="number" min="1" max="15" step="0.5" inputmode="decimal" aria-label="自動等待秒數"></label><label class="speech-start-cue-setting" for="speech-start-cue-enabled"><input id="speech-start-cue-enabled" type="checkbox" aria-label="啟動語音提示音">按下語音時播放啟動提示音</label><small id="speech-mode-description" class="capsule-speech-mode-description"></small>`;
+        section.innerHTML = `<div class="menu-title">🎙️ 語音操作</div><select id="speech-mode-select" class="lang-select" aria-label="選擇語音操作方式"><option value="tap">點擊開始，再點擊停止</option><option value="smart">自動等待停頓後送出</option></select><label class="speech-silence-setting" for="speech-silence-seconds">自動等待秒數 <input id="speech-silence-seconds" type="number" min="1" max="15" step="0.5" inputmode="decimal" aria-label="自動等待秒數"></label><small id="speech-mode-description" class="capsule-speech-mode-description"></small>`;
         const anchor = sideMenu.querySelector('.model-settings-section');
         if (anchor) anchor.before(section); else sideMenu.appendChild(section);
         const select = section.querySelector('#speech-mode-select');
@@ -6086,11 +6160,6 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         if (silenceInput) {
             silenceInput.value = String(getSmartSilenceSeconds());
             silenceInput.addEventListener('change', () => setSmartSilenceSeconds(silenceInput.value));
-        }
-        const startCue = section.querySelector('#speech-start-cue-enabled');
-        if (startCue) {
-            startCue.checked = window.GugoGetSpeechStartCueEnabled?.() === true;
-            startCue.addEventListener('change', () => window.GugoSetSpeechStartCueEnabled?.(startCue.checked));
         }
         updateModeDescription(select.value);
         select.addEventListener('change', () => { setMode(select.value); updateCapsuleLabels(); });
@@ -6198,45 +6267,43 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         if (!button) return null;
         const target = retryTargetFromButton(button);
         if (!target.messageId || !target.text) return null;
-        return bindSpeechControl(button, 'learning', {
+        const state = bindSpeechControl(button, 'learning', {
             challengeMessageId: target.messageId,
             challengeTarget: target.text,
             beforeStart: () => window.GugoSetRetryBusy?.(target.messageId, true),
             startFailed: () => window.GugoSetRetryBusy?.(target.messageId, false)
         });
+        if (!state) return null;
+        // Retry uses one delegated click path only. Remove the primary button's
+        // pointer handlers so a physical tap cannot start and stop in one gesture.
+        button.onclick = null;
+        button.onpointerdown = null;
+        button.onpointerup = null;
+        button.onpointercancel = null;
+        button.onlostpointercapture = null;
+        button.ontouchstart = null;
+        button.ontouchend = null;
+        button.ontouchcancel = null;
+        button.dataset.gugoRetryBound = '1';
+        return state;
     }
-    function launchPronunciationRetry(button) {
+    function launchPronunciationRetry(button, event = null) {
         const state = prepareRetryButton(button);
         if (!state) return false;
-        if (window.GugoSpeechActiveControl === button && window.GugoSpeechSessionActive) return stopSpeechControl(button);
+        event?.preventDefault?.();
+        event?.stopPropagation?.();
+        if (window.GugoSpeechActiveControl === button && window.GugoSpeechSessionActive) return stopSpeechControl(button, event);
         if (window.GugoSpeechSessionActive) return false;
         return startSpeechControl(button);
     }
     window.GugoHandlePronunciationRetry = launchPronunciationRetry;
-    function handleRetryPointerDown(event) {
-        const retry = event?.target?.closest?.('.pronunciation-retry');
-        if (!retry || event?.__gugoSpeechHandled) return;
-        const state = prepareRetryButton(retry);
-        if (!state) return;
-        state.pointerDown?.(event);
-    }
-    document.addEventListener('pointerdown', handleRetryPointerDown, true);
-    document.addEventListener('touchstart', event => { if (!window.PointerEvent) handleRetryPointerDown(event); }, true);
     document.addEventListener('click', event => {
         const retry = event.target?.closest?.('.pronunciation-retry');
         if (!retry) return;
-        const state = prepareRetryButton(retry);
-        if (state?.suppressNextClick && Date.now() <= Number(state.suppressClickUntil || 0)) {
-            state.suppressNextClick = false;
-            event.preventDefault?.();
-            event.stopPropagation?.();
-            event.stopImmediatePropagation?.();
-            return;
-        }
         event.preventDefault?.();
         event.stopPropagation?.();
         event.stopImmediatePropagation?.();
-        launchPronunciationRetry(retry);
+        launchPronunciationRetry(retry, event);
     }, true);
     function bindSpeechButton(button, role) { bindSpeechControl(button, role); }
     window.GugoOpenRoomStudy = roomId => {
