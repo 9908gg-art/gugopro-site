@@ -5379,6 +5379,10 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
     function finishWithOptionalDelay(session, explicitStop = false) {
         if (!session || session.finalized) return;
         if (explicitStop || session.stopRequested) { finalizeSession(session); return; }
+        if (session.segmentedSession && session.mode === 'tap') {
+            window.GugoSetSpeechComposerState?.('recording', session.role);
+            return;
+        }
         if (session.mode === 'hold' || session.mode === 'tap' || (session.mode === 'smart' && !session.latestTranscript)) {
             if (session.mode !== 'smart' || !session.latestTranscript) window.GugoSetSpeechComposerState?.('recording', session.role);
             restartRecognition(session, { silent: true });
@@ -5424,6 +5428,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         native.startRecognition({
             language: session.speechLocale,
             partialResults: true,
+            segmentedSession: session.segmentedSession === true,
             onStart: () => {
                 if (session.finalized || session.stopRequested || activeSession?.id !== session.id) {
                     native.stopRecognition().catch(() => {});
@@ -5445,6 +5450,10 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                     return;
                 }
                 const silenceError = /no speech input|speech.?timeout|no.?match|timeout/.test(detail);
+                if (silenceError && session.segmentedSession && session.mode === 'tap') {
+                    window.GugoSetSpeechComposerState?.('recording', session.role);
+                    return;
+                }
                 if (silenceError && session.mode === 'smart' && session.latestTranscript) {
                     beginSmartCountdown(session);
                     return;
@@ -5524,6 +5533,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         catch (error) { restartRecognition(session); }
     }
     function startSession(role, challengeMessageId = null, challengeTarget = '', challengeButton = null) {
+        try { window.stopMessageSpeech?.(); } catch (_) {}
         if (activeSession) {
             if (activeSession.state === 'waiting') finalizeSession(activeSession);
             else { stopActiveSession(); return; }
@@ -5537,6 +5547,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             id: ++sessionCounter,
             role,
             mode: sessionMode,
+            segmentedSession: sessionMode === 'tap',
             speechLocale,
             baseText: challengeMessageId ? '' : String(input?.value || ''),
             originalInput: String(input?.value || ''),
