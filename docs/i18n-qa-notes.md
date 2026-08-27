@@ -69,3 +69,7 @@ Production screenshots for all eight locales were captured after Pages success a
 ### Production eight-locale DOM smoke test
 
 The retry-protected production validator completed all eight HTTPS pages successfully. Every locale returned the expected `html lang` (`zh-TW`, `zh-CN`, `en`, `ja`, `de`, `fr`, `es`, `pt`), exactly eight language options, 22 course chapters, 19 interactive tools, Category 13 content, and the versioned i18n runtime. The production titles were localized for all eight languages. The initial `resourceHints` field in the diagnostic was intentionally not used as a pass criterion because Chromium's post-JavaScript dump does not serialize performance resource entries; direct browser fetch checks on the English production page returned HTTP 200 for the runtime, catalog, locale, phrase and dynamic resources.
+
+### Final Pages-success smoke test
+
+After final QA commit `d90a66fd1c134287826359e8922637df50b02fb0` and Pages run `33050927580` completed successfully, the browser reopened the English Academy at `https://gugopro.com/academy/index.html?lang=en&qa=d90a66f` and the English Trend/Breakout Playbook at `https://gugopro.com/articles/investment/18-trend-following-breakout-playbook.html?lang=en&qa=d90a66f`. Both displayed English content, the eight-option selector, and the unchanged Academy／long-form article geometry. The Playbook showed all nine chapter navigation controls, its research references and internal tool links. No production DOM change was required after the smoke test.
