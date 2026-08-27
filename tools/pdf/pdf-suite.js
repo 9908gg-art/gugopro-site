@@ -216,7 +216,10 @@
     thumbnails: { zh: '💡 縮圖面板已開啟：點擊縮圖跳頁，勾選後可做頁面管理。', en: '💡 Thumbnails are open: tap a thumbnail to jump, or check pages for organization.' },
     ai: { zh: '💡 AI 助手已開啟：可直接提問，或先切換到預設工具。', en: '💡 AI Assistant is open: ask a question or switch to Preset tools.' },
     aiBack: { zh: '💡 已返回 PDF 閱讀畫面；可繼續閱讀或使用上方工具列。', en: '💡 Returned to the PDF; continue reading or use the toolbar.' },
-    sidebarTab: { zh: '💡 已切換側欄檢視；點擊縮圖可直接跳到該頁。', en: '💡 Sidebar view changed; tap a thumbnail to jump to that page.' }
+    sidebarTab: { zh: '💡 已切換側欄檢視；點擊縮圖可直接跳到該頁。', en: '💡 Sidebar view changed; tap a thumbnail to jump to that page.' },
+    ocr: { zh: '💡 OCR 已準備：選擇圖片、貼上截圖或指定目前 PDF 頁面，再按開始 OCR。', en: '💡 OCR is ready: choose an image, paste a screenshot, or use the current PDF page, then start OCR.' },
+    ocrCurrent: { zh: '💡 已取出目前 PDF 頁面的高畫質影像，現在可以開始 OCR。', en: '💡 The current PDF page is ready as a high-resolution image for OCR.' },
+    universal: { zh: '💡 萬能轉檔已完成；檔案只在本機建立並下載。', en: '💡 Universal conversion finished; the file was created and downloaded locally.' }
   };
   function actionGuide(key) {
     var copy = ACTION_GUIDES[key] || ACTION_GUIDES.annotationPanel;
@@ -1008,6 +1011,7 @@
     log.appendChild(fragment); log.scrollTop = log.scrollHeight;
     var empty = $('pdf-preset-output-empty'); if (empty) empty.hidden = workspace.messages.length > 0;
     savePresetWorkspaces();
+    if (workspace.messages.length) autoCollapseWorkspaceTools('preset');
   }
   function addPresetMessage(action, role, text, id) {
     var message = { id: id || 'preset_msg_' + action + '_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), role: role === 'user' ? 'user' : 'assistant', text: String(text || '').slice(0, 30000), createdAt: new Date().toISOString() };
@@ -1015,6 +1019,7 @@
     if (action === presetActiveAction) {
       var log = $('pdf-preset-log'); if (log) { log.appendChild(buildChatMessageNode(message.role, message.text, message.id, 'pdf-preset-log')); log.scrollTop = log.scrollHeight; }
       var empty = $('pdf-preset-output-empty'); if (empty) empty.hidden = true;
+      autoCollapseWorkspaceTools('preset');
     }
     return message;
   }
@@ -1030,10 +1035,21 @@
   function handleMoreAction(mode, action) { closeMoreMenus(); if (action === 'copy-all') return copyTextToClipboard(getConversationText(mode)); if (action === 'export-md') return downloadConversation(mode, 'md'); if (action === 'export-txt') return downloadConversation(mode, 'txt'); if (action === 'clear') { if (mode === 'preset') clearPresetWorkspace(presetActiveAction); else if (window.GugoProPdfRooms && window.GugoProPdfRooms.clearActiveMessages) window.GugoProPdfRooms.clearActiveMessages(); } }
   function toggleAiExpanded() {
     var pane = $('pdf-ai-pane'); var button = $('pdf-ai-expand'); if (!pane || !button) return;
-    var expanded = pane.classList.toggle('is-expanded'); button.setAttribute('aria-expanded', expanded ? 'true' : 'false'); button.title = expanded ? (IS_EN ? 'Restore AI workspace' : '還原 AI 工作區') : (IS_EN ? 'Expand AI workspace' : '放大 AI 工作區'); var icon = button.querySelector('i'); if (icon) icon.className = expanded ? 'fa-solid fa-compress' : 'fa-solid fa-expand'; var label = button.querySelector('span'); if (label) label.textContent = expanded ? (IS_EN ? 'Restore' : '還原') : (IS_EN ? 'Expand' : '放大');
-    if (expanded) toast(IS_EN ? 'AI workspace expanded for easier reading.' : 'AI 工作區已放大，方便閱讀長篇結果。');
+    var expanded = pane.classList.toggle('is-expanded'); button.setAttribute('aria-expanded', expanded ? 'true' : 'false'); button.title = expanded ? (IS_EN ? 'Restore AI Assistant' : '還原 AI 助手') : (IS_EN ? 'Expand AI Assistant' : '放大 AI 助手'); var icon = button.querySelector('i'); if (icon) icon.className = expanded ? 'fa-solid fa-compress' : 'fa-solid fa-expand'; var label = button.querySelector('span'); if (label) label.textContent = expanded ? (IS_EN ? 'Restore AI Assistant' : '還原 AI 助手') : (IS_EN ? 'Expand AI Assistant' : '放大 AI 助手');
+    if (expanded) toast(IS_EN ? 'AI Assistant expanded for easier reading.' : 'AI 助手已放大，方便閱讀長篇結果。');
   }
 
+  function getPresetTranslationLanguage() {
+    var select = $('pdf-preset-translate-language'); if (!select) return IS_EN ? 'Traditional Chinese' : '繁體中文';
+    if (select.value !== '__custom__') return String(select.value || '').trim();
+    var input = $('pdf-preset-custom-language'); var custom = String(input && input.value || '').trim();
+    if (!custom) { setStatus(IS_EN ? 'Enter a custom target language first.' : '請先輸入自訂目標語言。', 'error'); if (input) input.focus(); return null; }
+    return custom.slice(0, 80);
+  }
+  function syncPresetCustomLanguageInput() {
+    var select = $('pdf-preset-translate-language'); var input = $('pdf-preset-custom-language'); if (!select || !input) return;
+    var custom = select.value === '__custom__'; input.hidden = !custom; input.setAttribute('aria-hidden', custom ? 'false' : 'true'); if (custom) window.setTimeout(function () { input.focus(); }, 0);
+  }
   async function extractTextFromPdfFile(file) {
     if (!file) return '';
     var pdfjs = await ensurePdfJs();
@@ -1052,6 +1068,7 @@
     action = String(action || '').toLowerCase();
     if (!TASK_PROMPTS[action]) return;
     presetActiveAction = action; renderPresetWorkspace(action); switchAiTab('preset');
+    autoCollapseWorkspaceTools('preset');
     if (action === 'diff' && !comparisonFile) {
       pendingTaskAction = action; pendingTaskSupplement = String(supplement || '');
       var diffInput = $('pdf-diff-input');
@@ -1066,7 +1083,8 @@
     var node = document.querySelector('#pdf-preset-log [data-message-id="' + taskId + '"]'); if (node) node.classList.add('is-pending');
     try {
       var comparisonText = comparisonFile ? await extractTextFromPdfFile(comparisonFile) : '';
-      var language = action === 'translate' ? String($('pdf-preset-translate-language') && $('pdf-preset-translate-language').value || (IS_EN ? 'Traditional Chinese' : '繁體中文')) : '';
+      var language = action === 'translate' ? getPresetTranslationLanguage() : '';
+      if (action === 'translate' && language === null) throw new Error('CUSTOM_TRANSLATION_REQUIRED');
       var languagePrompt = language ? (IS_EN ? '\n\nTarget language: ' + language + '. Translate the document into this language.' : '\n\n目標語言：【' + language + '】。請將 PDF 內容精準翻譯為此語言。') : '';
       var prompt = TASK_PROMPTS[action] + languagePrompt + (comparisonText ? (IS_EN ? '\n\nComparison version text:\n' : '\n\n比較版本文字如下：\n') + comparisonText : '') + (supplement ? (IS_EN ? '\n\nUser follow-up requirement:\n' : '\n\n使用者補充要求：\n') + String(supplement).slice(0, 8000) : '') + (IS_EN ? '\n\nReply in English in this preset workspace, cite pages, and do not change any custom task room.' : '\n\n請直接回覆在目前預設工具工作區，使用繁體中文並附頁碼；不要修改或保存任何自訂任務房間。');
       var answer = await requestAi(prompt, { maxOutputTokens: action === 'quiz' ? 4200 : 5000, ignoreRoomContext: true });
@@ -1076,6 +1094,7 @@
     } catch (error) {
       deletePresetMessage(action, taskId);
       if (error.message === 'NO_KEY') showAiError(IS_EN ? 'Open ⚙️ Settings in the AI rail and add a Gemini API key.' : '請先在 AI 側欄右上角的「⚙️ 設定」輸入 Gemini API key。', false);
+      else if (error.message === 'CUSTOM_TRANSLATION_REQUIRED') showAiError(IS_EN ? 'Enter a custom target language first.' : '請先輸入自訂目標語言。', false);
       else if ([503, 429, 500, 'TIMEOUT'].includes(error.status)) showAiError(IS_EN ? 'The AI model is busy or timed out; automatic fallback is active.' : 'AI 模型目前忙碌或逾時，系統會自動輪替；', true);
       else showAiError((IS_EN ? meta.label + ' failed: ' : '「' + meta.label + '」任務未完成：') + (error.message || (IS_EN ? 'Connection failed.' : '連線失敗。')), false);
     }
@@ -1083,17 +1102,18 @@
 
   async function handlePresetFollowup() {
     var input = $('pdf-preset-input'); var question = String(input && input.value || '').trim(); if (!question) return;
-    var action = presetActiveAction; var history = getPresetWorkspace(action).messages.slice(-8).map(function (item) { return presetText(item.role, item.text); }).join('\n\n'); var userId = 'preset_user_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7); var assistantId = userId + '_assistant';
+    var action = presetActiveAction; autoCollapseWorkspaceTools('preset'); var history = getPresetWorkspace(action).messages.slice(-8).map(function (item) { return presetText(item.role, item.text); }).join('\n\n'); var userId = 'preset_user_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7); var assistantId = userId + '_assistant';
     addPresetMessage(action, 'user', question, userId); if (input) { input.value = ''; input.style.height = ''; input.dispatchEvent(new Event('input', { bubbles: true })); }
     addPresetMessage(action, 'assistant', IS_EN ? 'Analyzing the follow-up request…' : '正在依照補充要求分析…', assistantId);
     var node = document.querySelector('#pdf-preset-log [data-message-id="' + assistantId + '"]'); if (node) node.classList.add('is-pending');
     var button = $('pdf-preset-send'); if (button) button.disabled = true;
     try {
-      var meta = PRESET_META[action]; var language = action === 'translate' ? String($('pdf-preset-translate-language') && $('pdf-preset-translate-language').value || (IS_EN ? 'Traditional Chinese' : '繁體中文')) : '';
+      var meta = PRESET_META[action]; var language = action === 'translate' ? getPresetTranslationLanguage() : '';
+      if (action === 'translate' && language === null) return;
       var prompt = (IS_EN ? 'Continue the ' + meta.label + ' analysis in the current preset workspace. ' : '請繼續目前「' + meta.label + '」預設工具分析。') + (language ? (IS_EN ? 'Use target language ' + language + '. ' : '目標語言為【' + language + '】。') : '') + (IS_EN ? 'Answer this follow-up requirement with page citations:\n' : '請回答以下補充要求並附頁碼：\n') + question + (history ? (IS_EN ? '\n\nRecent workspace chat:\n' : '\n\n目前工具最近對話：\n') + history : '');
       var answer = await requestAi(prompt, { maxOutputTokens: 4200, ignoreRoomContext: true });
       updatePresetMessage(action, assistantId, answer || (IS_EN ? 'No answer returned.' : 'AI 沒有回傳內容。')); if (node) node.classList.remove('is-pending');
-    } catch (error) { deletePresetMessage(action, assistantId); if (error.message === 'NO_KEY') showAiError(IS_EN ? 'Open ⚙️ Settings and add a Gemini API key.' : '請先在「⚙️ 設定」輸入 Gemini API key。', false); else showAiError(IS_EN ? 'Follow-up failed: ' + (error.message || 'Connection failed.') : '補充要求未完成：' + (error.message || '連線失敗。'), false); }
+    } catch (error) { deletePresetMessage(action, assistantId); if (error.message === 'NO_KEY') showAiError(IS_EN ? 'Open ⚙️ Settings and add a Gemini API key.' : '請先在「⚙️ 設定」輸入 Gemini API key。', false); else if (error.message === 'CUSTOM_TRANSLATION_REQUIRED') showAiError(IS_EN ? 'Enter a custom target language first.' : '請先輸入自訂目標語言。', false); else showAiError(IS_EN ? 'Follow-up failed: ' + (error.message || 'Connection failed.') : '補充要求未完成：' + (error.message || '連線失敗。'), false); }
     finally { if (button) button.disabled = false; }
   }
 
@@ -1248,7 +1268,7 @@
       var zip = new JSZip();
       for (var index = 0; index < state.pageOrder.length; index += 1) {
         var pageNumber = state.pageOrder[index]; var page = await state.pdf.getPage(pageNumber); var viewport = page.getViewport({ scale: 1.6, rotation: getPageDisplayRotation(pageNumber) }); var canvas = makeCanvas(viewport.width, viewport.height); await page.render({ canvasContext: canvas.getContext('2d'), viewport: viewport }).promise;
-        var data = canvas.toDataURL(format === 'jpg' ? 'image/jpeg' : 'image/png', format === 'jpg' ? .9 : undefined); zip.file('page-' + String(pageNumber).padStart(3, '0') + '.' + format, data.split(',')[1], { base64: true }); setProgress(((index + 1) / state.pageOrder.length) * 82);
+        var mime = format === 'jpg' ? 'image/jpeg' : format === 'webp' ? 'image/webp' : 'image/png'; var data = canvas.toDataURL(mime, format === 'jpg' ? .9 : undefined); var extension = format === 'jpg' ? 'jpg' : format === 'webp' ? 'webp' : 'png'; zip.file('page-' + String(pageNumber).padStart(3, '0') + '.' + extension, data.split(',')[1], { base64: true }); setProgress(((index + 1) / state.pageOrder.length) * 82);
       }
       var blob = await zip.generateAsync({ type: 'blob' }); downloadBlob(blob, safeName(state.file.name) + '-' + format + '-images.zip'); setProgress(100); setStatus('已產生 ' + state.pageOrder.length + ' 張 ' + format.toUpperCase() + ' 圖片並打包 ZIP。', 'success');
     } catch (error) { setStatus('轉圖片失敗：' + (error.message || 'Canvas 匯出失敗。'), 'error'); setProgress(0); }
@@ -1379,6 +1399,7 @@
   function switchAiTab(name) {
     qsa('.pdf-ai-tab').forEach(function (tab) { tab.classList.toggle('is-active', tab.dataset.aiTab === name); });
     qsa('.pdf-ai-view').forEach(function (view) { view.hidden = view.dataset.aiView !== name; });
+    syncWorkspaceToolsForTab(name);
   }
 
   function scrollChatToLatest(node, targetLog) {
@@ -1453,6 +1474,7 @@
       appendChat('user', question, userMessageId);
       if (input) { input.value = ''; input.style.height = ''; input.dispatchEvent(new Event('input', { bubbles: true })); }
     }
+    autoCollapseWorkspaceTools('task');
     var button = $('pdf-chat-send'); if (button) button.disabled = true;
     var pendingNode = appendChat('assistant', '正在分析文件，整理頁碼引用…', assistantMessageId);
     if (pendingNode) pendingNode.classList.add('is-pending');
@@ -1504,6 +1526,7 @@
     var progressText = IS_EN ? '🚀 Running the saved rules for “' + room.name + '” on the current PDF…' : '🚀 正在依據【' + room.name + '】自訂規則分析當前 PDF 文件…';
     var node = appendChat('assistant', progressText, executionId);
     if (node) node.classList.add('is-pending');
+    autoCollapseWorkspaceTools('task');
     try {
             var executionPrompt = IS_EN ? 'Run this custom AI project now. Analyze the whole document according to the saved core task rule, then output findings, evidence pages, priorities, and next actions as a concise Markdown report.' : '請立即執行這個自訂 AI 專案任務。先按照核心任務條件逐項分析整份文件，再以條列方式輸出發現、證據頁碼、優先級與可採取的下一步。';
       var answer = await requestAi(executionPrompt, { maxOutputTokens: 5000 }); var emptyAnswer = IS_EN ? 'The project returned no content.' : '專案任務沒有回傳內容。'; updateChatMessage(node, answer || emptyAnswer); if (node) node.classList.remove('is-pending');
@@ -1842,7 +1865,7 @@
       if (closeButton) {
         window.setTimeout(function () { try { closeButton.focus({ preventScroll: true }); } catch (_) {} }, 0);
       }
-      var guideKey = panel.id === 'pdf-annotate-popover' ? 'annotationPanel' : panel.id === 'pdf-pages-popover' ? 'pagesPanel' : 'convertPanel';
+      var guideKey = panel.id === 'pdf-annotate-popover' ? 'annotationPanel' : panel.id === 'pdf-pages-popover' ? 'pagesPanel' : panel.id === 'pdf-convert-popover' ? 'convertPanel' : panel.id === 'pdf-ocr-popover' ? 'ocr' : panel.id === 'pdf-universal-convert-popover' ? 'universal' : 'convertPanel';
       actionGuide(guideKey);
     }
     qsa('[data-popover-target]').forEach(function (toggle) {
@@ -1864,6 +1887,177 @@
     window.addEventListener('popstate', function () { if (openPopover && mobileHistoryPushed) { mobileHistoryPushed = false; closeAll(true); } });
   }
 
+  var workspaceToolsCollapsed = { task: false, preset: false };
+  function syncWorkspaceToolsLabels() {
+    var customRoom = window.GugoProPdfRooms && window.GugoProPdfRooms.getActiveRoom ? window.GugoProPdfRooms.getActiveRoom() : null;
+    var taskLabel = $('pdf-task-tools-current');
+    if (taskLabel) taskLabel.textContent = customRoom ? customRoom.name : (IS_EN ? 'General PDF Analysis' : '一般 PDF 分析房間');
+    var presetLabel = $('pdf-preset-tools-current');
+    if (presetLabel) presetLabel.textContent = PRESET_META[presetActiveAction] ? PRESET_META[presetActiveAction].title : presetActiveAction;
+  }
+  function setWorkspaceToolsCollapsed(mode, collapsed) {
+    var key = mode === 'preset' ? 'preset' : 'task';
+    var panel = $(key === 'preset' ? 'pdf-preset-tools-panel' : 'pdf-task-tools-panel');
+    var bar = $(key === 'preset' ? 'pdf-preset-tools-toggle' : 'pdf-task-tools-toggle');
+    workspaceToolsCollapsed[key] = Boolean(collapsed);
+    if (panel) { panel.classList.toggle('is-collapsed', workspaceToolsCollapsed[key]); panel.setAttribute('aria-hidden', workspaceToolsCollapsed[key] ? 'true' : 'false'); }
+    if (bar) { bar.hidden = !workspaceToolsCollapsed[key]; bar.setAttribute('aria-expanded', workspaceToolsCollapsed[key] ? 'false' : 'true'); }
+    syncWorkspaceToolsLabels();
+  }
+  function toggleWorkspaceTools(mode) { setWorkspaceToolsCollapsed(mode, !workspaceToolsCollapsed[mode]); }
+  function autoCollapseWorkspaceTools(mode) { setWorkspaceToolsCollapsed(mode, true); }
+  function syncWorkspaceToolsForTab(name) {
+    syncWorkspaceToolsLabels();
+    if (name === 'task' && $('pdf-chat-log') && $('pdf-chat-log').children.length) autoCollapseWorkspaceTools('task');
+    if (name === 'preset' && $('pdf-preset-log') && $('pdf-preset-log').children.length) autoCollapseWorkspaceTools('preset');
+  }
+
+  var ocrSource = { kind: '', file: null, canvas: null, label: '' };
+  var tesseractPromise = null;
+  var fontkitPromise = null;
+  var searchableFontPromise = null;
+  var TESSERACT_SCRIPT = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+  var FONTKIT_SCRIPT = 'https://cdn.jsdelivr.net/npm/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js';
+  var CJK_FONT_URL = 'https://raw.githubusercontent.com/notofonts/noto-cjk/main/Sans/OTF/TraditionalChinese/NotoSansCJKtc-Regular.otf';
+  function loadPdfSuiteExternalScript(src, globalName) {
+    if (window[globalName]) return Promise.resolve(window[globalName]);
+    var selector = 'script[data-pdf-suite-external="' + globalName + '"]';
+    var existing = document.querySelector(selector);
+    if (existing && existing.__pdfSuitePromise) return existing.__pdfSuitePromise;
+    var script = existing || document.createElement('script');
+    script.src = src; script.async = true; script.dataset.pdfSuiteExternal = globalName;
+    script.__pdfSuitePromise = new Promise(function (resolve, reject) {
+      script.onload = function () { if (window[globalName]) resolve(window[globalName]); else reject(new Error(globalName + ' unavailable')); };
+      script.onerror = function () { reject(new Error('Unable to load ' + globalName)); };
+    });
+    if (!existing) document.head.appendChild(script);
+    return script.__pdfSuitePromise;
+  }
+  function ensureTesseract() { if (window.Tesseract) return Promise.resolve(window.Tesseract); if (!tesseractPromise) tesseractPromise = loadPdfSuiteExternalScript(TESSERACT_SCRIPT, 'Tesseract'); return tesseractPromise; }
+  function ensureFontkit() { if (window.fontkit) return Promise.resolve(window.fontkit); if (!fontkitPromise) fontkitPromise = loadPdfSuiteExternalScript(FONTKIT_SCRIPT, 'fontkit'); return fontkitPromise; }
+  function setOcrSource(source, label) {
+    ocrSource = source || { kind: '', file: null, canvas: null, label: '' };
+    var sourceNode = $('pdf-ocr-source'); if (sourceNode) sourceNode.textContent = label || (IS_EN ? 'No OCR image source selected.' : '尚未選擇 OCR 圖片來源。');
+    var output = $('pdf-ocr-output'); if (output && !source) output.value = '';
+  }
+  function setOcrProgress(value, label) {
+    var bar = $('pdf-ocr-progress-bar'); var textNode = $('pdf-ocr-progress-label');
+    if (bar) bar.style.width = Math.max(0, Math.min(100, Number(value) || 0)) + '%';
+    if (textNode) textNode.textContent = label || (IS_EN ? 'Waiting' : '等待辨識');
+  }
+  async function getCurrentPdfOcrCanvas() {
+    if (!state.pdf) throw new Error(IS_EN ? 'Open a PDF first.' : '請先開啟 PDF。');
+    var page = await state.pdf.getPage(state.currentPage); var viewport = page.getViewport({ scale: 2.1, rotation: getPageDisplayRotation(state.currentPage) }); var canvas = makeCanvas(viewport.width, viewport.height, 'pdf-ocr-source-canvas');
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport: viewport }).promise; return canvas;
+  }
+  function imageFileToCanvas(file) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(file); var image = new Image();
+      image.onload = function () { var canvas = makeCanvas(image.naturalWidth || image.width, image.naturalHeight || image.height, 'pdf-ocr-source-canvas'); canvas.getContext('2d').drawImage(image, 0, 0); URL.revokeObjectURL(url); resolve(canvas); };
+      image.onerror = function () { URL.revokeObjectURL(url); reject(new Error(IS_EN ? 'The selected image could not be read.' : '無法讀取選取的圖片。')); }; image.src = url;
+    });
+  }
+  async function runOcr() {
+    var output = $('pdf-ocr-output'); var typed = String($('ocr-paste-input') && $('ocr-paste-input').value || '').trim();
+    if (!ocrSource.kind && typed) { if (output) output.value = typed; setOcrProgress(100, IS_EN ? 'Pasted text is ready.' : '已使用貼上的文字。'); actionGuide('ocr'); return; }
+    if (!ocrSource.kind) { setStatus(IS_EN ? 'Choose an image, paste a screenshot, or select the current PDF page.' : '請選擇圖片、貼上截圖，或指定目前 PDF 頁面。', 'error'); return; }
+    var runButton = $('pdf-ocr-run'); if (runButton) runButton.disabled = true; setOcrProgress(8, IS_EN ? 'Loading OCR engine…' : '正在載入 OCR 引擎…');
+    try {
+      var Tesseract = await ensureTesseract(); var language = String(($('ocr-language') || {}).value || 'eng'); var source = ocrSource.file || ocrSource.canvas;
+      var result = await Tesseract.recognize(source, language, { logger: function (info) { if (info && typeof info.progress === 'number') setOcrProgress(10 + info.progress * 82, info.status || (IS_EN ? 'Recognizing…' : '正在辨識…')); } });
+      var textValue = String(result && result.data && result.data.text || '').trim(); if (output) output.value = textValue;
+      setOcrProgress(100, textValue ? (IS_EN ? 'OCR complete.' : 'OCR 完成。') : (IS_EN ? 'No text detected.' : '沒有辨識到文字。')); setStatus(textValue ? (IS_EN ? 'OCR completed locally.' : 'OCR 已在本機完成。') : (IS_EN ? 'OCR found no text.' : 'OCR 沒有辨識到文字。'), textValue ? 'success' : 'error'); actionGuide('ocr');
+    } catch (error) { setOcrProgress(0, IS_EN ? 'OCR failed.' : 'OCR 失敗。'); setStatus((IS_EN ? 'OCR failed: ' : 'OCR 失敗：') + (error.message || (IS_EN ? 'Check the image or network.' : '請檢查圖片或網路。')), 'error'); }
+    finally { if (runButton) runButton.disabled = false; }
+  }
+  function getOcrText() { var value = String($('pdf-ocr-output') && $('pdf-ocr-output').value || '').trim(); if (!value) { setStatus(IS_EN ? 'Run OCR or enter text first.' : '請先執行 OCR 或輸入文字。', 'error'); return ''; } return value; }
+  function downloadOcrText(extension) { var value = getOcrText(); if (!value) return; var prefix = safeName(state.file && state.file.name || 'ocr-result'); var mime = extension === 'md' ? 'text/markdown;charset=utf-8' : 'text/plain;charset=utf-8'; downloadBlob(new Blob([value], { type: mime }), prefix + '-ocr.' + extension); setStatus(IS_EN ? 'OCR text downloaded.' : 'OCR 文字已下載。', 'success'); }
+  function wrapPdfText(font, value, size, maxWidth) {
+    var lines = []; String(value || '').split(/\r?\n/).forEach(function (raw) { if (!raw) { lines.push(''); return; } var current = ''; Array.from(raw).forEach(function (char) { var candidate = current + char; if (current && font.widthOfTextAtSize(candidate, size) > maxWidth) { lines.push(current); current = char; } else current = candidate; }); lines.push(current); }); return lines;
+  }
+  async function getSearchablePdfFont(pdfDocument, sourceText) {
+    var PDFLib = requirePdfLib();
+    if (!/[^\x00-\x7F]/.test(sourceText || '')) return { font: await pdfDocument.embedFont(PDFLib.StandardFonts.Helvetica), unicode: false };
+    try {
+      var fontkit = await ensureFontkit(); pdfDocument.registerFontkit(fontkit); if (!searchableFontPromise) searchableFontPromise = fetch(CJK_FONT_URL).then(function (response) { if (!response.ok) throw new Error('CJK font fetch failed'); return response.arrayBuffer(); });
+      var bytes = await searchableFontPromise; return { font: await pdfDocument.embedFont(bytes, { subset: true }), unicode: true };
+    } catch (_) { return { font: await pdfDocument.embedFont(PDFLib.StandardFonts.Helvetica), unicode: false }; }
+  }
+  async function downloadSearchableOcrPdf() {
+    var value = getOcrText(); if (!value) return; var PDFLib = requirePdfLib(); var pdfDocument = await PDFLib.PDFDocument.create(); var fontInfo = await getSearchablePdfFont(pdfDocument, value); var sourceCanvas = ocrSource.canvas;
+    var pageWidth = 595; var pageHeight = 842; if (sourceCanvas && sourceCanvas.width && sourceCanvas.height) pageHeight = Math.max(420, Math.min(842, pageWidth * sourceCanvas.height / sourceCanvas.width));
+    var lines = wrapPdfText(fontInfo.font, fontInfo.unicode ? value : safePdfText(value), 11, pageWidth - 72); var lineHeight = 16; var cursor = 0;
+    while (cursor < lines.length) { var page = pdfDocument.addPage([pageWidth, pageHeight]); var y = pageHeight - 48; if (sourceCanvas && cursor === 0) { try { var image = await pdfDocument.embedPng(sourceCanvas.toDataURL('image/png')); page.drawImage(image, { x: 0, y: 0, width: pageWidth, height: pageHeight, opacity: .99 }); } catch (_) {} }
+      while (cursor < lines.length && y > 42) { var line = lines[cursor++]; if (line) page.drawText(line, { x: 36, y: y, size: 11, font: fontInfo.font, color: PDFLib.rgb(0, 0, 0), opacity: sourceCanvas ? .025 : 1 }); y -= lineHeight; }
+    }
+    var bytes = await pdfDocument.save(); var prefix = safeName(state.file && state.file.name || 'ocr-result'); downloadBlob(new Blob([bytes], { type: 'application/pdf' }), prefix + '-searchable-ocr.pdf'); setStatus(IS_EN ? 'Searchable OCR PDF downloaded locally.' : '可搜尋 OCR PDF 已在本機下載。', 'success');
+  }
+  async function startOcrRegionSelection() {
+    var sourceCanvas = await getCurrentPdfOcrCanvas();
+    var modal = document.createElement('div'); modal.className = 'pdf-ocr-region-modal'; modal.setAttribute('role', 'dialog'); modal.setAttribute('aria-modal', 'true'); modal.setAttribute('aria-label', IS_EN ? 'Select OCR region' : '選取 OCR 區域');
+    var card = document.createElement('div'); card.className = 'pdf-ocr-region-card';
+    var head = document.createElement('div'); head.className = 'pdf-popover-head'; var title = document.createElement('strong'); title.textContent = IS_EN ? 'Select an OCR region' : '框選 OCR 區域'; var close = document.createElement('button'); close.type = 'button'; close.className = 'pdf-popover-close'; close.setAttribute('aria-label', IS_EN ? 'Cancel' : '取消'); close.innerHTML = '<i class="fa-solid fa-xmark"></i>'; head.appendChild(title); head.appendChild(close);
+    var hint = document.createElement('p'); hint.className = 'pdf-ocr-region-hint'; hint.textContent = IS_EN ? 'Drag across the page to select the area to recognize.' : '在頁面上拖曳，框選要辨識的區域。';
+    var stage = document.createElement('div'); stage.className = 'pdf-ocr-region-stage';
+    var maxWidth = Math.max(280, Math.min(window.innerWidth - 32, 880)); var maxHeight = Math.max(240, Math.min(window.innerHeight - 190, 620)); var scale = Math.min(1, maxWidth / sourceCanvas.width, maxHeight / sourceCanvas.height); var displayWidth = Math.max(1, Math.round(sourceCanvas.width * scale)); var displayHeight = Math.max(1, Math.round(sourceCanvas.height * scale));
+    var preview = document.createElement('canvas'); preview.width = sourceCanvas.width; preview.height = sourceCanvas.height; preview.style.width = displayWidth + 'px'; preview.style.height = displayHeight + 'px'; preview.getContext('2d').drawImage(sourceCanvas, 0, 0); stage.style.width = displayWidth + 'px'; stage.style.height = displayHeight + 'px'; stage.appendChild(preview);
+    var selection = document.createElement('div'); selection.className = 'pdf-ocr-region-selection'; selection.hidden = true; stage.appendChild(selection);
+    var actions = document.createElement('div'); actions.className = 'pdf-button-row pdf-ocr-region-actions'; var cancel = document.createElement('button'); cancel.type = 'button'; cancel.className = 'pdf-action-button'; cancel.textContent = IS_EN ? 'Cancel' : '取消'; var use = document.createElement('button'); use.type = 'button'; use.className = 'pdf-action-button primary'; use.disabled = true; use.textContent = IS_EN ? 'Use selected region' : '使用選取區域'; actions.appendChild(cancel); actions.appendChild(use);
+    card.appendChild(head); card.appendChild(hint); card.appendChild(stage); card.appendChild(actions); modal.appendChild(card); document.body.appendChild(modal); document.body.classList.add('pdf-ocr-region-open');
+    var start = null; var latest = null;
+    function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
+    function getPoint(event) { var point = event.touches && event.touches[0] || event.changedTouches && event.changedTouches[0] || event; var rect = stage.getBoundingClientRect(); return { x: clamp(point.clientX - rect.left, 0, rect.width), y: clamp(point.clientY - rect.top, 0, rect.height) }; }
+    function updateSelection(event) { if (!start) return; var point = getPoint(event); var x = Math.min(start.x, point.x); var y = Math.min(start.y, point.y); var width = Math.abs(point.x - start.x); var height = Math.abs(point.y - start.y); latest = { x: x, y: y, width: width, height: height }; selection.hidden = width < 2 || height < 2; selection.style.left = x + 'px'; selection.style.top = y + 'px'; selection.style.width = width + 'px'; selection.style.height = height + 'px'; use.disabled = width < 12 || height < 12; }
+    function stopSelection(event) { updateSelection(event); start = null; }
+    function closeModal() { document.removeEventListener('keydown', onKeydown); document.body.classList.remove('pdf-ocr-region-open'); modal.remove(); }
+    function onKeydown(event) { if (event.key === 'Escape') closeModal(); }
+    stage.addEventListener('pointerdown', function (event) { event.preventDefault(); start = getPoint(event); latest = null; use.disabled = true; selection.hidden = false; if (stage.setPointerCapture) stage.setPointerCapture(event.pointerId); });
+    stage.addEventListener('pointermove', function (event) { if (start) { event.preventDefault(); updateSelection(event); } }); stage.addEventListener('pointerup', function (event) { if (start) { event.preventDefault(); stopSelection(event); } }); stage.addEventListener('pointercancel', function () { start = null; });
+    close.addEventListener('click', closeModal); cancel.addEventListener('click', closeModal); document.addEventListener('keydown', onKeydown);
+    use.addEventListener('click', function () { if (!latest || latest.width < 12 || latest.height < 12) return; var crop = document.createElement('canvas'); crop.width = Math.max(1, Math.round(latest.width / scale)); crop.height = Math.max(1, Math.round(latest.height / scale)); crop.getContext('2d').drawImage(sourceCanvas, Math.round(latest.x / scale), Math.round(latest.y / scale), crop.width, crop.height, 0, 0, crop.width, crop.height); setOcrSource({ kind: 'region', file: null, canvas: crop, label: IS_EN ? 'Selected page region' : '目前頁面選取區域' }, IS_EN ? 'Selected PDF region is ready for OCR.' : '目前 PDF 選取區域已準備 OCR。'); closeModal(); });
+    close.focus();
+  }
+  function bindOcrControls() {
+    var imageInput = $('ocr-image-input'); var pick = $('pdf-ocr-pick'); var paste = $('ocr-paste-input');
+    if (pick && imageInput) pick.addEventListener('click', function () { imageInput.click(); actionGuide('ocr'); });
+    if (imageInput) imageInput.addEventListener('change', function () { var file = this.files && this.files[0]; if (file) setOcrSource({ kind: 'image', file: file, canvas: null, label: file.name }, (IS_EN ? 'Image source: ' : '圖片來源：') + file.name); this.value = ''; });
+    if (paste) paste.addEventListener('paste', function (event) { var files = event.clipboardData && event.clipboardData.files; var image = files && Array.prototype.slice.call(files).find(function (file) { return /^image\//.test(file.type); }); if (image) { event.preventDefault(); setOcrSource({ kind: 'image', file: image, canvas: null, label: IS_EN ? 'Pasted screenshot' : '已貼上的截圖' }, IS_EN ? 'Pasted screenshot image is ready.' : '已接收貼上的截圖，可開始 OCR。'); } });
+    $('pdf-ocr-current')?.addEventListener('click', async function () { try { var canvas = await getCurrentPdfOcrCanvas(); setOcrSource({ kind: 'current-pdf', file: null, canvas: canvas, label: IS_EN ? 'Current PDF page ' + state.currentPage : '目前 PDF 第 ' + state.currentPage + ' 頁' }, IS_EN ? 'Current PDF page is ready for OCR.' : '目前 PDF 頁面已準備 OCR。'); actionGuide('ocrCurrent'); } catch (error) { setStatus(error.message, 'error'); } });
+    $('pdf-ocr-region')?.addEventListener('click', function () { startOcrRegionSelection().then(function () { actionGuide('ocrCurrent'); }).catch(function (error) { setStatus(error.message, 'error'); }); });
+    $('pdf-ocr-run')?.addEventListener('click', runOcr); $('pdf-ocr-copy')?.addEventListener('click', function () { var value = getOcrText(); if (value) copyTextToClipboard(value); }); $('pdf-ocr-download-txt')?.addEventListener('click', function () { downloadOcrText('txt'); }); $('pdf-ocr-download-md')?.addEventListener('click', function () { downloadOcrText('md'); }); $('pdf-ocr-download-pdf')?.addEventListener('click', function () { downloadSearchableOcrPdf().catch(function (error) { setStatus((IS_EN ? 'Searchable PDF failed: ' : '可搜尋 PDF 失敗：') + (error.message || 'PDF error'), 'error'); }); });
+    setOcrProgress(0, IS_EN ? 'Waiting for an image or PDF page.' : '等待圖片或 PDF 頁面。');
+  }
+  var UNIVERSAL_FORMATS = {
+    docx: { description: IS_EN ? 'Create a local Word document with page markers and text paragraphs.' : '本機建立 Word 文件，保留頁碼與文字段落。', label: 'DOCX' }, txt: { description: IS_EN ? 'Download the PDF text layer as plain text.' : '將 PDF 文字層下載為純文字。', label: 'TXT' }, md: { description: IS_EN ? 'Download the PDF text layer as Markdown.' : '將 PDF 文字層整理為 Markdown。', label: 'Markdown' }, html: { description: IS_EN ? 'Create a standalone HTML reading document.' : '建立可離線閱讀的 HTML 文件。', label: 'HTML' }, png: { description: IS_EN ? 'Render every PDF page as a high-resolution PNG ZIP.' : '將每一頁 PDF 轉成高畫質 PNG 並打包 ZIP。', label: 'PNG ZIP' }, jpg: { description: IS_EN ? 'Render every PDF page as a high-resolution JPG ZIP.' : '將每一頁 PDF 轉成高畫質 JPG 並打包 ZIP。', label: 'JPG ZIP' }, webp: { description: IS_EN ? 'Render every PDF page as a WebP ZIP.' : '將每一頁 PDF 轉成 WebP 並打包 ZIP。', label: 'WebP ZIP' }, csv: { description: IS_EN ? 'Export page text as a page-indexed CSV.' : '將 PDF 文字依頁碼匯出為 CSV。', label: 'CSV' }, xlsx: { description: IS_EN ? 'Create a local spreadsheet with page-indexed text.' : '本機建立依頁碼整理的試算表。', label: 'XLSX' }, pptx: { description: IS_EN ? 'Create a one-slide PowerPoint text summary locally.' : '本機建立一頁式 PowerPoint 文字摘要。', label: 'PPTX' }, epub: { description: IS_EN ? 'Create a lightweight EPUB reading book locally.' : '本機建立輕量 EPUB 電子書。', label: 'EPUB' }
+  };
+  function setUniversalStatus(value, kind) { var node = $('pdf-universal-status'); if (node) node.textContent = value; if (value) setStatus(value, kind || 'success'); }
+  function getUniversalText() { if (!state.pdf) return Promise.reject(new Error(IS_EN ? 'Open a PDF first.' : '請先開啟 PDF。')); return extractAllText(false).then(function (value) { if (!value || !value.trim()) throw new Error(IS_EN ? 'This PDF has no selectable text. Use OCR for scanned pages.' : '這份 PDF 沒有可選取的文字層，掃描頁請先使用 OCR。'); return value.slice(0, 90000); }); }
+  function xmlEscape(value) { return String(value == null ? '' : value).replace(/[&<>"']/g, function (char) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' })[char]; }); }
+  function buildDocxBlob(value) { var JSZip = window.JSZip; if (!JSZip) return Promise.reject(new Error('JSZip unavailable')); var zip = new JSZip(); zip.file('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>'); zip.file('_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>'); zip.file('word/_rels/document.xml.rels', '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"/>'); var body = String(value).split(/\r?\n/).map(function (line) { return line ? '<w:p><w:r><w:t xml:space="preserve">' + xmlEscape(line) + '</w:t></w:r></w:p>' : '<w:p/>'; }).join(''); zip.file('word/document.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>' + body + '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="720" w:right="720" w:bottom="720" w:left="720"/></w:sectPr></w:body></w:document>'); return zip.generateAsync({ type: 'blob' }); }
+  function csvCell(value) { return '"' + String(value == null ? '' : value).replace(/"/g, '""').replace(/\r?\n/g, ' ') + '"'; }
+  function buildPageRows() { var rows = [['Page', 'Text']]; state.pageOrder.forEach(function (page) { rows.push([page, state.pageTexts[page] || '']); }); return rows; }
+  function buildXlsxBlob(rows) { var JSZip = window.JSZip; if (!JSZip) return Promise.reject(new Error('JSZip unavailable')); var zip = new JSZip(); var sheetRows = rows.map(function (row, r) { return '<row r="' + (r + 1) + '">' + row.map(function (cell, c) { var ref = String.fromCharCode(65 + Math.min(c, 25)) + (r + 1); return '<c r="' + ref + '" t="inlineStr"><is><t>' + xmlEscape(cell) + '</t></is></c>'; }).join('') + '</row>'; }).join(''); zip.file('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>'); zip.file('_rels/.rels', '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'); zip.file('xl/workbook.xml', '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="PDF text" sheetId="1" r:id="rId1"/></sheets></workbook>'); zip.file('xl/_rels/workbook.xml.rels', '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>'); zip.file('xl/worksheets/sheet1.xml', '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>' + sheetRows + '</sheetData></worksheet>'); return zip.generateAsync({ type: 'blob' }); }
+  function buildEpubBlob(value, title) { var JSZip = window.JSZip; if (!JSZip) return Promise.reject(new Error('JSZip unavailable')); var zip = new JSZip(); zip.file('mimetype', 'application/epub+zip', { compression: 'STORE' }); zip.file('META-INF/container.xml', '<?xml version="1.0" encoding="UTF-8"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>'); var html = String(value).split(/\r?\n/).map(function (line) { return '<p>' + xmlEscape(line) + '</p>'; }).join(''); zip.file('OEBPS/chapter.xhtml', '<?xml version="1.0" encoding="UTF-8"?><html xmlns="http://www.w3.org/1999/xhtml"><head><title>' + xmlEscape(title) + '</title></head><body><h1>' + xmlEscape(title) + '</h1>' + html + '</body></html>'); zip.file('OEBPS/content.opf', '<?xml version="1.0" encoding="UTF-8"?><package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="book-id"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="book-id">gugopro-pdf-' + Date.now() + '</dc:identifier><dc:title>' + xmlEscape(title) + '</dc:title><dc:language>und</dc:language></metadata><manifest><item id="chapter" href="chapter.xhtml" media-type="application/xhtml+xml"/></manifest><spine><itemref idref="chapter"/></spine></package>'); return zip.generateAsync({ type: 'blob' }); }
+  function buildPptxBlob(value, title) { var JSZip = window.JSZip; if (!JSZip) return Promise.reject(new Error('JSZip unavailable')); var zip = new JSZip(); var text = xmlEscape(String(value).split(/\r?\n/).slice(0, 28).join('\n')); zip.file('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/><Override PartName="/ppt/slides/slide1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/></Types>'); zip.file('_rels/.rels', '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="ppt/presentation.xml"/></Relationships>'); zip.file('ppt/presentation.xml', '<p:presentation xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"><p:sldMasterIdLst/><p:notesMasterIdLst/><p:handoutMasterIdLst/><p:sldIdLst><p:sldId id="256" r:id="rId1"/></p:sldIdLst><p:sldSz cx="12192000" cy="6858000"/><p:notesSz cx="6858000" cy="9144000"/></p:presentation>'); zip.file('ppt/_rels/presentation.xml.rels', '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide1.xml"/></Relationships>'); zip.file('ppt/slides/slide1.xml', '<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"><p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/><p:sp><p:nvSpPr><p:cNvPr id="2" name="Title"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr><p:spPr/><p:txBody><a:bodyPr/><a:lstStyle/><a:p><a:r><a:rPr lang="en-US" sz="2400"/><a:t>' + xmlEscape(title) + '</a:t></a:r></a:p></p:txBody></p:sp><p:sp><p:nvSpPr><p:cNvPr id="3" name="Content"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr><p:spPr/><p:txBody><a:bodyPr/><a:lstStyle/><a:p><a:r><a:rPr lang="en-US" sz="1400"/><a:t>' + text.replace(/\n/g, '</a:t></a:r></a:p><a:p><a:r><a:rPr lang="en-US" sz="1400"/><a:t>') + '</a:t></a:r></a:p></p:txBody></p:sp></p:spTree></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sld>'); return zip.generateAsync({ type: 'blob' }); }
+  function updateUniversalDescription() { var select = $('pdf-universal-format'); var node = $('pdf-universal-description'); if (!select || !node) return; var item = UNIVERSAL_FORMATS[select.value]; node.textContent = item ? item.description : ''; }
+  async function runUniversalConversion() {
+    var select = $('pdf-universal-format'); var format = select && select.value; if (!UNIVERSAL_FORMATS[format]) return; var button = $('pdf-universal-run'); if (button) button.disabled = true; setUniversalStatus(IS_EN ? 'Preparing ' + UNIVERSAL_FORMATS[format].label + ' locally…' : '正在本機準備 ' + UNIVERSAL_FORMATS[format].label + '…', 'loading');
+    try {
+      if (['png', 'jpg', 'webp'].includes(format)) { await renderAllImages(format); setUniversalStatus(IS_EN ? UNIVERSAL_FORMATS[format].label + ' downloaded.' : UNIVERSAL_FORMATS[format].label + ' 已下載。', 'success'); return; }
+      var text = await getUniversalText(); var prefix = safeName(state.file && state.file.name || 'pdf');
+      if (format === 'txt' || format === 'md') { var content = format === 'md' ? '# ' + prefix + '\n\n' + text : text; downloadBlob(new Blob([content], { type: format === 'md' ? 'text/markdown;charset=utf-8' : 'text/plain;charset=utf-8' }), prefix + '.' + format); }
+      else if (format === 'html') { var html = '<!doctype html><html lang="' + (IS_EN ? 'en' : 'zh-Hant') + '"><meta charset="utf-8"><title>' + xmlEscape(prefix) + '</title><style>body{font:16px/1.7 system-ui;max-width:860px;margin:40px auto;padding:0 20px;white-space:pre-wrap}</style><main>' + xmlEscape(text) + '</main></html>'; downloadBlob(new Blob([html], { type: 'text/html;charset=utf-8' }), prefix + '.html'); }
+      else if (format === 'docx') { downloadBlob(await buildDocxBlob(text), prefix + '.docx'); }
+      else if (format === 'csv') { var csv = buildPageRows().map(function (row) { return row.map(csvCell).join(','); }).join('\n'); downloadBlob(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }), prefix + '.csv'); }
+      else if (format === 'xlsx') { downloadBlob(await buildXlsxBlob(buildPageRows()), prefix + '.xlsx'); }
+      else if (format === 'pptx') { downloadBlob(await buildPptxBlob(text, prefix), prefix + '.pptx'); }
+      else if (format === 'epub') { downloadBlob(await buildEpubBlob(text, prefix), prefix + '.epub'); }
+      setUniversalStatus(IS_EN ? UNIVERSAL_FORMATS[format].label + ' downloaded locally.' : UNIVERSAL_FORMATS[format].label + ' 已在本機下載。', 'success'); actionGuide('universal');
+    } catch (error) { setUniversalStatus((IS_EN ? 'Conversion failed: ' : '轉檔失敗：') + (error.message || (IS_EN ? 'Unsupported format.' : '格式不受支援。')), 'error'); }
+    finally { if (button) button.disabled = false; }
+  }
+  function bindUniversalConverterControls() { $('pdf-universal-format')?.addEventListener('change', updateUniversalDescription); $('pdf-universal-run')?.addEventListener('click', runUniversalConversion); updateUniversalDescription(); }
+
   function bindAi() {
     loadPresetWorkspaces(); renderPresetWorkspace(presetActiveAction);
     qsa('[data-ai-tab]').forEach(function (button) { button.addEventListener('click', function () { if (button.dataset.aiTab === 'preset') renderPresetWorkspace(presetActiveAction); switchAiTab(button.dataset.aiTab); }); });
@@ -1883,10 +2077,16 @@
     $('pdf-preset-more')?.addEventListener('click', function (event) { event.stopPropagation(); toggleMoreMenu('pdf-preset-more-menu'); });
     qsa('[data-preset-more]').forEach(function (button) { button.addEventListener('click', function () { handleMoreAction('preset', button.dataset.presetMore); }); });
     $('pdf-ai-expand')?.addEventListener('click', toggleAiExpanded);
+    $('pdf-task-tools-toggle')?.addEventListener('click', function () { toggleWorkspaceTools('task'); });
+    $('pdf-preset-tools-toggle')?.addEventListener('click', function () { toggleWorkspaceTools('preset'); });
+    $('pdf-preset-translate-language')?.addEventListener('change', syncPresetCustomLanguageInput);
+    syncPresetCustomLanguageInput();
     document.addEventListener('click', function (event) { if (!event.target.closest('.pdf-composer-shell')) closeMoreMenus(); });
     $('pdf-open-models')?.addEventListener('click', function () { if (window.GugoProPdfRooms) window.GugoProPdfRooms.openDrawer(true); });
     $('pdf-model-close')?.addEventListener('click', closeModelDrawer); $('pdf-key-close')?.addEventListener('click', closeKeyModal);
     qsa('.pdf-model-drawer, .pdf-modal').forEach(function (overlay) { overlay.addEventListener('click', function (event) { if (event.target === overlay) overlay.classList.remove('is-open'); }); });
+    bindOcrControls(); bindUniversalConverterControls();
+    window.setTimeout(function () { syncWorkspaceToolsForTab('task'); syncWorkspaceToolsLabels(); }, 0);
   }
 
   function syncMobilePageControls() {

@@ -35,7 +35,8 @@
   function ensureGeneralTaskRoom() {
     var general = rooms.find(function (room) { return room.id === 'pdf_general_analysis'; });
     if (!general) { rooms.unshift(makeGeneralRoom()); return; }
-    if (!general.messages.length && !general.pdf && !general.taskRule) { general.name = IS_EN ? 'General PDF Analysis' : '一般 PDF 分析房間'; general.taskSummary = IS_EN ? 'Ask questions about the current document or define your own rule.' : '直接詢問目前文件，或建立自己的核心任務規則。'; }
+    general.name = IS_EN ? 'General PDF Analysis' : '一般 PDF 分析房間';
+    if (!general.messages.length && !general.pdf && !general.taskRule) { general.taskSummary = IS_EN ? 'Ask questions about the current document or define your own rule.' : '直接詢問目前文件，或建立自己的核心任務規則。'; }
     rooms = [general].concat(rooms.filter(function (room) { return room.id !== general.id; }));
   }
 
@@ -45,7 +46,7 @@
     Object.keys(pdf.pageTexts || {}).forEach(function (page) { pageTexts[page] = text(pdf.pageTexts[page]).slice(0, 90000); });
     if (!Object.keys(pageTexts).length) return null;
     return {
-      fileName: text(pdf.fileName || 'PDF 文字層備份').slice(0, 180),
+      fileName: text(pdf.fileName || (IS_EN ? 'PDF text layer backup' : 'PDF 文字層備份')).slice(0, 180),
       fileSize: Number(pdf.fileSize) || 0,
       pageTexts: pageTexts,
       pageOrder: Array.isArray(pdf.pageOrder) ? pdf.pageOrder.map(Number).filter(Boolean) : Object.keys(pageTexts).map(Number).sort(function (a, b) { return a - b; }),
@@ -58,12 +59,12 @@
     var item = room && typeof room === 'object' ? room : {};
     return {
       id: text(item.id || 'pdf_room_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7)),
-      name: text(item.name || 'PDF 分析房間').slice(0, 80),
+      name: text(item.name || (IS_EN ? 'PDF analysis room' : 'PDF 分析房間')).slice(0, 80),
       createdAt: item.createdAt || new Date().toISOString(),
       messages: Array.isArray(item.messages) ? item.messages.map(function (message, index) { return { id: text(message.id || 'pdf_msg_legacy_' + index + '_' + Math.random().toString(36).slice(2, 7)), role: message.role === 'assistant' ? 'assistant' : 'user', text: text(message.text || message.content || '').slice(0, 30000), createdAt: message.createdAt || new Date().toISOString() }; }).filter(function (message) { return message.text; }) : [],
       pdf: normalizePdfRecord(item.pdf),
       taskRule: text(item.taskRule || '').slice(0, 12000),
-      taskSummary: text(item.taskSummary || (item.taskRule ? '已保存自訂任務規則' : '尚未設定核心任務條件')).slice(0, 240)
+      taskSummary: text(item.taskSummary || (item.taskRule ? (IS_EN ? 'Saved custom task rule' : '已保存自訂任務規則') : (IS_EN ? 'No core task rule saved' : '尚未設定核心任務條件'))).slice(0, 240)
     };
   }
 
@@ -72,7 +73,7 @@
       root.localStorage.setItem(ROOM_STORAGE_KEY, JSON.stringify({ version: 2, activeRoomId: activeRoomId, rooms: rooms }));
     } catch (error) {
       console.warn('[GugoPro PDF Rooms] localStorage 寫入失敗:', error);
-      showRoomNotice('房間文字層或對話較大，瀏覽器 localStorage 暫時無法完整保存。', 'error');
+      showRoomNotice(IS_EN ? 'The room text layer or chat is too large for localStorage.' : '房間文字層或對話較大，瀏覽器 localStorage 暫時無法完整保存。', 'error');
     }
   }
 
@@ -191,7 +192,7 @@
   function setRoomContext(room) {
     root.GugoProPdfRoomContext = function () {
       if (!room || !room.pdf || !room.pdf.pageTexts) return '';
-      return Object.keys(room.pdf.pageTexts).sort(function (a, b) { return Number(a) - Number(b); }).map(function (page) { return '[第 ' + page + ' 頁]\n' + room.pdf.pageTexts[page]; }).join('\n\n');
+      return Object.keys(room.pdf.pageTexts).sort(function (a, b) { return Number(a) - Number(b); }).map(function (page) { return (IS_EN ? '[Page ' + page + ']\n' : '[第 ' + page + ' 頁]\n') + room.pdf.pageTexts[page]; }).join('\n\n');
     };
   }
 
@@ -251,10 +252,10 @@
     if (room && room.pdf) {
       var shell = $('pdf-app-shell'); if (shell) shell.classList.add('is-document-loaded');
       if (document.body) document.body.classList.add('pdf-document-loaded');
-      $('pdf-file-name').textContent = room.pdf.fileName + '（文字層備份）';
-      $('pdf-file-meta').textContent = '本機文字層已保存；重新選擇原 PDF 可恢復視覺閱讀';
-      if ($('pdf-reader-status')) $('pdf-reader-status').innerHTML = '<i class="fa-solid fa-file-lines"></i> 文字層就緒';
-      if ($('pdf-status')) $('pdf-status').textContent = '房間已載入本機文字層備份，AI 可繼續分析。';
+      $('pdf-file-name').textContent = room.pdf.fileName + (IS_EN ? ' (text layer backup)' : '（文字層備份）');
+      $('pdf-file-meta').textContent = IS_EN ? 'Local text layer restored; choose the original PDF to restore visual reading.' : '本機文字層已保存；重新選擇原 PDF 可恢復視覺閱讀';
+      if ($('pdf-reader-status')) $('pdf-reader-status').innerHTML = '<i class="fa-solid fa-file-lines"></i> ' + (IS_EN ? 'Text layer ready' : '文字層就緒');
+      if ($('pdf-status')) $('pdf-status').textContent = IS_EN ? 'A local text-layer backup is loaded; AI can continue analysis.' : '房間已載入本機文字層備份，AI 可繼續分析。';
     }
   }
 
@@ -273,7 +274,7 @@
       setRoomContext(room);
       renderRoomName(); renderRoomList(); renderRoomHistory(room);
       if (root.GugoProPdfSuite && root.GugoProPdfSuite.switchAiTab) root.GugoProPdfSuite.switchAiTab('task');
-      showRoomNotice('已切換至「' + room.name + '」；對話與 PDF 文字層彼此獨立。', 'success');
+      showRoomNotice((IS_EN ? 'Switched to “' : '已切換至「') + room.name + (IS_EN ? '”; chat and PDF text stay isolated.' : '」；對話與 PDF 文字層彼此獨立。'), 'success');
     } finally { restoringRoom = false; }
     closeDrawer();
   }
@@ -336,8 +337,8 @@
   function deleteRooms(ids) {
     var selected = ids.filter(function (id) { return rooms.some(function (room) { return room.id === id; }); });
     if (!selected.length) return;
-    if (rooms.length <= selected.length) { showRoomNotice('至少需保留一個 PDF 分析房間。', 'error'); return; }
-    if (!root.confirm('確定刪除選取房間嗎？對話與已保存的 PDF 文字層會一併移除。')) return;
+    if (rooms.length <= selected.length) { showRoomNotice(IS_EN ? 'Keep at least one PDF analysis room.' : '至少需保留一個 PDF 分析房間。', 'error'); return; }
+    if (!root.confirm(IS_EN ? 'Delete the selected rooms? Their chats and saved PDF text layers will also be removed.' : '確定刪除選取房間嗎？對話與已保存的 PDF 文字層會一併移除。')) return;
     rooms = rooms.filter(function (room) { return !selected.includes(room.id); });
     selected.forEach(function (id) { runtimeByRoom.delete(id); });
     if (selected.includes(activeRoomId)) activeRoomId = rooms[0].id;
@@ -355,8 +356,8 @@
     currentRoomOperation = operation;
     var modal = $('pdf-room-ops-modal'); var list = $('pdf-room-ops-list');
     if (!modal || !list) return;
-    $('pdf-room-ops-title').textContent = operation === 'export' ? '匯出 PDF 分析房間' : '清除或刪除房間';
-    $('pdf-room-ops-desc').textContent = operation === 'export' ? '勾選要匯出的房間；每個房間包含對話與可用的 PDF 文字層。' : '勾選房間後，確認時可選擇清空對話或直接刪除房間。';
+    $('pdf-room-ops-title').textContent = operation === 'export' ? (IS_EN ? 'Export PDF analysis rooms' : '匯出 PDF 分析房間') : (IS_EN ? 'Clear or delete rooms' : '清除或刪除房間');
+    $('pdf-room-ops-desc').textContent = operation === 'export' ? (IS_EN ? 'Select rooms to export; each includes chat and any saved PDF text layer.' : '勾選要匯出的房間；每個房間包含對話與可用的 PDF 文字層。') : (IS_EN ? 'Select rooms, then choose whether to clear chats or delete the rooms.' : '勾選房間後，確認時可選擇清空對話或直接刪除房間。');
     list.replaceChildren();
     rooms.forEach(function (room) {
       var label = document.createElement('label'); label.className = 'pdf-room-op-item';
@@ -369,12 +370,12 @@
 
   function confirmRoomOperation() {
     var selected = Array.prototype.slice.call(document.querySelectorAll('input[name="pdf-room-op-select"]:checked')).map(function (input) { return input.value; });
-    if (!selected.length) { showRoomNotice('請至少選擇一個房間。', 'error'); return; }
+    if (!selected.length) { showRoomNotice(IS_EN ? 'Select at least one room.' : '請至少選擇一個房間。', 'error'); return; }
     if (currentRoomOperation === 'export') {
       downloadJson({ version: 1, exportedAt: new Date().toISOString(), rooms: rooms.filter(function (room) { return selected.includes(room.id); }) }, 'gugopro-pdf-rooms-' + Date.now() + '.json');
       closeRoomOps(); return;
     }
-    var clearOnly = root.confirm('按「確定」清除選取房間的對話；按「取消」則繼續選擇是否直接刪除房間。');
+    var clearOnly = root.confirm(IS_EN ? 'Choose OK to clear chats in the selected rooms; choose Cancel to continue to deletion.' : '按「確定」清除選取房間的對話；按「取消」則繼續選擇是否直接刪除房間。');
     if (clearOnly) {
       rooms.forEach(function (room) { if (selected.includes(room.id)) room.messages = []; }); saveRooms(); renderRoomList(); renderRoomHistory(getActiveRoom()); closeRoomOps(); return;
     }
@@ -397,8 +398,8 @@
           rooms = rooms.filter(function (room) { return room.id !== current.id; });
         }
         normalized.forEach(function (room) { room.id = 'pdf_room_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7); rooms.push(room); });
-        activeRoomId = normalized[0].id; saveRooms(); renderRoomList(); switchRoom(activeRoomId, true); showRoomNotice('已匯入 ' + normalized.length + ' 個 PDF 分析房間。', 'success');
-      } catch (_) { showRoomNotice('JSON 房間備份格式無效。', 'error'); }
+        activeRoomId = normalized[0].id; saveRooms(); renderRoomList(); switchRoom(activeRoomId, true); showRoomNotice((IS_EN ? 'Imported ' : '已匯入 ') + normalized.length + (IS_EN ? ' PDF analysis room(s).' : ' 個 PDF 分析房間。'), 'success');
+      } catch (_) { showRoomNotice(IS_EN ? 'The JSON room backup is invalid.' : 'JSON 房間備份格式無效。', 'error'); }
     };
     reader.readAsText(file); $('pdf-room-import-input').value = '';
   }
@@ -463,7 +464,7 @@
     $('pdf-room-delete-inline')?.addEventListener('click', deleteActiveRoom);
     $('pdf-task-rule-save')?.addEventListener('click', saveTaskRule);
     document.querySelectorAll('[data-close-modal="pdf-room-ops-modal"], [data-close-modal="pdf-task-rule-modal"]').forEach(function (button) { button.addEventListener('click', function () { var modal = $(button.dataset.closeModal); if (modal) modal.classList.remove('is-open'); }); });
-    if ($('pdf-drawer-save-key')) $('pdf-drawer-save-key').addEventListener('click', async function () { var key = text($('pdf-drawer-api-key').value).trim(); if (!key) return showRoomNotice('請先貼上 Gemini API key。', 'error'); localStorage.setItem('gugopro_gemini_api_key', key); localStorage.setItem('gemini_api_key', key); $('pdf-drawer-api-status').textContent = 'Key 已保存在本機。'; if (root.GugoProPdfSuiteAI && root.GugoProPdfSuiteAI.refresh) await root.GugoProPdfSuiteAI.refresh({ silent: false, force: true }); });
+    if ($('pdf-drawer-save-key')) $('pdf-drawer-save-key').addEventListener('click', async function () { var key = text($('pdf-drawer-api-key').value).trim(); if (!key) return showRoomNotice(IS_EN ? 'Paste a Gemini API key first.' : '請先貼上 Gemini API key。', 'error'); localStorage.setItem('gugopro_gemini_api_key', key); localStorage.setItem('gemini_api_key', key); $('pdf-drawer-api-status').textContent = IS_EN ? 'Key saved locally.' : 'Key 已保存在本機。'; if (root.GugoProPdfSuiteAI && root.GugoProPdfSuiteAI.refresh) await root.GugoProPdfSuiteAI.refresh({ silent: false, force: true }); });
     if ($('pdf-model-refresh')) $('pdf-model-refresh').addEventListener('click', function () { if (root.GugoProPdfSuiteAI && root.GugoProPdfSuiteAI.refresh) root.GugoProPdfSuiteAI.refresh({ silent: false, force: true }); });
     root.addEventListener('gugopro:pdf-loaded', handlePdfLoaded);
     root.addEventListener('gugopro:pdf-text-extracted', function (event) { handleTextExtracted(event.detail || {}); });
