@@ -28,3 +28,11 @@
 ## 390×844 視覺檢查
 
 截图：`/tmp/trend-breakout-playbook-390.png`，尺寸 390×844。手机首屏的品牌列、分类标题、主标题、说明段落、badge 与章节胶囊均可读；章节导航按设计横向滚动，不将长按钮强行压缩或造成整页横向溢出。文章标题与正文没有文字重叠，符合长文教学不限制 single-screen 的设计原则。
+
+## Production smoke test
+
+正式頁面：`https://gugopro.com/articles/investment/18-trend-following-breakout-playbook.html?qa=2db70a3`
+
+GitHub Pages 已公開最新 Playbook。瀏覽器可見九個章節膠囊、文章主題、Donchian／ATR／假突破／回測內容、工具內鏈、來源卡片與 References。production DOM smoke test 已執行章節數、內部 Academy 工具連結、References、表格、水平溢出與外部行情 resource 檢查；文章沒有 JavaScript 行情邏輯，也沒有 API／quote／market／WebSocket 請求。
+
+Pages run：`33031940570`；head SHA：`2db70a3b4dd6d1b7b0f303a3d1948ec68cf91f2a`；狀態：`completed / success`。
