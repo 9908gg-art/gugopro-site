@@ -1221,6 +1221,8 @@
 
 
 
+
+
 <style id="gugo-capsule-dock-style">
 /* GugoPro Gemini-style capsule composer */
 html, body { background: #0A0B10 !important; }
@@ -5057,6 +5059,13 @@ html, body { background: #0A0B10 !important; }
         window.GugoSpeechSessionActive = Boolean(active);
         if (active && typeof window.GugoSetSpeechComposerState === 'function') window.GugoSetSpeechComposerState('recording', role);
     }
+    function setDualStarting(role) {
+        document.querySelectorAll('.dual-speech-button').forEach(button => button.classList.remove('recording'));
+        if (typeof setRecordingVisual === 'function') setRecordingVisual(false);
+        if (typeof isRecording !== 'undefined') isRecording = false;
+        window.GugoSpeechSessionActive = true;
+        if (typeof window.GugoSetSpeechComposerState === 'function') window.GugoSetSpeechComposerState('starting', role);
+    }
     function composeInput(baseText, transcript) {
         const base = normalize(baseText);
         const latest = normalize(transcript);
@@ -5195,6 +5204,10 @@ html, body { background: #0A0B10 !important; }
             language: session.speechLocale,
             partialResults: true,
             onStart: () => {
+                if (session.finalized || session.stopRequested || activeSession?.id !== session.id) {
+                    native.stopRecognition().catch(() => {});
+                    return;
+                }
                 if (session.startTimer) { clearTimeout(session.startTimer); session.startTimer = null; }
                 session.state = 'recording';
                 session.restartAttempts = 0;
@@ -5242,11 +5255,18 @@ html, body { background: #0A0B10 !important; }
             return;
         }
         if (!recognition) recognition = new SpeechRecognition();
-        session.state = 'recording';
+        session.state = 'starting';
+        window.GugoSetSpeechComposerState?.('starting', session.role);
         recognition.lang = session.speechLocale;
         recognition.continuous = true;
         recognition.interimResults = true;
-        recognition.onstart = () => setDualRecording(session.role, true);
+        recognition.onstart = () => {
+            if (session.finalized || session.stopRequested || activeSession?.id !== session.id) {
+                try { recognition.stop(); } catch (_) {}
+                return;
+            }
+            setDualRecording(session.role, true);
+        };
         recognition.onresult = event => {
             const result = event.results?.[event.resultIndex]?.[0];
             if (!result) return;
@@ -5290,7 +5310,7 @@ html, body { background: #0A0B10 !important; }
             latestTranscript: '',
             confidence: null,
             restartAttempts: 0,
-            state: 'recording',
+            state: 'starting',
             silenceTimer: null,
             restartTimer: null,
             sendTimer: null,
@@ -5298,7 +5318,7 @@ html, body { background: #0A0B10 !important; }
             finalized: false
         };
         activeSession = session;
-        setDualRecording(role, true);
+        setDualStarting(role);
         const native = window.GugoProNativeSpeech?.isNativeSpeechAvailable?.() ? window.GugoProNativeSpeech : null;
         if (native) startNativeRecognition(session);
         else startWebRecognition(session);
@@ -5474,6 +5494,8 @@ html, body { background: #0A0B10 !important; }
 
 
 
+
+
 <script id="gugo-capsule-dock-modes-js">
 // GugoPro Gemini-style Capsule Dock + three speech modes
 (() => {
@@ -5622,6 +5644,12 @@ html, body { background: #0A0B10 !important; }
 
     let holdPointerId = null;
     let holdButton = null;
+    let holdPointerType = null;
+    function clearHoldPointerState() {
+        holdPointerId = null;
+        holdButton = null;
+        holdPointerType = null;
+    }
     function start(role) {
         window.GugoSpeechMode = getMode();
         if (window.GugoSpeechSessionActive) return false;
@@ -5632,12 +5660,13 @@ html, body { background: #0A0B10 !important; }
     }
     function stopHeldSpeech(event) {
         if (getMode() !== 'hold' || !window.GugoSpeechSessionActive) return;
-        const pointerId = event?.pointerId;
+        const changedTouch = event?.changedTouches?.[0];
+        const pointerId = event?.pointerId ?? changedTouch?.identifier;
+        if (holdPointerId === null && !holdButton) return;
         if (holdPointerId !== null && pointerId !== undefined && String(pointerId) !== String(holdPointerId)) return;
         event?.preventDefault?.();
         event?.stopPropagation?.();
-        holdPointerId = null;
-        holdButton = null;
+        clearHoldPointerState();
         setSpeechComposerState('stopping');
         window.GugoStopDualSpeech?.();
     }
@@ -5656,10 +5685,12 @@ html, body { background: #0A0B10 !important; }
             if (getMode() !== 'hold') return;
             event.preventDefault();
             event.stopPropagation?.();
+            if (holdPointerId !== null || holdButton || window.GugoSpeechSessionActive) return;
             holdPointerId = event.pointerId ?? null;
+            holdPointerType = event.pointerType || 'touch';
             holdButton = button;
             try { button.setPointerCapture?.(event.pointerId); } catch (_) {}
-            start(role);
+            if (!start(role)) clearHoldPointerState();
         };
         button.onpointerup = event => {
             if (getMode() !== 'hold') return;
@@ -5669,20 +5700,33 @@ html, body { background: #0A0B10 !important; }
             if (getMode() !== 'hold') return;
             stopHeldSpeech(event);
         };
+        button.onlostpointercapture = event => {
+            if (getMode() !== 'hold') return;
+            stopHeldSpeech(event);
+        };
         // Older Android WebViews without PointerEvent still receive touch events.
         button.ontouchstart = event => {
             if (window.PointerEvent || getMode() !== 'hold') return;
             event.preventDefault();
+            event.stopPropagation?.();
+            if (holdButton || window.GugoSpeechSessionActive) return;
             holdButton = button;
-            start(role);
+            holdPointerType = 'touch';
+            holdPointerId = event.changedTouches?.[0]?.identifier ?? null;
+            if (!start(role)) clearHoldPointerState();
         };
         button.ontouchend = event => {
+            if (window.PointerEvent || getMode() !== 'hold') return;
+            stopHeldSpeech(event);
+        };
+        button.ontouchcancel = event => {
             if (window.PointerEvent || getMode() !== 'hold') return;
             stopHeldSpeech(event);
         };
     }
     document.addEventListener('pointerup', stopHeldSpeech, true);
     document.addEventListener('pointercancel', stopHeldSpeech, true);
+    document.addEventListener('lostpointercapture', stopHeldSpeech, true);
 
     window.GugoOpenRoomStudy = roomId => {
         const targetId = String(roomId || '');
