@@ -5361,7 +5361,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         if (!session || session.finalized || session.stopRequested || activeSession?.id !== session.id || session.restartTimer) return;
         session.restartAttempts = (session.restartAttempts || 0) + 1;
         window.GugoSetSpeechComposerState?.('reconnecting', session.role);
-        if (session.mode !== 'hold' && session.restartAttempts > 3) {
+        if (session.mode === 'smart' && session.restartAttempts > 3) {
             abortSession(session, '❌ 語音服務暫時無法使用，請檢查網路或稍後再試。');
             return;
         }
@@ -5378,7 +5378,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
     function finishWithOptionalDelay(session, explicitStop = false) {
         if (!session || session.finalized) return;
         if (explicitStop || session.stopRequested) { finalizeSession(session); return; }
-        if (session.mode === 'hold' || session.mode === 'tap') {
+        if (session.mode === 'hold' || session.mode === 'tap' || (session.mode === 'smart' && !session.latestTranscript)) {
             window.GugoSetSpeechComposerState?.('reconnecting', session.role);
             restartRecognition(session);
             return;
