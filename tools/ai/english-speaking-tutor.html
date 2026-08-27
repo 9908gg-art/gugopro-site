@@ -1243,11 +1243,15 @@
 
 
 
+
+
+
+
 <style id="gugo-capsule-dock-style">
 /* GugoPro Gemini-style capsule composer */
 html, body { background: #0A0B10 !important; }
 .bottom-controls {
-    padding: 8px 12px max(8px, env(safe-area-inset-bottom));
+    padding: 5px 12px max(6px, env(safe-area-inset-bottom));
     background: linear-gradient(180deg, rgba(10,11,16,.94), rgba(10,11,16,1)) !important;
     border-top: 1px solid rgba(255,255,255,.08);
 }
@@ -1276,9 +1280,10 @@ html, body { background: #0A0B10 !important; }
 .capsule-dock #user-text {
     flex: 1 1 auto;
     min-width: 0;
-    max-height: 168px;
+    min-height: 38px !important;
+    max-height: 104px;
     margin: 0;
-    padding: 10px 4px;
+    padding: 6px 4px;
     border: 0 !important;
     outline: 0 !important;
     resize: none;
@@ -1308,7 +1313,7 @@ html, body { background: #0A0B10 !important; }
 .speech-composer-status[data-state="reconnecting"] { color: #8ecbff; }
 .speech-composer-status[data-state="stopping"] { color: #cbd5e1; }
 .speech-composer-status[data-state="error"] { color: #fda4af; }
-.capsule-dock.has-speech-status #user-text { padding-top: 25px; }
+.capsule-dock.has-speech-status #user-text { padding-top: 21px; }
 .capsule-composer-row button {
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
@@ -1374,9 +1379,15 @@ html, body { background: #0A0B10 !important; }
 .capsule-actions button { min-width: 40px; min-height: 40px; }
 .capsule-composer-row.capsule-composer-expanded .capsule-voice-button { display: none !important; }
 .capsule-dock.capsule-dock-expanded { border-radius: 22px !important; }
-.capsule-actions { display: flex; align-items: center; gap: 3px; flex: 0 0 auto; }
+    .capsule-actions { display: flex; align-items: center; gap: 3px; flex: 0 0 auto; margin-left: auto; }
+    .btn-header-material { flex: 0 0 auto; width: 42px; height: 42px; min-width: 42px; min-height: 42px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,.15); border-radius: 50%; background: rgba(255,255,255,.08); color: #e7edf7; font-size: 1rem; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; transition: transform .14s ease, background .14s ease, color .14s ease; }
+    .btn-header-material:hover { background: rgba(255,255,255,.16); color: #fff; }
+    .btn-header-material:active { transform: scale(.94); }
+.header-right { min-width: 0; gap: 6px; }
+.lang-compact-header { min-width: 0; }
+
 .capsule-actions .btn-circle { flex: 0 0 38px; width: 38px !important; min-width: 38px !important; height: 38px !important; min-height: 38px !important; }
-.capsule-actions #btn-material-import-inline { background: transparent !important; color: #d5dbe6; }
+
 .capsule-actions #btn-send { background: #e8edf5 !important; color: #1b2029 !important; }
 .study-plan-summary { display: none !important; }
 .capsule-language-strip, .composer-language-strip, .speech-language-strip, #capsule-language-strip, #composer-language-summary, #speech-language-summary { display: none !important; }
@@ -1398,8 +1409,10 @@ html, body { background: #0A0B10 !important; }
     .capsule-voice-button .speech-button-language { font-size: 34px !important; }
     .capsule-voice-button .capsule-mic-badge { width: 21px; height: 21px; font-size: 10px; border-width: 2px; }
     .capsule-actions { gap: 6px; }
+    .capsule-actions { margin-left: auto; }
     .capsule-actions .btn-circle { flex-basis: 40px; width: 40px !important; min-width: 40px !important; height: 40px !important; min-height: 40px !important; }
-    .capsule-dock #user-text { padding: 8px 2px; max-height: 142px; }
+    .capsule-dock #user-text { min-height: 36px !important; padding: 5px 2px; max-height: 92px; }
+    .btn-header-material { width: 36px; height: 36px; min-width: 36px; min-height: 36px; }
 }
 </style>
 </head>
@@ -1417,6 +1430,7 @@ html, body { background: #0A0B10 !important; }
             </div>
             
             <div class="header-right">
+                <button id="btn-material-import-inline" class="btn-header-material" type="button" title="導入學習教材" aria-label="導入學習教材"><i class="fa-solid fa-paperclip"></i></button>
                 <div class="lang-compact-header">
                     <button id="btn-lang-toggle" class="btn-lang-toggle">
                         <span id="lang-display-label">載入中...</span>
@@ -1517,9 +1531,8 @@ html, body { background: #0A0B10 !important; }
                     <div class="main-input-group dual-stt-composer capsule-dock">
                         <div id="speech-composer-status" class="speech-composer-status" data-state="idle" aria-live="polite" aria-atomic="true"></div>
                         <textarea id="user-text" rows="1" maxlength="8000" placeholder="輸入訊息或說話… (Enter 送出)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" data-lpignore="true"></textarea>
-                        <div class="capsule-actions" aria-label="發送與附加">
+                        <div class="capsule-actions" aria-label="發送">
                             <button id="btn-send" class="btn-circle btn-send" type="button" aria-label="發送"><i class="fa-solid fa-paper-plane"></i></button>
-                            <button id="btn-material-import-inline" class="btn-circle btn-material" type="button" title="導入學習教材" aria-label="導入學習教材"><i class="fa-solid fa-paperclip"></i></button>
                         </div>
                     </div>
                     <button id="btn-mic-my" class="btn-circle dual-speech-button capsule-voice-button native-speech" type="button" aria-label="母語提問，不進行發音評分">
@@ -5599,6 +5612,10 @@ html, body { background: #0A0B10 !important; }
     };
 })();
 </script>
+
+
+
+
 
 
 
