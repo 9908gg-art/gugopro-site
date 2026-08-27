@@ -483,7 +483,8 @@
     var apiKey = root.GugoProPdfSuiteAI && root.GugoProPdfSuiteAI.getApiKey ? root.GugoProPdfSuiteAI.getApiKey() : '';
     if ($('pdf-drawer-api-key') && apiKey) $('pdf-drawer-api-key').value = apiKey;
     var room = getActiveRoom();
-    if (room && room.pdf && !(root.GugoProPdfSuite && root.GugoProPdfSuite.getState().pdf)) clearPdfForRoom();
+    var mobileViewport = root.matchMedia && root.matchMedia('(max-width: 767px)').matches;
+    if (!mobileViewport && room && room.pdf && !(root.GugoProPdfSuite && root.GugoProPdfSuite.getState().pdf)) clearPdfForRoom();
     renderRoomHistory(room);
   }
 
