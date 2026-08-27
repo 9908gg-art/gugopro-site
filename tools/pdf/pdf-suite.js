@@ -937,11 +937,12 @@
   }
 
   var pendingTaskAction = null;
+  var pendingTaskSupplement = '';
   var IS_EN = document.documentElement.lang === 'en';
   var TASK_PROMPTS = IS_EN ? {
     summary: 'Organize the core conclusions, key data, important dates, and action items in this PDF. Use clear Markdown sections and cite a page for every finding.',
     risk: 'Review contract risks: penalties, auto-renewal, disclaimers, unilateral changes, non-compete, payment, and termination clauses. Mark severity, evidence pages, and human-review suggestions.',
-    translate: 'Create a bilingual summary of this document, preserving proper nouns, numbers, clause numbers, and page citations. If the document is not Chinese, prioritize Traditional Chinese.',
+    translate: 'Translate the PDF accurately into the selected target language. Preserve proper nouns, numbers, clause numbers, formatting, and page citations.',
     diff: 'Compare the current PDF with the selected comparison version. List added, deleted, and modified clauses or data, explain material impact, and cite pages.',
     data: 'Extract all important financial data, tables, units, periods, and fields from the PDF into structured Markdown tables. Preserve source pages and flag suspected contradictions.',
     quiz: 'Generate a learning quiz from this document: 5 multiple-choice questions and 3 short-answer questions, with correct answers, brief explanations, and page citations.',
@@ -949,12 +950,89 @@
   } : {
     summary: '請整理這份 PDF 的核心結論、關鍵數據、重要日期與待辦事項；以清楚的 Markdown 小節輸出，所有發現附上頁碼。',
     risk: '請進行合約風險審閱，逐項檢查違約金、自動續約、免責、單方變更、競業、付款與終止條款，標示風險等級、證據頁碼與人工覆核建議。',
-    translate: '請把目前文件的重點整理成雙語對照摘要，保留專有名詞、數字、條款編號與頁碼；若文件不是中文，優先翻譯為繁體中文。',
+    translate: '請將整份 PDF 精準翻譯為指定目標語言，保留專有名詞、數字、條款編號、格式與頁碼引用。',
     diff: '請比較目前 PDF 與使用者選取的比較版本，列出新增、刪除、修改的條款或數據，並指出可能造成的實質影響與頁碼。',
     data: '請擷取 PDF 中所有重要財務數據、表格、單位、期間與欄位，轉成結構化 Markdown 表格；保留來源頁碼並指出疑似矛盾。',
     quiz: '請根據文件生成一組適合學習的問答測驗，包含 5 題單選題與 3 題問答題，附正確答案、簡短解析與頁碼。',
     compliance: '請執行合規與資安審查，掃描個人資料、機密資訊、未授權條款、資料外洩與潛在法律風險，依嚴重程度列出證據頁碼與處理建議。'
   };
+  var PRESET_STORAGE_KEY = 'gugopro_pdf_preset_workspaces_v1';
+  var PRESET_ORDER = ['summary', 'risk', 'translate', 'diff', 'data', 'quiz', 'compliance'];
+  var PRESET_META = IS_EN ? {
+    summary: { title: 'Summary workspace', hint: 'Confirm execution before generating key points and actions.', label: 'Summary', button: 'Run Summary analysis' },
+    risk: { title: 'Contract workspace', hint: 'Confirm execution before reviewing clauses and severity.', label: 'Contract risk', button: 'Run Contract analysis' },
+    translate: { title: 'Translation workspace', hint: 'Choose a target language, then confirm the full-document translation.', label: 'Translation', button: 'Run Translation' },
+    diff: { title: 'Diff check workspace', hint: 'Confirm execution, then choose the comparison PDF.', label: 'Diff check', button: 'Run Diff check' },
+    data: { title: 'Data extraction workspace', hint: 'Confirm execution before extracting tables and structured data.', label: 'Data extraction', button: 'Run Data extraction' },
+    quiz: { title: 'Quiz workspace', hint: 'Confirm execution before generating study questions.', label: 'Quiz', button: 'Run Quiz' },
+    compliance: { title: 'Compliance workspace', hint: 'Confirm execution before scanning privacy and security risks.', label: 'Compliance', button: 'Run Compliance scan' }
+  } : {
+    summary: { title: '摘要工作區', hint: '先確認執行，再開始整理重點與待辦。', label: '摘要', button: '執行摘要分析' },
+    risk: { title: '合約工作區', hint: '先確認執行，再開始檢查條款與風險等級。', label: '合約風控', button: '執行合約分析' },
+    translate: { title: '翻譯工作區', hint: '選擇目標語言後，確認執行整份文件翻譯。', label: '翻譯', button: '執行翻譯' },
+    diff: { title: '差異比對工作區', hint: '先確認執行，接著選擇要比較的第二份 PDF。', label: '差異比對', button: '執行差異比對' },
+    data: { title: '數據提煉工作區', hint: '先確認執行，再擷取表格與結構化數據。', label: '數據提煉', button: '執行數據提煉' },
+    quiz: { title: '問答測驗工作區', hint: '先確認執行，再生成學習題目。', label: '問答測驗', button: '執行問答測驗' },
+    compliance: { title: '合規資安工作區', hint: '先確認執行，再掃描個資與資安風險。', label: '合規資安', button: '執行合規資安分析' }
+  };
+  var presetActiveAction = 'summary';
+  var presetWorkspaces = {};
+  function createPresetWorkspace() { return { messages: [] }; }
+  function loadPresetWorkspaces() {
+    var saved = null;
+    try { saved = JSON.parse(localStorage.getItem(PRESET_STORAGE_KEY) || 'null'); } catch (_) { saved = null; }
+    presetWorkspaces = {};
+    PRESET_ORDER.forEach(function (action) {
+      var source = saved && saved.workspaces && saved.workspaces[action];
+      var messages = source && Array.isArray(source.messages) ? source.messages : [];
+      presetWorkspaces[action] = { messages: messages.map(function (message, index) { return { id: String(message.id || 'preset_msg_' + action + '_' + index), role: message.role === 'user' ? 'user' : 'assistant', text: String(message.text || '').slice(0, 30000), createdAt: message.createdAt || new Date().toISOString() }; }).filter(function (message) { return message.text; }).slice(-60) };
+    });
+    if (saved && PRESET_ORDER.includes(saved.activeAction)) presetActiveAction = saved.activeAction;
+  }
+  function savePresetWorkspaces() { try { localStorage.setItem(PRESET_STORAGE_KEY, JSON.stringify({ version: 1, activeAction: presetActiveAction, workspaces: presetWorkspaces })); } catch (_) { toast(IS_EN ? 'Preset chat history is too large to save locally.' : '預設工具對話太大，無法完整保存到本機。'); } }
+  function getPresetWorkspace(action) { if (!presetWorkspaces[action]) presetWorkspaces[action] = createPresetWorkspace(); return presetWorkspaces[action]; }
+  function presetText(role, text) { return (role === 'user' ? (IS_EN ? 'You' : '使用者') : 'GugoPro AI') + ': ' + String(text || ''); }
+  function presetHistoryText(action) { return getPresetWorkspace(action).messages.map(function (message) { return presetText(message.role, message.text); }).join('\n\n'); }
+  function renderPresetWorkspace(action) {
+    action = PRESET_ORDER.includes(action) ? action : 'summary'; presetActiveAction = action;
+    var meta = PRESET_META[action];
+    qsa('[data-task-action]').forEach(function (button) { button.classList.toggle('is-active', button.dataset.taskAction === action); });
+    if ($('pdf-preset-active-title')) $('pdf-preset-active-title').textContent = meta.title;
+    if ($('pdf-preset-active-hint')) $('pdf-preset-active-hint').textContent = meta.hint;
+    if ($('pdf-preset-language-wrap')) $('pdf-preset-language-wrap').hidden = action !== 'translate';
+    var run = $('pdf-preset-run'); if (run) { var label = run.querySelector('span'); if (label) label.textContent = meta.button; run.title = meta.button; }
+    var log = $('pdf-preset-log'); if (!log) return;
+    var workspace = getPresetWorkspace(action); log.replaceChildren();
+    var fragment = document.createDocumentFragment();
+    workspace.messages.forEach(function (message) { fragment.appendChild(buildChatMessageNode(message.role, message.text, message.id, 'pdf-preset-log')); });
+    log.appendChild(fragment); log.scrollTop = log.scrollHeight;
+    var empty = $('pdf-preset-output-empty'); if (empty) empty.hidden = workspace.messages.length > 0;
+    savePresetWorkspaces();
+  }
+  function addPresetMessage(action, role, text, id) {
+    var message = { id: id || 'preset_msg_' + action + '_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), role: role === 'user' ? 'user' : 'assistant', text: String(text || '').slice(0, 30000), createdAt: new Date().toISOString() };
+    var workspace = getPresetWorkspace(action); workspace.messages.push(message); if (workspace.messages.length > 60) workspace.messages = workspace.messages.slice(-60); savePresetWorkspaces();
+    if (action === presetActiveAction) {
+      var log = $('pdf-preset-log'); if (log) { log.appendChild(buildChatMessageNode(message.role, message.text, message.id, 'pdf-preset-log')); log.scrollTop = log.scrollHeight; }
+      var empty = $('pdf-preset-output-empty'); if (empty) empty.hidden = true;
+    }
+    return message;
+  }
+  function updatePresetMessage(action, id, text) { var message = getPresetWorkspace(action).messages.find(function (item) { return item.id === id; }); if (message) { message.text = String(text || '').slice(0, 30000); savePresetWorkspaces(); } if (action === presetActiveAction) { var node = document.querySelector('#pdf-preset-log [data-message-id="' + id + '"]'); if (node) updateChatMessage(node, text, 'pdf-preset-log'); } }
+  function deletePresetMessage(action, id) { var workspace = getPresetWorkspace(action); workspace.messages = workspace.messages.filter(function (message) { return message.id !== id; }); savePresetWorkspaces(); if (action === presetActiveAction) renderPresetWorkspace(action); }
+  function clearPresetWorkspace(action) { var workspace = getPresetWorkspace(action); if (!workspace.messages.length) return; if (!window.confirm(IS_EN ? 'Clear this preset tool chat only?' : '只清空目前預設工具的對話嗎？')) return; workspace.messages = []; savePresetWorkspaces(); renderPresetWorkspace(action); toast(IS_EN ? 'Current preset tool chat cleared.' : '目前預設工具對話已清空。'); }
+  function selectPresetAction(action) { if (!TASK_PROMPTS[action]) return; renderPresetWorkspace(action); switchAiTab('preset'); }
+  function getCustomRoomMessages() { var room = window.GugoProPdfRooms && window.GugoProPdfRooms.getActiveRoom ? window.GugoProPdfRooms.getActiveRoom() : null; return room && Array.isArray(room.messages) ? room.messages : []; }
+  function getConversationText(mode) { var messages = mode === 'preset' ? getPresetWorkspace(presetActiveAction).messages : getCustomRoomMessages(); return messages.map(function (message) { return presetText(message.role, message.text); }).join('\n\n'); }
+  function downloadConversation(mode, extension) { var content = getConversationText(mode); if (!content) return toast(IS_EN ? 'There are no messages to export yet.' : '目前聊天室還沒有可匯出的對話。'); var mime = extension === 'md' ? 'text/markdown;charset=utf-8' : 'text/plain;charset=utf-8'; var blob = new Blob([content], { type: mime }); var url = URL.createObjectURL(blob); var link = document.createElement('a'); link.href = url; link.download = 'gugopro-pdf-' + (mode === 'preset' ? presetActiveAction : 'custom-room') + '-chat-' + Date.now() + '.' + extension; document.body.appendChild(link); link.click(); link.remove(); setTimeout(function () { URL.revokeObjectURL(url); }, 500); toast(IS_EN ? 'Chat exported.' : '聊天室已匯出。'); }
+  function closeMoreMenus() { qsa('.pdf-chat-more-menu').forEach(function (menu) { menu.hidden = true; var trigger = menu.parentElement && menu.parentElement.querySelector('.pdf-chat-more'); if (trigger) trigger.setAttribute('aria-expanded', 'false'); }); }
+  function toggleMoreMenu(id) { var menu = $(id); if (!menu) return; var open = menu.hidden; closeMoreMenus(); menu.hidden = !open; var trigger = menu.parentElement && menu.parentElement.querySelector('.pdf-chat-more'); if (trigger) trigger.setAttribute('aria-expanded', open ? 'true' : 'false'); }
+  function handleMoreAction(mode, action) { closeMoreMenus(); if (action === 'copy-all') return copyTextToClipboard(getConversationText(mode)); if (action === 'export-md') return downloadConversation(mode, 'md'); if (action === 'export-txt') return downloadConversation(mode, 'txt'); if (action === 'clear') { if (mode === 'preset') clearPresetWorkspace(presetActiveAction); else if (window.GugoProPdfRooms && window.GugoProPdfRooms.clearActiveMessages) window.GugoProPdfRooms.clearActiveMessages(); } }
+  function toggleAiExpanded() {
+    var pane = $('pdf-ai-pane'); var button = $('pdf-ai-expand'); if (!pane || !button) return;
+    var expanded = pane.classList.toggle('is-expanded'); button.setAttribute('aria-expanded', expanded ? 'true' : 'false'); button.title = expanded ? (IS_EN ? 'Restore AI workspace' : '還原 AI 工作區') : (IS_EN ? 'Expand AI workspace' : '放大 AI 工作區'); var icon = button.querySelector('i'); if (icon) icon.className = expanded ? 'fa-solid fa-compress' : 'fa-solid fa-expand'; var label = button.querySelector('span'); if (label) label.textContent = expanded ? (IS_EN ? 'Restore' : '還原') : (IS_EN ? 'Expand' : '放大');
+    if (expanded) toast(IS_EN ? 'AI workspace expanded for easier reading.' : 'AI 工作區已放大，方便閱讀長篇結果。');
+  }
 
   async function extractTextFromPdfFile(file) {
     if (!file) return '';
@@ -970,36 +1048,53 @@
     return pages.join('\\n\\n').slice(0, 90000);
   }
 
-  async function runTaskMatrixAction(action, comparisonFile) {
+  async function runTaskMatrixAction(action, comparisonFile, supplement) {
     action = String(action || '').toLowerCase();
     if (!TASK_PROMPTS[action]) return;
+    presetActiveAction = action; renderPresetWorkspace(action); switchAiTab('preset');
     if (action === 'diff' && !comparisonFile) {
-      pendingTaskAction = action;
+      pendingTaskAction = action; pendingTaskSupplement = String(supplement || '');
       var diffInput = $('pdf-diff-input');
       if (diffInput) { diffInput.value = ''; diffInput.click(); }
-      else toast('請選擇比較用的第二份 PDF。');
+      else toast(IS_EN ? 'Choose the second PDF for comparison.' : '請選擇比較用的第二份 PDF。');
       return;
     }
-    switchAiTab('preset');
     var taskId = 'pdf_preset_action_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-    var labelMap = IS_EN ? { summary: 'Summary', risk: 'Contract risk', translate: 'Translation', diff: 'Diff check', data: 'Data extraction', quiz: 'Quiz', compliance: 'Compliance scan' } : { summary: '摘要', risk: '合約風控', translate: '翻譯', diff: '差異比對', data: '數據提煉', quiz: '問答測驗', compliance: '合規資安' };
-    var empty = $('pdf-preset-output-empty'); if (empty) empty.hidden = true;
-    var node = appendChat('assistant', IS_EN ? 'Running “' + labelMap[action] + '”…' : '正在執行「' + labelMap[action] + '」任務…', taskId, 'pdf-preset-log');
-    if (node) node.classList.add('is-pending');
-    qsa('[data-task-action]').forEach(function (button) { button.classList.toggle('is-active', button.dataset.taskAction === action); });
+    var meta = PRESET_META[action];
+    var pendingText = IS_EN ? 'Running “' + meta.label + '”…' : '正在執行「' + meta.label + '」任務…';
+    addPresetMessage(action, 'assistant', pendingText, taskId);
+    var node = document.querySelector('#pdf-preset-log [data-message-id="' + taskId + '"]'); if (node) node.classList.add('is-pending');
     try {
       var comparisonText = comparisonFile ? await extractTextFromPdfFile(comparisonFile) : '';
-      var prompt = TASK_PROMPTS[action] + (comparisonText ? (IS_EN ? '\n\nComparison version text:\n' : '\n\n比較版本文字如下：\n') + comparisonText : '') + (IS_EN ? '\n\nReply in English in the preset tools result area, cite pages, and do not change any custom task room.' : '\n\n請直接回覆在預設工具結果區，使用繁體中文並附頁碼；不要修改或保存任何自訂任務房間。');
+      var language = action === 'translate' ? String($('pdf-preset-translate-language') && $('pdf-preset-translate-language').value || (IS_EN ? 'Traditional Chinese' : '繁體中文')) : '';
+      var languagePrompt = language ? (IS_EN ? '\n\nTarget language: ' + language + '. Translate the document into this language.' : '\n\n目標語言：【' + language + '】。請將 PDF 內容精準翻譯為此語言。') : '';
+      var prompt = TASK_PROMPTS[action] + languagePrompt + (comparisonText ? (IS_EN ? '\n\nComparison version text:\n' : '\n\n比較版本文字如下：\n') + comparisonText : '') + (supplement ? (IS_EN ? '\n\nUser follow-up requirement:\n' : '\n\n使用者補充要求：\n') + String(supplement).slice(0, 8000) : '') + (IS_EN ? '\n\nReply in English in this preset workspace, cite pages, and do not change any custom task room.' : '\n\n請直接回覆在目前預設工具工作區，使用繁體中文並附頁碼；不要修改或保存任何自訂任務房間。');
       var answer = await requestAi(prompt, { maxOutputTokens: action === 'quiz' ? 4200 : 5000, ignoreRoomContext: true });
       var emptyAnswer = IS_EN ? 'The task returned no content.' : '任務沒有回傳內容。';
-      updateChatMessage(node, answer || emptyAnswer, 'pdf-preset-log'); if (node) node.classList.remove('is-pending');
-      setStatus(IS_EN ? labelMap[action] + ' completed.' : '「' + labelMap[action] + '」任務已完成。', 'success');
+      updatePresetMessage(action, taskId, answer || emptyAnswer); if (node) node.classList.remove('is-pending');
+      setStatus(IS_EN ? meta.label + ' completed.' : '「' + meta.label + '」任務已完成。', 'success');
     } catch (error) {
-      if (node) node.remove();
+      deletePresetMessage(action, taskId);
       if (error.message === 'NO_KEY') showAiError(IS_EN ? 'Open ⚙️ Settings in the AI rail and add a Gemini API key.' : '請先在 AI 側欄右上角的「⚙️ 設定」輸入 Gemini API key。', false);
       else if ([503, 429, 500, 'TIMEOUT'].includes(error.status)) showAiError(IS_EN ? 'The AI model is busy or timed out; automatic fallback is active.' : 'AI 模型目前忙碌或逾時，系統會自動輪替；', true);
-      else showAiError((IS_EN ? labelMap[action] + ' failed: ' : '「' + labelMap[action] + '」任務未完成：') + (error.message || (IS_EN ? 'Connection failed.' : '連線失敗。')), false);
+      else showAiError((IS_EN ? meta.label + ' failed: ' : '「' + meta.label + '」任務未完成：') + (error.message || (IS_EN ? 'Connection failed.' : '連線失敗。')), false);
     }
+  }
+
+  async function handlePresetFollowup() {
+    var input = $('pdf-preset-input'); var question = String(input && input.value || '').trim(); if (!question) return;
+    var action = presetActiveAction; var history = getPresetWorkspace(action).messages.slice(-8).map(function (item) { return presetText(item.role, item.text); }).join('\n\n'); var userId = 'preset_user_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7); var assistantId = userId + '_assistant';
+    addPresetMessage(action, 'user', question, userId); if (input) { input.value = ''; input.style.height = ''; input.dispatchEvent(new Event('input', { bubbles: true })); }
+    addPresetMessage(action, 'assistant', IS_EN ? 'Analyzing the follow-up request…' : '正在依照補充要求分析…', assistantId);
+    var node = document.querySelector('#pdf-preset-log [data-message-id="' + assistantId + '"]'); if (node) node.classList.add('is-pending');
+    var button = $('pdf-preset-send'); if (button) button.disabled = true;
+    try {
+      var meta = PRESET_META[action]; var language = action === 'translate' ? String($('pdf-preset-translate-language') && $('pdf-preset-translate-language').value || (IS_EN ? 'Traditional Chinese' : '繁體中文')) : '';
+      var prompt = (IS_EN ? 'Continue the ' + meta.label + ' analysis in the current preset workspace. ' : '請繼續目前「' + meta.label + '」預設工具分析。') + (language ? (IS_EN ? 'Use target language ' + language + '. ' : '目標語言為【' + language + '】。') : '') + (IS_EN ? 'Answer this follow-up requirement with page citations:\n' : '請回答以下補充要求並附頁碼：\n') + question + (history ? (IS_EN ? '\n\nRecent workspace chat:\n' : '\n\n目前工具最近對話：\n') + history : '');
+      var answer = await requestAi(prompt, { maxOutputTokens: 4200, ignoreRoomContext: true });
+      updatePresetMessage(action, assistantId, answer || (IS_EN ? 'No answer returned.' : 'AI 沒有回傳內容。')); if (node) node.classList.remove('is-pending');
+    } catch (error) { deletePresetMessage(action, assistantId); if (error.message === 'NO_KEY') showAiError(IS_EN ? 'Open ⚙️ Settings and add a Gemini API key.' : '請先在「⚙️ 設定」輸入 Gemini API key。', false); else showAiError(IS_EN ? 'Follow-up failed: ' + (error.message || 'Connection failed.') : '補充要求未完成：' + (error.message || '連線失敗。'), false); }
+    finally { if (button) button.disabled = false; }
   }
 
   async function loadPdf(file) {
@@ -1292,17 +1387,32 @@
     try { log.scrollTo({ top: log.scrollHeight, behavior: 'smooth' }); } catch (_) { log.scrollTop = log.scrollHeight; }
   }
 
-  function appendChat(role, value, messageId, targetLogId) {
-    var log = $(targetLogId || 'pdf-chat-log'); if (!log) return null;
+  function copyTextToClipboard(value) {
+    var text = String(value == null ? '' : value);
+    if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(text).then(function () { toast(IS_EN ? 'Copied to clipboard.' : '已複製到剪貼簿。'); }).catch(function () { return fallbackCopyText(text); });
+    return fallbackCopyText(text);
+  }
+  function fallbackCopyText(value) {
+    var area = document.createElement('textarea'); area.value = value; area.setAttribute('readonly', ''); area.style.position = 'fixed'; area.style.opacity = '0'; document.body.appendChild(area); area.select();
+    try { document.execCommand('copy'); toast(IS_EN ? 'Copied to clipboard.' : '已複製到剪貼簿。'); } catch (_) { toast(IS_EN ? 'Copy was blocked by the browser.' : '瀏覽器阻擋了複製操作。'); } area.remove(); return Promise.resolve();
+  }
+  function getMessageTextFromNode(node) { var body = node && node.querySelector('.pdf-chat-msg-body'); return body ? body.innerText : ''; }
+  function buildChatMessageNode(role, value, messageId, targetLogId) {
     var node = document.createElement('div'); node.className = 'pdf-chat-msg ' + role;
     if (messageId) node.dataset.messageId = messageId;
-    var label = document.createElement('strong'); label.textContent = role === 'user' ? 'You' : 'GugoPro AI';
+    var head = document.createElement('div'); head.className = 'pdf-chat-msg-head';
+    var label = document.createElement('strong'); label.textContent = role === 'user' ? (IS_EN ? 'You' : '使用者') : 'GugoPro AI';
     var actions = document.createElement('span'); actions.className = 'pdf-chat-msg-actions';
-    var remove = document.createElement('button'); remove.type = 'button'; remove.className = 'pdf-chat-delete'; remove.title = '刪除訊息'; remove.setAttribute('aria-label', '刪除訊息'); remove.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
-    remove.addEventListener('click', function (event) { event.preventDefault(); event.stopPropagation(); var id = node.dataset.messageId; if (targetLogId) node.remove(); else if (id && window.GugoProPdfRooms && window.GugoProPdfRooms.deleteMessage) window.GugoProPdfRooms.deleteMessage(null, id); else node.remove(); });
-    actions.appendChild(remove); node.appendChild(label); node.appendChild(actions);
+    var copy = document.createElement('button'); copy.type = 'button'; copy.className = 'pdf-chat-copy'; copy.title = IS_EN ? 'Copy this message' : '複製本則內容'; copy.setAttribute('aria-label', copy.title); copy.innerHTML = '<i class="fa-regular fa-copy"></i>'; copy.addEventListener('click', function (event) { event.preventDefault(); event.stopPropagation(); copyTextToClipboard(getMessageTextFromNode(node)); });
+    var remove = document.createElement('button'); remove.type = 'button'; remove.className = 'pdf-chat-delete'; remove.title = IS_EN ? 'Delete message' : '刪除訊息'; remove.setAttribute('aria-label', remove.title); remove.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
+    remove.addEventListener('click', function (event) { event.preventDefault(); event.stopPropagation(); var id = node.dataset.messageId; if (targetLogId === 'pdf-preset-log' && id) deletePresetMessage(presetActiveAction, id); else if (!targetLogId && id && window.GugoProPdfRooms && window.GugoProPdfRooms.deleteMessage) window.GugoProPdfRooms.deleteMessage(null, id); else node.remove(); });
+    actions.appendChild(copy); actions.appendChild(remove); head.appendChild(label); head.appendChild(actions); node.appendChild(head);
     var body = document.createElement('div'); body.className = 'pdf-chat-msg-body'; body.innerHTML = markdownToHtml(String(value == null ? '' : value)); node.appendChild(body);
-    log.appendChild(node); scrollChatToLatest(node, log); return node;
+    return node;
+  }
+  function appendChat(role, value, messageId, targetLogId) {
+    var log = $(targetLogId || 'pdf-chat-log'); if (!log) return null;
+    var node = buildChatMessageNode(role, value, messageId, targetLogId); log.appendChild(node); scrollChatToLatest(node, log); return node;
   }
 
   function updateChatMessage(node, value, targetLogId) {
@@ -1503,7 +1613,7 @@
     var zone = $('pdf-upload-zone') || $('pdf-empty-state'); if (zone) { ['dragenter', 'dragover'].forEach(function (eventName) { zone.addEventListener(eventName, function (event) { event.preventDefault(); zone.classList.add('is-dragover'); }); }); ['dragleave', 'drop'].forEach(function (eventName) { zone.addEventListener(eventName, function (event) { event.preventDefault(); zone.classList.remove('is-dragover'); }); }); zone.addEventListener('drop', function (event) { var file = event.dataTransfer.files && event.dataTransfer.files[0]; if (file) loadPdf(file); }); zone.addEventListener('click', function (event) { if (event.target.closest('button')) return; pdfInput.click(); }); }
     var imageInput = $('images-input'); imageInput.addEventListener('change', function () { state.imageFiles = Array.prototype.slice.call(this.files || []); renderFileList($('images-list'), state.imageFiles, 'fa-regular fa-image'); });
     var mergeInput = $('merge-input'); mergeInput.addEventListener('change', function () { state.mergeFiles = Array.prototype.slice.call(this.files || []).filter(isPdf); renderFileList($('merge-list'), state.mergeFiles, 'fa-solid fa-file-pdf'); });
-    var diffInput = $('pdf-diff-input'); if (diffInput) diffInput.addEventListener('change', function () { var file = this.files && this.files[0]; var action = pendingTaskAction || 'diff'; pendingTaskAction = null; this.value = ''; if (file) runTaskMatrixAction(action, file); });
+    var diffInput = $('pdf-diff-input'); if (diffInput) diffInput.addEventListener('change', function () { var file = this.files && this.files[0]; var action = pendingTaskAction || 'diff'; var supplement = pendingTaskSupplement || ''; pendingTaskAction = null; pendingTaskSupplement = ''; this.value = ''; if (file) runTaskMatrixAction(action, file, supplement); });
   }
 
   function bindToolbarTouchLabels() {
@@ -1755,18 +1865,25 @@
   }
 
   function bindAi() {
-    qsa('[data-ai-tab]').forEach(function (button) { button.addEventListener('click', function () { switchAiTab(button.dataset.aiTab); }); });
-    qsa('[data-ai-prompt]').forEach(function (button) { button.addEventListener('click', function () { $('pdf-chat-input').value = button.dataset.aiPrompt; $('pdf-chat-input').focus(); }); });
+    loadPresetWorkspaces(); renderPresetWorkspace(presetActiveAction);
+    qsa('[data-ai-tab]').forEach(function (button) { button.addEventListener('click', function () { if (button.dataset.aiTab === 'preset') renderPresetWorkspace(presetActiveAction); switchAiTab(button.dataset.aiTab); }); });
     $('pdf-chat-send')?.addEventListener('click', function () { handleChat(); });
-    $('pdf-chat-input')?.addEventListener('keydown', function (event) {
-      if (event.isComposing) return;
-      if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); handleChat(); }
-    });
+    $('pdf-chat-input')?.addEventListener('keydown', function (event) { if (event.isComposing) return; if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); handleChat(); } });
     $('pdf-chat-input')?.addEventListener('input', function () { this.style.height = 'auto'; this.style.height = Math.min(132, Math.max(28, this.scrollHeight)) + 'px'; });
     if ($('pdf-chat-input')) $('pdf-chat-input').dispatchEvent(new Event('input', { bubbles: true }));
+    $('pdf-chat-more')?.addEventListener('click', function (event) { event.stopPropagation(); toggleMoreMenu('pdf-chat-more-menu'); });
+    qsa('[data-chat-more]').forEach(function (button) { button.addEventListener('click', function () { handleMoreAction('custom', button.dataset.chatMore); }); });
     $('pdf-ai-retry')?.addEventListener('click', function () { if (pendingChatRetry) handleChat(pendingChatRetry); });
     $('pdf-summary-run')?.addEventListener('click', handleSummary); $('pdf-risk-run')?.addEventListener('click', handleRisk); $('pdf-translate-run')?.addEventListener('click', handleTranslate); $('pdf-translate-current')?.addEventListener('click', populateCurrentPageText);
-    qsa('[data-task-action]').forEach(function (button) { button.addEventListener('click', function () { runTaskMatrixAction(button.dataset.taskAction); }); });
+    qsa('[data-task-action]').forEach(function (button) { button.addEventListener('click', function () { selectPresetAction(button.dataset.taskAction); }); });
+    $('pdf-preset-run')?.addEventListener('click', function () { runTaskMatrixAction(presetActiveAction); });
+    $('pdf-preset-send')?.addEventListener('click', handlePresetFollowup);
+    $('pdf-preset-input')?.addEventListener('keydown', function (event) { if (event.isComposing) return; if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); handlePresetFollowup(); } });
+    $('pdf-preset-input')?.addEventListener('input', function () { this.style.height = 'auto'; this.style.height = Math.min(132, Math.max(28, this.scrollHeight)) + 'px'; });
+    $('pdf-preset-more')?.addEventListener('click', function (event) { event.stopPropagation(); toggleMoreMenu('pdf-preset-more-menu'); });
+    qsa('[data-preset-more]').forEach(function (button) { button.addEventListener('click', function () { handleMoreAction('preset', button.dataset.presetMore); }); });
+    $('pdf-ai-expand')?.addEventListener('click', toggleAiExpanded);
+    document.addEventListener('click', function (event) { if (!event.target.closest('.pdf-composer-shell')) closeMoreMenus(); });
     $('pdf-open-models')?.addEventListener('click', function () { if (window.GugoProPdfRooms) window.GugoProPdfRooms.openDrawer(true); });
     $('pdf-model-close')?.addEventListener('click', closeModelDrawer); $('pdf-key-close')?.addEventListener('click', closeKeyModal);
     qsa('.pdf-model-drawer, .pdf-modal').forEach(function (overlay) { overlay.addEventListener('click', function (event) { if (event.target === overlay) overlay.classList.remove('is-open'); }); });

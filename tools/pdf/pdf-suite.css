@@ -799,3 +799,60 @@ body.pdf-night-reading .pdf-continuous-page .pdf-signature-stamp { filter: inver
 @media (prefers-reduced-motion: reduce) {
   .pdf-toolbar-popover.is-mobile-sheet { animation: none; }
 }
+
+/* Preset AI workspaces and advanced chat controls. */
+.pdf-preset-workspace-bar { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 7px; padding: 8px; border: 1px solid rgba(98,203,255,.24); border-radius: 10px; background: rgba(98,203,255,.055); }
+.pdf-preset-active-copy { display: grid; min-width: 0; gap: 3px; }
+.pdf-preset-active-copy strong { overflow: hidden; color: #f4fbff; font-size: .75rem; text-overflow: ellipsis; white-space: nowrap; }
+.pdf-preset-active-copy span { overflow: hidden; color: var(--pdf-muted); font-size: .61rem; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
+.pdf-preset-language { display: grid; min-width: 116px; gap: 3px; color: var(--pdf-muted); font-size: .59rem; font-weight: 800; }
+.pdf-preset-language select { min-height: 31px; padding: 5px 7px; border: 1px solid var(--pdf-line-strong); border-radius: 7px; color: #edf7ff; background: #08101b; font-size: .65rem; font-weight: 700; }
+.pdf-preset-language select:focus { border-color: var(--pdf-cyan); outline: 0; box-shadow: 0 0 0 3px rgba(98,203,255,.1); }
+.pdf-preset-run { min-height: 38px !important; justify-content: center; white-space: nowrap; }
+.pdf-preset-output { display: flex; flex: 1 1 auto; min-height: 100px; flex-direction: column; }
+.pdf-preset-output .pdf-chat-log { overflow: visible; }
+.pdf-preset-composer { display: grid; flex: 0 0 auto; gap: 5px; margin-top: 2px; }
+.pdf-preset-composer .pdf-context-note { display: block; padding-inline: 4px; }
+.pdf-chat-more { display: grid; flex: 0 0 auto; width: 38px; height: 38px; place-items: center; padding: 0; border: 1px solid var(--pdf-line); border-radius: 50%; color: var(--pdf-muted); background: rgba(255,255,255,.045); font-size: .82rem; }
+.pdf-chat-more:hover, .pdf-chat-more[aria-expanded="true"] { color: #071018; border-color: var(--pdf-cyan); background: var(--pdf-cyan); }
+.pdf-chat-more-menu { position: absolute; right: 4px; bottom: calc(100% + 7px); z-index: 18; display: grid; min-width: 178px; gap: 3px; padding: 5px; border: 1px solid var(--pdf-line-strong); border-radius: 10px; box-shadow: var(--pdf-shadow); background: #101b2b; }
+.pdf-chat-more-menu[hidden] { display: none; }
+.pdf-chat-more-menu button { min-height: 36px; padding: 7px 9px; border: 0; border-radius: 7px; color: #dbeaf7; background: transparent; font-size: .68rem; font-weight: 750; text-align: left; }
+.pdf-chat-more-menu button:hover, .pdf-chat-more-menu button:focus-visible { color: #071018; outline: 0; background: var(--pdf-cyan); }
+.pdf-chat-msg-actions { gap: 3px; }
+.pdf-chat-copy, .pdf-chat-delete { width: 28px; height: 28px; }
+.pdf-chat-copy { display: grid; place-items: center; border: 1px solid transparent; border-radius: 6px; color: #8ea3bb; background: transparent; font-size: .64rem; }
+.pdf-chat-copy:hover { color: #071018; border-color: var(--pdf-cyan); background: var(--pdf-cyan); }
+.pdf-ai-pane.is-expanded { position: fixed; inset: 16px 16px 16px clamp(170px, 18vw, 280px); z-index: 90; width: auto; height: auto; min-height: 0; box-shadow: 0 24px 70px rgba(0,0,0,.55); }
+.pdf-ai-pane.is-expanded .pdf-ai-head { flex: 0 0 auto; }
+.pdf-ai-pane.is-expanded .pdf-ai-body { min-height: 0; }
+@media (max-width: 767px) {
+  .pdf-preset-workspace-bar { grid-template-columns: minmax(0, 1fr) auto; align-items: stretch; padding: 7px; }
+  .pdf-preset-language { grid-column: 1 / -1; min-width: 0; }
+  .pdf-preset-language select { min-height: 42px; }
+  .pdf-preset-run { min-height: 44px !important; }
+  .pdf-preset-composer .pdf-composer-shell { min-height: 52px; }
+  .pdf-chat-more { width: 44px; height: 44px; }
+  .pdf-chat-more-menu { right: 2px; min-width: min(220px, calc(100vw - 28px)); }
+  .pdf-chat-more-menu button { min-height: 44px; }
+  .pdf-chat-copy, .pdf-chat-delete { width: 36px; height: 36px; }
+  .pdf-ai-pane.is-mobile-open.is-expanded { inset: 8px 5px calc(8px + env(safe-area-inset-bottom)); }
+  .pdf-ai-pane.is-mobile-open.is-expanded .pdf-ai-head { display: flex; }
+  .pdf-ai-pane.is-mobile-open.is-expanded .pdf-ai-title strong { font-size: .78rem; }
+  .pdf-ai-pane.is-mobile-open.is-expanded .pdf-ai-title span { font-size: .61rem; }
+  .pdf-ai-pane.is-mobile-open.is-expanded .pdf-ai-tabs { padding: 7px; }
+  .pdf-ai-pane.is-mobile-open.is-expanded .pdf-ai-view { padding: 9px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pdf-chat-more, .pdf-chat-copy, .pdf-chat-delete, .pdf-ai-pane.is-expanded { transition: none; }
+}
+
+/* Keep the preset workspace composer inside the mobile AI sheet. */
+.pdf-preset-view { min-height: 0; }
+.pdf-preset-output { min-height: 0; }
+@media (max-width: 767px) {
+  .pdf-ai-pane.is-mobile-open .pdf-preset-view { min-height: 0; overflow: hidden; }
+  .pdf-ai-pane.is-mobile-open .pdf-preset-output { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+  .pdf-ai-pane.is-mobile-open .pdf-preset-composer { min-height: 0; margin-top: 0; }
+  .pdf-ai-pane.is-mobile-open .pdf-preset-composer .pdf-composer-shell { flex: 0 0 auto; }
+}

@@ -205,10 +205,13 @@
     node.dataset.messageId = message.id;
     var head = document.createElement('div'); head.className = 'pdf-chat-msg-head';
     var label = document.createElement('strong');
-    label.textContent = message.role === 'user' ? 'You' : 'GugoPro AI';
+    label.textContent = message.role === 'user' ? (IS_EN ? 'You' : '使用者') : 'GugoPro AI';
+    var actions = document.createElement('span'); actions.className = 'pdf-chat-msg-actions';
+    var copy = document.createElement('button'); copy.type = 'button'; copy.className = 'pdf-chat-copy'; copy.title = IS_EN ? 'Copy this message' : '複製本則內容'; copy.setAttribute('aria-label', copy.title); copy.innerHTML = '<i class="fa-regular fa-copy"></i>';
+    copy.addEventListener('click', function () { var value = text(message.text); if (root.navigator && root.navigator.clipboard && root.navigator.clipboard.writeText) root.navigator.clipboard.writeText(value).then(function () { showRoomNotice(IS_EN ? 'Copied to clipboard.' : '已複製到剪貼簿。', 'success'); }); else { var area = root.document.createElement('textarea'); area.value = value; area.style.position = 'fixed'; area.style.opacity = '0'; root.document.body.appendChild(area); area.select(); try { root.document.execCommand('copy'); showRoomNotice(IS_EN ? 'Copied to clipboard.' : '已複製到剪貼簿。', 'success'); } catch (_) {} area.remove(); } });
     var remove = document.createElement('button'); remove.type = 'button'; remove.className = 'pdf-chat-delete'; remove.title = IS_EN ? 'Delete message' : '刪除訊息'; remove.setAttribute('aria-label', remove.title); remove.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
     remove.addEventListener('click', function () { deleteMessage(room.id, message.id); });
-    head.appendChild(label); head.appendChild(remove);
+    actions.appendChild(copy); actions.appendChild(remove); head.appendChild(label); head.appendChild(actions);
     var body = document.createElement('p'); body.textContent = message.text;
     node.appendChild(head); node.appendChild(body);
     return node;
@@ -300,8 +303,14 @@
     room.messages = room.messages.filter(function (message) { return message.id !== id; });
     if (room.messages.length === before) return false;
     saveRooms(); renderRoomList(); if (room.id === activeRoomId) renderRoomHistory(room);
-    showRoomNotice('已刪除一則對話訊息。', 'success');
+    showRoomNotice(IS_EN ? 'One chat message was deleted.' : '已刪除一則對話訊息。', 'success');
     return true;
+  }
+  function clearActiveMessages() {
+    var room = getActiveRoom();
+    if (!room || !room.messages.length) { showRoomNotice(IS_EN ? 'The current chat is already empty.' : '目前聊天室已經是空的。', 'success'); return false; }
+    if (!root.confirm(IS_EN ? 'Clear messages in the current custom room only?' : '只清空目前自訂房間的對話嗎？')) return false;
+    room.messages = []; saveRooms(); renderRoomList(); renderRoomHistory(room); showRoomNotice(IS_EN ? 'Current custom room chat cleared.' : '目前自訂房間對話已清空。', 'success'); return true;
   }
 
   function openTaskRuleEditor() { var room = getActiveRoom(); if (!room) return; editingRoomId = room.id; prepareTaskRuleEditor(room); }
@@ -469,6 +478,6 @@
   }
 
   function init() { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind); else bind(); }
-  root.GugoProPdfRooms = { getRooms: function () { return rooms.slice(); }, getActiveRoom: getActiveRoom, switchRoom: switchRoom, createRoom: createRoom, deleteActiveRoom: deleteActiveRoom, openDrawer: openDrawer, closeDrawer: closeDrawer, saveRooms: saveRooms, deleteMessage: deleteMessage, openTaskRuleEditor: openTaskRuleEditor, saveTaskRule: saveTaskRule };
+  root.GugoProPdfRooms = { getRooms: function () { return rooms.slice(); }, getActiveRoom: getActiveRoom, switchRoom: switchRoom, createRoom: createRoom, deleteActiveRoom: deleteActiveRoom, openDrawer: openDrawer, closeDrawer: closeDrawer, saveRooms: saveRooms, deleteMessage: deleteMessage, clearActiveMessages: clearActiveMessages, openTaskRuleEditor: openTaskRuleEditor, saveTaskRule: saveTaskRule };
   init();
 })(window);
