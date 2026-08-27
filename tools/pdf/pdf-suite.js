@@ -489,9 +489,14 @@
     if (zoomLabel) zoomLabel.textContent = Math.round((Number(value) || 0) * 100) + '%';
   }
 
+  function getSignatureRenderKey() {
+    return Object.keys(state.signatures || {}).sort().map(function (page) {
+      return page + ':' + (state.signatures[page] || []).map(function (signature) { return [signature.id, signature.x, signature.y, signature.w, signature.h, signature.rotation || 0].join(','); }).join(';');
+    }).join('|');
+  }
   function getContinuousRenderKey() {
     var stage = $('pdf-reader-stage');
-    return [state.pageOrder.join(','), JSON.stringify(state.pageRotations), state.zoom.toFixed(4), state.fitMode, state.tool, stage ? stage.clientWidth : 0, stage ? stage.clientHeight : 0].join('|');
+    return [state.pageOrder.join(','), JSON.stringify(state.pageRotations), getSignatureRenderKey(), state.zoom.toFixed(4), state.fitMode, state.tool, stage ? stage.clientWidth : 0, stage ? stage.clientHeight : 0].join('|');
   }
 
   function syncContinuousActivePage(pageNumber) {
@@ -1426,22 +1431,46 @@
     image.src = dataUrl;
   }
   function signatureCenterPlacement(width, height) {
-    var frame = $('pdf-page-frame'); var stage = $('pdf-reader-stage');
+    var frame = isMobileReader() ? document.querySelector('.pdf-continuous-page.is-current') : $('pdf-page-frame');
+    var stage = $('pdf-reader-stage');
     if (!frame || !stage) return { x: (1 - width) / 2, y: (1 - height) / 2 };
     var frameRect = frame.getBoundingClientRect(); var stageRect = stage.getBoundingClientRect();
-    var x = (stageRect.left + stageRect.width / 2 - frameRect.left) / Math.max(1, frameRect.width) - width / 2;
-    var y = (stageRect.top + stageRect.height / 2 - frameRect.top) / Math.max(1, frameRect.height) - height / 2;
+    if (frameRect.width < 2 || frameRect.height < 2) return { x: (1 - width) / 2, y: (1 - height) / 2 };
+    var visibleLeft = Math.max(frameRect.left, stageRect.left); var visibleRight = Math.min(frameRect.right, stageRect.right);
+    var visibleTop = Math.max(frameRect.top, stageRect.top); var visibleBottom = Math.min(frameRect.bottom, stageRect.bottom);
+    var centerX = visibleRight > visibleLeft ? (visibleLeft + visibleRight) / 2 : frameRect.left + frameRect.width / 2;
+    var centerY = visibleBottom > visibleTop ? (visibleTop + visibleBottom) / 2 : frameRect.top + frameRect.height / 2;
+    var x = (centerX - frameRect.left) / frameRect.width - width / 2;
+    var y = (centerY - frameRect.top) / frameRect.height - height / 2;
     return { x: Math.max(0, Math.min(1 - width, x)), y: Math.max(0, Math.min(1 - height, y)) };
   }
   function addSignatureData(dataUrl) {
+    if (!dataUrl || dataUrl.indexOf('data:image/') !== 0) return setStatus(IS_EN ? 'Draw or upload a signature first.' : '請先繪製或上傳簽名。', 'error');
     state.signatureImage = dataUrl;
-    $('signature-modal').classList.remove('is-open');
+    var modal = $('signature-modal'); if (modal) modal.classList.remove('is-open');
     var width = .3; var height = .12; var placement = signatureCenterPlacement(width, height); var id = 'sig_' + Date.now();
     if (!state.signatures[state.currentPage]) state.signatures[state.currentPage] = [];
     recordEditHistory();
     state.signatures[state.currentPage].push({ id: id, dataUrl: dataUrl, x: placement.x, y: placement.y, w: width, h: height, rotation: 0 });
-    state.activeSignatureId = id; renderMainPage(); actionGuide('signaturePlaced');
+    state.activeSignatureId = id;
+    Promise.resolve(renderMainPage()).then(function () {
+      var page = document.querySelector('.pdf-continuous-page.is-current') || $('pdf-page-frame');
+      var stamp = page && page.querySelector('.pdf-signature-stamp[data-signature-id="' + id + '"]');
+      if (stamp && isMobileReader()) { try { stamp.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' }); } catch (_) {} }
+      actionGuide('signaturePlaced');
+    });
   }
+  function syncAnnotationWidthControl() {
+    var input = $('annotation-width'); var output = $('annotation-width-value'); var preview = $('annotation-width-preview');
+    if (!input) return;
+    var value = Math.max(1, Math.min(20, Number(input.value) || 5));
+    input.value = String(value);
+    var multiplier = state.tool === 'highlight' ? 3.5 : state.tool === 'underline' ? .65 : state.tool === 'strike' ? .6 : 1;
+    var actual = Math.max(1, value * multiplier);
+    if (output) output.textContent = value + ' px';
+    if (preview) { preview.style.setProperty('--preview-size', actual + 'px'); preview.style.setProperty('--preview-base-size', value + 'px'); preview.title = (IS_EN ? 'Actual visible width: ' : '實際顯示寬度：') + Math.round(actual * 10) / 10 + ' px'; }
+  }
+
   function initSignaturePad() {
     var canvas = $('signature-pad'); if (!canvas) return;
     var context = canvas.getContext('2d'); var drawing = false; var last = null; var activePointerId = null;
@@ -1458,7 +1487,7 @@
     canvas.ontouchmove = function (event) { if (window.PointerEvent) return; var touch = event.touches && event.touches[0]; if (touch) move({ clientX: touch.clientX, clientY: touch.clientY, pointerId: 'touch', cancelable: event.cancelable, preventDefault: function () { event.preventDefault(); }, stopPropagation: function () { event.stopPropagation(); } }); };
     canvas.ontouchend = function (event) { if (window.PointerEvent) return; end({ pointerId: 'touch', cancelable: event.cancelable, preventDefault: function () { event.preventDefault(); }, stopPropagation: function () { event.stopPropagation(); } }); };
     canvas.ontouchcancel = function (event) { if (window.PointerEvent) return; cancel({ pointerId: 'touch', cancelable: event.cancelable, preventDefault: function () { event.preventDefault(); }, stopPropagation: function () { event.stopPropagation(); } }); };
-    $('pdf-add-signature')?.addEventListener('click', function () { var modal = $('signature-modal'); if (modal) modal.classList.add('is-open'); var saved = getSignatureLibrary()[0]; if (saved) loadSignatureIntoPad(saved); actionGuide('signature'); });
+    $('pdf-add-signature')?.addEventListener('click', function () { var modal = $('signature-modal'); if (modal) modal.classList.add('is-open'); var saved = getSignatureLibrary()[0]; if (saved) loadSignatureIntoPad(saved); closeMobileToolPanel(); actionGuide('signature'); });
     $('signature-clear').addEventListener('click', function () { context.clearRect(0, 0, canvas.width, canvas.height); actionGuide('signatureCleared'); });
     $('signature-save-library').addEventListener('click', function () { saveSignatureToLibrary(canvas.toDataURL('image/png')); actionGuide('signatureSaved'); });
     $('signature-save').addEventListener('click', function () { addSignatureData(canvas.toDataURL('image/png')); });
@@ -1578,8 +1607,11 @@
   }
 
   function bindToolbar() {
-    qsa('[data-pdf-tool]').forEach(function (button) { button.addEventListener('click', function () { state.tool = button.dataset.pdfTool; qsa('[data-pdf-tool]').forEach(function (node) { node.classList.toggle('is-active', node === button); }); actionGuide(state.tool); closeMobileToolPanel(); if (state.pdf) renderMainPage(); }); });
+    qsa('[data-pdf-tool]').forEach(function (button) { button.addEventListener('click', function () { state.tool = button.dataset.pdfTool; qsa('[data-pdf-tool]').forEach(function (node) { node.classList.toggle('is-active', node === button); }); syncAnnotationWidthControl(); actionGuide(state.tool); closeMobileToolPanel(); if (state.pdf) renderMainPage(); }); });
     bindToolbarTouchLabels();
+    var annotationWidth = $('annotation-width');
+    if (annotationWidth) { annotationWidth.addEventListener('input', syncAnnotationWidthControl); annotationWidth.addEventListener('change', syncAnnotationWidthControl); }
+    syncAnnotationWidthControl();
     $('pdf-undo')?.addEventListener('click', function () { if (undoEdit()) actionGuide('undo'); });
     $('pdf-redo')?.addEventListener('click', function () { if (redoEdit()) actionGuide('redo'); });
     $('pdf-open-button').addEventListener('click', function () { actionGuide('open'); $('pdf-file-input').click(); });
