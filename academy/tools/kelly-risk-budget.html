@@ -8,7 +8,18 @@
 <link href="https://academy.gugopro.com/tools/kelly-risk-budget.html" rel="canonical"/>
 <link href="../academy.css" rel="stylesheet"/>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Kelly 風險預算工具","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"以使用者交易紀錄摘要估算 Kelly 與分數 Kelly 風險預算。","url":"https://academy.gugopro.com/tools/kelly-risk-budget.html"}</script>
-<link href="https://gugopro.com/academy/tools/kelly-risk-budget.html" hreflang="zh-Hant" rel="alternate"/><link href="https://gugopro.com/academy/tools/kelly-risk-budget.html?lang=zh-CN" hreflang="zh-Hans" rel="alternate"/><link href="https://gugopro.com/academy/tools/kelly-risk-budget.html?lang=en" hreflang="en" rel="alternate"/><link href="https://gugopro.com/academy/tools/kelly-risk-budget.html?lang=ja" hreflang="ja" rel="alternate"/><link href="https://gugopro.com/academy/tools/kelly-risk-budget.html?lang=de" hreflang="de" rel="alternate"/><link href="https://gugopro.com/academy/tools/kelly-risk-budget.html?lang=fr" hreflang="fr" rel="alternate"/><link href="https://gugopro.com/academy/tools/kelly-risk-budget.html?lang=es" hreflang="es" rel="alternate"/><link href="https://gugopro.com/academy/tools/kelly-risk-budget.html?lang=pt" hreflang="pt" rel="alternate"/><link href="https://gugopro.com/academy/tools/kelly-risk-budget.html" hreflang="x-default" rel="alternate"/></head>
+<meta name="i18n-status" content="machine-draft">
+<link rel="alternate" hreflang="zh-TW" href="./kelly-risk-budget.html">
+<link rel="alternate" hreflang="zh-CN" href="./kelly-risk-budget.html?lang=zh-CN">
+<link rel="alternate" hreflang="en" href="./kelly-risk-budget.html?lang=en">
+<link rel="alternate" hreflang="ja" href="./kelly-risk-budget.html?lang=ja">
+<link rel="alternate" hreflang="de" href="./kelly-risk-budget.html?lang=de">
+<link rel="alternate" hreflang="fr" href="./kelly-risk-budget.html?lang=fr">
+<link rel="alternate" hreflang="es" href="./kelly-risk-budget.html?lang=es">
+<link rel="alternate" hreflang="pt" href="./kelly-risk-budget.html?lang=pt">
+<link rel="alternate" hreflang="x-default" href="./kelly-risk-budget.html">
+<script src="/i18n/gugopro-i18n.js?v=machine-draft-20260827" defer></script>
+</head>
 <body class="quant-page">
 <main class="tool-page"><div class="tool-crumb"><a href="../">← 回到 GugoPro Academy</a><span>風險管理 · 個人輸入 · 不構成建議</span></div>
 <div class="tool-layout"><section class="panel"><div class="eyebrow">Quant lab · Risk budget</div><h1>Kelly 風險預算</h1><p>以你已結束交易的統計摘要，將「優勢」轉成上限與保守分數 Kelly。若勝率、盈虧比或樣本不穩定，輸出不應被當成自動下單比例。</p>
@@ -27,4 +38,4 @@
 <script src="../academy.js?v=20260827-i18n1"></script><script>
 const $=id=>document.getElementById(id),fmt=(n,d=2)=>Number.isFinite(n)?n.toFixed(d):'—';
 function calc(){const p=+$('win').value/100,w=+$('avgwin').value,l=+$('avgloss').value,f=+$('fraction').value,acct=+$('account').value,stop=+$('stop').value/100;if(![p,w,l,f,acct,stop].every(Number.isFinite)||p<=0||p>=1||w<=0||l<=0||f<=0||acct<0||stop<=0){for(const id of ['fractionKelly','fullKelly','ratio','riskBudget','position'])$(id).textContent='—';$('edge').textContent='等待有效輸入';$('chart').innerHTML='';$('status').textContent='輸入錯誤：請填入 0–100% 的勝率、正數 R 倍數、資金與停損距離。';$('status').className='status error';return}const b=w/l,full=p-(1-p)/b,frac=Math.max(0,full*f),budget=acct*frac,pos=stop?budget/stop:0;$('fractionKelly').textContent=fmt(frac*100,2)+'%';$('fullKelly').textContent=fmt(full*100,2)+'%';$('ratio').textContent=fmt(b,2)+' R';$('riskBudget').textContent='NT$ '+Math.round(budget).toLocaleString('zh-TW');$('position').textContent='NT$ '+Math.round(pos).toLocaleString('zh-TW');$('edge').textContent=full>0?'輸入統計呈現正 Kelly；仍需做樣本外與壓力測試。':'輸入統計的 Full Kelly 不為正；不要用負數結果製造槓桿。';const scale=Math.max(Math.abs(full),Math.abs(frac),.01);$('chart').innerHTML='<i style="height:'+Math.max(5,Math.max(0,full)/scale*145)+'px" title="Full Kelly"></i><i style="height:'+Math.max(5,frac/scale*145)+'px" title="Fractional Kelly"></i>';$('status').textContent='計算完成：結果只反映輸入的交易紀錄摘要與停損假設。';$('status').className='status ok'}
-$('calc').addEventListener('click',calc);</script><script data-gugopro-i18n="true" defer="" src="../../i18n/gugopro-i18n.js?v=20260827-i18n1"></script></body></html>
+$('calc').addEventListener('click',calc);</script></body></html>
