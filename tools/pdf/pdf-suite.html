@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700;800&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="pdf-suite.css?v=pdf-suite-universal-documents-20260827-v16">
+  <link rel="stylesheet" href="pdf-suite.css?v=pdf-suite-universal-documents-20260827-v21">
 </head>
 <body class="pdf-suite-page">
   <header class="pdf-site-header">
@@ -50,9 +50,14 @@
         <section class="pdf-mobile-reader-topbar" id="pdf-mobile-reader-topbar" aria-label="文件閱讀導覽" hidden>
       <button type="button" id="pdf-mobile-back" aria-label="返回文件入口" title="返回文件入口"><i class="fa-solid fa-arrow-left"></i><span>返回</span></button>
       <button type="button" id="pdf-mobile-help" aria-label="查看操作說明" title="查看操作說明"><i class="fa-regular fa-circle-question"></i><span>說明</span></button>
+      <button type="button" id="pdf-mobile-thumbnails" aria-label="開啟縮圖" title="開啟縮圖"><i class="fa-solid fa-grip"></i><span>縮圖</span></button>
+      <button type="button" id="pdf-mobile-page-prev" aria-label="上一頁" title="上一頁"><i class="fa-solid fa-chevron-left"></i><span>上一頁</span></button>
+      <label class="pdf-mobile-page-indicator" aria-label="目前頁碼"><input id="pdf-mobile-page-input" type="number" min="1" value="1" aria-label="跳到頁碼"><span>/ <strong id="pdf-mobile-total-pages">0</strong></span></label>
+      <button type="button" id="pdf-mobile-page-next" aria-label="下一頁" title="下一頁"><i class="fa-solid fa-chevron-right"></i><span>下一頁</span></button>
+      <button type="button" id="pdf-mobile-ai" aria-label="開啟 AI 助手" title="開啟 AI 助手"><i class="fa-solid fa-sparkles"></i><span>AI</span></button>
+      <span class="pdf-mobile-top-spacer" aria-hidden="true"></span>
       <button type="button" id="pdf-mobile-search" aria-label="搜尋文件文字" title="搜尋文件文字"><i class="fa-solid fa-magnifying-glass"></i><span>搜尋</span></button>
       <button type="button" id="pdf-mobile-bookmark" aria-label="收藏目前頁" title="收藏目前頁"><i class="fa-regular fa-bookmark"></i><span>收藏</span></button>
-      <span class="pdf-mobile-top-spacer" aria-hidden="true"></span>
       <button type="button" id="pdf-mobile-undo" aria-label="復原" title="復原"><i class="fa-solid fa-rotate-left"></i><span>復原</span></button>
       <button type="button" id="pdf-mobile-redo" aria-label="重做" title="重做"><i class="fa-solid fa-rotate-right"></i><span>重做</span></button>
       <button class="pdf-mobile-save" type="button" id="pdf-mobile-save" aria-label="儲存文件" title="儲存文件"><i class="fa-solid fa-floppy-disk"></i><span>儲存</span></button>
@@ -84,8 +89,7 @@
       <button class="pdf-mobile-action" type="button" data-mobile-action="more" data-mobile-capability="document"><i class="fa-solid fa-grip"></i><span>更多工具</span></button>
     </section>
     <section class="pdf-mobile-subdock" id="pdf-mobile-subdock" aria-label="手機子工具列" hidden>
-      <div class="pdf-mobile-subdock-head"><button type="button" id="pdf-mobile-subdock-back" aria-label="返回主工具列" title="返回主工具列"><i class="fa-solid fa-arrow-left"></i><span>返回工具</span></button><strong id="pdf-mobile-subdock-title"><i class="fa-solid fa-sliders"></i><span>工具</span></strong></div>
-      <div class="pdf-mobile-subdock-tools" id="pdf-mobile-subdock-tools" role="toolbar" aria-label="目前工具的功能"></div>
+      <div class="pdf-mobile-subdock-tools" id="pdf-mobile-subdock-tools" role="toolbar" aria-label="目前工具的功能"><button class="pdf-mobile-subtool pdf-mobile-subtool-back" type="button" id="pdf-mobile-subdock-back" aria-label="返回主工具列" title="返回主工具列"><i class="fa-solid fa-arrow-left"></i><span>返回</span></button></div>
     </section>
     <section class="pdf-editor-dock" id="pdf-editor-dock" aria-label="PDF 編輯工具" hidden>
       <div class="pdf-editor-dock-head"><strong><i class="fa-solid fa-pen-to-square"></i> PDF 編輯</strong><button class="pdf-editor-close" type="button" id="pdf-editor-close" aria-label="關閉 PDF 編輯模式"><i class="fa-solid fa-xmark"></i><span>完成</span></button></div>
@@ -132,7 +136,6 @@
           <div class="pdf-reader-title"><strong id="pdf-file-name">尚未開啟文件</strong><span id="pdf-file-meta">拖放檔案即可開始</span></div>
           <div class="pdf-reader-status" id="pdf-reader-status"><i class="fa-solid fa-lock"></i> 等待檔案</div><div class="pdf-status-inline" id="pdf-status" aria-live="polite">選擇或拖入文件開始</div>
         </div>
-        <div class="pdf-mobile-page-bar" aria-label="頁碼導覽"><button class="pdf-mobile-page-action" type="button" id="pdf-mobile-thumbnails" aria-label="開啟縮圖" title="開啟縮圖"><i class="fa-solid fa-grip"></i><span>縮圖</span></button><div class="pdf-mobile-page-controls" aria-label="頁碼導覽"><button type="button" id="pdf-mobile-page-prev" aria-label="上一頁"><i class="fa-solid fa-chevron-left"></i></button><span>第 <strong id="pdf-mobile-current-page">1</strong> / <strong id="pdf-mobile-total-pages">0</strong> 頁</span><button type="button" id="pdf-mobile-page-next" aria-label="下一頁"><i class="fa-solid fa-chevron-right"></i></button><input id="pdf-mobile-page-input" type="number" min="1" value="1" aria-label="跳到頁碼"></div><button class="pdf-mobile-page-action" type="button" id="pdf-mobile-ai" aria-label="開啟 AI 助手" title="開啟 AI 助手"><i class="fa-solid fa-sparkles"></i><span>AI</span></button></div>
         <div class="pdf-reader-stage" id="pdf-reader-stage">
           <div class="pdf-empty-state" id="pdf-empty-state">
             <i class="fa-solid fa-file-arrow-up"></i>
@@ -214,8 +217,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="../../js/global-ai-quota.js?v=humanized-sheets-20260827"></script>
   <script src="../../js/unified-ai-model-engine.js?v=humanized-sheets-20260827"></script>
-  <script src="pdf-suite.js?v=pdf-suite-universal-documents-20260827-v16"></script>
-  <script src="pdf-suite-rooms.js?v=pdf-suite-universal-documents-20260827-v16"></script>
+  <script src="pdf-suite.js?v=pdf-suite-universal-documents-20260827-v21"></script>
+  <script src="pdf-suite-rooms.js?v=pdf-suite-universal-documents-20260827-v21"></script>
   <script>
     (function(){
       document.querySelectorAll('[data-close-modal]').forEach(function(button){ button.addEventListener('click', function(){ var modal=document.getElementById(button.dataset.closeModal); if(modal) modal.classList.remove('is-open'); }); });
