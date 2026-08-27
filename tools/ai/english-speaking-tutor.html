@@ -5437,7 +5437,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 if (session.startTimer) { clearTimeout(session.startTimer); session.startTimer = null; }
                 if (session.finalized) return;
                 console.warn('Dual native STT error:', error);
-                const detail = String(error?.code || error?.error || error?.message || '').toLowerCase();
+                const detail = [error?.code, error?.error, error?.message].filter(value => value !== undefined && value !== null).join(' ').toLowerCase();
                 const permissionError = /permission|denied|not.?allowed|record_audio/.test(detail);
                 if (session.stopRequested) { finalizeSession(session); return; }
                 if (permissionError) {
