@@ -735,3 +735,54 @@ body.pdf-night-reading .pdf-continuous-page .pdf-signature-stamp { filter: inver
   .pdf-ai-pane.is-mobile-open { inset: 57px 8px max(8px, env(safe-area-inset-bottom)); }
   .pdf-ai-pane.is-mobile-open .pdf-mobile-ai-close { display: inline-flex; }
 }
+
+/* Mobile toolbar affordances: readable labels and viewport-level sheets. */
+.pdf-popover-scrim { display: none; }
+.pdf-toolbar-popover.is-mobile-sheet { display: grid; }
+
+@media (max-width: 767px) {
+  .pdf-app-toolbar .pdf-tool-label { display: inline; }
+  .pdf-app-toolbar .pdf-tool { min-height: 42px; padding: 8px 9px; font-size: .7rem; }
+  .pdf-app-toolbar .pdf-tool-icon { width: 16px; }
+  .pdf-app-toolbar .pdf-toolbar-file-group .pdf-tool-label { display: inline; }
+  .pdf-popover-scrim { position: fixed; inset: 0; z-index: 74; display: block; background: rgba(2,7,14,.68); backdrop-filter: blur(2px); }
+  .pdf-popover-scrim[hidden] { display: none; }
+  body.pdf-popover-open { overflow: hidden; }
+  .pdf-toolbar-popover.is-mobile-sheet {
+    position: fixed;
+    inset: auto 8px max(8px, env(safe-area-inset-bottom));
+    z-index: 75;
+    display: grid;
+    width: auto;
+    max-height: min(calc(var(--pdf-viewport-height, 100dvh) - 88px), 680px);
+    overflow: auto;
+    overscroll-behavior: contain;
+    padding: 14px;
+    border-color: rgba(98,203,255,.58);
+    border-radius: 16px;
+    box-shadow: 0 22px 60px rgba(0,0,0,.62), 0 0 0 1px rgba(98,203,255,.08);
+    animation: pdf-sheet-in 180ms cubic-bezier(.23,1,.32,1) both;
+  }
+  .pdf-toolbar-popover.is-mobile-sheet .pdf-popover-head { position: sticky; top: -14px; z-index: 2; min-height: 40px; padding: 4px 0 8px; background: linear-gradient(#111c2c 75%, rgba(17,28,44,0)); }
+  .pdf-toolbar-popover.is-mobile-sheet .pdf-popover-head strong { font-size: .9rem; }
+  .pdf-toolbar-popover.is-mobile-sheet .pdf-popover-close { width: 38px; height: 38px; border-radius: 10px; color: #071018; border-color: var(--pdf-cyan); background: var(--pdf-cyan); font-size: .9rem; }
+  .pdf-toolbar-popover.is-mobile-sheet .pdf-popover-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+  .pdf-toolbar-popover.is-mobile-sheet .pdf-popover-grid .pdf-tool { min-height: 44px; padding: 8px 7px; font-size: .72rem; }
+  .pdf-toolbar-popover.is-mobile-sheet .pdf-popover-fields { gap: 8px; }
+  .pdf-toolbar-popover.is-mobile-sheet .pdf-popover-fields input,
+  .pdf-toolbar-popover.is-mobile-sheet .pdf-popover-fields select { min-height: 42px; padding: 9px 10px; font-size: .78rem; }
+  .pdf-toolbar-popover.is-mobile-sheet .pdf-button-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+  .pdf-toolbar-popover.is-mobile-sheet .pdf-action-button { min-height: 44px; justify-content: center; padding: 8px 7px; font-size: .7rem; text-align: center; }
+  .pdf-toolbar-popover.is-mobile-sheet .pdf-popover-file-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+  .pdf-toolbar-popover.is-mobile-sheet .pdf-popover-file-row .pdf-action-button { min-height: 44px; flex: initial; }
+  .pdf-toolbar-popover.is-mobile-sheet .pdf-helper { padding: 2px 2px max(4px, env(safe-area-inset-bottom)); font-size: .7rem; line-height: 1.55; }
+}
+
+@keyframes pdf-sheet-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pdf-toolbar-popover.is-mobile-sheet { animation: none; }
+}

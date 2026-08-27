@@ -32,6 +32,7 @@
   };
 
   var editHistory = { undo: [], redo: [], applying: false, limit: 60 };
+  var mobileOverlayBackTimer = 0;
   function cloneValue(value) { return value == null ? value : JSON.parse(JSON.stringify(value)); }
   function captureEditState() {
     return {
@@ -1486,29 +1487,99 @@
 
   function bindPopovers() {
     var openPopover = null;
-    function closePopover(panel) { if (!panel) return; panel.hidden = true; var toggle = document.querySelector('[data-popover-target="' + panel.id + '"]'); if (toggle) { toggle.setAttribute('aria-expanded', 'false'); toggle.classList.remove('is-active'); } if (openPopover === panel) openPopover = null; }
-    function closeAll() { qsa('.pdf-toolbar-popover').forEach(closePopover); }
+    var mobileHistoryPushed = false;
+    var mobileScrim = document.createElement('div');
+    mobileScrim.className = 'pdf-popover-scrim';
+    mobileScrim.hidden = true;
+    mobileScrim.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(mobileScrim);
+
+    function isMobilePopover() { return Boolean(window.matchMedia && window.matchMedia('(max-width: 767px)').matches); }
+    function toggleFor(panel) { return panel ? document.querySelector('[data-popover-target="' + panel.id + '"]') : null; }
+    function restorePanel(panel) {
+      if (!panel || !panel.__pdfPopoverOrigin || panel.__pdfPopoverOrigin.parent && !panel.__pdfPopoverOrigin.parent.isConnected) return;
+      var origin = panel.__pdfPopoverOrigin;
+      panel.classList.remove('is-mobile-sheet');
+      panel.removeAttribute('role');
+      panel.removeAttribute('aria-modal');
+      panel.removeAttribute('aria-label');
+      panel.removeAttribute('tabindex');
+      panel.dataset.pdfPortalled = 'false';
+      if (origin.next && origin.next.parentNode === origin.parent) origin.parent.insertBefore(panel, origin.next);
+      else origin.parent.appendChild(panel);
+      panel.__pdfPopoverOrigin = null;
+    }
+    function portalPanel(panel) {
+      if (!panel || panel.dataset.pdfPortalled === 'true') return;
+      panel.__pdfPopoverOrigin = { parent: panel.parentNode, next: panel.nextSibling };
+      panel.dataset.pdfPortalled = 'true';
+      panel.classList.add('is-mobile-sheet');
+      panel.setAttribute('role', 'dialog');
+      panel.setAttribute('aria-modal', 'true');
+      var heading = panel.querySelector('.pdf-popover-head strong');
+      if (heading) panel.setAttribute('aria-label', heading.textContent.trim());
+      panel.setAttribute('tabindex', '-1');
+      document.body.appendChild(panel);
+    }
+    function closePopover(panel, fromHistory) {
+      if (!panel) return;
+      panel.hidden = true;
+      var toggle = toggleFor(panel);
+      if (toggle) { toggle.setAttribute('aria-expanded', 'false'); toggle.classList.remove('is-active'); }
+      var wasOpen = openPopover === panel;
+      if (wasOpen) openPopover = null;
+      if (panel.dataset.pdfPortalled === 'true') restorePanel(panel);
+      if (!openPopover) {
+        mobileScrim.hidden = true;
+        document.body.classList.remove('pdf-popover-open');
+        if (mobileHistoryPushed && !fromHistory) {
+          mobileHistoryPushed = false;
+          try { window.history.back(); } catch (_) {}
+        }
+      }
+      if (wasOpen && toggle && !fromHistory) {
+        try { toggle.focus({ preventScroll: true }); } catch (_) { toggle.focus(); }
+      }
+    }
+    function closeAll(fromHistory) { qsa('.pdf-toolbar-popover').forEach(function (panel) { closePopover(panel, fromHistory); }); }
+    function openPopoverPanel(panel, toggle) {
+      if (isMobilePopover()) {
+        portalPanel(panel);
+        mobileScrim.hidden = false;
+        document.body.classList.add('pdf-popover-open');
+        if (!mobileHistoryPushed) {
+          try { window.history.pushState({ gugoproPdfPopover: panel.id }, '', window.location.href); mobileHistoryPushed = true; } catch (_) {}
+        }
+      }
+      panel.hidden = false;
+      panel.scrollTop = 0;
+      toggle.setAttribute('aria-expanded', 'true');
+      toggle.classList.add('is-active');
+      openPopover = panel;
+      var closeButton = panel.querySelector('[data-popover-close]');
+      if (closeButton) {
+        window.setTimeout(function () { try { closeButton.focus({ preventScroll: true }); } catch (_) {} }, 0);
+      }
+      var label = toggle.getAttribute('aria-label') || toggle.title || toggle.textContent.trim();
+      toast((IS_EN ? 'Opened: ' : '已開啟：') + label);
+    }
     qsa('[data-popover-target]').forEach(function (toggle) {
       toggle.setAttribute('aria-controls', toggle.dataset.popoverTarget);
+      toggle.setAttribute('aria-haspopup', 'dialog');
       toggle.addEventListener('click', function (event) {
         event.stopPropagation();
         var panel = $(toggle.dataset.popoverTarget); if (!panel) return;
         var opening = panel.hidden;
-        closeAll();
-        if (opening) {
-          panel.hidden = false;
-          panel.scrollTop = 0;
-          toggle.setAttribute('aria-expanded', 'true');
-          toggle.classList.add('is-active');
-          openPopover = panel;
-          var label = toggle.getAttribute('aria-label') || toggle.title || toggle.textContent.trim();
-          toast((IS_EN ? 'Opened: ' : '已開啟：') + label);
-        }
+        var switching = Boolean(openPopover && openPopover !== panel && mobileHistoryPushed);
+        closeAll(switching);
+        if (opening) openPopoverPanel(panel, toggle);
       });
     });
-    qsa('[data-popover-close]').forEach(function (button) { button.addEventListener('click', function () { closePopover($(button.dataset.popoverClose)); }); });
-    document.addEventListener('click', function (event) { if (openPopover && !event.target.closest('.pdf-popover-wrap')) closeAll(); });
-    document.addEventListener('keydown', function (event) { if (event.key === 'Escape') closeAll(); });
+    qsa('[data-popover-close]').forEach(function (button) { button.addEventListener('click', function (event) { event.stopPropagation(); closePopover($(button.dataset.popoverClose)); }); });
+    mobileScrim.addEventListener('click', function () { closeAll(); });
+    document.addEventListener('click', function (event) { if (openPopover && !event.target.closest('.pdf-popover-wrap, .pdf-toolbar-popover')) closeAll(); });
+    document.addEventListener('keydown', function (event) { if (event.key === 'Escape' && openPopover) { event.preventDefault(); closeAll(); } });
+    window.addEventListener('popstate', function () { if (openPopover && mobileHistoryPushed) { mobileHistoryPushed = false; closeAll(true); } });
   }
 
   function bindAi() {
@@ -1549,10 +1620,14 @@
     var fromPopState = options && options.fromPopState;
     var skipHistory = options && options.skipHistory;
     var hasOverlayEntry = Boolean(window.history.state && window.history.state.pdfSuiteOverlay);
-    if (open && !hasOverlayEntry) {
-      window.history.pushState(Object.assign({}, window.history.state || {}, { pdfSuiteOverlay: true }), '', window.location.href);
-    } else if (!open && !fromPopState && !skipHistory && hasOverlayEntry) {
-      window.history.back();
+    if (open) {
+      if (mobileOverlayBackTimer) { window.clearTimeout(mobileOverlayBackTimer); mobileOverlayBackTimer = 0; }
+      if (!hasOverlayEntry) window.history.pushState(Object.assign({}, window.history.state || {}, { pdfSuiteOverlay: true }), '', window.location.href);
+    } else if (!fromPopState && !skipHistory && hasOverlayEntry && !mobileOverlayBackTimer) {
+      mobileOverlayBackTimer = window.setTimeout(function () {
+        mobileOverlayBackTimer = 0;
+        if (window.history.state && window.history.state.pdfSuiteOverlay) window.history.back();
+      }, 0);
     }
   }
 
