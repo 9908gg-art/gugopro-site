@@ -1251,6 +1251,8 @@
 
 
 
+
+
 <style id="gugo-capsule-dock-style">
 /* GugoPro Gemini-style capsule composer */
 html, body { background: #0A0B10 !important; }
@@ -1295,7 +1297,9 @@ html, body { background: #0A0B10 !important; }
     color: #f5f7fb;
     box-shadow: none !important;
 }
-.capsule-dock #user-text::placeholder { color: rgba(219,225,235,.58); }
+    .capsule-dock #user-text::placeholder { color: rgba(219,225,235,.58); }
+    .capsule-dock.has-speech-status #user-text::placeholder { color: transparent !important; }
+
 .capsule-dock #user-text:focus { box-shadow: none !important; }
 .speech-composer-status {
     position: absolute;
@@ -5697,6 +5701,8 @@ html, body { background: #0A0B10 !important; }
 
 
 
+
+
 <script id="gugo-capsule-dock-modes-js">
 // GugoPro Gemini-style Capsule Dock + three speech modes
 (() => {
@@ -5790,6 +5796,8 @@ html, body { background: #0A0B10 !important; }
         const learningButton = document.getElementById('btn-mic');
         const motherButton = document.getElementById('btn-mic-my');
         const input = document.getElementById('user-text');
+        const status = document.getElementById('speech-composer-status');
+        const hasActiveStatus = status && status.dataset.state && status.dataset.state !== 'idle';
         if (learningLabel) learningLabel.textContent = targetFlag;
         if (motherLabel) motherLabel.textContent = motherFlag;
         if (learningButton) {
@@ -5802,7 +5810,7 @@ html, body { background: #0A0B10 !important; }
             motherButton.title = `${selectedLabel('my-lang', motherLocale)}語音提問，不進行發音評分（${motherLocale}）`;
             motherButton.setAttribute('aria-label', `${selectedLabel('my-lang', motherLocale)}語音提問，不進行發音評分`);
         }
-        if (input && !window.GugoSpeechSessionActive && document.activeElement !== input && !String(input.value || '').trim()) input.placeholder = speechInputGuide();
+        if (input && !window.GugoSpeechSessionActive && !hasActiveStatus && document.activeElement !== input && !String(input.value || '').trim()) input.placeholder = speechInputGuide();
         return { targetLocale, motherLocale };
     }
     const SPEECH_STATUS_TEXT = {
@@ -6048,11 +6056,7 @@ html, body { background: #0A0B10 !important; }
             fileInput.addEventListener('change', () => setSpeechComposerState('idle'));
             window.addEventListener?.('focus', () => { if (!window.GugoSpeechSessionActive) setSpeechComposerState('idle'); });
         }
-        const materialButton = document.getElementById('btn-material-import-inline');
-        if (materialButton && materialButton.dataset.composerFeedbackBound !== '1') {
-            materialButton.dataset.composerFeedbackBound = '1';
-            materialButton.addEventListener('click', () => setSpeechComposerState('starting', '', '正在開啟教材…'));
-        }
+        // Material import intentionally has no composer status message: opening the file picker is self-explanatory, and the material banner confirms completion.
     }
     function bind() {
         ensureSpeechModePanel();
