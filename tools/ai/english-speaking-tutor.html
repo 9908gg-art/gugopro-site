@@ -1292,9 +1292,11 @@
 
 
 
+
+
 <style id="gugo-capsule-dock-style">
 /* GugoPro Gemini-style capsule composer */
-html, body { background: #0A0B10 !important; }
+html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .bottom-controls {
     padding: 5px 12px max(6px, env(safe-area-inset-bottom));
     background: linear-gradient(180deg, rgba(10,11,16,.94), rgba(10,11,16,1)) !important;
@@ -1302,13 +1304,16 @@ html, body { background: #0A0B10 !important; }
 }
 .input-wrapper { width: min(100%, 980px); margin: 0 auto; }
 .capsule-composer-row {
+    box-sizing: border-box;
     display: flex;
     align-items: flex-end;
     gap: 7px;
     width: min(100%, 1120px);
+    min-width: 0;
     margin: 0 auto;
 }
 .main-input-group.dual-stt-composer.capsule-dock {
+    box-sizing: border-box;
     position: relative;
     display: flex !important;
     align-items: flex-end;
@@ -1321,10 +1326,13 @@ html, body { background: #0A0B10 !important; }
     border-radius: 30px !important;
     background: linear-gradient(135deg, #202329 0%, #17191d 100%) !important;
     box-shadow: 0 8px 28px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.04);
+    overflow: hidden;
 }
 .capsule-dock #user-text {
     flex: 1 1 auto;
+    box-sizing: border-box;
     min-width: 0;
+    width: 100%;
     min-height: 38px !important;
     max-height: 104px;
     margin: 0;
@@ -1332,6 +1340,8 @@ html, body { background: #0A0B10 !important; }
     border: 0 !important;
     outline: 0 !important;
     resize: none;
+    overflow-x: hidden;
+    overflow-y: auto;
     background: transparent !important;
     color: #f5f7fb;
     box-shadow: none !important;
@@ -1461,7 +1471,7 @@ html, body { background: #0A0B10 !important; }
     .capsule-actions { gap: 6px; }
     .capsule-actions { margin-left: auto; }
     .capsule-actions .btn-circle { flex-basis: 40px; width: 40px !important; min-width: 40px !important; height: 40px !important; min-height: 40px !important; }
-    .capsule-dock #user-text { min-height: 36px !important; padding: 5px 2px; max-height: 92px; }
+    .capsule-dock #user-text { min-height: 36px !important; padding: 5px 2px; max-height: 92px; font-size: .78rem; line-height: 1.35; }
     .capsule-dock.has-speech-status #user-text { padding-top: 51px; }
     .capsule-dock #user-text::placeholder { font-size: .78rem; }
     .btn-header-material { width: 36px; height: 36px; min-width: 36px; min-height: 36px; }
@@ -2501,6 +2511,7 @@ html, body { background: #0A0B10 !important; }
                     <li><i class="fa-solid fa-book-bookmark"></i> 設定中可建立多本生詞字典，為每個教室選擇教材與字典學習清單</li>
                     <li><i class="fa-solid fa-comments"></i> 可指定旅遊、點餐、商務等主題，或依教材進行問答、複習與測驗</li>
                     <li><i class="fa-solid fa-language"></i> 頂部語言選單可設定對話語言；右上角選單可管理教室、教材與模型</li>
+                    <li><i class="fa-solid fa-microphone-lines"></i> 語音可選按住放開送出、點擊開始再點擊停止，或自動等待停頓（預設 6 秒，可在設定調整）</li>
                 </ul>
             `;
             container.prepend(card);
@@ -4162,16 +4173,8 @@ html, body { background: #0A0B10 !important; }
     }
 
     function renderStudyPlanSummary() {
-        const room = typeof getActiveRoom === 'function' ? getActiveRoom() : null;
         const old = document.getElementById('study-plan-summary');
         if (old) old.remove();
-        if (!room) return;
-        ensureRoomLearningState(room);
-        const selectedMaterials = (room.materials || []).filter(item => room.studyPlan.materialIds.includes(item.id));
-        const selectedDictionaries = getStudyDictionaries(room);
-        const summary = document.createElement('div'); summary.id = 'study-plan-summary'; summary.className = 'study-plan-summary';
-        summary.textContent = `學習清單：${selectedMaterials.length} 份教材 · ${selectedDictionaries.length} 本字典 · ${room.studyPlan.mode}`;
-        document.querySelector('.input-wrapper')?.prepend(summary);
     }
 
     function renderStudyPlanModal() {
@@ -5782,6 +5785,8 @@ html, body { background: #0A0B10 !important; }
 
 
 
+
+
 <script id="gugo-capsule-dock-modes-js">
 // GugoPro Gemini-style Capsule Dock + three speech modes
 (() => {
@@ -5860,8 +5865,8 @@ html, body { background: #0A0B10 !important; }
     }
     function speechInputGuide(mode = getMode()) {
         if (mode === 'hold') return '按住語音按鈕，錄音放開後送出；也可以直接打字';
-        if (mode === 'tap') return '點一下語音按鈕開始，再點一下停止送出；也可以直接打字…';
-        return `點一下語音按鈕開始，停頓 ${getSmartSilenceSeconds()} 秒後送出；需要時可再點一下提早結束…`;
+        if (mode === 'tap') return '點擊開始，再次點擊停止送出；也可直接打字';
+        return `停頓 ${getSmartSilenceSeconds()} 秒自動送出，可點擊提前結束；也可直接打字`;
     }
     function updateCapsuleLabels() {
         const targetValue = document.getElementById('target-lang')?.value || 'en-US';
