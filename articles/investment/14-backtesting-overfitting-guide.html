@@ -1,28 +1,26 @@
 <!DOCTYPE html>
+
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>【系統化交易】什麼是回測 (Backtesting)？如何避免過度擬合 (Overfitting) 與歷史陷阱 | GugoPro Academy</title>
-    <meta name="description" content="深入探討回測（Backtesting）的基本概念、過度擬合（Overfitting）的巨大危險、Walk-forward analysis、樣本外測試與交易系統開發流程。">
-    <meta name="keywords" content="回測, Backtesting, 過度擬合, Overfitting, Walk-forward analysis, 系統化交易, 樣本外測試">
-    <meta name="author" content="GugoPro AI Team">
-    
-    <!-- Google Analytics 4 (GA4) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-GF1DYLWMKX"></script>
-    <script>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>【系統化交易】什麼是回測 (Backtesting)？如何避免過度擬合 (Overfitting) 與歷史陷阱 | GugoPro Academy</title>
+<meta content="深入探討回測（Backtesting）的基本概念、過度擬合（Overfitting）的巨大危險、Walk-forward analysis、樣本外測試與交易系統開發流程。" name="description"/>
+<meta content="回測, Backtesting, 過度擬合, Overfitting, Walk-forward analysis, 系統化交易, 樣本外測試" name="keywords"/>
+<meta content="GugoPro AI Team" name="author"/>
+<!-- Google Analytics 4 (GA4) -->
+<script async="" src="https://www.googletagmanager.com/gtag/js?id=G-GF1DYLWMKX"></script>
+<script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
       gtag('config', 'G-GF1DYLWMKX');
     </script>
-    
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <style>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Outfit:wght@400;500;600;700;800&amp;family=Noto+Sans+TC:wght@300;400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<!-- FontAwesome Icons -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+<style>
         :root {
             --bg-dark: #090d16;
             --bg-card: rgba(15, 23, 42, 0.75);
@@ -163,127 +161,117 @@
         }
 
     </style>
-</head>
+<link href="https://gugopro.com/articles/investment/14-backtesting-overfitting-guide.html" hreflang="zh-Hant" rel="alternate"/><link href="https://gugopro.com/articles/investment/14-backtesting-overfitting-guide.html?lang=zh-CN" hreflang="zh-Hans" rel="alternate"/><link href="https://gugopro.com/articles/investment/14-backtesting-overfitting-guide.html?lang=en" hreflang="en" rel="alternate"/><link href="https://gugopro.com/articles/investment/14-backtesting-overfitting-guide.html?lang=ja" hreflang="ja" rel="alternate"/><link href="https://gugopro.com/articles/investment/14-backtesting-overfitting-guide.html?lang=de" hreflang="de" rel="alternate"/><link href="https://gugopro.com/articles/investment/14-backtesting-overfitting-guide.html?lang=fr" hreflang="fr" rel="alternate"/><link href="https://gugopro.com/articles/investment/14-backtesting-overfitting-guide.html?lang=es" hreflang="es" rel="alternate"/><link href="https://gugopro.com/articles/investment/14-backtesting-overfitting-guide.html?lang=pt" hreflang="pt" rel="alternate"/><link href="https://gugopro.com/articles/investment/14-backtesting-overfitting-guide.html" hreflang="x-default" rel="alternate"/></head>
 <body>
-    <header class="main-header">
-        <div class="container header-container" style="display: flex; justify-content: space-between; align-items: center;">
-            <a href="https://gugopro.com" class="brand-logo" style="font-size: 1.4rem; font-weight: 800; color: #fff; text-decoration: none; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-rocket" style="color: #38bdf8;"></i> GugoPro</a>
-            <div style="display: flex; gap: 12px; align-items: center;">
-                <a href="/articles/investment/" class="btn-back" style="color: #94a3b8; text-decoration: none; font-size: 0.9rem;"><i class="fa-solid fa-list-ul"></i> 專題目錄</a>
-                <a href="https://gugopro.com" class="btn-back-home">
-                    <i class="fa-solid fa-house"></i> 返回首頁
+<header class="main-header">
+<div class="container header-container" style="display: flex; justify-content: space-between; align-items: center;">
+<a class="brand-logo" href="https://gugopro.com" style="font-size: 1.4rem; font-weight: 800; color: #fff; text-decoration: none; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-rocket" style="color: #38bdf8;"></i> GugoPro</a>
+<div style="display: flex; gap: 12px; align-items: center;">
+<a class="btn-back" href="/articles/investment/" style="color: #94a3b8; text-decoration: none; font-size: 0.9rem;"><i class="fa-solid fa-list-ul"></i> 專題目錄</a>
+<a class="btn-back-home" href="https://gugopro.com">
+<i class="fa-solid fa-house"></i> 返回首頁
                 </a>
-            </div>
-        </div>
-    </header>
-
-    <main class="container">
-        <h1 class="article-title">【系統化交易】什麼是回測 (Backtesting)？如何避免過度擬合 (Overfitting) 與歷史陷阱</h1>
-        
-        <div class="key-takeaways">
-            <h2><i class="fa-solid fa-bolt"></i> 30 秒重點摘要 (Key Takeaways)</h2>
-            <ul>
-                <li>回測（Backtesting）是將交易策略套用於歷史資料中，以評估其過去表現與可行性的量化核心方法。</li>
-                <li>過度擬合（Overfitting）是回測中最大的殺手：將策略調整得完美契合歷史雜訊，導致未來實盤交易時慘遭滑鐵盧。</li>
-                <li>透過樣本外測試（Out-of-sample Testing）與步進式向前分析（Walk-forward Analysis），能大幅提升策略的穩健度。</li>
-                <li>資金部位控管與風險評估可參考站內的 <a href="../../academy/tools/kelly-risk-budget.html" class="internal-link">Kelly 風險預算工具</a>。</li>
-            </ul>
-        </div>
-
-        <section>
-            <h2>一、回測的基本概念與重要性</h2>
-            <p>在進入系統化與量化交易（Quantitative Trading）的世界時，「回測（Backtesting）」是每位交易員驗證想法的第一步。簡單來說，回測就是透過歷史價格、成交量與財務數據，編寫程式碼或使用專業軟體來模擬某個交易策略在過去特定時間段內的買賣執行結果。</p>
-            <p>回測的核心價值在於能夠在「不冒真實資金風險」的前提下，快速淘汰無效的交易構想，並評估策略的最大回撤（MDD）、勝率、盈虧比（Profit Factor）以及夏普值（Sharpe Ratio）。然而，回測數據的好壞絕對不代表未來實盤績效的保證。</p>
-        </section>
-
-        <section>
-            <h2>二、回測最大的致命陷阱：過度擬合（Overfitting）</h2>
-            <p>許多初學者在進行回測時，容易陷入<strong>過度擬合（Overfitting，又稱曲線擬合 Curve Fitting）</strong>的深淵。當你在回測軟體中不斷增加參數（例如將均線參數從 20 日微調到 23 日，再加入 RSI 大於 58、MACD 柱狀體大於特定數值的複雜條件），直到回測曲線呈現一條完美的 45 度向上直線時，你的策略很可能已經嚴重過度擬合了。</p>
-            <p>過度擬合的本質是「把歷史資料中的隨機雜訊當成了普遍規律」。當這個經過無數次微調的策略放到未來的真實市場中時，由於市場環境已經改變，策略往往會迅速失效並面臨巨大的虧損。</p>
-            
-            <table>
-                <thead>
-                    <tr>
-                        <th>回測特性</th>
-                        <th>健全的交易策略</th>
-                        <th>過度擬合（曲線擬合）策略</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>參數數量</td>
-                        <td>精簡（通常 1 至 2 個核心參數）</td>
-                        <td>繁雜（數個甚至十幾個調整參數）</td>
-                    </tr>
-                    <tr>
-                        <td>邏輯基礎</td>
-                        <td>基於宏觀經濟或市場微觀結構</td>
-                        <td>盲目追求歷史最大化績效</td>
-                    </tr>
-                    <tr>
-                        <td>樣本外表現</td>
-                        <td>績效穩定、與回測落差小</td>
-                        <td>實盤慘敗、完全無法複製</td>
-                    </tr>
-                </tbody>
-            </table>
-        </section>
-
-        <section>
-            <h2>三、如何防範過度擬合：樣本外測試與 Walk-forward</h2>
-            <p>為了確保回測結果具備真正的實戰價值，量化交易員會採用科學化的驗證流程：</p>
-            <p><strong>1. 樣本內與樣本外切分（In-sample / Out-of-sample）：</strong>將歷史資料劃分為兩部分。例如，使用 2010 年至 2020 年的資料進行策略開發與參數調整（樣本內），然後用 2021 年至 2025 年完全未見過的資料進行獨立測試（樣本外）。唯有在樣本外依然表現優異的策略，才具備上線實盤的資格。</p>
-            <p><strong>2. 步進式向前分析（Walk-forward Analysis）：</strong>動態滾動優化與驗證窗口，模擬真實世界中定期檢討與調整策略的過程。</p>
-            <p>在建立穩健的量化系統後，精準的資金控管更是長存市場的關鍵。建議搭配站內的 <a href="../../academy/tools/kelly-risk-budget.html" class="internal-link">Kelly 風險預算工具</a>，科學化管理每次進場的資金比例。</p>
-        </section>
-
-        <section class="faq-section">
-    <h2 class="faq-title"><i class="fa-solid fa-circle-question"></i> 常見問答 FAQ</h2>
-    <div class="faq-item">
-        <div class="faq-question"><i class="fa-solid fa-q"></i> 什麼是「樣本內 (In-Sample)」與「樣本外 (Out-of-Sample)」回測？</div>
-        <div class="faq-answer">樣本內數據（In-Sample）是用於訓練、參數優化與策略構建的歷史區間；而樣本外數據（Out-of-Sample）則是策略開發過程中「完全封存未接觸」的獨立時間區間。如果一個策略在樣本內表現極佳，但在樣本外測試時績效大幅衰退，說明該策略純屬「記憶歷史雜訊」的過度擬合產物。</div>
-    </div>
-    <div class="faq-item">
-        <div class="faq-question"><i class="fa-solid fa-q"></i> 什麼是前進分析 (Walk-Forward Analysis)？為何它是量化業界標準？</div>
-        <div class="faq-answer">Walk-Forward 分析模擬了真實世界的實盤交易過程：在滾動的滾動窗口中（如用前 2 年數據優化參數），將最佳參數應用於緊接著的未來 6 個月進行樣本外檢驗，隨後窗口向前滾動重複此流程。它能動態檢驗策略在市場體制轉換（如牛市切換為熊市）時的適應能力，大幅提高實盤存活率。</div>
-    </div>
-    <div class="faq-item">
-        <div class="faq-question"><i class="fa-solid fa-q"></i> 實盤上線後，策略最大回撤達到什麼標準必須強制停機？</div>
-        <div class="faq-answer">業界普遍採用「最大回撤容忍倍數」作為熔斷標準：當實盤最大回撤超過歷史回測最大 MDD 的 1.5 倍，或策略遭遇連續虧損次數超過理論泊松分佈 99% 信賴區間時，必須立即強制停機。這通常代表底層市場微觀結構已發生質變，繼續運行將面臨破產風險。</div>
-    </div>
+</div>
+</div>
+</header>
+<main class="container">
+<h1 class="article-title">【系統化交易】什麼是回測 (Backtesting)？如何避免過度擬合 (Overfitting) 與歷史陷阱</h1>
+<div class="key-takeaways">
+<h2><i class="fa-solid fa-bolt"></i> 30 秒重點摘要 (Key Takeaways)</h2>
+<ul>
+<li>回測（Backtesting）是將交易策略套用於歷史資料中，以評估其過去表現與可行性的量化核心方法。</li>
+<li>過度擬合（Overfitting）是回測中最大的殺手：將策略調整得完美契合歷史雜訊，導致未來實盤交易時慘遭滑鐵盧。</li>
+<li>透過樣本外測試（Out-of-sample Testing）與步進式向前分析（Walk-forward Analysis），能大幅提升策略的穩健度。</li>
+<li>資金部位控管與風險評估可參考站內的 <a class="internal-link" href="../../academy/tools/kelly-risk-budget.html">Kelly 風險預算工具</a>。</li>
+</ul>
+</div>
+<section>
+<h2>一、回測的基本概念與重要性</h2>
+<p>在進入系統化與量化交易（Quantitative Trading）的世界時，「回測（Backtesting）」是每位交易員驗證想法的第一步。簡單來說，回測就是透過歷史價格、成交量與財務數據，編寫程式碼或使用專業軟體來模擬某個交易策略在過去特定時間段內的買賣執行結果。</p>
+<p>回測的核心價值在於能夠在「不冒真實資金風險」的前提下，快速淘汰無效的交易構想，並評估策略的最大回撤（MDD）、勝率、盈虧比（Profit Factor）以及夏普值（Sharpe Ratio）。然而，回測數據的好壞絕對不代表未來實盤績效的保證。</p>
 </section>
-
-        <div class="analysis-box">
-            <div class="analysis-card">
-                <h3 class="pros">優點與適用對象</h3>
-                <p>回測能以科學化數據取代主觀情緒，幫助交易員建立客觀紀律，非常適合追求系統化與程式交易的投資人。</p>
-            </div>
-            <div class="analysis-card">
-                <h3 class="cons">挑戰與注意事項</h3>
-                <p>歷史不會完全重複但總是押著相同的韻腳。回測無法預判未來的黑天鵝事件與流動性危機，實盤時仍須嚴格停損。</p>
-            </div>
-        </div>
-
-        <div class="kofi-section" id="kofi-section-anchor">
-            <h3><i class="fa-solid fa-mug-hot"></i> 喜歡這篇文章嗎？</h3>
-            <p>您的支持是我持續創作高品質投資教學的最大動力。</p>
-            <a href="https://ko-fi.com/R1K123XRS9" target="_blank" class="kofi-button">
-                <img src="https://storage.ko-fi.com/cdn/cup-border.png" alt="Ko-fi" style="height: 20px;">
+<section>
+<h2>二、回測最大的致命陷阱：過度擬合（Overfitting）</h2>
+<p>許多初學者在進行回測時，容易陷入<strong>過度擬合（Overfitting，又稱曲線擬合 Curve Fitting）</strong>的深淵。當你在回測軟體中不斷增加參數（例如將均線參數從 20 日微調到 23 日，再加入 RSI 大於 58、MACD 柱狀體大於特定數值的複雜條件），直到回測曲線呈現一條完美的 45 度向上直線時，你的策略很可能已經嚴重過度擬合了。</p>
+<p>過度擬合的本質是「把歷史資料中的隨機雜訊當成了普遍規律」。當這個經過無數次微調的策略放到未來的真實市場中時，由於市場環境已經改變，策略往往會迅速失效並面臨巨大的虧損。</p>
+<table>
+<thead>
+<tr>
+<th>回測特性</th>
+<th>健全的交易策略</th>
+<th>過度擬合（曲線擬合）策略</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>參數數量</td>
+<td>精簡（通常 1 至 2 個核心參數）</td>
+<td>繁雜（數個甚至十幾個調整參數）</td>
+</tr>
+<tr>
+<td>邏輯基礎</td>
+<td>基於宏觀經濟或市場微觀結構</td>
+<td>盲目追求歷史最大化績效</td>
+</tr>
+<tr>
+<td>樣本外表現</td>
+<td>績效穩定、與回測落差小</td>
+<td>實盤慘敗、完全無法複製</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section>
+<h2>三、如何防範過度擬合：樣本外測試與 Walk-forward</h2>
+<p>為了確保回測結果具備真正的實戰價值，量化交易員會採用科學化的驗證流程：</p>
+<p><strong>1. 樣本內與樣本外切分（In-sample / Out-of-sample）：</strong>將歷史資料劃分為兩部分。例如，使用 2010 年至 2020 年的資料進行策略開發與參數調整（樣本內），然後用 2021 年至 2025 年完全未見過的資料進行獨立測試（樣本外）。唯有在樣本外依然表現優異的策略，才具備上線實盤的資格。</p>
+<p><strong>2. 步進式向前分析（Walk-forward Analysis）：</strong>動態滾動優化與驗證窗口，模擬真實世界中定期檢討與調整策略的過程。</p>
+<p>在建立穩健的量化系統後，精準的資金控管更是長存市場的關鍵。建議搭配站內的 <a class="internal-link" href="../../academy/tools/kelly-risk-budget.html">Kelly 風險預算工具</a>，科學化管理每次進場的資金比例。</p>
+</section>
+<section class="faq-section">
+<h2 class="faq-title"><i class="fa-solid fa-circle-question"></i> 常見問答 FAQ</h2>
+<div class="faq-item">
+<div class="faq-question"><i class="fa-solid fa-q"></i> 什麼是「樣本內 (In-Sample)」與「樣本外 (Out-of-Sample)」回測？</div>
+<div class="faq-answer">樣本內數據（In-Sample）是用於訓練、參數優化與策略構建的歷史區間；而樣本外數據（Out-of-Sample）則是策略開發過程中「完全封存未接觸」的獨立時間區間。如果一個策略在樣本內表現極佳，但在樣本外測試時績效大幅衰退，說明該策略純屬「記憶歷史雜訊」的過度擬合產物。</div>
+</div>
+<div class="faq-item">
+<div class="faq-question"><i class="fa-solid fa-q"></i> 什麼是前進分析 (Walk-Forward Analysis)？為何它是量化業界標準？</div>
+<div class="faq-answer">Walk-Forward 分析模擬了真實世界的實盤交易過程：在滾動的滾動窗口中（如用前 2 年數據優化參數），將最佳參數應用於緊接著的未來 6 個月進行樣本外檢驗，隨後窗口向前滾動重複此流程。它能動態檢驗策略在市場體制轉換（如牛市切換為熊市）時的適應能力，大幅提高實盤存活率。</div>
+</div>
+<div class="faq-item">
+<div class="faq-question"><i class="fa-solid fa-q"></i> 實盤上線後，策略最大回撤達到什麼標準必須強制停機？</div>
+<div class="faq-answer">業界普遍採用「最大回撤容忍倍數」作為熔斷標準：當實盤最大回撤超過歷史回測最大 MDD 的 1.5 倍，或策略遭遇連續虧損次數超過理論泊松分佈 99% 信賴區間時，必須立即強制停機。這通常代表底層市場微觀結構已發生質變，繼續運行將面臨破產風險。</div>
+</div>
+</section>
+<div class="analysis-box">
+<div class="analysis-card">
+<h3 class="pros">優點與適用對象</h3>
+<p>回測能以科學化數據取代主觀情緒，幫助交易員建立客觀紀律，非常適合追求系統化與程式交易的投資人。</p>
+</div>
+<div class="analysis-card">
+<h3 class="cons">挑戰與注意事項</h3>
+<p>歷史不會完全重複但總是押著相同的韻腳。回測無法預判未來的黑天鵝事件與流動性危機，實盤時仍須嚴格停損。</p>
+</div>
+</div>
+<div class="kofi-section" id="kofi-section-anchor">
+<h3><i class="fa-solid fa-mug-hot"></i> 喜歡這篇文章嗎？</h3>
+<p>您的支持是我持續創作高品質投資教學的最大動力。</p>
+<a class="kofi-button" href="https://ko-fi.com/R1K123XRS9" target="_blank">
+<img alt="Ko-fi" src="https://storage.ko-fi.com/cdn/cup-border.png" style="height: 20px;"/>
                 Buy me a coffee
             </a>
-        </div>
-
-        <footer class="footer" style="margin-top: 50px; text-align: center; color: #64748b; font-size: 0.88rem; padding: 25px 0; border-top: 1px solid rgba(255, 255, 255, 0.05);">
-            <p style="margin-bottom: 12px;">&copy; 2026 GugoPro Academy. All rights reserved. 跨國智能財經教育與量化分析專題。</p>
-            <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; color: #94a3b8;">
-                <a href="https://gugopro.com" style="color: #94a3b8; text-decoration: none;">首頁</a> |
+</div>
+<footer class="footer" style="margin-top: 50px; text-align: center; color: #64748b; font-size: 0.88rem; padding: 25px 0; border-top: 1px solid rgba(255, 255, 255, 0.05);">
+<p style="margin-bottom: 12px;">© 2026 GugoPro Academy. All rights reserved. 跨國智能財經教育與量化分析專題。</p>
+<div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; color: #94a3b8;">
+<a href="https://gugopro.com" style="color: #94a3b8; text-decoration: none;">首頁</a> |
                 <a href="https://gugopro.com/about.html" style="color: #94a3b8; text-decoration: none;">關於我們</a> |
                 <a href="https://gugopro.com/disclaimer.html" style="color: #94a3b8; text-decoration: none;">免責聲明</a> |
                 <a href="https://gugopro.com/privacy.html" style="color: #94a3b8; text-decoration: none;">隱私權政策</a> |
                 <a href="https://gugopro.com/terms.html" style="color: #94a3b8; text-decoration: none;">服務條款</a> |
                 <a href="https://gugopro.com/contact.html" style="color: #94a3b8; text-decoration: none;">聯絡我們</a>
-            </div>
-        <div class="site-contact-inline" style="margin:12px 0;line-height:1.8;"><a href="../../contact.html" style="color:#67e8f9;font-weight:700;">聯絡我們 / Contact Us</a> <span style="margin-left:10px;">Support Email: <a href="mailto:contact@gugopro.com" style="color:#67e8f9;">contact@gugopro.com</a></span></div></footer>
-    </main>
-<section style="max-width:860px;margin:32px auto;padding:20px 24px;border-radius:14px;background:linear-gradient(120deg,#101b33,#1c3c55);color:#fff;font-family:system-ui,sans-serif"><div style="font-size:11px;letter-spacing:.14em;color:#70d5c4;font-weight:800;text-transform:uppercase">GugoPro Academy · Interactive lab</div><h3 style="margin:8px 0;font-size:21px">投資決策檢查表</h3><p style="margin:0 0 14px;color:#c8d6e8">用樣本外思維與複盤紀錄降低過度擬合。</p><a href="../../academy/lessons/16-investor-behavior.html" style="display:inline-block;background:#f1b84b;color:#142033;padding:9px 14px;border-radius:8px;font-weight:800;text-decoration:none">立即操作工具 →</a></section><!-- GugoPro Academy interactive lab --></body>
+</div>
+<div class="site-contact-inline" style="margin:12px 0;line-height:1.8;"><a href="../../contact.html" style="color:#67e8f9;font-weight:700;">聯絡我們 / Contact Us</a> <span style="margin-left:10px;">Support Email: <a href="mailto:contact@gugopro.com" style="color:#67e8f9;">contact@gugopro.com</a></span></div></footer>
+</main>
+<section style="max-width:860px;margin:32px auto;padding:20px 24px;border-radius:14px;background:linear-gradient(120deg,#101b33,#1c3c55);color:#fff;font-family:system-ui,sans-serif"><div style="font-size:11px;letter-spacing:.14em;color:#70d5c4;font-weight:800;text-transform:uppercase">GugoPro Academy · Interactive lab</div><h3 style="margin:8px 0;font-size:21px">投資決策檢查表</h3><p style="margin:0 0 14px;color:#c8d6e8">用樣本外思維與複盤紀錄降低過度擬合。</p><a href="../../academy/lessons/16-investor-behavior.html" style="display:inline-block;background:#f1b84b;color:#142033;padding:9px 14px;border-radius:8px;font-weight:800;text-decoration:none">立即操作工具 →</a></section><!-- GugoPro Academy interactive lab --><script data-gugopro-i18n="true" defer="" src="../../i18n/gugopro-i18n.js?v=20260827-i18n1"></script></body>
 </html>

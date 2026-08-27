@@ -1,20 +1,21 @@
-<!doctype html>
-<html lang="zh-Hant">
+<!DOCTYPE html>
+
+<html lang="zh-TW">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
 <title>風險報酬與最大回撤分析工具｜GugoPro Academy</title>
-<meta name="description" content="將使用者貼入的歷史價格或報酬序列，在瀏覽器本地計算累積報酬、波動、Sharpe、Sortino、最大回撤與恢復期。">
-<meta name="keywords" content="風險報酬分析,最大回撤計算器,MDD,Sharpe,Sortino,Calmar,回撤恢復期,風報比">
-<link rel="canonical" href="https://gugopro.com/academy/tools/risk-return-drawdown.html">
-<link rel="stylesheet" href="../academy.css">
-<link rel="stylesheet" href="risk-return-drawdown.css">
+<meta content="將使用者貼入的歷史價格或報酬序列，在瀏覽器本地計算累積報酬、波動、Sharpe、Sortino、最大回撤與恢復期。" name="description"/>
+<meta content="風險報酬分析,最大回撤計算器,MDD,Sharpe,Sortino,Calmar,回撤恢復期,風報比" name="keywords"/>
+<link href="https://gugopro.com/academy/tools/risk-return-drawdown.html" rel="canonical"/>
+<link href="../academy.css" rel="stylesheet"/>
+<link href="risk-return-drawdown.css" rel="stylesheet"/>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"風險報酬與最大回撤分析工具","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"以使用者輸入的歷史價格或報酬序列，在瀏覽器本地計算風險報酬與最大回撤。","url":"https://gugopro.com/academy/tools/risk-return-drawdown.html"}</script>
-</head>
+<link href="https://gugopro.com/academy/tools/risk-return-drawdown.html" hreflang="zh-Hant" rel="alternate"/><link href="https://gugopro.com/academy/tools/risk-return-drawdown.html?lang=zh-CN" hreflang="zh-Hans" rel="alternate"/><link href="https://gugopro.com/academy/tools/risk-return-drawdown.html?lang=en" hreflang="en" rel="alternate"/><link href="https://gugopro.com/academy/tools/risk-return-drawdown.html?lang=ja" hreflang="ja" rel="alternate"/><link href="https://gugopro.com/academy/tools/risk-return-drawdown.html?lang=de" hreflang="de" rel="alternate"/><link href="https://gugopro.com/academy/tools/risk-return-drawdown.html?lang=fr" hreflang="fr" rel="alternate"/><link href="https://gugopro.com/academy/tools/risk-return-drawdown.html?lang=es" hreflang="es" rel="alternate"/><link href="https://gugopro.com/academy/tools/risk-return-drawdown.html?lang=pt" hreflang="pt" rel="alternate"/><link href="https://gugopro.com/academy/tools/risk-return-drawdown.html" hreflang="x-default" rel="alternate"/></head>
 <body class="quant-page risk-return-tool">
 <main class="tool-page rr-tool-page">
 <div class="tool-crumb"><a href="../../articles/investment/06-sharpe-mdd-risk-control.html">← 閱讀風險報酬與最大回撤教學</a><span>Risk lens · 純前端 · 不抓即時行情</span></div>
-<div class="article-jump" aria-label="工具區段"><a href="#inputs">資料輸入</a><a href="#trade-input">單筆風報比</a><a href="#results">歷史風險摘要</a><a href="#drawdown-table">回撤路徑</a><a href="#limits">限制與來源</a></div>
+<div aria-label="工具區段" class="article-jump"><a href="#inputs">資料輸入</a><a href="#trade-input">單筆風報比</a><a href="#results">歷史風險摘要</a><a href="#drawdown-table">回撤路徑</a><a href="#limits">限制與來源</a></div>
 <div class="tool-layout rr-tool-layout">
 <section class="panel rr-input-panel" id="inputs">
 <div class="eyebrow">Quant lab · Risk / Return</div>
@@ -25,22 +26,22 @@
 <div><label for="input-mode">資料型態</label><select id="input-mode"><option value="prices">價格序列（正數）</option><option value="returns">報酬序列（百分比）</option></select></div>
 <div><label for="frequency">報酬頻率</label><select id="frequency"><option value="daily">每日（252 期／年）</option><option value="weekly">每週（52 期／年）</option><option value="monthly">每月（12 期／年）</option><option value="custom">自訂年化期數</option></select></div>
 </div>
-<div id="custom-frequency-wrap" class="hidden-field"><label for="custom-frequency">自訂年化期數</label><input id="custom-frequency" type="number" min="1" max="1000" step="1" placeholder="例如 252"></div>
+<div class="hidden-field" id="custom-frequency-wrap"><label for="custom-frequency">自訂年化期數</label><input id="custom-frequency" max="1000" min="1" placeholder="例如 252" step="1" type="number"/></div>
 <label for="series">歷史序列</label>
-<textarea id="series" rows="8" spellcheck="false" placeholder="請貼入已查證資料；例如價格 100, 105, 98，或報酬 2.1, -1.4, 0.8。頁面不預填市場行情。"></textarea>
+<textarea id="series" placeholder="請貼入已查證資料；例如價格 100, 105, 98，或報酬 2.1, -1.4, 0.8。頁面不預填市場行情。" rows="8" spellcheck="false"></textarea>
 <div class="input-grid">
-<div><label for="mar">每期最低可接受報酬 MAR（%）</label><input id="mar" type="number" step="0.01" value="0" inputmode="decimal"></div>
-<div><label for="initial-capital">起始資金（元）</label><input id="initial-capital" type="number" min="0.01" step="1" value="100000" inputmode="decimal"></div>
+<div><label for="mar">每期最低可接受報酬 MAR（%）</label><input id="mar" inputmode="decimal" step="0.01" type="number" value="0"/></div>
+<div><label for="initial-capital">起始資金（元）</label><input id="initial-capital" inputmode="decimal" min="0.01" step="1" type="number" value="100000"/></div>
 </div>
-<div class="button-row"><button class="calc" id="calculate" type="button">計算風險摘要</button><button class="secondary-btn" id="clear" type="button">清除結果</button><button class="secondary-btn" id="download" type="button" disabled>下載 CSV</button></div>
-<div class="status" id="status" aria-live="polite">請貼入至少 3 筆同一頻率的歷史資料後計算。</div>
+<div class="button-row"><button class="calc" id="calculate" type="button">計算風險摘要</button><button class="secondary-btn" id="clear" type="button">清除結果</button><button class="secondary-btn" disabled="" id="download" type="button">下載 CSV</button></div>
+<div aria-live="polite" class="status" id="status">請貼入至少 3 筆同一頻率的歷史資料後計算。</div>
 <div class="formula-note"><strong>資料契約：</strong>價格必須為正數；報酬以百分比輸入；資料由舊到新；MAR 是每期百分比，不是年化值。工具不驗證來源、不自動調整股利／分割／現金流，也不把 0% MAR 當成市場無風險利率事實。</div>
 <section class="trade-module" id="trade-input">
 <div class="module-heading"><div><div class="eyebrow">Scenario lens</div><h2>單筆風報比 R:R</h2></div><span>進場前情境</span></div>
 <p>這裡的 R:R 只描述進場、停損與目標的價格距離；輸入勝率後才會估算每筆期望值，不會把單筆情境冒充成歷史 Sharpe。</p>
-<div class="input-grid three-col"><div><label for="direction">方向</label><select id="direction"><option value="long">多頭</option><option value="short">空頭</option></select></div><div><label for="entry">進場價</label><input id="entry" type="number" step="0.01" placeholder="例如 100"></div><div><label for="stop">停損價</label><input id="stop" type="number" step="0.01" placeholder="例如 95"></div></div>
-<div class="input-grid"><div><label for="target">目標價</label><input id="target" type="number" step="0.01" placeholder="例如 115"></div><div><label for="win-rate">勝率（%）選填</label><input id="win-rate" type="number" min="0.01" max="99.99" step="0.1" placeholder="未填則只算 R:R"></div></div>
-<div class="trade-result" id="trade-result" aria-live="polite"><strong>尚未計算單筆情境</strong><span>請輸入進場、停損與目標價。</span></div>
+<div class="input-grid three-col"><div><label for="direction">方向</label><select id="direction"><option value="long">多頭</option><option value="short">空頭</option></select></div><div><label for="entry">進場價</label><input id="entry" placeholder="例如 100" step="0.01" type="number"/></div><div><label for="stop">停損價</label><input id="stop" placeholder="例如 95" step="0.01" type="number"/></div></div>
+<div class="input-grid"><div><label for="target">目標價</label><input id="target" placeholder="例如 115" step="0.01" type="number"/></div><div><label for="win-rate">勝率（%）選填</label><input id="win-rate" max="99.99" min="0.01" placeholder="未填則只算 R:R" step="0.1" type="number"/></div></div>
+<div aria-live="polite" class="trade-result" id="trade-result"><strong>尚未計算單筆情境</strong><span>請輸入進場、停損與目標價。</span></div>
 </section>
 </section>
 <section class="result rr-result-panel" id="results">
@@ -60,14 +61,14 @@
 <div class="metric"><span class="sub">觀測期數</span><b id="observations">—</b></div>
 </div>
 <div class="drawdown-callout" id="drawdown-summary"><strong>等待回撤分析</strong><span>需要有效的歷史序列與起始資金。</span></div>
-<div class="visual rr-visual"><div class="visual-heading"><h3>權益曲線與歷史回撤</h3><span id="chart-caption">—</span></div><svg id="equity-chart" class="equity-chart" viewBox="0 0 720 250" role="img" aria-label="權益曲線與回撤圖表"></svg><div class="chart-legend"><span><i class="legend-equity"></i>權益曲線</span><span><i class="legend-peak"></i>歷史高點基準</span><span><i class="legend-drawdown"></i>回撤區域</span></div></div>
+<div class="visual rr-visual"><div class="visual-heading"><h3>權益曲線與歷史回撤</h3><span id="chart-caption">—</span></div><svg aria-label="權益曲線與回撤圖表" class="equity-chart" id="equity-chart" role="img" viewbox="0 0 720 250"></svg><div class="chart-legend"><span><i class="legend-equity"></i>權益曲線</span><span><i class="legend-peak"></i>歷史高點基準</span><span><i class="legend-drawdown"></i>回撤區域</span></div></div>
 <div class="source-box"><strong>指標口徑：</strong>Sharpe＝超額平均報酬／樣本標準差；Sortino＝超額平均報酬／MAR 下行偏差；MDD 依 running peak 的先峰後谷路徑計算。若標準差為 0 或沒有低於 MAR 的觀測，工具會明示無法形成對應指標，不輸出無限值。</div>
 </section>
 </div>
 <section class="rr-table-section" id="drawdown-table"><div class="section-heading"><div><div class="eyebrow">Path audit</div><h2>回撤路徑檢查</h2></div><span id="table-note">尚未計算</span></div><div class="table-wrap"><table class="result-table"><thead><tr><th>序號</th><th>權益</th><th>Running peak</th><th>Drawdown</th><th>狀態</th></tr></thead><tbody id="path-rows"></tbody></table></div></section>
 <section class="source-box rr-limit-section" id="limits"><strong>來源與限制：</strong>Sharpe 的歷史版本、時間相依與分布限制參考 William F. Sharpe 的 Stanford 文章；Sortino 的下行風險口徑參考 Charles Schwab；最大回撤與峰谷順序參考 CFA Institute。<a href="../../articles/investment/06-sharpe-mdd-risk-control.html#limits">查看完整教學與 References →</a><p>本頁完全使用使用者輸入，沒有即時行情、沒有伺服器上傳、沒有自動調整價格與現金流，也不替使用者選擇資產或設定停損。歷史指標不能保證未來結果，This is research and analysis only, not personalized financial advice.</p></section>
 </main>
-<script src="../academy.js"></script>
+<script src="../academy.js?v=20260827-i18n1"></script>
 <script src="risk-return-drawdown.js"></script>
-</body>
+<script data-gugopro-i18n="true" defer="" src="../../i18n/gugopro-i18n.js?v=20260827-i18n1"></script></body>
 </html>

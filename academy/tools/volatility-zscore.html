@@ -1,13 +1,14 @@
-<!doctype html>
-<html lang="zh-Hant">
+<!DOCTYPE html>
+
+<html lang="zh-TW">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/>
 <title>波動度 Z-Score 研究工具｜GugoPro Academy</title>
-<meta name="description" content="以你查證的歷史日報酬計算滾動波動度、波動 Z-Score 與壓力狀態；純前端、透明公式、不填假行情。">
-<link rel="canonical" href="https://academy.gugopro.com/tools/volatility-zscore.html">
-<link rel="stylesheet" href="../academy.css">
+<meta content="以你查證的歷史日報酬計算滾動波動度、波動 Z-Score 與壓力狀態；純前端、透明公式、不填假行情。" name="description"/>
+<link href="https://academy.gugopro.com/tools/volatility-zscore.html" rel="canonical"/>
+<link href="../academy.css" rel="stylesheet"/>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"波動度 Z-Score 研究工具","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"以使用者查證的歷史報酬計算滾動波動度與 Z-Score。","url":"https://academy.gugopro.com/tools/volatility-zscore.html"}</script>
-</head>
+<link href="https://gugopro.com/academy/tools/volatility-zscore.html" hreflang="zh-Hant" rel="alternate"/><link href="https://gugopro.com/academy/tools/volatility-zscore.html?lang=zh-CN" hreflang="zh-Hans" rel="alternate"/><link href="https://gugopro.com/academy/tools/volatility-zscore.html?lang=en" hreflang="en" rel="alternate"/><link href="https://gugopro.com/academy/tools/volatility-zscore.html?lang=ja" hreflang="ja" rel="alternate"/><link href="https://gugopro.com/academy/tools/volatility-zscore.html?lang=de" hreflang="de" rel="alternate"/><link href="https://gugopro.com/academy/tools/volatility-zscore.html?lang=fr" hreflang="fr" rel="alternate"/><link href="https://gugopro.com/academy/tools/volatility-zscore.html?lang=es" hreflang="es" rel="alternate"/><link href="https://gugopro.com/academy/tools/volatility-zscore.html?lang=pt" hreflang="pt" rel="alternate"/><link href="https://gugopro.com/academy/tools/volatility-zscore.html" hreflang="x-default" rel="alternate"/></head>
 <body class="quant-page">
 <main class="tool-page">
 <div class="tool-crumb"><a href="../">← 回到 GugoPro Academy</a><span>量化研究 · 純前端 · 不自動填入行情</span></div>
@@ -15,16 +16,16 @@
 <section class="panel"><div class="eyebrow">Quant lab · Volatility</div><h1>波動度 Z-Score</h1><p>把你已查證的日報酬貼入瀏覽器，觀察目前滾動波動度相對於自身歷史分布的位置。這是研究分類器，不是買賣訊號。</p>
 <div class="badge-row"><span>Rolling σ</span><span>Z-Score</span><span>Client-side</span></div>
 <label for="returns">歷史日報酬（%），逗號或換行分隔</label><textarea id="returns" placeholder="例：-1.2, 0.4, 0.8 ...；請貼入自己的查證資料，頁面不預填行情"></textarea>
-<label for="window">滾動窗口（交易日）</label><input id="window" type="number" min="5" max="252" step="1" value="20">
+<label for="window">滾動窗口（交易日）</label><input id="window" max="252" min="5" step="1" type="number" value="20"/>
 <label for="annualize">年化倍數</label><select id="annualize"><option value="1">不年化：日波動</option><option value="15.8745">年化：√252</option></select>
-<button class="calc" id="calc" type="button">計算波動 Z-Score</button><div class="status" id="status" aria-live="polite">請貼入至少 25 筆日報酬後開始。</div>
+<button class="calc" id="calc" type="button">計算波動 Z-Score</button><div aria-live="polite" class="status" id="status">請貼入至少 25 筆日報酬後開始。</div>
 <div class="formula-note"><strong>公式：</strong>滾動 σ＝窗口報酬的樣本標準差；Z＝（目前滾動 σ−所有滾動 σ 平均）÷所有滾動 σ 標準差。樣本不足或波動沒有變化時，工具會保留可見錯誤，不產生虛構 Z 值。</div></section>
 <section class="result"><div class="eyebrow">Regime lens</div><h2>波動分布位置</h2><div class="result-big" id="zscore">—</div><div class="sub" id="regime">等待有效輸入</div>
 <div class="metric-grid"><div class="metric"><span class="sub">目前滾動波動</span><b id="current">—</b></div><div class="metric"><span class="sub">基準平均</span><b id="mean">—</b></div><div class="metric"><span class="sub">樣本筆數</span><b id="count">—</b></div><div class="metric"><span class="sub">滾動窗口數</span><b id="rolls">—</b></div></div>
-<div class="visual"><h3>滾動波動度序列</h3><div class="bar-chart" id="chart" aria-label="滾動波動度圖表"></div><div class="axis"><span>較早觀測</span><span>最新觀測</span></div></div>
+<div class="visual"><h3>滾動波動度序列</h3><div aria-label="滾動波動度圖表" class="bar-chart" id="chart"></div><div class="axis"><span>較早觀測</span><span>最新觀測</span></div></div>
 <div class="source-box"><strong>資料與限制：</strong>輸入資料只存在目前瀏覽器頁面；請註明價格是否為 adjusted close、報酬頻率與樣本期間。Z-Score 只描述相對位置，不代表波動方向、未來報酬或風險上限。</div></section>
 </div></main>
-<script src="../academy.js"></script>
+<script src="../academy.js?v=20260827-i18n1"></script>
 <script>
 const $=id=>document.getElementById(id);
 const fmt=(n,d=2)=>Number.isFinite(n)?n.toFixed(d):'—';
@@ -37,4 +38,4 @@ $('zscore').textContent=fmt(z,2)+' Z';$('current').textContent=fmt(cur,2)+'%';$(
 const max=Math.max(...rolls,1),min=Math.min(...rolls,0),span=Math.max(max-min,1);$('chart').innerHTML=rolls.slice(-80).map(v=>{const h=Math.max(3,((v-min)/span)*150);return '<i style="height:'+h+'px" class="'+(v===cur?'alert':'')+'" title="'+fmt(v,2)+'%"></i>'}).join('');setStatus('計算完成：已使用 '+data.length+' 筆使用者輸入報酬。','ok')}
 $('calc').addEventListener('click',calc);$('returns').addEventListener('input',()=>setStatus('資料已變更，按下計算後更新。'));$('window').addEventListener('change',()=>setStatus('窗口已變更，按下計算後更新。'));
 </script>
-</body></html>
+<script data-gugopro-i18n="true" defer="" src="../../i18n/gugopro-i18n.js?v=20260827-i18n1"></script></body></html>

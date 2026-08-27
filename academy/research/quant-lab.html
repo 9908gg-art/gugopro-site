@@ -1,86 +1,83 @@
-<!doctype html>
-<html lang="zh-Hant">
+<!DOCTYPE html>
+
+<html lang="zh-TW">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>量化特徵與回測工作台｜GugoPro Academy</title>
-  <meta name="description" content="以可追溯的公開歷史資料研究特徵工程、波動 regime 與 next-bar 基準回測；不提供即時交易訊號。">
-  <link rel="canonical" href="https://gugopro.com/academy/research/quant-lab.html">
-  <link rel="stylesheet" href="../academy.css">
-  <link rel="stylesheet" href="./research.css">
-  <link rel="stylesheet" href="./quant-lab.css">
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"量化特徵與回測工作台","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"使用帶來源與快照的歷史序列進行可重現的特徵研究與基準回測。","url":"https://gugopro.com/academy/research/quant-lab.html","isPartOf":{"@type":"WebSite","name":"GugoPro Academy"}}</script>
-</head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>量化特徵與回測工作台｜GugoPro Academy</title>
+<meta content="以可追溯的公開歷史資料研究特徵工程、波動 regime 與 next-bar 基準回測；不提供即時交易訊號。" name="description"/>
+<link href="https://gugopro.com/academy/research/quant-lab.html" rel="canonical"/>
+<link href="../academy.css" rel="stylesheet"/>
+<link href="./research.css" rel="stylesheet"/>
+<link href="./quant-lab.css" rel="stylesheet"/>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"量化特徵與回測工作台","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"使用帶來源與快照的歷史序列進行可重現的特徵研究與基準回測。","url":"https://gugopro.com/academy/research/quant-lab.html","isPartOf":{"@type":"WebSite","name":"GugoPro Academy"}}</script>
+<link href="https://gugopro.com/academy/research/quant-lab.html" hreflang="zh-Hant" rel="alternate"/><link href="https://gugopro.com/academy/research/quant-lab.html?lang=zh-CN" hreflang="zh-Hans" rel="alternate"/><link href="https://gugopro.com/academy/research/quant-lab.html?lang=en" hreflang="en" rel="alternate"/><link href="https://gugopro.com/academy/research/quant-lab.html?lang=ja" hreflang="ja" rel="alternate"/><link href="https://gugopro.com/academy/research/quant-lab.html?lang=de" hreflang="de" rel="alternate"/><link href="https://gugopro.com/academy/research/quant-lab.html?lang=fr" hreflang="fr" rel="alternate"/><link href="https://gugopro.com/academy/research/quant-lab.html?lang=es" hreflang="es" rel="alternate"/><link href="https://gugopro.com/academy/research/quant-lab.html?lang=pt" hreflang="pt" rel="alternate"/><link href="https://gugopro.com/academy/research/quant-lab.html" hreflang="x-default" rel="alternate"/></head>
 <body class="research-page quant-lab-page">
-  <main class="research-shell">
-    <header class="research-header quant-header">
-      <div>
-        <a class="research-back" href="./">← 回到公開資料研究層</a>
-        <div class="eyebrow">Phase 2 · Features &amp; backtest</div>
-        <h1>量化特徵與回測工作台</h1>
-        <p class="research-lead">先固定資料、時間口徑與成交假設，再查看特徵與基準策略。這是可重建的研究實驗，不是即時行情、模型信號或個人化建議。</p>
-      </div>
-      <div class="research-status-card quant-status-card">
-        <span class="status-label">研究狀態</span>
-        <strong id="quant-status" aria-live="polite">等待執行</strong>
-        <small id="quant-status-detail">未載入任何結果；所有輸入與結果會留在本機頁面。</small>
-      </div>
-    </header>
-
-    <section class="quant-provenance" aria-labelledby="quant-provenance-title">
-      <div class="eyebrow">Provenance bar</div>
-      <h2 id="quant-provenance-title">目前研究口徑</h2>
-      <div class="quant-meta-grid">
-        <div><span>Dataset</span><b id="meta-dataset">fred:SP500</b></div>
-        <div><span>Snapshot</span><b id="meta-snapshot">—</b></div>
-        <div><span>As-of</span><b id="meta-asof">—</b></div>
-        <div><span>Adjustment</span><b id="meta-adjustment">source_defined</b></div>
-        <div><span>Feature version</span><b id="meta-feature-version">1.0.0</b></div>
-        <div><span>Backtest version</span><b id="meta-backtest-version">1.0.0</b></div>
-      </div>
-      <p class="research-note">資料採自版本庫保存的 FRED `SP500` 官方 CSV fixture。日曆中的空值日期會被明確計數並排除，不以插值、零值或上一筆價格填補。若 fixture 載入失敗，結果區會清空並顯示錯誤。</p>
-    </section>
-
-    <section class="quant-controls" aria-labelledby="quant-controls-title">
-      <div class="section-heading"><div><div class="eyebrow">Research controls</div><h2 id="quant-controls-title">設定研究參數</h2></div><p>固定參數只供研究重現；不要把 held-out 結果拿回來調參。</p></div>
-      <div class="controls-grid">
-        <label>資料集<select id="dataset-select"><option value="fred-SP500.csv">FRED SP500（版本化 fixture）</option></select></label>
-        <label class="file-control">本機 CSV（可選）<input id="local-csv" type="file" accept=".csv,text/csv"><small>只在本機解析，不會上傳。</small></label>
-        <label>Fast MA<input id="fast-window" type="number" min="2" max="120" value="20"></label>
-        <label>Slow MA<input id="slow-window" type="number" min="3" max="240" value="60"></label>
-        <label>成本（bps）<input id="cost-bps" type="number" min="0" max="5000" step="0.1" value="10"></label>
-        <label>訓練前綴（rows）<input id="train-size" type="number" min="60" max="200" value="120"></label>
-        <label>測試窗（rows）<input id="test-size" type="number" min="10" max="80" value="40"></label>
-        <label>資訊間隔（rows）<input id="censor-gap" type="number" min="0" max="20" value="1"></label>
-        <label>未來波動窗口<input id="label-horizon" type="number" min="2" max="60" value="20"></label>
-      </div>
-      <div class="quant-actions"><button id="run-quant" class="quant-primary" type="button">執行特徵與回測</button><button id="reset-quant" class="quant-secondary" type="button">清除結果</button><button id="download-quant" class="quant-secondary" type="button" disabled>下載 run manifest</button></div>
-      <p id="quant-error" class="research-error" role="alert" hidden></p>
-    </section>
-
-    <section id="quant-results" class="quant-results" aria-labelledby="quant-results-title" hidden>
-      <div class="section-heading"><div><div class="eyebrow">Research output</div><h2 id="quant-results-title">可重建結果</h2></div><p id="result-summary">—</p></div>
-      <div class="result-grid">
-        <article class="result-card"><span>完整來源 rows</span><strong id="result-source-rows">—</strong><small id="result-source-gap">—</small></article>
-        <article class="result-card"><span>可訓練 labels</span><strong id="result-labels">—</strong><small>未完成 future window 不納入訓練</small></article>
-        <article class="result-card"><span>測試窗數</span><strong id="result-splits">—</strong><small id="result-censor-gap">—</small></article>
-        <article class="result-card"><span>平均超額報酬</span><strong id="result-excess">—</strong><small>策略減 buy-and-hold；非收益承諾</small></article>
-      </div>
-      <div class="quant-two-col">
-        <article class="quant-panel"><div class="panel-heading"><div><div class="eyebrow">Feature view</div><h3>最新特徵</h3></div><span id="latest-feature-asof">as-of —</span></div><div class="feature-table-wrap"><table><thead><tr><th>特徵</th><th>值</th><th>公式／口徑</th></tr></thead><tbody id="feature-table"></tbody></table></div></article>
-        <article class="quant-panel"><div class="panel-heading"><div><div class="eyebrow">Baseline metrics</div><h3>基準策略與 benchmark</h3></div><span>next-bar</span></div><div class="metric-list" id="metric-list"></div></article>
-      </div>
-      <article class="quant-panel chart-panel"><div class="panel-heading"><div><div class="eyebrow">Equity curve</div><h3>測試區間累積曲線</h3></div><span>策略 vs benchmark</span></div><canvas id="equity-chart" width="960" height="300" role="img" aria-label="測試區間策略與買入持有累積權益曲線"></canvas><p id="chart-summary" class="chart-summary">執行研究後顯示文字摘要。</p></article>
-      <article class="quant-panel split-panel"><div class="panel-heading"><div><div class="eyebrow">Walk-forward report</div><h3>保留測試窗</h3></div><span>expanding train · held-out test</span></div><div class="feature-table-wrap"><table><thead><tr><th>Split</th><th>Train／Test</th><th>策略</th><th>Benchmark</th><th>超額</th><th>MDD</th><th>進場</th></tr></thead><tbody id="split-table"></tbody></table></div></article>
-      <article class="quant-panel limitations-panel"><div class="eyebrow">Limitations &amp; compliance</div><h3>讀結果前先看限制</h3><p>這裡是 long-only 0／1 的 moving-average deterministic benchmark。訊號在收盤 t 計算、下一根 bar 才執行；成本以 turnover × bps／10,000 計算。沒有滑價、稅費、市場衝擊、槓桿、放空、停牌、退市與完整公司行動模型；輸入價格的 adjusted／unadjusted 口徑會直接影響結果。</p><p>未來波動 label 只用於歷史 regime 研究，不能解讀為買賣、目標價、報酬或風險保證。平均超額報酬為本次 fixture 與固定參數的描述，不是未來表現預測。</p></article>
-    </section>
-
-    <section class="research-section next-links" aria-labelledby="next-title">
-      <div class="section-heading"><div><div class="eyebrow">Continue learning</div><h2 id="next-title">從研究結果回到教學</h2></div></div>
-      <div class="link-grid"><a href="../../articles/investment/15-quant-research-workflow.html"><strong>量化研究工作流</strong><span>理解資料切分、5MA／20MA 扣抵、波動 Z-Score 與樣本外檢查表。</span></a><a href="../../articles/investment/16-futures-pairs-basis.html"><strong>臺指期／富台期配對</strong><span>把契約口徑、Basis、期限結構與轉倉風險分開研究。</span></a><a href="./"><strong>公開資料研究層</strong><span>回看來源 registry、dataset catalog、snapshot 與 quality status。</span></a></div>
-    </section>
-    <footer class="research-footer">所有結果僅供研究與教育；資料來源、日期、調整方式與假設應於使用前重新覆核。This is research and analysis only, not personalized financial advice.</footer>
-  </main>
-  <script src="./quant-lab.js"></script>
-</body>
+<main class="research-shell">
+<header class="research-header quant-header">
+<div>
+<a class="research-back" href="./">← 回到公開資料研究層</a>
+<div class="eyebrow">Phase 2 · Features &amp; backtest</div>
+<h1>量化特徵與回測工作台</h1>
+<p class="research-lead">先固定資料、時間口徑與成交假設，再查看特徵與基準策略。這是可重建的研究實驗，不是即時行情、模型信號或個人化建議。</p>
+</div>
+<div class="research-status-card quant-status-card">
+<span class="status-label">研究狀態</span>
+<strong aria-live="polite" id="quant-status">等待執行</strong>
+<small id="quant-status-detail">未載入任何結果；所有輸入與結果會留在本機頁面。</small>
+</div>
+</header>
+<section aria-labelledby="quant-provenance-title" class="quant-provenance">
+<div class="eyebrow">Provenance bar</div>
+<h2 id="quant-provenance-title">目前研究口徑</h2>
+<div class="quant-meta-grid">
+<div><span>Dataset</span><b id="meta-dataset">fred:SP500</b></div>
+<div><span>Snapshot</span><b id="meta-snapshot">—</b></div>
+<div><span>As-of</span><b id="meta-asof">—</b></div>
+<div><span>Adjustment</span><b id="meta-adjustment">source_defined</b></div>
+<div><span>Feature version</span><b id="meta-feature-version">1.0.0</b></div>
+<div><span>Backtest version</span><b id="meta-backtest-version">1.0.0</b></div>
+</div>
+<p class="research-note">資料採自版本庫保存的 FRED `SP500` 官方 CSV fixture。日曆中的空值日期會被明確計數並排除，不以插值、零值或上一筆價格填補。若 fixture 載入失敗，結果區會清空並顯示錯誤。</p>
+</section>
+<section aria-labelledby="quant-controls-title" class="quant-controls">
+<div class="section-heading"><div><div class="eyebrow">Research controls</div><h2 id="quant-controls-title">設定研究參數</h2></div><p>固定參數只供研究重現；不要把 held-out 結果拿回來調參。</p></div>
+<div class="controls-grid">
+<label>資料集<select id="dataset-select"><option value="fred-SP500.csv">FRED SP500（版本化 fixture）</option></select></label>
+<label class="file-control">本機 CSV（可選）<input accept=".csv,text/csv" id="local-csv" type="file"/><small>只在本機解析，不會上傳。</small></label>
+<label>Fast MA<input id="fast-window" max="120" min="2" type="number" value="20"/></label>
+<label>Slow MA<input id="slow-window" max="240" min="3" type="number" value="60"/></label>
+<label>成本（bps）<input id="cost-bps" max="5000" min="0" step="0.1" type="number" value="10"/></label>
+<label>訓練前綴（rows）<input id="train-size" max="200" min="60" type="number" value="120"/></label>
+<label>測試窗（rows）<input id="test-size" max="80" min="10" type="number" value="40"/></label>
+<label>資訊間隔（rows）<input id="censor-gap" max="20" min="0" type="number" value="1"/></label>
+<label>未來波動窗口<input id="label-horizon" max="60" min="2" type="number" value="20"/></label>
+</div>
+<div class="quant-actions"><button class="quant-primary" id="run-quant" type="button">執行特徵與回測</button><button class="quant-secondary" id="reset-quant" type="button">清除結果</button><button class="quant-secondary" disabled="" id="download-quant" type="button">下載 run manifest</button></div>
+<p class="research-error" hidden="" id="quant-error" role="alert"></p>
+</section>
+<section aria-labelledby="quant-results-title" class="quant-results" hidden="" id="quant-results">
+<div class="section-heading"><div><div class="eyebrow">Research output</div><h2 id="quant-results-title">可重建結果</h2></div><p id="result-summary">—</p></div>
+<div class="result-grid">
+<article class="result-card"><span>完整來源 rows</span><strong id="result-source-rows">—</strong><small id="result-source-gap">—</small></article>
+<article class="result-card"><span>可訓練 labels</span><strong id="result-labels">—</strong><small>未完成 future window 不納入訓練</small></article>
+<article class="result-card"><span>測試窗數</span><strong id="result-splits">—</strong><small id="result-censor-gap">—</small></article>
+<article class="result-card"><span>平均超額報酬</span><strong id="result-excess">—</strong><small>策略減 buy-and-hold；非收益承諾</small></article>
+</div>
+<div class="quant-two-col">
+<article class="quant-panel"><div class="panel-heading"><div><div class="eyebrow">Feature view</div><h3>最新特徵</h3></div><span id="latest-feature-asof">as-of —</span></div><div class="feature-table-wrap"><table><thead><tr><th>特徵</th><th>值</th><th>公式／口徑</th></tr></thead><tbody id="feature-table"></tbody></table></div></article>
+<article class="quant-panel"><div class="panel-heading"><div><div class="eyebrow">Baseline metrics</div><h3>基準策略與 benchmark</h3></div><span>next-bar</span></div><div class="metric-list" id="metric-list"></div></article>
+</div>
+<article class="quant-panel chart-panel"><div class="panel-heading"><div><div class="eyebrow">Equity curve</div><h3>測試區間累積曲線</h3></div><span>策略 vs benchmark</span></div><canvas aria-label="測試區間策略與買入持有累積權益曲線" height="300" id="equity-chart" role="img" width="960"></canvas><p class="chart-summary" id="chart-summary">執行研究後顯示文字摘要。</p></article>
+<article class="quant-panel split-panel"><div class="panel-heading"><div><div class="eyebrow">Walk-forward report</div><h3>保留測試窗</h3></div><span>expanding train · held-out test</span></div><div class="feature-table-wrap"><table><thead><tr><th>Split</th><th>Train／Test</th><th>策略</th><th>Benchmark</th><th>超額</th><th>MDD</th><th>進場</th></tr></thead><tbody id="split-table"></tbody></table></div></article>
+<article class="quant-panel limitations-panel"><div class="eyebrow">Limitations &amp; compliance</div><h3>讀結果前先看限制</h3><p>這裡是 long-only 0／1 的 moving-average deterministic benchmark。訊號在收盤 t 計算、下一根 bar 才執行；成本以 turnover × bps／10,000 計算。沒有滑價、稅費、市場衝擊、槓桿、放空、停牌、退市與完整公司行動模型；輸入價格的 adjusted／unadjusted 口徑會直接影響結果。</p><p>未來波動 label 只用於歷史 regime 研究，不能解讀為買賣、目標價、報酬或風險保證。平均超額報酬為本次 fixture 與固定參數的描述，不是未來表現預測。</p></article>
+</section>
+<section aria-labelledby="next-title" class="research-section next-links">
+<div class="section-heading"><div><div class="eyebrow">Continue learning</div><h2 id="next-title">從研究結果回到教學</h2></div></div>
+<div class="link-grid"><a href="../../articles/investment/15-quant-research-workflow.html"><strong>量化研究工作流</strong><span>理解資料切分、5MA／20MA 扣抵、波動 Z-Score 與樣本外檢查表。</span></a><a href="../../articles/investment/16-futures-pairs-basis.html"><strong>臺指期／富台期配對</strong><span>把契約口徑、Basis、期限結構與轉倉風險分開研究。</span></a><a href="./"><strong>公開資料研究層</strong><span>回看來源 registry、dataset catalog、snapshot 與 quality status。</span></a></div>
+</section>
+<footer class="research-footer">所有結果僅供研究與教育；資料來源、日期、調整方式與假設應於使用前重新覆核。This is research and analysis only, not personalized financial advice.</footer>
+</main>
+<script src="./quant-lab.js"></script>
+<script data-gugopro-i18n="true" defer="" src="../../i18n/gugopro-i18n.js?v=20260827-i18n1"></script></body>
 </html>
