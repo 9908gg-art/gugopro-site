@@ -557,10 +557,10 @@
   function runSelectedPdfTextAction(action) {
     var selected = state.activeTextSelection; if (!selected || !selected.element) return;
     hidePdfTextContextMenu();
-    if (action === 'edit') { openInlineTextEditor(selected.pageNumber, selected.itemIndex, getTextItemValue(selected.pageNumber, selected.itemIndex, selected.original), selected.element, { kind: 'pdf', textOrdinal: selected.textOrdinal }); return; }
-    if (action === 'copy') { copyTextValue(getTextItemValue(selected.pageNumber, selected.itemIndex, selected.original)); return; }
+    if (action === 'edit') { openInlineTextEditor(selected.pageNumber, selected.itemIndex, getPdfBlockValue(selected.pageNumber, selected.block || { itemIndexes: selected.itemIndexes, original: selected.original }), selected.element, { kind: 'pdf', blockIndex: selected.blockIndex, itemIndexes: selected.itemIndexes, lineItemIndexes: selected.lineItemIndexes, itemOriginals: selected.block && selected.block.itemOriginals, textOrdinals: selected.textOrdinals, textOrdinal: selected.textOrdinal }); return; }
+    if (action === 'copy') { copyTextValue(getPdfBlockValue(selected.pageNumber, selected.block || { itemIndexes: selected.itemIndexes, original: selected.original })); return; }
     if (action === 'delete') {
-      var current = getTextItemValue(selected.pageNumber, selected.itemIndex, selected.original); recordEditHistory(); upsertTextEdit(selected.pageNumber, selected.itemIndex, Object.assign({ original: String(selected.original || ''), replacement: current, deleted: true, textOrdinal: selected.textOrdinal }, selected.geometry));
+      var current = getPdfBlockValue(selected.pageNumber, selected.block || { itemIndexes: selected.itemIndexes, original: selected.original }); recordEditHistory(); upsertTextEdit(selected.pageNumber, selected.itemIndex, Object.assign({ blockIndex: selected.blockIndex, itemIndexes: selected.itemIndexes.slice(), lineItemIndexes: selected.lineItemIndexes.map(function (line) { return line.slice(); }), itemOriginals: selected.block && selected.block.itemOriginals, textOrdinals: selected.textOrdinals.slice(), original: String(selected.original || ''), replacement: '', deleted: true, textOrdinal: selected.textOrdinal }, selected.geometry));
       selected.element.classList.add('is-deleted'); selected.element.textContent = ''; state.activeTextSelection = null; renderNotesPanel(); actionGuide('textDeleted');
     }
   }
@@ -633,7 +633,7 @@
           state.annotations[editor.pageNumber].push({ type: 'text', x: editor.geometry.x, y: editor.geometry.y, text: value.trim(), color: editor.color || '#ff9e6b', size: editor.size || 18 });
         }
       } else {
-        upsertTextEdit(editor.pageNumber, editor.itemIndex, Object.assign({ original: original, replacement: value, deleted: !value.trim(), textOrdinal: editor.textOrdinal }, editor.geometry));
+        upsertTextEdit(editor.pageNumber, editor.itemIndex, Object.assign({ blockIndex: editor.blockIndex, itemIndexes: editor.itemIndexes.slice(), lineItemIndexes: editor.lineItemIndexes.map(function (line) { return line.slice(); }), itemOriginals: Object.assign({}, editor.itemOriginals), textOrdinals: editor.textOrdinals.slice(), original: original, replacement: value, deleted: !value.trim(), textOrdinal: editor.textOrdinal }, editor.geometry));
         if (editor.target && editor.target.isConnected) {
           editor.target.textContent = value;
           editor.target.classList.toggle('is-edited', Boolean(value.trim()));
@@ -677,7 +677,7 @@
       top = Math.max(4, Math.min(Math.max(4, frame.clientHeight - baseHeight - 4), top));
       host = document.createElement('span'); host.className = 'pdf-direct-text-editor'; host.style.left = left + 'px'; host.style.top = top + 'px'; host.style.width = editorWidth + 'px'; host.style.minHeight = baseHeight + 'px'; host.contentEditable = 'true'; host.setAttribute('role', 'textbox'); host.setAttribute('aria-multiline', 'true'); host.setAttribute('aria-label', IS_EN ? 'Insert text directly on the PDF' : '直接在 PDF 上插入文字'); host.setAttribute('spellcheck', 'false'); host.setAttribute('autocapitalize', 'sentences'); host.textContent = String(original || ''); frame.appendChild(host); field = host;
     }
-    var editor = { kind: options.kind || 'pdf', pageNumber: Number(pageNumber), itemIndex: Number(itemIndex), textOrdinal: Number(options.textOrdinal != null ? options.textOrdinal : target && target.dataset && target.dataset.textOrdinal != null ? target.dataset.textOrdinal : itemIndex), original: String(original || ''), target: target, frame: frame, host: host, field: field, geometry: geometry, color: options.color, size: options.size, baseHeight: baseHeight, originalStyle: originalStyle, cancelled: false };
+    var editorTextOrdinal = Number(options.textOrdinal != null ? options.textOrdinal : target && target.dataset && target.dataset.textOrdinal != null ? target.dataset.textOrdinal : itemIndex); var editor = { kind: options.kind || 'pdf', pageNumber: Number(pageNumber), itemIndex: Number(itemIndex), blockIndex: Number(options.blockIndex != null ? options.blockIndex : -1), itemIndexes: Array.isArray(options.itemIndexes) && options.itemIndexes.length ? options.itemIndexes.slice() : [Number(itemIndex)], lineItemIndexes: Array.isArray(options.lineItemIndexes) && options.lineItemIndexes.length ? options.lineItemIndexes.map(function (line) { return line.slice(); }) : [[Number(itemIndex)]], itemOriginals: options.itemOriginals && typeof options.itemOriginals === 'object' ? Object.assign({}, options.itemOriginals) : {}, textOrdinals: Array.isArray(options.textOrdinals) && options.textOrdinals.length ? options.textOrdinals.slice() : [editorTextOrdinal], textOrdinal: editorTextOrdinal, original: String(original || ''), target: target, frame: frame, host: host, field: field, geometry: geometry, color: options.color, size: options.size, baseHeight: baseHeight, originalStyle: originalStyle, cancelled: false };
     state.inlineTextEditor = editor;
     if (target) target.classList.add('is-inline-editing');
     field.addEventListener('keydown', function (event) {
@@ -696,41 +696,88 @@
     actionGuide('textEditReady');
     return true;
   }
-  function handlePdfTextItemClick(event, pageNumber, itemIndex, original, element) {
+  function getPdfBlockEdit(pageNumber, block) {
+    if (!block) return null;
+    var edits = state.textEdits[pageNumber] || [];
+    var firstIndex = Array.isArray(block.itemIndexes) && block.itemIndexes.length ? block.itemIndexes[0] : block.itemIndex;
+    return edits.find(function (edit) { return Number(edit.blockIndex) === Number(block.blockIndex) && Number(edit.blockIndex) >= 0; }) || edits.find(function (edit) { return Number(edit.itemIndex) === Number(firstIndex); }) || null;
+  }
+  function getPdfBlockValue(pageNumber, block) {
+    var edit = getPdfBlockEdit(pageNumber, block);
+    return edit && Object.prototype.hasOwnProperty.call(edit, 'replacement') ? String(edit.replacement || '') : String(block && block.original || '');
+  }
+  function selectedPdfTextBlock(pageNumber, block, element) {
+    var firstIndex = Array.isArray(block.itemIndexes) && block.itemIndexes.length ? block.itemIndexes[0] : block.itemIndex;
+    state.activeTextSelection = { pageNumber: Number(pageNumber), itemIndex: Number(firstIndex), itemIndexes: (block.itemIndexes || [firstIndex]).slice(), blockIndex: Number(block.blockIndex), lineItemIndexes: (block.lineItemIndexes || []).map(function (line) { return line.slice(); }), textOrdinals: (block.textOrdinals || []).slice(), textOrdinal: Number((block.textOrdinals || [firstIndex])[0]), original: String(block.original || ''), element: element, block: block, geometry: textTargetGeometry(element) };
+    qsa('.pdf-text-block.is-selected').forEach(function (node) { node.classList.remove('is-selected'); });
+    if (element) element.classList.add('is-selected');
+    showPdfTextContextMenu(element);
+  }
+  function handlePdfTextBlockClick(event, pageNumber, block, element) {
     if (state.inlineTextEditor && state.inlineTextEditor.target === element) { event.stopPropagation(); return; }
     if (state.inlineTextEditor && state.inlineTextEditor.target !== element) commitInlineTextEditor({ skipRender: true });
     event.preventDefault(); event.stopPropagation();
-    var value = getTextItemValue(pageNumber, itemIndex, original);
-    selectedPdfTextTarget(pageNumber, itemIndex, original, element);
+    var value = getPdfBlockValue(pageNumber, block);
+    selectedPdfTextBlock(pageNumber, block, element);
     var action = state.activeEditorAction || 'edit';
     if (action === 'copy-text') { copyTextValue(value); return; }
     if (action === 'delete-text') {
-      recordEditHistory(); upsertTextEdit(pageNumber, itemIndex, Object.assign({ original: String(original || ''), replacement: value, deleted: true, textOrdinal: Number(element && element.dataset && element.dataset.textOrdinal != null ? element.dataset.textOrdinal : itemIndex) }, textTargetGeometry(element)));
+      recordEditHistory(); upsertTextEdit(pageNumber, block.itemIndexes[0], Object.assign({ blockIndex: block.blockIndex, itemIndexes: block.itemIndexes.slice(), lineItemIndexes: block.lineItemIndexes.map(function (line) { return line.slice(); }), itemOriginals: Object.assign({}, block.itemOriginals), textOrdinals: block.textOrdinals.slice(), original: String(block.original || ''), replacement: '', deleted: true }, textTargetGeometry(element)));
       renderMainPage(); renderNotesPanel(); actionGuide('textDeleted'); return;
     }
-    if (action === 'text-edit' || action === 'edit') { showPdfTextContextMenu(element); return; }
+    if (action === 'text-edit' || action === 'edit') showPdfTextContextMenu(element);
   }
-  async function renderPdfTextLayer(page, viewport, pageFrame, pageNumber, renderToken) {
-    if (!page || !pageFrame || !state.editorMode) return;
-    var content;
-    try { content = await page.getTextContent({ includeMarkedContent: true }); } catch (_) { return; }
-    if (renderToken != null && renderToken !== mainRenderToken) return;
-    var layer = document.createElement('div'); layer.className = 'pdf-text-layer'; layer.setAttribute('aria-label', IS_EN ? 'Selectable PDF text' : '可選取的 PDF 文字');
-    var textOrdinal = 0;
+  function buildPdfTextBlocks(content, viewport) {
+    var items = []; var textOrdinal = 0;
     (content.items || []).forEach(function (item, itemIndex) {
       var original = String(item.str || ''); if (!original.trim()) return;
       var transform = item.transform || [1, 0, 0, 1, 0, 0];
       var tx = (window.pdfjsLib && window.pdfjsLib.Util && window.pdfjsLib.Util.transform) ? window.pdfjsLib.Util.transform(viewport.transform, transform) : viewport.transform;
       var fontHeight = Math.max(8, Math.hypot(tx[2] || 0, tx[3] || 0));
       var width = Math.max(fontHeight * .55, Number(item.width || 0) * viewport.scale);
-      var top = (tx[5] || 0) - fontHeight;
-      var span = document.createElement('span'); span.className = 'pdf-text-item'; span.setAttribute('role', 'button'); span.tabIndex = 0; span.textContent = getTextItemValue(pageNumber, itemIndex, original); span.dataset.page = String(pageNumber); span.dataset.textIndex = String(itemIndex); span.setAttribute('aria-label', (IS_EN ? 'PDF text: ' : 'PDF 文字：') + original);
-      var edit = getTextEdit(pageNumber, itemIndex); if (edit && edit.deleted) span.classList.add('is-deleted'); else if (edit && edit.replacement !== original) span.classList.add('is-edited');
-      span.dataset.textOrdinal = String(textOrdinal); textOrdinal += 1;
-      span.style.left = Math.max(0, tx[4] || 0) + 'px'; span.style.top = Math.max(0, top) + 'px'; span.style.width = Math.max(10, width) + 'px'; span.style.height = Math.max(12, fontHeight * 1.22) + 'px'; span.style.fontSize = Math.max(8, fontHeight * .82) + 'px'; span.style.lineHeight = Math.max(10, fontHeight) + 'px';
-      span.style.transform = 'rotate(' + Math.atan2(tx[1] || 0, tx[0] || 1) + 'rad)'; span.style.transformOrigin = 'left top';
-      span.addEventListener('click', function (event) { handlePdfTextItemClick(event, pageNumber, itemIndex, original, span); });
-      span.addEventListener('keydown', function (event) { if ((event.key === 'Enter' || event.key === ' ') && !state.inlineTextEditor) { event.preventDefault(); handlePdfTextItemClick(event, pageNumber, itemIndex, original, span); } });
+      items.push({ itemIndex: itemIndex, original: original, x: Math.max(0, tx[4] || 0), top: Math.max(0, (tx[5] || 0) - fontHeight), right: Math.max(0, tx[4] || 0) + width, bottom: Math.max(0, (tx[5] || 0) - fontHeight) + Math.max(12, fontHeight * 1.22), fontHeight: fontHeight, textOrdinal: textOrdinal });
+      textOrdinal += 1;
+    });
+    var lines = [];
+    items.forEach(function (item) {
+      var line = lines.length ? lines[lines.length - 1] : null;
+      var tolerance = Math.max(5, item.fontHeight * .62);
+      if (!line || Math.abs(item.top - line.top) > tolerance) { line = { top: item.top, bottom: item.bottom, height: item.fontHeight, items: [] }; lines.push(line); }
+      line.items.push(item); line.top = Math.min(line.top, item.top); line.bottom = Math.max(line.bottom, item.bottom); line.height = Math.max(line.height, item.fontHeight);
+    });
+    lines.forEach(function (line) {
+      line.items.sort(function (a, b) { return a.x - b.x || a.itemIndex - b.itemIndex; });
+      var text = ''; line.items.forEach(function (item, index) { if (index && item.x - line.items[index - 1].right > Math.max(2, line.height * .14)) text += ' '; text += item.original; });
+      line.text = text;
+    });
+    var blocks = [];
+    lines.forEach(function (line) {
+      var previous = blocks.length ? blocks[blocks.length - 1] : null;
+      var gap = previous ? line.top - previous.bottom : Infinity;
+      var left = line.items[0] ? line.items[0].x : 0;
+      var sameRegion = previous && gap <= Math.max(14, line.height * 1.45) && Math.abs(left - previous.left) <= Math.max(34, line.height * 2.6);
+      if (!sameRegion) { previous = { blockIndex: blocks.length, lines: [], left: left, top: line.top, right: 0, bottom: line.bottom, height: line.height }; blocks.push(previous); }
+      previous.lines.push(line); previous.left = Math.min(previous.left, left); previous.top = Math.min(previous.top, line.top); previous.right = Math.max(previous.right, line.items.reduce(function (max, item) { return Math.max(max, item.right); }, 0)); previous.bottom = Math.max(previous.bottom, line.bottom); previous.height = Math.max(previous.height, line.height);
+    });
+    return blocks.map(function (block) {
+      var itemIndexes = []; var lineItemIndexes = []; var textOrdinals = []; var itemOriginals = {}; var text = [];
+      block.lines.forEach(function (line) { var indexes = []; line.items.forEach(function (item) { indexes.push(item.itemIndex); itemIndexes.push(item.itemIndex); textOrdinals.push(item.textOrdinal); itemOriginals[item.itemIndex] = item.original; }); lineItemIndexes.push(indexes); text.push(line.text); });
+      return { blockIndex: block.blockIndex, itemIndexes: itemIndexes, lineItemIndexes: lineItemIndexes, textOrdinals: textOrdinals, itemOriginals: itemOriginals, original: text.join('\n'), x: block.left, y: block.top, w: Math.max(10, block.right - block.left), h: Math.max(14, block.bottom - block.top), fontHeight: block.height };
+    });
+  }
+  async function renderPdfTextLayer(page, viewport, pageFrame, pageNumber, renderToken) {
+    if (!page || !pageFrame || !state.editorMode) return;
+    var content;
+    try { content = await page.getTextContent({ includeMarkedContent: true }); } catch (_) { return; }
+    if (renderToken != null && renderToken !== mainRenderToken) return;
+    var blocks = buildPdfTextBlocks(content, viewport); state.pdfTextItems[pageNumber] = blocks;
+    var layer = document.createElement('div'); layer.className = 'pdf-text-layer'; layer.setAttribute('aria-label', IS_EN ? 'Selectable PDF text regions' : '可選取的 PDF 文字區塊');
+    blocks.forEach(function (block) {
+      var span = document.createElement('span'); span.className = 'pdf-text-item pdf-text-block'; span.setAttribute('role', 'button'); span.tabIndex = 0; span.dataset.page = String(pageNumber); span.dataset.blockIndex = String(block.blockIndex); span.dataset.textIndexes = block.itemIndexes.join(','); span.setAttribute('aria-label', (IS_EN ? 'PDF text region: ' : 'PDF 文字區塊：') + block.original); span.textContent = getPdfBlockValue(pageNumber, block);
+      var edit = getPdfBlockEdit(pageNumber, block); if (edit && edit.deleted) span.classList.add('is-deleted'); else if (edit && edit.replacement !== block.original) span.classList.add('is-edited');
+      span.style.left = block.x + 'px'; span.style.top = block.y + 'px'; span.style.width = block.w + 'px'; span.style.height = block.h + 'px'; span.style.fontSize = Math.max(8, block.fontHeight * .82) + 'px'; span.style.lineHeight = Math.max(10, block.fontHeight) + 'px';
+      span.addEventListener('click', function (event) { handlePdfTextBlockClick(event, pageNumber, block, span); });
+      span.addEventListener('keydown', function (event) { if ((event.key === 'Enter' || event.key === ' ') && !state.inlineTextEditor) { event.preventDefault(); handlePdfTextBlockClick(event, pageNumber, block, span); } });
       layer.appendChild(span);
     });
     pageFrame.appendChild(layer);
@@ -1783,19 +1830,19 @@
     return { forward: forward, reverse: reverse, codeBytes: codeBytes };
   }
   function encodePdfTextToken(text, token, map) {
-    text = String(text == null ? '' : text); if (map) { var encoded = ''; var characters = Array.from(text); for (var i = 0; i < characters.length; i += 1) { var key = map.reverse[characters[i]]; if (!key) return null; encoded += key; } return '<' + encoded.toUpperCase() + '>'; }
+    text = String(text == null ? '' : text); if (map) { var encoded = ''; var characters = Array.from(text); var complete = true; for (var i = 0; i < characters.length; i += 1) { var key = map.reverse[characters[i]]; if (!key) { complete = false; break; } encoded += key; } if (complete) return '<' + encoded.toUpperCase() + '>'; }
     if (!/^[\u0000-\u007F]*$/.test(text)) return null;
     if (token && token.kind === 'hex') { var hex = ''; for (var j = 0; j < text.length; j += 1) hex += text.charCodeAt(j).toString(16).padStart(2, '0'); return '<' + hex.toUpperCase() + '>'; }
-    return '(' + text.replace(/[\\\\()]/g, '\\\\$&').replace(/\\n/g, '\\\\n').replace(/\\r/g, '\\\\r') + ')';
+    return '(' + text.replace(/[\\\\()]/g, '\\\\$&').replace(/\n/g, '\\\\n').replace(/\r/g, '\\\\r') + ')';
   }
   function rewritePdfContentStream(source, fontMaps, targets) {
     var tokens = tokenizePdfContent(source); var replacements = []; var operands = []; var activeFont = null; var ordinal = Number(arguments[3]) || 0; var applied = Object.create(null); var unresolved = [];
     function maybeReplace(token) {
       var map = activeFont ? (fontMaps[activeFont] || fontMaps[activeFont.charAt(0) === '/' ? activeFont.slice(1) : '/' + activeFont]) : null; var value = decodePdfTextToken(token, map);
-      var target = targets.find(function (candidate) { return !applied[candidate.key] && candidate.ordinal === ordinal && String(candidate.original || '') === value; });
-      if (!target) target = targets.find(function (candidate) { return !applied[candidate.key] && String(candidate.original || '') === value; });
-      if (!target) target = targets.find(function (candidate) { return !applied[candidate.key] && candidate.ordinal === ordinal; });
-      if (target) { var replacement = target.edit.deleted ? '' : String(target.edit.replacement || ''); var derivedMap = derivePdfTextMap(target.original, token); var encodeMaps = []; if (map) encodeMaps.push(map); Object.keys(fontMaps || {}).forEach(function (fontKey) { if (fontMaps[fontKey] && encodeMaps.indexOf(fontMaps[fontKey]) < 0) encodeMaps.push(fontMaps[fontKey]); }); if (derivedMap) encodeMaps.push(derivedMap); var encoded = null; for (var mapIndex = 0; mapIndex < encodeMaps.length && encoded == null; mapIndex += 1) encoded = encodePdfTextToken(replacement, token, encodeMaps[mapIndex]); if (encoded != null) { replacements.push({ start: token.start, end: token.end, value: encoded }); applied[target.key] = true; target.edit.nativeApplied = true; } else unresolved.push(target); }
+      var target = targets.find(function (candidate) { return !candidate.used && !applied[candidate.key] && candidate.ordinal === ordinal && String(candidate.original || '') === value; });
+      if (!target) target = targets.find(function (candidate) { return !candidate.used && !applied[candidate.key] && String(candidate.original || '') === value; });
+      if (!target) target = targets.find(function (candidate) { return !candidate.used && !applied[candidate.key] && candidate.ordinal === ordinal; });
+      if (target) { var replacement = target.tokenReplacement != null ? String(target.tokenReplacement) : (target.edit.deleted ? '' : String(target.edit.replacement || '')); var derivedMap = derivePdfTextMap(target.original, token); var encodeMaps = []; if (map) encodeMaps.push(map); Object.keys(fontMaps || {}).forEach(function (fontKey) { if (fontMaps[fontKey] && encodeMaps.indexOf(fontMaps[fontKey]) < 0) encodeMaps.push(fontMaps[fontKey]); }); if (derivedMap) encodeMaps.push(derivedMap); var encoded = null; for (var mapIndex = 0; mapIndex < encodeMaps.length && encoded == null; mapIndex += 1) encoded = encodePdfTextToken(replacement, token, encodeMaps[mapIndex]); if (encoded != null) { replacements.push({ start: token.start, end: token.end, value: encoded }); applied[target.key] = true; target.applied = true; target.used = true; } else unresolved.push(target); }
       ordinal += 1;
     }
     tokens.forEach(function (token) {
@@ -1808,8 +1855,8 @@
       } else operands.push(token);
     });
     var output = source; replacements.sort(function (a, b) { return b.start - a.start; }).forEach(function (item) { output = output.slice(0, item.start) + item.value + output.slice(item.end); });
-    targets.forEach(function (target) { if (!applied[target.key] && !unresolved.some(function (item) { return item.key === target.key; })) unresolved.push(target); });
-    return { changed: replacements.length > 0, bytes: new TextEncoder().encode(output), unresolved: unresolved, nextOrdinal: ordinal };
+    targets.forEach(function (target) { if (!target.used && !unresolved.some(function (item) { return item.key === target.key; })) unresolved.push(target); });
+    return { changed: replacements.length > 0, bytes: new TextEncoder().encode(output), unresolved: unresolved, applied: applied, nextOrdinal: ordinal };
   }
   async function applyTextEdits(outputInfo) {
     var editsByPage = state.textEdits || {};
@@ -1818,11 +1865,33 @@
     outputInfo.pageNumbers.forEach(function (pageNumber, pageIndex) {
       var edits = (editsByPage[pageNumber] || []).filter(function (edit) { return edit && (edit.deleted || String(edit.replacement || '') !== String(edit.original || '')); });
       var page = pages[pageIndex]; if (!page || !edits.length) return;
-      var targets = edits.map(function (edit) { return { key: String(pageNumber) + ':' + String(edit.itemIndex), original: String(edit.original || ''), ordinal: Number(edit.textOrdinal != null ? edit.textOrdinal : edit.itemIndex), edit: edit }; });
+      var groups = [];
+      edits.forEach(function (edit, editIndex) {
+        var itemIndexes = Array.isArray(edit.itemIndexes) && edit.itemIndexes.length ? edit.itemIndexes.map(Number) : [Number(edit.itemIndex)];
+        var lineItemIndexes = Array.isArray(edit.lineItemIndexes) && edit.lineItemIndexes.length ? edit.lineItemIndexes.map(function (line) { return Array.isArray(line) ? line.map(Number) : []; }).filter(function (line) { return line.length; }) : [itemIndexes.slice()];
+        var textOrdinals = Array.isArray(edit.textOrdinals) && edit.textOrdinals.length ? edit.textOrdinals.map(Number) : [Number(edit.textOrdinal != null ? edit.textOrdinal : itemIndexes[0])];
+        var itemOriginals = edit.itemOriginals && typeof edit.itemOriginals === 'object' ? edit.itemOriginals : {};
+        var replacementLines = edit.deleted ? [''] : String(edit.replacement || '').replace(/\r\n/g, '\n').split('\n');
+        var group = { key: String(pageNumber) + ':block:' + String(edit.blockIndex != null ? edit.blockIndex : editIndex), pageNumber: Number(pageNumber), edit: edit, targets: [], forceFallback: replacementLines.length > lineItemIndexes.length };
+        if (!group.forceFallback) {
+          var cursor = 0;
+          lineItemIndexes.forEach(function (line, lineIndex) {
+            var lineText = replacementLines[lineIndex] == null ? '' : replacementLines[lineIndex];
+            line.forEach(function (itemIndex, itemPosition) {
+              var original = Object.prototype.hasOwnProperty.call(itemOriginals, itemIndex) ? String(itemOriginals[itemIndex] || '') : (itemPosition === 0 && lineIndex === 0 ? String(edit.original || '') : '');
+              group.targets.push({ key: group.key + ':' + String(cursor), original: original, ordinal: Number(textOrdinals[cursor] != null ? textOrdinals[cursor] : itemIndex), edit: edit, tokenReplacement: itemPosition === 0 ? lineText : '' });
+              cursor += 1;
+            });
+          });
+        }
+        if (!group.targets.length && !group.forceFallback) group.targets.push({ key: group.key + ':0', original: String(edit.original || ''), ordinal: Number(edit.textOrdinal != null ? edit.textOrdinal : edit.itemIndex), edit: edit, tokenReplacement: replacementLines[0] || '' });
+        groups.push(group);
+      });
       var contents = page.node && page.node.Contents ? page.node.Contents() : null; var streams = [];
       if (contents && typeof contents.size === 'function') { for (var i = 0; i < contents.size(); i += 1) streams.push(contents.lookup(i)); }
       else if (contents) streams = [contents];
-      if (!streams.length) { unresolved = unresolved.concat(targets); return; }
+      if (!streams.length) { groups.forEach(function (group) { unresolved.push({ key: group.key, pageNumber: group.pageNumber, edit: group.edit }); }); return; }
+      var targets = []; groups.forEach(function (group) { if (!group.forceFallback) targets = targets.concat(group.targets); });
       var refs = []; var pageChanged = false; var fontMaps = getPageFontMaps(page, PDFLib); var ordinalBase = 0;
       streams.forEach(function (stream) {
         var bytes = pdfStreamBytes(stream, PDFLib); if (!bytes) { refs.push(stream); return; }
@@ -1831,7 +1900,11 @@
         refs.push(document.context.register(document.context.flateStream(rewritten.bytes)));
       });
       if (pageChanged) page.node.set(PDFLib.PDFName.of('Contents'), document.context.obj(refs));
-      targets.forEach(function (target) { if (!target.edit.nativeApplied) unresolved.push(target); });
+      groups.forEach(function (group) {
+        var applied = !group.forceFallback && group.targets.length > 0 && group.targets.every(function (target) { return target.used; });
+        group.edit.nativeApplied = applied;
+        if (!applied) unresolved.push({ key: group.key, pageNumber: group.pageNumber, edit: group.edit });
+      });
     });
     outputInfo.nativeTextEditCount = Object.keys(editsByPage).reduce(function (total, pageNumber) { return total + (editsByPage[pageNumber] || []).filter(function (edit) { return edit && edit.nativeApplied; }).length; }, 0);
     outputInfo.unresolvedTextEdits = unresolved;
@@ -3372,11 +3445,11 @@
   }
 
   function getSnapshot() {
-    return { file: state.file, pdf: state.pdf, documentKind: state.documentKind, documentText: state.documentText, documentImageDataUrl: state.documentImageDataUrl, documentImageWidth: state.documentImageWidth, documentImageHeight: state.documentImageHeight, documentImageMime: state.documentImageMime, pageOrder: state.pageOrder.slice(), currentPage: state.currentPage, pageRotations: Object.assign({}, state.pageRotations), pageTexts: Object.assign({}, state.pageTexts), textReady: state.textReady, zoom: state.zoom, fitMode: state.fitMode, tool: state.tool, annotations: JSON.parse(JSON.stringify(state.annotations || {})), annotationImages: Object.assign({}, state.annotationImages), signatures: JSON.parse(JSON.stringify(state.signatures || {})), activeSignatureId: state.activeSignatureId, outline: JSON.parse(JSON.stringify(state.outline || {})) };
+    return { file: state.file, pdf: state.pdf, documentKind: state.documentKind, documentText: state.documentText, documentImageDataUrl: state.documentImageDataUrl, documentImageWidth: state.documentImageWidth, documentImageHeight: state.documentImageHeight, documentImageMime: state.documentImageMime, pageOrder: state.pageOrder.slice(), currentPage: state.currentPage, pageRotations: Object.assign({}, state.pageRotations), pageTexts: Object.assign({}, state.pageTexts), textReady: state.textReady, zoom: state.zoom, fitMode: state.fitMode, tool: state.tool, annotations: JSON.parse(JSON.stringify(state.annotations || {})), textEdits: JSON.parse(JSON.stringify(state.textEdits || {})), annotationImages: Object.assign({}, state.annotationImages), signatures: JSON.parse(JSON.stringify(state.signatures || {})), activeSignatureId: state.activeSignatureId, outline: JSON.parse(JSON.stringify(state.outline || {})) };
   }
   async function restoreSnapshot(snapshot) {
     if (!snapshot || (!snapshot.pdf && !snapshot.file)) { clearReaderFrame(); setEmptyState(true); return; }
-    state.file = snapshot.file || null; state.pdf = snapshot.pdf || null; state.documentKind = snapshot.documentKind || (state.pdf ? 'pdf' : getDocumentKind(state.file)); state.documentText = snapshot.documentText || ''; state.documentImageDataUrl = snapshot.documentImageDataUrl || ''; state.documentImageWidth = Number(snapshot.documentImageWidth) || 0; state.documentImageHeight = Number(snapshot.documentImageHeight) || 0; state.documentImageMime = snapshot.documentImageMime || (state.file && state.file.type) || ''; state.pageOrder = Array.isArray(snapshot.pageOrder) ? snapshot.pageOrder.slice() : []; state.currentPage = Number(snapshot.currentPage) || state.pageOrder[0] || 1; state.pageRotations = Object.assign({}, snapshot.pageRotations || {}); state.pageTexts = Object.assign({}, snapshot.pageTexts || {}); state.textReady = Boolean(snapshot.textReady); state.zoom = Number(snapshot.zoom) || .92; state.fitMode = snapshot.fitMode || 'fit-width'; state.tool = snapshot.tool || 'select'; state.annotations = JSON.parse(JSON.stringify(snapshot.annotations || {})); state.annotationImages = Object.assign({}, snapshot.annotationImages || {}); state.signatures = JSON.parse(JSON.stringify(snapshot.signatures || {})); state.activeSignatureId = snapshot.activeSignatureId || null; state.outline = JSON.parse(JSON.stringify(snapshot.outline || []));
+    state.file = snapshot.file || null; state.pdf = snapshot.pdf || null; state.documentKind = snapshot.documentKind || (state.pdf ? 'pdf' : getDocumentKind(state.file)); state.documentText = snapshot.documentText || ''; state.documentImageDataUrl = snapshot.documentImageDataUrl || ''; state.documentImageWidth = Number(snapshot.documentImageWidth) || 0; state.documentImageHeight = Number(snapshot.documentImageHeight) || 0; state.documentImageMime = snapshot.documentImageMime || (state.file && state.file.type) || ''; state.pageOrder = Array.isArray(snapshot.pageOrder) ? snapshot.pageOrder.slice() : []; state.currentPage = Number(snapshot.currentPage) || state.pageOrder[0] || 1; state.pageRotations = Object.assign({}, snapshot.pageRotations || {}); state.pageTexts = Object.assign({}, snapshot.pageTexts || {}); state.textReady = Boolean(snapshot.textReady); state.zoom = Number(snapshot.zoom) || .92; state.fitMode = snapshot.fitMode || 'fit-width'; state.tool = snapshot.tool || 'select';     state.annotations = JSON.parse(JSON.stringify(snapshot.annotations || {})); state.textEdits = JSON.parse(JSON.stringify(snapshot.textEdits || {})); state.annotationImages = Object.assign({}, snapshot.annotationImages || {}); state.signatures = JSON.parse(JSON.stringify(snapshot.signatures || {})); state.activeSignatureId = snapshot.activeSignatureId || null; state.outline = JSON.parse(JSON.stringify(snapshot.outline || []));
     setEmptyState(false); $('pdf-file-name').textContent = state.file ? state.file.name : (IS_EN ? 'Document text backup' : '文件文字層備份'); $('pdf-file-meta').textContent = state.pdf ? state.pageOrder.length + (IS_EN ? ' page(s) · local room content' : ' 頁 · 本機房間內容') : (IS_EN ? 'Local document text backup' : '本機文件文字層備份'); $('pdf-total-pages').textContent = state.pdf ? state.pageOrder.length : '1'; $('pdf-page-count-badge').textContent = state.pdf ? state.pageOrder.length + (IS_EN ? ' page(s)' : ' 頁') : (IS_EN ? '1 document' : '1 份文件'); if ($('pdf-thumb-empty')) $('pdf-thumb-empty').hidden = true; await renderThumbnails(); await renderOutline(); await renderMainPage(); renderNotesPanel(); syncToolCapabilities();
   }
   window.GugoProPdfSuite = { loadPdf: loadPdf, loadDocument: loadDocument, extractAllText: extractAllText, getSnapshot: getSnapshot, restoreSnapshot: restoreSnapshot, clearViewer: function () { if ($('pdf-clear')) $('pdf-clear').click(); }, switchAiTab: switchAiTab, executeTask: executeTask, runTaskMatrixAction: runTaskMatrixAction, getSignatureLibrary: getSignatureLibrary, getState: function () { return state; } };
