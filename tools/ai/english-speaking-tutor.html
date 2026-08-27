@@ -569,6 +569,32 @@
 .message.tts-playing .btn-msg-stop i { animation: gugoTtsStopPulse 1.15s ease-in-out infinite; }
 @keyframes gugoTtsStopPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.16); } }
 
+/* Mobile message actions: keep controls vertical so they do not squeeze the message bubble. */
+@media (max-width: 640px) {
+    .message-tutor .msg-learning { padding-right: 56px; }
+    .message .msg-actions {
+        top: 8px;
+        right: 7px;
+        flex-direction: column;
+        align-items: center;
+        gap: 13px;
+        opacity: .72;
+    }
+    .message .msg-actions .btn-msg-action {
+        width: 34px;
+        min-width: 34px;
+        height: 34px;
+        min-height: 34px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 3px;
+    }
+    .message .msg-actions .btn-msg-delete { order: 1; }
+    .message .msg-actions .btn-msg-stop { order: 2; }
+    .message .msg-actions .btn-msg-action:not(.btn-msg-stop):not(.btn-msg-delete) { order: 3; }
+}
+
         .correction-box {
             margin-top: 12px;
             padding-top: 12px;
@@ -1199,6 +1225,8 @@
     .dual-stt-composer .composer-actions #btn-send { width: 38px !important; min-width: 38px !important; height: 38px !important; }
 }
 </style>
+
+
 
 
 
@@ -3191,7 +3219,7 @@ html, body { background: #0A0B10 !important; }
                 <div class="msg-my"></div>
                 <div class="msg-actions">
                     <button class="btn-msg-action" onclick="speakMessage(this)" aria-label="朗讀 AI 訊息" title="朗讀 AI 訊息"><i class="fa-solid fa-volume-high"></i></button>
-                    ${role === 'tutor' ? '<button class="btn-msg-action btn-msg-stop" onclick="return stopMessageSpeech(this)" aria-label="停止語音朗讀" title="停止語音朗讀" disabled><i class="fa-solid fa-stop"></i></button>' : ''}
+                    ${role === 'tutor' ? '<button class="btn-msg-action btn-msg-stop" onclick="return stopMessageSpeech(this)" aria-label="停止語音朗讀" title="停止語音朗讀" disabled><i class="fa-solid fa-circle-stop"></i></button>' : ''}
                     <button class="btn-msg-action btn-msg-delete" onclick="deleteMessage('${id}')" aria-label="刪除訊息" title="刪除訊息"><i class="fa-solid fa-trash-can"></i></button>
                 </div>
             `;
@@ -5170,6 +5198,14 @@ html, body { background: #0A0B10 !important; }
         };
         tick();
     }
+    function markSessionRecording(session) {
+        if (!session || session.finalized || session.stopRequested || activeSession?.id !== session.id) return;
+        if (session.startTimer) { clearTimeout(session.startTimer); session.startTimer = null; }
+        session.startPending = false;
+        session.state = 'recording';
+        session.restartAttempts = 0;
+        setDualRecording(session.role, true);
+    }
     function updateSpeechInput(session, transcript) {
         if (!session || session.finalized) return;
         if (session.silenceTimer) { clearTimeout(session.silenceTimer); session.silenceTimer = null; }
@@ -5302,11 +5338,12 @@ html, body { background: #0A0B10 !important; }
     function startNativeRecognition(session) {
         const native = window.GugoProNativeSpeech?.isNativeSpeechAvailable?.() ? window.GugoProNativeSpeech : null;
         if (!native || session.finalized || session.stopRequested || activeSession?.id !== session.id) return;
-        session.state = 'starting';
-        window.GugoSetSpeechComposerState?.('starting', session.role);
+        session.startPending = true;
+        session.state = 'recording';
+        window.GugoSetSpeechComposerState?.('recording', session.role);
         session.startTimer = setTimeout(() => {
             session.startTimer = null;
-            if (session.finalized || activeSession?.id !== session.id || session.state !== 'starting') return;
+            if (session.finalized || activeSession?.id !== session.id || !session.startPending) return;
             native.stopRecognition().catch(() => {});
             if (session.mode === 'hold' && !session.stopRequested) {
                 window.GugoSetSpeechComposerState?.('reconnecting', session.role, '語音服務重新連線中，請繼續按住…');
@@ -5323,10 +5360,7 @@ html, body { background: #0A0B10 !important; }
                     native.stopRecognition().catch(() => {});
                     return;
                 }
-                if (session.startTimer) { clearTimeout(session.startTimer); session.startTimer = null; }
-                session.state = 'recording';
-                session.restartAttempts = 0;
-                setDualRecording(session.role, true);
+                markSessionRecording(session);
             },
             onResult: transcript => updateSpeechInput(session, transcript),
             onEnd: () => finishWithOptionalDelay(session),
@@ -5348,7 +5382,9 @@ html, body { background: #0A0B10 !important; }
                 abortSession(session, '❌ 語音服務暫時無法使用，請稍後再試。');
             }
         }).then(result => {
-            if (session.startTimer) { clearTimeout(session.startTimer); session.startTimer = null; }
+            if (result?.started && !session.finalized && activeSession?.id === session.id && session.startPending) {
+                markSessionRecording(session);
+            }
             if (!result?.started && !session.finalized) {
                 const denied = /permission|denied|not.?allowed|record_audio/i.test(String(result?.reason || result?.error?.message || ''));
                 if (session.stopRequested) finalizeSession(session);
@@ -5370,8 +5406,9 @@ html, body { background: #0A0B10 !important; }
             return;
         }
         if (!recognition) recognition = new SpeechRecognition();
-        session.state = 'starting';
-        window.GugoSetSpeechComposerState?.('starting', session.role);
+        session.startPending = true;
+        session.state = 'recording';
+        window.GugoSetSpeechComposerState?.('recording', session.role);
         recognition.lang = session.speechLocale;
         recognition.continuous = true;
         recognition.interimResults = true;
@@ -5380,11 +5417,12 @@ html, body { background: #0A0B10 !important; }
                 try { recognition.stop(); } catch (_) {}
                 return;
             }
-            setDualRecording(session.role, true);
+            markSessionRecording(session);
         };
         recognition.onresult = event => {
             const result = event.results?.[event.resultIndex]?.[0];
             if (!result) return;
+            markSessionRecording(session);
             session.confidence = Number(result.confidence) || session.confidence;
             updateSpeechInput(session, result.transcript);
         };
@@ -5428,7 +5466,8 @@ html, body { background: #0A0B10 !important; }
             latestTranscript: '',
             confidence: null,
             restartAttempts: 0,
-            state: 'starting',
+            state: 'recording',
+            startPending: true,
             silenceTimer: null,
             silenceProbeTimer: null,
             countdownTimer: null,
@@ -5441,7 +5480,7 @@ html, body { background: #0A0B10 !important; }
         };
         activeSession = session;
         window.GugoSpeechSessionChallengeId = String(challengeMessageId || '');
-        setDualStarting(role);
+        setDualRecording(role, true);
         const native = window.GugoProNativeSpeech?.isNativeSpeechAvailable?.() ? window.GugoProNativeSpeech : null;
         if (native) startNativeRecognition(session);
         else startWebRecognition(session);
@@ -5703,6 +5742,8 @@ html, body { background: #0A0B10 !important; }
 
 
 
+
+
 <script id="gugo-capsule-dock-modes-js">
 // GugoPro Gemini-style Capsule Dock + three speech modes
 (() => {
@@ -5815,7 +5856,7 @@ html, body { background: #0A0B10 !important; }
     }
     const SPEECH_STATUS_TEXT = {
         idle: '',
-        starting: '正在啟動語音…',
+        starting: '正在錄音…',
         recording: '正在錄音…',
         waiting: '語音暫停，等待你繼續說…',
         reconnecting: '語音暫時中斷，正在重新連線…',
@@ -5910,7 +5951,7 @@ html, body { background: #0A0B10 !important; }
         state.beforeStart?.();
         window.GugoSpeechMode = speechMode();
         window.GugoSpeechActiveControl = button;
-        setSpeechComposerState('starting', state.role, `正在啟動${state.role === 'learning' ? '學習語言' : '母語'}語音…`);
+        setSpeechComposerState('recording', state.role, `${state.role === 'learning' ? '學習語言' : '母語'}正在錄音…`);
         const result = window.GugoStartDualSpeech(state.role, state.challengeMessageId || null, state.challengeTarget || '', button);
         if (!window.GugoSpeechSessionActive && result !== true && result !== false) {
             state.startFailed?.();
