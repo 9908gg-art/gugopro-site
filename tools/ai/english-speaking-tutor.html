@@ -1241,6 +1241,8 @@
 
 
 
+
+
 <style id="gugo-capsule-dock-style">
 /* GugoPro Gemini-style capsule composer */
 html, body { background: #0A0B10 !important; }
@@ -5190,18 +5192,19 @@ html, body { background: #0A0B10 !important; }
         if (!session || session.finalized || session.stopRequested || activeSession?.id !== session.id || session.restartTimer) return;
         session.restartAttempts = (session.restartAttempts || 0) + 1;
         window.GugoSetSpeechComposerState?.('reconnecting', session.role);
-        if (session.restartAttempts > 3) {
+        if (session.mode !== 'hold' && session.restartAttempts > 3) {
             abortSession(session, '❌ 語音服務暫時無法使用，請檢查網路或稍後再試。');
             return;
         }
         session.state = 'restarting';
+        const retryDelay = session.mode === 'hold' ? Math.min(1500, 140 + (session.restartAttempts * 120)) : 140;
         session.restartTimer = setTimeout(() => {
             session.restartTimer = null;
             if (session.finalized || session.stopRequested || activeSession?.id !== session.id) return;
             const native = window.GugoProNativeSpeech?.isNativeSpeechAvailable?.() ? window.GugoProNativeSpeech : null;
             if (native) { startNativeRecognition(session); return; }
             startWebRecognition(session);
-        }, 140);
+        }, retryDelay);
     }
     function finishWithOptionalDelay(session, explicitStop = false) {
         if (!session || session.finalized) return;
@@ -5243,8 +5246,13 @@ html, body { background: #0A0B10 !important; }
             session.startTimer = null;
             if (session.finalized || activeSession?.id !== session.id || session.state !== 'starting') return;
             native.stopRecognition().catch(() => {});
+            if (session.mode === 'hold' && !session.stopRequested) {
+                window.GugoSetSpeechComposerState?.('reconnecting', session.role, '語音服務重新連線中，請繼續按住…');
+                restartRecognition(session);
+                return;
+            }
             abortSession(session, '❌ 語音服務啟動逾時，請檢查網路、麥克風權限或稍後重試。');
-        }, 10000);
+        }, session.mode === 'hold' ? 10000 : 10000);
         native.startRecognition({
             language: session.speechLocale,
             partialResults: true,
@@ -5591,6 +5599,8 @@ html, body { background: #0A0B10 !important; }
     };
 })();
 </script>
+
+
 
 
 
