@@ -87,3 +87,7 @@
 ## Production：Academy 主頁 smoke test
 
 正式 URL：`https://gugopro.com/academy/index.html?qa=d57ea9e#practical-trading`。頁面 title 正常；`#tools` 實際找到 19 個工具卡；`#practical-trading` section 存在並顯示第 13 類總覽與 4 個入口；工具清單最後三張卡為 `17 / 實戰`、`18 / 實戰`、`19 / 實戰`。三個新工具連結與第 13 類文章相對路徑均可取得，DOM 無水平溢出；外部 resource 關鍵字僅命中 Google Fonts，無行情 API／quote／market／WebSocket 請求。
+
+## Production final descendant：5699793 article smoke test
+
+正式 URL：`https://gugopro.com/articles/investment/17-practical-trading.html?qa=5699793`。最新 origin/main descendant 的文章 title 正常，章節導航共 9 個，錨點為 `#market`、`#plan`、`#orders`、`#risk`、`#strategies`、`#backtest`、`#manage`、`#review`、`#roadmap`；文章內工具連結共 9 個，包含交易期望值、交易日誌、交易前規則、部位檢查、MDD 與研究工作台。文章仍含「本分類不提供即時訊號」邊界聲明；DOM 無水平溢出。resource 關鍵字只命中 Google Fonts，沒有行情 API／quote／market／WebSocket 請求。
