@@ -5130,13 +5130,53 @@ html, body { background: #0A0B10 !important; }
         if (!latest) return base;
         return /\s$/.test(String(baseText || '')) ? `${baseText}${latest}` : `${base} ${latest}`;
     }
+    function clearSmartCountdown(session) {
+        if (!session) return;
+        if (session.silenceProbeTimer) { clearTimeout(session.silenceProbeTimer); session.silenceProbeTimer = null; }
+        if (session.countdownTimer) { clearTimeout(session.countdownTimer); session.countdownTimer = null; }
+        session.silenceDeadline = null;
+    }
+    function stopRecognitionAfterSmartFinalize() {
+        const native = window.GugoProNativeSpeech?.isNativeSpeechAvailable?.() ? window.GugoProNativeSpeech : null;
+        if (native?.stopRecognition) native.stopRecognition().catch(() => {});
+        else if (typeof recognition !== 'undefined' && recognition) { try { recognition.stop(); } catch (_) {} }
+    }
+    function beginSmartCountdown(session) {
+        if (!session || session.finalized || session.stopRequested || session.mode !== 'smart' || !session.latestTranscript) return;
+        if (session.countdownTimer || session.silenceDeadline) return;
+        const silenceMs = Math.max(1000, Math.min(15000, Number(window.GugoGetSmartSilenceMs?.() || 6000)));
+        session.state = 'waiting';
+        session.silenceDeadline = Date.now() + silenceMs;
+        const tick = () => {
+            session.countdownTimer = null;
+            if (session.finalized || session.stopRequested || activeSession?.id !== session.id) return;
+            const remaining = Math.max(0, session.silenceDeadline - Date.now());
+            if (remaining <= 0) {
+                session.silenceDeadline = null;
+                finalizeSession(session);
+                stopRecognitionAfterSmartFinalize();
+                return;
+            }
+            const seconds = Math.max(1, Math.ceil(remaining / 1000));
+            window.GugoSetSpeechComposerState?.('waiting', session.role, `已偵測到你暫停說話，剩餘 ${seconds} 秒後自動送出；點擊語音按鈕可立即送出`);
+            session.countdownTimer = setTimeout(tick, Math.min(250, Math.max(50, remaining)));
+        };
+        tick();
+    }
     function updateSpeechInput(session, transcript) {
         if (!session || session.finalized) return;
         if (session.silenceTimer) { clearTimeout(session.silenceTimer); session.silenceTimer = null; }
+        clearSmartCountdown(session);
         session.state = 'recording';
         session.latestTranscript = normalize(transcript);
         // Voice transcripts stay in the session only; they must never overwrite or leak into the composer.
         // The final message is built from session.baseText + session.latestTranscript on explicit stop.
+        if (session.mode === 'smart' && session.latestTranscript) {
+            session.silenceProbeTimer = setTimeout(() => {
+                session.silenceProbeTimer = null;
+                beginSmartCountdown(session);
+            }, 700);
+        }
     }
     function clearSpeechTimers(session) {
         if (!session) return;
@@ -5144,6 +5184,7 @@ html, body { background: #0A0B10 !important; }
         if (session.restartTimer) { clearTimeout(session.restartTimer); session.restartTimer = null; }
         if (session.startTimer) { clearTimeout(session.startTimer); session.startTimer = null; }
         if (session.sendTimer) { clearTimeout(session.sendTimer); session.sendTimer = null; }
+        clearSmartCountdown(session);
     }
     function abortSession(session, message = '') {
         if (!session || session.finalized) return;
@@ -5153,6 +5194,7 @@ html, body { background: #0A0B10 !important; }
         clearSpeechTimers(session);
         setDualRecording(session.role, false);
         if (activeSession?.id === session.id) activeSession = null;
+        window.GugoClearSpeechControl?.();
         if (String(window.GugoSpeechSessionChallengeId || '') === String(session.challengeMessageId || '')) window.GugoSpeechSessionChallengeId = '';
         if (session.challengeMessageId && typeof setRetryBusy === 'function') setRetryBusy(session.challengeMessageId, false);
         if (typeof window.GugoSetSpeechComposerState === 'function') {
@@ -5170,6 +5212,7 @@ html, body { background: #0A0B10 !important; }
         clearSpeechTimers(session);
         setDualRecording(session.role, false);
         if (activeSession?.id === session.id) activeSession = null;
+        window.GugoClearSpeechControl?.();
         if (String(window.GugoSpeechSessionChallengeId || '') === String(session.challengeMessageId || '')) window.GugoSpeechSessionChallengeId = '';
         if (session.challengeMessageId && typeof setRetryBusy === 'function') setRetryBusy(session.challengeMessageId, false);
         const transcript = normalize(session.latestTranscript);
@@ -5188,6 +5231,7 @@ html, body { background: #0A0B10 !important; }
             }
             window.GugoProPendingPronunciation = score;
         }
+        window.GugoClearSpeechControl?.();
         if (!session.challengeMessageId && typeof sendMessage === 'function') {
             const input = document.getElementById('user-text');
             const speechContent = normalize(composeInput(session.baseText, session.latestTranscript));
@@ -5229,11 +5273,7 @@ html, body { background: #0A0B10 !important; }
             restartRecognition(session);
             return;
         }
-        session.state = 'waiting';
-        window.GugoSetSpeechComposerState?.('waiting', session.role);
-        clearTimeout(session.silenceTimer);
-        const smartSilenceMs = Math.max(1000, Math.min(15000, Number(window.GugoGetSmartSilenceMs?.() || 6000)));
-        session.silenceTimer = setTimeout(() => finalizeSession(session), smartSilenceMs);
+        beginSmartCountdown(session);
     }
     function stopActiveSession() {
         const session = activeSession;
@@ -5383,6 +5423,9 @@ html, body { background: #0A0B10 !important; }
             restartAttempts: 0,
             state: 'starting',
             silenceTimer: null,
+            silenceProbeTimer: null,
+            countdownTimer: null,
+            silenceDeadline: null,
             restartTimer: null,
             sendTimer: null,
             stopRequested: false,
@@ -5395,6 +5438,7 @@ html, body { background: #0A0B10 !important; }
         const native = window.GugoProNativeSpeech?.isNativeSpeechAvailable?.() ? window.GugoProNativeSpeech : null;
         if (native) startNativeRecognition(session);
         else startWebRecognition(session);
+        return true;
     }
     window.GugoStartDualSpeech = startSession;
 
