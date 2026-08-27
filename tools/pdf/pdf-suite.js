@@ -26,6 +26,7 @@
     annotations: {},
     textEdits: {},
     activeTextSelection: null,
+    inlineTextEditor: null,
     activeEditorAction: 'edit',
     editorMode: false,
     mobileSubdock: '',
@@ -101,6 +102,7 @@
     (snapshot.selectedPages || []).forEach(function (page) { state.selectedPages.add(Number(page)); });
     state.annotations = cloneValue(snapshot.annotations || {});
     state.textEdits = cloneValue(snapshot.textEdits || {});
+    closeInlineTextEditor(false);
     state.activeTextSelection = null;
     state.activeEditorAction = 'edit';
     state.annotationImages = {};
@@ -115,6 +117,7 @@
     syncHistoryButtons();
   }
   function undoEdit() {
+    if (state.inlineTextEditor) closeInlineTextEditor(false);
     if (!state.pdf) { toast(messages.choosePdf); return false; }
     if (!editHistory.undo.length) { toast(IS_EN ? 'There is no edit to undo.' : '目前沒有可復原的編輯。'); return false; }
     var current = captureEditState();
@@ -125,6 +128,7 @@
     return true;
   }
   function redoEdit() {
+    if (state.inlineTextEditor) closeInlineTextEditor(false);
     if (!state.pdf) { toast(messages.choosePdf); return false; }
     if (!editHistory.redo.length) { toast(IS_EN ? 'There is no edit to redo.' : '目前沒有可重做的編輯。'); return false; }
     var current = captureEditState();
@@ -254,9 +258,11 @@
     editorOpen: { zh: '💡 已進入 PDF 編輯模式；請從下方工具列選擇操作。', en: '💡 PDF editing mode is open; choose an action from the tool strip below.' },
     editorClose: { zh: '💡 已離開 PDF 編輯模式；文件內容仍保留在閱讀畫面。', en: '💡 PDF editing mode is closed; the document remains in the reader.' },
     textEdit: { zh: '💡 文字編輯已啟用；請點選 PDF 中的文字區塊修改內容。', en: '💡 Text editing is active; click a text block in the PDF to change it.' },
+    textEditReady: { zh: '💡 已在原文字位置開啟編輯框；直接修改內容，再按「套用」保存。', en: '💡 An inline editor is open at the original text; edit it directly, then choose Apply.' },
+    textEditCanceled: { zh: '💡 已取消這次文字編輯，原內容保持不變。', en: '💡 This text edit was canceled; the original content is unchanged.' },
     copyText: { zh: '💡 複製文字已啟用；請點選 PDF 中的文字區塊。', en: '💡 Copy text is active; click a text block in the PDF.' },
     deleteText: { zh: '💡 刪除文字已啟用；請點選要移除的 PDF 文字區塊。', en: '💡 Delete text is active; click the PDF text block to remove it.' },
-    textEdited: { zh: '💡 文字已修改；可繼續編輯，或按「儲存 PDF」下載編輯結果。', en: '💡 Text updated; keep editing or choose Save PDF to download the result.' },
+    textEdited: { zh: '💡 文字已套用；你現在可以直接看見修改結果，完成後按「儲存 PDF」下載。', en: '💡 Text applied; the change is now visible in the document. Choose Save PDF when finished.' },
     textDeleted: { zh: '💡 文字已移除；可按復原恢復，或按「儲存 PDF」下載。', en: '💡 Text removed; use Undo to restore it or Save PDF to download.' },
     areaHighlight: { zh: '💡 區域高亮已啟用；請在 PDF 上拖曳框選要突出的區域。', en: '💡 Area highlight is active; drag a box over the area to emphasize.' },
     color: { zh: '💡 請選擇下一個標註的顏色；選完即可繼續編輯。', en: '💡 Choose the color for the next annotation, then continue editing.' },
@@ -532,6 +538,78 @@
     qsa('.pdf-text-item.is-selected').forEach(function (node) { node.classList.remove('is-selected'); });
     if (element) element.classList.add('is-selected');
   }
+  function removeInlineTextEditor(editor) {
+    editor = editor || state.inlineTextEditor;
+    if (!editor) return;
+    if (editor.target) editor.target.classList.remove('is-inline-editing');
+    if (editor.host && editor.host.parentNode) editor.host.parentNode.removeChild(editor.host);
+    if (state.inlineTextEditor === editor) state.inlineTextEditor = null;
+    state.activeTextSelection = null;
+  }
+  function closeInlineTextEditor(commit) {
+    if (!state.inlineTextEditor) { state.activeTextSelection = null; return false; }
+    if (commit) return commitInlineTextEditor();
+    removeInlineTextEditor(state.inlineTextEditor);
+    return true;
+  }
+  function commitInlineTextEditor(options) {
+    var shouldRender = !(options && options.skipRender);
+    var editor = state.inlineTextEditor;
+    if (!editor || !editor.field) return false;
+    var value = String(editor.field.value || '').replace(/\r\n/g, '\n').slice(0, 500);
+    var original = String(editor.original || '');
+    var changed = value !== original;
+    if (changed) {
+      recordEditHistory();
+      if (editor.kind === 'annotation') {
+        if (!state.annotations[editor.pageNumber]) state.annotations[editor.pageNumber] = [];
+        state.annotations[editor.pageNumber].push({ type: 'text', x: editor.geometry.x, y: editor.geometry.y, text: value.trim(), color: editor.color || '#ff9e6b', size: editor.size || 18 });
+      } else {
+        upsertTextEdit(editor.pageNumber, editor.itemIndex, Object.assign({ original: original, replacement: value, deleted: !value.trim() }, editor.geometry));
+      }
+    }
+    removeInlineTextEditor(editor);
+    if (changed) {
+      if (shouldRender) renderMainPage();
+      renderNotesPanel(); actionGuide(editor.kind === 'annotation' ? 'textAdded' : 'textEdited');
+    } else actionGuide('textEditCanceled');
+    return changed;
+  }
+  function openInlineTextEditor(pageNumber, itemIndex, original, target, options) {
+    options = options || {};
+    closeInlineTextEditor(false);
+    var frame = options.frame || (target && target.closest ? target.closest('.pdf-page-frame, .pdf-continuous-page') : null);
+    if (!frame) return false;
+    var geometry = options.geometry || textTargetGeometry(target);
+    var left = options.left == null ? (parseFloat(target && target.style.left) || geometry.x * frame.clientWidth) : Number(options.left);
+    var top = options.top == null ? (parseFloat(target && target.style.top) || geometry.y * frame.clientHeight) : Number(options.top);
+    var sourceWidth = options.width == null ? (parseFloat(target && target.style.width) || geometry.w * frame.clientWidth) : Number(options.width);
+    var editorWidth = Math.max(190, Math.min(330, sourceWidth < 150 ? 260 : sourceWidth + 24, Math.max(190, frame.clientWidth - 16)));
+    var editorHeight = 94;
+    left = Math.max(4, Math.min(Math.max(4, frame.clientWidth - editorWidth - 4), left));
+    top = Math.max(4, Math.min(Math.max(4, frame.clientHeight - editorHeight - 4), top));
+    var host = document.createElement('div'); host.className = 'pdf-inline-text-editor'; host.style.left = left + 'px'; host.style.top = top + 'px'; host.style.width = editorWidth + 'px';
+    host.setAttribute('role', 'dialog'); host.setAttribute('aria-label', IS_EN ? 'Inline PDF text editor' : 'PDF 內嵌文字編輯器');
+    var label = document.createElement('div'); label.className = 'pdf-inline-text-editor-label'; label.textContent = IS_EN ? (options.kind === 'annotation' ? 'Insert text here' : 'Edit this text') : (options.kind === 'annotation' ? '在這裡插入文字' : '直接編輯這段文字');
+    var field = document.createElement('textarea'); field.className = 'pdf-inline-text-editor-field'; field.rows = 1; field.maxLength = 500; field.value = String(original || ''); field.setAttribute('aria-label', IS_EN ? 'Text content' : '文字內容'); field.setAttribute('autocomplete', 'off'); field.setAttribute('autocapitalize', 'sentences'); field.setAttribute('spellcheck', 'false');
+    var actions = document.createElement('div'); actions.className = 'pdf-inline-text-editor-actions';
+    var cancel = document.createElement('button'); cancel.type = 'button'; cancel.className = 'pdf-inline-text-editor-cancel'; cancel.textContent = IS_EN ? 'Cancel' : '取消'; cancel.setAttribute('aria-label', IS_EN ? 'Cancel text edit' : '取消文字編輯');
+    var apply = document.createElement('button'); apply.type = 'button'; apply.className = 'pdf-inline-text-editor-apply'; apply.textContent = IS_EN ? 'Apply' : '套用'; apply.setAttribute('aria-label', IS_EN ? 'Apply text edit' : '套用文字編輯');
+    actions.appendChild(cancel); actions.appendChild(apply); host.appendChild(label); host.appendChild(field); host.appendChild(actions); frame.appendChild(host);
+    var editor = { kind: options.kind || 'pdf', pageNumber: Number(pageNumber), itemIndex: Number(itemIndex), original: String(original || ''), target: target, frame: frame, host: host, field: field, geometry: geometry, color: options.color, size: options.size };
+    state.inlineTextEditor = editor;
+    if (target) target.classList.add('is-inline-editing');
+    cancel.addEventListener('click', function (event) { event.preventDefault(); event.stopPropagation(); removeInlineTextEditor(editor); actionGuide('textEditCanceled'); });
+    apply.addEventListener('click', function (event) { event.preventDefault(); event.stopPropagation(); commitInlineTextEditor(); });
+    field.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') { event.preventDefault(); removeInlineTextEditor(editor); actionGuide('textEditCanceled'); }
+      else if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) { event.preventDefault(); commitInlineTextEditor(); }
+    });
+    field.addEventListener('pointerdown', function (event) { event.stopPropagation(); });
+    window.setTimeout(function () { try { field.focus({ preventScroll: true }); field.select(); } catch (_) { field.focus(); } }, 0);
+    actionGuide('textEditReady');
+    return true;
+  }
   function handlePdfTextItemClick(event, pageNumber, itemIndex, original, element) {
     event.preventDefault(); event.stopPropagation();
     var value = getTextItemValue(pageNumber, itemIndex, original);
@@ -542,12 +620,7 @@
       recordEditHistory(); upsertTextEdit(pageNumber, itemIndex, Object.assign({ original: String(original || ''), replacement: value, deleted: true }, textTargetGeometry(element)));
       renderMainPage(); renderNotesPanel(); actionGuide('textDeleted'); return;
     }
-    if (action === 'text-edit' || action === 'edit') {
-      var promptValue = window.prompt(IS_EN ? 'Edit this PDF text. Leave blank to remove this text item.' : '編輯這段 PDF 文字；留白會移除這段文字。', value);
-      if (promptValue === null) return;
-      recordEditHistory(); upsertTextEdit(pageNumber, itemIndex, Object.assign({ original: String(original || ''), replacement: promptValue.slice(0, 500), deleted: !promptValue.trim() }, textTargetGeometry(element)));
-      state.activeTextSelection = null; renderMainPage(); renderNotesPanel(); actionGuide('textEdited');
-    }
+    if (action === 'text-edit' || action === 'edit') openInlineTextEditor(pageNumber, itemIndex, value, element, { kind: 'pdf' });
   }
   async function renderPdfTextLayer(page, viewport, pageFrame, pageNumber, renderToken) {
     if (!page || !pageFrame || !state.editorMode) return;
@@ -795,6 +868,7 @@
 
   var mainRenderToken = 0;
   async function renderMainPage() {
+    if (state.inlineTextEditor) commitInlineTextEditor({ skipRender: true });
     if (!state.pdf) { if (state.file && (state.documentText || (state.documentKind === 'image' && state.documentImageDataUrl))) renderDocumentPreview(); return; }
     var renderToken = ++mainRenderToken;
     if (isMobileReader()) {
@@ -900,13 +974,9 @@
       preventCanvasGesture(event);
       var startPoint = pointFrom(event.clientX, event.clientY);
       if (state.tool === 'text') {
-        var textValue = window.prompt(IS_EN ? 'Enter text to place on the PDF:' : '輸入要放在 PDF 上的文字：', IS_EN ? 'Text note' : '文字註記');
-        if (textValue && textValue.trim()) {
-          recordEditHistory();
-          if (!state.annotations[pageNumber]) state.annotations[pageNumber] = [];
-          state.annotations[pageNumber].push({ type: 'text', x: startPoint.x, y: startPoint.y, text: textValue.trim().slice(0, 500), color: $('annotation-color') ? $('annotation-color').value : '#ff9e6b', size: Number(($('annotation-width') || {}).value) * 3 + 12 });
-          renderAnnotationLayer(canvas, pageNumber); renderNotesPanel(); actionGuide('textAdded');
-        }
+        var frame = canvas.closest ? canvas.closest('.pdf-page-frame, .pdf-continuous-page') : null;
+        var geometry = { x: startPoint.x, y: startPoint.y, w: .38, h: .08 };
+        openInlineTextEditor(pageNumber, -1, '', null, { kind: 'annotation', frame: frame, geometry: geometry, left: startPoint.x * (frame ? frame.clientWidth : canvas.clientWidth), top: startPoint.y * (frame ? frame.clientHeight : canvas.clientHeight), width: .38 * (frame ? frame.clientWidth : canvas.clientWidth), color: $('annotation-color') ? $('annotation-color').value : '#ff9e6b', size: Number(($('annotation-width') || {}).value) * 3 + 12 });
         return;
       }
       if (start) return;
@@ -1446,6 +1516,7 @@
   async function loadDocument(file) {
     if (!isSupportedDocument(file)) { setStatus(IS_EN ? 'Choose a supported document format.' : '請選擇支援的文件格式。', 'error'); return; }
     if (getDocumentKind(file) === 'pdf') return loadPdf(file);
+    closeInlineTextEditor(false);
     setStatus(IS_EN ? 'Reading the document locally…' : '正在本機讀取文件…', 'loading'); setProgress(4); setEmptyState(false); resetDocumentState(file);
     try {
       var parsed = await parseDocumentFile(file, state.documentKind); state.documentText = String(parsed.text || '').slice(0, 120000); state.documentImageDataUrl = parsed.imageDataUrl || ''; state.documentImageWidth = Number(parsed.imageWidth) || 0; state.documentImageHeight = Number(parsed.imageHeight) || 0; state.documentImageMime = parsed.imageMime || file.type || ''; state.pageOrder = [1]; state.pageTexts = { 1: state.documentText }; state.textReady = Boolean(state.documentText); state.currentPage = 1; setEmptyState(false); syncToolCapabilities(); syncMobilePageControls(); var fileName = $('pdf-file-name'); if (fileName) fileName.textContent = file.name; var fileMeta = $('pdf-file-meta'); if (fileMeta) fileMeta.textContent = (IS_EN ? 'Local ' + state.documentKind.toUpperCase() + ' document · ' : '本機 ' + state.documentKind.toUpperCase() + ' 文件 · ') + formatBytes(file.size); var readerStatus = $('pdf-reader-status'); if (readerStatus) readerStatus.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + (IS_EN ? 'Document ready' : '文件就緒'); setStatus(messages.ready, 'success'); if (!state.documentText && state.documentKind !== 'image') setStatus(messages.noText, 'error'); renderDocumentThumbnail(); renderDocumentPreview(); renderNotesPanel(); $('pdf-page-count-badge').textContent = IS_EN ? '1 document' : '1 份文件'; setProgress(100); try { var detail = { file: state.file.name, pages: 1, kind: state.documentKind }; window.dispatchEvent(new CustomEvent('gugopro:document-loaded', { detail: detail })); window.dispatchEvent(new CustomEvent('gugopro:document-text-extracted', { detail: getSnapshot() })); window.dispatchEvent(new CustomEvent('gugopro:pdf-loaded', { detail: detail })); } catch (_) {}
@@ -1461,6 +1532,7 @@
 
   async function loadPdf(file) {
     if (!isPdf(file)) { setStatus(messages.choosePdf, 'error'); return; }
+    closeInlineTextEditor(false);
     setStatus(messages.loading, 'loading'); setProgress(3); setEmptyState(false);
     mainRenderToken += 1; state.file = file; state.pdf = null; state.documentKind = 'pdf'; state.bookmarks = []; state.documentText = ''; state.documentImageDataUrl = ''; state.documentImageWidth = 0; state.documentImageHeight = 0; state.documentImageMime = ''; state.pageTexts = {}; state.textReady = false; state.pageRotations = {}; state.selectedPages.clear(); state.annotations = {}; state.textEdits = {}; state.activeTextSelection = null; state.activeEditorAction = 'edit'; state.editorMode = false; state.mobileSubdock = ''; state.annotationImages = {}; state.signatures = {}; state.currentPage = 1; resetEditHistory();
     try {
@@ -1522,18 +1594,16 @@
     var text = safePdfText(value).replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim();
     var width = Math.max(1, Number(maxWidth) || 1);
     var size = Math.max(4, Math.min(32, Number(preferredSize) || 10));
-    if (!font || !text) return { text: text, size: size };
-    var measured = font.widthOfTextAtSize(text, size);
-    if (measured <= width) return { text: text, size: size };
-    var fittedSize = Math.max(4, Math.min(size, size * width / Math.max(1, measured)));
-    if (font.widthOfTextAtSize(text, fittedSize) <= width) return { text: text, size: fittedSize };
-    var fitted = '';
-    for (var index = 0; index < text.length; index += 1) {
-      var next = fitted + text[index];
-      if (font.widthOfTextAtSize(next, fittedSize) > width) break;
-      fitted = next;
-    }
-    return { text: fitted.replace(/\s+$/, ''), size: fittedSize };
+    if (!font || !text) return { lines: text ? [text] : [], size: size, width: width };
+    var words = text.split(' '); var longestWordWidth = words.reduce(function (max, word) { return Math.max(max, font.widthOfTextAtSize(word, size)); }, 0); var fittedSize = longestWordWidth > width ? Math.max(4, size * width / longestWordWidth) : size;
+    var lines = []; var current = '';
+    words.forEach(function (word) {
+      var candidate = current ? current + ' ' + word : word;
+      if (current && font.widthOfTextAtSize(candidate, fittedSize) > width) { lines.push(current); current = word; }
+      else current = candidate;
+    });
+    if (current) lines.push(current);
+    return { lines: lines, size: fittedSize, width: width };
   }
   async function applyTextEdits(outputInfo) {
     var editsByPage = state.textEdits || {};
@@ -1552,8 +1622,11 @@
         if (!edit.deleted && font && String(edit.replacement || '').trim()) {
           var size = Math.max(6, Math.min(32, Number(edit.fontSize) || editHeight * .72));
           var fitted = fitPdfText(font, edit.replacement, Math.max(4, editWidth - 4), size);
-          if (fitted.text) {
-            try { page.drawText(fitted.text, { x: x + 2, y: y + Math.max(2, editHeight - fitted.size - 2), size: fitted.size, font: font, color: PDFLib.rgb(.08, .12, .17) }); } catch (_) {}
+          if (fitted.lines && fitted.lines.length) {
+            var lineHeight = Math.max(fitted.size * 1.2, editHeight * .92); var renderHeight = Math.min(height - yTop, Math.max(editHeight, fitted.lines.length * lineHeight + 4));
+            var maxLineWidth = fitted.lines.reduce(function (max, line) { return Math.max(max, font.widthOfTextAtSize(line, fitted.size)); }, 0); var renderWidth = Math.min(width - x, Math.max(editWidth, maxLineWidth + 4));
+            page.drawRectangle({ x: x, y: Math.max(0, height - yTop - renderHeight), width: Math.max(8, renderWidth), height: Math.max(10, renderHeight), color: PDFLib.rgb(1, 1, 1), opacity: 1 });
+            fitted.lines.forEach(function (line, lineIndex) { try { page.drawText(line, { x: x + 2, y: Math.max(2, height - yTop - 2 - fitted.size - lineIndex * lineHeight), size: fitted.size, font: font, color: PDFLib.rgb(.08, .12, .17) }); } catch (_) {} });
           }
         }
       });
@@ -2082,6 +2155,7 @@
   }
 
   function closePdf() {
+    closeInlineTextEditor(false);
     thumbnailRenderToken += 1;
     mainRenderToken += 1;
     state.file = null;
@@ -2287,6 +2361,7 @@
   }
   function setEditorMode(enabled) {
     if (enabled && !state.pdf) { explainUnavailable('pdf'); return false; }
+    if (!enabled && state.inlineTextEditor) closeInlineTextEditor(true);
     state.editorMode = Boolean(enabled && state.pdf);
     state.activeEditorAction = 'text-edit';
     state.activeTextSelection = null;
@@ -2297,6 +2372,7 @@
   }
   function activateEditorAction(action) {
     if (!state.pdf) { explainUnavailable('pdf'); return; }
+    if (state.inlineTextEditor) closeInlineTextEditor(true);
     state.activeEditorAction = action || 'text-edit';
     state.activeTextSelection = null;
     if (action === 'save') { exportPdf(state.pageOrder, safeName(state.file.name) + '-edited.pdf'); return; }
@@ -2327,7 +2403,7 @@
     $('pdf-mobile-bookmark')?.addEventListener('click', toggleCurrentBookmark);
     $('pdf-mobile-undo')?.addEventListener('click', function () { if (undoEdit()) actionGuide('undo'); });
     $('pdf-mobile-redo')?.addEventListener('click', function () { if (redoEdit()) actionGuide('redo'); });
-    $('pdf-mobile-save')?.addEventListener('click', function () { if (!state.file) { explainUnavailable('document'); return; } if (state.pdf) exportPdf(state.pageOrder, safeName(state.file.name) + '-edited.pdf'); else openToolbarPopoverById('pdf-universal-convert-popover'); });
+    $('pdf-mobile-save')?.addEventListener('click', function () { if (!state.file) { explainUnavailable('document'); return; } if (state.inlineTextEditor) closeInlineTextEditor(true); if (state.pdf) exportPdf(state.pageOrder, safeName(state.file.name) + '-edited.pdf'); else openToolbarPopoverById('pdf-universal-convert-popover'); });
   }
   function bindEditorControls() {
     bindMobileReaderTopbar();
@@ -3066,7 +3142,7 @@
     addFileInputListeners(); bindPopovers(); bindToolbar(); bindAi(); bindSidebar(); bindHistoryShortcuts(); bindUnavailableControlGuard(); initSignaturePad(); initAi(); setEmptyState(true); syncMobileLauncherCategory('all'); syncMobilePageControls(); syncHistoryButtons(); syncToolCapabilities(); renderNotesPanel();
     $('pdf-page-input').value = '1'; $('pdf-total-pages').textContent = '0';
     syncVisualViewportHeight();
-    window.addEventListener('resize', function () { syncVisualViewportHeight(); syncToolCapabilities(); syncMobilePageControls(); syncMobileActionDock(); syncEditorDock(); if (state.pdf && state.fitMode !== 'manual') renderMainPage(); });
+    window.addEventListener('resize', function () { syncVisualViewportHeight(); syncToolCapabilities(); syncMobilePageControls(); syncMobileActionDock(); syncEditorDock(); if (state.pdf && state.fitMode !== 'manual' && !state.inlineTextEditor) renderMainPage(); });
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', function () { syncVisualViewportHeight(); syncToolCapabilities(); syncMobilePageControls(); syncMobileActionDock(); syncEditorDock(); }, { passive: true });
       window.visualViewport.addEventListener('scroll', syncVisualViewportHeight, { passive: true });
