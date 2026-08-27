@@ -5357,10 +5357,11 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             }
         }
     }
-    function restartRecognition(session) {
+    function restartRecognition(session, options = {}) {
         if (!session || session.finalized || session.stopRequested || activeSession?.id !== session.id || session.restartTimer) return;
+        const silentRollover = options.silent === true;
         session.restartAttempts = (session.restartAttempts || 0) + 1;
-        window.GugoSetSpeechComposerState?.('reconnecting', session.role);
+        if (!silentRollover) window.GugoSetSpeechComposerState?.('reconnecting', session.role);
         if (session.mode === 'smart' && session.restartAttempts > 3) {
             abortSession(session, '❌ 語音服務暫時無法使用，請檢查網路或稍後再試。');
             return;
@@ -5379,8 +5380,8 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         if (!session || session.finalized) return;
         if (explicitStop || session.stopRequested) { finalizeSession(session); return; }
         if (session.mode === 'hold' || session.mode === 'tap' || (session.mode === 'smart' && !session.latestTranscript)) {
-            window.GugoSetSpeechComposerState?.('reconnecting', session.role);
-            restartRecognition(session);
+            if (session.mode !== 'smart' || !session.latestTranscript) window.GugoSetSpeechComposerState?.('recording', session.role);
+            restartRecognition(session, { silent: true });
             return;
         }
         beginSmartCountdown(session);
@@ -5408,7 +5409,8 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         session.startPending = true;
         session.state = 'recording';
         window.GugoSetSpeechComposerState?.('recording', session.role);
-        session.startTimer = setTimeout(() => {
+        const startupTimeoutMs = session.mode === 'tap' ? 0 : 10000;
+        if (startupTimeoutMs > 0) session.startTimer = setTimeout(() => {
             session.startTimer = null;
             if (session.finalized || activeSession?.id !== session.id || !session.startPending) return;
             native.stopRecognition().catch(() => {});
@@ -5418,7 +5420,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 return;
             }
             abortSession(session, '❌ 語音服務啟動逾時，請檢查網路、麥克風權限或稍後重試。');
-        }, session.mode === 'hold' ? 10000 : 10000);
+        }, startupTimeoutMs);
         native.startRecognition({
             language: session.speechLocale,
             partialResults: true,
@@ -5442,7 +5444,18 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                     abortSession(session, '❌ 麥克風權限未開啟，請到 Android 設定允許麥克風後再試。');
                     return;
                 }
+                const silenceError = /no speech input|speech.?timeout|no.?match|timeout/.test(detail);
+                if (silenceError && session.mode === 'smart' && session.latestTranscript) {
+                    beginSmartCountdown(session);
+                    return;
+                }
+                if (silenceError) {
+                    window.GugoSetSpeechComposerState?.('recording', session.role);
+                    restartRecognition(session, { silent: true });
+                    return;
+                }
                 if (session.mode === 'hold' || session.mode === 'tap') {
+                    window.GugoSetSpeechComposerState?.('reconnecting', session.role);
                     restartRecognition(session);
                     return;
                 }
