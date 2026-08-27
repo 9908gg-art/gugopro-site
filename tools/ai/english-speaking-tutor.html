@@ -1464,6 +1464,8 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
     .capsule-speech-mode-description { display: block; margin-top: 7px; color: var(--text-dim); font-size: .72rem; line-height: 1.4; }
     .speech-silence-setting { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; color: var(--text-dim); font-size: .72rem; }
     .speech-silence-setting input { width: 76px; min-height: 32px; padding: 4px 7px; color: var(--text-main); background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.18); border-radius: 8px; }
+    .speech-start-cue-setting { display: flex; align-items: center; gap: 8px; margin-top: 8px; color: var(--text-dim); font-size: .72rem; }
+    .speech-start-cue-setting input { width: 17px; height: 17px; accent-color: #ffd54f; }
     .pronunciation-retry.retry-recording { background: rgba(239,68,68,.24); border-color: rgba(252,165,165,.62); color: #ffe4e6; }
 
 @media (max-width: 640px) {
@@ -5173,19 +5175,6 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
 
     function setRetryBusy(messageId, busy) {
         retryButtonsFor(messageId).forEach(button => {
-            button.disabled = Boolean(busy);
-            button.dataset.busy = busy ? '1' : '0';
-            button.setAttribute('aria-busy', busy ? 'true' : 'false');
-        });
-    }
-
-    function retryButtonsFor(messageId) {
-        const key = String(messageId || '');
-        return [...document.querySelectorAll('.pronunciation-retry')].filter(button => String(button.dataset.messageId || '') === key);
-    }
-
-    function setRetryBusy(messageId, busy) {
-        retryButtonsFor(messageId).forEach(button => {
             button.disabled = false;
             button.dataset.busy = busy ? '1' : '0';
             button.setAttribute('aria-busy', busy ? 'true' : 'false');
@@ -5194,6 +5183,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             button.classList.toggle('retry-recording', Boolean(busy));
         });
     }
+    window.GugoSetRetryBusy = setRetryBusy;
 
     function updateMessageScore(messageId, score) {
         const root = document.querySelector(`[data-id="${String(messageId || '').replace(/"/g, '')}"]`);
@@ -5209,15 +5199,16 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
     let activeSession = null;
     let sessionCounter = 0;
     window.GugoSpeechSessionChallengeId = '';
-    function setDualRecording(role, active) {
-        document.querySelectorAll('.dual-speech-button').forEach(button => button.classList.toggle('recording', active && button.id === (role === 'learning' ? 'btn-mic' : 'btn-mic-my')));
-        if (typeof setRecordingVisual === 'function') setRecordingVisual(Boolean(active && role === 'learning'));
+    function setDualRecording(role, active, control = null) {
+        const activeButton = control || document.getElementById(role === 'learning' ? 'btn-mic' : 'btn-mic-my');
+        document.querySelectorAll('.dual-speech-button, .pronunciation-retry').forEach(button => button.classList.toggle('recording', Boolean(active && button === activeButton)));
+        if (typeof setRecordingVisual === 'function') setRecordingVisual(Boolean(active && role === 'learning' && !control));
         if (typeof isRecording !== 'undefined') isRecording = Boolean(active);
         window.GugoSpeechSessionActive = Boolean(active);
         if (active && typeof window.GugoSetSpeechComposerState === 'function') window.GugoSetSpeechComposerState('recording', role);
     }
-    function setDualStarting(role) {
-        document.querySelectorAll('.dual-speech-button').forEach(button => button.classList.remove('recording'));
+    function setDualStarting(role, control = null) {
+        document.querySelectorAll('.dual-speech-button, .pronunciation-retry').forEach(button => button.classList.remove('recording'));
         if (typeof setRecordingVisual === 'function') setRecordingVisual(false);
         if (typeof isRecording !== 'undefined') isRecording = false;
         window.GugoSpeechSessionActive = true;
@@ -5285,14 +5276,18 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         session.startPending = false;
         session.state = 'recording';
         session.restartAttempts = 0;
-        setDualRecording(session.role, true);
+        if (!session.startCuePlayed) {
+            window.GugoPlaySpeechStartCue?.();
+            session.startCuePlayed = true;
+        }
+        setDualRecording(session.role, true, session.challengeButton);
     }
     function updateSpeechInput(session, transcript, metadata = {}) {
         if (!session || session.finalized) return;
         if (session.silenceTimer) { clearTimeout(session.silenceTimer); session.silenceTimer = null; }
         clearSmartCountdown(session);
         session.state = 'recording';
-        setDualRecording(session.role, true);
+        setDualRecording(session.role, true, session.challengeButton);
         window.GugoSetSpeechComposerState?.('recording', session.role);
         const clean = normalize(transcript);
         if (session.segmentedSession && session.mode === 'tap') {
@@ -5334,7 +5329,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         session.stopRequested = true;
         session.state = 'aborted';
         clearSpeechTimers(session);
-        setDualRecording(session.role, false);
+        setDualRecording(session.role, false, session.challengeButton);
         if (activeSession?.id === session.id) activeSession = null;
         window.GugoClearSpeechControl?.();
         if (String(window.GugoSpeechSessionChallengeId || '') === String(session.challengeMessageId || '')) window.GugoSpeechSessionChallengeId = '';
@@ -5352,7 +5347,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         session.stopRequested = true;
         session.state = 'finalized';
         clearSpeechTimers(session);
-        setDualRecording(session.role, false);
+        setDualRecording(session.role, false, session.challengeButton);
         if (activeSession?.id === session.id) activeSession = null;
         window.GugoClearSpeechControl?.();
         if (String(window.GugoSpeechSessionChallengeId || '') === String(session.challengeMessageId || '')) window.GugoSpeechSessionChallengeId = '';
@@ -5590,6 +5585,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             challengeMessageId,
             challengeButton: challengeButton || null,
             challengeTarget: normalize(challengeTarget),
+            startCuePlayed: false,
             latestTranscript: '',
             confidence: null,
             restartAttempts: 0,
@@ -5607,136 +5603,20 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         };
         activeSession = session;
         window.GugoSpeechSessionChallengeId = String(challengeMessageId || '');
-        setDualRecording(role, true);
+        setDualRecording(role, true, challengeButton);
         const native = window.GugoProNativeSpeech?.isNativeSpeechAvailable?.() ? window.GugoProNativeSpeech : null;
         if (native) startNativeRecognition(session);
         else startWebRecognition(session);
         return true;
     }
     window.GugoStartDualSpeech = startSession;
-
     function getMessageTarget(messageId) {
         const root = document.querySelector(`[data-id="${String(messageId || '').replace(/"/g, '')}"]`);
         const learning = root?.querySelector('.msg-learning');
         return { root, text: normalize(learning?.dataset?.rawText || learning?.textContent || '') };
     }
-
-    function bind() {
+    function bindDualSpeechSession() {
         updateComposerLanguageUI();
-        ['my-lang', 'target-lang'].forEach(id => document.getElementById(id)?.addEventListener('change', updateComposerLanguageUI));
-        const chat = document.getElementById('chat-container');
-        if (chat && chat.dataset.nativeCalloutGuardBound !== '1') {
-            chat.dataset.nativeCalloutGuardBound = '1';
-            chat.addEventListener('contextmenu', event => event.preventDefault(), true);
-        }
-        const learningButton = document.getElementById('btn-mic');
-        if (learningButton && learningButton.dataset.dualSttBound !== '1') {
-            learningButton.dataset.dualSttBound = '1';
-            learningButton.onclick = event => { event.preventDefault(); startSession('learning'); };
-        }
-        const motherButton = document.getElementById('btn-mic-my');
-        if (motherButton && motherButton.dataset.dualSttBound !== '1') {
-            motherButton.dataset.dualSttBound = '1';
-            motherButton.onclick = event => { event.preventDefault(); startSession('mother'); };
-        }
-    let retryPointerId = null;
-    let retryPointerButton = null;
-    let retrySuppressClickUntil = 0;
-    function retrySessionMatches(messageId) {
-        return Boolean(activeSession && !activeSession.finalized && String(activeSession.challengeMessageId || '') === String(messageId || ''));
-    }
-    function stopRetrySession(button, event) {
-        const messageId = String(button?.dataset?.messageId || '');
-        if (!messageId || !retrySessionMatches(messageId)) return false;
-        event?.preventDefault?.();
-        event?.stopPropagation?.();
-        window.GugoSetSpeechComposerState?.('stopping', 'learning', '正在整理重新挑戰語音…');
-        stopActiveSession();
-        return true;
-    }
-    function launchPronunciationRetry(button) {
-        if (!button || button.disabled) return false;
-        const messageId = String(button.dataset.messageId || '');
-        if (button.dataset.busy === '1') return stopRetrySession(button);
-        const target = getMessageTarget(messageId);
-        if (!messageId || !target.text) {
-            setRetryBusy(messageId, false);
-            return false;
-        }
-        setRetryBusy(messageId, true);
-        let attempts = 0;
-        const launch = () => {
-            if (attempts >= 12) {
-                setRetryBusy(messageId, false);
-                return;
-            }
-            if (activeSession && !activeSession.finalized) {
-                if (attempts === 0) stopActiveSession();
-                attempts += 1;
-                setTimeout(launch, 180);
-                return;
-            }
-            const beforeCounter = sessionCounter;
-            startSession('learning', messageId, target.text, button);
-            const started = sessionCounter !== beforeCounter
-                && activeSession
-                && !activeSession.finalized
-                && String(activeSession.challengeMessageId || '') === messageId;
-            if (!started) {
-                attempts += 1;
-                setTimeout(launch, 180);
-            }
-        };
-        launch();
-        return true;
-    }
-    window.GugoHandlePronunciationRetry = launchPronunciationRetry;
-
-    function retryPointerIdFromEvent(event) {
-        return event?.pointerId ?? event?.changedTouches?.[0]?.identifier ?? null;
-    }
-    function retryButtonFromEvent(event) {
-        return event?.target?.closest?.('.pronunciation-retry') || retryPointerButton;
-    }
-    function handleRetryPointerDown(event) {
-        const retry = retryButtonFromEvent(event);
-        if (!retry || (window.GugoGetSpeechMode?.() || window.GugoSpeechMode) !== 'hold') return;
-        event.preventDefault?.();
-        event.stopPropagation?.();
-        if (retryPointerId !== null || retryPointerButton || activeSession) return;
-        retryPointerId = retryPointerIdFromEvent(event);
-        retryPointerButton = retry;
-        try { retry.setPointerCapture?.(retryPointerId); } catch (_) {}
-        launchPronunciationRetry(retry);
-    }
-    function handleRetryPointerRelease(event) {
-        if ((window.GugoGetSpeechMode?.() || window.GugoSpeechMode) !== 'hold') return;
-        const retry = retryButtonFromEvent(event);
-        const pointerId = retryPointerIdFromEvent(event);
-        if (!retryPointerButton || (retryPointerId !== null && pointerId !== null && String(pointerId) !== String(retryPointerId))) return;
-        event.preventDefault?.();
-        event.stopPropagation?.();
-        retrySuppressClickUntil = Date.now() + 350;
-        retryPointerId = null;
-        retryPointerButton = null;
-        stopRetrySession(retry, event);
-    }
-    document.addEventListener('pointerdown', handleRetryPointerDown, true);
-    document.addEventListener('pointerup', handleRetryPointerRelease, true);
-    document.addEventListener('pointercancel', handleRetryPointerRelease, true);
-    document.addEventListener('lostpointercapture', handleRetryPointerRelease, true);
-    document.addEventListener('touchstart', event => { if (!window.PointerEvent) handleRetryPointerDown(event); }, true);
-    document.addEventListener('touchend', event => { if (!window.PointerEvent) handleRetryPointerRelease(event); }, true);
-    document.addEventListener('touchcancel', event => { if (!window.PointerEvent) handleRetryPointerRelease(event); }, true);
-    document.addEventListener('click', event => {
-        const retry = event.target.closest?.('.pronunciation-retry');
-        if (!retry) return;
-        event.preventDefault();
-        event.stopPropagation();
-        event.stopImmediatePropagation();
-        if ((window.GugoGetSpeechMode?.() || window.GugoSpeechMode) === 'hold' && Date.now() < retrySuppressClickUntil) return;
-        launchPronunciationRetry(retry);
-    }, true);
         try {
             if (typeof switchRoom === 'function' && !window.__gugoDualSwitchWrapped) {
                 const original = switchRoom;
@@ -5746,8 +5626,8 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         } catch (_) {}
         setTimeout(updateComposerLanguageUI, 0);
     }
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind, { once: true });
-    else bind();
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindDualSpeechSession, { once: true });
+    else bindDualSpeechSession();
 })();
 </script>
 
@@ -5951,6 +5831,42 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
     };
     window.GugoGetSmartSilenceMs = () => getSmartSilenceSeconds() * 1000;
     window.GugoSetSmartSilenceSeconds = setSmartSilenceSeconds;
+    const START_CUE_KEY = 'gugopro_ai_tutor_speech_start_cue_v1';
+    function getSpeechStartCueEnabled() {
+        return localStorage.getItem(START_CUE_KEY) === '1';
+    }
+    function setSpeechStartCueEnabled(value) {
+        const enabled = value === true || value === '1' || value === 'true';
+        localStorage.setItem(START_CUE_KEY, enabled ? '1' : '0');
+        return enabled;
+    }
+    function playSpeechStartCue() {
+        if (!getSpeechStartCueEnabled()) return false;
+        try {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContextClass) return false;
+            const context = window.__gugoSpeechStartCueContext || (window.__gugoSpeechStartCueContext = new AudioContextClass());
+            const now = context.currentTime;
+            const oscillator = context.createOscillator();
+            const gain = context.createGain();
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(880, now);
+            gain.gain.setValueAtTime(0.0001, now);
+            gain.gain.exponentialRampToValueAtTime(0.08, now + 0.008);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+            oscillator.connect(gain);
+            gain.connect(context.destination);
+            oscillator.start(now);
+            oscillator.stop(now + 0.1);
+            if (context.state === 'suspended') context.resume().catch(() => {});
+            return true;
+        } catch (_) {
+            return false;
+        }
+    }
+    window.GugoGetSpeechStartCueEnabled = getSpeechStartCueEnabled;
+    window.GugoSetSpeechStartCueEnabled = setSpeechStartCueEnabled;
+    window.GugoPlaySpeechStartCue = playSpeechStartCue;
 
     function syncCapsuleLayout() {
         const dock = document.querySelector('.capsule-dock');
@@ -6053,6 +5969,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         const input = document.getElementById('user-text');
         const learning = document.getElementById('btn-mic');
         const mother = document.getElementById('btn-mic-my');
+        const activeControl = window.GugoSpeechActiveControl || null;
         if (status) {
             status.dataset.state = safeState;
             status.textContent = stateText;
@@ -6066,7 +5983,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         if (dock) dock.classList.toggle('has-speech-status', safeState !== 'idle');
         [learning, mother].forEach(button => {
             if (!button) return;
-            const active = safeState !== 'idle' && safeState !== 'error' && ((role === 'learning' && button === learning) || (role === 'mother' && button === mother));
+            const active = safeState !== 'idle' && safeState !== 'error' && (activeControl ? button === activeControl : ((role === 'learning' && button === learning) || (role === 'mother' && button === mother)));
             button.classList.toggle('speech-state-active', active);
             button.setAttribute('aria-pressed', active ? 'true' : 'false');
             button.setAttribute('aria-busy', active ? 'true' : 'false');
@@ -6113,7 +6030,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         const section = document.createElement('div');
         section.id = 'speech-mode-section';
         section.className = 'menu-section capsule-speech-mode-section';
-        section.innerHTML = `<div class="menu-title">🎙️ 語音操作</div><select id="speech-mode-select" class="lang-select" aria-label="選擇語音操作方式"><option value="hold">按住按鈕，放開送出</option><option value="tap">點擊開始，再點擊停止</option><option value="smart">自動等待停頓後送出</option></select><label class="speech-silence-setting" for="speech-silence-seconds">自動等待秒數 <input id="speech-silence-seconds" type="number" min="1" max="15" step="0.5" inputmode="decimal" aria-label="自動等待秒數"></label><small id="speech-mode-description" class="capsule-speech-mode-description"></small>`;
+        section.innerHTML = `<div class="menu-title">🎙️ 語音操作</div><select id="speech-mode-select" class="lang-select" aria-label="選擇語音操作方式"><option value="hold">按住按鈕，放開送出</option><option value="tap">點擊開始，再點擊停止</option><option value="smart">自動等待停頓後送出</option></select><label class="speech-silence-setting" for="speech-silence-seconds">自動等待秒數 <input id="speech-silence-seconds" type="number" min="1" max="15" step="0.5" inputmode="decimal" aria-label="自動等待秒數"></label><label class="speech-start-cue-setting" for="speech-start-cue-enabled"><input id="speech-start-cue-enabled" type="checkbox" aria-label="啟動語音提示音">按下語音時播放啟動提示音</label><small id="speech-mode-description" class="capsule-speech-mode-description"></small>`;
         const anchor = sideMenu.querySelector('.model-settings-section');
         if (anchor) anchor.before(section); else sideMenu.appendChild(section);
         const select = section.querySelector('#speech-mode-select');
@@ -6122,6 +6039,11 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         if (silenceInput) {
             silenceInput.value = String(getSmartSilenceSeconds());
             silenceInput.addEventListener('change', () => setSmartSilenceSeconds(silenceInput.value));
+        }
+        const startCue = section.querySelector('#speech-start-cue-enabled');
+        if (startCue) {
+            startCue.checked = window.GugoGetSpeechStartCueEnabled?.() === true;
+            startCue.addEventListener('change', () => window.GugoSetSpeechStartCueEnabled?.(startCue.checked));
         }
         updateModeDescription(select.value);
         select.addEventListener('change', () => { setMode(select.value); updateCapsuleLabels(); });
@@ -6275,6 +6197,77 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         return state;
     }
     window.GugoBindSpeechControl = bindSpeechControl;
+    let retryPointerId = null;
+    let retryPointerButton = null;
+    function retryTargetFromButton(button) {
+        const messageId = String(button?.dataset?.messageId || '');
+        const root = document.querySelector(`[data-id="${messageId.replace(/"/g, '')}"]`);
+        const learning = root?.querySelector?.('.msg-learning');
+        return { messageId, text: String(learning?.dataset?.rawText || learning?.textContent || '').trim() };
+    }
+    function prepareRetryButton(button) {
+        if (!button) return null;
+        const target = retryTargetFromButton(button);
+        if (!target.messageId || !target.text) return null;
+        return bindSpeechControl(button, 'learning', {
+            challengeMessageId: target.messageId,
+            challengeTarget: target.text,
+            beforeStart: () => window.GugoSetRetryBusy?.(target.messageId, true),
+            startFailed: () => window.GugoSetRetryBusy?.(target.messageId, false)
+        });
+    }
+    function launchPronunciationRetry(button) {
+        const state = prepareRetryButton(button);
+        if (!state) return false;
+        if (window.GugoSpeechActiveControl === button && window.GugoSpeechSessionActive) return stopSpeechControl(button);
+        if (window.GugoSpeechSessionActive) return false;
+        return startSpeechControl(button);
+    }
+    window.GugoHandlePronunciationRetry = launchPronunciationRetry;
+    function retryButtonFromEvent(event) {
+        return event?.target?.closest?.('.pronunciation-retry') || retryPointerButton;
+    }
+    function handleRetryPointerDown(event) {
+        const retry = retryButtonFromEvent(event);
+        if (!retry) return;
+        const state = prepareRetryButton(retry);
+        if (!state || speechMode() !== 'hold') return;
+        if (retryPointerButton || window.GugoSpeechSessionActive) return;
+        event.preventDefault?.();
+        event.stopPropagation?.();
+        retryPointerId = event?.pointerId ?? event?.changedTouches?.[0]?.identifier ?? null;
+        retryPointerButton = retry;
+        state.pointerDown?.(event);
+    }
+    function handleRetryPointerRelease(event) {
+        if (!retryPointerButton) return;
+        const pointerId = event?.pointerId ?? event?.changedTouches?.[0]?.identifier ?? null;
+        if (retryPointerId !== null && pointerId !== null && String(pointerId) !== String(retryPointerId)) return;
+        const retry = retryPointerButton;
+        retryPointerId = null;
+        retryPointerButton = null;
+        stopSpeechControl(retry, event);
+    }
+    document.addEventListener('pointerdown', handleRetryPointerDown, true);
+    document.addEventListener('pointerup', handleRetryPointerRelease, true);
+    document.addEventListener('pointercancel', handleRetryPointerRelease, true);
+    document.addEventListener('lostpointercapture', handleRetryPointerRelease, true);
+    document.addEventListener('touchstart', event => { if (!window.PointerEvent) handleRetryPointerDown(event); }, true);
+    document.addEventListener('touchend', handleRetryPointerRelease, true);
+    document.addEventListener('touchcancel', handleRetryPointerRelease, true);
+    document.addEventListener('click', event => {
+        const retry = event.target?.closest?.('.pronunciation-retry');
+        if (!retry) return;
+        const state = prepareRetryButton(retry);
+        if (state?.suppressNextClick && Date.now() <= Number(state.suppressClickUntil || 0)) {
+            state.suppressNextClick = false;
+            return;
+        }
+        event.preventDefault?.();
+        event.stopPropagation?.();
+        event.stopImmediatePropagation?.();
+        launchPronunciationRetry(retry);
+    }, true);
     function bindSpeechButton(button, role) { bindSpeechControl(button, role); }
     document.addEventListener('pointerup', stopHeldSpeech, true);
     document.addEventListener('pointercancel', stopHeldSpeech, true);
