@@ -18,8 +18,16 @@
       disabledKey: '',
       preferenceKey: '',
       elements: {},
-      quotaSource: 'quota.gugopro.com enabled chat models'
+      quotaSource: 'quota.gugopro.com enabled chat models',
+      i18n: null
     }, options || {});
+
+    function tx(key, fallback, values) {
+      let dictionary = {};
+      try { dictionary = typeof config.i18n === 'function' ? (config.i18n() || {}) : (config.i18n || {}); } catch (_) { dictionary = {}; }
+      let text = dictionary[key] ?? fallback;
+      return String(text).replace(/\{(\w+)\}/g, (_, name) => values && values[name] !== undefined ? String(values[name]) : `{${name}}`);
+    }
 
     const disabledKey = config.disabledKey || `${config.storagePrefix}_disabled_models_v1`;
     const preferenceKey = config.preferenceKey || `${config.storagePrefix}_model_preference_v1`;
@@ -164,7 +172,7 @@
     function getBusyLabel(apiName) {
       const state = busyStates.get(apiName);
       if (!state) return '';
-      return state.status === 'TIMEOUT' ? 'Busy · timeout' : `Busy · ${state.status}`;
+      return state.status === 'TIMEOUT' ? tx('busyTimeout', 'Busy · timeout') : tx('busyStatus', 'Busy · {status}', { status: state.status });
     }
 
     function appendText(parent, tag, className, text) {
@@ -176,7 +184,10 @@
     }
 
     function getModelOptionsSignature() {
+      let locale = '';
+      try { locale = typeof config.i18n === 'function' ? String(config.i18n()?.locale || '') : String(config.i18n?.locale || ''); } catch (_) { locale = ''; }
       return JSON.stringify({
+        locale,
         models: availableModels.map(model => [model.api_name, model.display_name, model.score, model.dailyQuota, model.rpmLimit, getModelUsageCount(model.api_name)]),
         disabled: [...disabledModels].sort(),
         preferred: getSavedPreference(),
@@ -193,7 +204,7 @@
       modelOptionsSignature = signature;
       container.replaceChildren();
       if (!availableModels.length) {
-        appendText(container, 'p', 'model-empty', 'No eligible free chat models loaded yet. Refresh to retry.');
+        appendText(container, 'p', 'model-empty', tx('modelEmpty', 'No eligible free chat models loaded yet. Refresh to retry.'));
         return;
       }
       availableModels.forEach(model => {
@@ -215,12 +226,12 @@
         const used = getModelUsageCount(model.api_name);
         const quota = Number(model.dailyQuota || 0);
         const rpm = Number(model.rpmLimit || 0);
-        appendText(body, 'div', 'model-option-quota', `RPD: ${quota} · RPM: ${rpm || '—'} · Used: ${used}`);
+        appendText(body, 'div', 'model-option-quota', `${tx('rpd', 'RPD')}: ${quota} · ${tx('rpm', 'RPM')}: ${rpm || '—'} · ${tx('used', 'Used')}: ${used}`);
         if (quota > 0) {
           const meter = root.document.createElement('div');
           meter.className = 'model-quota-bar';
           meter.setAttribute('role', 'progressbar');
-          meter.setAttribute('aria-label', `${model.display_name} daily quota usage`);
+          meter.setAttribute('aria-label', tx('quotaUsageAria', `${model.display_name} daily quota usage`, { name: model.display_name }));
           meter.setAttribute('aria-valuemin', '0');
           meter.setAttribute('aria-valuemax', String(quota));
           meter.setAttribute('aria-valuenow', String(Math.min(quota, Math.max(0, used))));
@@ -230,18 +241,18 @@
           meter.appendChild(fill);
           body.appendChild(meter);
         }
-        if (quota > 0 && used >= quota) appendText(body, 'div', 'model-busy-badge model-quota-exhausted', 'Quota exhausted today');
+        if (quota > 0 && used >= quota) appendText(body, 'div', 'model-busy-badge model-quota-exhausted', tx('quotaExhausted', 'Quota exhausted today'));
         const busy = getBusyLabel(model.api_name);
         if (busy) appendText(body, 'div', 'model-busy-badge', busy);
         option.appendChild(body);
         const control = root.document.createElement('label');
         control.className = 'model-option-control';
         const toggle = root.document.createElement('input');
-        toggle.type = 'checkbox'; toggle.className = 'model-toggle'; toggle.checked = enabled; toggle.setAttribute('role', 'switch'); toggle.setAttribute('aria-checked', String(enabled)); toggle.setAttribute('aria-label', `Enable ${model.display_name}`);
+        toggle.type = 'checkbox'; toggle.className = 'model-toggle'; toggle.checked = enabled; toggle.setAttribute('role', 'switch'); toggle.setAttribute('aria-checked', String(enabled)); toggle.setAttribute('aria-label', tx('enableModel', 'Enable {name}', { name: model.display_name }));
         toggle.addEventListener('click', event => event.stopPropagation());
         toggle.addEventListener('change', event => { event.stopPropagation(); setModelEnabled(model.api_name, toggle.checked); });
         control.appendChild(toggle);
-        appendText(control, 'span', 'model-toggle-label', enabled ? 'ON' : 'OFF');
+        appendText(control, 'span', 'model-toggle-label', enabled ? tx('on', 'ON') : tx('off', 'OFF'));
         option.appendChild(control);
         container.appendChild(option);
       });
@@ -257,7 +268,7 @@
     function renderCurrentModelStatus() {
       const status = el('modelCurrentStatus');
       if (!status) return;
-      status.textContent = currentModel ? `Current model: ${getModelDisplayName(currentModel)}${getBusyLabel(currentModel) ? ` · ${getBusyLabel(currentModel)}` : ''}` : 'Current model: not loaded';
+      status.textContent = currentModel ? tx('currentModel', 'Current model: {name}', { name: getModelDisplayName(currentModel) }) + (getBusyLabel(currentModel) ? ` · ${getBusyLabel(currentModel)}` : '') : tx('currentModelNone', 'Current model: not loaded');
     }
 
     function renderQuota(snapshot) {
@@ -275,12 +286,12 @@
       }
       const current = snapshot || tracker.getSnapshot();
       const limitEl = el('quotaLimit'); const usedEl = el('quotaUsed'); const statusEl = el('quotaStatus'); const resetEl = el('quotaReset');
-      if (limitEl) limitEl.textContent = current.dailyLimit === null ? 'Unavailable' : `${current.dailyLimit} requests`;
-      if (usedEl) usedEl.textContent = `${current.usedCount} used · ${current.remainingCount === null ? '—' : `${current.remainingCount} left`}`;
+      if (limitEl) limitEl.textContent = current.dailyLimit === null ? tx('unavailable', 'Unavailable') : `${current.dailyLimit} ${tx('requests', 'requests')}`;
+      if (usedEl) usedEl.textContent = `${current.usedCount} ${tx('used', 'used')} · ${current.remainingCount === null ? '—' : `${current.remainingCount} ${tx('left', 'left')}`}`;
       if (statusEl) {
         const exhausted = current.dailyLimit !== null && current.remainingCount !== null && current.remainingCount <= 0;
         statusEl.classList.toggle('exhausted', exhausted);
-        statusEl.textContent = exhausted ? 'Today’s shared free quota is exhausted.' : '';
+        statusEl.textContent = exhausted ? tx('quotaExhausted', 'Today’s shared free quota is exhausted.') : '';
       }
       if (resetEl) {
         try {
@@ -290,8 +301,8 @@
           const offsetMinutes = offsetMatch ? (offsetMatch[1] === '-' ? -1 : 1) * (Number(offsetMatch[2]) * 60 + Number(offsetMatch[3] || 0)) : -480;
           const nextMidnight = Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day) + 1) - offsetMinutes * 60 * 1000;
           const minutes = Math.ceil(Math.max(0, nextMidnight - Date.now()) / 60000);
-          resetEl.textContent = `Pacific reset in ${Math.floor(minutes / 60)}h ${minutes % 60}m`;
-        } catch (_) { resetEl.textContent = 'Reset countdown unavailable'; }
+          resetEl.textContent = tx('resetIn', 'Pacific reset in {h}h {m}m', { h: Math.floor(minutes / 60), m: minutes % 60 });
+        } catch (_) { resetEl.textContent = tx('resetUnavailable', 'Reset countdown unavailable'); }
       }
     }
 
@@ -306,7 +317,7 @@
       const model = getModelByName(apiName);
       if (!model || !isModelEnabled(apiName)) return;
       persistPreference(apiName); reconcileCurrentModel();
-      setModelSettingsStatus(`Selected ${model.display_name}; it is now first in the enabled queue.`, '');
+      setModelSettingsStatus(tx('selectedModel', 'Selected {name}; it is now first in the enabled queue.', { name: model.display_name }), '');
       renderModelOptions(); renderCurrentModelStatus();
     }
 
@@ -315,7 +326,7 @@
       if (enabled) disabledModels.delete(apiName); else disabledModels.add(apiName);
       persistDisabledModels(); reconcileCurrentModel();
       const count = getEnabledModels().length;
-      setModelSettingsStatus(count ? `${enabled ? 'Enabled' : 'Disabled'} ${getModelDisplayName(apiName)} · ${count} model(s) in queue.` : 'No model is enabled. Turn on at least one model.', count ? '' : 'error');
+      setModelSettingsStatus(count ? tx(enabled ? 'enabledModel' : 'disabledModel', `${enabled ? 'Enabled' : 'Disabled'} {name} · {count} model(s) in queue.`, { name: getModelDisplayName(apiName), count }) : tx('noModelEnabled', 'No model is enabled. Turn on at least one model.'), count ? '' : 'error');
       renderModelOptions(); renderCurrentModelStatus(); renderQuota();
     }
 
@@ -333,7 +344,7 @@
     async function fetchLatestModel({ silent = false, force = false } = {}) {
       if (catalogPromise) return catalogPromise;
       if (!force && availableModels.length && lastCatalogUpdatedAt && Date.now() - lastCatalogUpdatedAt.getTime() < CATALOG_TTL_MS) return availableModels.slice();
-      setModelSettingsStatus('Loading the dynamic free Gemini model catalog…', 'loading');
+      setModelSettingsStatus(tx('loadingCatalog', 'Loading the dynamic free Gemini model catalog…'), 'loading');
       catalogPromise = (async () => {
         try {
           const response = await fetchJsonWithTimeout(QUOTA_MODELS_URL);
@@ -345,12 +356,12 @@
           lastCatalogUpdatedAt = new Date();
           renderModelOptions(); renderCurrentModelStatus(); renderQuota();
           const time = lastCatalogUpdatedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-          setModelSettingsStatus(`Loaded ${availableModels.length} eligible free model(s) · ${getEnabledModels().length} enabled · updated ${time}.`, availableModels.length ? '' : 'error');
+          setModelSettingsStatus(tx('loadedCatalog', 'Loaded {total} eligible free model(s) · {enabled} enabled · updated {time}.', { total: availableModels.length, enabled: getEnabledModels().length, time }), availableModels.length ? '' : 'error');
           return availableModels;
         } catch (error) {
           availableModels = []; currentModel = null; currentModelIndex = 0;
           renderModelOptions(); renderCurrentModelStatus(); renderQuota();
-          setModelSettingsStatus('Model catalog is temporarily unavailable. Refresh to retry.', 'error');
+          setModelSettingsStatus(tx('catalogUnavailable', 'Model catalog is temporarily unavailable. Refresh to retry.'), 'error');
           if (!silent) console.warn('[GugoPro Unified AI] Model catalog error:', error);
           return [];
         } finally { catalogPromise = null; }
@@ -437,7 +448,7 @@
     function setModels(models) {
       availableModels = mergeModels(Array.isArray(models) ? models : []);
       reconcileCurrentModel(); renderModelOptions(); renderCurrentModelStatus(); renderQuota();
-      setModelSettingsStatus(`Loaded ${availableModels.length} model(s) for local test or preview.`, availableModels.length ? '' : 'error');
+      setModelSettingsStatus(tx('loadedTestCatalog', 'Loaded {total} model(s) for local test or preview.', { total: availableModels.length }), availableModels.length ? '' : 'error');
       return availableModels;
     }
 
