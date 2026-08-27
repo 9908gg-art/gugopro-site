@@ -569,15 +569,15 @@
 .message.tts-playing .btn-msg-stop i { animation: gugoTtsStopPulse 1.15s ease-in-out infinite; }
 @keyframes gugoTtsStopPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.16); } }
 
-/* Mobile message actions: keep controls vertical so they do not squeeze the message bubble. */
+/* Mobile message actions: keep AI controls vertical while user controls stay compact and horizontal. */
 @media (max-width: 640px) {
     .message-tutor .msg-learning { padding-right: 56px; }
     .message .msg-actions {
         top: 8px;
         right: 7px;
-        flex-direction: column;
+        flex-direction: row;
         align-items: center;
-        gap: 13px;
+        gap: 8px;
         opacity: .72;
     }
     .message .msg-actions .btn-msg-action {
@@ -590,10 +590,18 @@
         justify-content: center;
         padding: 3px;
     }
-    .message .msg-actions .btn-msg-delete { order: 1; }
-    .message .msg-actions .btn-msg-stop { order: 2; }
-    .message .msg-actions .btn-msg-action:not(.btn-msg-stop):not(.btn-msg-delete) { order: 3; }
+    .message-tutor .msg-actions {
+        flex-direction: column;
+        align-items: center;
+        gap: 13px;
+    }
+    .message-tutor .msg-actions .btn-msg-delete { order: 1; }
+    .message-tutor .msg-actions .btn-msg-stop { order: 2; }
+    .message-tutor .msg-actions .btn-msg-action:not(.btn-msg-stop):not(.btn-msg-delete) { order: 3; }
+    .message-user .msg-actions { flex-direction: row; gap: 8px; }
+    .message-user .msg-actions .btn-msg-action { order: initial !important; }
 }
+
 
         .correction-box {
             margin-top: 12px;
@@ -957,7 +965,7 @@
         .material-meta { color: var(--text-dim); font-size: 0.78rem; line-height: 1.45; margin-bottom: 10px; }
         .material-file-note { color: var(--text-dim); font-size: 0.75rem; line-height: 1.45; margin: 8px 0 12px; }
     
-                /* GugoPro Tutor Experience v2 */
+                        /* GugoPro Tutor Experience v2 */
         :root {
             --tutor-bubble: rgba(14, 165, 233, 0.11);
             --tutor-bubble-border: rgba(14, 165, 233, 0.30);
@@ -968,6 +976,7 @@
         .native-platform .app-brand-mark { display: inline-flex; }
         .native-platform .header-left { gap: 9px; }
         .native-platform .logo-text { display: block; font-size: 0.88rem; }
+        .message-user { background: linear-gradient(180deg, rgba(18, 94, 107, 0.98), rgba(6, 51, 64, 0.98)); border-color: rgba(45, 212, 191, 0.48); }
         .message-tutor { background: linear-gradient(180deg, rgba(27, 37, 59, 0.97), rgba(14, 28, 38, 0.97)); border-color: var(--tutor-bubble-border); }
         .message-tutor .correction-box { border-top-color: rgba(14, 165, 233, 0.26); }
         .msg-learning { user-select: text; -webkit-user-select: text; cursor: text; white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -1281,6 +1290,8 @@
 
 
 
+
+
 <style id="gugo-capsule-dock-style">
 /* GugoPro Gemini-style capsule composer */
 html, body { background: #0A0B10 !important; }
@@ -1349,6 +1360,7 @@ html, body { background: #0A0B10 !important; }
 .speech-composer-status[data-state="reconnecting"] { color: #8ecbff; }
 .speech-composer-status[data-state="stopping"] { color: #cbd5e1; }
 .speech-composer-status[data-state="error"] { color: #fda4af; }
+.speech-composer-hint { display: none; }
 .capsule-dock.has-speech-status #user-text { padding-top: 21px; }
 .capsule-composer-row button {
     -webkit-tap-highlight-color: transparent;
@@ -1438,7 +1450,9 @@ html, body { background: #0A0B10 !important; }
 
 @media (max-width: 640px) {
     .bottom-controls { padding-left: 8px; padding-right: 8px; }
-    .speech-composer-status { left: 10px; right: 86px; font-size: .68rem; }
+    .speech-composer-status { left: 10px; right: 86px; top: 7px; font-size: 1rem; line-height: 1.15; }
+    .speech-composer-hint { position: absolute; top: 32px; left: 10px; right: 86px; z-index: 2; overflow: hidden; color: rgba(226,233,244,.82); font-size: .74rem; font-weight: 600; line-height: 1.25; white-space: nowrap; text-overflow: ellipsis; pointer-events: none; }
+    .speech-composer-hint[data-visible="1"] { display: block; }
     .capsule-composer-row { gap: 4px; width: 100%; }
     .main-input-group.dual-stt-composer.capsule-dock { gap: 4px; padding: 5px 6px; border-radius: 26px !important; }
     .capsule-voice-button { flex-basis: 64px; width: 64px !important; min-width: 64px !important; height: 64px !important; min-height: 64px !important; }
@@ -1448,6 +1462,7 @@ html, body { background: #0A0B10 !important; }
     .capsule-actions { margin-left: auto; }
     .capsule-actions .btn-circle { flex-basis: 40px; width: 40px !important; min-width: 40px !important; height: 40px !important; min-height: 40px !important; }
     .capsule-dock #user-text { min-height: 36px !important; padding: 5px 2px; max-height: 92px; }
+    .capsule-dock.has-speech-status #user-text { padding-top: 51px; }
     .capsule-dock #user-text::placeholder { font-size: .78rem; }
     .btn-header-material { width: 36px; height: 36px; min-width: 36px; min-height: 36px; }
 }
@@ -1567,6 +1582,7 @@ html, body { background: #0A0B10 !important; }
                     </button>
                     <div class="main-input-group dual-stt-composer capsule-dock">
                         <div id="speech-composer-status" class="speech-composer-status" data-state="idle" aria-live="polite" aria-atomic="true"></div>
+                        <div id="speech-composer-hint" class="speech-composer-hint" data-state="idle" data-visible="0" aria-live="polite" aria-atomic="true"></div>
                         <textarea id="user-text" rows="1" maxlength="8000" placeholder="按住語音按鈕，錄音放開後送出；也可以直接打字" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" data-lpignore="true"></textarea>
                         <div class="capsule-actions" aria-label="發送">
                             <button id="btn-send" class="btn-circle btn-send" type="button" aria-label="發送"><i class="fa-solid fa-paper-plane"></i></button>
@@ -2485,8 +2501,6 @@ html, body { background: #0A0B10 !important; }
                     <li><i class="fa-solid fa-book-bookmark"></i> 設定中可建立多本生詞字典，為每個教室選擇教材與字典學習清單</li>
                     <li><i class="fa-solid fa-comments"></i> 可指定旅遊、點餐、商務等主題，或依教材進行問答、複習與測驗</li>
                     <li><i class="fa-solid fa-language"></i> 頂部語言選單可設定對話語言；右上角選單可管理教室、教材與模型</li>
-                    <li><i class="fa-solid fa-microphone-lines"></i> 語音可選按住放開送出、點擊開始再點擊停止，或自動等待停頓（預設 6 秒，可在設定調整）</li>
-                    <li><i class="fa-solid fa-microphone-lines"></i> 語音可選按住發話、點擊開關，或智慧靜音偵測（延長 2.5 秒緩衝）</li>
                 </ul>
             `;
             container.prepend(card);
@@ -3948,6 +3962,7 @@ html, body { background: #0A0B10 !important; }
 
 
 
+
 // GugoPro Tutor Experience v2
 (() => {
     if (window.__gugoTutorExperienceV2) return;
@@ -4147,8 +4162,16 @@ html, body { background: #0A0B10 !important; }
     }
 
     function renderStudyPlanSummary() {
+        const room = typeof getActiveRoom === 'function' ? getActiveRoom() : null;
         const old = document.getElementById('study-plan-summary');
         if (old) old.remove();
+        if (!room) return;
+        ensureRoomLearningState(room);
+        const selectedMaterials = (room.materials || []).filter(item => room.studyPlan.materialIds.includes(item.id));
+        const selectedDictionaries = getStudyDictionaries(room);
+        const summary = document.createElement('div'); summary.id = 'study-plan-summary'; summary.className = 'study-plan-summary';
+        summary.textContent = `學習清單：${selectedMaterials.length} 份教材 · ${selectedDictionaries.length} 本字典 · ${room.studyPlan.mode}`;
+        document.querySelector('.input-wrapper')?.prepend(summary);
     }
 
     function renderStudyPlanModal() {
@@ -4200,26 +4223,30 @@ html, body { background: #0A0B10 !important; }
     }
 
     async function lookupWordMeaning(term, sourceLang, targetLang) {
-        const target = String(targetLang || document.getElementById('my-lang')?.value || 'zh-TW');
-        const termText = String(term || '').trim();
-        const body = new URLSearchParams([
-            ['client', 'gtx'], ['sl', 'auto'], ['tl', target],
-            ['dt', 't'], ['dt', 'bd'], ['q', termText]
-        ]).toString();
-        const response = await fetch('https://translate.googleapis.com/translate_a/single', {
-            method: 'POST',
-            headers: { Accept: 'application/json', 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-            body
-        });
-        if (!response.ok) throw new Error(`Google Translate HTTP ${response.status}`);
-        const data = await response.json();
-        const translation = Array.isArray(data?.[0]) ? data[0].map(part => part?.[0]).filter(Boolean).join('') : '';
-        const details = Array.isArray(data?.[1]) ? data[1].map(group => {
-            const partOfSpeech = String(group?.[0] || '').trim();
-            const words = Array.isArray(group?.[1]) ? group[1].map(item => String(item?.[0] || '').trim()).filter(Boolean).slice(0, 8) : [];
-            return partOfSpeech && words.length ? `${partOfSpeech}：${words.join('、')}` : '';
-        }).filter(Boolean).join('\n') : '';
-        return [translation, details].filter(Boolean).join('\n');
+        const source = baseLang(sourceLang); const target = baseLang(targetLang);
+        const local = { hello: '你好；問候語', goodbye: '再見', thank: '感謝', thanks: '謝謝', practice: '練習', language: '語言', teacher: '老師', student: '學生', こんにちは: '你好；日文問候語', ありがとう: '謝謝', 你好: 'hello；問候語' };
+        if (source === 'en' && local[term.toLowerCase()]) return local[term.toLowerCase()];
+        if (source === target && local[term.toLowerCase()]) return local[term.toLowerCase()];
+        try {
+            if (source === 'en') {
+                const dictionaryResponse = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(term)}`);
+                if (dictionaryResponse.ok) {
+                    const data = await dictionaryResponse.json();
+                    const definitions = (data[0]?.meanings || []).flatMap(meaning => (meaning.definitions || []).slice(0, 2).map(item => item.definition)).filter(Boolean);
+                    if (definitions.length && target === 'en') return definitions.join('\n');
+                    const translationResponse = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(term)}&langpair=en|${encodeURIComponent(target)}`);
+                    const translation = translationResponse.ok ? await translationResponse.json() : null;
+                    if (definitions.length && translation?.responseData?.translatedText) return `${translation.responseData.translatedText}\n\n英文定義：${definitions.join('\n')}`;
+                    if (definitions.length) return definitions.join('\n');
+                }
+            }
+            const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(term)}&langpair=${encodeURIComponent(source)}|${encodeURIComponent(target)}`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data?.responseData?.translatedText) return data.responseData.translatedText;
+            }
+        } catch (error) { console.warn('單字查詢失敗:', error); }
+        return '目前查不到離線或公開字典結果；仍可先加入生詞本，稍後補充意思。';
     }
 
     function openWordLookup(term, messageLang = 'en-US') {
@@ -4271,6 +4298,15 @@ html, body { background: #0A0B10 !important; }
         sendMessage = async function(...args) { try { return await legacySendMessage(...args); } finally { autoGrowComposer(); } };
     }
 
+    document.addEventListener('pointerup', event => {
+        const learning = event.target?.closest?.('.msg-learning'); if (!learning) return;
+        window.setTimeout(() => {
+            const selection = window.getSelection?.()?.toString().trim();
+            if (selection && selection.length <= MAX_TERM) {
+                const message = learning.closest('.message'); openWordLookup(selection, message?.dataset.speechLang || 'en-US');
+            }
+        }, 40);
+    }, { passive: true });
 
     function autoGrowComposer() {
         const input = document.getElementById('user-text'); if (!input || input.tagName !== 'TEXTAREA') return;
@@ -5744,6 +5780,8 @@ html, body { background: #0A0B10 !important; }
 
 
 
+
+
 <script id="gugo-capsule-dock-modes-js">
 // GugoPro Gemini-style Capsule Dock + three speech modes
 (() => {
@@ -5854,6 +5892,19 @@ html, body { background: #0A0B10 !important; }
         if (input && !window.GugoSpeechSessionActive && !hasActiveStatus && document.activeElement !== input && !String(input.value || '').trim()) input.placeholder = speechInputGuide();
         return { targetLocale, motherLocale };
     }
+    function speechOperationGuide(state, role) {
+        const who = role === 'learning' ? '學習語言' : '母語';
+        const mode = getMode();
+        if (state === 'recording' && mode === 'hold') return '按住語音按鈕，放開後送出';
+        if (state === 'recording' && mode === 'tap') return `再次點擊${who}語音按鈕，停止並送出`;
+        if (state === 'recording' && mode === 'smart') return `停頓 ${getSmartSilenceSeconds()} 秒後自動送出，也可點擊${who}語音按鈕提前結束`;
+        if (state === 'waiting') return `倒數期間可點擊${who}語音按鈕立即送出`;
+        if (state === 'reconnecting') return '語音服務重新連線中，請繼續說話';
+        if (state === 'stopping') return '正在整理語音，請稍候…';
+        if (state === 'sending') return '訊息送出中，請稍候…';
+        if (state === 'error') return '請依上方原因處理後再試，或直接打字';
+        return '';
+    }
     const SPEECH_STATUS_TEXT = {
         idle: '',
         starting: '正在錄音…',
@@ -5868,6 +5919,7 @@ html, body { background: #0A0B10 !important; }
         const safeState = Object.prototype.hasOwnProperty.call(SPEECH_STATUS_TEXT, state) ? state : 'idle';
         const stateText = customText || (safeState === 'waiting' ? `語音暫停，${getSmartSilenceSeconds()} 秒內繼續說…` : SPEECH_STATUS_TEXT[safeState]);
         const status = document.getElementById('speech-composer-status');
+        const hint = document.getElementById('speech-composer-hint');
         const dock = document.querySelector('.capsule-dock');
         const input = document.getElementById('user-text');
         const learning = document.getElementById('btn-mic');
@@ -5875,6 +5927,12 @@ html, body { background: #0A0B10 !important; }
         if (status) {
             status.dataset.state = safeState;
             status.textContent = stateText;
+        }
+        if (hint) {
+            const hintText = speechOperationGuide(safeState, role);
+            hint.dataset.state = safeState;
+            hint.dataset.visible = hintText ? '1' : '0';
+            hint.textContent = hintText;
         }
         if (dock) dock.classList.toggle('has-speech-status', safeState !== 'idle');
         [learning, mother].forEach(button => {
