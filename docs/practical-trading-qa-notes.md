@@ -67,3 +67,23 @@
 頁面顯示實際工具統計 19，互動工具卡從 01 到 19 均有對應入口；新增加的 17／18／19 實戰工具卡分別連到實戰計畫與部位檢查器、交易日誌分析器與交易前規則檢查器。新增 `#practical-trading` section 顯示「第 13 類實戰交易知識樹」、三個新工具與研究用途邊界；主頁 DOM 內容可讀，無假數量或不存在的相對路徑。
 
 補充截圖觀察：`practical-trade-plan-390.png` 的交易方向、回到第 13 類、章節膠囊、帳戶資金與表單卡片在手機寬度內清楚顯示；`trade-rule-checklist-390.png` 的八項勾選卡以單欄排列，checkbox、標題與說明間距足夠，未見文字重疊或橫向溢出。兩頁均維持一致的深色 Academy 樣式與高對比輸入區。
+
+## Production：第 13 類文章 smoke test
+
+正式 URL：`https://gugopro.com/articles/investment/17-practical-trading.html?qa=d57ea9e`。頁面 title、Category 13 標記、九個章節錨點 `#market`／`#plan`／`#orders`／`#risk`／`#strategies`／`#backtest`／`#manage`／`#review`／`#roadmap` 均存在；文章內有交易期望值、交易日誌、交易前規則、部位檢查、MDD 工具與既有技術／回測文章內鏈。DOM 寬度檢查無水平溢出。resource 關鍵字檢查只命中 Google Fonts，沒有行情 API、quote、market 或 WebSocket 請求；此字型資源不屬於市場資料請求。
+
+## Production：實戰計畫與部位檢查器 smoke test
+
+正式 URL：`https://gugopro.com/academy/tools/practical-trade-plan.html?qa=d57ea9e`。同一組多頭 3R 成本案例在 production 正確顯示最大整數部位 188 單位、每單位風險 NT$5.29、成本後 R:R 2.77R、預算使用率 99.50%，狀態「計算完成」。將 Stop 改為 105 後，正式頁面正確顯示多頭價格關係錯誤、單位「—」與未計算表格；恢復合法輸入後可重算。DOM 無水平溢出，外部 resource 關鍵字 API／quote／market／WebSocket 為空。
+
+## Production：交易日誌分析器 smoke test
+
+正式 URL：`https://gugopro.com/academy/tools/trade-journal-analyzer.html?qa=d57ea9e`。序列 `3, -1, 0.5, -1, 2`、1R=NT$1,000 在正式版正確顯示 5 筆、勝率 60.00%、期望值 +0.70R、Profit Factor 2.75、最大連續虧損 1 筆、最大 R 回撤 −1.50R、累積 +3.50R。使用 `3R` 等後綴重新輸入仍得到 +0.70R／+3.50R；插入 `not-a-number` 後結果與表格清空並顯示解析錯誤。DOM 無水平溢出，外部 resource 關鍵字 API／quote／market／WebSocket 為空。
+
+## Production：交易前規則檢查器 smoke test
+
+正式 URL：`https://gugopro.com/academy/tools/trade-rule-checklist.html?qa=d57ea9e`。部分勾選三項後正式版顯示 3/8、完成比例 38%、狀態「部分完成」；勾選全部八項後顯示 8/8、100%、狀態「完整」；按「全部取消」後回到 0/8、待補 8、狀態「待補充」。DOM 無水平溢出，resource 關鍵字 API／quote／market／WebSocket 為空；頁面仍明確聲明完成度不代表交易品質、勝率或未來獲利。
+
+## Production：Academy 主頁 smoke test
+
+正式 URL：`https://gugopro.com/academy/index.html?qa=d57ea9e#practical-trading`。頁面 title 正常；`#tools` 實際找到 19 個工具卡；`#practical-trading` section 存在並顯示第 13 類總覽與 4 個入口；工具清單最後三張卡為 `17 / 實戰`、`18 / 實戰`、`19 / 實戰`。三個新工具連結與第 13 類文章相對路徑均可取得，DOM 無水平溢出；外部 resource 關鍵字僅命中 Google Fonts，無行情 API／quote／market／WebSocket 請求。
