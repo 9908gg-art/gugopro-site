@@ -119,7 +119,7 @@ button:disabled { cursor: not-allowed; opacity: .48; }
 .pdf-continuous-page .pdf-annotation-canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; touch-action: none; }
 .pdf-toolbar-touch-label { position: fixed; z-index: 160; max-width: min(180px, calc(100vw - 20px)); padding: 6px 9px; border: 1px solid rgba(98,203,255,.7); border-radius: 7px; color: #071018; background: var(--pdf-cyan); box-shadow: 0 7px 18px rgba(0,0,0,.35); font-size: .72rem; font-weight: 900; line-height: 1.2; text-align: center; pointer-events: none; opacity: 0; transform: translate(-50%, -2px); transition: opacity 120ms ease, transform 120ms ease; }
 .pdf-toolbar-touch-label.is-visible { opacity: 1; transform: translate(-50%, 0); }
-.pdf-annotation-canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
+.pdf-annotation-canvas { position: absolute; inset: 0; z-index: 2; display: block; width: 100%; height: 100%; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; cursor: crosshair; }
 .pdf-page-frame.tool-select .pdf-annotation-canvas { pointer-events: none; cursor: default; }
 .pdf-signature-layer { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
 .pdf-signature-layer .pdf-signature-stamp { pointer-events: auto; }
@@ -244,8 +244,9 @@ button:disabled { cursor: not-allowed; opacity: .48; }
 .pdf-key-input { width: 100%; padding: 10px 11px; border: 1px solid var(--pdf-line); border-radius: 9px; outline: none; color: #fff; background: #08101b; font-size: .8rem; }
 .pdf-key-input:focus { border-color: var(--pdf-cyan); box-shadow: 0 0 0 3px rgba(98,203,255,.1); }
 
-.pdf-toast { position: fixed; right: 20px; bottom: 20px; z-index: 120; max-width: min(360px, calc(100vw - 40px)); padding: 11px 13px; border: 1px solid var(--pdf-line-strong); border-radius: 10px; color: #def5ff; background: #102032; box-shadow: var(--pdf-shadow); font-size: .75rem; transform: translateY(20px); opacity: 0; pointer-events: none; transition: opacity 180ms ease, transform 180ms ease; }
+.pdf-toast { position: fixed; right: 20px; bottom: 20px; z-index: 220; max-width: min(360px, calc(100vw - 40px)); padding: 11px 13px; border: 1px solid var(--pdf-line-strong); border-radius: 10px; color: #def5ff; background: #102032; box-shadow: var(--pdf-shadow); font-size: .75rem; transform: translateY(20px); opacity: 0; pointer-events: none; transition: opacity 180ms ease, transform 180ms ease; }
 .pdf-toast.is-visible { transform: translateY(0); opacity: 1; }
+.pdf-toast.is-action-guide { border-color: rgba(98,203,255,.72); color: #06131d; background: linear-gradient(135deg, #b6efff, #62cbff); font-weight: 900; line-height: 1.45; }
 
 @media (max-width: 1180px) {
   .pdf-workspace { grid-template-columns: minmax(205px, 240px) minmax(0, 1fr) minmax(275px, 315px); }
@@ -776,6 +777,8 @@ body.pdf-night-reading .pdf-continuous-page .pdf-signature-stamp { filter: inver
   .pdf-toolbar-popover.is-mobile-sheet .pdf-popover-file-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
   .pdf-toolbar-popover.is-mobile-sheet .pdf-popover-file-row .pdf-action-button { min-height: 44px; flex: initial; }
   .pdf-toolbar-popover.is-mobile-sheet .pdf-helper { padding: 2px 2px max(4px, env(safe-area-inset-bottom)); font-size: .7rem; line-height: 1.55; }
+  .pdf-toast { left: 12px; right: 12px; bottom: max(12px, env(safe-area-inset-bottom)); max-width: none; text-align: center; }
+  .pdf-toast.is-action-guide { top: max(68px, calc(env(safe-area-inset-top) + 68px)); bottom: auto; }
 }
 
 @keyframes pdf-sheet-in {

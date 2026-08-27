@@ -92,22 +92,24 @@
     syncHistoryButtons();
   }
   function undoEdit() {
-    if (!state.pdf) return toast(messages.choosePdf);
-    if (!editHistory.undo.length) return toast(IS_EN ? 'There is no edit to undo.' : '目前沒有可復原的編輯。');
+    if (!state.pdf) { toast(messages.choosePdf); return false; }
+    if (!editHistory.undo.length) { toast(IS_EN ? 'There is no edit to undo.' : '目前沒有可復原的編輯。'); return false; }
     var current = captureEditState();
     var previous = editHistory.undo.pop();
     editHistory.redo.push(current);
     restoreEditState(previous);
     toast(IS_EN ? 'Undid the last edit' : '已復原上一步編輯');
+    return true;
   }
   function redoEdit() {
-    if (!state.pdf) return toast(messages.choosePdf);
-    if (!editHistory.redo.length) return toast(IS_EN ? 'There is no edit to redo.' : '目前沒有可重做的編輯。');
+    if (!state.pdf) { toast(messages.choosePdf); return false; }
+    if (!editHistory.redo.length) { toast(IS_EN ? 'There is no edit to redo.' : '目前沒有可重做的編輯。'); return false; }
     var current = captureEditState();
     var next = editHistory.redo.pop();
     editHistory.undo.push(current);
     restoreEditState(next);
     toast(IS_EN ? 'Redid the last edit' : '已重做上一步編輯');
+    return true;
   }
 
   var PDF_WORKER = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -151,13 +153,76 @@
     if (bar) bar.style.width = Math.max(0, Math.min(100, Number(value) || 0)) + '%';
   }
 
-  function toast(value) {
+  function toast(value, options) {
     var node = $('pdf-toast');
     if (!node) return;
     node.textContent = value;
+    node.classList.toggle('is-action-guide', Boolean(options && options.guide));
     node.classList.add('is-visible');
     clearTimeout(toast.timer);
-    toast.timer = setTimeout(function () { node.classList.remove('is-visible'); }, 2600);
+    toast.timer = setTimeout(function () { node.classList.remove('is-visible'); node.classList.remove('is-action-guide'); }, options && options.guide ? 4400 : 2600);
+  }
+
+  var ACTION_GUIDES = {
+    open: { zh: '💡 請選擇要開啟的 PDF；檔案只會留在這個瀏覽器本機處理。', en: '💡 Choose a PDF to open; the file stays local in this browser.' },
+    undo: { zh: '💡 已復原上一步編輯；可繼續修改，或按重做恢復。', en: '💡 The last edit was undone; keep editing or use Redo to restore it.' },
+    redo: { zh: '💡 已重做上一步編輯；可繼續檢查文件。', en: '💡 The edit was restored; continue checking the document.' },
+    fullscreen: { zh: '💡 已切換全螢幕閱讀；按瀏覽器返回或全螢幕鍵即可離開。', en: '💡 Full-screen reading is active; use the browser back or full-screen control to leave.' },
+    export: { zh: '💡 正在準備匯出編輯版 PDF；完成後可在下載項目查看。', en: '💡 Preparing the edited PDF; check your downloads when it finishes.' },
+    close: { zh: '💡 PDF 已關閉；可重新選擇檔案開始新的工作。', en: '💡 The PDF is closed; choose another file to start a new task.' },
+    pagePrev: { zh: '💡 已回到上一頁；可繼續使用頁碼或左右箭頭瀏覽。', en: '💡 Moved to the previous page; use the page field or arrows to continue.' },
+    pageNext: { zh: '💡 已前往下一頁；可繼續使用頁碼或左右箭頭瀏覽。', en: '💡 Moved to the next page; use the page field or arrows to continue.' },
+    pageInput: { zh: '💡 已跳到指定頁；可直接在目前頁面閱讀或標註。', en: '💡 Jumped to the requested page; you can read or annotate it now.' },
+    zoomOut: { zh: '💡 PDF 已縮小；可用手指雙指縮放，或按放大恢復細節。', en: '💡 The PDF is zoomed out; pinch or use Zoom in to inspect detail.' },
+    zoomIn: { zh: '💡 PDF 已放大；可用單指拖曳閱讀目前區域。', en: '💡 The PDF is zoomed in; drag with one finger to read the current area.' },
+    fit: { zh: '💡 已套用新的檢視比例；需要細節時可切換手動或雙指放大。', en: '💡 The viewing scale was updated; use Manual or pinch to inspect detail.' },
+    pageFlow: { zh: '💡 已切換頁面排列方向；可在閱讀區滑動檢查頁面順序。', en: '💡 Page flow changed; scroll the reader to check the page order.' },
+    night: { zh: '💡 夜間閱讀已切換；PDF 內容會以較低刺激的色彩顯示。', en: '💡 Night reading was toggled; the PDF now uses a lower-glare presentation.' },
+    annotationPanel: { zh: '💡 標註工具已開啟：先選工具，再在 PDF 頁面拖曳或點擊。', en: '💡 Annotation tools are open: choose a tool, then drag or tap on the PDF.' },
+    select: { zh: '💡 已切回選取工具：可點擊頁面、選取或移動簽名。', en: '💡 Select mode is active: tap pages or select and move a signature.' },
+    highlight: { zh: '💡 已啟用螢光筆：請在 PDF 文字或區域上方拖曳劃記。', en: '💡 Highlighter is active: drag across PDF text or an area to mark it.' },
+    underline: { zh: '💡 已選取底線標註：請在 PDF 頁面上拖曳劃出重點線條。', en: '💡 Underline is active: drag across the PDF to mark a key line.' },
+    strike: { zh: '💡 已選取刪除線標註：請在 PDF 頁面上拖曳劃掉重點文字。', en: '💡 Strike-through is active: drag across text to mark it for removal.' },
+    draw: { zh: '💡 已啟用自由畫筆：請直接在 PDF 頁面上用手指或滑鼠繪製標註。', en: '💡 Freehand pen is active: draw directly on the PDF with a finger or mouse.' },
+    text: { zh: '💡 已啟用文字輸入：請在 PDF 任意位置點擊一下，即可輸入自訂文字。', en: '💡 Text mode is active: tap any PDF position to enter custom text.' },
+    annotationAdded: { zh: '💡 標註已加入本頁；可繼續劃記，或切回選取工具移動簽名。', en: '💡 The annotation was added; keep marking or switch to Select to move a signature.' },
+    textAdded: { zh: '💡 文字註記已加入本頁；可切回選取工具繼續整理。', en: '💡 The text note was added; switch to Select to keep organizing.' },
+    signature: { zh: '💡 請在簽名板用手指或滑鼠繪製；儲存後簽名會放在可視 PDF 中央。', en: '💡 Draw on the signature pad with a finger or mouse; the saved signature is placed at the visible PDF center.' },
+    signatureSaved: { zh: '💡 簽名已儲存到本機常用簽名庫；下次開啟會自動帶入。', en: '💡 The signature was saved locally; it will be available the next time you open the pad.' },
+    signatureCleared: { zh: '💡 簽名板已清除；請重新用手指或滑鼠繪製。', en: '💡 The signature pad was cleared; draw again with a finger or mouse.' },
+    signaturePlaced: { zh: '💡 簽名已放在目前可視 PDF 中央；可拖曳、縮放或雙擊旋轉。', en: '💡 The signature was placed at the visible PDF center; drag, resize, or double-click to rotate.' },
+    signatureClose: { zh: '💡 已關閉簽名板；要再次建立簽名，請從標註／簽名工具開啟。', en: '💡 The signature pad is closed; open Annotation / Sign to create one again.' },
+    signatureRotate: { zh: '💡 可繼續拖曳簽名移動；需要改變角度時再按左轉或右轉。', en: '💡 Drag the signature to move it; use Rotate left or right to change its angle.' },
+    signatureDelete: { zh: '💡 簽名已移除；若要重新加入，請按簽名並重新放置。', en: '💡 The signature was removed; choose Sign to place a new one.' },
+    pagesPanel: { zh: '💡 頁面組織模式：請在縮圖側欄勾選頁面後，再執行旋轉、刪除或提取。', en: '💡 Page organizer is open: select pages in Thumbnails, then rotate, delete, or extract.' },
+    deletePages: { zh: '💡 已刪除選取頁面（匯出時套用）；至少要保留一頁。', en: '💡 Selected pages were removed for export; at least one page must remain.' },
+    exportPages: { zh: '💡 正在提取選取頁面；完成後請查看下載項目。', en: '💡 Extracting the selected pages; check your downloads when it finishes.' },
+    split: { zh: '💡 請先輸入頁碼範圍，例如 1-3,5，再執行分割。', en: '💡 Enter a page range such as 1-3,5, then run Split.' },
+    insert: { zh: '💡 請選擇要插入的 PDF；頁面會加入目前文件。', en: '💡 Choose a PDF to insert; its pages will be added to the current document.' },
+    crop: { zh: '💡 請設定裁切邊界（pt）後套用；裁切會在匯出時生效。', en: '💡 Set the crop margin in points and apply it; cropping takes effect on export.' },
+    compress: { zh: '💡 正在準備壓縮 PDF；完成後請查看下載項目。', en: '💡 Preparing the compressed PDF; check your downloads when it finishes.' },
+    rotateLeft: { zh: '💡 頁面已左轉 90°；可繼續調整或匯出檢查結果。', en: '💡 The page was rotated left 90°; continue adjusting or export to check it.' },
+    rotateRight: { zh: '💡 頁面已右轉 90°；可繼續調整或匯出檢查結果。', en: '💡 The page was rotated right 90°; continue adjusting or export to check it.' },
+    rotate180: { zh: '💡 頁面已旋轉 180°；可繼續調整或匯出檢查結果。', en: '💡 The page was rotated 180°; continue adjusting or export to check it.' },
+    convertPanel: { zh: '💡 檔案保護與轉檔工具已開啟：先填欄位，再按需要的輸出或安全動作。', en: '💡 Conversion and security tools are open: fill the fields, then choose an output or security action.' },
+    png: { zh: '💡 正在輸出 PNG ZIP；完成後請查看下載項目。', en: '💡 Exporting a PNG ZIP; check your downloads when it finishes.' },
+    jpg: { zh: '💡 正在輸出 JPG ZIP；完成後請查看下載項目。', en: '💡 Exporting a JPG ZIP; check your downloads when it finishes.' },
+    imagesToPdf: { zh: '💡 正在將已加入的圖片合成 PDF；完成後請查看下載項目。', en: '💡 Combining the selected images into a PDF; check your downloads when it finishes.' },
+    merge: { zh: '💡 請先按「加入 PDF」選取多個檔案，再執行合併。', en: '💡 Use Add PDFs to choose files, then run Merge PDFs.' },
+    lock: { zh: '💡 請輸入至少 6 個字元的密碼，再套用並下載本機鎖定包。', en: '💡 Enter at least 6 characters, then apply and download the local lock package.' },
+    unlock: { zh: '💡 請選擇本機鎖定包檔案，系統會在瀏覽器內解密。', en: '💡 Choose a local lock package; it will be decrypted in this browser.' },
+    addPdfs: { zh: '💡 請選擇要加入的 PDF 檔案，可一次選取多個。', en: '💡 Choose the PDFs to add; you can select multiple files at once.' },
+    addImages: { zh: '💡 請選擇要轉成 PDF 的 PNG 或 JPG 圖片，可一次選取多個。', en: '💡 Choose PNG or JPG images to convert; you can select multiple files at once.' },
+    thumbnails: { zh: '💡 縮圖面板已開啟：點擊縮圖跳頁，勾選後可做頁面管理。', en: '💡 Thumbnails are open: tap a thumbnail to jump, or check pages for organization.' },
+    ai: { zh: '💡 AI 助手已開啟：可直接提問，或先切換到預設工具。', en: '💡 AI Assistant is open: ask a question or switch to Preset tools.' },
+    aiBack: { zh: '💡 已返回 PDF 閱讀畫面；可繼續閱讀或使用上方工具列。', en: '💡 Returned to the PDF; continue reading or use the toolbar.' },
+    sidebarTab: { zh: '💡 已切換側欄檢視；點擊縮圖可直接跳到該頁。', en: '💡 Sidebar view changed; tap a thumbnail to jump to that page.' }
+  };
+  function actionGuide(key) {
+    var copy = ACTION_GUIDES[key] || ACTION_GUIDES.annotationPanel;
+    var text = IS_EN ? copy.en : copy.zh;
+    toast(text, { guide: true });
+    setStatus(text.replace(/^💡\s*/, ''), 'success');
   }
 
   function downloadBlob(blob, name) {
@@ -611,33 +676,25 @@
   }
 
   function bindAnnotationCanvas(canvas, pageNumber) {
+    if (!canvas) return;
     var start = null;
+    var activePointerId = null;
     var context = canvas.getContext('2d');
     canvas.style.pointerEvents = state.tool === 'select' ? 'none' : 'auto';
+    canvas.style.touchAction = 'none';
+    canvas.style.webkitUserSelect = 'none';
+    canvas.style.userSelect = 'none';
     canvas.style.cursor = state.tool === 'select' ? 'default' : 'crosshair';
-    canvas.onpointerdown = function (event) {
-      if (state.tool === 'select') return;
-      event.preventDefault();
+
+    function pointFrom(clientX, clientY) {
       var rect = canvas.getBoundingClientRect();
-      var startPoint = { x: Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)), y: Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height)) };
-      if (state.tool === 'text') {
-        var textValue = window.prompt('輸入要放在 PDF 上的文字：', '文字註記');
-        if (textValue && textValue.trim()) { recordEditHistory(); if (!state.annotations[pageNumber]) state.annotations[pageNumber] = []; state.annotations[pageNumber].push({ type: 'text', x: startPoint.x, y: startPoint.y, text: textValue.trim().slice(0, 500), color: $('annotation-color') ? $('annotation-color').value : '#ff9e6b', size: Number(($('annotation-width') || {}).value) * 3 + 12 }); renderAnnotationLayer(canvas, pageNumber); renderNotesPanel(); toast('文字註記已加入本頁'); }
-        return;
-      }
-      start = { points: [startPoint], color: $('annotation-color') ? $('annotation-color').value : '#ff9e6b', type: state.tool, width: Number(($('annotation-width') || {}).value) || 5 };
-      canvas.setPointerCapture(event.pointerId);
-    };
-    canvas.onpointermove = function (event) {
-      if (!start) return;
-      var rect = canvas.getBoundingClientRect();
-      start.points.push({ x: Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)), y: Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height)) });
-      context.clearRect(0, 0, canvas.width, canvas.height);
-      var pixelRatio = canvas.width / Math.max(1, rect.width);
-      (state.annotations[pageNumber] || []).forEach(function (item) { drawPath(context, item, canvas.width, canvas.height, pixelRatio); });
-      drawPath(context, start, canvas.width, canvas.height, pixelRatio);
-    };
-    canvas.onpointerup = function () {
+      return { x: Math.max(0, Math.min(1, (clientX - rect.left) / Math.max(1, rect.width))), y: Math.max(0, Math.min(1, (clientY - rect.top) / Math.max(1, rect.height))) };
+    }
+    function preventCanvasGesture(event) {
+      if (event && event.cancelable) event.preventDefault();
+      if (event && event.stopPropagation) event.stopPropagation();
+    }
+    function finishStroke() {
       if (!start) return;
       if (start.points.length > 1) {
         recordEditHistory();
@@ -645,9 +702,76 @@
         state.annotations[pageNumber].push(start);
         renderAnnotationLayer(canvas, pageNumber);
         renderNotesPanel();
-        toast('標註已加入本頁');
+        actionGuide('annotationAdded');
       }
       start = null;
+      activePointerId = null;
+    }
+    function beginStroke(event) {
+      if (state.tool === 'select') return;
+      preventCanvasGesture(event);
+      var startPoint = pointFrom(event.clientX, event.clientY);
+      if (state.tool === 'text') {
+        var textValue = window.prompt(IS_EN ? 'Enter text to place on the PDF:' : '輸入要放在 PDF 上的文字：', IS_EN ? 'Text note' : '文字註記');
+        if (textValue && textValue.trim()) {
+          recordEditHistory();
+          if (!state.annotations[pageNumber]) state.annotations[pageNumber] = [];
+          state.annotations[pageNumber].push({ type: 'text', x: startPoint.x, y: startPoint.y, text: textValue.trim().slice(0, 500), color: $('annotation-color') ? $('annotation-color').value : '#ff9e6b', size: Number(($('annotation-width') || {}).value) * 3 + 12 });
+          renderAnnotationLayer(canvas, pageNumber); renderNotesPanel(); actionGuide('textAdded');
+        }
+        return;
+      }
+      if (start) return;
+      start = { points: [startPoint], color: $('annotation-color') ? $('annotation-color').value : '#ff9e6b', type: state.tool, width: Number(($('annotation-width') || {}).value) || 5 };
+      activePointerId = event.pointerId == null ? null : event.pointerId;
+      if (activePointerId != null && canvas.setPointerCapture) { try { canvas.setPointerCapture(activePointerId); } catch (_) {} }
+    }
+    function moveStroke(event) {
+      if (!start || (activePointerId != null && event.pointerId !== activePointerId)) return;
+      preventCanvasGesture(event);
+      var point = pointFrom(event.clientX, event.clientY);
+      start.points.push(point);
+      var rect = canvas.getBoundingClientRect();
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      var pixelRatio = canvas.width / Math.max(1, rect.width);
+      (state.annotations[pageNumber] || []).forEach(function (item) { drawPath(context, item, canvas.width, canvas.height, pixelRatio); });
+      drawPath(context, start, canvas.width, canvas.height, pixelRatio);
+    }
+    function endStroke(event) {
+      if (!start || (activePointerId != null && event.pointerId !== activePointerId)) return;
+      preventCanvasGesture(event);
+      if (activePointerId != null && canvas.releasePointerCapture) { try { canvas.releasePointerCapture(activePointerId); } catch (_) {} }
+      finishStroke();
+    }
+    function cancelStroke(event) {
+      if (start && (!event || activePointerId == null || event.pointerId === activePointerId)) {
+        preventCanvasGesture(event);
+        start = null; activePointerId = null; renderAnnotationLayer(canvas, pageNumber);
+      }
+    }
+    canvas.onpointerdown = beginStroke;
+    canvas.onpointermove = moveStroke;
+    canvas.onpointerup = endStroke;
+    canvas.onpointercancel = cancelStroke;
+    canvas.ontouchstart = function (event) {
+      if (window.PointerEvent) return;
+      var touch = event.touches && event.touches[0];
+      if (!touch) return;
+      beginStroke({ clientX: touch.clientX, clientY: touch.clientY, pointerId: 'touch', cancelable: event.cancelable, preventDefault: function () { event.preventDefault(); }, stopPropagation: function () { event.stopPropagation(); } });
+    };
+    canvas.ontouchmove = function (event) {
+      if (window.PointerEvent) return;
+      var touch = event.touches && event.touches[0];
+      if (!touch) return;
+      moveStroke({ clientX: touch.clientX, clientY: touch.clientY, pointerId: 'touch', cancelable: event.cancelable, preventDefault: function () { event.preventDefault(); }, stopPropagation: function () { event.stopPropagation(); } });
+    };
+    canvas.ontouchend = function (event) {
+      if (window.PointerEvent) return;
+      endStroke({ pointerId: 'touch', cancelable: event.cancelable, preventDefault: function () { event.preventDefault(); }, stopPropagation: function () { event.stopPropagation(); } });
+    };
+    canvas.ontouchcancel = function (event) {
+      if (window.PointerEvent) return;
+      cancelStroke({ pointerId: 'touch', cancelable: event.cancelable, preventDefault: function () { event.preventDefault(); }, stopPropagation: function () { event.stopPropagation(); } });
     };
   }
 
@@ -1316,22 +1440,31 @@
     if (!state.signatures[state.currentPage]) state.signatures[state.currentPage] = [];
     recordEditHistory();
     state.signatures[state.currentPage].push({ id: id, dataUrl: dataUrl, x: placement.x, y: placement.y, w: width, h: height, rotation: 0 });
-    state.activeSignatureId = id; renderMainPage(); toast('簽名已放置於目前可視 PDF 中央，可拖曳、縮放或雙擊旋轉');
+    state.activeSignatureId = id; renderMainPage(); actionGuide('signaturePlaced');
   }
   function initSignaturePad() {
     var canvas = $('signature-pad'); if (!canvas) return;
-    var context = canvas.getContext('2d'); var drawing = false; var last = null;
+    var context = canvas.getContext('2d'); var drawing = false; var last = null; var activePointerId = null;
+    canvas.style.touchAction = 'none'; canvas.style.userSelect = 'none'; canvas.style.webkitUserSelect = 'none';
     function position(event) { var rect = canvas.getBoundingClientRect(); return { x: (event.clientX - rect.left) * canvas.width / Math.max(1, rect.width), y: (event.clientY - rect.top) * canvas.height / Math.max(1, rect.height) }; }
     function brushSize() { return Math.max(1, Math.min(20, Number(($('signature-width') || {}).value) || 1)); }
-    function begin(event) { drawing = true; last = position(event); if (canvas.setPointerCapture) canvas.setPointerCapture(event.pointerId); }
-    function move(event) { if (!drawing || !last) return; var point = position(event); var rect = canvas.getBoundingClientRect(); context.strokeStyle = '#122033'; context.lineWidth = brushSize() * (canvas.width / Math.max(1, rect.width)); context.lineCap = 'round'; context.lineJoin = 'round'; context.beginPath(); context.moveTo(last.x, last.y); context.lineTo(point.x, point.y); context.stroke(); last = point; }
-    function end() { drawing = false; last = null; }
-    canvas.addEventListener('pointerdown', begin); canvas.addEventListener('pointermove', move); canvas.addEventListener('pointerup', end); canvas.addEventListener('pointercancel', end);
-    $('pdf-add-signature')?.addEventListener('click', function () { $('signature-modal').classList.add('is-open'); var saved = getSignatureLibrary()[0]; if (saved) loadSignatureIntoPad(saved); });
-    $('signature-clear').addEventListener('click', function () { context.clearRect(0, 0, canvas.width, canvas.height); });
-    $('signature-save-library').addEventListener('click', function () { saveSignatureToLibrary(canvas.toDataURL('image/png')); });
+    function stopBrowserGesture(event) { if (event && event.cancelable) event.preventDefault(); if (event && event.stopPropagation) event.stopPropagation(); }
+    function begin(event) { stopBrowserGesture(event); drawing = true; activePointerId = event.pointerId == null ? null : event.pointerId; last = position(event); if (activePointerId != null && canvas.setPointerCapture) { try { canvas.setPointerCapture(activePointerId); } catch (_) {} } }
+    function move(event) { if (!drawing || !last || (activePointerId != null && event.pointerId !== activePointerId)) return; stopBrowserGesture(event); var point = position(event); var rect = canvas.getBoundingClientRect(); context.strokeStyle = '#122033'; context.lineWidth = brushSize() * (canvas.width / Math.max(1, rect.width)); context.lineCap = 'round'; context.lineJoin = 'round'; context.beginPath(); context.moveTo(last.x, last.y); context.lineTo(point.x, point.y); context.stroke(); last = point; }
+    function end(event) { if (!drawing || (activePointerId != null && event && event.pointerId !== activePointerId)) return; stopBrowserGesture(event); if (activePointerId != null && canvas.releasePointerCapture) { try { canvas.releasePointerCapture(activePointerId); } catch (_) {} } drawing = false; last = null; activePointerId = null; }
+    function cancel(event) { if (!drawing) return; stopBrowserGesture(event); drawing = false; last = null; activePointerId = null; context.clearRect(0, 0, canvas.width, canvas.height); }
+    canvas.addEventListener('pointerdown', begin); canvas.addEventListener('pointermove', move); canvas.addEventListener('pointerup', end); canvas.addEventListener('pointercancel', cancel);
+    canvas.ontouchstart = function (event) { if (window.PointerEvent) return; var touch = event.touches && event.touches[0]; if (touch) begin({ clientX: touch.clientX, clientY: touch.clientY, pointerId: 'touch', cancelable: event.cancelable, preventDefault: function () { event.preventDefault(); }, stopPropagation: function () { event.stopPropagation(); } }); };
+    canvas.ontouchmove = function (event) { if (window.PointerEvent) return; var touch = event.touches && event.touches[0]; if (touch) move({ clientX: touch.clientX, clientY: touch.clientY, pointerId: 'touch', cancelable: event.cancelable, preventDefault: function () { event.preventDefault(); }, stopPropagation: function () { event.stopPropagation(); } }); };
+    canvas.ontouchend = function (event) { if (window.PointerEvent) return; end({ pointerId: 'touch', cancelable: event.cancelable, preventDefault: function () { event.preventDefault(); }, stopPropagation: function () { event.stopPropagation(); } }); };
+    canvas.ontouchcancel = function (event) { if (window.PointerEvent) return; cancel({ pointerId: 'touch', cancelable: event.cancelable, preventDefault: function () { event.preventDefault(); }, stopPropagation: function () { event.stopPropagation(); } }); };
+    $('pdf-add-signature')?.addEventListener('click', function () { var modal = $('signature-modal'); if (modal) modal.classList.add('is-open'); var saved = getSignatureLibrary()[0]; if (saved) loadSignatureIntoPad(saved); actionGuide('signature'); });
+    $('signature-clear').addEventListener('click', function () { context.clearRect(0, 0, canvas.width, canvas.height); actionGuide('signatureCleared'); });
+    $('signature-save-library').addEventListener('click', function () { saveSignatureToLibrary(canvas.toDataURL('image/png')); actionGuide('signatureSaved'); });
     $('signature-save').addEventListener('click', function () { addSignatureData(canvas.toDataURL('image/png')); });
     $('signature-upload').addEventListener('change', function () { var file = this.files && this.files[0]; if (!file) return; var reader = new FileReader(); reader.onload = function () { addSignatureData(String(reader.result || '')); }; reader.readAsDataURL(file); this.value = ''; });
+    qsa('[data-close-modal="signature-modal"]').forEach(function (button) { button.addEventListener('click', function () { var modal = $('signature-modal'); if (modal) modal.classList.remove('is-open'); actionGuide('signatureClose'); }); });
+    $('signature-modal')?.addEventListener('click', function (event) { if (event.target === this) { this.classList.remove('is-open'); actionGuide('signatureClose'); } });
   }
 
   function selectedSignature() { return (state.signatures[state.currentPage] || []).find(function (item) { return item.id === state.activeSignatureId; }); }
@@ -1436,20 +1569,28 @@
     resetEditHistory();
   }
 
+  function closeMobileToolPanel() {
+    if (!isMobileReader()) return;
+    var panel = $('pdf-annotate-popover');
+    if (!panel || panel.hidden) return;
+    var closeButton = panel.querySelector('[data-popover-close]');
+    if (closeButton) closeButton.click();
+  }
+
   function bindToolbar() {
-    qsa('[data-pdf-tool]').forEach(function (button) { button.addEventListener('click', function () { state.tool = button.dataset.pdfTool; qsa('[data-pdf-tool]').forEach(function (node) { node.classList.toggle('is-active', node === button); }); if (state.pdf) renderMainPage(); }); });
+    qsa('[data-pdf-tool]').forEach(function (button) { button.addEventListener('click', function () { state.tool = button.dataset.pdfTool; qsa('[data-pdf-tool]').forEach(function (node) { node.classList.toggle('is-active', node === button); }); actionGuide(state.tool); closeMobileToolPanel(); if (state.pdf) renderMainPage(); }); });
     bindToolbarTouchLabels();
-    $('pdf-undo')?.addEventListener('click', undoEdit);
-    $('pdf-redo')?.addEventListener('click', redoEdit);
-    $('pdf-open-button').addEventListener('click', function () { $('pdf-file-input').click(); });
-    $('pdf-fullscreen').addEventListener('click', function () { var shell = $('pdf-app-shell'); if (document.fullscreenElement) document.exitFullscreen(); else if (shell.requestFullscreen) shell.requestFullscreen(); });
-    $('pdf-page-prev').addEventListener('click', function () { if (state.pdf) { state.currentPage = state.pageOrder[Math.max(0, state.pageOrder.indexOf(state.currentPage) - 1)]; renderMainPage(); } });
-    $('pdf-page-next').addEventListener('click', function () { if (state.pdf) { state.currentPage = state.pageOrder[Math.min(state.pageOrder.length - 1, state.pageOrder.indexOf(state.currentPage) + 1)]; renderMainPage(); } });
-    $('pdf-page-input').addEventListener('change', function () { var page = Number(this.value); if (state.pageOrder.includes(page)) { state.currentPage = page; renderMainPage(); } });
-    $('pdf-zoom-out').addEventListener('click', function () { state.fitMode = 'manual'; state.zoom = Math.max(.25, state.zoom - .1); renderMainPage(); });
-    $('pdf-zoom-in').addEventListener('click', function () { state.fitMode = 'manual'; state.zoom = Math.min(2.5, state.zoom + .1); renderMainPage(); });
-    $('pdf-fit-select').addEventListener('change', function () { state.fitMode = this.value; renderMainPage(); });
-    $('pdf-rotate-left')?.addEventListener('click', function () { rotatePages(-90); }); $('pdf-rotate-right')?.addEventListener('click', function () { rotatePages(90); }); $('pdf-rotate-180')?.addEventListener('click', function () { rotatePages(180); });
+    $('pdf-undo')?.addEventListener('click', function () { if (undoEdit()) actionGuide('undo'); });
+    $('pdf-redo')?.addEventListener('click', function () { if (redoEdit()) actionGuide('redo'); });
+    $('pdf-open-button').addEventListener('click', function () { actionGuide('open'); $('pdf-file-input').click(); });
+    $('pdf-fullscreen').addEventListener('click', function () { var shell = $('pdf-app-shell'); if (document.fullscreenElement) { document.exitFullscreen(); actionGuide('fullscreen'); } else if (shell.requestFullscreen) { shell.requestFullscreen(); actionGuide('fullscreen'); } });
+    $('pdf-page-prev').addEventListener('click', function () { if (navigatePage(-1)) actionGuide('pagePrev'); });
+    $('pdf-page-next').addEventListener('click', function () { if (navigatePage(1)) actionGuide('pageNext'); });
+    $('pdf-page-input').addEventListener('change', function () { var page = Number(this.value); if (state.pageOrder.includes(page)) { state.currentPage = page; renderMainPage(); actionGuide('pageInput'); } else { this.value = String(state.currentPage); toast(IS_EN ? 'Enter a valid page number.' : '請輸入有效頁碼', { guide: true }); } });
+    $('pdf-zoom-out').addEventListener('click', function () { state.fitMode = 'manual'; state.zoom = Math.max(.25, state.zoom - .1); renderMainPage(); actionGuide('zoomOut'); });
+    $('pdf-zoom-in').addEventListener('click', function () { state.fitMode = 'manual'; state.zoom = Math.min(2.5, state.zoom + .1); renderMainPage(); actionGuide('zoomIn'); });
+    $('pdf-fit-select').addEventListener('change', function () { state.fitMode = this.value; renderMainPage(); actionGuide('fit'); });
+    $('pdf-rotate-left')?.addEventListener('click', function () { rotatePages(-90); actionGuide('rotateLeft'); }); $('pdf-rotate-right')?.addEventListener('click', function () { rotatePages(90); actionGuide('rotateRight'); }); $('pdf-rotate-180')?.addEventListener('click', function () { rotatePages(180); actionGuide('rotate180'); });
     var nightModeButton = $('pdf-night-mode');
     if (nightModeButton) {
       nightModeButton.setAttribute('aria-pressed', document.body.classList.contains('pdf-night-reading') ? 'true' : 'false');
@@ -1457,28 +1598,27 @@
         var enabled = document.body.classList.toggle('pdf-night-reading');
         this.classList.toggle('is-active', enabled);
         this.setAttribute('aria-pressed', enabled ? 'true' : 'false');
-        toast(enabled ? '已開啟夜間閱讀' : '已關閉夜間閱讀');
+        actionGuide('night');
       });
     }
     $('pdf-delete-pages').addEventListener('click', function () {     if (!state.pdf) return toast(messages.choosePdf);
     var pages = getSelectedOrCurrentPages(); if (pages.length >= state.pageOrder.length) return setStatus('至少保留一頁，無法全部刪除。', 'error');
     recordEditHistory();
-    state.pageOrder = state.pageOrder.filter(function (page) { return !pages.includes(page); }); state.selectedPages.clear(); state.currentPage = state.pageOrder[0]; renderThumbnails(); renderMainPage(); updateSelectionStatus(); toast('已刪除 ' + pages.length + ' 頁（輸出時套用）'); });
-    $('pdf-export-pages').addEventListener('click', function () { var pages = state.selectedPages.size ? state.pageOrder.filter(function (page) { return state.selectedPages.has(page); }) : state.pageOrder; exportPdf(pages, safeName(state.file && state.file.name) + '-extracted.pdf'); });
-    $('pdf-save').addEventListener('click', function () { exportPdf(state.pageOrder, safeName(state.file && state.file.name) + '-edited.pdf'); });
-    $('pdf-clear').addEventListener('click', closePdf);
-    $('pdf-add-signature').addEventListener('click', function () { $('signature-modal').classList.add('is-open'); });
-    $('pdf-delete-signature').addEventListener('click', function () { var signature = selectedSignature(); if (!signature) return toast('請先點選簽名'); recordEditHistory(); state.signatures[state.currentPage] = (state.signatures[state.currentPage] || []).filter(function (item) { return item.id !== signature.id; }); state.activeSignatureId = null; renderMainPage(); });
-    $('pdf-signature-rotate-left').addEventListener('click', function () { var signature = selectedSignature(); if (!signature) return toast('請先點選簽名'); recordEditHistory(); signature.rotation = (signature.rotation - 15 + 360) % 360; renderMainPage(); });
-    $('pdf-signature-rotate-right').addEventListener('click', function () { var signature = selectedSignature(); if (!signature) return toast('請先點選簽名'); recordEditHistory(); signature.rotation = (signature.rotation + 15) % 360; renderMainPage(); });
-    $('pdf-download-current')?.addEventListener('click', function () { renderAllImages('png'); }); $('pdf-download-jpg')?.addEventListener('click', function () { renderAllImages('jpg'); });
-    $('pdf-images-to-pdf')?.addEventListener('click', imagesToPdf); $('pdf-merge-run')?.addEventListener('click', mergePdfs); $('pdf-merge-pick')?.addEventListener('click', function () { $('merge-input')?.click(); }); $('pdf-images-pick')?.addEventListener('click', function () { $('images-input')?.click(); }); $('pdf-lock-run')?.addEventListener('click', encryptCurrentPdf);
-    $('pdf-unlock-run')?.addEventListener('click', function () { $('unlock-input')?.click(); }); $('unlock-input')?.addEventListener('change', function () { decryptLockPackage(this.files && this.files[0]); this.value = ''; });
-    $('pdf-insert-page')?.addEventListener('click', function () { $('insert-input')?.click(); }); $('insert-input')?.addEventListener('change', function () { insertPdfPages(this.files); this.value = ''; });
-    $('pdf-crop-run')?.addEventListener('click', function () { var margin = Math.max(0, Math.min(240, Number(($('crop-margin') || {}).value) || 0));     if (!state.pdf) return toast(messages.choosePdf); recordEditHistory(); state.crop = { top: margin, right: margin, bottom: margin, left: margin }; toast(margin ? '已設定四邊各裁切 ' + margin + ' pt，匯出時套用。' : '已清除裁切設定。'); });
-    $('pdf-compress-run')?.addEventListener('click', compressCurrentPdf);
-    $('pdf-page-flow')?.addEventListener('change', function () { var stage = $('pdf-reader-stage'); if (stage) stage.classList.toggle('is-horizontal-flow', this.value === 'horizontal'); setStatus(this.value === 'horizontal' ? '已切換橫向翻頁檢視。' : '已切換縱向翻頁檢視。', 'success'); });
-    $('pdf-split-run').addEventListener('click', function () { if (!state.pdf) return toast(messages.choosePdf); var raw = String($('split-range').value || '').trim(); var result = parseRange(raw, state.pageOrder.length); if (!result.length) return setStatus('請輸入有效頁碼範圍，例如 1-3,5。', 'error'); exportPdf(result, safeName(state.file.name) + '-split.pdf'); });
+    state.pageOrder = state.pageOrder.filter(function (page) { return !pages.includes(page); }); state.selectedPages.clear(); state.currentPage = state.pageOrder[0]; renderThumbnails(); renderMainPage(); updateSelectionStatus(); actionGuide('deletePages'); });
+    $('pdf-export-pages').addEventListener('click', function () { actionGuide('exportPages'); var pages = state.selectedPages.size ? state.pageOrder.filter(function (page) { return state.selectedPages.has(page); }) : state.pageOrder; exportPdf(pages, safeName(state.file && state.file.name) + '-extracted.pdf'); });
+    $('pdf-save').addEventListener('click', function () { actionGuide('export'); exportPdf(state.pageOrder, safeName(state.file && state.file.name) + '-edited.pdf'); });
+    $('pdf-clear').addEventListener('click', function () { closePdf(); actionGuide('close'); });
+    $('pdf-delete-signature').addEventListener('click', function () { var signature = selectedSignature(); if (!signature) return toast(IS_EN ? 'Select a signature first.' : '請先點選簽名'); recordEditHistory(); state.signatures[state.currentPage] = (state.signatures[state.currentPage] || []).filter(function (item) { return item.id !== signature.id; }); state.activeSignatureId = null; renderMainPage(); actionGuide('signatureDelete'); });
+    $('pdf-signature-rotate-left').addEventListener('click', function () { var signature = selectedSignature(); if (!signature) return toast(IS_EN ? 'Select a signature first.' : '請先點選簽名'); recordEditHistory(); signature.rotation = (signature.rotation - 15 + 360) % 360; renderMainPage(); actionGuide('signatureRotate'); });
+    $('pdf-signature-rotate-right').addEventListener('click', function () { var signature = selectedSignature(); if (!signature) return toast(IS_EN ? 'Select a signature first.' : '請先點選簽名'); recordEditHistory(); signature.rotation = (signature.rotation + 15) % 360; renderMainPage(); actionGuide('signatureRotate'); });
+    $('pdf-download-current')?.addEventListener('click', function () { actionGuide('png'); renderAllImages('png'); }); $('pdf-download-jpg')?.addEventListener('click', function () { actionGuide('jpg'); renderAllImages('jpg'); });
+    $('pdf-images-to-pdf')?.addEventListener('click', function () { actionGuide('imagesToPdf'); imagesToPdf(); }); $('pdf-merge-run')?.addEventListener('click', function () { actionGuide('merge'); mergePdfs(); }); $('pdf-merge-pick')?.addEventListener('click', function () { actionGuide('addPdfs'); $('merge-input')?.click(); }); $('pdf-images-pick')?.addEventListener('click', function () { actionGuide('addImages'); $('images-input')?.click(); }); $('pdf-lock-run')?.addEventListener('click', function () { actionGuide('lock'); encryptCurrentPdf(); });
+    $('pdf-unlock-run')?.addEventListener('click', function () { actionGuide('unlock'); $('unlock-input')?.click(); }); $('unlock-input')?.addEventListener('change', function () { decryptLockPackage(this.files && this.files[0]); this.value = ''; });
+    $('pdf-insert-page')?.addEventListener('click', function () { actionGuide('insert'); $('insert-input')?.click(); }); $('insert-input')?.addEventListener('change', function () { insertPdfPages(this.files); this.value = ''; });
+    $('pdf-crop-run')?.addEventListener('click', function () { var margin = Math.max(0, Math.min(240, Number(($('crop-margin') || {}).value) || 0));     if (!state.pdf) return toast(messages.choosePdf); recordEditHistory(); state.crop = { top: margin, right: margin, bottom: margin, left: margin }; actionGuide('crop'); });
+    $('pdf-compress-run')?.addEventListener('click', function () { actionGuide('compress'); compressCurrentPdf(); });
+    $('pdf-page-flow')?.addEventListener('change', function () { var stage = $('pdf-reader-stage'); if (stage) stage.classList.toggle('is-horizontal-flow', this.value === 'horizontal'); actionGuide('pageFlow'); });
+    $('pdf-split-run').addEventListener('click', function () { if (!state.pdf) return toast(messages.choosePdf); actionGuide('split'); var raw = String($('split-range').value || '').trim(); var result = parseRange(raw, state.pageOrder.length); if (!result.length) return setStatus(IS_EN ? 'Enter a valid range such as 1-3,5.' : '請輸入有效頁碼範圍，例如 1-3,5。', 'error'); exportPdf(result, safeName(state.file.name) + '-split.pdf'); });
   }
 
   function parseRange(value, max) {
@@ -1560,8 +1700,8 @@
       if (closeButton) {
         window.setTimeout(function () { try { closeButton.focus({ preventScroll: true }); } catch (_) {} }, 0);
       }
-      var label = toggle.getAttribute('aria-label') || toggle.title || toggle.textContent.trim();
-      toast((IS_EN ? 'Opened: ' : '已開啟：') + label);
+      var guideKey = panel.id === 'pdf-annotate-popover' ? 'annotationPanel' : panel.id === 'pdf-pages-popover' ? 'pagesPanel' : 'convertPanel';
+      actionGuide(guideKey);
     }
     qsa('[data-popover-target]').forEach(function (toggle) {
       toggle.setAttribute('aria-controls', toggle.dataset.popoverTarget);
@@ -1608,11 +1748,12 @@
   }
 
   function navigatePage(delta) {
-    if (!state.pdf) return toast(messages.choosePdf);
+    if (!state.pdf) { toast(messages.choosePdf); return false; }
     var index = state.pageOrder.indexOf(state.currentPage); if (index < 0) index = 0;
     var nextIndex = Math.max(0, Math.min(state.pageOrder.length - 1, index + delta));
-    if (nextIndex === index) return toast(delta < 0 ? '已經是第一頁' : '已經是最後一頁');
+    if (nextIndex === index) { toast(delta < 0 ? (IS_EN ? 'Already on the first page.' : '已經是第一頁') : (IS_EN ? 'Already on the last page.' : '已經是最後一頁')); return false; }
     state.currentPage = state.pageOrder[nextIndex]; renderMainPage(); syncMobilePageControls();
+    return true;
   }
 
   function syncMobileOverlayHistory(open, options) {
@@ -1636,6 +1777,7 @@
     if (!sidebar) return;
     if (open) setMobileAi(false, { skipHistory: true });
     sidebar.classList.toggle('is-mobile-open', Boolean(open));
+    if (open) actionGuide('thumbnails');
     sidebar.setAttribute('aria-hidden', open ? 'false' : 'true');
     if (button) button.classList.toggle('is-active', Boolean(open));
     syncMobileOverlayHistory(Boolean(open), options);
@@ -1646,6 +1788,7 @@
     if (!pane) return;
     if (open) setMobileSidebar(false, { skipHistory: true });
     pane.classList.toggle('is-mobile-open', Boolean(open));
+    if (open) actionGuide('ai');
     pane.setAttribute('aria-hidden', open ? 'false' : 'true');
     var button = $('pdf-mobile-ai');
     if (button) button.classList.toggle('is-active', Boolean(open));
@@ -1667,14 +1810,14 @@
         setMobileAi(false, { skipHistory: true, fromPopState: true });
       });
     }
-    $('pdf-mobile-page-prev')?.addEventListener('click', function () { navigatePage(-1); });
-    $('pdf-mobile-page-next')?.addEventListener('click', function () { navigatePage(1); });
-    $('pdf-mobile-page-input')?.addEventListener('change', function () { if (!state.pdf) return toast(messages.choosePdf); var page = Number(this.value); if (state.pageOrder.includes(page)) { state.currentPage = page; renderMainPage(); syncMobilePageControls(); } else { this.value = String(state.currentPage); toast('請輸入有效頁碼'); } });
-    $('pdf-empty-open')?.addEventListener('click', function () { $('pdf-file-input')?.click(); });
+    $('pdf-mobile-page-prev')?.addEventListener('click', function () { if (navigatePage(-1)) actionGuide('pagePrev'); });
+    $('pdf-mobile-page-next')?.addEventListener('click', function () { if (navigatePage(1)) actionGuide('pageNext'); });
+    $('pdf-mobile-page-input')?.addEventListener('change', function () { if (!state.pdf) return toast(messages.choosePdf); var page = Number(this.value); if (state.pageOrder.includes(page)) { state.currentPage = page; renderMainPage(); syncMobilePageControls(); actionGuide('pageInput'); } else { this.value = String(state.currentPage); toast(IS_EN ? 'Enter a valid page number.' : '請輸入有效頁碼', { guide: true }); } });
+    $('pdf-empty-open')?.addEventListener('click', function () { actionGuide('open'); $('pdf-file-input')?.click(); });
     $('pdf-mobile-thumbnails')?.addEventListener('click', function () { setMobileSidebar(true); });
     $('pdf-mobile-ai')?.addEventListener('click', function () { var pane = $('pdf-ai-pane'); setMobileAi(!pane || !pane.classList.contains('is-mobile-open')); });
-    $('pdf-mobile-ai-close')?.addEventListener('click', function () { setMobileAi(false); });
-    $('pdf-sidebar-close-mobile')?.addEventListener('click', function () { setMobileSidebar(false); });
+    $('pdf-mobile-ai-close')?.addEventListener('click', function () { setMobileAi(false); actionGuide('aiBack'); });
+    $('pdf-sidebar-close-mobile')?.addEventListener('click', function () { setMobileSidebar(false); actionGuide('aiBack'); });
     var stage = $('pdf-reader-stage'); var startX = 0; var startY = 0; var pinch = null; var pinchFrame = 0; var gestureWasPinch = false;
     function pinchSurface() { return isMobileReader() ? $('pdf-continuous-stack') : $('pdf-page-frame'); }
     function resetPinchVisual(surface) {
@@ -1812,7 +1955,7 @@
   }
 
   function bindSidebar() {
-    qsa('[data-sidebar]').forEach(function (button) { button.addEventListener('click', function () { setSidebarTab(button.dataset.sidebar); }); });
+    qsa('[data-sidebar]').forEach(function (button) { button.addEventListener('click', function () { setSidebarTab(button.dataset.sidebar); actionGuide('sidebarTab'); }); });
     bindMobileReaderControls();
   }
 
