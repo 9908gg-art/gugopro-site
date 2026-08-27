@@ -5,20 +5,24 @@
 <meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/>
 <title>臺指期／富台期期現價差工具｜GugoPro Academy</title>
 <meta content="輸入同一時間查證的現貨、近月與次月期貨報價，計算 Basis、年化期現價差、轉倉價差與名目損益。" name="description"/>
-<link href="https://academy.gugopro.com/tools/futures-basis-pairs.html" rel="canonical"/>
 <link href="../academy.css" rel="stylesheet"/>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"臺指期／富台期期現價差工具","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"以使用者輸入拆解現貨、近月與次月期貨的期現價差和轉倉影響。","url":"https://academy.gugopro.com/tools/futures-basis-pairs.html"}</script>
-<meta name="i18n-status" content="machine-draft">
-<link rel="alternate" hreflang="zh-TW" href="./futures-basis-pairs.html">
-<link rel="alternate" hreflang="zh-CN" href="./futures-basis-pairs.html?lang=zh-CN">
-<link rel="alternate" hreflang="en" href="./futures-basis-pairs.html?lang=en">
-<link rel="alternate" hreflang="ja" href="./futures-basis-pairs.html?lang=ja">
-<link rel="alternate" hreflang="de" href="./futures-basis-pairs.html?lang=de">
-<link rel="alternate" hreflang="fr" href="./futures-basis-pairs.html?lang=fr">
-<link rel="alternate" hreflang="es" href="./futures-basis-pairs.html?lang=es">
-<link rel="alternate" hreflang="pt" href="./futures-basis-pairs.html?lang=pt">
-<link rel="alternate" hreflang="x-default" href="./futures-basis-pairs.html">
-<script src="/i18n/gugopro-i18n.js?v=machine-draft-20260827" defer></script>
+<meta property="og:url" content="https://gugopro.com/academy/tools/futures-basis-pairs.html">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://gugopro.com/academy/tools/futures-basis-pairs.html">
+<link rel="alternate" hreflang="zh-TW" href="https://gugopro.com/academy/tools/futures-basis-pairs.html">
+<link rel="alternate" hreflang="zh-CN" href="https://gugopro.com/zh-CN/academy/tools/futures-basis-pairs.html">
+<link rel="alternate" hreflang="en" href="https://gugopro.com/en/academy/tools/futures-basis-pairs.html">
+<link rel="alternate" hreflang="ja" href="https://gugopro.com/ja/academy/tools/futures-basis-pairs.html">
+<link rel="alternate" hreflang="de" href="https://gugopro.com/de/academy/tools/futures-basis-pairs.html">
+<link rel="alternate" hreflang="fr" href="https://gugopro.com/fr/academy/tools/futures-basis-pairs.html">
+<link rel="alternate" hreflang="es" href="https://gugopro.com/es/academy/tools/futures-basis-pairs.html">
+<link rel="alternate" hreflang="pt" href="https://gugopro.com/pt/academy/tools/futures-basis-pairs.html">
+<link rel="alternate" hreflang="x-default" href="https://gugopro.com/academy/tools/futures-basis-pairs.html">
+<meta name="static-locale-route" content="true">
+<link rel="stylesheet" href="/tools/finance/finance-locale.css?v=20260827">
+<script src="/i18n/static-locale-runtime.js?v=20260827" defer></script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 </head>
 <body class="quant-page">
 <main class="tool-page"><div class="tool-crumb"><a href="../">← 回到 GugoPro Academy</a><span>衍生品研究 · 同時間輸入 · 非即時報價</span></div>
@@ -38,4 +42,6 @@
 <script src="../academy.js?v=20260827-i18n1"></script><script>
 const $=id=>document.getElementById(id),fmt=(n,d=2)=>Number.isFinite(n)?n.toFixed(d):'—';
 function calc(){const s=+$('spot').value,f=+$('front').value,n=+$('next').value,d=+$('days').value,m=+$('multiplier').value,q=+$('contracts').value;if(![s,f,n,d,m,q].every(Number.isFinite)||s<=0||d<=0||m<=0||q<0){$('status').textContent='輸入錯誤：請填入有效的同口徑價格、天數、乘數與口數。';$('status').className='status error';return}const b=f-s,p=b/s*100,a=p*365/d,cal=n-f; $('basis').textContent=fmt(b)+' 點';$('basisPct').textContent=fmt(p,3)+'%';$('annualBasis').textContent=fmt(a,2)+'%';$('calendar').textContent=fmt(cal)+' 點';$('notional').textContent='NT$ '+Math.round(b*m*q).toLocaleString('zh-TW');$('shape').textContent=cal>0?'次月高於近月：正價差／Contango 研究標籤':cal<0?'次月低於近月：逆價差／Backwardation 研究標籤':'次月與近月相同：期限價差為 0';const span=Math.max(Math.abs(b),Math.abs(cal),1);$('chart').innerHTML='<i style="height:'+Math.max(5,Math.abs(b)/span*145)+'px" title="Basis"></i><i style="height:'+Math.max(5,Math.abs(cal)/span*145)+'px" title="Calendar spread"></i>';$('status').textContent='計算完成：請再核對乘數、幣別、到期日與同時點資料。';$('status').className='status ok'}
-$('calc').addEventListener('click',calc);</script></body></html>
+$('calc').addEventListener('click',calc);</script><section class="finance-quality-note" data-finance-quality><h2>財經工具使用說明</h2><p>本頁把財經概念拆成可檢查的輸入、公式與情境結果。請先閱讀變數定義，再比較保守、中性與壓力情境；單一結果不代表收益承諾。</p><p>建議流程：確認資料單位與期間，輸入自己的假設，接著檢查敏感度、成本與下行情境。</p><p><strong>限制：模型不會預測市場，也不包含所有稅費、滑價、流動性、信用、法規或個別合約條款；重要決策請以最新官方資料及合格專業意見複核。:</strong>限制：模型不會預測市場，也不包含所有稅費、滑價、流動性、信用、法規或個別合約條款；重要決策請以最新官方資料及合格專業意見複核。</p></section>
+<section class="finance-disclaimer" data-finance-disclaimer><h2>投資風險免責聲明</h2><p>本頁內容、計算器與示例僅供教育、研究與情境估算，不構成投資、交易、投注、稅務、法律或其他個人化金融建議。金融市場與個別制度可能快速變化，請核對最新官方資料並自負決策責任。過去表現、模型輸出或模擬結果不代表未來結果。</p></section>
+</body></html>

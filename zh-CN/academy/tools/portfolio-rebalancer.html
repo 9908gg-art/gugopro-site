@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>资产配置与动态再平衡工具｜GugoPro Academy</title>
+<meta content="以用户输入的资产市值与目标权重，计算当前偏离、理论调整额、漂移阈值、新资金优先与交易摩擦。纯前端、透明公式、不抓取即时行情。" name="description"/>
+<meta content="资产配置, 动态再平衡, 投资组合, 漂移阈值, 交易成本, 分散投资" name="keywords"/>
+<link href="/academy/academy.css" rel="stylesheet"/>
+<link href="/academy/tools/portfolio-rebalancer.css" rel="stylesheet"/>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"资产配置与动态再平衡工具","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"以用户输入的当前市值与目标权重，检查配置偏离、动态再平衡规则与交易摩擦。","url":"https://gugopro.com/zh-CN/academy/tools/portfolio-rebalancer.html"}</script>
+<meta content="https://gugopro.com/academy/tools/portfolio-rebalancer.html" property="og:url"/>
+<meta content="index, follow" name="robots"/>
+<link href="https://gugopro.com/zh-CN/academy/tools/portfolio-rebalancer.html" rel="canonical"/>
+<link href="https://gugopro.com/academy/tools/portfolio-rebalancer.html" hreflang="zh-TW" rel="alternate"/>
+<link href="https://gugopro.com/zh-CN/academy/tools/portfolio-rebalancer.html" hreflang="zh-CN" rel="alternate"/>
+<link href="https://gugopro.com/en/academy/tools/portfolio-rebalancer.html" hreflang="en" rel="alternate"/>
+<link href="https://gugopro.com/ja/academy/tools/portfolio-rebalancer.html" hreflang="ja" rel="alternate"/>
+<link href="https://gugopro.com/de/academy/tools/portfolio-rebalancer.html" hreflang="de" rel="alternate"/>
+<link href="https://gugopro.com/fr/academy/tools/portfolio-rebalancer.html" hreflang="fr" rel="alternate"/>
+<link href="https://gugopro.com/es/academy/tools/portfolio-rebalancer.html" hreflang="es" rel="alternate"/>
+<link href="https://gugopro.com/pt/academy/tools/portfolio-rebalancer.html" hreflang="pt" rel="alternate"/>
+<link href="https://gugopro.com/academy/tools/portfolio-rebalancer.html" hreflang="x-default" rel="alternate"/>
+<meta content="true" name="static-locale-route"/>
+<meta content="machine-draft" name="i18n-status"/>
+<link href="/tools/finance/finance-locale.css?v=20260827" rel="stylesheet"/>
+<script src="/i18n/static-locale-runtime.js?v=20260827" defer></script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="allocation-tool-page">
+<header class="nav"><div class="shell navin"><a class="brand" href="/academy/">GugoPro <span>学院</span></a><button class="theme" data-theme="" type="button">切换深色</button></div></header>
+<main class="allocation-shell">
+<div class="tool-crumb"><a href="/academy/lessons/15-retirement-cashflow.html">← 返回学院课程</a><span>投资组合设计 · 纯前端 · 不抓即时行情</span></div>
+<header class="tool-hero" id="tool-title">
+<div class="eyebrow">投资组合设计 · 动态再平衡</div>
+<h1>资产配置与动态再平衡</h1>
+<p>输入同一评估时点的当前市值与目标权重，检查偏离幅度，并比较完整回到目标、漂移阈值与新资金优先三种规则。结果为理论计算，不代表已成交或适合所有人。</p>
+<div class="badge-row"><span>目标权重</span><span>漂移带</span><span>现金优先</span><span>客户端</span></div>
+</header>
+<nav aria-label="工具章節導覽" class="article-jump"><a href="#inputs">输入配置</a><a href="#rules">再平衡规则</a><a href="#results">结果与差额</a><a href="#limits">限制与来源</a></nav>
+<div class="tool-layout allocation-layout">
+<section class="panel input-panel" id="inputs">
+<div class="section-kicker">01 · 组合输入</div>
+<h2>当前资产与目标配置</h2>
+<p class="helper">请使用相同日期、相同币别和相同估值口径。目标权重必须合计 100%；不要输入虚假行情，即使资产为零也必须保留其目标权重。</p>
+<div class="table-wrap input-table-wrap">
+<table class="asset-input-table">
+<thead><tr><th scope="col">资产名称</th><th scope="col">当前市值</th><th scope="col">目标权重</th><th scope="col"><span class="sr-only">操作</span></th></tr></thead>
+<tbody id="asset-rows"></tbody>
+</table>
+</div>
+<div class="input-actions"><button class="button secondary" id="add-asset" type="button">新增资产列</button><button class="button ghost" id="reset" type="button">恢复默认</button></div>
+<div class="field-grid compact-fields">
+<label for="contribution">本次新增投入资金（元）<input id="contribution" min="0" step="1" type="number" value="0"/></label>
+<label for="rebalance-mode">再平衡规则<select id="rebalance-mode"><option value="full">完整回到目标权重</option><option value="threshold">漂移门槛：只调整超标资产</option><option value="cash-first">新资金优先补低配</option></select></label>
+<label for="threshold">偏离门槛（百分点）<input id="threshold" max="100" min="0" step="0.1" type="number" value="5"/></label>
+<label for="fee-rate">交易费率（%）<input id="fee-rate" max="10" min="0" step="0.01" type="number" value="0.15"/></label>
+<label for="minimum-fee">最低单笔费用（元）<input id="minimum-fee" min="0" step="1" type="number" value="20"/></label>
+<label for="tax-rate">卖出税费率（%）<input id="tax-rate" max="10" min="0" step="0.01" type="number" value="0"/></label>
+</div>
+<div aria-live="polite" class="mode-help" id="mode-help"></div>
+<button class="button primary" id="calculate" type="button">計算配置與再平衡</button>
+<div aria-live="polite" class="status" id="status">尚未计算；输入与结果只保留在当前浏览器页面。</div>
+</section>
+<section class="panel rules-panel" id="rules">
+<div class="section-kicker">02 · 决策规则</div>
+<h2>先写规则，再看差额</h2>
+<div class="rule-cards">
+<article><strong>完整回到目标</strong><p>用总市值加上新增资金重新计算目标市值，显示每个资产的理论买入或减仓额。</p></article>
+<article><strong>漂移门槛</strong><p>以“百分点”比较当前权重与目标权重；未超过阈值的资产不被标记为必须交易。</p></article>
+<article><strong>新资金优先</strong><p>先把新增资金按低配缺口分配；资金不足的剩余缺口仍保留，不假设已完成交易。</p></article>
+</div>
+<div class="formula-note"><strong>公式：</strong><br/>当前权重＝当前市值 ÷ 当前总市值<br/>目标市值＝（目前总市值＋新增资金）× 目标权重<br/>理论调整额＝目标市值 − 目前市值<br/>偏离百分点＝目前权重 − 目标权重</div>
+<div class="note-box"><strong>百分点不是百分比。</strong>目标 60%、目前 66% 代表偏离 +6 个百分点；它不是「相对超配 10%」的同一概念。</div>
+</section>
+<section class="result result-panel" id="results">
+<div class="section-kicker">03 · 配置输出</div>
+<div class="result-heading"><div><h2>配置偏离与理论行为</h2><p class="helper">买入/减仓是模型差额标签，不是下单指令；成本与税费为用户输入的示例假设。</p></div><button class="button secondary" disabled="" id="download" type="button">下载本地结果</button></div>
+<div class="metric-grid" id="summary"></div>
+<div class="visual allocation-visual"><h3>当前权重与目标权重</h3><div aria-label="目前權重與目標權重比較圖" class="allocation-chart" id="allocation-chart" role="img"></div><div class="chart-legend"><span><i class="legend-current"></i>当前权重</span><span><i class="legend-target"></i>目标位置</span></div></div>
+<div class="table-wrap result-table-wrap"><table class="result-table"><thead><tr><th scope="col">资产</th><th scope="col">当前权重</th><th scope="col">目标权重</th><th scope="col">偏离</th><th scope="col">目标市值</th><th scope="col">理论行动</th><th scope="col">估算后权重</th></tr></thead><tbody id="allocation-rows"></tbody></table></div>
+<div class="cost-box"><h3>交易摩擦与剩余资金</h3><div class="cost-grid" id="cost-summary"></div></div>
+</section>
+</div>
+<section class="source-box" id="limits">
+<div class="section-kicker">04 · 来源与限额</div>
+<h2>数据来源与模型边界</h2>
+<p>Investor.gov 将资产配置与再平衡视为需要结合投资期限与风险承受度的决策；SEC 的入门指南列出卖出超配、把新资金导向低配与调整持续投入三种常见方式，并提醒交易费与税务后果；FINRA 也指出分散、配置与再平衡处理的是不同层次的风险管理问题。<sup><a href="https://www.investor.gov/introduction-investing/getting-started/asset-allocation" rel="noopener" target="_blank">[1]</a> <a href="https://www.investor.gov/additional-resources/general-resources/publications-research/info-sheets/beginners-guide-asset" rel="noopener" target="_blank">[2]</a> <a href="https://www.finra.org/investors/investing/investing-basics/asset-allocation-diversification" rel="noopener" target="_blank">[3]</a></sup></p>
+<p>本工具不验证基金底层持仓、相关性、流动性、税务身份、账户限制、交易时段、最小交易单位或资产品质；也不判定任何目标权重是否适合个人。交易成本仅是用户输入的简化估算，不能替代券商费率、交易税、资本利得税或专业意见。</p>
+<p class="disclaimer">本页是 deterministic educational model，不是历史回测、Monte Carlo、报酬预测、资产配置建议或交易指令。请先复核资料日期、币别、权重、费用与适用法规。This is research and analysis only, not personalized financial advice.</p>
+</section>
+</main>
+<script src="/academy/academy.js?v=20260827-i18n1"></script>
+<script src="/academy/tools/portfolio-rebalancer.js"></script><section class="finance-quality-note" data-finance-quality=""><h2>财经工具使用说明</h2><p>本页把财经概念拆成可检查的输入、公式与情境结果。请先阅读变量定义，再比较保守、中性与压力情境；单一结果不代表收益承诺。</p><p>建议流程：确认资料单位与期间，输入自己的假设，接着检查敏感度、成本与下行情境。</p><p><strong>限制：模型不会预测市场，也不包含所有税费、滑点、流动性、信用、法规或个别合约条款；重要决策请以最新官方资料及合格专业意见复核。:</strong>限制：模型不会预测市场，也不包含所有税费、滑点、流动性、信用、法规或个别合约条款；重要决策请以最新官方资料及合格专业意见复核。</p></section>
+<section class="finance-disclaimer" data-finance-disclaimer=""><h2>投资风险免责声明</h2><p>本页内容、计算器与示例仅供教育、研究与情境估算，不构成投资、交易、投注、税务、法律或其他个性化金融建议。金融市场与个别制度可能快速变化，请核对最新官方资料并承担决策责任。过去表现、模型输出或模拟结果不代表未来结果。</p></section>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+<meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>Outil d’écart 臺指期／富台期｜GugoPro Academy</title>
+<meta content="Saisissez les cotations spot, futures du mois proche et du mois suivant vérifiées au même instant ; calculez la Basis, le spread future‑spot annualisé, le roll spread et le P&amp;L nominal." name="description"/>
+<link href="/academy/academy.css" rel="stylesheet"/>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Outil d’écart cash‑futures entre 臺指期 et 富台期","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"Décomposer, à partir des entrées utilisateur, le basis spot et celui des futures front‑month et next‑month et l'impact du roll.","url":"https://academy.gugopro.com/tools/futures-basis-pairs.html"}</script>
+<meta content="https://gugopro.com/academy/tools/futures-basis-pairs.html" property="og:url"/>
+<meta content="index, follow" name="robots"/>
+<link href="https://gugopro.com/fr/academy/tools/futures-basis-pairs.html" rel="canonical"/>
+<link href="https://gugopro.com/academy/tools/futures-basis-pairs.html" hreflang="zh-TW" rel="alternate"/>
+<link href="https://gugopro.com/zh-CN/academy/tools/futures-basis-pairs.html" hreflang="zh-CN" rel="alternate"/>
+<link href="https://gugopro.com/en/academy/tools/futures-basis-pairs.html" hreflang="en" rel="alternate"/>
+<link href="https://gugopro.com/ja/academy/tools/futures-basis-pairs.html" hreflang="ja" rel="alternate"/>
+<link href="https://gugopro.com/de/academy/tools/futures-basis-pairs.html" hreflang="de" rel="alternate"/>
+<link href="https://gugopro.com/fr/academy/tools/futures-basis-pairs.html" hreflang="fr" rel="alternate"/>
+<link href="https://gugopro.com/es/academy/tools/futures-basis-pairs.html" hreflang="es" rel="alternate"/>
+<link href="https://gugopro.com/pt/academy/tools/futures-basis-pairs.html" hreflang="pt" rel="alternate"/>
+<link href="https://gugopro.com/academy/tools/futures-basis-pairs.html" hreflang="x-default" rel="alternate"/>
+<meta content="true" name="static-locale-route"/>
+<meta content="machine-draft" name="i18n-status"/>
+<link href="/tools/finance/finance-locale.css?v=20260827" rel="stylesheet"/>
+<script src="/i18n/static-locale-runtime.js?v=20260827" defer></script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="quant-page">
+<main class="tool-page"><div class="tool-crumb"><a href="/academy/">← Retour à GugoPro Academy</a><span>Recherche produits dérivés · entrées simultanées · cotations non‑temps réel</span></div>
+<div class="tool-layout"><section class="panel"><div class="eyebrow">Quant lab · Base des futures</div><h1>Écart cash‑futures 臺指期／富台期</h1><p>Mettez la référence spot, les cotations futures near‑month et next‑month au même instant dans la même unité pour décomposer la base, la structure par échéance et simplifier le P&amp;L nominal. Adaptez le multiplicateur selon les spécifications réelles du contrat sur la bourse.</p>
+<label for="spot">Valeur de référence spot/indice</label><input id="spot" min="0" placeholder="Coller valeurs vérifiées" step="0.01" type="number"/>
+<label for="front">Prix du future front‑month</label><input id="front" min="0" placeholder="Coller valeurs vérifiées" step="0.01" type="number"/>
+<label for="next">Prix du future du mois suivant</label><input id="next" min="0" placeholder="Coller valeurs vérifiées" step="0.01" type="number"/>
+<label for="days">Jours jusqu’à l’échéance (front‑month)</label><input id="days" max="365" min="1" step="1" type="number" value="30"/>
+<label for="multiplier">Multiplicateur par point（元）</label><input id="multiplier" min="0.01" step="0.01" type="number" value="200"/>
+<label for="contracts">Nombre de contrats front‑month (usage recherche)</label><input id="contracts" min="0" step="1" type="number" value="1"/>
+<button class="calc" id="calc" type="button">Décomposer les écarts prix spot‑futures et de roll</button><div aria-live="polite" class="status" id="status">Veuillez saisir trois prix au même moment pour le même instrument.</div>
+<div class="formula-note"><strong>Formule :</strong>Basis = future du mois proche − spot ; Basis% = Basis ÷ spot ; Basis annualisé simplifié = Basis% × 365 ÷ jours jusqu’à l’échéance ; Calendar spread = mois suivant − mois proche. Ce sont des décompositions analytiques, pas des garanties de convergence ni des rendements d’arbitrage.</div></section>
+<section class="result"><div class="eyebrow">Décomposition du basis</div><h2>Écart terme‑spot et structure par échéance</h2><div class="result-big" id="basis">—</div><div class="sub" id="shape">En attente d'entrée valide</div>
+<div class="metric-grid"><div class="metric"><span class="sub">Basis %</span><b id="basisPct">—</b></div><div class="metric"><span class="sub">Base annualisée</span><b id="annualBasis">—</b></div><div class="metric"><span class="sub">Roll spread</span><b id="calendar">—</b></div><div class="metric"><span class="sub">Montant nominal Basis</span><b id="notional">—</b></div></div>
+<div class="visual"><h3>Structure du spread (points)</h3><div class="bar-chart" id="chart"><i style="height:6px"></i></div><div class="axis"><span>Spot 0</span><span>Basis</span><span>Calendar spread</span></div></div>
+<div class="source-box"><strong>Limitations du contrat et des données :</strong>La taille de contrat et les horaires de négociation du future de l’indice taïwanais (TX) devraient être basés sur <a href="https://www.taifex.com.tw/enl/eng2/tX" rel="noopener" target="_blank">Spécifications officielles de TAIFEX</a>Vérifier ; les multiplicateurs, la devise, l’échéance et les horaires de négociation de 富台期 et des autres futures d’indices ne sont pas directement interchangeables. L’outil ne récupère pas les cotations temps réel : évitez d’associer par erreur des moments différents ou des contrats différents comme un spread négociable.</div></section></div></main>
+<script src="/academy/academy.js?v=20260827-i18n1"></script><script>
+const $=id=>document.getElementById(id),fmt=(n,d=2)=>Number.isFinite(n)?n.toFixed(d):'—';
+function calc(){const s=+$('spot').value,f=+$('front').value,n=+$('next').value,d=+$('days').value,m=+$('multiplier').value,q=+$('contracts').value;if(![s,f,n,d,m,q].every(Number.isFinite)||s<=0||d<=0||m<=0||q<0){$('status').textContent='輸入錯誤：請填入有效的同口徑價格、天數、乘數與口數。';$('status').className='status error';return}const b=f-s,p=b/s*100,a=p*365/d,cal=n-f; $('basis').textContent=fmt(b)+' 點';$('basisPct').textContent=fmt(p,3)+'%';$('annualBasis').textContent=fmt(a,2)+'%';$('calendar').textContent=fmt(cal)+' 點';$('notional').textContent='NT$ '+Math.round(b*m*q).toLocaleString('zh-TW');$('shape').textContent=cal>0?'次月高於近月：正價差／Contango 研究標籤':cal<0?'次月低於近月：逆價差／Backwardation 研究標籤':'次月與近月相同：期限價差為 0';const span=Math.max(Math.abs(b),Math.abs(cal),1);$('chart').innerHTML='<i style="height:'+Math.max(5,Math.abs(b)/span*145)+'px" title="Basis"></i><i style="height:'+Math.max(5,Math.abs(cal)/span*145)+'px" title="Calendar spread"></i>';$('status').textContent='計算完成：請再核對乘數、幣別、到期日與同時點資料。';$('status').className='status ok'}
+$('calc').addEventListener('click',calc);</script><section class="finance-quality-note" data-finance-quality=""><h2>Comment utiliser cet outil financier</h2><p>Cette page transforme un concept financier en données, formules et scénarios vérifiables. Lisez d’abord les définitions, puis comparez les scénarios prudent, central et de stress ; un résultat ne garantit aucun rendement.</p><p>Méthode conseillée : vérifier les unités et périodes, saisir vos hypothèses, puis examiner la sensibilité, les coûts et les scénarios défavorables.</p><p><strong>Limites :</strong> le modèle ne prévoit pas les marchés et peut exclure certains impôts, glissements, risques de liquidité, de crédit, règles ou clauses contractuelles. Vérifiez toute décision importante avec des sources primaires à jour et un professionnel qualifié.</p></section>
+<section class="finance-disclaimer" data-finance-disclaimer=""><h2>Avertissement sur les risques financiers</h2><p>Cette page, ses calculateurs et ses exemples sont fournis uniquement à des fins éducatives, de recherche et d’estimation de scénarios. Ils ne constituent pas un conseil personnalisé en investissement, trading, paris, fiscalité, droit ou finance. Les marchés et règles locales évoluent ; vérifiez les sources primaires à jour et assumez vos décisions. Les performances passées, sorties de modèle et simulations ne garantissent pas les résultats futurs.</p></section>
+</body></html>

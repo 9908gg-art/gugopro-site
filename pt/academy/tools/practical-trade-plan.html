@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+
+<html lang="pt">
+<head>
+<meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>Plano de trading prático e verificador de posições | GugoPro Academy</title>
+<meta content="Insira capital da conta, risco por operação, entrada, stop, objetivo e custos de transação para estimar a posição inteira máxima e a utilização de risco após custos. Somente front‑end; não busca dados de mercado." name="description"/>
+<link href="/academy/academy.css" rel="stylesheet"/><link href="/academy/tools/practical-trading.css" rel="stylesheet"/>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Plano de trading prático e verificador de posições","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"Estime a posição inteira máxima a partir do risco de conta, preço e custos de negociação inseridos pelo usuário.","url":"https://gugopro.com/pt/academy/tools/practical-trade-plan.html"}</script>
+<meta content="https://gugopro.com/academy/tools/practical-trade-plan.html" property="og:url"/>
+<meta content="index, follow" name="robots"/>
+<link href="https://gugopro.com/pt/academy/tools/practical-trade-plan.html" rel="canonical"/>
+<link href="https://gugopro.com/academy/tools/practical-trade-plan.html" hreflang="zh-TW" rel="alternate"/>
+<link href="https://gugopro.com/zh-CN/academy/tools/practical-trade-plan.html" hreflang="zh-CN" rel="alternate"/>
+<link href="https://gugopro.com/en/academy/tools/practical-trade-plan.html" hreflang="en" rel="alternate"/>
+<link href="https://gugopro.com/ja/academy/tools/practical-trade-plan.html" hreflang="ja" rel="alternate"/>
+<link href="https://gugopro.com/de/academy/tools/practical-trade-plan.html" hreflang="de" rel="alternate"/>
+<link href="https://gugopro.com/fr/academy/tools/practical-trade-plan.html" hreflang="fr" rel="alternate"/>
+<link href="https://gugopro.com/es/academy/tools/practical-trade-plan.html" hreflang="es" rel="alternate"/>
+<link href="https://gugopro.com/pt/academy/tools/practical-trade-plan.html" hreflang="pt" rel="alternate"/>
+<link href="https://gugopro.com/academy/tools/practical-trade-plan.html" hreflang="x-default" rel="alternate"/>
+<meta content="true" name="static-locale-route"/>
+<meta content="machine-draft" name="i18n-status"/>
+<link href="/tools/finance/finance-locale.css?v=20260827" rel="stylesheet"/>
+<script src="/i18n/static-locale-runtime.js?v=20260827" defer></script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="quant-page practical-page">
+<main class="practical-shell">
+<div class="practical-top"><a class="practical-brand" href="/academy/">← Voltar para GugoPro Academy</a><a class="practical-back" href="/articles/investment/17-practical-trading.html">Ler Categoria 13: Dimensionamento de posição e controlo de risco</a></div>
+<nav aria-label="頁內導覽" class="practical-jump"><a href="#inputs">Plano de negociação</a><a href="#costs">Pressupostos de custo</a><a href="#results">Resultados da posição</a><a href="#limits">Limitações do modelo</a></nav>
+<header class="practical-hero"><div><div class="eyebrow">Category 13 · Controle pré‑trade</div><h1>Plano de trading prático<br/>Com verificador de posição</h1><p>Anote primeiro a perda máxima que está disposto a suportar e depois retrocesse para a posição inteira máxima. A ferramenta não fornece ativos, direção ou preços; todas as entradas são calculadas localmente no navegador atual.</p></div><div class="practical-badge"><strong>Risco primeiro, posição depois.</strong><span>Inclua slippage e custos no orçamento de stop‑loss.</span></div></header>
+<div class="practical-layout">
+<section class="practical-panel" id="inputs"><div class="eyebrow">Plano pré‑trade</div><h2>Criar uma suposição de negociação</h2><div class="practical-grid two">
+<div><label for="direction">Direção</label><select id="direction"><option value="long">Long (comprado)</option><option value="short">Short（Short）</option></select></div>
+<div><label for="account">Fundos da conta（元）</label><input id="account" inputmode="decimal" min="0.01" placeholder="ex. 100000" step="1" type="number"/></div>
+<div><label for="risk-percent">Teto de risco por trade (%)</label><input id="risk-percent" inputmode="decimal" max="99.99" min="0.01" placeholder="ex. 1" step="0.1" type="number"/><small class="practical-help">Isto é uma hipótese de limite superior; não significa que as perdas reais estarão necessariamente limitadas a este valor.</small></div>
+<div><label for="multiplier">Multiplicador de preço por unidade</label><input id="multiplier" inputmode="decimal" min="0.000001" step="0.01" type="number" value="1"/><small class="practical-help">Spot normalmente é 1; para futuros, verifique você mesmo o multiplicador do contrato.</small></div>
+<div><label for="entry">Preço de entrada (Entry)</label><input id="entry" inputmode="decimal" min="0.000001" placeholder="Insira seu preço planejado" step="0.0001" type="number"/></div>
+<div><label for="stop">Preço de stop Stop</label><input id="stop" inputmode="decimal" min="0.000001" placeholder="Insira o preço de invalidação" step="0.0001" type="number"/></div>
+<div><label for="target">Preço alvo Target</label><input id="target" inputmode="decimal" min="0.000001" placeholder="Insira o objetivo do plano" step="0.0001" type="number"/></div>
+</div>
+<fieldset class="practical-fieldset" id="costs"><legend>Pressupostos de custos e slippage</legend><p>Insira as taxas como percentagem, por ex. 0.10% → 0.10. Sempre estime slippage em desfavor do trader; conte taxas fixas uma vez por entrada/saída.</p><div class="practical-grid two">
+<div><label for="entry-fee">Comissão de entrada (%)</label><input id="entry-fee" inputmode="decimal" max="99.99" min="0" step="0.01" type="number" value="0.10"/></div>
+<div><label for="exit-fee">Taxa de saída (%)</label><input id="exit-fee" inputmode="decimal" max="99.99" min="0" step="0.01" type="number" value="0.10"/></div>
+<div><label for="entry-slip">Slippage na entrada (%)</label><input id="entry-slip" inputmode="decimal" max="99.99" min="0" step="0.01" type="number" value="0.05"/></div>
+<div><label for="exit-slip">Slippage de saída por stop (%)</label><input id="exit-slip" inputmode="decimal" max="99.99" min="0" step="0.01" type="number" value="0.05"/></div>
+<div><label for="entry-fixed">Taxa fixa de entrada（元）</label><input id="entry-fixed" inputmode="decimal" min="0" step="0.01" type="number" value="0"/></div>
+<div><label for="exit-fixed">Taxa fixa de saída (元)</label><input id="exit-fixed" inputmode="decimal" min="0" step="0.01" type="number" value="0"/></div>
+</div></fieldset>
+<div class="practical-actions"><button class="practical-calc" id="calculate" type="button">Verificar posições</button><button class="practical-clear" id="clear" type="button">limpar resultados</button></div><div aria-live="polite" class="practical-status" id="status">Ao inserir suas premissas de trading o cálculo é imediato; a página não busca cotações de mercado.</div><div class="practical-formula"><strong>Fórmula:</strong>Tolerância a perdas ＝ capital da conta×% risco; risco por unidade ＝ diferença do preço de stop×multiplicador＋custos variáveis; unidades inteiras máximas ＝ floor（（tolerância a perdas−custo fixo）÷ risco por unidade）。</div>
+</section>
+<section aria-live="polite" class="practical-result" id="results"><div class="eyebrow">Verificação de posição</div><h2>Resultados de posição e risco</h2><div class="practical-big" id="max-units">—</div><div class="practical-sub" id="result-message">Aguardando entrada válida</div><div class="practical-metrics">
+<div class="practical-metric"><span>Orçamento de risco</span><b id="risk-budget">—</b></div><div class="practical-metric"><span>Risco por unidade</span><b id="risk-per-unit">—</b></div><div class="practical-metric"><span>Estimar posição nominal</span><b id="notional">—</b></div><div class="practical-metric"><span>Pior perda estimada</span><b id="worst-loss">—</b></div><div class="practical-metric"><span>Taxa de utilização do orçamento</span><b id="budget-usage">—</b></div><div class="practical-metric"><span>R:R após custos</span><b id="net-rr">—</b></div><div class="practical-metric"><span>Preço de entrada real</span><b id="actual-entry">—</b></div><div class="practical-metric"><span>Premissas de execução do stop</span><b id="actual-stop">—</b></div>
+</div><div class="practical-breakdown"><h3>Cálculo de decomposição</h3><div class="practical-table-wrap"><table class="practical-table"><thead><tr><th>Item</th><th>Valor numérico</th><th>Explicar</th></tr></thead><tbody id="breakdown-rows"><tr><td colspan="3">Ainda não calculado</td></tr></tbody></table></div></div><div class="practical-note" id="limits"><strong>Limitações do modelo:</strong>Esta é uma verificação simplificada de risco pré‑trade e não determina se um ativo vale a pena ser negociado. Não considera gaps, fills parciais, impacto de liquidez, chamadas de margem, impostos/taxas, custo de empréstimo nem probabilidade real de execução; futuros, opções e produtos alavancados exigem verificação separada das especificações do contrato.</div></section>
+</div>
+<section class="practical-section"><div class="eyebrow">Usar com a categoria</div><h2>O que verificar a seguir?</h2><div class="practical-cards"><div class="practical-card"><strong>Custo por trade único</strong><p>Converta o R:R planejado em valor esperado líquido, não apenas em distância de preço.</p><a href="/academy/tools/trade-expectancy.html">Abrir expectativa de trade →</a></div><div class="practical-card"><strong>Transação concluída</strong><p>Verifique taxa de acerto, P/L médio e máximas sequências de perdas usando resultados reais em R.</p><a href="/academy/tools/trade-journal-analyzer.html">Abrir analisador de diário de trades →</a></div><div class="practical-card"><strong>Risco histórico</strong><p>Converta séries de patrimônio em MDD, períodos de recuperação e métricas risco‑retorno.</p><a href="/academy/tools/risk-return-drawdown.html">Abrir ferramenta MDD →</a></div></div></section>
+<footer class="practical-footer">Dados e cálculos usam apenas as hipóteses que você insere; não há cotações em tempo real nem cálculos em servidor. Verifique especificações de corretoras, exchanges e produtos; esta página é uma ferramenta de pesquisa e educação, não aconselhamento personalizado de investimento ou negociação.</footer>
+</main><script src="/academy/academy.js?v=20260827-i18n1"></script><script src="/academy/tools/practical-trade-plan.js"></script><section class="finance-quality-note" data-finance-quality=""><h2>Como usar esta ferramenta financeira</h2><p>Esta página transforma um conceito financeiro em entradas, fórmulas e cenários verificáveis. Leia primeiro as definições e compare os cenários conservador, base e de estresse; um resultado não garante retorno.</p><p>Fluxo recomendado: confirme unidades e períodos, insira suas premissas e revise sensibilidade, custos e cenários desfavoráveis.</p><p><strong>Limitações:</strong> o modelo não prevê os mercados e pode não incluir todos os impostos, slippage, liquidez, crédito, regras ou termos contratuais. Confirme decisões importantes com fontes primárias atualizadas e um profissional qualificado.</p></section>
+<section class="finance-disclaimer" data-finance-disclaimer=""><h2>Aviso de risco financeiro</h2><p>Esta página, suas calculadoras e exemplos servem apenas para educação, pesquisa e estimativa de cenários. Não constituem aconselhamento personalizado de investimento, trading, apostas, fiscal, jurídico ou financeiro. Mercados e regras podem mudar; confirme fontes primárias atuais e assuma a responsabilidade pelas suas decisões. Desempenho passado, saídas do modelo e simulações não garantem resultados futuros.</p></section>
+</body></html>

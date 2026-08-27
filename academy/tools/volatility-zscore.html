@@ -5,20 +5,24 @@
 <meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/>
 <title>波動度 Z-Score 研究工具｜GugoPro Academy</title>
 <meta content="以你查證的歷史日報酬計算滾動波動度、波動 Z-Score 與壓力狀態；純前端、透明公式、不填假行情。" name="description"/>
-<link href="https://academy.gugopro.com/tools/volatility-zscore.html" rel="canonical"/>
 <link href="../academy.css" rel="stylesheet"/>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"波動度 Z-Score 研究工具","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"以使用者查證的歷史報酬計算滾動波動度與 Z-Score。","url":"https://academy.gugopro.com/tools/volatility-zscore.html"}</script>
-<meta name="i18n-status" content="machine-draft">
-<link rel="alternate" hreflang="zh-TW" href="./volatility-zscore.html">
-<link rel="alternate" hreflang="zh-CN" href="./volatility-zscore.html?lang=zh-CN">
-<link rel="alternate" hreflang="en" href="./volatility-zscore.html?lang=en">
-<link rel="alternate" hreflang="ja" href="./volatility-zscore.html?lang=ja">
-<link rel="alternate" hreflang="de" href="./volatility-zscore.html?lang=de">
-<link rel="alternate" hreflang="fr" href="./volatility-zscore.html?lang=fr">
-<link rel="alternate" hreflang="es" href="./volatility-zscore.html?lang=es">
-<link rel="alternate" hreflang="pt" href="./volatility-zscore.html?lang=pt">
-<link rel="alternate" hreflang="x-default" href="./volatility-zscore.html">
-<script src="/i18n/gugopro-i18n.js?v=machine-draft-20260827" defer></script>
+<meta property="og:url" content="https://gugopro.com/academy/tools/volatility-zscore.html">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://gugopro.com/academy/tools/volatility-zscore.html">
+<link rel="alternate" hreflang="zh-TW" href="https://gugopro.com/academy/tools/volatility-zscore.html">
+<link rel="alternate" hreflang="zh-CN" href="https://gugopro.com/zh-CN/academy/tools/volatility-zscore.html">
+<link rel="alternate" hreflang="en" href="https://gugopro.com/en/academy/tools/volatility-zscore.html">
+<link rel="alternate" hreflang="ja" href="https://gugopro.com/ja/academy/tools/volatility-zscore.html">
+<link rel="alternate" hreflang="de" href="https://gugopro.com/de/academy/tools/volatility-zscore.html">
+<link rel="alternate" hreflang="fr" href="https://gugopro.com/fr/academy/tools/volatility-zscore.html">
+<link rel="alternate" hreflang="es" href="https://gugopro.com/es/academy/tools/volatility-zscore.html">
+<link rel="alternate" hreflang="pt" href="https://gugopro.com/pt/academy/tools/volatility-zscore.html">
+<link rel="alternate" hreflang="x-default" href="https://gugopro.com/academy/tools/volatility-zscore.html">
+<meta name="static-locale-route" content="true">
+<link rel="stylesheet" href="/tools/finance/finance-locale.css?v=20260827">
+<script src="/i18n/static-locale-runtime.js?v=20260827" defer></script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 </head>
 <body class="quant-page">
 <main class="tool-page">
@@ -48,4 +52,6 @@ const mean=rolls.reduce((a,b)=>a+b,0)/rolls.length,sd=Math.sqrt(rolls.reduce((a,
 $('zscore').textContent=fmt(z,2)+' Z';$('current').textContent=fmt(cur,2)+'%';$('mean').textContent=fmt(mean,2)+'%';$('count').textContent=data.length;$('rolls').textContent=rolls.length;$('regime').textContent=z>=2?'高於自身歷史波動分布（研究警示）':z<=-2?'低於自身歷史波動分布（不代表低風險）':'接近自身歷史波動分布中段';
 const max=Math.max(...rolls,1),min=Math.min(...rolls,0),span=Math.max(max-min,1);$('chart').innerHTML=rolls.slice(-80).map(v=>{const h=Math.max(3,((v-min)/span)*150);return '<i style="height:'+h+'px" class="'+(v===cur?'alert':'')+'" title="'+fmt(v,2)+'%"></i>'}).join('');setStatus('計算完成：已使用 '+data.length+' 筆使用者輸入報酬。','ok')}
 $('calc').addEventListener('click',calc);$('returns').addEventListener('input',()=>setStatus('資料已變更，按下計算後更新。'));$('window').addEventListener('change',()=>setStatus('窗口已變更，按下計算後更新。'));
-</script></body></html>
+</script><section class="finance-quality-note" data-finance-quality><h2>財經工具使用說明</h2><p>本頁把財經概念拆成可檢查的輸入、公式與情境結果。請先閱讀變數定義，再比較保守、中性與壓力情境；單一結果不代表收益承諾。</p><p>建議流程：確認資料單位與期間，輸入自己的假設，接著檢查敏感度、成本與下行情境。</p><p><strong>限制：模型不會預測市場，也不包含所有稅費、滑價、流動性、信用、法規或個別合約條款；重要決策請以最新官方資料及合格專業意見複核。:</strong>限制：模型不會預測市場，也不包含所有稅費、滑價、流動性、信用、法規或個別合約條款；重要決策請以最新官方資料及合格專業意見複核。</p></section>
+<section class="finance-disclaimer" data-finance-disclaimer><h2>投資風險免責聲明</h2><p>本頁內容、計算器與示例僅供教育、研究與情境估算，不構成投資、交易、投注、稅務、法律或其他個人化金融建議。金融市場與個別制度可能快速變化，請核對最新官方資料並自負決策責任。過去表現、模型輸出或模擬結果不代表未來結果。</p></section>
+</body></html>

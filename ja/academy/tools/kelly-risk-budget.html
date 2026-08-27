@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>Kelly リスク予算ツール｜GugoPro Academy</title>
+<meta content="あなたの取引記録サマリからKelly上限、分数Kellyリスク予算、ストップ位置を計算する；過去の勝率を未来の保証とみなしてはいけない。" name="description"/>
+<link href="/academy/academy.css" rel="stylesheet"/>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Kelly リスク予算ツール","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"ユーザーの取引記録サマリからKellyおよび分数Kellyのリスク予算を推定する。","url":"https://academy.gugopro.com/tools/kelly-risk-budget.html"}</script>
+<meta content="https://gugopro.com/academy/tools/kelly-リスク予算.html" property="og:url"/>
+<meta content="index, follow" name="robots"/>
+<link href="https://gugopro.com/ja/academy/tools/kelly-risk-budget.html" rel="canonical"/>
+<link href="https://gugopro.com/academy/tools/kelly-risk-budget.html" hreflang="zh-TW" rel="alternate"/>
+<link href="https://gugopro.com/zh-CN/academy/tools/kelly-risk-budget.html" hreflang="zh-CN" rel="alternate"/>
+<link href="https://gugopro.com/en/academy/tools/kelly-risk-budget.html" hreflang="en" rel="alternate"/>
+<link href="https://gugopro.com/ja/academy/tools/kelly-risk-budget.html" hreflang="ja" rel="alternate"/>
+<link href="https://gugopro.com/de/academy/tools/kelly-risk-budget.html" hreflang="de" rel="alternate"/>
+<link href="https://gugopro.com/fr/academy/tools/kelly-risk-budget.html" hreflang="fr" rel="alternate"/>
+<link href="https://gugopro.com/es/academy/tools/kelly-risk-budget.html" hreflang="es" rel="alternate"/>
+<link href="https://gugopro.com/pt/academy/tools/kelly-risk-budget.html" hreflang="pt" rel="alternate"/>
+<link href="https://gugopro.com/academy/tools/kelly-risk-budget.html" hreflang="x-default" rel="alternate"/>
+<meta content="true" name="static-locale-route"/>
+<meta content="machine-draft" name="i18n-status"/>
+<link href="/tools/finance/finance-locale.css?v=20260827" rel="stylesheet"/>
+<script src="/i18n/static-locale-runtime.js?v=20260827" defer></script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="quant-page">
+<main class="tool-page"><div class="tool-crumb"><a href="/academy/">← GugoPro Academy に戻る</a><span>リスク管理 · 個人入力 · 投資助言ではありません</span></div>
+<div class="tool-layout"><section class="panel"><div class="eyebrow">Quant lab · リスク予算</div><h1>Kelly リスク予算</h1><p>終了した取引の統計サマリを用いて『アドバンテージ』をKelly上限と保守的なフラクショナルKellyに変換する。勝率、ペイオフ比、サンプルが不安定な場合、出力を自動ポジション比率と見なしてはならない。</p>
+<label for="win">勝率（％）</label><input id="win" max="99.99" min="0.01" placeholder="終了したトレードのサマリを貼り付け" step="0.1" type="number"/>
+<label for="avgwin">平均利益（R）</label><input id="avgwin" min="0.01" placeholder="例：1.8R" step="0.01" type="number"/>
+<label for="avgloss">平均損失（R）</label><input id="avgloss" min="0.01" placeholder="例：1R" step="0.01" type="number"/>
+<label for="fraction">分数ケリー</label><select id="fraction"><option value="1">Full Kelly（研究上限）</option><option selected="" value="0.5">Half Kelly</option><option value="0.25">Quarter Kelly</option></select>
+<label for="account">口座資金（元）</label><input id="account" min="0" placeholder="ご自身のアカウント基準を入力してください" step="1" type="number"/>
+<label for="stop">単一トレードのストップ距離（%）</label><input id="stop" max="100" min="0.01" placeholder="ご自身のストップ想定を入力してください" step="0.1" type="number"/>
+<button class="calc" id="calc" type="button">リスク予算を計算</button><div aria-live="polite" class="status" id="status">終了した取引を基にしたサマリーを入力してください；このページは記録を保存しません。</div>
+<div class="formula-note"><strong>式：</strong>b＝平均獲利 R ÷ 平均虧損 R；Full Kelly＝p−(1−p)÷b；分數 Kelly＝Full Kelly×fraction。ポジションサイズは口座残高×リスク比率×ストップ距離で概算され、ギャップ、スリッページ、相関、証拠金ルールは考慮していません。</div></section>
+<section class="result"><div class="eyebrow">リスク予算</div><h2>理論上限と保守的な比率</h2><div class="result-big" id="fractionKelly">—</div><div class="sub" id="edge">計算待ち</div>
+<div class="metric-grid"><div class="metric"><span class="sub">Full Kelly</span><b id="fullKelly">—</b></div><div class="metric"><span class="sub">盈虧比 b</span><b id="ratio">—</b></div><div class="metric"><span class="sub">リスク予算</span><b id="riskBudget">—</b></div><div class="metric"><span class="sub">ストップ時のポジション上限</span><b id="position">—</b></div></div>
+<div class="visual"><h3>Full Kelly と Fractional Kelly</h3><div class="bar-chart" id="chart"><i style="height:6px"></i><i style="height:6px"></i></div><div class="axis"><span>フル</span><span>少額株（フラクショナル）</span></div></div>
+<div class="source-box"><strong>重要な制約：</strong>ケリー（Kelly）は勝率や損益比の推定誤差に非常に敏感です；Full Kelly が 0 未満であれば、履歴上の優位が正の Kelly を支持するには不十分であることを意味し、負の値を反転してレバレッジに使うべきではありません。本ページは研究用計算機であり、個別の投資やトレード助言ではありません。</div></section></div></main>
+<script src="/academy/academy.js?v=20260827-i18n1"></script><script>
+const $=id=>document.getElementById(id),fmt=(n,d=2)=>Number.isFinite(n)?n.toFixed(d):'—';
+function calc(){const p=+$('win').value/100,w=+$('avgwin').value,l=+$('avgloss').value,f=+$('fraction').value,acct=+$('account').value,stop=+$('stop').value/100;if(![p,w,l,f,acct,stop].every(Number.isFinite)||p<=0||p>=1||w<=0||l<=0||f<=0||acct<0||stop<=0){for(const id of ['fractionKelly','fullKelly','ratio','riskBudget','position'])$(id).textContent='—';$('edge').textContent='等待有效輸入';$('chart').innerHTML='';$('status').textContent='輸入錯誤：請填入 0–100% 的勝率、正數 R 倍數、資金與停損距離。';$('status').className='status error';return}const b=w/l,full=p-(1-p)/b,frac=Math.max(0,full*f),budget=acct*frac,pos=stop?budget/stop:0;$('fractionKelly').textContent=fmt(frac*100,2)+'%';$('fullKelly').textContent=fmt(full*100,2)+'%';$('ratio').textContent=fmt(b,2)+' R';$('riskBudget').textContent='NT$ '+Math.round(budget).toLocaleString('zh-TW');$('position').textContent='NT$ '+Math.round(pos).toLocaleString('zh-TW');$('edge').textContent=full>0?'輸入統計呈現正 Kelly；仍需做樣本外與壓力測試。':'輸入統計的 Full Kelly 不為正；不要用負數結果製造槓桿。';const scale=Math.max(Math.abs(full),Math.abs(frac),.01);$('chart').innerHTML='<i style="height:'+Math.max(5,Math.max(0,full)/scale*145)+'px" title="Full Kelly"></i><i style="height:'+Math.max(5,frac/scale*145)+'px" title="Fractional Kelly"></i>';$('status').textContent='計算完成：結果只反映輸入的交易紀錄摘要與停損假設。';$('status').className='status ok'}
+$('calc').addEventListener('click',calc);</script><section class="finance-quality-note" data-finance-quality=""><h2>財務ツールの使い方</h2><p>このページでは、財務の概念を検証可能な入力、計算式、シナリオに分けています。変数の定義を確認し、保守・基本・ストレスケースを比較してください。単一の結果は収益を保証しません。</p><p>手順：単位と期間を確認し、自分の前提を入力してから、感応度、コスト、下振れケースを確認します。</p><p><strong>制限：市場を予測するものではなく、税金、スリッページ、流動性、信用、規制、契約条件をすべて含むとは限りません。重要な判断は最新の一次情報と有資格者に確認してください。:</strong>制限：市場を予測するものではなく、税金、スリッページ、流動性、信用、規制、契約条件をすべて含むとは限りません。重要な判断は最新の一次情報と有資格者に確認してください。</p></section>
+<section class="finance-disclaimer" data-finance-disclaimer=""><h2>投資リスクに関する免責事項</h2><p>本ページの内容、計算ツール、例示は教育・研究・シナリオ試算のみを目的とし、個別の投資、取引、賭け、税務、法律その他の金融助言ではありません。市場や制度は変化するため、最新の一次情報を確認し、判断はご自身の責任で行ってください。過去の実績、モデル出力、シミュレーションは将来を保証しません。</p></section>
+</body></html>

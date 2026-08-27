@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>台指期／富台期配对工具｜GugoPro Academy</title>
+<meta content="输入同一时间核实的现货、近月与次月期货报价，计算 Basis、年化期现价差、转仓价差与名义损益。" name="description"/>
+<link href="/academy/academy.css" rel="stylesheet"/>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"台指期／富台期配对工具","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"以用户输入拆解现货、近月与次月期货的期现价差和换仓影响。","url":"https://academy.gugopro.com/tools/futures-basis-pairs.html"}</script>
+<meta content="https://gugopro.com/academy/tools/futures-basis-pairs.html" property="og:url"/>
+<meta content="index, follow" name="robots"/>
+<link href="https://gugopro.com/zh-CN/academy/tools/futures-basis-pairs.html" rel="canonical"/>
+<link href="https://gugopro.com/academy/tools/futures-basis-pairs.html" hreflang="zh-TW" rel="alternate"/>
+<link href="https://gugopro.com/zh-CN/academy/tools/futures-basis-pairs.html" hreflang="zh-CN" rel="alternate"/>
+<link href="https://gugopro.com/en/academy/tools/futures-basis-pairs.html" hreflang="en" rel="alternate"/>
+<link href="https://gugopro.com/ja/academy/tools/futures-basis-pairs.html" hreflang="ja" rel="alternate"/>
+<link href="https://gugopro.com/de/academy/tools/futures-basis-pairs.html" hreflang="de" rel="alternate"/>
+<link href="https://gugopro.com/fr/academy/tools/futures-basis-pairs.html" hreflang="fr" rel="alternate"/>
+<link href="https://gugopro.com/es/academy/tools/futures-basis-pairs.html" hreflang="es" rel="alternate"/>
+<link href="https://gugopro.com/pt/academy/tools/futures-basis-pairs.html" hreflang="pt" rel="alternate"/>
+<link href="https://gugopro.com/academy/tools/futures-basis-pairs.html" hreflang="x-default" rel="alternate"/>
+<meta content="true" name="static-locale-route"/>
+<meta content="machine-draft" name="i18n-status"/>
+<link href="/tools/finance/finance-locale.css?v=20260827" rel="stylesheet"/>
+<script src="/i18n/static-locale-runtime.js?v=20260827" defer></script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="quant-page">
+<main class="tool-page"><div class="tool-crumb"><a href="/academy/">← 返回 GugoPro Academy</a><span>衍生品研究 · 同時輸入 · 非即時報價</span></div>
+<div class="tool-layout"><section class="panel"><div class="eyebrow">量化实验室 · 期货基差 Futures</div><h1>台指期／富台期期现价差</h1><p>把同一时点的现货参考、近月与次月期货报价放在同一个单位中，拆解 Basis、期限结构与简化名目损益。请按实际交易所合约规格修改乘数。</p>
+<label for="spot">现货／指数参考值</label><input id="spot" min="0" placeholder="粘贴已核验值" step="0.01" type="number"/>
+<label for="front">近月期货价格</label><input id="front" min="0" placeholder="粘贴已核验值" step="0.01" type="number"/>
+<label for="next">次月期货价格</label><input id="next" min="0" placeholder="粘贴已核验值" step="0.01" type="number"/>
+<label for="days">近月距到期日（天）</label><input id="days" max="365" min="1" step="1" type="number" value="30"/>
+<label for="multiplier">每点乘数（元）</label><input id="multiplier" min="0.01" step="0.01" type="number" value="200"/>
+<label for="contracts">近月口数（研究用）</label><input id="contracts" min="0" step="1" type="number" value="1"/>
+<button class="calc" id="calc" type="button">拆解期现与转仓价差</button><div aria-live="polite" class="status" id="status">请输入同一时间、同一标的口径的三个价格。</div>
+<div class="formula-note"><strong>公式：</strong>Basis＝近月期货−现货；Basis%＝Basis÷现货；简化年化 Basis＝Basis%×365÷距到期天数；Calendar spread＝次月−近月。这些是研究拆解，不是保证收敛或套利收益。</div></section>
+<section class="result"><div class="eyebrow">基差分解</div><h2>期现与期限结构</h2><div class="result-big" id="basis">—</div><div class="sub" id="shape">等待有效输入</div>
+<div class="metric-grid"><div class="metric"><span class="sub">基差 %</span><b id="basisPct">—</b></div><div class="metric"><span class="sub">年化 Basis</span><b id="annualBasis">—</b></div><div class="metric"><span class="sub">转仓价差</span><b id="calendar">—</b></div><div class="metric"><span class="sub">名义 Basis 金额</span><b id="notional">—</b></div></div>
+<div class="visual"><h3>价差结构（点数）</h3><div class="bar-chart" id="chart"><i style="height:6px"></i></div><div class="axis"><span>现货 0</span><span>基差</span><span>日历价差</span></div></div>
+<div class="source-box"><strong>契约与资料限制：</strong>台指期 TX 的合约大小与交易时段应以 <a href="https://www.taifex.com.tw/enl/eng2/tX" rel="noopener" target="_blank">TAIFEX 官方规格</a>核对；富台期与其他指数期货的乘数、币别、到期与交易时段不可直接套用。工具不抓即时报价，避免把不同时间或不同合约误配成可交易的价差。</div></section></div></main>
+<script src="/academy/academy.js?v=20260827-i18n1"></script><script>
+const $=id=>document.getElementById(id),fmt=(n,d=2)=>Number.isFinite(n)?n.toFixed(d):'—';
+function calc(){const s=+$('spot').value,f=+$('front').value,n=+$('next').value,d=+$('days').value,m=+$('multiplier').value,q=+$('contracts').value;if(![s,f,n,d,m,q].every(Number.isFinite)||s<=0||d<=0||m<=0||q<0){$('status').textContent='輸入錯誤：請填入有效的同口徑價格、天數、乘數與口數。';$('status').className='status error';return}const b=f-s,p=b/s*100,a=p*365/d,cal=n-f; $('basis').textContent=fmt(b)+' 點';$('basisPct').textContent=fmt(p,3)+'%';$('annualBasis').textContent=fmt(a,2)+'%';$('calendar').textContent=fmt(cal)+' 點';$('notional').textContent='NT$ '+Math.round(b*m*q).toLocaleString('zh-TW');$('shape').textContent=cal>0?'次月高於近月：正價差／Contango 研究標籤':cal<0?'次月低於近月：逆價差／Backwardation 研究標籤':'次月與近月相同：期限價差為 0';const span=Math.max(Math.abs(b),Math.abs(cal),1);$('chart').innerHTML='<i style="height:'+Math.max(5,Math.abs(b)/span*145)+'px" title="Basis"></i><i style="height:'+Math.max(5,Math.abs(cal)/span*145)+'px" title="Calendar spread"></i>';$('status').textContent='計算完成：請再核對乘數、幣別、到期日與同時點資料。';$('status').className='status ok'}
+$('calc').addEventListener('click',calc);</script><section class="finance-quality-note" data-finance-quality=""><h2>财经工具使用说明</h2><p>本页把财经概念拆成可检查的输入、公式与情境结果。请先阅读变量定义，再比较保守、中性与压力情境；单一结果不代表收益承诺。</p><p>建议流程：确认资料单位与期间，输入自己的假设，接着检查敏感度、成本与下行情境。</p><p><strong>限制：模型不会预测市场，也不包含所有税费、滑点、流动性、信用、法规或个别合约条款；重要决策请以最新官方资料及合格专业意见复核。:</strong>限制：模型不会预测市场，也不包含所有税费、滑点、流动性、信用、法规或个别合约条款；重要决策请以最新官方资料及合格专业意见复核。</p></section>
+<section class="finance-disclaimer" data-finance-disclaimer=""><h2>投资风险免责声明</h2><p>本页内容、计算器与示例仅供教育、研究与情境估算，不构成投资、交易、投注、税务、法律或其他个性化金融建议。金融市场与个别制度可能快速变化，请核对最新官方资料并承担决策责任。过去表现、模型输出或模拟结果不代表未来结果。</p></section>
+</body></html>

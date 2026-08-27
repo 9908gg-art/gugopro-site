@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+
+<html lang="pt">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>Ferramenta de alocação de ativos e rebalanceamento dinâmico｜GugoPro Academy</title>
+<meta content="A partir dos valores de mercado dos ativos e pesos alvo inseridos pelo usuário, calcule o desvio atual, o montante de ajuste teórico, o limiar de deriva, prioridade para novo capital e fricção de negociação. Totalmente front‑end, fórmulas transparentes, sem captura de dados de mercado em tempo real." name="description"/>
+<meta content="Alocação de ativos, rebalanceamento dinâmico, portfólio, limiar de drift, custos de transação, diversificação" name="keywords"/>
+<link href="/academy/academy.css" rel="stylesheet"/>
+<link href="/academy/tools/portfolio-rebalancer.css" rel="stylesheet"/>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Ferramenta de alocação de ativos e rebalanceamento dinâmico","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"Com os valores de mercado atuais e os pesos alvo inseridos pelo usuário, verifique o desvio de alocação, regras de rebalanceamento dinâmico e fricção de negociação.","url":"https://gugopro.com/pt/academy/tools/portfolio-rebalancer.html"}</script>
+<meta content="https://gugopro.com/academy/tools/portfolio-rebalancer.html" property="og:url"/>
+<meta content="index, follow" name="robots"/>
+<link href="https://gugopro.com/pt/academy/tools/portfolio-rebalancer.html" rel="canonical"/>
+<link href="https://gugopro.com/academy/tools/portfolio-rebalancer.html" hreflang="zh-TW" rel="alternate"/>
+<link href="https://gugopro.com/zh-CN/academy/tools/portfolio-rebalancer.html" hreflang="zh-CN" rel="alternate"/>
+<link href="https://gugopro.com/en/academy/tools/portfolio-rebalancer.html" hreflang="en" rel="alternate"/>
+<link href="https://gugopro.com/ja/academy/tools/portfolio-rebalancer.html" hreflang="ja" rel="alternate"/>
+<link href="https://gugopro.com/de/academy/tools/portfolio-rebalancer.html" hreflang="de" rel="alternate"/>
+<link href="https://gugopro.com/fr/academy/tools/portfolio-rebalancer.html" hreflang="fr" rel="alternate"/>
+<link href="https://gugopro.com/es/academy/tools/portfolio-rebalancer.html" hreflang="es" rel="alternate"/>
+<link href="https://gugopro.com/pt/academy/tools/portfolio-rebalancer.html" hreflang="pt" rel="alternate"/>
+<link href="https://gugopro.com/academy/tools/portfolio-rebalancer.html" hreflang="x-default" rel="alternate"/>
+<meta content="true" name="static-locale-route"/>
+<meta content="machine-draft" name="i18n-status"/>
+<link href="/tools/finance/finance-locale.css?v=20260827" rel="stylesheet"/>
+<script src="/i18n/static-locale-runtime.js?v=20260827" defer></script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="allocation-tool-page">
+<header class="nav"><div class="shell navin"><a class="brand" href="/academy/">GugoPro <span>Academy</span></a><button class="theme" data-theme="" type="button">Alternar modo escuro (breve)</button></div></header>
+<main class="allocation-shell">
+<div class="tool-crumb"><a href="/academy/lessons/15-retirement-cashflow.html">← Voltar aos cursos da Academy</a><span>Design de portfólio · Apenas frontend · Sem dados de mercado em tempo real</span></div>
+<header class="tool-hero" id="tool-title">
+<div class="eyebrow">Design de portfólio · Rebalance dinâmico</div>
+<h1>Alocação de ativos e rebalanceamento dinâmico</h1>
+<p>Insira o valor de mercado atual e os pesos alvo no mesmo ponto de avaliação, verifique o desvio e compare as três regras: retorno completo ao alvo, limiar de drift e priorização de novo capital. Os resultados são cálculos teóricos e não representam ordens executadas nem adequação para todos.</p>
+<div class="badge-row"><span>Pesos alvo</span><span>Bandas de drift</span><span>Cash‑first</span><span>Lado cliente</span></div>
+</header>
+<nav aria-label="工具章節導覽" class="article-jump"><a href="#inputs">Inserir alocação</a><a href="#rules">Regras de rebalanceamento</a><a href="#results">resultado e diferença</a><a href="#limits">Restrições e fontes</a></nav>
+<div class="tool-layout allocation-layout">
+<section class="panel input-panel" id="inputs">
+<div class="section-kicker">01 · Portfolio input</div>
+<h2>Ativos atuais e alocação alvo</h2>
+<p class="helper">Use a mesma data, a mesma moeda e a mesma base de avaliação. Os pesos alvo devem somar 100%; não insira dados de mercado fictícios; ativos com valor zero devem manter seu peso alvo.</p>
+<div class="table-wrap input-table-wrap">
+<table class="asset-input-table">
+<thead><tr><th scope="col">Nome do ativo</th><th scope="col">Valor de mercado atual</th><th scope="col">Ponderação alvo</th><th scope="col"><span class="sr-only">Operações</span></th></tr></thead>
+<tbody id="asset-rows"></tbody>
+</table>
+</div>
+<div class="input-actions"><button class="button secondary" id="add-asset" type="button">Adicionar linha de ativo</button><button class="button ghost" id="reset" type="button">Restaurar padrões</button></div>
+<div class="field-grid compact-fields">
+<label for="contribution">Novo aporte desta vez（元）<input id="contribution" min="0" step="1" type="number" value="0"/></label>
+<label for="rebalance-mode">Regras de rebalanceamento<select id="rebalance-mode"><option value="full">Retornar completamente aos pesos alvo</option><option value="threshold">limiar de drift: ajustar apenas ativos que excedam o limiar</option><option value="cash-first">Priorizar novos fundos para cobrir subponderações</option></select></label>
+<label for="threshold">Limiar de desvio (pontos percentuais)<input id="threshold" max="100" min="0" step="0.1" type="number" value="5"/></label>
+<label for="fee-rate">Taxa de corretagem (%)<input id="fee-rate" max="10" min="0" step="0.01" type="number" value="0.15"/></label>
+<label for="minimum-fee">Taxa mínima por operação（元）<input id="minimum-fee" min="0" step="1" type="number" value="20"/></label>
+<label for="tax-rate">Taxa de imposto/taxa de venda (%)<input id="tax-rate" max="10" min="0" step="0.01" type="number" value="0"/></label>
+</div>
+<div aria-live="polite" class="mode-help" id="mode-help"></div>
+<button class="button primary" id="calculate" type="button">Calcular alocação e rebalanceamento</button>
+<div aria-live="polite" class="status" id="status">Ainda não calculado; entradas e resultados permanecem apenas na página atual do navegador.</div>
+</section>
+<section class="panel rules-panel" id="rules">
+<div class="section-kicker">02 · Decision rules</div>
+<h2>Escreva as regras primeiro, depois veja a diferença.</h2>
+<div class="rule-cards">
+<article><strong>Retornar completamente ao alvo</strong><p>Recalcule os valores de mercado alvo somando o valor de mercado total e os novos fundos, mostrando o montante teórico de compra ou redução para cada ativo.</p></article>
+<article><strong>limiar de drift</strong><p>Compare peso atual e peso alvo em pontos percentuais; ativos que não ultrapassam o limiar não são marcados como obrigatórios para negociação.</p></article>
+<article><strong>Priorizar novos fundos</strong><p>Alocar novos recursos primeiro às lacunas de sub‑peso; a lacuna restante por insuficiência de fundos permanece e não é assumida como negociação concluída.</p></article>
+</div>
+<div class="formula-note"><strong>Fórmula:</strong><br/>Ponderação atual = Valor de mercado atual ÷ Valor de mercado total atual<br/>Valor de mercado alvo = (Valor de mercado total atual + novos fundos) × ponderação alvo<br/>Valor de ajuste teórico = Valor de mercado alvo − Valor de mercado atual<br/>Desvio (pontos percentuais) = peso atual − peso alvo</div>
+<div class="note-box"><strong>Pontos percentuais não são porcentagens.</strong>Alvo 60%, atual 66% representa um desvio de +6 pontos percentuais; não é o mesmo conceito que um "sobrepeso relativo de 10%".</div>
+</section>
+<section class="result result-panel" id="results">
+<div class="section-kicker">03 · Allocation output</div>
+<div class="result-heading"><div><h2>Desvio de alocação e ações teóricas</h2><p class="helper">Comprar/reduzir é um rótulo de delta do modelo, não uma ordem; custos e impostos são suposições pedagógicas inseridas pelo usuário.</p></div><button class="button secondary" disabled="" id="download" type="button">Descarregar resultados locais</button></div>
+<div class="metric-grid" id="summary"></div>
+<div class="visual allocation-visual"><h3>Ponderação atual e ponderação alvo</h3><div aria-label="目前權重與目標權重比較圖" class="allocation-chart" id="allocation-chart" role="img"></div><div class="chart-legend"><span><i class="legend-current"></i>Ponderação atual</span><span><i class="legend-target"></i>Posição alvo</span></div></div>
+<div class="table-wrap result-table-wrap"><table class="result-table"><thead><tr><th scope="col">Ativos</th><th scope="col">Ponderação atual</th><th scope="col">Ponderação alvo</th><th scope="col">Desvio</th><th scope="col">Valor de mercado alvo</th><th scope="col">Ação teórica</th><th scope="col">Peso estimado após</th></tr></thead><tbody id="allocation-rows"></tbody></table></div>
+<div class="cost-box"><h3>Fricção de negociação e caixa residual</h3><div class="cost-grid" id="cost-summary"></div></div>
+</section>
+</div>
+<section class="source-box" id="limits">
+<div class="section-kicker">04 · Sources &amp; limits</div>
+<h2>Fontes de dados e limites do modelo</h2>
+<p>Investor.gov vê alocação de ativos e rebalanceamento como decisões que devem combinar horizonte temporal e tolerância ao risco; o guia da SEC lista três abordagens comuns — vender posições sobreponderadas, direcionar novos fundos para as subponderadas e ajustar contribuições contínuas — e alerta sobre custos de negociação e consequências fiscais; a FINRA também aponta que diversificação, alocação e rebalanceamento tratam de diferentes camadas de gestão de risco.<sup><a href="https://www.investor.gov/introduction-investing/getting-started/asset-allocation" rel="noopener" target="_blank">[1]</a> <a href="https://www.investor.gov/additional-resources/general-resources/publications-research/info-sheets/beginners-guide-asset" rel="noopener" target="_blank">[2]</a> <a href="https://www.finra.org/investors/investing/investing-basics/asset-allocation-diversification" rel="noopener" target="_blank">[3]</a></sup></p>
+<p>Esta ferramenta não verifica as posições subjacentes dos fundos, correlações, liquidez, situação fiscal, restrições de conta, horários de negociação, tamanho mínimo de ordem ou qualidade dos ativos; nem determina se pesos‑alvo são adequados para um indivíduo. Os custos de negociação são apenas estimativas simplificadas inseridas pelo usuário e não substituem taxas de corretagem, impostos sobre transações, imposto sobre ganhos de capital ou aconselhamento profissional.</p>
+<p class="disclaimer">Esta página é um modelo educacional determinístico, não um backtest histórico, Monte Carlo, previsão de retornos, recomendação de alocação de ativos ou diretriz de negociação. Verifique antes as datas dos dados, moeda, pesos, taxas e regulamentação aplicável. This is research and analysis only, not personalized financial advice.</p>
+</section>
+</main>
+<script src="/academy/academy.js?v=20260827-i18n1"></script>
+<script src="/academy/tools/portfolio-rebalancer.js"></script><section class="finance-quality-note" data-finance-quality=""><h2>Como usar esta ferramenta financeira</h2><p>Esta página transforma um conceito financeiro em entradas, fórmulas e cenários verificáveis. Leia primeiro as definições e compare os cenários conservador, base e de estresse; um resultado não garante retorno.</p><p>Fluxo recomendado: confirme unidades e períodos, insira suas premissas e revise sensibilidade, custos e cenários desfavoráveis.</p><p><strong>Limitações:</strong> o modelo não prevê os mercados e pode não incluir todos os impostos, slippage, liquidez, crédito, regras ou termos contratuais. Confirme decisões importantes com fontes primárias atualizadas e um profissional qualificado.</p></section>
+<section class="finance-disclaimer" data-finance-disclaimer=""><h2>Aviso de risco financeiro</h2><p>Esta página, suas calculadoras e exemplos servem apenas para educação, pesquisa e estimativa de cenários. Não constituem aconselhamento personalizado de investimento, trading, apostas, fiscal, jurídico ou financeiro. Mercados e regras podem mudar; confirme fontes primárias atuais e assuma a responsabilidade pelas suas decisões. Desempenho passado, saídas do modelo e simulações não garantem resultados futuros.</p></section>
+</body>
+</html>

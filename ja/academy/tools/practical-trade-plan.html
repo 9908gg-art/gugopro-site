@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>実戦トレード計画とポジションチェッカー｜GugoPro Academy</title>
+<meta content="口座資金、1回あたりリスク、エントリー、ストップ、ターゲット、取引コストを入力して、コスト控除後の最大整数ポジションとリスク使用率を推定します。フロントエンドのみで、相場データは取得しません。" name="description"/>
+<link href="/academy/academy.css" rel="stylesheet"/><link href="/academy/tools/practical-trading.css" rel="stylesheet"/>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"実戦トレード計画とポジションチェッカー","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"ユーザー入力の口座リスク、価格、取引コストから最大整数ポジションを推定する。","url":"https://gugopro.com/ja/academy/tools/practical-trade-plan.html"}</script>
+<meta content="https://gugopro.com/academy/tools/practical-trade-plan.html" property="og:url"/>
+<meta content="index, follow" name="robots"/>
+<link href="https://gugopro.com/ja/academy/tools/practical-trade-plan.html" rel="canonical"/>
+<link href="https://gugopro.com/academy/tools/practical-trade-plan.html" hreflang="zh-TW" rel="alternate"/>
+<link href="https://gugopro.com/zh-CN/academy/tools/practical-trade-plan.html" hreflang="zh-CN" rel="alternate"/>
+<link href="https://gugopro.com/en/academy/tools/practical-trade-plan.html" hreflang="en" rel="alternate"/>
+<link href="https://gugopro.com/ja/academy/tools/practical-trade-plan.html" hreflang="ja" rel="alternate"/>
+<link href="https://gugopro.com/de/academy/tools/practical-trade-plan.html" hreflang="de" rel="alternate"/>
+<link href="https://gugopro.com/fr/academy/tools/practical-trade-plan.html" hreflang="fr" rel="alternate"/>
+<link href="https://gugopro.com/es/academy/tools/practical-trade-plan.html" hreflang="es" rel="alternate"/>
+<link href="https://gugopro.com/pt/academy/tools/practical-trade-plan.html" hreflang="pt" rel="alternate"/>
+<link href="https://gugopro.com/academy/tools/practical-trade-plan.html" hreflang="x-default" rel="alternate"/>
+<meta content="true" name="static-locale-route"/>
+<meta content="machine-draft" name="i18n-status"/>
+<link href="/tools/finance/finance-locale.css?v=20260827" rel="stylesheet"/>
+<script src="/i18n/static-locale-runtime.js?v=20260827" defer></script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="quant-page practical-page">
+<main class="practical-shell">
+<div class="practical-top"><a class="practical-brand" href="/academy/">← GugoPro Academy に戻る</a><a class="practical-back" href="/articles/investment/17-practical-trading.html">第13類を読む：ポジションサイズとリスク管理</a></div>
+<nav aria-label="頁內導覽" class="practical-jump"><a href="#inputs">トレーディングプラン</a><a href="#costs">コスト仮定</a><a href="#results">ポジション結果</a><a href="#limits">モデルの制約</a></nav>
+<header class="practical-hero"><div><div class="eyebrow">Category 13 · プレトレード管理</div><h1>実戦トレード計画<br/>ポジションチェッカー付き</h1><p>まず負担できる最大損失を書き出し、そこから最大整数ポジションを逆算する。ツールは銘柄、方向、価格を提供しません；すべての入力は現在のブラウザ内でローカルに計算されます。</p></div><div class="practical-badge"><strong>リスク優先、ポジションは後。</strong><span>スリッページとコストをストップ予算に入れる。</span></div></header>
+<div class="practical-layout">
+<section class="practical-panel" id="inputs"><div class="eyebrow">プレトレード計画</div><h2>取引想定を作成する</h2><div class="practical-grid two">
+<div><label for="direction">方向</label><select id="direction"><option value="long">ロング</option><option value="short">空頭（Short）</option></select></div>
+<div><label for="account">口座資金（元）</label><input id="account" inputmode="decimal" min="0.01" placeholder="例：100000" step="1" type="number"/></div>
+<div><label for="risk-percent">単一ポジションのリスク上限（%）</label><input id="risk-percent" inputmode="decimal" max="99.99" min="0.01" placeholder="例：1" step="0.1" type="number"/><small class="practical-help">これは上限の仮定であり、実際の損失が必ずしもこの数に限定されるわけではありません。</small></div>
+<div><label for="multiplier">単位あたり価格乗数</label><input id="multiplier" inputmode="decimal" min="0.000001" step="0.01" type="number" value="1"/><small class="practical-help">現物は通常 1；先物については契約乗数をご自身で確認してください。</small></div>
+<div><label for="entry">進場価格（Entry）</label><input id="entry" inputmode="decimal" min="0.000001" placeholder="計画価格を入力してください" step="0.0001" type="number"/></div>
+<div><label for="stop">ストップ価格 Stop</label><input id="stop" inputmode="decimal" min="0.000001" placeholder="失効価格を入力してください" step="0.0001" type="number"/></div>
+<div><label for="target">目標価格 Target</label><input id="target" inputmode="decimal" min="0.000001" placeholder="計画目標を入力してください" step="0.0001" type="number"/></div>
+</div>
+<fieldset class="practical-fieldset" id="costs"><legend>コストとスリッページの仮定</legend><p>手数料はパーセンテージで入力してください。例：0.10% は 0.10。スリッページは常にトレーダー不利に見積もること；固定手数料はエントリー／エグジットそれぞれ1件として計上してください。</p><div class="practical-grid two">
+<div><label for="entry-fee">進場手数料（%）</label><input id="entry-fee" inputmode="decimal" max="99.99" min="0" step="0.01" type="number" value="0.10"/></div>
+<div><label for="exit-fee">イグジット手数料（%）</label><input id="exit-fee" inputmode="decimal" max="99.99" min="0" step="0.01" type="number" value="0.10"/></div>
+<div><label for="entry-slip">進場スリッページ（%）</label><input id="entry-slip" inputmode="decimal" max="99.99" min="0" step="0.01" type="number" value="0.05"/></div>
+<div><label for="exit-slip">ストップ退出スリッページ（％）</label><input id="exit-slip" inputmode="decimal" max="99.99" min="0" step="0.01" type="number" value="0.05"/></div>
+<div><label for="entry-fixed">進場固定費（元）</label><input id="entry-fixed" inputmode="decimal" min="0" step="0.01" type="number" value="0"/></div>
+<div><label for="exit-fixed">イグジット固定費（元）</label><input id="exit-fixed" inputmode="decimal" min="0" step="0.01" type="number" value="0"/></div>
+</div></fieldset>
+<div class="practical-actions"><button class="practical-calc" id="calculate" type="button">ポジションを確認</button><button class="practical-clear" id="clear" type="button">結果をクリア</button></div><div aria-live="polite" class="practical-status" id="status">取引仮定を入力すると即座に計算されます；ページは市場の相場を取得しません。</div><div class="practical-formula"><strong>式：</strong>耐損失性＝口座資金×リスク％；単位当たりリスク＝ストップ価格差×乗数＋変動コスト；最大整数建＝floor（（耐損失性−固定費）÷単位当たりリスク）。</div>
+</section>
+<section aria-live="polite" class="practical-result" id="results"><div class="eyebrow">ポジション確認</div><h2>ポジションとリスクの結果</h2><div class="practical-big" id="max-units">—</div><div class="practical-sub" id="result-message">有効な入力待ち</div><div class="practical-metrics">
+<div class="practical-metric"><span>リスク予算</span><b id="risk-budget">—</b></div><div class="practical-metric"><span>単位あたりリスク</span><b id="risk-per-unit">—</b></div><div class="practical-metric"><span>名目ポジションを推定</span><b id="notional">—</b></div><div class="practical-metric"><span>推定最大損失</span><b id="worst-loss">—</b></div><div class="practical-metric"><span>予算使用率</span><b id="budget-usage">—</b></div><div class="practical-metric"><span>コスト後の R:R</span><b id="net-rr">—</b></div><div class="practical-metric"><span>実際のエントリー価格</span><b id="actual-entry">—</b></div><div class="practical-metric"><span>ストップ約定の仮定</span><b id="actual-stop">—</b></div>
+</div><div class="practical-breakdown"><h3>分解計算</h3><div class="practical-table-wrap"><table class="practical-table"><thead><tr><th>項目</th><th>数値</th><th>説明</th></tr></thead><tbody id="breakdown-rows"><tr><td colspan="3">未計算</td></tr></tbody></table></div></div><div class="practical-note" id="limits"><strong>モデルの制約：</strong>これは取引前の簡易リスクチェックであり、銘柄が取引に値するかは判断しません。ギャップ、部分約定、流動性インパクト、追証、税費、貸株料、実際の約定確率は考慮していません。先物・オプション・レバレッジ商品は契約仕様を別途確認する必要があります。</div></section>
+</div>
+<section class="practical-section"><div class="eyebrow">カテゴリと併用</div><h2>次に何を確認しますか？</h2><div class="practical-cards"><div class="practical-card"><strong>単一トレードのコスト</strong><p>計画上の R:R を価格距離だけでなく正味期待値に変換する。</p><a href="/academy/tools/trade-expectancy.html">取引の期待値を開く →</a></div><div class="practical-card"><strong>取引完了</strong><p>実際の R 結果を用いて勝率、平均損益、最大連敗を確認する。</p><a href="/academy/tools/trade-journal-analyzer.html">トレードジャーナル解析を開く →</a></div><div class="practical-card"><strong>ヒストリカルリスク</strong><p>エクイティ系列を MDD、回復期間、リスク対リターン指標に変換する。</p><a href="/academy/tools/risk-return-drawdown.html">MDDツールを開く →</a></div></div></section>
+<footer class="practical-footer">データと計算は入力した前提のみを使用します。リアルタイムの見積もりやサーバー計算はありません。ブローカー、取引所、商品の仕様を確認してください。本ページは研究・教育ツールであり、個別化された投資・取引助言ではありません。</footer>
+</main><script src="/academy/academy.js?v=20260827-i18n1"></script><script src="/academy/tools/practical-trade-plan.js"></script><section class="finance-quality-note" data-finance-quality=""><h2>財務ツールの使い方</h2><p>このページでは、財務の概念を検証可能な入力、計算式、シナリオに分けています。変数の定義を確認し、保守・基本・ストレスケースを比較してください。単一の結果は収益を保証しません。</p><p>手順：単位と期間を確認し、自分の前提を入力してから、感応度、コスト、下振れケースを確認します。</p><p><strong>制限：市場を予測するものではなく、税金、スリッページ、流動性、信用、規制、契約条件をすべて含むとは限りません。重要な判断は最新の一次情報と有資格者に確認してください。:</strong>制限：市場を予測するものではなく、税金、スリッページ、流動性、信用、規制、契約条件をすべて含むとは限りません。重要な判断は最新の一次情報と有資格者に確認してください。</p></section>
+<section class="finance-disclaimer" data-finance-disclaimer=""><h2>投資リスクに関する免責事項</h2><p>本ページの内容、計算ツール、例示は教育・研究・シナリオ試算のみを目的とし、個別の投資、取引、賭け、税務、法律その他の金融助言ではありません。市場や制度は変化するため、最新の一次情報を確認し、判断はご自身の責任で行ってください。過去の実績、モデル出力、シミュレーションは将来を保証しません。</p></section>
+</body></html>

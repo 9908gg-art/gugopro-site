@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>Retirement cash‑flow stress test | GugoPro Academy</title>
+<meta content="Inspect retirement assets, withdrawal rules, inflation, reserves and sequence‑of‑returns stress scenarios with a transparent annual model; front‑end only calculation, no success rates or personalized advice." name="description"/>
+<link href="/academy/academy.css" rel="stylesheet"/>
+<link href="/academy/tools/retirement-cashflow.css" rel="stylesheet"/>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Retirement cash‑flow stress test","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"With a user‑input annual deterministic scenario, check retirement withdrawals, inflation and sequence‑of‑returns stress; does not provide success probabilities or personalized investment advice.","url":"https://gugopro.com/en/academy/tools/retirement-cashflow.html","isPartOf":{"@type":"WebSite","name":"GugoPro Academy"}}</script>
+<meta content="https://gugopro.com/academy/tools/retirement-cashflow.html" property="og:url"/>
+<meta content="index, follow" name="robots"/>
+<link href="https://gugopro.com/en/academy/tools/retirement-cashflow.html" rel="canonical"/>
+<link href="https://gugopro.com/academy/tools/retirement-cashflow.html" hreflang="zh-TW" rel="alternate"/>
+<link href="https://gugopro.com/zh-CN/academy/tools/retirement-cashflow.html" hreflang="zh-CN" rel="alternate"/>
+<link href="https://gugopro.com/en/academy/tools/retirement-cashflow.html" hreflang="en" rel="alternate"/>
+<link href="https://gugopro.com/ja/academy/tools/retirement-cashflow.html" hreflang="ja" rel="alternate"/>
+<link href="https://gugopro.com/de/academy/tools/retirement-cashflow.html" hreflang="de" rel="alternate"/>
+<link href="https://gugopro.com/fr/academy/tools/retirement-cashflow.html" hreflang="fr" rel="alternate"/>
+<link href="https://gugopro.com/es/academy/tools/retirement-cashflow.html" hreflang="es" rel="alternate"/>
+<link href="https://gugopro.com/pt/academy/tools/retirement-cashflow.html" hreflang="pt" rel="alternate"/>
+<link href="https://gugopro.com/academy/tools/retirement-cashflow.html" hreflang="x-default" rel="alternate"/>
+<meta content="true" name="static-locale-route"/>
+<meta content="machine-draft" name="i18n-status"/>
+<link href="/tools/finance/finance-locale.css?v=20260827" rel="stylesheet"/>
+<script src="/i18n/static-locale-runtime.js?v=20260827" defer></script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="quant-page retirement-page">
+<header class="nav"><div class="shell navin"><a class="brand" href="/academy/">GugoPro <span>Academy</span></a><button class="theme" data-theme="" type="button">Toggle dark</button></div></header>
+<main class="tool-page retirement-tool-shell">
+<div class="tool-crumb"><a href="/academy/lessons/15-retirement-cashflow.html">← Read the retirement cash‑flow tutorial</a><span>Interactive lab · Frontend only · No real‑time quotes</span></div>
+<div class="tool-layout">
+<section aria-labelledby="tool-title" class="panel retirement-input-panel">
+<div class="eyebrow">Retirement income · Stress test</div>
+<h1 id="tool-title">Retirement cash‑flow stress test</h1>
+<p>Place retirement assets, spending, inflation and return assumptions on the same annual table, then compare explicitly specified sequence stresses. The result is a single‑path educational demonstration, not a probability of success, return forecast or withdrawal recommendation.</p>
+<div aria-label="工具說明錨點" class="article-jump"><a href="/academy/lessons/15-retirement-cashflow.html">Look at cash flow first.</a><a href="/academy/lessons/15-retirement-cashflow.html">Understand sequence risk</a><a href="/academy/lessons/15-retirement-cashflow.html">Compare withdrawal rules</a></div>
+<div class="input-grid">
+<label for="asset">Assets at retirement (amount)<input id="asset" inputmode="decimal" min="0.01" step="1" type="number" value="10000000"/></label>
+<label for="withdrawal">Fixed/flexible first‑year benchmark withdrawal (NT$)<input id="withdrawal" inputmode="decimal" min="0" step="1" type="number" value="400000"/></label>
+<label for="nominal-return">Annualized nominal return（%）<input id="nominal-return" inputmode="decimal" max="100" min="-100" step="0.1" type="number" value="5"/></label>
+<label for="inflation">Annual inflation rate（%）<input id="inflation" inputmode="decimal" max="50" min="-20" step="0.1" type="number" value="2"/></label>
+<label for="years">Simulation years<input id="years" inputmode="numeric" max="80" min="1" step="1" type="number" value="40"/></label>
+<label for="reserve">liquidity reserve（元）<input id="reserve" inputmode="decimal" min="0" step="1" type="number" value="1200000"/></label>
+<label for="withdrawal-mode">Withdrawal rules<select id="withdrawal-mode"><option value="fixed">fixed amount + inflation‑adjusted</option><option value="percentage">Asset percentage withdrawal</option><option value="flexible">Flexible spending：reduce in downturns</option></select></label>
+<label for="percentage-rate" hidden="" id="percentage-control">Asset percentage withdrawal rate (%)<input id="percentage-rate" inputmode="decimal" max="100" min="0" step="0.1" type="number" value="4"/></label>
+<label for="flexible-cut" hidden="" id="flexible-controls">Decline (%)<input id="flexible-cut" inputmode="decimal" max="100" min="0" step="1" type="number" value="20"/><span class="field-sub">Trigger threshold: prior-year return below <input class="inline-number" id="trigger" inputmode="decimal" max="100" min="-100" step="0.1" type="number" value="0"/>%</span></label>
+<label for="sequence">Sequence of returns stress scenario<select id="sequence"><option value="none">Baseline: no additional stress</option><option value="early">A 15% decline in each of retirement years 1–2</option><option value="late">Years 10–11 each decline 15%</option></select></label>
+</div>
+<p class="mode-help" id="mode-help">—</p>
+<div class="quant-actions"><button class="quant-primary" id="run" type="button">Run stress test</button><button class="quant-secondary" id="reset" type="button">Restore defaults</button><button class="quant-secondary" disabled="" id="download" type="button">Download local results</button></div>
+<div aria-live="polite" class="status" id="status">Model not yet executed; inputs and results remain only on this local page.</div>
+<div class="status-detail" id="status-detail">The model will build annual cash flows and compare three sequences at execution.</div>
+<p class="tool-error" hidden="" id="error" role="alert"></p>
+<div class="formula-note"><strong>Model scope:</strong><code>Ending assets = max(0, starting assets × (1＋return that year) − withdrawals that year)</code>Fixed rules index withdrawals to inflation; percentage rules compute withdrawals from beginning‑of‑year assets; flexible rules reduce withdrawals only when prior‑year returns fall below a threshold. The model applies annual returns first, then annual withdrawals.</div>
+</section>
+<section aria-labelledby="result-title" class="result retirement-result" hidden="" id="results">
+<div class="eyebrow">Scenario output</div>
+<h2 id="result-title">Asset runway and stress monitoring</h2>
+<p class="result-intro" id="summary">—</p>
+<div class="metric-grid retirement-metrics">
+<div class="metric"><span class="sub">Initial withdrawal rate</span><b id="rate">—</b><small>First‑year withdrawal ÷ assets at retirement</small></div>
+<div class="metric"><span class="sub">Real return rate</span><b id="real-return">—</b><small>(1＋nominal return) ÷ (1＋inflation) − 1</small></div>
+<div class="metric"><span class="sub">End‑of‑simulation assets</span><b id="end">—</b><small>Nominal amount; single path</small></div>
+<div class="metric"><span class="sub">liquidity runway</span><b id="reserve-months">—</b><small>reserve ÷ first month withdrawal</small></div>
+<div class="metric"><span class="sub">Year of asset depletion</span><b id="deplete">—</b><small>If year‑end balance first falls below 0</small></div>
+</div>
+<div class="selected-rule"><strong>Current measurement basis:</strong><span id="selected-rule">—</span></div>
+<div class="visual retirement-visual"><div class="panel-heading"><div><div class="eyebrow">Balance path</div><h3>Annual asset balance</h3></div><span>Orange line: currently selected scenario</span></div><canvas aria-label="Annual retirement asset balance curve" height="260" id="cashflow-chart" role="img" width="960"></canvas></div>
+<div class="visual table-visual"><div class="panel-heading"><div><div class="eyebrow">Cash‑flow ledger</div><h3>Annual cash flow details</h3></div><span id="table-basis">—</span></div><div class="table-wrap"><table><thead><tr><th>Yearly</th><th>Assets at start of year</th><th>Annual return</th><th>Withdrawal</th><th>Assets at year end</th></tr></thead><tbody id="rows"></tbody></table></div></div>
+<div class="visual scenario-visual"><div class="panel-heading"><div><div class="eyebrow">Sequence comparison</div><h3>Three explicit stress pathways</h3></div><span>All other inputs fixed</span></div><p class="chart-summary" id="scenario-note">—</p><div class="table-wrap"><table><thead><tr><th>Scenario</th><th>Ending assets</th><th>Depleted during the simulation period</th><th>Purpose</th></tr></thead><tbody id="scenario-rows"></tbody></table></div></div>
+<div class="source-box"><strong>Interpretation limits:</strong>This is not a Monte Carlo simulation, nor a probability‑of‑success estimate. It does not include taxes, fees, insurance, medical costs, government/pension benefits, account withdrawal limits, exchange rates, asset allocation, actual return distributions or longevity uncertainty; the sample return paths do not represent market behaviour.<br/><span id="source-links">Further reading:<a href="https://www.finra.org/investors/learn-to-invest/types-investments/retirement/managing-retirement-income/managing-your-retirement-portfolio" rel="noopener" target="_blank">FINRA Retirement Portfolio</a> · <a href="https://www.investor.gov/financial-tools-calculators/calculators/compound-interest-calculator" rel="noopener" target="_blank">Investor.gov Compound Interest Calculator</a> · <a href="https://www.schwab.com/learn/story/timing-matters-understanding-sequence-returns-risk" rel="noopener" target="_blank">Charles Schwab sequence‑of‑returns risk explanation</a></span></div>
+</section>
+</div>
+</main>
+<script src="/academy/academy.js?v=20260827-i18n1"></script>
+<script src="/academy/tools/retirement-cashflow.js"></script><section class="finance-quality-note" data-finance-quality=""><h2>How to use this finance tool</h2><p>This page turns a finance concept into checkable inputs, formulas, and scenarios. Read the variable definitions first, then compare conservative, base, and stress cases; one result is not a promise of return.</p><p>Suggested workflow: confirm units and time periods, enter your own assumptions, then review sensitivity, costs, and downside cases.</p><p><strong>Limitations:</strong> the model does not forecast markets and may not include every tax, slippage, liquidity, credit, regulatory, or contract term. Verify important decisions with current primary information and a qualified professional.</p></section>
+<section class="finance-disclaimer" data-finance-disclaimer=""><h2>Financial risk disclaimer</h2><p>This page, its calculators, and examples are for education, research, and scenario estimation only. They are not personalized investment, trading, betting, tax, legal, or financial advice. Markets and local rules can change quickly; verify current primary information and take responsibility for your decisions. Past performance, model outputs, and simulations do not guarantee future results.</p></section>
+</body>
+</html>

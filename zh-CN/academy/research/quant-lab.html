@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>量化特征与回测工作台｜GugoPro Academy</title>
+<meta content="以可溯源的公开历史资料研究特征工程、波动 regime 与 next-bar 基准回测；不提供实时交易信号。" name="description"/>
+<link href="/academy/academy.css" rel="stylesheet"/>
+<link href="/academy/research/research.css" rel="stylesheet"/>
+<link href="/academy/research/quant-lab.css" rel="stylesheet"/>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"量化特征与回测工作台","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"使用带来源与快照的历史序列进行可重现的特征研究与基准回测。","url":"https://gugopro.com/zh-CN/academy/research/quant-lab.html","isPartOf":{"@type":"WebSite","name":"GugoPro Academy"}}</script>
+<meta content="https://gugopro.com/academy/research/quant-lab.html" property="og:url"/>
+<meta content="index, follow" name="robots"/>
+<link href="https://gugopro.com/zh-CN/academy/research/quant-lab.html" rel="canonical"/>
+<link href="https://gugopro.com/academy/research/quant-lab.html" hreflang="zh-TW" rel="alternate"/>
+<link href="https://gugopro.com/zh-CN/academy/research/quant-lab.html" hreflang="zh-CN" rel="alternate"/>
+<link href="https://gugopro.com/en/academy/research/quant-lab.html" hreflang="en" rel="alternate"/>
+<link href="https://gugopro.com/ja/academy/research/quant-lab.html" hreflang="ja" rel="alternate"/>
+<link href="https://gugopro.com/de/academy/research/quant-lab.html" hreflang="de" rel="alternate"/>
+<link href="https://gugopro.com/fr/academy/research/quant-lab.html" hreflang="fr" rel="alternate"/>
+<link href="https://gugopro.com/es/academy/research/quant-lab.html" hreflang="es" rel="alternate"/>
+<link href="https://gugopro.com/pt/academy/research/quant-lab.html" hreflang="pt" rel="alternate"/>
+<link href="https://gugopro.com/academy/research/quant-lab.html" hreflang="x-default" rel="alternate"/>
+<meta content="true" name="static-locale-route"/>
+<meta content="machine-draft" name="i18n-status"/>
+<link href="/tools/finance/finance-locale.css?v=20260827" rel="stylesheet"/>
+<script src="/i18n/static-locale-runtime.js?v=20260827" defer></script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="research-page quant-lab-page">
+<main class="research-shell">
+<header class="research-header quant-header">
+<div>
+<a class="research-back" href="/academy/research/">← 返回公开资料研究层</a>
+<div class="eyebrow">Phase 2 · 功能与回测</div>
+<h1>量化特征与回测工作台</h1>
+<p class="research-lead">先固定数据、时间口径与成交假设，再查看特征与基准策略。这是可重现的研究实验，不是即时行情、模型信号或个性化建议。</p>
+</div>
+<div class="research-status-card quant-status-card">
+<span class="status-label">研究状态</span>
+<strong aria-live="polite" id="quant-status">等待执行</strong>
+<small id="quant-status-detail">未载入任何结果；所有输入与结果会留在本机页面。</small>
+</div>
+</header>
+<section aria-labelledby="quant-provenance-title" class="quant-provenance">
+<div class="eyebrow">来源栏</div>
+<h2 id="quant-provenance-title">目前研究口径</h2>
+<div class="quant-meta-grid">
+<div><span>数据集</span><b id="meta-dataset">fred:SP500</b></div>
+<div><span>快照</span><b id="meta-snapshot">—</b></div>
+<div><span>截至</span><b id="meta-asof">—</b></div>
+<div><span>调整</span><b id="meta-adjustment">source_defined</b></div>
+<div><span>功能版本</span><b id="meta-feature-version">1.0.0</b></div>
+<div><span>回测版本</span><b id="meta-backtest-version">1.0.0</b></div>
+</div>
+<p class="research-note">数据取自版本库保存的 FRED `SP500` 官方 CSV fixture。日历中的缺失日期会被明确计数并排除，不以插值、零值或上一笔价格填补。若 fixture 加载失败，结果区会清空并显示错误。</p>
+</section>
+<section aria-labelledby="quant-controls-title" class="quant-controls">
+<div class="section-heading"><div><div class="eyebrow">研究控制</div><h2 id="quant-controls-title">設定研究參數</h2></div><p>固定参数只供研究重现；不要把 held-out 结果拿回来调参。</p></div>
+<div class="controls-grid">
+<label>数据集<select id="dataset-select"><option value="fred-SP500.csv">FRED SP500（版本化 fixture）</option></select></label>
+<label class="file-control">本机 CSV（可选）<input accept=".csv,text/csv" id="local-csv" type="file"/><small>只在本机解析，不会上传。</small></label>
+<label>快速均线<input id="fast-window" max="120" min="2" type="number" value="20"/></label>
+<label>慢速 MA<input id="slow-window" max="240" min="3" type="number" value="60"/></label>
+<label>成本（bps）<input id="cost-bps" max="5000" min="0" step="0.1" type="number" value="10"/></label>
+<label>訓練前綴（rows）<input id="train-size" max="200" min="60" type="number" value="120"/></label>
+<label>测试窗（rows）<input id="test-size" max="80" min="10" type="number" value="40"/></label>
+<label>信息间隔（rows）<input id="censor-gap" max="20" min="0" type="number" value="1"/></label>
+<label>未来波动窗口<input id="label-horizon" max="60" min="2" type="number" value="20"/></label>
+</div>
+<div class="quant-actions"><button class="quant-primary" id="run-quant" type="button">执行特征与回测</button><button class="quant-secondary" id="reset-quant" type="button">清除结果</button><button class="quant-secondary" disabled="" id="download-quant" type="button">下载 run manifest</button></div>
+<p class="research-error" hidden="" id="quant-error" role="alert"></p>
+</section>
+<section aria-labelledby="quant-results-title" class="quant-results" hidden="" id="quant-results">
+<div class="section-heading"><div><div class="eyebrow">研究输出</div><h2 id="quant-results-title">可重建结果</h2></div><p id="result-summary">—</p></div>
+<div class="result-grid">
+<article class="result-card"><span>完整来源 rows</span><strong id="result-source-rows">—</strong><small id="result-source-gap">—</small></article>
+<article class="result-card"><span>可训练 labels</span><strong id="result-labels">—</strong><small>未完成 future window 不纳入训练</small></article>
+<article class="result-card"><span>测试窗数</span><strong id="result-splits">—</strong><small id="result-censor-gap">—</small></article>
+<article class="result-card"><span>平均超额收益</span><strong id="result-excess">—</strong><small>策略减 买入并持有；非收益承诺</small></article>
+</div>
+<div class="quant-two-col">
+<article class="quant-panel"><div class="panel-heading"><div><div class="eyebrow">功能视图</div><h3>最新特征</h3></div><span id="latest-feature-asof">as-of —</span></div><div class="feature-table-wrap"><table><thead><tr><th>特征</th><th>值</th><th>公式／口径</th></tr></thead><tbody id="feature-table"></tbody></table></div></article>
+<article class="quant-panel"><div class="panel-heading"><div><div class="eyebrow">基线指标</div><h3>基准策略与 benchmark</h3></div><span>next-bar</span></div><div class="metric-list" id="metric-list"></div></article>
+</div>
+<article class="quant-panel chart-panel"><div class="panel-heading"><div><div class="eyebrow">权益曲线</div><h3>测试区间累积曲线</h3></div><span>策略 vs 基准</span></div><canvas aria-label="测试区间策略与买入持有累积权益曲线" height="300" id="equity-chart" role="img" width="960"></canvas><p class="chart-summary" id="chart-summary">执行研究后显示文字摘要。</p></article>
+<article class="quant-panel split-panel"><div class="panel-heading"><div><div class="eyebrow">Walk-forward 报告</div><h3>保留测试窗</h3></div><span>扩展训练 · 留出测试</span></div><div class="feature-table-wrap"><table><thead><tr><th>拆分</th><th>训练／测试</th><th>策略</th><th>基准</th><th>超额</th><th>MDD</th><th>进场</th></tr></thead><tbody id="split-table"></tbody></table></div></article>
+<article class="quant-panel limitations-panel"><div class="eyebrow">限制与合规</div><h3>阅读结果前先查看限制</h3><p>这里是 long-only 0／1 的 moving-average deterministic benchmark。信号在收盘 t 计算、下一根 bar 才执行；成本以 turnover × bps／10,000 计算。没有滑价、税费、市场冲击、杠杆、做空、停牌、退市与完整公司行动模型；输入价格的 adjusted／unadjusted 口径会直接影响结果。</p><p>未来波动 label 只用于历史 regime 研究，不能解读为买卖、目标价、报酬或风险保证。平均超额报酬为本次 fixture 与固定参数的描述，不是未来表现预测。</p></article>
+</section>
+<section aria-labelledby="next-title" class="research-section next-links">
+<div class="section-heading"><div><div class="eyebrow">继续学习</div><h2 id="next-title">从研究结果回到教学</h2></div></div>
+<div class="link-grid"><a href="/articles/investment/15-quant-research-workflow.html"><strong>量化研究工作流</strong><span>理解数据切分、5MA／20MA 扣抵、波动 Z-Score 与样本外检查表。</span></a><a href="/articles/investment/16-futures-pairs-basis.html"><strong>台指期／富台期配对</strong><span>把合约口径、Basis、期限结构与转仓风险分开研究。</span></a><a href="/academy/research/"><strong>公开资料研究层</strong><span>回看来源 registry、dataset catalog、snapshot 与 quality status。</span></a></div>
+</section>
+<footer class="research-footer">所有结果仅供研究与教育；资料来源、日期、调整方式与假设应于使用前重新复核。This is research and analysis only, not personalized financial advice.</footer>
+</main>
+<script src="/academy/research/quant-lab.js"></script><section class="finance-disclaimer" data-finance-disclaimer=""><h2>投资风险免责声明</h2><p>本页内容、计算器与示例仅供教育、研究与情境估算，不构成投资、交易、投注、税务、法律或其他个性化金融建议。金融市场与个别制度可能快速变化，请核对最新官方资料并承担决策责任。过去表现、模型输出或模拟结果不代表未来结果。</p></section>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>Calculadora de expectativa de trading | comisiones y slippage | GugoPro Academy</title>
+<meta content="Introduzca entrada, stop, objetivo, tasa de aciertos, tamaño de posición y costes de transacción para calcular en tiempo real la esperanza de la operación, el múltiplo R neto y la tasa de aciertos de equilibrio. Solo front‑end; no obtiene datos de mercado." name="description"/>
+<link href="/academy/academy.css" rel="stylesheet"/>
+<link href="/academy/tools/trade-expectancy.css" rel="stylesheet"/>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Calculadora de expectativa de trading","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"Calcular expectativa neta y tasa de break‑even con precio de operación, tasa de aciertos, comisiones y slippage.","url":"https://gugopro.com/es/academy/tools/trade-expectancy.html"}</script>
+<meta content="https://gugopro.com/academy/tools/trade-expectancy.html" property="og:url"/>
+<meta content="index, follow" name="robots"/>
+<link href="https://gugopro.com/es/academy/tools/trade-expectancy.html" rel="canonical"/>
+<link href="https://gugopro.com/academy/tools/trade-expectancy.html" hreflang="zh-TW" rel="alternate"/>
+<link href="https://gugopro.com/zh-CN/academy/tools/trade-expectancy.html" hreflang="zh-CN" rel="alternate"/>
+<link href="https://gugopro.com/en/academy/tools/trade-expectancy.html" hreflang="en" rel="alternate"/>
+<link href="https://gugopro.com/ja/academy/tools/trade-expectancy.html" hreflang="ja" rel="alternate"/>
+<link href="https://gugopro.com/de/academy/tools/trade-expectancy.html" hreflang="de" rel="alternate"/>
+<link href="https://gugopro.com/fr/academy/tools/trade-expectancy.html" hreflang="fr" rel="alternate"/>
+<link href="https://gugopro.com/es/academy/tools/trade-expectancy.html" hreflang="es" rel="alternate"/>
+<link href="https://gugopro.com/pt/academy/tools/trade-expectancy.html" hreflang="pt" rel="alternate"/>
+<link href="https://gugopro.com/academy/tools/trade-expectancy.html" hreflang="x-default" rel="alternate"/>
+<meta content="true" name="static-locale-route"/>
+<meta content="machine-draft" name="i18n-status"/>
+<link href="/tools/finance/finance-locale.css?v=20260827" rel="stylesheet"/>
+<script src="/i18n/static-locale-runtime.js?v=20260827" defer></script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="quant-page expectancy-page">
+<main class="tool-page exp-page-shell">
+<div class="tool-crumb"><a href="/academy/">← Volver a GugoPro Academy</a><span>Riesgo / Retorno · Solo frontend · Sin datos de mercado en tiempo real</span></div>
+<nav aria-label="頁內導覽" class="exp-jump"><a href="#inputs">Introducir parámetros</a><a href="#costs">Costes de transacción</a><a href="#results">Resultados del cálculo</a><a href="#limits">Limitaciones y fórmulas</a></nav>
+<div class="exp-hero"><div><div class="eyebrow">Lente de escenario · Expectativa consciente de costos</div><h1>Calculadora de expectativa de trading</h1><p>Convierte el R:R planeado en el resultado neto tras comisiones y slippage. Recalcula al instante cuando cambian las entradas; todos los números permanecen en el navegador actual y no se suben ni se rellenan automáticamente con datos de mercado.</p></div><div class="exp-hero-badge"><strong>3R ≠ garantía</strong><span>Los costos reducirán las ganancias y amplificarán las pérdidas</span></div></div>
+<div class="exp-layout">
+<section class="panel exp-panel" id="inputs">
+<div class="eyebrow">Entradas del modelo</div><h2>Configurar escenario de trading</h2>
+<div class="exp-grid two">
+<div><label for="direction">Dirección de la operación</label><select id="direction"><option value="long">Long (posición larga)</option><option value="short">Short（Short）</option></select></div>
+<div><label for="win-rate">Tasa de aciertos (%)</label><input id="win-rate" inputmode="decimal" max="100" min="0" step="0.1" type="number" value="25"/><small>Estime usando registros históricos de operaciones, no promesas subjetivas.</small></div>
+<div><label for="entry">Precio de entrada (Entry)</label><input id="entry" inputmode="decimal" min="0.0000001" step="0.0001" type="number" value="100"/></div>
+<div><label for="stop">Precio de stop Stop</label><input id="stop" inputmode="decimal" min="0.0000001" step="0.0001" type="number" value="95"/></div>
+<div><label for="target">Precio objetivo Target</label><input id="target" inputmode="decimal" min="0.0000001" step="0.0001" type="number" value="115"/></div>
+<div><label for="position-size">Cantidad de posición</label><input id="position-size" inputmode="decimal" min="0.0000001" step="0.0001" type="number" value="200"/><small>Puedes ingresar número de acciones, contratos u otras unidades de negociación.</small></div>
+<div><label for="trades">Evaluar número de operaciones</label><input id="trades" inputmode="numeric" min="1" step="1" type="number" value="20"/></div>
+</div>
+<fieldset class="exp-costs" id="costs"><legend>Supuestos de costes de transacción</legend><p class="exp-field-help">Introduzca tarifas en porcentaje; p. ej. para 0.10% introduzca 0.10; el slippage se asume en contra del trader. Verifique tarifas reales de broker, impuestos y reglas de mercado.</p><div class="exp-grid two">
+<div><label for="entry-fee">Comisión de entrada (%)</label><input id="entry-fee" inputmode="decimal" max="99.99" min="0" step="0.01" type="number" value="0.10"/></div>
+<div><label for="exit-fee">Comisión de salida (%)</label><input id="exit-fee" inputmode="decimal" max="99.99" min="0" step="0.01" type="number" value="0.10"/></div>
+<div><label for="entry-slip">Slippage de entrada (%)</label><input id="entry-slip" inputmode="decimal" max="99.99" min="0" step="0.01" type="number" value="0.05"/></div>
+<div><label for="exit-slip">Slippage de salida (%)</label><input id="exit-slip" inputmode="decimal" max="99.99" min="0" step="0.01" type="number" value="0.05"/></div>
+<div><label for="entry-fixed">Cuota fija de entrada（元）</label><input id="entry-fixed" inputmode="decimal" min="0" step="0.01" type="number" value="0"/></div>
+<div><label for="exit-fixed">Comisión fija de salida (元)</label><input id="exit-fixed" inputmode="decimal" min="0" step="0.01" type="number" value="0"/></div>
+</div></fieldset>
+<div class="exp-actions"><button class="calc" id="calculate" type="button">Calcular expectativa</button><button class="ghost-btn" id="clear" type="button">borrar resultados</button></div>
+<div aria-live="polite" class="status" id="status">Los cambios en la entrada se calculan en tiempo real; actualmente se usan 3R, 25% de tasa de éxito y costes como demostración.</div>
+<div class="formula-note"><strong>Fórmula principal:</strong>Valor esperado = tasa de éxito × ganancia neta media + tasa de fallo × pérdida neta media. El resultado neto aplica primero un slippage adverso y luego resta comisiones bilaterales calculadas sobre el importe de la ejecución y costes fijos.</div>
+</section>
+<section aria-live="polite" class="result exp-result" id="results">
+<div class="eyebrow">Expectativa neta</div><h2>Resultados tras ajuste por costos</h2><div class="result-big" id="expectancy-r">—</div><div class="exp-result-sub" id="result-message">En espera de entrada válida</div>
+<div class="metric-grid exp-metrics">
+<div class="metric"><span class="sub">R:R planificado</span><b id="planned-rr">—</b></div>
+<div class="metric"><span class="sub">beneficio neto R</span><b id="net-win-r">—</b></div>
+<div class="metric"><span class="sub">pérdida neta R</span><b id="net-loss-r">—</b></div>
+<div class="metric"><span class="sub">Importe esperado por operación</span><b id="expectancy-money">—</b></div>
+<div class="metric"><span class="sub">Tasa de aciertos para el punto de equilibrio</span><b id="break-even">—</b></div>
+<div class="metric"><span class="sub">Expectativas del periodo de evaluación</span><b id="expected-total">—</b></div>
+<div class="metric"><span class="sub">Precio real de entrada</span><b id="actual-entry">—</b></div>
+<div class="metric"><span class="sub">Dirección del costo</span><b id="cost-direction">—</b></div>
+</div>
+<div class="exp-outcomes"><div class="exp-section-title"><h3>Desglose de resultados por operación</h3><span>Monto calculado según la cantidad de posición</span></div><div class="exp-table-wrap"><table class="exp-table"><thead><tr><th>Escenario</th><th>Resultado bruto</th><th>Costes de transacción</th><th>resultado neto</th><th>R neto</th></tr></thead><tbody id="outcome-rows"><tr><td colspan="5">Aún no calculado</td></tr></tbody></table></div></div>
+<div aria-label="獲利與虧損 R 倍數比較" class="exp-bars"><div class="exp-section-title"><h3>comparación visual de resultados netos</h3><span id="bar-caption">—</span></div><div class="bar-track"><i id="win-bar"></i><i id="loss-bar"></i></div><div class="bar-labels"><span>Escenarios de beneficio <b id="win-bar-label">—</b></span><span>Escenario de stop <b id="loss-bar-label">—</b></span></div></div>
+<div class="source-box" id="limits"><strong>Propósito y limitaciones de la investigación:</strong>Esta herramienta solo calcula un único escenario de ganancia y un único escenario de stop‑loss a partir de las entradas; no modela salidas parciales, gaps, probabilidad de ejecución, distribuciones reales de P&amp;L, impuestos sobre transacciones, comisiones de préstamo, impactos de liquidez ni cambios futuros en la tasa de éxito. El R:R planificado no equivale al P&amp;L medio realizado; los resultados no deben interpretarse como instrucciones de trading ni asesoramiento financiero personalizado.</div>
+</section>
+</div>
+<section class="exp-explain"><div><div class="eyebrow">Leer el modelo</div><h2>¿Cómo interpretar un valor esperado negativo?</h2></div><div class="exp-explain-grid"><div><strong>Mira primero la R neta.</strong><p>3R es la distancia de precio sin contabilizar costes. Si se incluyen slippage y comisiones de ida y vuelta, la ganancia neta de una operación ganadora puede ser menor que +3R y la pérdida neta de una operación stoppeada puede ser mayor que −1R.</p></div><div><strong>Revisar umbral de tasa de aciertos</strong><p>Tasa de equilibrio＝valor absoluto de la pérdida neta ÷（ganancia neta＋valor absoluto de la pérdida neta）。Cuanto mayores sean los costes, más alto suele ser el umbral。</p></div><div><strong>Última muestra in‑sample</strong><p>El valor esperado es una media ponderada por probabilidades, no la predicción de la siguiente operación. Rellene la tasa de aciertos y la ganancia/pérdida media real con registros de operaciones cerradas y con la misma definición.</p></div></div></section>
+</main>
+<script src="/academy/academy.js?v=20260827-i18n1"></script>
+<script src="/academy/tools/trade-expectancy.js"></script><section class="finance-quality-note" data-finance-quality=""><h2>Cómo usar esta herramienta financiera</h2><p>Esta página convierte un concepto financiero en datos, fórmulas y escenarios verificables. Lee primero las definiciones y compara escenarios prudente, base y de estrés; un resultado no garantiza rentabilidad.</p><p>Flujo recomendado: confirma unidades y periodos, introduce tus supuestos y revisa sensibilidad, costes y escenarios adversos.</p><p><strong>Limitaciones:</strong> el modelo no predice los mercados y puede no incluir todos los impuestos, deslizamientos, liquidez, crédito, regulación o condiciones contractuales. Verifica las decisiones importantes con fuentes primarias actualizadas y un profesional cualificado.</p></section>
+<section class="finance-disclaimer" data-finance-disclaimer=""><h2>Aviso de riesgo financiero</h2><p>Esta página, sus calculadoras y ejemplos se ofrecen únicamente con fines educativos, de investigación y estimación de escenarios. No constituyen asesoramiento personalizado de inversión, trading, apuestas, fiscalidad, legal o financiero. Los mercados y normas locales cambian; verifica fuentes primarias actuales y asume la responsabilidad de tus decisiones. El rendimiento pasado, los resultados del modelo y las simulaciones no garantizan resultados futuros.</p></section>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+
+<html lang="de">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>Stress‑Test für Ruhestandscashflows | GugoPro Academy</title>
+<meta content="Prüfen Sie Rentenvermögen, Entnahmeregeln, Inflation, Reserve‑Puffer und Sequence‑of‑Returns‑Stres­szenarien mit einem transparenten Jahresmodell; rein front‑end Berechnung, keine Erfolgswahrscheinlichkeiten oder personalisierte Beratung." name="description"/>
+<link href="/academy/academy.css" rel="stylesheet"/>
+<link href="/academy/tools/retirement-cashflow.css" rel="stylesheet"/>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Stress‑Test für Ruhestandscashflows","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"Mit vom Nutzer eingegebenem jährlichem deterministischem Szenario prüfen: Rentenentnahmen, Inflation und Sequence‑of‑Returns‑Stresstests; es werden keine Erfolgsraten oder persönliche Anlageempfehlungen gegeben.","url":"https://gugopro.com/de/academy/tools/retirement-cashflow.html","isPartOf":{"@type":"WebSite","name":"GugoPro Academy"}}</script>
+<meta content="https://gugopro.com/academy/tools/retirement-cashflow.html" property="og:url"/>
+<meta content="index, follow" name="robots"/>
+<link href="https://gugopro.com/de/academy/tools/retirement-cashflow.html" rel="canonical"/>
+<link href="https://gugopro.com/academy/tools/retirement-cashflow.html" hreflang="zh-TW" rel="alternate"/>
+<link href="https://gugopro.com/zh-CN/academy/tools/retirement-cashflow.html" hreflang="zh-CN" rel="alternate"/>
+<link href="https://gugopro.com/en/academy/tools/retirement-cashflow.html" hreflang="en" rel="alternate"/>
+<link href="https://gugopro.com/ja/academy/tools/retirement-cashflow.html" hreflang="ja" rel="alternate"/>
+<link href="https://gugopro.com/de/academy/tools/retirement-cashflow.html" hreflang="de" rel="alternate"/>
+<link href="https://gugopro.com/fr/academy/tools/retirement-cashflow.html" hreflang="fr" rel="alternate"/>
+<link href="https://gugopro.com/es/academy/tools/retirement-cashflow.html" hreflang="es" rel="alternate"/>
+<link href="https://gugopro.com/pt/academy/tools/retirement-cashflow.html" hreflang="pt" rel="alternate"/>
+<link href="https://gugopro.com/academy/tools/retirement-cashflow.html" hreflang="x-default" rel="alternate"/>
+<meta content="true" name="static-locale-route"/>
+<meta content="machine-draft" name="i18n-status"/>
+<link href="/tools/finance/finance-locale.css?v=20260827" rel="stylesheet"/>
+<script src="/i18n/static-locale-runtime.js?v=20260827" defer></script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="quant-page retirement-page">
+<header class="nav"><div class="shell navin"><a class="brand" href="/academy/">GugoPro <span>Academy</span></a><button class="theme" data-theme="" type="button">Dunkel umschalten</button></div></header>
+<main class="tool-page retirement-tool-shell">
+<div class="tool-crumb"><a href="/academy/lessons/15-retirement-cashflow.html">← Anleitung zu Renten‑Cashflows lesen</a><span>Interaktives Labor · Nur Frontend · Keine Echtzeitkurse</span></div>
+<div class="tool-layout">
+<section aria-labelledby="tool-title" class="panel retirement-input-panel">
+<div class="eyebrow">Altersvorsorge · Stresstest</div>
+<h1 id="tool-title">Stress‑Test für Ruhestandscashflows</h1>
+<p>Setzen Sie Rentenvermögen, Ausgaben, Inflation und Renditeannahmen in dieselbe Jahresübersicht und vergleichen Sie dann klar definierte Sequenz-Stresstests. Das Ergebnis ist eine Ein-Pfad-Lehrdemonstration, keine Erfolgswahrscheinlichkeit, Renditeprognose oder Entnahmeempfehlung.</p>
+<div aria-label="工具說明錨點" class="article-jump"><a href="/academy/lessons/15-retirement-cashflow.html">Zuerst die Cash‑Flows prüfen.</a><a href="/academy/lessons/15-retirement-cashflow.html">Sequenzrisiko verstehen</a><a href="/academy/lessons/15-retirement-cashflow.html">Vergleich der Entnahmeregeln</a></div>
+<div class="input-grid">
+<label for="asset">Vermögen zum Ruhestand (Betrag)<input id="asset" inputmode="decimal" min="0.01" step="1" type="number" value="10000000"/></label>
+<label for="withdrawal">Fester/flexibler Erstjahres‑Benchmark‑Entnahme (NT$)<input id="withdrawal" inputmode="decimal" min="0" step="1" type="number" value="400000"/></label>
+<label for="nominal-return">Annualisierte nominale Rendite（%）<input id="nominal-return" inputmode="decimal" max="100" min="-100" step="0.1" type="number" value="5"/></label>
+<label for="inflation">Jährliche Inflationsrate（%）<input id="inflation" inputmode="decimal" max="50" min="-20" step="0.1" type="number" value="2"/></label>
+<label for="years">Simulationsjahre<input id="years" inputmode="numeric" max="80" min="1" step="1" type="number" value="40"/></label>
+<label for="reserve">Liquiditätsreserve（元）<input id="reserve" inputmode="decimal" min="0" step="1" type="number" value="1200000"/></label>
+<label for="withdrawal-mode">Entnahmeregeln<select id="withdrawal-mode"><option value="fixed">fester Betrag + inflationsbereinigt</option><option value="percentage">Prozentuale Entnahme des Vermögenswerts</option><option value="flexible">Flexible Ausgaben：Bei Rückgang reduzieren</option></select></label>
+<label for="percentage-rate" hidden="" id="percentage-control">Prozentuale Entnahmerate des Vermögenswerts (%)<input id="percentage-rate" inputmode="decimal" max="100" min="0" step="0.1" type="number" value="4"/></label>
+<label for="flexible-cut" hidden="" id="flexible-controls">Rückgang in Prozent (%)<input id="flexible-cut" inputmode="decimal" max="100" min="0" step="1" type="number" value="20"/><span class="field-sub">Auslöse-Schwelle: Rendite im Vorjahr unter <input class="inline-number" id="trigger" inputmode="decimal" max="100" min="-100" step="0.1" type="number" value="0"/>%</span></label>
+<label for="sequence">Sequenzielle Rendite‑Stressszenarien<select id="sequence"><option value="none">Baseline: keine zusätzlichen Belastungen</option><option value="early">In den ersten 1–2 Ruhestandsjahren jeweils ein Rückgang von 15 %</option><option value="late">In den Jahren 10–11 Rückgang um jeweils 15%</option></select></label>
+</div>
+<p class="mode-help" id="mode-help">—</p>
+<div class="quant-actions"><button class="quant-primary" id="run" type="button">Stresstest durchführen</button><button class="quant-secondary" id="reset" type="button">Standardeinstellungen wiederherstellen</button><button class="quant-secondary" disabled="" id="download" type="button">Lokale Ergebnisse herunterladen</button></div>
+<div aria-live="polite" class="status" id="status">Modell noch nicht ausgeführt; Eingaben und Ergebnisse verbleiben nur lokal auf dieser Seite.</div>
+<div class="status-detail" id="status-detail">Das Modell erstellt bei Ausführung Jahres‑Cashflows und einen Vergleich von drei Sequenzen.</div>
+<p class="tool-error" hidden="" id="error" role="alert"></p>
+<div class="formula-note"><strong>Modellumfang:</strong><code>Endvermögen = max(0, Anfangsvermögen × (1＋Jahresrendite) − Jahresentnahmen)</code>Feste Regeln passen Entnahmen an die Inflation an; Prozentregeln rechnen mit dem Vermögen zu Jahresbeginn; flexible Regeln senken Entnahmen nur, wenn die Vorjahresrendite unter einer Schwelle liegt. Das Modell wendet zuerst die Jahresrendite an, dann die Jahresentnahme.</div>
+</section>
+<section aria-labelledby="result-title" class="result retirement-result" hidden="" id="results">
+<div class="eyebrow">Szenario‑Ergebnis</div>
+<h2 id="result-title">Vermögenslaufzeit und Stresstests</h2>
+<p class="result-intro" id="summary">—</p>
+<div class="metric-grid retirement-metrics">
+<div class="metric"><span class="sub">Anfängliche Entnahmerate</span><b id="rate">—</b><small>Erstjahr‑Entnahme ÷ Vermögen bei Rentenbeginn</small></div>
+<div class="metric"><span class="sub">Reale Rendite</span><b id="real-return">—</b><small>(1＋Nominelle Rendite) ÷ (1＋Inflation) − 1</small></div>
+<div class="metric"><span class="sub">Vermögen am Ende der Simulation</span><b id="end">—</b><small>Nominalbetrag; Einzelner Pfad</small></div>
+<div class="metric"><span class="sub">Liquiditäts-Runway</span><b id="reserve-months">—</b><small>Reserve ÷ erste Monatsentnahme</small></div>
+<div class="metric"><span class="sub">Jahr der Vermögenserschöpfung</span><b id="deplete">—</b><small>Wenn der Jahresend‑Saldo erstmals unter 0 liegt</small></div>
+</div>
+<div class="selected-rule"><strong>Aktuelle Messgrundlage：</strong><span id="selected-rule">—</span></div>
+<div class="visual retirement-visual"><div class="panel-heading"><div><div class="eyebrow">Balance‑Verlauf</div><h3>Jährlicher Vermögenssaldo</h3></div><span>Orange Linie: aktuell gewähltes Szenario</span></div><canvas aria-label="Jährliche Kurve des Vermögensbestands im Ruhestand" height="260" id="cashflow-chart" role="img" width="960"></canvas></div>
+<div class="visual table-visual"><div class="panel-heading"><div><div class="eyebrow">Cash‑flow‑Ledger</div><h3>Jährliche Cashflow‑Aufschlüsselung</h3></div><span id="table-basis">—</span></div><div class="table-wrap"><table><thead><tr><th>Jahresperiode</th><th>Vermögen zu Jahresbeginn</th><th>Jahresrendite</th><th>Entnahme</th><th>Vermögen am Jahresende</th></tr></thead><tbody id="rows"></tbody></table></div></div>
+<div class="visual scenario-visual"><div class="panel-heading"><div><div class="eyebrow">Sequenzvergleich</div><h3>Drei klar definierte Stress‑Pfad‑Szenarien</h3></div><span>Alle übrigen Eingaben fixieren</span></div><p class="chart-summary" id="scenario-note">—</p><div class="table-wrap"><table><thead><tr><th>Szenario</th><th>Endvermögen</th><th>In der Simulationsperiode erschöpft</th><th>Verwendungszweck</th></tr></thead><tbody id="scenario-rows"></tbody></table></div></div>
+<div class="source-box"><strong>Einschränkungen der Auslegung:</strong>Das ist weder eine Monte‑Carlo‑Simulation noch eine Schätzung der Erfolgswahrscheinlichkeit. Nicht berücksichtigt sind Steuern, Gebühren, Versicherungen, medizinische Kosten, staatliche/Rentenleistungen, Konten‑Abhebungsbeschränkungen, Wechselkurse, Asset‑Allocation, tatsächliche Renditeverteilungen und Lebensdauerunsicherheit; die gezeigten Renditepfade stellen keinen Marktverlauf dar.<br/><span id="source-links">Weiterführende Lektüre：<a href="https://www.finra.org/investors/learn-to-invest/types-investments/retirement/managing-retirement-income/managing-your-retirement-portfolio" rel="noopener" target="_blank">FINRA Retirement Portfolio</a> · <a href="https://www.investor.gov/financial-tools-calculators/calculators/compound-interest-calculator" rel="noopener" target="_blank">Investor.gov Zinseszins‑Rechner</a> · <a href="https://www.schwab.com/learn/story/timing-matters-understanding-sequence-returns-risk" rel="noopener" target="_blank">Charles Schwab: Erläuterung des Sequence‑of‑Returns‑Risikos</a></span></div>
+</section>
+</div>
+</main>
+<script src="/academy/academy.js?v=20260827-i18n1"></script>
+<script src="/academy/tools/retirement-cashflow.js"></script><section class="finance-quality-note" data-finance-quality=""><h2>So nutzen Sie dieses Finanztool</h2><p>Diese Seite zerlegt ein Finanzkonzept in überprüfbare Eingaben, Formeln und Szenarien. Lesen Sie zuerst die Variablendefinitionen und vergleichen Sie vorsichtige, Basis- und Stressfälle; ein Ergebnis ist keine Renditezusage.</p><p>Empfohlener Ablauf: Einheiten und Zeiträume prüfen, eigene Annahmen eingeben und anschließend Sensitivität, Kosten und Verlustszenarien prüfen.</p><p><strong>Einschränkungen:</strong> Das Modell prognostiziert keine Märkte und enthält möglicherweise nicht jede Steuer, Slippage, Liquiditäts-, Kredit-, Regulierungs- oder Vertragsbedingung. Wichtige Entscheidungen mit aktuellen Primärquellen und qualifizierten Fachleuten prüfen.</p></section>
+<section class="finance-disclaimer" data-finance-disclaimer=""><h2>Finanzrisiko-Hinweis</h2><p>Diese Seite, ihre Rechner und Beispiele dienen ausschließlich der Bildung, Recherche und Szenarioschätzung. Sie sind keine persönliche Anlage-, Handels-, Wett-, Steuer-, Rechts- oder Finanzberatung. Märkte und lokale Regeln können sich ändern; prüfen Sie aktuelle Primärquellen und tragen Sie die Verantwortung für Ihre Entscheidungen. Vergangene Ergebnisse, Modellwerte und Simulationen garantieren keine Zukunftsergebnisse.</p></section>
+</body>
+</html>

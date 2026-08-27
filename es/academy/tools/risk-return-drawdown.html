@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>Herramienta de análisis de riesgo‑rentabilidad y drawdown máximo｜GugoPro Academy</title>
+<meta content="Calculará localmente en el navegador la rentabilidad acumulada, volatilidad, Sharpe, Sortino, máxima caída (MDD) y período de recuperación a partir de la serie histórica de precios o rendimientos pegada por el usuario." name="description"/>
+<meta content="Análisis riesgo‑rentabilidad, calculadora de drawdown máximo, MDD, Sharpe, Sortino, Calmar, periodo de recuperación de drawdown, ratio R/R" name="keywords"/>
+<link href="/academy/academy.css" rel="stylesheet"/>
+<link href="/academy/tools/risk-return-drawdown.css" rel="stylesheet"/>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Herramienta de análisis de riesgo‑rentabilidad y drawdown máximo","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"Calcula riesgo/rendimiento y máximo drawdown localmente en el navegador a partir de series históricas de precios o rendimientos introducidas por el usuario.","url":"https://gugopro.com/es/academy/tools/risk-return-drawdown.html"}</script>
+<meta content="https://gugopro.com/academy/tools/risk-return-drawdown.html" property="og:url"/>
+<meta content="index, follow" name="robots"/>
+<link href="https://gugopro.com/es/academy/tools/risk-return-drawdown.html" rel="canonical"/>
+<link href="https://gugopro.com/academy/tools/risk-return-drawdown.html" hreflang="zh-TW" rel="alternate"/>
+<link href="https://gugopro.com/zh-CN/academy/tools/risk-return-drawdown.html" hreflang="zh-CN" rel="alternate"/>
+<link href="https://gugopro.com/en/academy/tools/risk-return-drawdown.html" hreflang="en" rel="alternate"/>
+<link href="https://gugopro.com/ja/academy/tools/risk-return-drawdown.html" hreflang="ja" rel="alternate"/>
+<link href="https://gugopro.com/de/academy/tools/risk-return-drawdown.html" hreflang="de" rel="alternate"/>
+<link href="https://gugopro.com/fr/academy/tools/risk-return-drawdown.html" hreflang="fr" rel="alternate"/>
+<link href="https://gugopro.com/es/academy/tools/risk-return-drawdown.html" hreflang="es" rel="alternate"/>
+<link href="https://gugopro.com/pt/academy/tools/risk-return-drawdown.html" hreflang="pt" rel="alternate"/>
+<link href="https://gugopro.com/academy/tools/risk-return-drawdown.html" hreflang="x-default" rel="alternate"/>
+<meta content="true" name="static-locale-route"/>
+<meta content="machine-draft" name="i18n-status"/>
+<link href="/tools/finance/finance-locale.css?v=20260827" rel="stylesheet"/>
+<script src="/i18n/static-locale-runtime.js?v=20260827" defer></script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="quant-page risk-return-tool">
+<main class="tool-page rr-tool-page">
+<div class="tool-crumb"><a href="/articles/investment/06-sharpe-mdd-risk-control.html">← Leer el tutorial sobre riesgo‑rentabilidad y máximo drawdown</a><span>Lente de riesgo · Solo frontend · Sin datos de mercado en tiempo real</span></div>
+<div aria-label="工具區段" class="article-jump"><a href="#inputs">Entrada de datos</a><a href="#trade-input">Riesgo‑recompensa por operación</a><a href="#results">Resumen de riesgo histórico</a><a href="#drawdown-table">Trayectoria de drawdown</a><a href="#limits">Limitaciones y fuentes</a></div>
+<div class="tool-layout rr-tool-layout">
+<section class="panel rr-input-panel" id="inputs">
+<div class="eyebrow">Quant lab · Riesgo / Retorno</div>
+<h1>Análisis de riesgo‑rentabilidad y drawdown máximo</h1>
+<p>Pegue su serie histórica de precios o retornos verificada; la herramienta calcula solo en el navegador actual, sin conexión y sin autocompletar datos de mercado. Secuencia: antiguo→nuevo; separe números con coma, punto y coma, espacio o salto de línea.</p>
+<div class="badge-row"><span>Sharpe</span><span>Sortino</span><span>MDD</span><span>Recuperación</span><span>Lado cliente</span></div>
+<div class="input-grid">
+<div><label for="input-mode">Tipo de dato</label><select id="input-mode"><option value="prices">Serie de precios (números positivos)</option><option value="returns">Secuencia de retornos (porcentaje)</option></select></div>
+<div><label for="frequency">Frecuencia de retornos</label><select id="frequency"><option value="daily">Diario (252 periodos/año)</option><option value="weekly">Semanal (52 periodos/año)</option><option value="monthly">Mensual (12 periodos/año)</option><option value="custom">Períodos anuales personalizados</option></select></div>
+</div>
+<div class="hidden-field" id="custom-frequency-wrap"><label for="custom-frequency">Períodos anuales personalizados</label><input id="custom-frequency" max="1000" min="1" placeholder="p. ej. 252" step="1" type="number"/></div>
+<label for="series">Serie histórica</label>
+<textarea id="series" placeholder="Pegue datos verificados; p. ej., precios 100, 105, 98 o retornos 2.1, -1.4, 0.8. La página no completa datos de mercado automáticamente." rows="8" spellcheck="false"></textarea>
+<div class="input-grid">
+<div><label for="mar">Rendimiento mínimo aceptable por periodo MAR (%)</label><input id="mar" inputmode="decimal" step="0.01" type="number" value="0"/></div>
+<div><label for="initial-capital">Capital inicial（元）</label><input id="initial-capital" inputmode="decimal" min="0.01" step="1" type="number" value="100000"/></div>
+</div>
+<div class="button-row"><button class="calc" id="calculate" type="button">Calcular resumen de riesgo</button><button class="secondary-btn" id="clear" type="button">borrar resultados</button><button class="secondary-btn" disabled="" id="download" type="button">Descargar CSV</button></div>
+<div aria-live="polite" class="status" id="status">Pegue al menos 3 valores históricos con la misma frecuencia antes de calcular.</div>
+<div class="formula-note"><strong>Contrato de datos:</strong>Los precios deben ser positivos; las rentabilidades se ingresan en porcentaje; los datos van de lo antiguo a lo nuevo; MAR es un porcentaje por periodo, no un valor anualizado. La herramienta no verifica fuentes, no ajusta automáticamente dividendos/splits/flujo de caja y no toma 0% MAR como tasa libre de riesgo de mercado.</div>
+<section class="trade-module" id="trade-input">
+<div class="module-heading"><div><div class="eyebrow">Lente de escenario</div><h2>R:R por operación</h2></div><span>Escenarios previos a la entrada</span></div>
+<p>Aquí R:R solo describe las distancias de precio entre entrada, stop y objetivo; tras introducir la tasa de aciertos estimará el valor esperado por operación — no presentará un único escenario como si fuera un Sharpe histórico.</p>
+<div class="input-grid three-col"><div><label for="direction">Dirección</label><select id="direction"><option value="long">Posición larga (Long)</option><option value="short">Corto (short)</option></select></div><div><label for="entry">Precio de entrada</label><input id="entry" placeholder="p. ej. 100" step="0.01" type="number"/></div><div><label for="stop">Precio de stop</label><input id="stop" placeholder="p. ej. 95" step="0.01" type="number"/></div></div>
+<div class="input-grid"><div><label for="target">Precio objetivo</label><input id="target" placeholder="p. ej. 115" step="0.01" type="number"/></div><div><label for="win-rate">Tasa de aciertos (%) opcional</label><input id="win-rate" max="99.99" min="0.01" placeholder="Si no se completa, solo se calcula R:R." step="0.1" type="number"/></div></div>
+<div aria-live="polite" class="trade-result" id="trade-result"><strong>Escenario individual aún no calculado</strong><span>Introduzca precio de entrada, stop y objetivo.</span></div>
+</section>
+</section>
+<section class="result rr-result-panel" id="results">
+<div class="eyebrow">Lente histórica</div><h2>Resumen riesgo‑rentabilidad histórico</h2>
+<div class="result-big" id="result-headline">En espera de secuencia válida</div><div class="sub" id="result-detail">Los resultados reflejan únicamente los datos, la frecuencia y el MAR ingresados actualmente.</div>
+<div class="metric-grid rr-metrics">
+<div class="metric"><span class="sub">rendimiento acumulado</span><b id="cumulative-return">—</b></div>
+<div class="metric"><span class="sub">Rendimiento anualizado</span><b id="annual-return">—</b></div>
+<div class="metric"><span class="sub">Volatilidad anualizada</span><b id="annual-volatility">—</b></div>
+<div class="metric"><span class="sub">Sharpe</span><b id="sharpe">—</b></div>
+<div class="metric"><span class="sub">Sortino</span><b id="sortino">—</b></div>
+<div class="metric metric-risk"><span class="sub">Máximo drawdown (MDD)</span><b id="mdd">—</b></div>
+<div class="metric metric-risk"><span class="sub">Importe del drawdown</span><b id="mdd-amount">—</b></div>
+<div class="metric"><span class="sub">Período de recuperación</span><b id="recovery">—</b></div>
+<div class="metric"><span class="sub">Calmar</span><b id="calmar">—</b></div>
+<div class="metric"><span class="sub">Factor de recuperación</span><b id="recovery-factor">—</b></div>
+<div class="metric"><span class="sub">Períodos de observación</span><b id="observations">—</b></div>
+</div>
+<div class="drawdown-callout" id="drawdown-summary"><strong>En espera de análisis de drawdown</strong><span>Requiere series históricas válidas y capital inicial.</span></div>
+<div class="visual rr-visual"><div class="visual-heading"><h3>Curva de equity y drawdowns históricos</h3><span id="chart-caption">—</span></div><svg aria-label="權益曲線與回撤圖表" class="equity-chart" id="equity-chart" role="img" viewbox="0 0 720 250"></svg><div class="chart-legend"><span><i class="legend-equity"></i>Curva de equity</span><span><i class="legend-peak"></i>Referencia de máximos históricos</span><span><i class="legend-drawdown"></i>Región de drawdown</span></div></div>
+<div class="source-box"><strong>Definición del indicador:</strong>Sharpe＝rendimiento medio en exceso／desviación estándar de la muestra; Sortino＝rendimiento medio en exceso／downside deviation respecto a MAR; MDD se calcula siguiendo la ruta del running peak (primero pico, luego valle). Si la desviación estándar es 0 o no hay observaciones por debajo de MAR, la herramienta indicará que la métrica no puede formarse y no mostrará valores infinitos.</div>
+</section>
+</div>
+<section class="rr-table-section" id="drawdown-table"><div class="section-heading"><div><div class="eyebrow">Auditoría de ruta</div><h2>Comprobación de la trayectoria de drawdown</h2></div><span id="table-note">Aún no calculado</span></div><div class="table-wrap"><table class="result-table"><thead><tr><th>Número de serie</th><th>Equity</th><th>Pico en curso</th><th>Drawdown</th><th>Estado</th></tr></thead><tbody id="path-rows"></tbody></table></div></section>
+<section class="source-box rr-limit-section" id="limits"><strong>Fuentes y limitaciones:</strong>La versión histórica del Sharpe, la dependencia temporal y los límites de distribución se discuten en el artículo de William F. Sharpe en Stanford; la definición de downside risk para Sortino puede consultarse en Charles Schwab; MDD y la secuencia pico‑a‑valle se explican en el CFA Institute.<a href="/articles/investment/06-sharpe-mdd-risk-control.html">Ver tutorial completo y Referencias →</a><p>Esta página utiliza exclusivamente las entradas del usuario: no hay cotizaciones en tiempo real, no hay carga al servidor, no hay ajuste automático de precios o flujos de caja, y no selecciona activos ni fija stops por el usuario. Los indicadores históricos no garantizan resultados futuros. This is research and analysis only, not personalized financial advice.</p></section>
+</main>
+<script src="/academy/academy.js?v=20260827-i18n1"></script>
+<script src="/academy/tools/risk-return-drawdown.js"></script><section class="finance-quality-note" data-finance-quality=""><h2>Cómo usar esta herramienta financiera</h2><p>Esta página convierte un concepto financiero en datos, fórmulas y escenarios verificables. Lee primero las definiciones y compara escenarios prudente, base y de estrés; un resultado no garantiza rentabilidad.</p><p>Flujo recomendado: confirma unidades y periodos, introduce tus supuestos y revisa sensibilidad, costes y escenarios adversos.</p><p><strong>Limitaciones:</strong> el modelo no predice los mercados y puede no incluir todos los impuestos, deslizamientos, liquidez, crédito, regulación o condiciones contractuales. Verifica las decisiones importantes con fuentes primarias actualizadas y un profesional cualificado.</p></section>
+<section class="finance-disclaimer" data-finance-disclaimer=""><h2>Aviso de riesgo financiero</h2><p>Esta página, sus calculadoras y ejemplos se ofrecen únicamente con fines educativos, de investigación y estimación de escenarios. No constituyen asesoramiento personalizado de inversión, trading, apuestas, fiscalidad, legal o financiero. Los mercados y normas locales cambian; verifica fuentes primarias actuales y asume la responsabilidad de tus decisiones. El rendimiento pasado, los resultados del modelo y las simulaciones no garantizan resultados futuros.</p></section>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>交易日志分析器｜胜率、期望值与最大连亏｜GugoPro Academy</title>
+<meta content="粘贴已完成交易的 R 结果，在浏览器本地分析胜率、平均盈利、平均亏损、Profit Factor、期望值、最大连续亏损与 R 回撤。" name="description"/>
+<link href="/academy/academy.css" rel="stylesheet"/><link href="/academy/tools/practical-trading.css" rel="stylesheet"/>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"交易日志分析器","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"以用户粘贴的已完成交易 R 结果，计算交易统计与最大连续亏损。","url":"https://gugopro.com/zh-CN/academy/tools/trade-journal-analyzer.html"}</script>
+<meta content="https://gugopro.com/academy/tools/trade-journal-analyzer.html" property="og:url"/>
+<meta content="index, follow" name="robots"/>
+<link href="https://gugopro.com/zh-CN/academy/tools/trade-journal-analyzer.html" rel="canonical"/>
+<link href="https://gugopro.com/academy/tools/trade-journal-analyzer.html" hreflang="zh-TW" rel="alternate"/>
+<link href="https://gugopro.com/zh-CN/academy/tools/trade-journal-analyzer.html" hreflang="zh-CN" rel="alternate"/>
+<link href="https://gugopro.com/en/academy/tools/trade-journal-analyzer.html" hreflang="en" rel="alternate"/>
+<link href="https://gugopro.com/ja/academy/tools/trade-journal-analyzer.html" hreflang="ja" rel="alternate"/>
+<link href="https://gugopro.com/de/academy/tools/trade-journal-analyzer.html" hreflang="de" rel="alternate"/>
+<link href="https://gugopro.com/fr/academy/tools/trade-journal-analyzer.html" hreflang="fr" rel="alternate"/>
+<link href="https://gugopro.com/es/academy/tools/trade-journal-analyzer.html" hreflang="es" rel="alternate"/>
+<link href="https://gugopro.com/pt/academy/tools/trade-journal-analyzer.html" hreflang="pt" rel="alternate"/>
+<link href="https://gugopro.com/academy/tools/trade-journal-analyzer.html" hreflang="x-default" rel="alternate"/>
+<meta content="true" name="static-locale-route"/>
+<meta content="machine-draft" name="i18n-status"/>
+<link href="/tools/finance/finance-locale.css?v=20260827" rel="stylesheet"/>
+<script src="/i18n/static-locale-runtime.js?v=20260827" defer></script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="quant-page practical-page">
+<main class="practical-shell">
+<div class="practical-top"><a class="practical-brand" href="/academy/">← 返回 GugoPro Academy</a><a class="practical-back" href="/articles/investment/17-practical-trading.html">阅读第 13 类：交易日志与复盘</a></div>
+<nav aria-label="頁內導覽" class="practical-jump"><a href="#inputs">粘贴记录</a><a href="#results">统计结果</a><a href="#chart">权益路径</a><a href="#limits">限制</a></nav>
+<header class="practical-hero"><div><div class="eyebrow">第13类 · 复盘台</div><h1>交易日志<br/>分析器</h1><p>粘贴已完成交易的 R 结果，把“我觉得策略有效”拆成可检验的胜率、平均盈亏、期望值、连续亏损与回撤。数据仅保留在当前浏览器。</p></div><div class="practical-badge"><strong>先记录，再解释</strong><span>不要用一笔成功交易代表策略</span></div></header>
+<div class="practical-layout">
+<section class="practical-panel" id="inputs"><div class="eyebrow">已完成交易</div><h2>粘贴已完成交易结果</h2><label for="trade-results">每笔交易结果（R）</label><textarea id="trade-results" placeholder="一行一笔，例如：\n2.4\n-1\n0.8\n-1\n3.1\n只输入数字；也接受 2.4R 格式。顺序请由旧到新。"></textarea><small class="practical-help">请先定义同一套 1R 口径；不要将未平仓交易、不同策略或不同成本口径混在一起。</small><fieldset class="practical-fieldset"><legend>金额换算（选填）</legend><div><label for="r-money">1R 对应金额（元）</label><input id="r-money" inputmode="decimal" min="0" placeholder="例如 1000" step="0.01" type="number"/></div><p>未填时仍会计算 R 统计；填入后可查看累计期望金额。</p></fieldset><div class="practical-actions"><button class="practical-calc" id="calculate" type="button">分析交易记录</button><button class="practical-clear" id="clear" type="button">清除结果</button></div><div aria-live="polite" class="practical-status" id="status">至少粘贴 5 笔已完成交易，并确认所有交易使用相同的 R 定义。</div><div class="practical-formula"><strong>核心公式：</strong>期望值＝胜率×平均获利＋失败率×平均亏损；Profit Factor＝总获利÷总亏损绝对值；R 回撤依累积 R 曲线的 running peak 计算。</div></section>
+<section aria-live="polite" class="practical-result" id="results"><div class="eyebrow">期刊统计</div><h2>交易统计</h2><div class="practical-big" id="expectancy">—</div><div class="practical-sub" id="result-message">等待有效输入</div><div class="practical-metrics"><div class="practical-metric"><span>交易笔数</span><b id="count">—</b></div><div class="practical-metric"><span>胜率</span><b id="win-rate">—</b></div><div class="practical-metric"><span>平均盈利</span><b id="avg-win">—</b></div><div class="practical-metric"><span>平均亏损</span><b id="avg-loss">—</b></div><div class="practical-metric"><span>盈利因子</span><b id="profit-factor">—</b></div><div class="practical-metric"><span>最大连续亏损</span><b id="max-loss-streak">—</b></div><div class="practical-metric"><span>最大 R 回撤</span><b id="max-drawdown">—</b></div><div class="practical-metric"><span>累计 R</span><b id="total-r">—</b></div></div><div class="practical-breakdown"><h3>分布拆解</h3><div class="practical-table-wrap"><table class="practical-table"><thead><tr><th>项目</th><th>笔数/数值</th><th>解讀</th></tr></thead><tbody id="breakdown-rows"><tr><td colspan="3">尚未计算</td></tr></tbody></table></div></div><div class="practical-chart" id="chart"><div class="practical-chart-title"><h3>累计 R 路径</h3><span id="chart-caption">—</span></div><div aria-label="累積 R 長條圖" class="practical-bars" id="equity-bars"></div><div class="practical-axis"><span>较早交易</span><span>最新交易</span></div></div><div class="practical-note" id="limits"><strong>模型限制：</strong>此页只分析你粘贴的已完成 R 结果，不知道每笔交易的价格、滑点、税费、时间、策略标签或流动性。样本小、策略混合、幸存者偏差与未纳入未平仓交易，都会使统计失真；历史正期望不保证未来结果。</div></section>
+</div>
+<section class="practical-section"><div class="eyebrow">下一次检查</div><h2>把统计连回交易流程</h2><div class="practical-cards"><div class="practical-card"><strong>成本敏感度</strong><p>用单笔工具检查手续费与滑点如何改变期望值。</p><a href="/academy/tools/trade-expectancy.html">开启交易期望值 →</a></div><div class="practical-card"><strong>仓位规划</strong><p>把单笔最大损失与每单位成本放进交易前检查。</p><a href="/academy/tools/practical-trade-plan.html">开启仓位检查器 →</a></div><div class="practical-card"><strong>风险路径</strong><p>将权益序列延伸到 MDD、恢复期与 Sharpe。</p><a href="/academy/tools/risk-return-drawdown.html">开启风险分析 →</a></div></div></section>
+<footer class="practical-footer">本页只在浏览器本地处理用户粘贴的数据，不上传交易日志。资料与计算结果仅供教育与研究，并非个性化投资或交易建议。</footer>
+</main><script src="/academy/academy.js?v=20260827-i18n1"></script><script src="/academy/tools/trade-journal-analyzer.js"></script><section class="finance-quality-note" data-finance-quality=""><h2>财经工具使用说明</h2><p>本页把财经概念拆成可检查的输入、公式与情境结果。请先阅读变量定义，再比较保守、中性与压力情境；单一结果不代表收益承诺。</p><p>建议流程：确认资料单位与期间，输入自己的假设，接着检查敏感度、成本与下行情境。</p><p><strong>限制：模型不会预测市场，也不包含所有税费、滑点、流动性、信用、法规或个别合约条款；重要决策请以最新官方资料及合格专业意见复核。:</strong>限制：模型不会预测市场，也不包含所有税费、滑点、流动性、信用、法规或个别合约条款；重要决策请以最新官方资料及合格专业意见复核。</p></section>
+<section class="finance-disclaimer" data-finance-disclaimer=""><h2>投资风险免责声明</h2><p>本页内容、计算器与示例仅供教育、研究与情境估算，不构成投资、交易、投注、税务、法律或其他个性化金融建议。金融市场与个别制度可能快速变化，请核对最新官方资料并承担决策责任。过去表现、模型输出或模拟结果不代表未来结果。</p></section>
+</body></html>

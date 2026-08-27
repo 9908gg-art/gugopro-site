@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>臺指期／富台期の期現價差ツール｜GugoPro Academy</title>
+<meta content="同一時点で検証したスポット、近月および次月の先物価格を入力し、Basis、年率換算の期現スプレッド、ロールスプレッド、および名目損益を計算します。" name="description"/>
+<link href="/academy/academy.css" rel="stylesheet"/>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"臺指期と富台期の期現價差ツール","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"ユーザー入力に基づき、現物・近月・次月先物の期現差（ベーシス）とロール影響を分解する。","url":"https://academy.gugopro.com/tools/futures-basis-pairs.html"}</script>
+<meta content="https://gugopro.com/academy/tools/futures-basis-pairs.html" property="og:url"/>
+<meta content="index, follow" name="robots"/>
+<link href="https://gugopro.com/ja/academy/tools/futures-basis-pairs.html" rel="canonical"/>
+<link href="https://gugopro.com/academy/tools/futures-basis-pairs.html" hreflang="zh-TW" rel="alternate"/>
+<link href="https://gugopro.com/zh-CN/academy/tools/futures-basis-pairs.html" hreflang="zh-CN" rel="alternate"/>
+<link href="https://gugopro.com/en/academy/tools/futures-basis-pairs.html" hreflang="en" rel="alternate"/>
+<link href="https://gugopro.com/ja/academy/tools/futures-basis-pairs.html" hreflang="ja" rel="alternate"/>
+<link href="https://gugopro.com/de/academy/tools/futures-basis-pairs.html" hreflang="de" rel="alternate"/>
+<link href="https://gugopro.com/fr/academy/tools/futures-basis-pairs.html" hreflang="fr" rel="alternate"/>
+<link href="https://gugopro.com/es/academy/tools/futures-basis-pairs.html" hreflang="es" rel="alternate"/>
+<link href="https://gugopro.com/pt/academy/tools/futures-basis-pairs.html" hreflang="pt" rel="alternate"/>
+<link href="https://gugopro.com/academy/tools/futures-basis-pairs.html" hreflang="x-default" rel="alternate"/>
+<meta content="true" name="static-locale-route"/>
+<meta content="machine-draft" name="i18n-status"/>
+<link href="/tools/finance/finance-locale.css?v=20260827" rel="stylesheet"/>
+<script src="/i18n/static-locale-runtime.js?v=20260827" defer></script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="quant-page">
+<main class="tool-page"><div class="tool-crumb"><a href="/academy/">← GugoPro Academy に戻る</a><span>デリバティブ研究 · 同時入力 · 非リアルタイム見積もり</span></div>
+<div class="tool-layout"><section class="panel"><div class="eyebrow">Quant lab · 先物ベーシス Futures</div><h1>臺指期／富台期の期現價差（現物‑先物スプレッド）</h1><p>同一時点の現物参照価格と近月・次月の先物価格を同一単位に揃え、Basis、期限構造、名目損益を分解する。乗数は取引所の実際の契約仕様に合わせて修正すること。</p>
+<label for="spot">現物／指数参照値</label><input id="spot" min="0" placeholder="検証値を貼り付け" step="0.01" type="number"/>
+<label for="front">近月先物価格</label><input id="front" min="0" placeholder="検証値を貼り付け" step="0.01" type="number"/>
+<label for="next">先限の先物価格</label><input id="next" min="0" placeholder="検証値を貼り付け" step="0.01" type="number"/>
+<label for="days">近月の満期までの日数（天）</label><input id="days" max="365" min="1" step="1" type="number" value="30"/>
+<label for="multiplier">1ポイント当たり乗数（元）</label><input id="multiplier" min="0.01" step="0.01" type="number" value="200"/>
+<label for="contracts">近月の口数（調査用）</label><input id="contracts" min="0" step="1" type="number" value="1"/>
+<button class="calc" id="calc" type="button">期現とロールの価格差を分解する</button><div aria-live="polite" class="status" id="status">同一時点・同一銘柄の価格を3つ入力してください。</div>
+<div class="formula-note"><strong>式：</strong>Basis = 近月先物 − 現物；Basis% = Basis ÷ 現物；簡易年率化 Basis = Basis% × 365 ÷ 満期までの日数；Calendar spread = 翌月 − 近月。これらは分析上の分解であり、収束や裁定のリターンを保証するものではありません。</div></section>
+<section class="result"><div class="eyebrow">Basis の分解</div><h2>期現および期限構造</h2><div class="result-big" id="basis">—</div><div class="sub" id="shape">有効な入力待ち</div>
+<div class="metric-grid"><div class="metric"><span class="sub">Basis %</span><b id="basisPct">—</b></div><div class="metric"><span class="sub">年化ベース</span><b id="annualBasis">—</b></div><div class="metric"><span class="sub">ロールスプレッド</span><b id="calendar">—</b></div><div class="metric"><span class="sub">名目Basis金額</span><b id="notional">—</b></div></div>
+<div class="visual"><h3>スプレッド構造（ポイント）</h3><div class="bar-chart" id="chart"><i style="height:6px"></i></div><div class="axis"><span>現物 0</span><span>Basis</span><span>Calendar spread</span></div></div>
+<div class="source-box"><strong>契約とデータの制約：</strong>臺指期（TX）の契約サイズと取引時間は、以下に基づくべきです <a href="https://www.taifex.com.tw/enl/eng2/tX" rel="noopener" target="_blank">TAIFEX 公式仕様</a>照合：富台期と他の指数先物の乗数、通貨、満期、取引時間はそのまま流用できません。ツールはリアルタイム価格を取得しないため、異なる時点や異なる限月を誤って取引可能なスプレッドとして組み合わせないでください。</div></section></div></main>
+<script src="/academy/academy.js?v=20260827-i18n1"></script><script>
+const $=id=>document.getElementById(id),fmt=(n,d=2)=>Number.isFinite(n)?n.toFixed(d):'—';
+function calc(){const s=+$('spot').value,f=+$('front').value,n=+$('next').value,d=+$('days').value,m=+$('multiplier').value,q=+$('contracts').value;if(![s,f,n,d,m,q].every(Number.isFinite)||s<=0||d<=0||m<=0||q<0){$('status').textContent='輸入錯誤：請填入有效的同口徑價格、天數、乘數與口數。';$('status').className='status error';return}const b=f-s,p=b/s*100,a=p*365/d,cal=n-f; $('basis').textContent=fmt(b)+' 點';$('basisPct').textContent=fmt(p,3)+'%';$('annualBasis').textContent=fmt(a,2)+'%';$('calendar').textContent=fmt(cal)+' 點';$('notional').textContent='NT$ '+Math.round(b*m*q).toLocaleString('zh-TW');$('shape').textContent=cal>0?'次月高於近月：正價差／Contango 研究標籤':cal<0?'次月低於近月：逆價差／Backwardation 研究標籤':'次月與近月相同：期限價差為 0';const span=Math.max(Math.abs(b),Math.abs(cal),1);$('chart').innerHTML='<i style="height:'+Math.max(5,Math.abs(b)/span*145)+'px" title="Basis"></i><i style="height:'+Math.max(5,Math.abs(cal)/span*145)+'px" title="Calendar spread"></i>';$('status').textContent='計算完成：請再核對乘數、幣別、到期日與同時點資料。';$('status').className='status ok'}
+$('calc').addEventListener('click',calc);</script><section class="finance-quality-note" data-finance-quality=""><h2>財務ツールの使い方</h2><p>このページでは、財務の概念を検証可能な入力、計算式、シナリオに分けています。変数の定義を確認し、保守・基本・ストレスケースを比較してください。単一の結果は収益を保証しません。</p><p>手順：単位と期間を確認し、自分の前提を入力してから、感応度、コスト、下振れケースを確認します。</p><p><strong>制限：市場を予測するものではなく、税金、スリッページ、流動性、信用、規制、契約条件をすべて含むとは限りません。重要な判断は最新の一次情報と有資格者に確認してください。:</strong>制限：市場を予測するものではなく、税金、スリッページ、流動性、信用、規制、契約条件をすべて含むとは限りません。重要な判断は最新の一次情報と有資格者に確認してください。</p></section>
+<section class="finance-disclaimer" data-finance-disclaimer=""><h2>投資リスクに関する免責事項</h2><p>本ページの内容、計算ツール、例示は教育・研究・シナリオ試算のみを目的とし、個別の投資、取引、賭け、税務、法律その他の金融助言ではありません。市場や制度は変化するため、最新の一次情報を確認し、判断はご自身の責任で行ってください。過去の実績、モデル出力、シミュレーションは将来を保証しません。</p></section>
+</body></html>

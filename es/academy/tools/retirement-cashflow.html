@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>Prueba de estrés de flujo de caja de jubilación | GugoPro Academy</title>
+<meta content="Revise activos de jubilación, reglas de retiro, inflación, reservas y escenarios de estrés por secuencia de retornos con un modelo anual transparente; cálculo solo en front‑end, sin tasas de éxito ni asesoramiento personalizado." name="description"/>
+<link href="/academy/academy.css" rel="stylesheet"/>
+<link href="/academy/tools/retirement-cashflow.css" rel="stylesheet"/>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Prueba de estrés de flujo de caja de jubilación","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"Con un escenario determinista anual ingresado por el usuario, verifique retiros de jubilación, inflación y estrés por secuencia de retornos; no ofrece probabilidades de éxito ni asesoramiento de inversión personalizado.","url":"https://gugopro.com/es/academy/tools/retirement-cashflow.html","isPartOf":{"@type":"WebSite","name":"GugoPro Academy"}}</script>
+<meta content="https://gugopro.com/academy/tools/retirement-cashflow.html" property="og:url"/>
+<meta content="index, follow" name="robots"/>
+<link href="https://gugopro.com/es/academy/tools/retirement-cashflow.html" rel="canonical"/>
+<link href="https://gugopro.com/academy/tools/retirement-cashflow.html" hreflang="zh-TW" rel="alternate"/>
+<link href="https://gugopro.com/zh-CN/academy/tools/retirement-cashflow.html" hreflang="zh-CN" rel="alternate"/>
+<link href="https://gugopro.com/en/academy/tools/retirement-cashflow.html" hreflang="en" rel="alternate"/>
+<link href="https://gugopro.com/ja/academy/tools/retirement-cashflow.html" hreflang="ja" rel="alternate"/>
+<link href="https://gugopro.com/de/academy/tools/retirement-cashflow.html" hreflang="de" rel="alternate"/>
+<link href="https://gugopro.com/fr/academy/tools/retirement-cashflow.html" hreflang="fr" rel="alternate"/>
+<link href="https://gugopro.com/es/academy/tools/retirement-cashflow.html" hreflang="es" rel="alternate"/>
+<link href="https://gugopro.com/pt/academy/tools/retirement-cashflow.html" hreflang="pt" rel="alternate"/>
+<link href="https://gugopro.com/academy/tools/retirement-cashflow.html" hreflang="x-default" rel="alternate"/>
+<meta content="true" name="static-locale-route"/>
+<meta content="machine-draft" name="i18n-status"/>
+<link href="/tools/finance/finance-locale.css?v=20260827" rel="stylesheet"/>
+<script src="/i18n/static-locale-runtime.js?v=20260827" defer></script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="quant-page retirement-page">
+<header class="nav"><div class="shell navin"><a class="brand" href="/academy/">GugoPro <span>Academy</span></a><button class="theme" data-theme="" type="button">Alternar oscuro</button></div></header>
+<main class="tool-page retirement-tool-shell">
+<div class="tool-crumb"><a href="/academy/lessons/15-retirement-cashflow.html">← Leer el tutorial sobre flujos de caja de jubilación</a><span>Laboratorio interactivo · Solo front-end · Sin cotizaciones en tiempo real</span></div>
+<div class="tool-layout">
+<section aria-labelledby="tool-title" class="panel retirement-input-panel">
+<div class="eyebrow">Renta de jubilación · Prueba de estrés</div>
+<h1 id="tool-title">Prueba de estrés de flujo de caja de jubilación</h1>
+<p>Coloca activos de retiro, gastos, inflación y supuestos de rendimiento en la misma tabla anual y compara tensiones de secuencia claramente especificadas. El resultado es una demostración educativa de un único camino, no una probabilidad de éxito, predicción de rendimiento ni recomendación de retiro.</p>
+<div aria-label="工具說明錨點" class="article-jump"><a href="/academy/lessons/15-retirement-cashflow.html">Mira primero el flujo de caja.</a><a href="/academy/lessons/15-retirement-cashflow.html">Entender el riesgo de secuencia</a><a href="/academy/lessons/15-retirement-cashflow.html">Comparar reglas de extracción</a></div>
+<div class="input-grid">
+<label for="asset">Activos al momento de la jubilación (monto)<input id="asset" inputmode="decimal" min="0.01" step="1" type="number" value="10000000"/></label>
+<label for="withdrawal">Retiro base fijo/flexible primer año (NT$)<input id="withdrawal" inputmode="decimal" min="0" step="1" type="number" value="400000"/></label>
+<label for="nominal-return">Rendimiento nominal anualizado（%）<input id="nominal-return" inputmode="decimal" max="100" min="-100" step="0.1" type="number" value="5"/></label>
+<label for="inflation">Tasa de inflación anual（%）<input id="inflation" inputmode="decimal" max="50" min="-20" step="0.1" type="number" value="2"/></label>
+<label for="years">Años de simulación<input id="years" inputmode="numeric" max="80" min="1" step="1" type="number" value="40"/></label>
+<label for="reserve">reserva de liquidez（元）<input id="reserve" inputmode="decimal" min="0" step="1" type="number" value="1200000"/></label>
+<label for="withdrawal-mode">Reglas de retiro<select id="withdrawal-mode"><option value="fixed">monto fijo + ajustado por inflación</option><option value="percentage">Retiro porcentual del activo</option><option value="flexible">Gastos flexibles：reducir en bajadas</option></select></label>
+<label for="percentage-rate" hidden="" id="percentage-control">Tasa de retiro porcentual del activo (%)<input id="percentage-rate" inputmode="decimal" max="100" min="0" step="0.1" type="number" value="4"/></label>
+<label for="flexible-cut" hidden="" id="flexible-controls">Caída (%)<input id="flexible-cut" inputmode="decimal" max="100" min="0" step="1" type="number" value="20"/><span class="field-sub">Umbral de activación: rentabilidad del año anterior por debajo de <input class="inline-number" id="trigger" inputmode="decimal" max="100" min="-100" step="0.1" type="number" value="0"/>%</span></label>
+<label for="sequence">Escenario de estrés por secuencia de rendimientos<select id="sequence"><option value="none">Referencia: sin estrés adicional</option><option value="early">Caída del 15% en cada uno de los años 1–2 del inicio de la jubilación</option><option value="late">En los años 10–11 caída del 15% en cada año</option></select></label>
+</div>
+<p class="mode-help" id="mode-help">—</p>
+<div class="quant-actions"><button class="quant-primary" id="run" type="button">Ejecutar prueba de estrés</button><button class="quant-secondary" id="reset" type="button">Restaurar valores predeterminados</button><button class="quant-secondary" disabled="" id="download" type="button">Descargar resultados locales</button></div>
+<div aria-live="polite" class="status" id="status">Modelo aún no ejecutado; las entradas y resultados permanecen solo en esta página local.</div>
+<div class="status-detail" id="status-detail">El modelo generará al ejecutarse flujos de caja anuales y comparará tres series.</div>
+<p class="tool-error" hidden="" id="error" role="alert"></p>
+<div class="formula-note"><strong>Alcance del modelo:</strong><code>Activo final = max(0, activo inicial × (1 + rentabilidad del año) − retiradas del año)</code>Las reglas fijas ajustan las extracciones por inflación; las reglas porcentuales calculan la extracción sobre el patrimonio a inicio de año; las reglas flexibles reducen la extracción solo si la rentabilidad del año anterior cae por debajo de un umbral. El modelo aplica primero la rentabilidad anual y después la extracción anual.</div>
+</section>
+<section aria-labelledby="result-title" class="result retirement-result" hidden="" id="results">
+<div class="eyebrow">Resultado del escenario</div>
+<h2 id="result-title">Duración y observación de estrés del activo</h2>
+<p class="result-intro" id="summary">—</p>
+<div class="metric-grid retirement-metrics">
+<div class="metric"><span class="sub">Tasa inicial de retiro</span><b id="rate">—</b><small>Retiro del primer año ÷ patrimonios al momento de la jubilación</small></div>
+<div class="metric"><span class="sub">Tasa de rendimiento real</span><b id="real-return">—</b><small>(1＋rentabilidad nominal) ÷ (1＋inflación) − 1</small></div>
+<div class="metric"><span class="sub">Activos al final de la simulación</span><b id="end">—</b><small>Importe nominal; camino único</small></div>
+<div class="metric"><span class="sub">runway de liquidez</span><b id="reserve-months">—</b><small>reserva ÷ primer retiro mensual</small></div>
+<div class="metric"><span class="sub">Año de agotamiento del activo</span><b id="deplete">—</b><small>Si el saldo a fin de año cae por primera vez por debajo de 0</small></div>
+</div>
+<div class="selected-rule"><strong>Base de cálculo actual：</strong><span id="selected-rule">—</span></div>
+<div class="visual retirement-visual"><div class="panel-heading"><div><div class="eyebrow">Evolución del balance</div><h3>Saldo de activos anual</h3></div><span>Línea naranja: escenario seleccionado actualmente</span></div><canvas aria-label="Curva de saldo de activos de jubilación anual" height="260" id="cashflow-chart" role="img" width="960"></canvas></div>
+<div class="visual table-visual"><div class="panel-heading"><div><div class="eyebrow">Libro de flujo de caja</div><h3>Detalle de flujos de caja anuales</h3></div><span id="table-basis">—</span></div><div class="table-wrap"><table><thead><tr><th>Anual</th><th>Activos al inicio del año</th><th>Rendimiento anual</th><th>Retiro</th><th>Activos al final del año</th></tr></thead><tbody id="rows"></tbody></table></div></div>
+<div class="visual scenario-visual"><div class="panel-heading"><div><div class="eyebrow">Comparación de secuencias</div><h3>Tres rutas de estrés claramente definidas</h3></div><span>Resto de entradas fijas</span></div><p class="chart-summary" id="scenario-note">—</p><div class="table-wrap"><table><thead><tr><th>Escenario</th><th>Activos finales</th><th>Agotado durante el período de simulación</th><th>Uso</th></tr></thead><tbody id="scenario-rows"></tbody></table></div></div>
+<div class="source-box"><strong>Límites de interpretación:</strong>Esto no es Monte Carlo ni una estimación de tasa de éxito. No incluye impuestos, comisiones, seguros, gastos médicos, prestaciones gubernamentales/pensionales, límites de retirada de cuentas, tipos de cambio, asignación de activos, distribuciones reales de retornos ni incertidumbre de longevidad; las rutas de rendimiento de muestra no representan el comportamiento del mercado.<br/><span id="source-links">Lecturas adicionales:<a href="https://www.finra.org/investors/learn-to-invest/types-investments/retirement/managing-retirement-income/managing-your-retirement-portfolio" rel="noopener" target="_blank">FINRA Retirement Portfolio</a> · <a href="https://www.investor.gov/financial-tools-calculators/calculators/compound-interest-calculator" rel="noopener" target="_blank">Calculadora de interés compuesto de Investor.gov</a> · <a href="https://www.schwab.com/learn/story/timing-matters-understanding-sequence-returns-risk" rel="noopener" target="_blank">Explicación de Charles Schwab sobre el riesgo de secuencia de rendimientos</a></span></div>
+</section>
+</div>
+</main>
+<script src="/academy/academy.js?v=20260827-i18n1"></script>
+<script src="/academy/tools/retirement-cashflow.js"></script><section class="finance-quality-note" data-finance-quality=""><h2>Cómo usar esta herramienta financiera</h2><p>Esta página convierte un concepto financiero en datos, fórmulas y escenarios verificables. Lee primero las definiciones y compara escenarios prudente, base y de estrés; un resultado no garantiza rentabilidad.</p><p>Flujo recomendado: confirma unidades y periodos, introduce tus supuestos y revisa sensibilidad, costes y escenarios adversos.</p><p><strong>Limitaciones:</strong> el modelo no predice los mercados y puede no incluir todos los impuestos, deslizamientos, liquidez, crédito, regulación o condiciones contractuales. Verifica las decisiones importantes con fuentes primarias actualizadas y un profesional cualificado.</p></section>
+<section class="finance-disclaimer" data-finance-disclaimer=""><h2>Aviso de riesgo financiero</h2><p>Esta página, sus calculadoras y ejemplos se ofrecen únicamente con fines educativos, de investigación y estimación de escenarios. No constituyen asesoramiento personalizado de inversión, trading, apuestas, fiscalidad, legal o financiero. Los mercados y normas locales cambian; verifica fuentes primarias actuales y asume la responsabilidad de tus decisiones. El rendimiento pasado, los resultados del modelo y las simulaciones no garantizan resultados futuros.</p></section>
+</body>
+</html>

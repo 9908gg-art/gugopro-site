@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>风险报酬与最大回撤分析工具｜GugoPro Academy</title>
+<meta content="将用户粘贴的历史价格或收益序列，在浏览器本地计算累计收益、波动、Sharpe、Sortino、最大回撤与恢复期。" name="description"/>
+<meta content="风险报酬分析, 最大回撤计算器, MDD, Sharpe, Sortino, Calmar, 回撤恢复期, 风报比" name="keywords"/>
+<link href="/academy/academy.css" rel="stylesheet"/>
+<link href="/academy/tools/risk-return-drawdown.css" rel="stylesheet"/>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"风险报酬与最大回撤分析工具","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"以用户输入的历史价格或收益序列，在浏览器本地计算风险回报与最大回撤。","url":"https://gugopro.com/zh-CN/academy/tools/risk-return-drawdown.html"}</script>
+<meta content="https://gugopro.com/academy/tools/risk-return-drawdown.html" property="og:url"/>
+<meta content="index, follow" name="robots"/>
+<link href="https://gugopro.com/zh-CN/academy/tools/risk-return-drawdown.html" rel="canonical"/>
+<link href="https://gugopro.com/academy/tools/risk-return-drawdown.html" hreflang="zh-TW" rel="alternate"/>
+<link href="https://gugopro.com/zh-CN/academy/tools/risk-return-drawdown.html" hreflang="zh-CN" rel="alternate"/>
+<link href="https://gugopro.com/en/academy/tools/risk-return-drawdown.html" hreflang="en" rel="alternate"/>
+<link href="https://gugopro.com/ja/academy/tools/risk-return-drawdown.html" hreflang="ja" rel="alternate"/>
+<link href="https://gugopro.com/de/academy/tools/risk-return-drawdown.html" hreflang="de" rel="alternate"/>
+<link href="https://gugopro.com/fr/academy/tools/risk-return-drawdown.html" hreflang="fr" rel="alternate"/>
+<link href="https://gugopro.com/es/academy/tools/risk-return-drawdown.html" hreflang="es" rel="alternate"/>
+<link href="https://gugopro.com/pt/academy/tools/risk-return-drawdown.html" hreflang="pt" rel="alternate"/>
+<link href="https://gugopro.com/academy/tools/risk-return-drawdown.html" hreflang="x-default" rel="alternate"/>
+<meta content="true" name="static-locale-route"/>
+<meta content="machine-draft" name="i18n-status"/>
+<link href="/tools/finance/finance-locale.css?v=20260827" rel="stylesheet"/>
+<script src="/i18n/static-locale-runtime.js?v=20260827" defer></script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="quant-page risk-return-tool">
+<main class="tool-page rr-tool-page">
+<div class="tool-crumb"><a href="/articles/investment/06-sharpe-mdd-risk-control.html">← 阅读风险报酬与最大回撤教学</a><span>风险视角 · 纯前端 · 不抓即时行情</span></div>
+<div aria-label="工具區段" class="article-jump"><a href="#inputs">数据输入</a><a href="#trade-input">单笔风报比</a><a href="#results">历史风险摘要</a><a href="#drawdown-table">回撤路径</a><a href="#limits">限制与来源</a></div>
+<div class="tool-layout rr-tool-layout">
+<section class="panel rr-input-panel" id="inputs">
+<div class="eyebrow">量化实验室 · 风险 / 回报</div>
+<h1>风险报酬与最大回撤分析</h1>
+<p>粘贴你已核验的历史价格或收益序列，工具仅在当前浏览器中计算，不联网、不自动补行情。序列请按从旧到新排列；每个数字以逗号、分号、空格或换行分隔。</p>
+<div class="badge-row"><span>Sharpe</span><span>Sortino 比率</span><span>MDD</span><span>恢复</span><span>客户端</span></div>
+<div class="input-grid">
+<div><label for="input-mode">数据类型</label><select id="input-mode"><option value="prices">价格序列（正数）</option><option value="returns">报酬序列（百分比）</option></select></div>
+<div><label for="frequency">报酬频率</label><select id="frequency"><option value="daily">每日（252 期／年）</option><option value="weekly">每周（52 期/年）</option><option value="monthly">每月（12 期／年）</option><option value="custom">自定义年化期数</option></select></div>
+</div>
+<div class="hidden-field" id="custom-frequency-wrap"><label for="custom-frequency">自定义年化期数</label><input id="custom-frequency" max="1000" min="1" placeholder="例如 252" step="1" type="number"/></div>
+<label for="series">历史序列</label>
+<textarea id="series" placeholder="请粘贴已核验的数据；例如价格 100, 105, 98，或收益 2.1, -1.4, 0.8。页面不预填市场行情。" rows="8" spellcheck="false"></textarea>
+<div class="input-grid">
+<div><label for="mar">每期最低可接受报酬 MAR（%）</label><input id="mar" inputmode="decimal" step="0.01" type="number" value="0"/></div>
+<div><label for="initial-capital">起始资金（元）</label><input id="initial-capital" inputmode="decimal" min="0.01" step="1" type="number" value="100000"/></div>
+</div>
+<div class="button-row"><button class="calc" id="calculate" type="button">計算風險摘要</button><button class="secondary-btn" id="clear" type="button">清除结果</button><button class="secondary-btn" disabled="" id="download" type="button">下载 CSV</button></div>
+<div aria-live="polite" class="status" id="status">请粘贴至少 3 条同一频率的历史数据后计算。</div>
+<div class="formula-note"><strong>数据约定：</strong>价格必须为正数；收益以百分比输入；数据由旧到新；MAR 是每期百分比，不是年化值。工具不验证来源、不自动调整股息/拆股/现金流，也不把 0% MAR 视为市场无风险利率事实。</div>
+<section class="trade-module" id="trade-input">
+<div class="module-heading"><div><div class="eyebrow">情景视角</div><h2>单笔风报比 R:R</h2></div><span>进场前情景</span></div>
+<p>这里的 R:R 只描述进场、止损与目标的价格距离；输入胜率后才会估算每笔期望值，不会把单笔情境冒充成历史 Sharpe。</p>
+<div class="input-grid three-col"><div><label for="direction">方向</label><select id="direction"><option value="long">多头</option><option value="short">空头</option></select></div><div><label for="entry">进场价</label><input id="entry" placeholder="例如 100" step="0.01" type="number"/></div><div><label for="stop">止损价</label><input id="stop" placeholder="例如 95" step="0.01" type="number"/></div></div>
+<div class="input-grid"><div><label for="target">目标价</label><input id="target" placeholder="例如 115" step="0.01" type="number"/></div><div><label for="win-rate">胜率（%）选填</label><input id="win-rate" max="99.99" min="0.01" placeholder="未填则只算 R:R" step="0.1" type="number"/></div></div>
+<div aria-live="polite" class="trade-result" id="trade-result"><strong>尚未计算单笔情境</strong><span>请输入进场价、止损价与目标价。</span></div>
+</section>
+</section>
+<section class="result rr-result-panel" id="results">
+<div class="eyebrow">历史视角</div><h2>历史风险收益摘要</h2>
+<div class="result-big" id="result-headline">等待有效序列</div><div class="sub" id="result-detail">结果只反映本次输入的数据、频率与 MAR。</div>
+<div class="metric-grid rr-metrics">
+<div class="metric"><span class="sub">累计收益</span><b id="cumulative-return">—</b></div>
+<div class="metric"><span class="sub">年化收益</span><b id="annual-return">—</b></div>
+<div class="metric"><span class="sub">年化波动</span><b id="annual-volatility">—</b></div>
+<div class="metric"><span class="sub">Sharpe</span><b id="sharpe">—</b></div>
+<div class="metric"><span class="sub">Sortino 比率</span><b id="sortino">—</b></div>
+<div class="metric metric-risk"><span class="sub">最大回撤 MDD</span><b id="mdd">—</b></div>
+<div class="metric metric-risk"><span class="sub">回撤金额</span><b id="mdd-amount">—</b></div>
+<div class="metric"><span class="sub">恢复期</span><b id="recovery">—</b></div>
+<div class="metric"><span class="sub">Calmar 比率</span><b id="calmar">—</b></div>
+<div class="metric"><span class="sub">恢复因子</span><b id="recovery-factor">—</b></div>
+<div class="metric"><span class="sub">觀測期數</span><b id="observations">—</b></div>
+</div>
+<div class="drawdown-callout" id="drawdown-summary"><strong>等待回撤分析</strong><span>需要有效的历史序列与起始资金。</span></div>
+<div class="visual rr-visual"><div class="visual-heading"><h3>权益曲线与历史回撤</h3><span id="chart-caption">—</span></div><svg aria-label="權益曲線與回撤圖表" class="equity-chart" id="equity-chart" role="img" viewbox="0 0 720 250"></svg><div class="chart-legend"><span><i class="legend-equity"></i>权益曲线</span><span><i class="legend-peak"></i>历史高点基准</span><span><i class="legend-drawdown"></i>回撤区域</span></div></div>
+<div class="source-box"><strong>指标口径：</strong>Sharpe＝超额平均报酬／样本标准差；Sortino＝超额平均报酬／MAR 下行偏差；MDD 依 running peak 的先峰后谷路径计算。若标准差为 0 或没有低于 MAR 的观测，工具会明示无法形成对应指标，不输出无限值。</div>
+</section>
+</div>
+<section class="rr-table-section" id="drawdown-table"><div class="section-heading"><div><div class="eyebrow">路径审计</div><h2>回撤路径检查</h2></div><span id="table-note">尚未计算</span></div><div class="table-wrap"><table class="result-table"><thead><tr><th>序号</th><th>权益</th><th>运行峰值</th><th>回撤</th><th>状态</th></tr></thead><tbody id="path-rows"></tbody></table></div></section>
+<section class="source-box rr-limit-section" id="limits"><strong>来源与限制：</strong>Sharpe 的历史版本、时间相依与分布限制参考 William F. Sharpe 的 Stanford 文章；Sortino 的下行风险口径参考 Charles Schwab；最大回撤与峰谷顺序参考 CFA Institute。<a href="/articles/investment/06-sharpe-mdd-risk-control.html">查看完整教学与 References →</a><p>本页完全使用用户输入，没有即时行情、没有服务器上传、没有自动调整价格与现金流，也不替用户选择资产或设定停损。历史指标不能保证未来结果，This is research and analysis only, not personalized financial advice.</p></section>
+</main>
+<script src="/academy/academy.js?v=20260827-i18n1"></script>
+<script src="/academy/tools/risk-return-drawdown.js"></script><section class="finance-quality-note" data-finance-quality=""><h2>财经工具使用说明</h2><p>本页把财经概念拆成可检查的输入、公式与情境结果。请先阅读变量定义，再比较保守、中性与压力情境；单一结果不代表收益承诺。</p><p>建议流程：确认资料单位与期间，输入自己的假设，接着检查敏感度、成本与下行情境。</p><p><strong>限制：模型不会预测市场，也不包含所有税费、滑点、流动性、信用、法规或个别合约条款；重要决策请以最新官方资料及合格专业意见复核。:</strong>限制：模型不会预测市场，也不包含所有税费、滑点、流动性、信用、法规或个别合约条款；重要决策请以最新官方资料及合格专业意见复核。</p></section>
+<section class="finance-disclaimer" data-finance-disclaimer=""><h2>投资风险免责声明</h2><p>本页内容、计算器与示例仅供教育、研究与情境估算，不构成投资、交易、投注、税务、法律或其他个性化金融建议。金融市场与个别制度可能快速变化，请核对最新官方资料并承担决策责任。过去表现、模型输出或模拟结果不代表未来结果。</p></section>
+</body>
+</html>

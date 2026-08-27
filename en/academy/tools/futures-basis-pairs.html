@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>Taiwan index futures / 富台期 cash‑futures spread tool｜GugoPro Academy</title>
+<meta content="Enter spot, front‑month and next‑month futures quotes verified at the same time; calculate Basis, annualized futures‑spot spread, roll spread and nominal P&amp;L." name="description"/>
+<link href="/academy/academy.css" rel="stylesheet"/>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Tool for cash‑futures spread between Taiwan index futures and 富台期","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"Decompose spot, front‑month and next‑month futures basis and roll impact from user input.","url":"https://academy.gugopro.com/tools/futures-basis-pairs.html"}</script>
+<meta content="https://gugopro.com/academy/tools/futures-basis-pairs.html" property="og:url"/>
+<meta content="index, follow" name="robots"/>
+<link href="https://gugopro.com/en/academy/tools/futures-basis-pairs.html" rel="canonical"/>
+<link href="https://gugopro.com/academy/tools/futures-basis-pairs.html" hreflang="zh-TW" rel="alternate"/>
+<link href="https://gugopro.com/zh-CN/academy/tools/futures-basis-pairs.html" hreflang="zh-CN" rel="alternate"/>
+<link href="https://gugopro.com/en/academy/tools/futures-basis-pairs.html" hreflang="en" rel="alternate"/>
+<link href="https://gugopro.com/ja/academy/tools/futures-basis-pairs.html" hreflang="ja" rel="alternate"/>
+<link href="https://gugopro.com/de/academy/tools/futures-basis-pairs.html" hreflang="de" rel="alternate"/>
+<link href="https://gugopro.com/fr/academy/tools/futures-basis-pairs.html" hreflang="fr" rel="alternate"/>
+<link href="https://gugopro.com/es/academy/tools/futures-basis-pairs.html" hreflang="es" rel="alternate"/>
+<link href="https://gugopro.com/pt/academy/tools/futures-basis-pairs.html" hreflang="pt" rel="alternate"/>
+<link href="https://gugopro.com/academy/tools/futures-basis-pairs.html" hreflang="x-default" rel="alternate"/>
+<meta content="true" name="static-locale-route"/>
+<meta content="machine-draft" name="i18n-status"/>
+<link href="/tools/finance/finance-locale.css?v=20260827" rel="stylesheet"/>
+<script src="/i18n/static-locale-runtime.js?v=20260827" defer></script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="quant-page">
+<main class="tool-page"><div class="tool-crumb"><a href="/academy/">← Back to GugoPro Academy</a><span>Derivatives research · simultaneous inputs · non‑real‑time quotes</span></div>
+<div class="tool-layout"><section class="panel"><div class="eyebrow">Quant lab · Futures basis</div><h1>Cash‑futures spread for Taiwan index futures / 富台期</h1><p>Express spot reference, nearby and next‑month futures quotes at the same timestamp in a common unit to decompose basis, term structure and simplify nominal P&amp;L. Adjust the multiplier according to actual exchange contract specifications.</p>
+<label for="spot">Spot / index reference value</label><input id="spot" min="0" placeholder="Paste verified values" step="0.01" type="number"/>
+<label for="front">Front‑month futures price</label><input id="front" min="0" placeholder="Paste verified values" step="0.01" type="number"/>
+<label for="next">Next‑month futures price</label><input id="next" min="0" placeholder="Paste verified values" step="0.01" type="number"/>
+<label for="days">Days to expiry (front‑month)</label><input id="days" max="365" min="1" step="1" type="number" value="30"/>
+<label for="multiplier">Point multiplier (元)</label><input id="multiplier" min="0.01" step="0.01" type="number" value="200"/>
+<label for="contracts">Front‑month contract count (research)</label><input id="contracts" min="0" step="1" type="number" value="1"/>
+<button class="calc" id="calc" type="button">Decompose futures‑spot and roll price differences</button><div aria-live="polite" class="status" id="status">Please enter three prices at the same time for the same instrument.</div>
+<div class="formula-note"><strong>Formula:</strong>Basis = near‑month futures − spot; Basis% = Basis ÷ spot; simplified annualized Basis = Basis% × 365 ÷ days to expiry; Calendar spread = next‑month − near‑month. These are analytical decompositions, not guarantees of convergence or arbitrage returns.</div></section>
+<section class="result"><div class="eyebrow">Basis decomposition</div><h2>Futures vs spot and term structure</h2><div class="result-big" id="basis">—</div><div class="sub" id="shape">Awaiting valid input</div>
+<div class="metric-grid"><div class="metric"><span class="sub">Basis %</span><b id="basisPct">—</b></div><div class="metric"><span class="sub">Annualized basis</span><b id="annualBasis">—</b></div><div class="metric"><span class="sub">Roll spread</span><b id="calendar">—</b></div><div class="metric"><span class="sub">Nominal Basis amount</span><b id="notional">—</b></div></div>
+<div class="visual"><h3>Spread structure (points)</h3><div class="bar-chart" id="chart"><i style="height:6px"></i></div><div class="axis"><span>Spot 0</span><span>Basis</span><span>Calendar spread</span></div></div>
+<div class="source-box"><strong>Contract and data limitations:</strong>Contract size and trading hours for Taiwan index futures (TX) should be based on <a href="https://www.taifex.com.tw/enl/eng2/tX" rel="noopener" target="_blank">TAIFEX official specifications</a>Verify; the multipliers, currency, expiry and trading hours of 富台期 and other index futures are not directly interchangeable. The tool does not fetch real‑time quotes—avoid matching different times or different contracts into a tradable spread.</div></section></div></main>
+<script src="/academy/academy.js?v=20260827-i18n1"></script><script>
+const $=id=>document.getElementById(id),fmt=(n,d=2)=>Number.isFinite(n)?n.toFixed(d):'—';
+function calc(){const s=+$('spot').value,f=+$('front').value,n=+$('next').value,d=+$('days').value,m=+$('multiplier').value,q=+$('contracts').value;if(![s,f,n,d,m,q].every(Number.isFinite)||s<=0||d<=0||m<=0||q<0){$('status').textContent='輸入錯誤：請填入有效的同口徑價格、天數、乘數與口數。';$('status').className='status error';return}const b=f-s,p=b/s*100,a=p*365/d,cal=n-f; $('basis').textContent=fmt(b)+' 點';$('basisPct').textContent=fmt(p,3)+'%';$('annualBasis').textContent=fmt(a,2)+'%';$('calendar').textContent=fmt(cal)+' 點';$('notional').textContent='NT$ '+Math.round(b*m*q).toLocaleString('zh-TW');$('shape').textContent=cal>0?'次月高於近月：正價差／Contango 研究標籤':cal<0?'次月低於近月：逆價差／Backwardation 研究標籤':'次月與近月相同：期限價差為 0';const span=Math.max(Math.abs(b),Math.abs(cal),1);$('chart').innerHTML='<i style="height:'+Math.max(5,Math.abs(b)/span*145)+'px" title="Basis"></i><i style="height:'+Math.max(5,Math.abs(cal)/span*145)+'px" title="Calendar spread"></i>';$('status').textContent='計算完成：請再核對乘數、幣別、到期日與同時點資料。';$('status').className='status ok'}
+$('calc').addEventListener('click',calc);</script><section class="finance-quality-note" data-finance-quality=""><h2>How to use this finance tool</h2><p>This page turns a finance concept into checkable inputs, formulas, and scenarios. Read the variable definitions first, then compare conservative, base, and stress cases; one result is not a promise of return.</p><p>Suggested workflow: confirm units and time periods, enter your own assumptions, then review sensitivity, costs, and downside cases.</p><p><strong>Limitations:</strong> the model does not forecast markets and may not include every tax, slippage, liquidity, credit, regulatory, or contract term. Verify important decisions with current primary information and a qualified professional.</p></section>
+<section class="finance-disclaimer" data-finance-disclaimer=""><h2>Financial risk disclaimer</h2><p>This page, its calculators, and examples are for education, research, and scenario estimation only. They are not personalized investment, trading, betting, tax, legal, or financial advice. Markets and local rules can change quickly; verify current primary information and take responsibility for your decisions. Past performance, model outputs, and simulations do not guarantee future results.</p></section>
+</body></html>

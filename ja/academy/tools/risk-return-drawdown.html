@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>リスクリターンと最大ドローダウン分析ツール｜GugoPro Academy</title>
+<meta content="ユーザーが貼り付けた過去の価格またはリターン系列をブラウザ内でローカルに処理し、累積リターン、ボラティリティ、Sharpe、Sortino、最大ドローダウン、回復期間を計算します。" name="description"/>
+<meta content="リスクリターン分析、最大ドローダウン計算機、MDD、Sharpe、Sortino、Calmar、ドローダウン回復期間、R/R比" name="keywords"/>
+<link href="/academy/academy.css" rel="stylesheet"/>
+<link href="/academy/tools/risk-return-drawdown.css" rel="stylesheet"/>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"リスクリターンと最大ドローダウン分析ツール","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"ユーザー入力の過去価格またはリターン系列から、ブラウザ内でリスク対リターンと最大ドローダウンを計算する。","url":"https://gugopro.com/ja/academy/tools/risk-return-drawdown.html"}</script>
+<meta content="https://gugopro.com/academy/tools/risk-return-drawdown.html" property="og:url"/>
+<meta content="index, follow" name="robots"/>
+<link href="https://gugopro.com/ja/academy/tools/risk-return-drawdown.html" rel="canonical"/>
+<link href="https://gugopro.com/academy/tools/risk-return-drawdown.html" hreflang="zh-TW" rel="alternate"/>
+<link href="https://gugopro.com/zh-CN/academy/tools/risk-return-drawdown.html" hreflang="zh-CN" rel="alternate"/>
+<link href="https://gugopro.com/en/academy/tools/risk-return-drawdown.html" hreflang="en" rel="alternate"/>
+<link href="https://gugopro.com/ja/academy/tools/risk-return-drawdown.html" hreflang="ja" rel="alternate"/>
+<link href="https://gugopro.com/de/academy/tools/risk-return-drawdown.html" hreflang="de" rel="alternate"/>
+<link href="https://gugopro.com/fr/academy/tools/risk-return-drawdown.html" hreflang="fr" rel="alternate"/>
+<link href="https://gugopro.com/es/academy/tools/risk-return-drawdown.html" hreflang="es" rel="alternate"/>
+<link href="https://gugopro.com/pt/academy/tools/risk-return-drawdown.html" hreflang="pt" rel="alternate"/>
+<link href="https://gugopro.com/academy/tools/risk-return-drawdown.html" hreflang="x-default" rel="alternate"/>
+<meta content="true" name="static-locale-route"/>
+<meta content="machine-draft" name="i18n-status"/>
+<link href="/tools/finance/finance-locale.css?v=20260827" rel="stylesheet"/>
+<script src="/i18n/static-locale-runtime.js?v=20260827" defer></script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="quant-page risk-return-tool">
+<main class="tool-page rr-tool-page">
+<div class="tool-crumb"><a href="/articles/investment/06-sharpe-mdd-risk-control.html">← リスクとリターン、最大ドローダウンの解説を読む</a><span>リスクレンズ · フロントエンドのみ · ライブ相場不使用</span></div>
+<div aria-label="工具區段" class="article-jump"><a href="#inputs">データ入力</a><a href="#trade-input">単一トレードのリスク・リワード</a><a href="#results">過去のリスク要約</a><a href="#drawdown-table">ドローダウン経路</a><a href="#limits">制限事項と情報源</a></div>
+<div class="tool-layout rr-tool-layout">
+<section class="panel rr-input-panel" id="inputs">
+<div class="eyebrow">Quant lab · リスク／リターン</div>
+<h1>リスクリターンと最大ドローダウンの分析</h1>
+<p>検証済みの歴史的価格またはリターン系列を貼り付けてください。本ツールは現在のブラウザ内でのみ計算し、オフラインで動作し自動的に相場を補完しません。系列は古→新の順、各数値はカンマ、セミコロン、空白または改行で区切ってください。</p>
+<div class="badge-row"><span>Sharpe</span><span>Sortino</span><span>MDD</span><span>リカバリー</span><span>クライアント側</span></div>
+<div class="input-grid">
+<div><label for="input-mode">データ型</label><select id="input-mode"><option value="prices">価格系列（正の数）</option><option value="returns">リターン系列（％）</option></select></div>
+<div><label for="frequency">リターン頻度</label><select id="frequency"><option value="daily">日次（252 期／年）</option><option value="weekly">週次（52 期／年）</option><option value="monthly">毎月（12 期／年）</option><option value="custom">カスタム年次期間</option></select></div>
+</div>
+<div class="hidden-field" id="custom-frequency-wrap"><label for="custom-frequency">カスタム年次期間</label><input id="custom-frequency" max="1000" min="1" placeholder="例：252" step="1" type="number"/></div>
+<label for="series">履歴系列</label>
+<textarea id="series" placeholder="検証済みのデータを貼り付けてください。例：価格 100, 105, 98 またはリターン 2.1, -1.4, 0.8。ページはマーケットデータを事前入力しません。" rows="8" spellcheck="false"></textarea>
+<div class="input-grid">
+<div><label for="mar">各期の最低許容リターン MAR（%）</label><input id="mar" inputmode="decimal" step="0.01" type="number" value="0"/></div>
+<div><label for="initial-capital">初期資金（元）</label><input id="initial-capital" inputmode="decimal" min="0.01" step="1" type="number" value="100000"/></div>
+</div>
+<div class="button-row"><button class="calc" id="calculate" type="button">リスク概要を計算</button><button class="secondary-btn" id="clear" type="button">結果をクリア</button><button class="secondary-btn" disabled="" id="download" type="button">CSV をダウンロード</button></div>
+<div aria-live="polite" class="status" id="status">計算する前に、同一頻度の履歴データを最低3件貼り付けてください。</div>
+<div class="formula-note"><strong>データ契約：</strong>価格は正である必要があります；リターンはパーセンテージで入力；データは古い順→新しい順；MARは各期のパーセンテージであり、年率値ではありません。ツールは出所を検証せず、配当／株式分割／キャッシュフローを自動調整せず、0％のMARを市場の無リスク金利とみなしません。</div>
+<section class="trade-module" id="trade-input">
+<div class="module-heading"><div><div class="eyebrow">シナリオレンズ</div><h2>単一トレード R:R</h2></div><span>進場前シナリオ</span></div>
+<p>ここでのR:Rはエントリー、ストップ、ターゲットの価格差のみを表します。勝率を入力して初めて1トレード当たりの期待値を推定します。単一のシナリオを過去のSharpeのように扱いません。</p>
+<div class="input-grid three-col"><div><label for="direction">方向</label><select id="direction"><option value="long">ロング（多頭）</option><option value="short">空売り（ショート）</option></select></div><div><label for="entry">進場価格</label><input id="entry" placeholder="例：100" step="0.01" type="number"/></div><div><label for="stop">ストップ価格</label><input id="stop" placeholder="例：95" step="0.01" type="number"/></div></div>
+<div class="input-grid"><div><label for="target">目標価格</label><input id="target" placeholder="例：115" step="0.01" type="number"/></div><div><label for="win-rate">勝率（％）任意入力</label><input id="win-rate" max="99.99" min="0.01" placeholder="未入力の場合、R:Rのみを計算します。" step="0.1" type="number"/></div></div>
+<div aria-live="polite" class="trade-result" id="trade-result"><strong>単一シナリオはまだ計算されていません</strong><span>エントリー、ストップ、ターゲット価格を入力してください。</span></div>
+</section>
+</section>
+<section class="result rr-result-panel" id="results">
+<div class="eyebrow">歴史的観点</div><h2>過去のリスク・リターン要約</h2>
+<div class="result-big" id="result-headline">有効なシーケンス待ち</div><div class="sub" id="result-detail">結果は現在入力されたデータ、頻度、MAR のみを反映します。</div>
+<div class="metric-grid rr-metrics">
+<div class="metric"><span class="sub">累積リターン</span><b id="cumulative-return">—</b></div>
+<div class="metric"><span class="sub">年率リターン</span><b id="annual-return">—</b></div>
+<div class="metric"><span class="sub">年率ボラティリティ</span><b id="annual-volatility">—</b></div>
+<div class="metric"><span class="sub">Sharpe</span><b id="sharpe">—</b></div>
+<div class="metric"><span class="sub">Sortino</span><b id="sortino">—</b></div>
+<div class="metric metric-risk"><span class="sub">最大ドローダウン（MDD）</span><b id="mdd">—</b></div>
+<div class="metric metric-risk"><span class="sub">ドローダウン額</span><b id="mdd-amount">—</b></div>
+<div class="metric"><span class="sub">回復期間</span><b id="recovery">—</b></div>
+<div class="metric"><span class="sub">Calmar</span><b id="calmar">—</b></div>
+<div class="metric"><span class="sub">回復係数</span><b id="recovery-factor">—</b></div>
+<div class="metric"><span class="sub">観察期間</span><b id="observations">—</b></div>
+</div>
+<div class="drawdown-callout" id="drawdown-summary"><strong>ドローダウン分析待ち</strong><span>有効な過去の時系列と初期資金が必要です。</span></div>
+<div class="visual rr-visual"><div class="visual-heading"><h3>エクイティカーブと過去のドローダウン</h3><span id="chart-caption">—</span></div><svg aria-label="權益曲線與回撤圖表" class="equity-chart" id="equity-chart" role="img" viewbox="0 0 720 250"></svg><div class="chart-legend"><span><i class="legend-equity"></i>エクイティカーブ</span><span><i class="legend-peak"></i>過去の最高値基準</span><span><i class="legend-drawdown"></i>ドローダウン領域</span></div></div>
+<div class="source-box"><strong>指標の口径：</strong>Sharpe＝超過平均リターン／サンプル標準偏差；Sortino＝超過平均リターン／MAR に対するダウンサイド偏差；MDD は running peak の経路（先にピーク、後にトラフ）に沿って計算されます。標準偏差が 0 であるか MAR を下回る観測がない場合、ツールは該当指標が算出不可であることを示し、無限大を出力しません。</div>
+</section>
+</div>
+<section class="rr-table-section" id="drawdown-table"><div class="section-heading"><div><div class="eyebrow">パス監査</div><h2>ドローダウン経路の点検</h2></div><span id="table-note">未計算</span></div><div class="table-wrap"><table class="result-table"><thead><tr><th>シリアル番号</th><th>エクイティ</th><th>ランニングピーク</th><th>ドローダウン</th><th>状態</th></tr></thead><tbody id="path-rows"></tbody></table></div></section>
+<section class="source-box rr-limit-section" id="limits"><strong>ソースと制約：</strong>Sharpe の歴史的定義、時間依存性、分布の制約は William F. Sharpe の Stanford 論文を参照してください。Sortino のダウンサイド定義は Charles Schwab、最大ドローダウンとピーク‑トゥ‑トラフの順序については CFA Institute を参照してください。<a href="/articles/investment/06-sharpe-mdd-risk-control.html">完全なチュートリアルと参考文献を見る →</a><p>このページは完全にユーザーの入力のみを使用し、リアルタイム相場はなく、サーバーへのアップロードもなく、価格やキャッシュフローの自動調整も行わず、ユーザーの代わりに資産を選んだりストップを設定したりしません。過去の指標は将来結果を保証しません。This is research and analysis only, not personalized financial advice.</p></section>
+</main>
+<script src="/academy/academy.js?v=20260827-i18n1"></script>
+<script src="/academy/tools/risk-return-drawdown.js"></script><section class="finance-quality-note" data-finance-quality=""><h2>財務ツールの使い方</h2><p>このページでは、財務の概念を検証可能な入力、計算式、シナリオに分けています。変数の定義を確認し、保守・基本・ストレスケースを比較してください。単一の結果は収益を保証しません。</p><p>手順：単位と期間を確認し、自分の前提を入力してから、感応度、コスト、下振れケースを確認します。</p><p><strong>制限：市場を予測するものではなく、税金、スリッページ、流動性、信用、規制、契約条件をすべて含むとは限りません。重要な判断は最新の一次情報と有資格者に確認してください。:</strong>制限：市場を予測するものではなく、税金、スリッページ、流動性、信用、規制、契約条件をすべて含むとは限りません。重要な判断は最新の一次情報と有資格者に確認してください。</p></section>
+<section class="finance-disclaimer" data-finance-disclaimer=""><h2>投資リスクに関する免責事項</h2><p>本ページの内容、計算ツール、例示は教育・研究・シナリオ試算のみを目的とし、個別の投資、取引、賭け、税務、法律その他の金融助言ではありません。市場や制度は変化するため、最新の一次情報を確認し、判断はご自身の責任で行ってください。過去の実績、モデル出力、シミュレーションは将来を保証しません。</p></section>
+</body>
+</html>

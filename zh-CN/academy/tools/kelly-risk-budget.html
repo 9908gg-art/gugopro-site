@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>Kelly 风险预算工具｜GugoPro Academy</title>
+<meta content="以你的交易记录摘要计算 Kelly 上限、分数 Kelly 风险预算与止损仓位；不把历史胜率当成未来保证。" name="description"/>
+<link href="/academy/academy.css" rel="stylesheet"/>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Kelly 风险预算工具","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"以用户交易记录摘要估算 Kelly 与分数 Kelly 风险预算。","url":"https://academy.gugopro.com/tools/kelly-risk-budget.html"}</script>
+<meta content="https://gugopro.com/academy/tools/kelly-risk-budget.html" property="og:url"/>
+<meta content="index, follow" name="robots"/>
+<link href="https://gugopro.com/zh-CN/academy/tools/kelly-risk-budget.html" rel="canonical"/>
+<link href="https://gugopro.com/academy/tools/kelly-risk-budget.html" hreflang="zh-TW" rel="alternate"/>
+<link href="https://gugopro.com/zh-CN/academy/tools/kelly-risk-budget.html" hreflang="zh-CN" rel="alternate"/>
+<link href="https://gugopro.com/en/academy/tools/kelly-risk-budget.html" hreflang="en" rel="alternate"/>
+<link href="https://gugopro.com/ja/academy/tools/kelly-risk-budget.html" hreflang="ja" rel="alternate"/>
+<link href="https://gugopro.com/de/academy/tools/kelly-risk-budget.html" hreflang="de" rel="alternate"/>
+<link href="https://gugopro.com/fr/academy/tools/kelly-risk-budget.html" hreflang="fr" rel="alternate"/>
+<link href="https://gugopro.com/es/academy/tools/kelly-risk-budget.html" hreflang="es" rel="alternate"/>
+<link href="https://gugopro.com/pt/academy/tools/kelly-risk-budget.html" hreflang="pt" rel="alternate"/>
+<link href="https://gugopro.com/academy/tools/kelly-risk-budget.html" hreflang="x-default" rel="alternate"/>
+<meta content="true" name="static-locale-route"/>
+<meta content="machine-draft" name="i18n-status"/>
+<link href="/tools/finance/finance-locale.css?v=20260827" rel="stylesheet"/>
+<script src="/i18n/static-locale-runtime.js?v=20260827" defer></script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="quant-page">
+<main class="tool-page"><div class="tool-crumb"><a href="/academy/">← 返回 GugoPro Academy</a><span>风险管理 · 个人输入 · 不构成建议</span></div>
+<div class="tool-layout"><section class="panel"><div class="eyebrow">量化实验室 · 风险预算</div><h1>Kelly 风险预算</h1><p>以你已结束交易的统计摘要，将“优势”转成上限与保守分数 Kelly。若胜率、盈亏比或样本不稳定，输出不应被当成自动下单比例。</p>
+<label for="win">胜率（%）</label><input id="win" max="99.99" min="0.01" placeholder="粘贴已结束交易摘要" step="0.1" type="number"/>
+<label for="avgwin">平均盈利（R）</label><input id="avgwin" min="0.01" placeholder="例如 1.8R" step="0.01" type="number"/>
+<label for="avgloss">平均亏损（R）</label><input id="avgloss" min="0.01" placeholder="例如 1R" step="0.01" type="number"/>
+<label for="fraction">分数 Kelly</label><select id="fraction"><option value="1">Full Kelly（研究上限）</option><option selected="" value="0.5">Half Kelly</option><option value="0.25">四分之一 Kelly</option></select>
+<label for="account">账户资金（元）</label><input id="account" min="0" placeholder="填入自己的账户基准" step="1" type="number"/>
+<label for="stop">单笔止损距离（%）</label><input id="stop" max="100" min="0.01" placeholder="填入自己的停损假设" step="0.1" type="number"/>
+<button class="calc" id="calc" type="button">計算風險預算</button><div aria-live="polite" class="status" id="status">输入基于你已结束交易的摘要；页面不保存记录。</div>
+<div class="formula-note"><strong>公式：</strong>b＝平均获利 R ÷ 平均亏损 R；Full Kelly＝p−(1−p)÷b；分数 Kelly＝Full Kelly×fraction。仓位金额再以账户×风险比例与止损距离估算，未纳入跳空、滑价、相关性与保证金规则。</div></section>
+<section class="result"><div class="eyebrow">风险预算</div><h2>理论上限与保守比例</h2><div class="result-big" id="fractionKelly">—</div><div class="sub" id="edge">等待计算</div>
+<div class="metric-grid"><div class="metric"><span class="sub">Full Kelly</span><b id="fullKelly">—</b></div><div class="metric"><span class="sub">盈亏比 b</span><b id="ratio">—</b></div><div class="metric"><span class="sub">风险预算</span><b id="riskBudget">—</b></div><div class="metric"><span class="sub">止损仓位上限</span><b id="position">—</b></div></div>
+<div class="visual"><h3>Full Kelly 与分数 Kelly</h3><div class="bar-chart" id="chart"><i style="height:6px"></i><i style="height:6px"></i></div><div class="axis"><span>全部</span><span>零股</span></div></div>
+<div class="source-box"><strong>重要限制：</strong>Kelly 对胜率与盈亏比估计误差非常敏感；若 Full Kelly 小于 0，代表输入的历史优势不足以支持正 Kelly，不应用负数反推杠杆。此页是研究计算器，不是个性化投资或交易建议。</div></section></div></main>
+<script src="/academy/academy.js?v=20260827-i18n1"></script><script>
+const $=id=>document.getElementById(id),fmt=(n,d=2)=>Number.isFinite(n)?n.toFixed(d):'—';
+function calc(){const p=+$('win').value/100,w=+$('avgwin').value,l=+$('avgloss').value,f=+$('fraction').value,acct=+$('account').value,stop=+$('stop').value/100;if(![p,w,l,f,acct,stop].every(Number.isFinite)||p<=0||p>=1||w<=0||l<=0||f<=0||acct<0||stop<=0){for(const id of ['fractionKelly','fullKelly','ratio','riskBudget','position'])$(id).textContent='—';$('edge').textContent='等待有效輸入';$('chart').innerHTML='';$('status').textContent='輸入錯誤：請填入 0–100% 的勝率、正數 R 倍數、資金與停損距離。';$('status').className='status error';return}const b=w/l,full=p-(1-p)/b,frac=Math.max(0,full*f),budget=acct*frac,pos=stop?budget/stop:0;$('fractionKelly').textContent=fmt(frac*100,2)+'%';$('fullKelly').textContent=fmt(full*100,2)+'%';$('ratio').textContent=fmt(b,2)+' R';$('riskBudget').textContent='NT$ '+Math.round(budget).toLocaleString('zh-TW');$('position').textContent='NT$ '+Math.round(pos).toLocaleString('zh-TW');$('edge').textContent=full>0?'輸入統計呈現正 Kelly；仍需做樣本外與壓力測試。':'輸入統計的 Full Kelly 不為正；不要用負數結果製造槓桿。';const scale=Math.max(Math.abs(full),Math.abs(frac),.01);$('chart').innerHTML='<i style="height:'+Math.max(5,Math.max(0,full)/scale*145)+'px" title="Full Kelly"></i><i style="height:'+Math.max(5,frac/scale*145)+'px" title="Fractional Kelly"></i>';$('status').textContent='計算完成：結果只反映輸入的交易紀錄摘要與停損假設。';$('status').className='status ok'}
+$('calc').addEventListener('click',calc);</script><section class="finance-quality-note" data-finance-quality=""><h2>财经工具使用说明</h2><p>本页把财经概念拆成可检查的输入、公式与情境结果。请先阅读变量定义，再比较保守、中性与压力情境；单一结果不代表收益承诺。</p><p>建议流程：确认资料单位与期间，输入自己的假设，接着检查敏感度、成本与下行情境。</p><p><strong>限制：模型不会预测市场，也不包含所有税费、滑点、流动性、信用、法规或个别合约条款；重要决策请以最新官方资料及合格专业意见复核。:</strong>限制：模型不会预测市场，也不包含所有税费、滑点、流动性、信用、法规或个别合约条款；重要决策请以最新官方资料及合格专业意见复核。</p></section>
+<section class="finance-disclaimer" data-finance-disclaimer=""><h2>投资风险免责声明</h2><p>本页内容、计算器与示例仅供教育、研究与情境估算，不构成投资、交易、投注、税务、法律或其他个性化金融建议。金融市场与个别制度可能快速变化，请核对最新官方资料并承担决策责任。过去表现、模型输出或模拟结果不代表未来结果。</p></section>
+</body></html>

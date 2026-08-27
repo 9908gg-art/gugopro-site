@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>資産配分と動的リバランスツール｜GugoPro Academy</title>
+<meta content="ユーザー入力の資産時価と目標ウェイトから、現在の乖離、理論的調整額、ドリフト閾値、新規資金の優先度、取引摩擦を計算する。完全にフロントエンド、透明な式、リアルタイム市場データの取得は行わない。" name="description"/>
+<meta content="資産配分、動的リバランス、ポートフォリオ、ドリフト閾値、取引コスト、分散投資" name="keywords"/>
+<link href="/academy/academy.css" rel="stylesheet"/>
+<link href="/academy/tools/portfolio-rebalancer.css" rel="stylesheet"/>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"資産配分と動的リバランスツール","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"ユーザー入力の現在時価と目標ウェイトに基づき、配分の乖離、動的リバランス規則、取引摩擦をチェックする。","url":"https://gugopro.com/ja/academy/tools/portfolio-rebalancer.html"}</script>
+<meta content="https://gugopro.com/academy/tools/portfolio-rebalancer.html" property="og:url"/>
+<meta content="index, follow" name="robots"/>
+<link href="https://gugopro.com/ja/academy/tools/portfolio-rebalancer.html" rel="canonical"/>
+<link href="https://gugopro.com/academy/tools/portfolio-rebalancer.html" hreflang="zh-TW" rel="alternate"/>
+<link href="https://gugopro.com/zh-CN/academy/tools/portfolio-rebalancer.html" hreflang="zh-CN" rel="alternate"/>
+<link href="https://gugopro.com/en/academy/tools/portfolio-rebalancer.html" hreflang="en" rel="alternate"/>
+<link href="https://gugopro.com/ja/academy/tools/portfolio-rebalancer.html" hreflang="ja" rel="alternate"/>
+<link href="https://gugopro.com/de/academy/tools/portfolio-rebalancer.html" hreflang="de" rel="alternate"/>
+<link href="https://gugopro.com/fr/academy/tools/portfolio-rebalancer.html" hreflang="fr" rel="alternate"/>
+<link href="https://gugopro.com/es/academy/tools/portfolio-rebalancer.html" hreflang="es" rel="alternate"/>
+<link href="https://gugopro.com/pt/academy/tools/portfolio-rebalancer.html" hreflang="pt" rel="alternate"/>
+<link href="https://gugopro.com/academy/tools/portfolio-rebalancer.html" hreflang="x-default" rel="alternate"/>
+<meta content="true" name="static-locale-route"/>
+<meta content="machine-draft" name="i18n-status"/>
+<link href="/tools/finance/finance-locale.css?v=20260827" rel="stylesheet"/>
+<script src="/i18n/static-locale-runtime.js?v=20260827" defer></script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="allocation-tool-page">
+<header class="nav"><div class="shell navin"><a class="brand" href="/academy/">GugoPro <span>Academy</span></a><button class="theme" data-theme="" type="button">ダーク切替</button></div></header>
+<main class="allocation-shell">
+<div class="tool-crumb"><a href="/academy/lessons/15-retirement-cashflow.html">← アカデミーのコースに戻る</a><span>ポートフォリオ設計 · フロントエンドのみ · ライブ相場不使用</span></div>
+<header class="tool-hero" id="tool-title">
+<div class="eyebrow">ポートフォリオ設計 · 動的リバランス</div>
+<h1>資産配分と動的リバランス</h1>
+<p>同一の評価時点で現在の時価と目標ウェイトを入力し、乖離を確認し、完全に目標へ戻すルール、ドリフト閾値、新規資金優先の三つのルールを比較してください。結果は理論計算であり、約定済みや全員に適合するものを示すものではありません。</p>
+<div class="badge-row"><span>目標配分</span><span>ドリフトバンド</span><span>Cash‑first</span><span>クライアント側</span></div>
+</header>
+<nav aria-label="工具章節導覽" class="article-jump"><a href="#inputs">配分を入力</a><a href="#rules">リバランス規則</a><a href="#results">結果と差分</a><a href="#limits">制限事項と情報源</a></nav>
+<div class="tool-layout allocation-layout">
+<section class="panel input-panel" id="inputs">
+<div class="section-kicker">01 · Portfolio input</div>
+<h2>現在の資産と目標配分</h2>
+<p class="helper">同じ日付、同じ通貨、同じ評価口径を使用してください。目標ウェイトは合計で100％にすること；仮想のマーケットデータを入力しないでください。価値がゼロの資産でも目標ウェイトは保持してください。</p>
+<div class="table-wrap input-table-wrap">
+<table class="asset-input-table">
+<thead><tr><th scope="col">資産名</th><th scope="col">現在の時価</th><th scope="col">目標ウェイト</th><th scope="col"><span class="sr-only">操作</span></th></tr></thead>
+<tbody id="asset-rows"></tbody>
+</table>
+</div>
+<div class="input-actions"><button class="button secondary" id="add-asset" type="button">資産行を追加</button><button class="button ghost" id="reset" type="button">デフォルトに復元</button></div>
+<div class="field-grid compact-fields">
+<label for="contribution">今回の追加投入資金（元）<input id="contribution" min="0" step="1" type="number" value="0"/></label>
+<label for="rebalance-mode">リバランス規則<select id="rebalance-mode"><option value="full">目標ウェイトへ完全に戻す</option><option value="threshold">ドリフト閾値：閾値超過の資産のみを調整</option><option value="cash-first">新規資金を優先して低配を補充</option></select></label>
+<label for="threshold">乖離閾値（パーセンテージポイント）<input id="threshold" max="100" min="0" step="0.1" type="number" value="5"/></label>
+<label for="fee-rate">取引手数料率（%）<input id="fee-rate" max="10" min="0" step="0.01" type="number" value="0.15"/></label>
+<label for="minimum-fee">最低取引手数料（元）<input id="minimum-fee" min="0" step="1" type="number" value="20"/></label>
+<label for="tax-rate">売却税・手数料率（%）<input id="tax-rate" max="10" min="0" step="0.01" type="number" value="0"/></label>
+</div>
+<div aria-live="polite" class="mode-help" id="mode-help"></div>
+<button class="button primary" id="calculate" type="button">配分とリバランスを計算</button>
+<div aria-live="polite" class="status" id="status">未計算です。入力と結果は現在のブラウザページにのみ残ります。</div>
+</section>
+<section class="panel rules-panel" id="rules">
+<div class="section-kicker">02 · Decision rules</div>
+<h2>まずルールを書き、その後差額を見る。</h2>
+<div class="rule-cards">
+<article><strong>目標へ完全に戻す</strong><p>総時価に新規資金を加えて目標時価を再計算し、各資産の理論的な買い増しまたは減額を表示する。</p></article>
+<article><strong>ドリフト閾値</strong><p>現在のウェイトと目標ウェイトをパーセンテージポイントで比較する；閾値を超えない資産は必須取引としてマークしない。</p></article>
+<article><strong>新規資金を優先</strong><p>新たな資金はまずアンダーウェイトのギャップに割り当ててください；資金不足により残るギャップは保持され、取引済みと仮定しません。</p></article>
+</div>
+<div class="formula-note"><strong>式：</strong><br/>現在のウェイト＝現在の時価 ÷ 現在の総時価<br/>目標時価＝（現在の総時価＋追加資金）× 目標ウェイト<br/>理論調整額 = 目標市値 − 現在の市値<br/>乖離（パーセンテージポイント）＝現在のウェイト − 目標ウェイト</div>
+<div class="note-box"><strong>パーセンテージポイントはパーセンテージではない。</strong>目標 60%、現在 66% は +6 パーセンテージポイントの偏差を示します；これは「相対的超配 10%」と同じ概念ではありません。</div>
+</section>
+<section class="result result-panel" id="results">
+<div class="section-kicker">03 · Allocation output</div>
+<div class="result-heading"><div><h2>配分の乖離と理論的な対応</h2><p class="helper">買い／削減はモデルの差分ラベルであり、注文指示ではありません；コストと税は利用者が入力する教育的仮定です。</p></div><button class="button secondary" disabled="" id="download" type="button">ローカル結果をダウンロード</button></div>
+<div class="metric-grid" id="summary"></div>
+<div class="visual allocation-visual"><h3>現在のウェイトと目標ウェイト</h3><div aria-label="目前權重與目標權重比較圖" class="allocation-chart" id="allocation-chart" role="img"></div><div class="chart-legend"><span><i class="legend-current"></i>現在のウェイト</span><span><i class="legend-target"></i>目標ポジション</span></div></div>
+<div class="table-wrap result-table-wrap"><table class="result-table"><thead><tr><th scope="col">資産</th><th scope="col">現在のウェイト</th><th scope="col">目標ウェイト</th><th scope="col">乖離</th><th scope="col">目標時価</th><th scope="col">理論的行動</th><th scope="col">推定後ウェイト</th></tr></thead><tbody id="allocation-rows"></tbody></table></div>
+<div class="cost-box"><h3>取引摩擦と残余資金</h3><div class="cost-grid" id="cost-summary"></div></div>
+</section>
+</div>
+<section class="source-box" id="limits">
+<div class="section-kicker">04 · Sources &amp; limits</div>
+<h2>データソースとモデルの境界</h2>
+<p>Investor.gov は資産配分とリバランスを投資期間とリスク許容度を組み合わせた意思決定と見なしています；SEC の入門ガイドは過大配分を売却する、新規資金を過小配分へ向ける、継続的な入金を調整する、という三つの一般的な方法を挙げ、取引コストと税務の帰結に注意を促しています；FINRA も分散、配分、リバランスは異なるリスク管理のレイヤーに対応すると指摘しています。<sup><a href="https://www.investor.gov/introduction-investing/getting-started/asset-allocation" rel="noopener" target="_blank">[1]</a> <a href="https://www.investor.gov/additional-resources/general-resources/publications-research/info-sheets/beginners-guide-asset" rel="noopener" target="_blank">[2]</a> <a href="https://www.finra.org/investors/investing/investing-basics/asset-allocation-diversification" rel="noopener" target="_blank">[3]</a></sup></p>
+<p>本ツールはファンドの基礎保有銘柄、相関、流動性、税務上の扱い、口座制限、取引時間、最小取引単位、資産の質を検証しません。また、目標ウェイトが個人に適しているかも判断しません。取引コストはユーザー入力による簡易推定にすぎず、証券会社の手数料、取引税、キャピタルゲイン課税や専門家の助言に代わるものではありません。</p>
+<p class="disclaimer">このページは決定論的な教育モデルであり、歴史的バックテスト、モンテカルロ、リターン予測、資産配分の推奨、取引指示ではありません。まずデータの日付、通貨、ウェイト、手数料および適用法規を確認してください。This is research and analysis only, not personalized financial advice.</p>
+</section>
+</main>
+<script src="/academy/academy.js?v=20260827-i18n1"></script>
+<script src="/academy/tools/portfolio-rebalancer.js"></script><section class="finance-quality-note" data-finance-quality=""><h2>財務ツールの使い方</h2><p>このページでは、財務の概念を検証可能な入力、計算式、シナリオに分けています。変数の定義を確認し、保守・基本・ストレスケースを比較してください。単一の結果は収益を保証しません。</p><p>手順：単位と期間を確認し、自分の前提を入力してから、感応度、コスト、下振れケースを確認します。</p><p><strong>制限：市場を予測するものではなく、税金、スリッページ、流動性、信用、規制、契約条件をすべて含むとは限りません。重要な判断は最新の一次情報と有資格者に確認してください。:</strong>制限：市場を予測するものではなく、税金、スリッページ、流動性、信用、規制、契約条件をすべて含むとは限りません。重要な判断は最新の一次情報と有資格者に確認してください。</p></section>
+<section class="finance-disclaimer" data-finance-disclaimer=""><h2>投資リスクに関する免責事項</h2><p>本ページの内容、計算ツール、例示は教育・研究・シナリオ試算のみを目的とし、個別の投資、取引、賭け、税務、法律その他の金融助言ではありません。市場や制度は変化するため、最新の一次情報を確認し、判断はご自身の責任で行ってください。過去の実績、モデル出力、シミュレーションは将来を保証しません。</p></section>
+</body>
+</html>

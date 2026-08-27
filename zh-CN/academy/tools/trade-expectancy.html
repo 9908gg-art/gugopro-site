@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>交易期望值计算器｜手续费与滑点｜GugoPro Academy</title>
+<meta content="输入进场、止损、目标、胜率、仓位与交易成本，即时计算交易期望值、净 R 倍数与盈亏平衡胜率。纯前端，不抓行情。" name="description"/>
+<link href="/academy/academy.css" rel="stylesheet"/>
+<link href="/academy/tools/trade-expectancy.css" rel="stylesheet"/>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"交易期望值计算器","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"以交易价格、胜率、手续费与滑点计算净期望值与盈亏平衡胜率。","url":"https://gugopro.com/zh-CN/academy/tools/trade-expectancy.html"}</script>
+<meta content="https://gugopro.com/academy/tools/trade-expectancy.html" property="og:url"/>
+<meta content="index, follow" name="robots"/>
+<link href="https://gugopro.com/zh-CN/academy/tools/trade-expectancy.html" rel="canonical"/>
+<link href="https://gugopro.com/academy/tools/trade-expectancy.html" hreflang="zh-TW" rel="alternate"/>
+<link href="https://gugopro.com/zh-CN/academy/tools/trade-expectancy.html" hreflang="zh-CN" rel="alternate"/>
+<link href="https://gugopro.com/en/academy/tools/trade-expectancy.html" hreflang="en" rel="alternate"/>
+<link href="https://gugopro.com/ja/academy/tools/trade-expectancy.html" hreflang="ja" rel="alternate"/>
+<link href="https://gugopro.com/de/academy/tools/trade-expectancy.html" hreflang="de" rel="alternate"/>
+<link href="https://gugopro.com/fr/academy/tools/trade-expectancy.html" hreflang="fr" rel="alternate"/>
+<link href="https://gugopro.com/es/academy/tools/trade-expectancy.html" hreflang="es" rel="alternate"/>
+<link href="https://gugopro.com/pt/academy/tools/trade-expectancy.html" hreflang="pt" rel="alternate"/>
+<link href="https://gugopro.com/academy/tools/trade-expectancy.html" hreflang="x-default" rel="alternate"/>
+<meta content="true" name="static-locale-route"/>
+<meta content="machine-draft" name="i18n-status"/>
+<link href="/tools/finance/finance-locale.css?v=20260827" rel="stylesheet"/>
+<script src="/i18n/static-locale-runtime.js?v=20260827" defer></script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="quant-page expectancy-page">
+<main class="tool-page exp-page-shell">
+<div class="tool-crumb"><a href="/academy/">← 返回 GugoPro Academy</a><span>风险 / 回报 · 纯前端 · 不抓即时行情</span></div>
+<nav aria-label="頁內導覽" class="exp-jump"><a href="#inputs">输入参数</a><a href="#costs">交易成本</a><a href="#results">計算結果</a><a href="#limits">限制与公式</a></nav>
+<div class="exp-hero"><div><div class="eyebrow">情景视角 · 成本敏感的期望值</div><h1>交易期望值计算器</h1><p>把计划上的 R:R，转成纳入手续费与滑价后的净结果。输入变更时即時計算；所有数字只留在目前浏览器，不会上传或自动补行情。</p></div><div class="exp-hero-badge"><strong>3R ≠ 保证</strong><span>成本会压低盈利、放大亏损</span></div></div>
+<div class="exp-layout">
+<section class="panel exp-panel" id="inputs">
+<div class="eyebrow">模型输入</div><h2>設定交易情境</h2>
+<div class="exp-grid two">
+<div><label for="direction">交易方向</label><select id="direction"><option value="long">多头（Long）</option><option value="short">空头（Short）</option></select></div>
+<div><label for="win-rate">胜率（%）</label><input id="win-rate" inputmode="decimal" max="100" min="0" step="0.1" type="number" value="25"/><small>请用历史交易记录估计，而非主观保证。</small></div>
+<div><label for="entry">进场价 Entry</label><input id="entry" inputmode="decimal" min="0.0000001" step="0.0001" type="number" value="100"/></div>
+<div><label for="stop">止损价 Stop</label><input id="stop" inputmode="decimal" min="0.0000001" step="0.0001" type="number" value="95"/></div>
+<div><label for="target">目标价 Target</label><input id="target" inputmode="decimal" min="0.0000001" step="0.0001" type="number" value="115"/></div>
+<div><label for="position-size">仓位数量</label><input id="position-size" inputmode="decimal" min="0.0000001" step="0.0001" type="number" value="200"/><small>可输入股数、口数或其他交易单位。</small></div>
+<div><label for="trades">評估交易筆數</label><input id="trades" inputmode="numeric" min="1" step="1" type="number" value="20"/></div>
+</div>
+<fieldset class="exp-costs" id="costs"><legend>交易成本假设</legend><p class="exp-field-help">费率以百分比输入，例如 0.10% 就填入 0.10；滑点假设按对交易者不利的方向估算。实际券商费率、税费与市场规则请自行核对。</p><div class="exp-grid two">
+<div><label for="entry-fee">进场手续费（%）</label><input id="entry-fee" inputmode="decimal" max="99.99" min="0" step="0.01" type="number" value="0.10"/></div>
+<div><label for="exit-fee">出场手续费（%）</label><input id="exit-fee" inputmode="decimal" max="99.99" min="0" step="0.01" type="number" value="0.10"/></div>
+<div><label for="entry-slip">进场滑价（%）</label><input id="entry-slip" inputmode="decimal" max="99.99" min="0" step="0.01" type="number" value="0.05"/></div>
+<div><label for="exit-slip">出场滑价（%）</label><input id="exit-slip" inputmode="decimal" max="99.99" min="0" step="0.01" type="number" value="0.05"/></div>
+<div><label for="entry-fixed">进场固定费（元）</label><input id="entry-fixed" inputmode="decimal" min="0" step="0.01" type="number" value="0"/></div>
+<div><label for="exit-fixed">出场固定费（元）</label><input id="exit-fixed" inputmode="decimal" min="0" step="0.01" type="number" value="0"/></div>
+</div></fieldset>
+<div class="exp-actions"><button class="calc" id="calculate" type="button">計算期望值</button><button class="ghost-btn" id="clear" type="button">清除结果</button></div>
+<div aria-live="polite" class="status" id="status">输入变更会即时计算；目前使用 3R、25% 胜率与成本示范。</div>
+<div class="formula-note"><strong>核心公式：</strong>期望值＝胜率×平均净获利＋失败率×平均净损失。净结果会先套用不利滑价，再扣除按成交金额计算的双边手续费与固定费用。</div>
+</section>
+<section aria-live="polite" class="result exp-result" id="results">
+<div class="eyebrow">净期望值</div><h2>成本调整后结果</h2><div class="result-big" id="expectancy-r">—</div><div class="exp-result-sub" id="result-message">等待有效输入</div>
+<div class="metric-grid exp-metrics">
+<div class="metric"><span class="sub">計畫 R:R</span><b id="planned-rr">—</b></div>
+<div class="metric"><span class="sub">净获利 R</span><b id="net-win-r">—</b></div>
+<div class="metric"><span class="sub">净亏损 R</span><b id="net-loss-r">—</b></div>
+<div class="metric"><span class="sub">每笔金额期望</span><b id="expectancy-money">—</b></div>
+<div class="metric"><span class="sub">损益两平胜率</span><b id="break-even">—</b></div>
+<div class="metric"><span class="sub">評估期間期望</span><b id="expected-total">—</b></div>
+<div class="metric"><span class="sub">实际进场价</span><b id="actual-entry">—</b></div>
+<div class="metric"><span class="sub">成本方向</span><b id="cost-direction">—</b></div>
+</div>
+<div class="exp-outcomes"><div class="exp-section-title"><h3>单笔结果拆解</h3><span>金额按仓位数量计算</span></div><div class="exp-table-wrap"><table class="exp-table"><thead><tr><th>情境</th><th>毛结果</th><th>交易成本</th><th>净结果</th><th>净 R</th></tr></thead><tbody id="outcome-rows"><tr><td colspan="5">尚未计算</td></tr></tbody></table></div></div>
+<div aria-label="獲利與虧損 R 倍數比較" class="exp-bars"><div class="exp-section-title"><h3>净结果视觉比较</h3><span id="bar-caption">—</span></div><div class="bar-track"><i id="win-bar"></i><i id="loss-bar"></i></div><div class="bar-labels"><span>盈利情景 <b id="win-bar-label">—</b></span><span>止损情境 <b id="loss-bar-label">—</b></span></div></div>
+<div class="source-box" id="limits"><strong>研究用途与限制：</strong>本工具只计算输入的单一获利情境与单一停损情境，不建模部分出场、跳空、成交概率、实际盈亏分布、证交税、借券费、流动性冲击或未来胜率变化。计划 R:R 不等于实现后平均盈亏；结果不能视为交易指令或个性化财务建议。</div>
+</section>
+</div>
+<section class="exp-explain"><div><div class="eyebrow">阅读模型</div><h2>如何解读负期望值？</h2></div><div class="exp-explain-grid"><div><strong>先看净 R</strong><p>3R 是未计成本的价格距离。若加入滑价与双边手续费，成功交易的净获利会低于 +3R，止损交易的净损失则可能大于 −1R。</p></div><div><strong>再看胜率门槛</strong><p>损益两平胜率＝净损失绝对值 ÷（净获利＋净损失绝对值）。成本越高，门槛通常越高。</p></div><div><strong>最后看样本</strong><p>期望值是概率加权的平均，不是下一笔交易的预测。请用同一口径的已完成交易记录回填胜率与实际平均盈亏。</p></div></div></section>
+</main>
+<script src="/academy/academy.js?v=20260827-i18n1"></script>
+<script src="/academy/tools/trade-expectancy.js"></script><section class="finance-quality-note" data-finance-quality=""><h2>财经工具使用说明</h2><p>本页把财经概念拆成可检查的输入、公式与情境结果。请先阅读变量定义，再比较保守、中性与压力情境；单一结果不代表收益承诺。</p><p>建议流程：确认资料单位与期间，输入自己的假设，接着检查敏感度、成本与下行情境。</p><p><strong>限制：模型不会预测市场，也不包含所有税费、滑点、流动性、信用、法规或个别合约条款；重要决策请以最新官方资料及合格专业意见复核。:</strong>限制：模型不会预测市场，也不包含所有税费、滑点、流动性、信用、法规或个别合约条款；重要决策请以最新官方资料及合格专业意见复核。</p></section>
+<section class="finance-disclaimer" data-finance-disclaimer=""><h2>投资风险免责声明</h2><p>本页内容、计算器与示例仅供教育、研究与情境估算，不构成投资、交易、投注、税务、法律或其他个性化金融建议。金融市场与个别制度可能快速变化，请核对最新官方资料并承担决策责任。过去表现、模型输出或模拟结果不代表未来结果。</p></section>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>トレード期待値計算機｜手数料とスリッページ｜GugoPro Academy</title>
+<meta content="エントリー、ストップ、ターゲット、勝率、ポジション、取引コストを入力すると、取引期待値、ネットR倍、損益分岐勝率を即時計算します。フロントエンドのみで、相場データは取得しません。" name="description"/>
+<link href="/academy/academy.css" rel="stylesheet"/>
+<link href="/academy/tools/trade-expectancy.css" rel="stylesheet"/>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"トレード期待値計算機","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"取引価格、勝率、手数料、スリッページから純期待値と損益分岐勝率を計算する。","url":"https://gugopro.com/ja/academy/tools/trade-expectancy.html"}</script>
+<meta content="https://gugopro.com/academy/tools/trade-expectancy.html" property="og:url"/>
+<meta content="index, follow" name="robots"/>
+<link href="https://gugopro.com/ja/academy/tools/trade-expectancy.html" rel="canonical"/>
+<link href="https://gugopro.com/academy/tools/trade-expectancy.html" hreflang="zh-TW" rel="alternate"/>
+<link href="https://gugopro.com/zh-CN/academy/tools/trade-expectancy.html" hreflang="zh-CN" rel="alternate"/>
+<link href="https://gugopro.com/en/academy/tools/trade-expectancy.html" hreflang="en" rel="alternate"/>
+<link href="https://gugopro.com/ja/academy/tools/trade-expectancy.html" hreflang="ja" rel="alternate"/>
+<link href="https://gugopro.com/de/academy/tools/trade-expectancy.html" hreflang="de" rel="alternate"/>
+<link href="https://gugopro.com/fr/academy/tools/trade-expectancy.html" hreflang="fr" rel="alternate"/>
+<link href="https://gugopro.com/es/academy/tools/trade-expectancy.html" hreflang="es" rel="alternate"/>
+<link href="https://gugopro.com/pt/academy/tools/trade-expectancy.html" hreflang="pt" rel="alternate"/>
+<link href="https://gugopro.com/academy/tools/trade-expectancy.html" hreflang="x-default" rel="alternate"/>
+<meta content="true" name="static-locale-route"/>
+<meta content="machine-draft" name="i18n-status"/>
+<link href="/tools/finance/finance-locale.css?v=20260827" rel="stylesheet"/>
+<script src="/i18n/static-locale-runtime.js?v=20260827" defer></script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="quant-page expectancy-page">
+<main class="tool-page exp-page-shell">
+<div class="tool-crumb"><a href="/academy/">← GugoPro Academy に戻る</a><span>リスク／リターン · フロントエンドのみ · ライブ相場不使用</span></div>
+<nav aria-label="頁內導覽" class="exp-jump"><a href="#inputs">パラメータを入力</a><a href="#costs">取引コスト</a><a href="#results">計算結果</a><a href="#limits">制約と数式</a></nav>
+<div class="exp-hero"><div><div class="eyebrow">シナリオレンズ · コストを考慮した期待値</div><h1>トレード期待値計算機</h1><p>計画上の R:R を手数料とスリッページを考慮した純結果に変換する。入力が変わると即座に再計算される；全ての数値は現在のブラウザ内にのみ残り、アップロードも相場の自動補完も行われない。</p></div><div class="exp-hero-badge"><strong>3R ≠ 保証</strong><span>コストは利益を圧縮し、損失を拡大する</span></div></div>
+<div class="exp-layout">
+<section class="panel exp-panel" id="inputs">
+<div class="eyebrow">モデル入力</div><h2>取引シナリオを設定</h2>
+<div class="exp-grid two">
+<div><label for="direction">取引方向</label><select id="direction"><option value="long">ロング</option><option value="short">空頭（Short）</option></select></div>
+<div><label for="win-rate">勝率（％）</label><input id="win-rate" inputmode="decimal" max="100" min="0" step="0.1" type="number" value="25"/><small>主観的な約束ではなく、過去の取引記録で推定してください。</small></div>
+<div><label for="entry">進場価格（Entry）</label><input id="entry" inputmode="decimal" min="0.0000001" step="0.0001" type="number" value="100"/></div>
+<div><label for="stop">ストップ価格 Stop</label><input id="stop" inputmode="decimal" min="0.0000001" step="0.0001" type="number" value="95"/></div>
+<div><label for="target">目標価格 Target</label><input id="target" inputmode="decimal" min="0.0000001" step="0.0001" type="number" value="115"/></div>
+<div><label for="position-size">ポジション数量</label><input id="position-size" inputmode="decimal" min="0.0000001" step="0.0001" type="number" value="200"/><small>株数、枚数、その他取引単位を入力できます。</small></div>
+<div><label for="trades">取引回数を評価する</label><input id="trades" inputmode="numeric" min="1" step="1" type="number" value="20"/></div>
+</div>
+<fieldset class="exp-costs" id="costs"><legend>取引コストの仮定</legend><p class="exp-field-help">手数料はパーセンテージで入力してください。例：0.10% は 0.10 と入力；スリッページは常にトレーダー不利で想定します。実際のブローカー手数料、税、マーケットルールは各自で確認してください。</p><div class="exp-grid two">
+<div><label for="entry-fee">進場手数料（%）</label><input id="entry-fee" inputmode="decimal" max="99.99" min="0" step="0.01" type="number" value="0.10"/></div>
+<div><label for="exit-fee">イグジット手数料（%）</label><input id="exit-fee" inputmode="decimal" max="99.99" min="0" step="0.01" type="number" value="0.10"/></div>
+<div><label for="entry-slip">進場スリッページ（%）</label><input id="entry-slip" inputmode="decimal" max="99.99" min="0" step="0.01" type="number" value="0.05"/></div>
+<div><label for="exit-slip">イグジットスリッページ（%）</label><input id="exit-slip" inputmode="decimal" max="99.99" min="0" step="0.01" type="number" value="0.05"/></div>
+<div><label for="entry-fixed">進場固定費（元）</label><input id="entry-fixed" inputmode="decimal" min="0" step="0.01" type="number" value="0"/></div>
+<div><label for="exit-fixed">イグジット固定費（元）</label><input id="exit-fixed" inputmode="decimal" min="0" step="0.01" type="number" value="0"/></div>
+</div></fieldset>
+<div class="exp-actions"><button class="calc" id="calculate" type="button">期待値を計算</button><button class="ghost-btn" id="clear" type="button">結果をクリア</button></div>
+<div aria-live="polite" class="status" id="status">入力の変更は即時に計算されます；現在はデモとして 3R、勝率 25% とコストを使用しています。</div>
+<div class="formula-note"><strong>コアの公式：</strong>期待値＝勝率×平均ネット獲利＋敗率×平均ネット損失。ネット結果にはまず不利なスリッページを適用し、その後、約定金額に基づく両側手数料および固定費を差し引きます。</div>
+</section>
+<section aria-live="polite" class="result exp-result" id="results">
+<div class="eyebrow">純期待値</div><h2>コスト調整後の結果</h2><div class="result-big" id="expectancy-r">—</div><div class="exp-result-sub" id="result-message">有効な入力待ち</div>
+<div class="metric-grid exp-metrics">
+<div class="metric"><span class="sub">想定R:R</span><b id="planned-rr">—</b></div>
+<div class="metric"><span class="sub">純利益 R</span><b id="net-win-r">—</b></div>
+<div class="metric"><span class="sub">純損失 R</span><b id="net-loss-r">—</b></div>
+<div class="metric"><span class="sub">取引ごとの期待金額</span><b id="expectancy-money">—</b></div>
+<div class="metric"><span class="sub">損益分岐勝率</span><b id="break-even">—</b></div>
+<div class="metric"><span class="sub">評価期間の期待</span><b id="expected-total">—</b></div>
+<div class="metric"><span class="sub">実際のエントリー価格</span><b id="actual-entry">—</b></div>
+<div class="metric"><span class="sub">コストの方向性</span><b id="cost-direction">—</b></div>
+</div>
+<div class="exp-outcomes"><div class="exp-section-title"><h3>単一トレード結果の分解</h3><span>金額はポジション数量に基づいて計算されます</span></div><div class="exp-table-wrap"><table class="exp-table"><thead><tr><th>シナリオ</th><th>粗い結果</th><th>取引コスト</th><th>純結果</th><th>純R</th></tr></thead><tbody id="outcome-rows"><tr><td colspan="5">未計算</td></tr></tbody></table></div></div>
+<div aria-label="獲利與虧損 R 倍數比較" class="exp-bars"><div class="exp-section-title"><h3>純結果の視覚的比較</h3><span id="bar-caption">—</span></div><div class="bar-track"><i id="win-bar"></i><i id="loss-bar"></i></div><div class="bar-labels"><span>収益シナリオ <b id="win-bar-label">—</b></span><span>ストップシナリオ <b id="loss-bar-label">—</b></span></div></div>
+<div class="source-box" id="limits"><strong>研究目的と制約：</strong>本ツールは入力された単一の利益シナリオと単一のストップシナリオのみを計算し、部分決済、窓開け、約定確率、実際の損益分布、取引税、貸株料、流動性ショック、将来の勝率変化はモデル化しません。計画上のR:Rは実現後の平均損益と同一ではありません；結果は取引指示や個別の金融助言と見なせません。</div>
+</section>
+</div>
+<section class="exp-explain"><div><div class="eyebrow">モデルを読む</div><h2>負の期待値をどう解釈するか？</h2></div><div class="exp-explain-grid"><div><strong>まず純 R を見る。</strong><p>3R はコストを除いた価格距離です。スリッページや往復手数料を加味すると、成功したトレードの純利益は +3R を下回る可能性があり、ストップで損切りされたトレードの純損失は −1R を上回る可能性があります。</p></div><div><strong>勝率の閾値を再確認する</strong><p>損益分岐勝率＝純損失の絶対値 ÷（純利益＋純損失の絶対値）。コストが高いほど、閾値は通常上がる。</p></div><div><strong>最後のインサンプル</strong><p>期待値は確率で重み付けされた平均であり、次のトレードの予測ではありません。同一の基準で集計した既完了トレードの履歴を使い、勝率と実際の平均損益を入力してください。</p></div></div></section>
+</main>
+<script src="/academy/academy.js?v=20260827-i18n1"></script>
+<script src="/academy/tools/trade-expectancy.js"></script><section class="finance-quality-note" data-finance-quality=""><h2>財務ツールの使い方</h2><p>このページでは、財務の概念を検証可能な入力、計算式、シナリオに分けています。変数の定義を確認し、保守・基本・ストレスケースを比較してください。単一の結果は収益を保証しません。</p><p>手順：単位と期間を確認し、自分の前提を入力してから、感応度、コスト、下振れケースを確認します。</p><p><strong>制限：市場を予測するものではなく、税金、スリッページ、流動性、信用、規制、契約条件をすべて含むとは限りません。重要な判断は最新の一次情報と有資格者に確認してください。:</strong>制限：市場を予測するものではなく、税金、スリッページ、流動性、信用、規制、契約条件をすべて含むとは限りません。重要な判断は最新の一次情報と有資格者に確認してください。</p></section>
+<section class="finance-disclaimer" data-finance-disclaimer=""><h2>投資リスクに関する免責事項</h2><p>本ページの内容、計算ツール、例示は教育・研究・シナリオ試算のみを目的とし、個別の投資、取引、賭け、税務、法律その他の金融助言ではありません。市場や制度は変化するため、最新の一次情報を確認し、判断はご自身の責任で行ってください。過去の実績、モデル出力、シミュレーションは将来を保証しません。</p></section>
+</body>
+</html>

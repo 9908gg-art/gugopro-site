@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>实战交易计划与头寸检查器｜GugoPro Academy</title>
+<meta content="输入账户资金、单笔风险、进场、止损、目标与交易成本，估算成本后的最大整数仓位与风险使用率。纯前端，不抓行情。" name="description"/>
+<link href="/academy/academy.css" rel="stylesheet"/><link href="/academy/tools/practical-trading.css" rel="stylesheet"/>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"实战交易计划与头寸检查器","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"以用户输入的账户风险、价格与交易成本估算最大整数仓位。","url":"https://gugopro.com/zh-CN/academy/tools/practical-trade-plan.html"}</script>
+<meta content="https://gugopro.com/academy/tools/practical-trade-plan.html" property="og:url"/>
+<meta content="index, follow" name="robots"/>
+<link href="https://gugopro.com/zh-CN/academy/tools/practical-trade-plan.html" rel="canonical"/>
+<link href="https://gugopro.com/academy/tools/practical-trade-plan.html" hreflang="zh-TW" rel="alternate"/>
+<link href="https://gugopro.com/zh-CN/academy/tools/practical-trade-plan.html" hreflang="zh-CN" rel="alternate"/>
+<link href="https://gugopro.com/en/academy/tools/practical-trade-plan.html" hreflang="en" rel="alternate"/>
+<link href="https://gugopro.com/ja/academy/tools/practical-trade-plan.html" hreflang="ja" rel="alternate"/>
+<link href="https://gugopro.com/de/academy/tools/practical-trade-plan.html" hreflang="de" rel="alternate"/>
+<link href="https://gugopro.com/fr/academy/tools/practical-trade-plan.html" hreflang="fr" rel="alternate"/>
+<link href="https://gugopro.com/es/academy/tools/practical-trade-plan.html" hreflang="es" rel="alternate"/>
+<link href="https://gugopro.com/pt/academy/tools/practical-trade-plan.html" hreflang="pt" rel="alternate"/>
+<link href="https://gugopro.com/academy/tools/practical-trade-plan.html" hreflang="x-default" rel="alternate"/>
+<meta content="true" name="static-locale-route"/>
+<meta content="machine-draft" name="i18n-status"/>
+<link href="/tools/finance/finance-locale.css?v=20260827" rel="stylesheet"/>
+<script src="/i18n/static-locale-runtime.js?v=20260827" defer></script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="quant-page practical-page">
+<main class="practical-shell">
+<div class="practical-top"><a class="practical-brand" href="/academy/">← 返回 GugoPro Academy</a><a class="practical-back" href="/articles/investment/17-practical-trading.html">阅读第 13 类：仓位与风控</a></div>
+<nav aria-label="頁內導覽" class="practical-jump"><a href="#inputs">交易计划</a><a href="#costs">成本假设</a><a href="#results">仓位结果</a><a href="#limits">模型限制</a></nav>
+<header class="practical-hero"><div><div class="eyebrow">第13类 · 交易前控制</div><h1>实战交易计划<br/>与持仓检查器</h1><p>先写下最多愿意承担的损失，再反推最大整数仓位。工具不提供标的、方向或价格；所有输入只在当前浏览器本地计算。</p></div><div class="practical-badge"><strong>先风险，后仓位</strong><span>把滑价与成本放进止损预算</span></div></header>
+<div class="practical-layout">
+<section class="practical-panel" id="inputs"><div class="eyebrow">交易前计划</div><h2>建立一笔交易假设</h2><div class="practical-grid two">
+<div><label for="direction">方向</label><select id="direction"><option value="long">多头（Long）</option><option value="short">空头（Short）</option></select></div>
+<div><label for="account">账户资金（元）</label><input id="account" inputmode="decimal" min="0.01" placeholder="例如 100000" step="1" type="number"/></div>
+<div><label for="risk-percent">单笔风险上限（%）</label><input id="risk-percent" inputmode="decimal" max="99.99" min="0.01" placeholder="例如 1" step="0.1" type="number"/><small class="practical-help">这是上限假设，不代表实际一定只损失此数。</small></div>
+<div><label for="multiplier">每单位价格乘数</label><input id="multiplier" inputmode="decimal" min="0.000001" step="0.01" type="number" value="1"/><small class="practical-help">现货通常为 1；期货请自行核对合约乘数。</small></div>
+<div><label for="entry">进场价 Entry</label><input id="entry" inputmode="decimal" min="0.000001" placeholder="输入你的计划价格" step="0.0001" type="number"/></div>
+<div><label for="stop">止损价 Stop</label><input id="stop" inputmode="decimal" min="0.000001" placeholder="输入失效价格" step="0.0001" type="number"/></div>
+<div><label for="target">目标价 Target</label><input id="target" inputmode="decimal" min="0.000001" placeholder="输入计划目标" step="0.0001" type="number"/></div>
+</div>
+<fieldset class="practical-fieldset" id="costs"><legend>成本与滑价假设</legend><p>费率请以百分比填入，例如 0.10% 填写 0.10。滑点一律按对交易者不利方向估算；固定费用按每次进场/出场各计一笔。</p><div class="practical-grid two">
+<div><label for="entry-fee">进场手续费（%）</label><input id="entry-fee" inputmode="decimal" max="99.99" min="0" step="0.01" type="number" value="0.10"/></div>
+<div><label for="exit-fee">出场手续费（%）</label><input id="exit-fee" inputmode="decimal" max="99.99" min="0" step="0.01" type="number" value="0.10"/></div>
+<div><label for="entry-slip">进场滑价（%）</label><input id="entry-slip" inputmode="decimal" max="99.99" min="0" step="0.01" type="number" value="0.05"/></div>
+<div><label for="exit-slip">止损出场滑价（%）</label><input id="exit-slip" inputmode="decimal" max="99.99" min="0" step="0.01" type="number" value="0.05"/></div>
+<div><label for="entry-fixed">进场固定费（元）</label><input id="entry-fixed" inputmode="decimal" min="0" step="0.01" type="number" value="0"/></div>
+<div><label for="exit-fixed">出场固定费（元）</label><input id="exit-fixed" inputmode="decimal" min="0" step="0.01" type="number" value="0"/></div>
+</div></fieldset>
+<div class="practical-actions"><button class="practical-calc" id="calculate" type="button">检查持仓</button><button class="practical-clear" id="clear" type="button">清除结果</button></div><div aria-live="polite" class="practical-status" id="status">填入你的交易假设后即時計算；页面不带入任何市场行情。</div><div class="practical-formula"><strong>公式：</strong>可承受损失＝账户资金×风险%；每单位风险＝止损价差×乘数＋变动成本；最大整数部位＝floor（（可承受损失−固定费）÷每单位风险）。</div>
+</section>
+<section aria-live="polite" class="practical-result" id="results"><div class="eyebrow">持仓检查</div><h2>仓位与风险结果</h2><div class="practical-big" id="max-units">—</div><div class="practical-sub" id="result-message">等待有效输入</div><div class="practical-metrics">
+<div class="practical-metric"><span>风险预算</span><b id="risk-budget">—</b></div><div class="practical-metric"><span>每单位风险</span><b id="risk-per-unit">—</b></div><div class="practical-metric"><span>估算名义仓位</span><b id="notional">—</b></div><div class="practical-metric"><span>预估最坏损失</span><b id="worst-loss">—</b></div><div class="practical-metric"><span>预算使用率</span><b id="budget-usage">—</b></div><div class="practical-metric"><span>成本后 R:R</span><b id="net-rr">—</b></div><div class="practical-metric"><span>实际进场价</span><b id="actual-entry">—</b></div><div class="practical-metric"><span>止损成交假设</span><b id="actual-stop">—</b></div>
+</div><div class="practical-breakdown"><h3>計算拆解</h3><div class="practical-table-wrap"><table class="practical-table"><thead><tr><th>项目</th><th>数值</th><th>說明</th></tr></thead><tbody id="breakdown-rows"><tr><td colspan="3">尚未计算</td></tr></tbody></table></div></div><div class="practical-note" id="limits"><strong>模型限制：</strong>这是交易前的简化风险检查，不会判断标的是否值得交易。未纳入跳空、部分成交、流动性冲击、追加保证金、税费、借券费与实际成交概率；期货、期权与杠杆产品必须另行核对合约规格。</div></section>
+</div>
+<section class="practical-section"><div class="eyebrow">与类别一起使用</div><h2>接下来检查什么？</h2><div class="practical-cards"><div class="practical-card"><strong>单笔成本</strong><p>把计划 R:R 转成净期望值，不只看价格距离。</p><a href="/academy/tools/trade-expectancy.html">开启交易期望值 →</a></div><div class="practical-card"><strong>完成交易</strong><p>用实际 R 结果检查胜率、平均盈亏与最大连亏。</p><a href="/academy/tools/trade-journal-analyzer.html">开启交易日志分析器 →</a></div><div class="practical-card"><strong>历史风险</strong><p>把权益序列转成 MDD、恢复期与风险报酬指标。</p><a href="/academy/tools/risk-return-drawdown.html">开启 MDD 工具 →</a></div></div></section>
+<footer class="practical-footer">数据与计算仅使用你输入的假设，不包含实时报价或服务器计算。请先核对券商、交易所与产品规格；本页为研究与教育工具，不是个性化投资或交易建议。</footer>
+</main><script src="/academy/academy.js?v=20260827-i18n1"></script><script src="/academy/tools/practical-trade-plan.js"></script><section class="finance-quality-note" data-finance-quality=""><h2>财经工具使用说明</h2><p>本页把财经概念拆成可检查的输入、公式与情境结果。请先阅读变量定义，再比较保守、中性与压力情境；单一结果不代表收益承诺。</p><p>建议流程：确认资料单位与期间，输入自己的假设，接着检查敏感度、成本与下行情境。</p><p><strong>限制：模型不会预测市场，也不包含所有税费、滑点、流动性、信用、法规或个别合约条款；重要决策请以最新官方资料及合格专业意见复核。:</strong>限制：模型不会预测市场，也不包含所有税费、滑点、流动性、信用、法规或个别合约条款；重要决策请以最新官方资料及合格专业意见复核。</p></section>
+<section class="finance-disclaimer" data-finance-disclaimer=""><h2>投资风险免责声明</h2><p>本页内容、计算器与示例仅供教育、研究与情境估算，不构成投资、交易、投注、税务、法律或其他个性化金融建议。金融市场与个别制度可能快速变化，请核对最新官方资料并承担决策责任。过去表现、模型输出或模拟结果不代表未来结果。</p></section>
+</body></html>

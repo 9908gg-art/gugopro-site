@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+
+<html lang="de">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>Handelserwartungsrechner | Kommissionen und Slippage | GugoPro Academy</title>
+<meta content="Geben Sie Entry, Stop, Ziel, Trefferquote, Positionsgröße und Handelskosten ein, um Erwartungswert, Netto‑R‑Faktor und Break‑even‑Trefferquote in Echtzeit zu berechnen. Rein Frontend, keine Marktdatenabfrage." name="description"/>
+<link href="/academy/academy.css" rel="stylesheet"/>
+<link href="/academy/tools/trade-expectancy.css" rel="stylesheet"/>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Handelserwartungsrechner","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"Berechne Nettorerwartungswert und Break‑Even‑Trefferquote aus Handelspreis, Trefferquote, Kommissionen und Slippage.","url":"https://gugopro.com/de/academy/tools/trade-expectancy.html"}</script>
+<meta content="https://gugopro.com/academy/tools/trade-expectancy.html" property="og:url"/>
+<meta content="index, follow" name="robots"/>
+<link href="https://gugopro.com/de/academy/tools/trade-expectancy.html" rel="canonical"/>
+<link href="https://gugopro.com/academy/tools/trade-expectancy.html" hreflang="zh-TW" rel="alternate"/>
+<link href="https://gugopro.com/zh-CN/academy/tools/trade-expectancy.html" hreflang="zh-CN" rel="alternate"/>
+<link href="https://gugopro.com/en/academy/tools/trade-expectancy.html" hreflang="en" rel="alternate"/>
+<link href="https://gugopro.com/ja/academy/tools/trade-expectancy.html" hreflang="ja" rel="alternate"/>
+<link href="https://gugopro.com/de/academy/tools/trade-expectancy.html" hreflang="de" rel="alternate"/>
+<link href="https://gugopro.com/fr/academy/tools/trade-expectancy.html" hreflang="fr" rel="alternate"/>
+<link href="https://gugopro.com/es/academy/tools/trade-expectancy.html" hreflang="es" rel="alternate"/>
+<link href="https://gugopro.com/pt/academy/tools/trade-expectancy.html" hreflang="pt" rel="alternate"/>
+<link href="https://gugopro.com/academy/tools/trade-expectancy.html" hreflang="x-default" rel="alternate"/>
+<meta content="true" name="static-locale-route"/>
+<meta content="machine-draft" name="i18n-status"/>
+<link href="/tools/finance/finance-locale.css?v=20260827" rel="stylesheet"/>
+<script src="/i18n/static-locale-runtime.js?v=20260827" defer></script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="quant-page expectancy-page">
+<main class="tool-page exp-page-shell">
+<div class="tool-crumb"><a href="/academy/">← Zurück zu GugoPro Academy</a><span>Risiko / Rendite · Nur Frontend · Keine Live‑Marktdaten</span></div>
+<nav aria-label="頁內導覽" class="exp-jump"><a href="#inputs">Parameter eingeben</a><a href="#costs">Handelskosten</a><a href="#results">Berechnungsergebnis</a><a href="#limits">Einschränkungen und Formeln</a></nav>
+<div class="exp-hero"><div><div class="eyebrow">Szenario‑Linse · Kostenbewusste Erwartung</div><h1>Handelserwartungsrechner</h1><p>Wandeln Sie die geplante R:R in die nach Gebühren und Slippage bereinigten Nettoergebnisse um. Bei Änderungen der Eingaben wird sofort neu berechnet; alle Zahlen verbleiben im aktuellen Browser und werden weder hochgeladen noch automatisch mit Marktpreisen gefüllt.</p></div><div class="exp-hero-badge"><strong>3R ≠ Garantie</strong><span>Kosten drücken Gewinne und vergrößern Verluste</span></div></div>
+<div class="exp-layout">
+<section class="panel exp-panel" id="inputs">
+<div class="eyebrow">Modelleingaben</div><h2>Handelsszenario festlegen</h2>
+<div class="exp-grid two">
+<div><label for="direction">Handelsrichtung</label><select id="direction"><option value="long">Long (Long)</option><option value="short">Short（Short）</option></select></div>
+<div><label for="win-rate">Trefferquote (%)</label><input id="win-rate" inputmode="decimal" max="100" min="0" step="0.1" type="number" value="25"/><small>Bitte historische Trading-Daten zur Schätzung verwenden, nicht subjektive Versprechungen.</small></div>
+<div><label for="entry">Einstiegspreis (Entry)</label><input id="entry" inputmode="decimal" min="0.0000001" step="0.0001" type="number" value="100"/></div>
+<div><label for="stop">Stop‑Preis Stop</label><input id="stop" inputmode="decimal" min="0.0000001" step="0.0001" type="number" value="95"/></div>
+<div><label for="target">Zielpreis Target</label><input id="target" inputmode="decimal" min="0.0000001" step="0.0001" type="number" value="115"/></div>
+<div><label for="position-size">Positionsanzahl</label><input id="position-size" inputmode="decimal" min="0.0000001" step="0.0001" type="number" value="200"/><small>Anzahl Aktien, Kontrakte oder andere Handelseinheiten eingeben.</small></div>
+<div><label for="trades">Anzahl der Trades bewerten</label><input id="trades" inputmode="numeric" min="1" step="1" type="number" value="20"/></div>
+</div>
+<fieldset class="exp-costs" id="costs"><legend>Annahmen zu Handelskosten</legend><p class="exp-field-help">Gebühren in Prozent eingeben, z. B. für 0.10% 0.10 eingeben; Slippage wird gegen den Trader angenommen. Bitte tatsächliche Brokergebühren, Steuern und Marktregeln prüfen.</p><div class="exp-grid two">
+<div><label for="entry-fee">Einstiegsprovision (%)</label><input id="entry-fee" inputmode="decimal" max="99.99" min="0" step="0.01" type="number" value="0.10"/></div>
+<div><label for="exit-fee">Ausstiegsprovision (%)</label><input id="exit-fee" inputmode="decimal" max="99.99" min="0" step="0.01" type="number" value="0.10"/></div>
+<div><label for="entry-slip">Einstiegsslippage (%)</label><input id="entry-slip" inputmode="decimal" max="99.99" min="0" step="0.01" type="number" value="0.05"/></div>
+<div><label for="exit-slip">Ausstiegsslippage (%)</label><input id="exit-slip" inputmode="decimal" max="99.99" min="0" step="0.01" type="number" value="0.05"/></div>
+<div><label for="entry-fixed">Fixe Einstiegsgebühr（元）</label><input id="entry-fixed" inputmode="decimal" min="0" step="0.01" type="number" value="0"/></div>
+<div><label for="exit-fixed">Ausstiegsfixgebühr (元)</label><input id="exit-fixed" inputmode="decimal" min="0" step="0.01" type="number" value="0"/></div>
+</div></fieldset>
+<div class="exp-actions"><button class="calc" id="calculate" type="button">Erwartungswert berechnen</button><button class="ghost-btn" id="clear" type="button">Ergebnisse löschen</button></div>
+<div aria-live="polite" class="status" id="status">Eingabeänderungen werden in Echtzeit berechnet; aktuell werden zur Demonstration 3R, 25% Trefferquote und Kosten verwendet.</div>
+<div class="formula-note"><strong>Kernformel:</strong>Erwartungswert = Trefferquote × durchschnittlicher Nettoertrag + Ausfallrate × durchschnittlicher Nettoverlust. Auf das Nettoergebnis wird zuerst ungünstige Slippage angewendet, anschließend werden beidseitige Transaktionsgebühren (auf Basis der Ausführungsbeträge) und fixe Kosten abgezogen.</div>
+</section>
+<section aria-live="polite" class="result exp-result" id="results">
+<div class="eyebrow">Nettoerwartungswert</div><h2>Ergebnisse nach Kostenanpassung</h2><div class="result-big" id="expectancy-r">—</div><div class="exp-result-sub" id="result-message">Wartet auf gültige Eingabe</div>
+<div class="metric-grid exp-metrics">
+<div class="metric"><span class="sub">Geplantes R:R</span><b id="planned-rr">—</b></div>
+<div class="metric"><span class="sub">Nettoertrag R</span><b id="net-win-r">—</b></div>
+<div class="metric"><span class="sub">Nettoverlust R</span><b id="net-loss-r">—</b></div>
+<div class="metric"><span class="sub">Erwarteter Betrag pro Trade</span><b id="expectancy-money">—</b></div>
+<div class="metric"><span class="sub">Break‑even‑Gewinnrate</span><b id="break-even">—</b></div>
+<div class="metric"><span class="sub">Erwartungen für den Bewertungszeitraum</span><b id="expected-total">—</b></div>
+<div class="metric"><span class="sub">Tatsächlicher Einstiegspreis</span><b id="actual-entry">—</b></div>
+<div class="metric"><span class="sub">Richtung der Kosten</span><b id="cost-direction">—</b></div>
+</div>
+<div class="exp-outcomes"><div class="exp-section-title"><h3>Aufschlüsselung einzelner Ergebnisse</h3><span>Betrag wird nach Positionsanzahl berechnet</span></div><div class="exp-table-wrap"><table class="exp-table"><thead><tr><th>Szenario</th><th>Bruttoergebnis</th><th>Handelskosten</th><th>Nettorgebnis</th><th>Netto R</th></tr></thead><tbody id="outcome-rows"><tr><td colspan="5">Noch nicht berechnet</td></tr></tbody></table></div></div>
+<div aria-label="獲利與虧損 R 倍數比較" class="exp-bars"><div class="exp-section-title"><h3>Visueller Vergleich der Nettoergebnisse</h3><span id="bar-caption">—</span></div><div class="bar-track"><i id="win-bar"></i><i id="loss-bar"></i></div><div class="bar-labels"><span>Gewinnszenarien <b id="win-bar-label">—</b></span><span>Stop‑Szenario <b id="loss-bar-label">—</b></span></div></div>
+<div class="source-box" id="limits"><strong>Forschungszweck und -einschränkungen:</strong>Dieses Tool berechnet nur eine einzelne Gewinnsituation und eine einzelne Stopp‑Loss‑Szenario aus den Eingaben; es modelliert keine partiellen Ausstiege, Gaps, Ausführungswahrscheinlichkeiten, tatsächliche P&amp;L‑Verteilungen, Transaktionssteuern, Leihgebühren, Liquiditätseinflüsse oder künftige Änderungen der Gewinnrate. Das geplante R:R entspricht nicht dem nachträglich realisierten durchschnittlichen Gewinn/Verlust; die Ergebnisse sind keine Handlungsanweisung und keine personalisierte Finanzberatung.</div>
+</section>
+</div>
+<section class="exp-explain"><div><div class="eyebrow">Modell lesen</div><h2>Wie interpretiert man einen negativen Erwartungswert?</h2></div><div class="exp-explain-grid"><div><strong>Zuerst die Netto‑R ansehen.</strong><p>3R ist die preisliche Distanz vor Kosten. Werden Slippage und Round-Trip-Kommissionen berücksichtigt, kann der Nettogewinn eines Gewinntrades unter +3R liegen und der Nettoverlust eines gestoppten Trades größer als −1R ausfallen.</p></div><div><strong>Erneut Schwellenwert für Trefferquote prüfen</strong><p>Break‑even‑Gewinnrate＝Betrag des Nettoverlusts÷（Nettoertrag＋Betrag des Nettoverlusts）。Je höher die Kosten, desto höher üblicherweise die Schwelle。</p></div><div><strong>Letztes In‑Sample</strong><p>Der Erwartungswert ist ein wahrscheinlichkeitssicht gewichteter Mittelwert, nicht die Vorhersage der nächsten Transaktion. Verwenden Sie abgeschlossene Trades mit einheitlicher Definition, um Trefferquote und tatsächliches durchschnittliches Ergebnis einzutragen.</p></div></div></section>
+</main>
+<script src="/academy/academy.js?v=20260827-i18n1"></script>
+<script src="/academy/tools/trade-expectancy.js"></script><section class="finance-quality-note" data-finance-quality=""><h2>So nutzen Sie dieses Finanztool</h2><p>Diese Seite zerlegt ein Finanzkonzept in überprüfbare Eingaben, Formeln und Szenarien. Lesen Sie zuerst die Variablendefinitionen und vergleichen Sie vorsichtige, Basis- und Stressfälle; ein Ergebnis ist keine Renditezusage.</p><p>Empfohlener Ablauf: Einheiten und Zeiträume prüfen, eigene Annahmen eingeben und anschließend Sensitivität, Kosten und Verlustszenarien prüfen.</p><p><strong>Einschränkungen:</strong> Das Modell prognostiziert keine Märkte und enthält möglicherweise nicht jede Steuer, Slippage, Liquiditäts-, Kredit-, Regulierungs- oder Vertragsbedingung. Wichtige Entscheidungen mit aktuellen Primärquellen und qualifizierten Fachleuten prüfen.</p></section>
+<section class="finance-disclaimer" data-finance-disclaimer=""><h2>Finanzrisiko-Hinweis</h2><p>Diese Seite, ihre Rechner und Beispiele dienen ausschließlich der Bildung, Recherche und Szenarioschätzung. Sie sind keine persönliche Anlage-, Handels-, Wett-, Steuer-, Rechts- oder Finanzberatung. Märkte und lokale Regeln können sich ändern; prüfen Sie aktuelle Primärquellen und tragen Sie die Verantwortung für Ihre Entscheidungen. Vergangene Ergebnisse, Modellwerte und Simulationen garantieren keine Zukunftsergebnisse.</p></section>
+</body>
+</html>

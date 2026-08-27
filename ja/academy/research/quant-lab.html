@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>クオンツ特徴とバックテスト作業台｜GugoPro Academy</title>
+<meta content="追跡可能な公開ヒストリカルデータを用いて特徴量エンジニアリング、ボラティリティ・レジーム、next‑bar ベンチマークのバックテストを研究します。リアルタイム取引シグナルは提供しません。" name="description"/>
+<link href="/academy/academy.css" rel="stylesheet"/>
+<link href="/academy/research/research.css" rel="stylesheet"/>
+<link href="/academy/research/quant-lab.css" rel="stylesheet"/>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"クオンツ特徴とバックテスト作業台","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"ソースとスナップショット付きの履歴系列を用いて、再現可能な特徴量研究とベンチマークバックテストを行う。","url":"https://gugopro.com/ja/academy/research/quant-lab.html","isPartOf":{"@type":"WebSite","name":"GugoPro Academy"}}</script>
+<meta content="https://gugopro.com/academy/research/quant-lab.html" property="og:url"/>
+<meta content="index, follow" name="robots"/>
+<link href="https://gugopro.com/ja/academy/research/quant-lab.html" rel="canonical"/>
+<link href="https://gugopro.com/academy/research/quant-lab.html" hreflang="zh-TW" rel="alternate"/>
+<link href="https://gugopro.com/zh-CN/academy/research/quant-lab.html" hreflang="zh-CN" rel="alternate"/>
+<link href="https://gugopro.com/en/academy/research/quant-lab.html" hreflang="en" rel="alternate"/>
+<link href="https://gugopro.com/ja/academy/research/quant-lab.html" hreflang="ja" rel="alternate"/>
+<link href="https://gugopro.com/de/academy/research/quant-lab.html" hreflang="de" rel="alternate"/>
+<link href="https://gugopro.com/fr/academy/research/quant-lab.html" hreflang="fr" rel="alternate"/>
+<link href="https://gugopro.com/es/academy/research/quant-lab.html" hreflang="es" rel="alternate"/>
+<link href="https://gugopro.com/pt/academy/research/quant-lab.html" hreflang="pt" rel="alternate"/>
+<link href="https://gugopro.com/academy/research/quant-lab.html" hreflang="x-default" rel="alternate"/>
+<meta content="true" name="static-locale-route"/>
+<meta content="machine-draft" name="i18n-status"/>
+<link href="/tools/finance/finance-locale.css?v=20260827" rel="stylesheet"/>
+<script src="/i18n/static-locale-runtime.js?v=20260827" defer></script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="research-page quant-lab-page">
+<main class="research-shell">
+<header class="research-header quant-header">
+<div>
+<a class="research-back" href="/academy/research/">← 公開データ研究セクションに戻る</a>
+<div class="eyebrow">Phase 2 · Features &amp; backtest</div>
+<h1>クオンツ特徴とバックテスト作業台</h1>
+<p class="research-lead">まずデータ、時間口径、約定想定を固定し、特徴とベンチマーク戦略を確認してください。これは再現可能な研究実験であり、リアルタイムの相場、モデル信号、個別助言ではありません。</p>
+</div>
+<div class="research-status-card quant-status-card">
+<span class="status-label">リサーチ状況</span>
+<strong aria-live="polite" id="quant-status">実行待ち</strong>
+<small id="quant-status-detail">結果はロードされていません；すべての入力と結果はこのローカルページに残ります。</small>
+</div>
+</header>
+<section aria-labelledby="quant-provenance-title" class="quant-provenance">
+<div class="eyebrow">出所バー</div>
+<h2 id="quant-provenance-title">現在の研究口径</h2>
+<div class="quant-meta-grid">
+<div><span>データセット</span><b id="meta-dataset">fred:SP500</b></div>
+<div><span>スナップショット</span><b id="meta-snapshot">—</b></div>
+<div><span>基準日</span><b id="meta-asof">—</b></div>
+<div><span>調整</span><b id="meta-adjustment">source_defined</b></div>
+<div><span>機能バージョン</span><b id="meta-feature-version">1.0.0</b></div>
+<div><span>バックテストバージョン</span><b id="meta-backtest-version">1.0.0</b></div>
+</div>
+<p class="research-note">データはVCSに保存されたFRED `SP500` 公式CSVフィクスチャから取得しています。カレンダー上の欠損日はこちらで明示的にカウントして除外し、補間・ゼロ埋め・前回価格での埋めは行いません。フィクスチャの読み込みに失敗すると、結果領域はクリアされエラーが表示されます。 CSV</p>
+</section>
+<section aria-labelledby="quant-controls-title" class="quant-controls">
+<div class="section-heading"><div><div class="eyebrow">リサーチ管理</div><h2 id="quant-controls-title">調査パラメータを設定</h2></div><p>固定パラメータは再現性のためのものであり、held‑out の結果を使ってパラメータを再調整してはならない。</p></div>
+<div class="controls-grid">
+<label>データセット<select id="dataset-select"><option value="fred-SP500.csv">FRED SP500（versioned fixture）</option></select></label>
+<label class="file-control">ローカルCSV（任意） CSV<input accept=".csv,text/csv" id="local-csv" type="file"/><small>ローカルでのみ解析され、アップロードは行われません。</small></label>
+<label>短期MA<input id="fast-window" max="120" min="2" type="number" value="20"/></label>
+<label>Slow MA<input id="slow-window" max="240" min="3" type="number" value="60"/></label>
+<label>コスト（bps）<input id="cost-bps" max="5000" min="0" step="0.1" type="number" value="10"/></label>
+<label>トレーニング用プレフィックス（行）<input id="train-size" max="200" min="60" type="number" value="120"/></label>
+<label>テストウィンドウ（rows）<input id="test-size" max="80" min="10" type="number" value="40"/></label>
+<label>情報間隔（行）<input id="censor-gap" max="20" min="0" type="number" value="1"/></label>
+<label>将来ボラティリティウィンドウ<input id="label-horizon" max="60" min="2" type="number" value="20"/></label>
+</div>
+<div class="quant-actions"><button class="quant-primary" id="run-quant" type="button">特徴とバックテストを実行</button><button class="quant-secondary" id="reset-quant" type="button">結果をクリア</button><button class="quant-secondary" disabled="" id="download-quant" type="button">run manifest をダウンロード</button></div>
+<p class="research-error" hidden="" id="quant-error" role="alert"></p>
+</section>
+<section aria-labelledby="quant-results-title" class="quant-results" hidden="" id="quant-results">
+<div class="section-heading"><div><div class="eyebrow">研究成果</div><h2 id="quant-results-title">結果の再現可能性</h2></div><p id="result-summary">—</p></div>
+<div class="result-grid">
+<article class="result-card"><span>完全なソース rows</span><strong id="result-source-rows">—</strong><small id="result-source-gap">—</small></article>
+<article class="result-card"><span>学習可能なラベル</span><strong id="result-labels">—</strong><small>未完成のfuture windowはトレーニングに含まれません。</small></article>
+<article class="result-card"><span>テストウィンドウ数</span><strong id="result-splits">—</strong><small id="result-censor-gap">—</small></article>
+<article class="result-card"><span>平均超過リターン</span><strong id="result-excess">—</strong><small>戦略 vs buy‑and‑hold；収益の保証ではない</small></article>
+</div>
+<div class="quant-two-col">
+<article class="quant-panel"><div class="panel-heading"><div><div class="eyebrow">機能ビュー</div><h3>最新の特徴</h3></div><span id="latest-feature-asof">as-of —</span></div><div class="feature-table-wrap"><table><thead><tr><th>特徴</th><th>值</th><th>式／口径</th></tr></thead><tbody id="feature-table"></tbody></table></div></article>
+<article class="quant-panel"><div class="panel-heading"><div><div class="eyebrow">ベースライン指標</div><h3>基準戦略とベンチマーク</h3></div><span>next-bar</span></div><div class="metric-list" id="metric-list"></div></article>
+</div>
+<article class="quant-panel chart-panel"><div class="panel-heading"><div><div class="eyebrow">エクイティカーブ</div><h3>テスト区間累積曲線</h3></div><span>戦略 vs ベンチマーク</span></div><canvas aria-label="テスト区間の戦略と買持ちの累積エクイティ曲線" height="300" id="equity-chart" role="img" width="960"></canvas><p class="chart-summary" id="chart-summary">リサーチを実行してテキスト要約を表示します。</p></article>
+<article class="quant-panel split-panel"><div class="panel-heading"><div><div class="eyebrow">Walk‑forward レポート</div><h3>テスト窓を保持</h3></div><span>expanding train · held-out test</span></div><div class="feature-table-wrap"><table><thead><tr><th>株式分割</th><th>学習／テスト</th><th>戦略</th><th>Benchmark</th><th>超過分</th><th>MDD</th><th>Entry</th></tr></thead><tbody id="split-table"></tbody></table></div></article>
+<article class="quant-panel limitations-panel"><div class="eyebrow">制限事項とコンプライアンス</div><h3>結果を読む前に制約を確認してください</h3><p>ここはlong‑onlyの0/1移動平均による決定論的ベンチマークです。シグナルはクローズtで計算され、次のバーで実行されます。コストは turnover × bps/10,000 で計算します。スリッページ、税金、市場インパクト、レバレッジ、空売り、取引停止、上場廃止、企業行動の完全モデルはありません。入力価格がadjusted／unadjustedかどうかが結果に直接影響します。</p><p>「将来のボラティリティ」というラベルは歴史的レジーム研究にのみ使用され、売買や目標価格、リターン、リスクの保証と解釈してはいけません。平均超過リターンは本フィクスチャと固定パラメータの記述であり、将来のパフォーマンス予測ではありません。</p></article>
+</section>
+<section aria-labelledby="next-title" class="research-section next-links">
+<div class="section-heading"><div><div class="eyebrow">学習を続ける</div><h2 id="next-title">研究結果から教育へ還元する。</h2></div></div>
+<div class="link-grid"><a href="/articles/investment/15-quant-research-workflow.html"><strong>量的研究ワークフロー</strong><span>データの分割、5MA／20MAの差引、ボラティリティZスコア、アウトオブサンプルのチェックリストを理解する。 Z-Score</span></a><a href="/articles/investment/16-futures-pairs-basis.html"><strong>臺指期／富台期のペアリング</strong><span>契約口径、Basis、期限構造、ロールリスクを分けて研究する。</span></a><a href="/academy/research/"><strong>公開データの研究レイヤー</strong><span>出所を確認：registry、dataset catalog、snapshot、quality status。</span></a></div>
+</section>
+<footer class="research-footer">すべての結果は研究および教育目的のみに提供されます。データの出典、日付、調整方法および仮定は使用前に再確認してください。これは研究および分析のみであり、個別の金融助言ではありません。</footer>
+</main>
+<script src="/academy/research/quant-lab.js"></script><section class="finance-disclaimer" data-finance-disclaimer=""><h2>投資リスクに関する免責事項</h2><p>本ページの内容、計算ツール、例示は教育・研究・シナリオ試算のみを目的とし、個別の投資、取引、賭け、税務、法律その他の金融助言ではありません。市場や制度は変化するため、最新の一次情報を確認し、判断はご自身の責任で行ってください。過去の実績、モデル出力、シミュレーションは将来を保証しません。</p></section>
+</body>
+</html>

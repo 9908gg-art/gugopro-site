@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Caractéristiques quant et poste de travail de backtesting｜GugoPro Academy</title>
+<meta content="Étudiez le feature engineering, les régimes de volatilité et les backtests benchmark next‑bar à partir de données historiques publiques traçables ; ne fournit pas de signaux de trading en temps réel." name="description"/>
+<link href="/academy/academy.css" rel="stylesheet"/>
+<link href="/academy/research/research.css" rel="stylesheet"/>
+<link href="/academy/research/quant-lab.css" rel="stylesheet"/>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Caractéristiques quant et poste de travail de backtesting","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"Utilisez des séries historiques avec source et snapshot pour un feature research reproductible et des backtests benchmark.","url":"https://gugopro.com/fr/academy/research/quant-lab.html","isPartOf":{"@type":"WebSite","name":"GugoPro Academy"}}</script>
+<meta content="https://gugopro.com/academy/research/quant-lab.html" property="og:url"/>
+<meta content="index, follow" name="robots"/>
+<link href="https://gugopro.com/fr/academy/research/quant-lab.html" rel="canonical"/>
+<link href="https://gugopro.com/academy/research/quant-lab.html" hreflang="zh-TW" rel="alternate"/>
+<link href="https://gugopro.com/zh-CN/academy/research/quant-lab.html" hreflang="zh-CN" rel="alternate"/>
+<link href="https://gugopro.com/en/academy/research/quant-lab.html" hreflang="en" rel="alternate"/>
+<link href="https://gugopro.com/ja/academy/research/quant-lab.html" hreflang="ja" rel="alternate"/>
+<link href="https://gugopro.com/de/academy/research/quant-lab.html" hreflang="de" rel="alternate"/>
+<link href="https://gugopro.com/fr/academy/research/quant-lab.html" hreflang="fr" rel="alternate"/>
+<link href="https://gugopro.com/es/academy/research/quant-lab.html" hreflang="es" rel="alternate"/>
+<link href="https://gugopro.com/pt/academy/research/quant-lab.html" hreflang="pt" rel="alternate"/>
+<link href="https://gugopro.com/academy/research/quant-lab.html" hreflang="x-default" rel="alternate"/>
+<meta content="true" name="static-locale-route"/>
+<meta content="machine-draft" name="i18n-status"/>
+<link href="/tools/finance/finance-locale.css?v=20260827" rel="stylesheet"/>
+<script src="/i18n/static-locale-runtime.js?v=20260827" defer></script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="research-page quant-lab-page">
+<main class="research-shell">
+<header class="research-header quant-header">
+<div>
+<a class="research-back" href="/academy/research/">← Retour à la recherche sur données publiques</a>
+<div class="eyebrow">Phase 2 · Features &amp; backtest</div>
+<h1>Caractéristiques quant et poste de travail de backtesting</h1>
+<p class="research-lead">Fixez d'abord les données, la périodicité et les hypothèses d'exécution, puis examinez les caractéristiques et stratégies de référence. Il s'agit d'une expérience de recherche reproductible, pas de données de marché en temps réel, de signaux de modèle ou de conseils personnalisés.</p>
+</div>
+<div class="research-status-card quant-status-card">
+<span class="status-label">Statut de la recherche</span>
+<strong aria-live="polite" id="quant-status">En attente d'exécution</strong>
+<small id="quant-status-detail">Aucun résultat chargé ; toutes les entrées et résultats restent sur cette page locale.</small>
+</div>
+</header>
+<section aria-labelledby="quant-provenance-title" class="quant-provenance">
+<div class="eyebrow">Barre de provenance</div>
+<h2 id="quant-provenance-title">Périmètre de recherche actuel</h2>
+<div class="quant-meta-grid">
+<div><span>Jeu de données</span><b id="meta-dataset">fred:SP500</b></div>
+<div><span>Instantané</span><b id="meta-snapshot">—</b></div>
+<div><span>À la date de</span><b id="meta-asof">—</b></div>
+<div><span>Ajustement</span><b id="meta-adjustment">source_defined</b></div>
+<div><span>Version de la fonctionnalité</span><b id="meta-feature-version">1.0.0</b></div>
+<div><span>Version du backtest</span><b id="meta-backtest-version">1.0.0</b></div>
+</div>
+<p class="research-note">Les données proviennent du fixture CSV officiel FRED `SP500` stocké dans le VCS. Les dates manquantes du calendrier sont explicitement comptées et exclues, non remplies par interpolation, zéros ou le prix précédent. Si le fixture ne se charge pas, la zone de résultats sera vidée et une erreur affichée.</p>
+</section>
+<section aria-labelledby="quant-controls-title" class="quant-controls">
+<div class="section-heading"><div><div class="eyebrow">Contrôles de recherche</div><h2 id="quant-controls-title">Définir les paramètres de recherche</h2></div><p>Les paramètres fixes servent uniquement à la reproductibilité ; n'utilisez pas de résultats held‑out pour retuner les paramètres.</p></div>
+<div class="controls-grid">
+<label>Jeu de données<select id="dataset-select"><option value="fred-SP500.csv">FRED SP500 (versioned fixture)</option></select></label>
+<label class="file-control">CSV local (optionnel)<input accept=".csv,text/csv" id="local-csv" type="file"/><small>Analysé uniquement en local, rien n’est uploadé.</small></label>
+<label>MA rapide<input id="fast-window" max="120" min="2" type="number" value="20"/></label>
+<label>Slow MA<input id="slow-window" max="240" min="3" type="number" value="60"/></label>
+<label>Coût (bps)<input id="cost-bps" max="5000" min="0" step="0.1" type="number" value="10"/></label>
+<label>Préfixe d'entraînement (lignes)<input id="train-size" max="200" min="60" type="number" value="120"/></label>
+<label>fenêtre de test（rows）<input id="test-size" max="80" min="10" type="number" value="40"/></label>
+<label>Intervalle d'information (lignes)<input id="censor-gap" max="20" min="0" type="number" value="1"/></label>
+<label>Fenêtre de volatilité future<input id="label-horizon" max="60" min="2" type="number" value="20"/></label>
+</div>
+<div class="quant-actions"><button class="quant-primary" id="run-quant" type="button">Exécuter les features et le backtest</button><button class="quant-secondary" id="reset-quant" type="button">effacer les résultats</button><button class="quant-secondary" disabled="" id="download-quant" type="button">Télécharger run manifest</button></div>
+<p class="research-error" hidden="" id="quant-error" role="alert"></p>
+</section>
+<section aria-labelledby="quant-results-title" class="quant-results" hidden="" id="quant-results">
+<div class="section-heading"><div><div class="eyebrow">Résultat de la recherche</div><h2 id="quant-results-title">Résultats reproductibles</h2></div><p id="result-summary">—</p></div>
+<div class="result-grid">
+<article class="result-card"><span>Sources complètes rows</span><strong id="result-source-rows">—</strong><small id="result-source-gap">—</small></article>
+<article class="result-card"><span>Labels entraînables</span><strong id="result-labels">—</strong><small>Les fenêtres futures incomplètes ne sont pas incluses dans l'entraînement.</small></article>
+<article class="result-card"><span>nombre de fenêtres de test</span><strong id="result-splits">—</strong><small id="result-censor-gap">—</small></article>
+<article class="result-card"><span>Surperformance moyenne</span><strong id="result-excess">—</strong><small>Stratégie vs buy‑and‑hold ; pas d'engagement de rendement</small></article>
+</div>
+<div class="quant-two-col">
+<article class="quant-panel"><div class="panel-heading"><div><div class="eyebrow">Vue de la fonctionnalité</div><h3>Dernières caractéristiques</h3></div><span id="latest-feature-asof">as-of —</span></div><div class="feature-table-wrap"><table><thead><tr><th>Caractéristiques</th><th>值</th><th>Formule / périmètre de calcul</th></tr></thead><tbody id="feature-table"></tbody></table></div></article>
+<article class="quant-panel"><div class="panel-heading"><div><div class="eyebrow">Métriques de référence</div><h3>Stratégie de référence et benchmark</h3></div><span>next-bar</span></div><div class="metric-list" id="metric-list"></div></article>
+</div>
+<article class="quant-panel chart-panel"><div class="panel-heading"><div><div class="eyebrow">Courbe de performance (equity curve)</div><h3>courbe cumulée de la période de test</h3></div><span>Stratégie vs benchmark</span></div><canvas aria-label="courbe d’équité cumulée de la stratégie testée vs buy‑and‑hold sur la période de test" height="300" id="equity-chart" role="img" width="960"></canvas><p class="chart-summary" id="chart-summary">Exécute l’étude et affiche un résumé textuel.</p></article>
+<article class="quant-panel split-panel"><div class="panel-heading"><div><div class="eyebrow">Rapport walk‑forward</div><h3>Conserver la fenêtre de test</h3></div><span>expanding train · held-out test</span></div><div class="feature-table-wrap"><table><thead><tr><th>Fractionnement d'actions</th><th>Entraînement／Test</th><th>Stratégie</th><th>Benchmark</th><th>Excédent</th><th>MDD</th><th>Entrée</th></tr></thead><tbody id="split-table"></tbody></table></div></article>
+<article class="quant-panel limitations-panel"><div class="eyebrow">Limitations &amp; conformité</div><h3>Consultez les limitations avant de lire les résultats</h3><p>Ceci est un benchmark déterministe long‑only 0/1 basé sur une moyenne mobile. Le signal est calculé au close t et exécuté sur la barre suivante ; les coûts sont calculés comme turnover × bps/10.000. Pas de slippage, pas d'impôts, pas d'impact marché, pas d'effet de levier, pas de ventes à découvert, pas de suspensions, pas de radiation ni de modèle complet d'actions d'entreprise ; les prix d'entrée adjusted vs unadjusted impactent directement les résultats.</p><p>Le libellé « volatilité future » n'est utilisé que pour des études de régimes historiques et ne doit pas être interprété comme un signal d'achat/vente, un objectif de cours, une garantie de rendement ou de risque. La surperformance moyenne décrit le fixture et les paramètres fixes applicables, ce n'est pas une prévision de performance future.</p></article>
+</section>
+<section aria-labelledby="next-title" class="research-section next-links">
+<div class="section-heading"><div><div class="eyebrow">Poursuivre l’apprentissage</div><h2 id="next-title">Des résultats de la recherche vers l'enseignement</h2></div></div>
+<div class="link-grid"><a href="/articles/investment/15-quant-research-workflow.html"><strong>Flux de travail de recherche quantitative</strong><span>Comprendre la répartition des données, les ajustements 5MA/20MA, le Z‑Score de volatilité et la check‑list out‑of‑sample. Z-Score</span></a><a href="/articles/investment/16-futures-pairs-basis.html"><strong>Appariement 臺指期／富台期</strong><span>Étudiez séparément l’échelle du contrat, la base, la structure par échéance et le risque de roll.</span></a><a href="/academy/research/"><strong>Couche de recherche sur données publiques</strong><span>Vérifier la provenance : registry, dataset catalog, snapshot et quality status.</span></a></div>
+</section>
+<footer class="research-footer">Tous les résultats sont uniquement destinés à la recherche et à l'éducation ; les sources de données, les dates, les méthodes d'ajustement et les hypothèses doivent être revérifiées avant utilisation. Il s'agit uniquement de recherche et d'analyse, et non d'un conseil financier personnalisé.</footer>
+</main>
+<script src="/academy/research/quant-lab.js"></script><section class="finance-disclaimer" data-finance-disclaimer=""><h2>Avertissement sur les risques financiers</h2><p>Cette page, ses calculateurs et ses exemples sont fournis uniquement à des fins éducatives, de recherche et d’estimation de scénarios. Ils ne constituent pas un conseil personnalisé en investissement, trading, paris, fiscalité, droit ou finance. Les marchés et règles locales évoluent ; vérifiez les sources primaires à jour et assumez vos décisions. Les performances passées, sorties de modèle et simulations ne garantissent pas les résultats futurs.</p></section>
+</body>
+</html>

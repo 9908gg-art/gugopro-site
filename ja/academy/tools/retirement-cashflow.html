@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>退職キャッシュフローストレステスト｜GugoPro Academy</title>
+<meta content="透明な年次モデルで退職資産、引き出しルール、インフレ、準備金、シーケンスリスクのストレスシナリオを点検します。フロントエンドのみの計算で、成功率や個別の助言は提供しません。" name="description"/>
+<link href="/academy/academy.css" rel="stylesheet"/>
+<link href="/academy/tools/retirement-cashflow.css" rel="stylesheet"/>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"退職キャッシュフローストレステスト","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"ユーザー入力の年次決定論シナリオを用いて退職引出、インフレ、シーケンスリスクのストレスを検査する。成功率や個別の投資助言は提供しない。","url":"https://gugopro.com/ja/academy/tools/retirement-cashflow.html","isPartOf":{"@type":"WebSite","name":"GugoPro Academy"}}</script>
+<meta content="https://gugopro.com/academy/tools/retirement-cashflow.html" property="og:url"/>
+<meta content="index, follow" name="robots"/>
+<link href="https://gugopro.com/ja/academy/tools/retirement-cashflow.html" rel="canonical"/>
+<link href="https://gugopro.com/academy/tools/retirement-cashflow.html" hreflang="zh-TW" rel="alternate"/>
+<link href="https://gugopro.com/zh-CN/academy/tools/retirement-cashflow.html" hreflang="zh-CN" rel="alternate"/>
+<link href="https://gugopro.com/en/academy/tools/retirement-cashflow.html" hreflang="en" rel="alternate"/>
+<link href="https://gugopro.com/ja/academy/tools/retirement-cashflow.html" hreflang="ja" rel="alternate"/>
+<link href="https://gugopro.com/de/academy/tools/retirement-cashflow.html" hreflang="de" rel="alternate"/>
+<link href="https://gugopro.com/fr/academy/tools/retirement-cashflow.html" hreflang="fr" rel="alternate"/>
+<link href="https://gugopro.com/es/academy/tools/retirement-cashflow.html" hreflang="es" rel="alternate"/>
+<link href="https://gugopro.com/pt/academy/tools/retirement-cashflow.html" hreflang="pt" rel="alternate"/>
+<link href="https://gugopro.com/academy/tools/retirement-cashflow.html" hreflang="x-default" rel="alternate"/>
+<meta content="true" name="static-locale-route"/>
+<meta content="machine-draft" name="i18n-status"/>
+<link href="/tools/finance/finance-locale.css?v=20260827" rel="stylesheet"/>
+<script src="/i18n/static-locale-runtime.js?v=20260827" defer></script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="quant-page retirement-page">
+<header class="nav"><div class="shell navin"><a class="brand" href="/academy/">GugoPro <span>Academy</span></a><button class="theme" data-theme="" type="button">ダーク切替</button></div></header>
+<main class="tool-page retirement-tool-shell">
+<div class="tool-crumb"><a href="/academy/lessons/15-retirement-cashflow.html">← 退職後のキャッシュフロー解説を読む</a><span>インタラクティブラボ · フロントエンドのみ · リアルタイム相場は取得しません</span></div>
+<div class="tool-layout">
+<section aria-labelledby="tool-title" class="panel retirement-input-panel">
+<div class="eyebrow">退職所得 · ストレステスト</div>
+<h1 id="tool-title">退職キャッシュフローストレステスト</h1>
+<p>退職資産、支出、インフレ、リターンの仮定を同じ年次表にまとめ、明確に指定したシーケンスのストレスを比較する。結果は単一経路の教育用デモであり、成功確率、リターン予測、引き出しの推奨ではない。</p>
+<div aria-label="工具說明錨點" class="article-jump"><a href="/academy/lessons/15-retirement-cashflow.html">まずキャッシュフローを確認する。</a><a href="/academy/lessons/15-retirement-cashflow.html">シーケンスリスクを理解する</a><a href="/academy/lessons/15-retirement-cashflow.html">引き出し規則の比較</a></div>
+<div class="input-grid">
+<label for="asset">退職時の資産（額）<input id="asset" inputmode="decimal" min="0.01" step="1" type="number" value="10000000"/></label>
+<label for="withdrawal">固定／フレキシブル 初年度基準引出額（NT$）<input id="withdrawal" inputmode="decimal" min="0" step="1" type="number" value="400000"/></label>
+<label for="nominal-return">年率名目リターン（%）<input id="nominal-return" inputmode="decimal" max="100" min="-100" step="0.1" type="number" value="5"/></label>
+<label for="inflation">年次インフレ率（%）<input id="inflation" inputmode="decimal" max="50" min="-20" step="0.1" type="number" value="2"/></label>
+<label for="years">シミュレーション年数<input id="years" inputmode="numeric" max="80" min="1" step="1" type="number" value="40"/></label>
+<label for="reserve">流動準備金（元）<input id="reserve" inputmode="decimal" min="0" step="1" type="number" value="1200000"/></label>
+<label for="withdrawal-mode">取り崩しルール<select id="withdrawal-mode"><option value="fixed">固定額＋インフレ調整</option><option value="percentage">資産比率による引き出し</option><option value="flexible">弾性支出：下落時に削減</option></select></label>
+<label for="percentage-rate" hidden="" id="percentage-control">資産比率の引出率（%）<input id="percentage-rate" inputmode="decimal" max="100" min="0" step="0.1" type="number" value="4"/></label>
+<label for="flexible-cut" hidden="" id="flexible-controls">下落時の減少率（％）<input id="flexible-cut" inputmode="decimal" max="100" min="0" step="1" type="number" value="20"/><span class="field-sub">発動閾値：前年度リターンが以下の場合 <input class="inline-number" id="trigger" inputmode="decimal" max="100" min="-100" step="0.1" type="number" value="0"/>%</span></label>
+<label for="sequence">リターンのシーケンス（順序）に関するストレスシナリオ<select id="sequence"><option value="none">基準：追加ストレスなし</option><option value="early">退職初期の第1–2年に各々15%下落</option><option value="late">第10〜11年にそれぞれ15%下落</option></select></label>
+</div>
+<p class="mode-help" id="mode-help">—</p>
+<div class="quant-actions"><button class="quant-primary" id="run" type="button">ストレステストを実行</button><button class="quant-secondary" id="reset" type="button">デフォルトに復元</button><button class="quant-secondary" disabled="" id="download" type="button">ローカル結果をダウンロード</button></div>
+<div aria-live="polite" class="status" id="status">モデルはまだ実行されていません。入力と結果はこのブラウザのページ内にのみ残ります。</div>
+<div class="status-detail" id="status-detail">モデルは実行時に年間キャッシュフローを作成し、3つのシーケンスを比較します。</div>
+<p class="tool-error" hidden="" id="error" role="alert"></p>
+<div class="formula-note"><strong>モデルの口径：</strong><code>期末資産＝max(0, 年初資産 × (1＋当年リターン) − 当年引出額)</code>固定ルールは引き出しをインフレに合わせて調整します；割合ルールは年初の資産に基づいて引き出しを計算します；柔軟ルールは前年度のリターンが閾値を下回るときのみ引き出しを減らします。モデルは年次リターンを先に適用し、その後に年次引き出しを適用します。</div>
+</section>
+<section aria-labelledby="result-title" class="result retirement-result" hidden="" id="results">
+<div class="eyebrow">シナリオ出力</div>
+<h2 id="result-title">資産の継続性とストレス観察</h2>
+<p class="result-intro" id="summary">—</p>
+<div class="metric-grid retirement-metrics">
+<div class="metric"><span class="sub">初期引出率</span><b id="rate">—</b><small>初年度引出し ÷ 退職時資産</small></div>
+<div class="metric"><span class="sub">実質利回り</span><b id="real-return">—</b><small>(1＋名目リターン) ÷ (1＋インフレ) − 1</small></div>
+<div class="metric"><span class="sub">シミュレーション終了時資産</span><b id="end">—</b><small>名目金額；単一路径</small></div>
+<div class="metric"><span class="sub">流動性ランウェイ</span><b id="reserve-months">—</b><small>準備金 ÷ 初月引出し</small></div>
+<div class="metric"><span class="sub">資産が尽きる年</span><b id="deplete">—</b><small>年末残高が初めて0を下回る場合</small></div>
+</div>
+<div class="selected-rule"><strong>現在の口径：</strong><span id="selected-rule">—</span></div>
+<div class="visual retirement-visual"><div class="panel-heading"><div><div class="eyebrow">残高パス</div><h3>年間資産残高</h3></div><span>オレンジ線：現在選択中のシナリオ</span></div><canvas aria-label="年次退職資産残高カーブ" height="260" id="cashflow-chart" role="img" width="960"></canvas></div>
+<div class="visual table-visual"><div class="panel-heading"><div><div class="eyebrow">キャッシュフロー台帳</div><h3>年間キャッシュフロー明細</h3></div><span id="table-basis">—</span></div><div class="table-wrap"><table><thead><tr><th>年度</th><th>年初資産</th><th>年次リターン</th><th>引き出し</th><th>年末資産</th></tr></thead><tbody id="rows"></tbody></table></div></div>
+<div class="visual scenario-visual"><div class="panel-heading"><div><div class="eyebrow">シーケンス比較</div><h3>三つの明確なストレス経路</h3></div><span>その他の入力は固定</span></div><p class="chart-summary" id="scenario-note">—</p><div class="table-wrap"><table><thead><tr><th>シナリオ</th><th>期末資産</th><th>シミュレーション期間内で枯渇する</th><th>用途</th></tr></thead><tbody id="scenario-rows"></tbody></table></div></div>
+<div class="source-box"><strong>解釈の制約：</strong>これはモンテカルロでも成功確率の推計でもありません。税金、手数料、保険、医療費、政府／年金給付、口座の出金制限、為替、資産配分、実際のリターン分布や寿命不確実性は含まれていません。示例的な報酬パスは市場動向を表すものではありません。<br/><span id="source-links">参考読書：<a href="https://www.finra.org/investors/learn-to-invest/types-investments/retirement/managing-retirement-income/managing-your-retirement-portfolio" rel="noopener" target="_blank">FINRA Retirement Portfolio</a> · <a href="https://www.investor.gov/financial-tools-calculators/calculators/compound-interest-calculator" rel="noopener" target="_blank">Investor.gov 複利計算機</a> · <a href="https://www.schwab.com/learn/story/timing-matters-understanding-sequence-returns-risk" rel="noopener" target="_blank">Charles Schwab のシーケンス・オブ・リターンのリスクに関する説明</a></span></div>
+</section>
+</div>
+</main>
+<script src="/academy/academy.js?v=20260827-i18n1"></script>
+<script src="/academy/tools/retirement-cashflow.js"></script><section class="finance-quality-note" data-finance-quality=""><h2>財務ツールの使い方</h2><p>このページでは、財務の概念を検証可能な入力、計算式、シナリオに分けています。変数の定義を確認し、保守・基本・ストレスケースを比較してください。単一の結果は収益を保証しません。</p><p>手順：単位と期間を確認し、自分の前提を入力してから、感応度、コスト、下振れケースを確認します。</p><p><strong>制限：市場を予測するものではなく、税金、スリッページ、流動性、信用、規制、契約条件をすべて含むとは限りません。重要な判断は最新の一次情報と有資格者に確認してください。:</strong>制限：市場を予測するものではなく、税金、スリッページ、流動性、信用、規制、契約条件をすべて含むとは限りません。重要な判断は最新の一次情報と有資格者に確認してください。</p></section>
+<section class="finance-disclaimer" data-finance-disclaimer=""><h2>投資リスクに関する免責事項</h2><p>本ページの内容、計算ツール、例示は教育・研究・シナリオ試算のみを目的とし、個別の投資、取引、賭け、税務、法律その他の金融助言ではありません。市場や制度は変化するため、最新の一次情報を確認し、判断はご自身の責任で行ってください。過去の実績、モデル出力、シミュレーションは将来を保証しません。</p></section>
+</body>
+</html>

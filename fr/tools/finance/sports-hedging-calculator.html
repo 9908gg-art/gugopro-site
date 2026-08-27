@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Convertisseur de cotes de paris sportifs et calculateur d'arbitrage/hedging | Sports Betting Odds &amp; Hedging Calculator - GugoPro</title>
+<meta content="Prend en charge la conversion en temps réel des cotes américaines, européennes et britanniques, le calcul de couverture en direct pour sécuriser le capital, le verrouillage d'un bénéfice net équivalent et la détection d'arbitrage sans risque. Outil purement front-end, responsive sur mobile." name="description"/>
+<meta content="運動彩券, 賠率換算, 套利計算器, 對沖計算, 美式賠率, 歐洲賠率, 英式賠率, 場中投注, hedging, arbitrage, sports betting calculator" name="keywords"/>
+<meta content="GugoPro" name="author"/>
+<meta content="index, follow" name="robots"/>
+<meta content="Convertisseur de cotes et calculateur d'arbitrage/hedging pour paris sportifs | GugoPro" property="og:title"/>
+<meta content="Prend en charge la conversion instantanée entre plusieurs formats de cotes, le calcul de couverture en direct pour sécuriser le capital et la détection d'arbitrage sans risque." property="og:description"/>
+<meta content="website" property="og:type"/>
+<meta content="https://gugopro.com/tools/finance/sports-hedging-calculator.html" property="og:url"/>
+<meta content="zh_TW" property="og:locale"/>
+<!-- Google Analytics 4 (GA4) -->
+<script async="" src="https://www.googletagmanager.com/gtag/js?id=G-GF1DYLWMKX"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-GF1DYLWMKX');
+  </script>
+<!-- FontAwesome 6 -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;family=Noto+Sans+TC:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<style>
+    :root {
+      --bg-primary: #0a0e1a;
+      --bg-secondary: #111827;
+      --bg-card: rgba(17, 24, 39, 0.75);
+      --bg-glass: rgba(30, 41, 59, 0.5);
+      --border-glass: rgba(148, 163, 184, 0.15);
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent-cyan: #06b6d4;
+      --accent-purple: #8b5cf6;
+      --accent-green: #10b981;
+      --accent-red: #ef4444;
+      --accent-amber: #f59e0b;
+      --accent-blue: #3b82f6;
+      --glow-cyan: 0 0 20px rgba(6, 182, 212, 0.3);
+      --glow-purple: 0 0 20px rgba(139, 92, 246, 0.3);
+      --glow-green: 0 0 20px rgba(16, 185, 129, 0.3);
+      --glow-amber: 0 0 20px rgba(245, 158, 11, 0.3);
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Outfit', 'Noto Sans TC', 'Inter', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* Animated background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background:
+        radial-gradient(ellipse 800px 600px at 20% 10%, rgba(6, 182, 212, 0.08) 0%, transparent 70%),
+        radial-gradient(ellipse 600px 500px at 80% 80%, rgba(139, 92, 246, 0.06) 0%, transparent 70%),
+        radial-gradient(ellipse 500px 400px at 50% 50%, rgba(16, 185, 129, 0.04) 0%, transparent 70%);
+      z-index: -1;
+      animation: bgPulse 8s ease-in-out infinite alternate;
+    }
+
+    @keyframes bgPulse {
+      0% { opacity: 0.6; }
+      100% { opacity: 1; }
+    }
+
+    /* Top Navigation */
+    .top-nav {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: rgba(10, 14, 26, 0.9);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-glass);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .btn-back-home {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--accent-cyan);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      background: rgba(6, 182, 212, 0.08);
+      transition: all 0.3s ease;
+    }
+
+    .btn-back-home:hover {
+      background: rgba(6, 182, 212, 0.15);
+      box-shadow: var(--glow-cyan);
+      transform: translateY(-1px);
+    }
+
+    .nav-brand {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .nav-brand span { color: var(--accent-cyan); }
+
+    /* Main Container */
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    /* Hero Header */
+    .hero {
+      text-align: center;
+      margin-bottom: 50px;
+    }
+
+    .hero h1 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero p {
+      color: var(--text-secondary);
+      font-size: 1.05rem;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    /* Card Styles */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius);
+      backdrop-filter: blur(16px);
+      padding: 32px;
+      margin-bottom: 30px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      transition: border-color 0.3s ease;
+    }
+
+    .card:hover {
+      border-color: rgba(6, 182, 212, 0.3);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .card-header .icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .icon-cyan { background: rgba(6, 182, 212, 0.15); color: var(--accent-cyan); }
+    .icon-green { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); }
+    .icon-purple { background: rgba(139, 92, 246, 0.15); color: var(--accent-purple); }
+    .icon-amber { background: rgba(245, 158, 11, 0.15); color: var(--accent-amber); }
+
+    .card-header h2 {
+      font-size: 1.3rem;
+      font-weight: 600;
+    }
+
+    /* Form Styles */
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .form-group label .tag {
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(6, 182, 212, 0.15);
+      color: var(--accent-cyan);
+      font-weight: 600;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-glass);
+      background: rgba(15, 23, 42, 0.8);
+      color: var(--text-primary);
+      font-size: 1rem;
+      font-family: 'Inter', monospace;
+      transition: all 0.3s ease;
+      outline: none;
+    }
+
+    .form-input:focus {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+    }
+
+    .form-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    /* Currency input */
+    .currency-input {
+      position: relative;
+    }
+
+    .currency-input .prefix {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .currency-input .form-input {
+      padding-left: 32px;
+    }
+
+    /* Result Panel */
+    .result-panel {
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-sm);
+      padding: 20px;
+      margin-top: 20px;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+    }
+
+    .result-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 12px;
+      border-radius: 8px;
+      background: rgba(30, 41, 59, 0.4);
+      border: 1px solid rgba(148, 163, 184, 0.08);
+    }
+
+    .result-item .label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .result-item .value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      font-family: 'Inter', monospace;
+    }
+
+    .value-cyan { color: var(--accent-cyan); }
+    .value-green { color: var(--accent-green); }
+    .value-amber { color: var(--accent-amber); }
+    .value-purple { color: var(--accent-purple); }
+    .value-red { color: var(--accent-red); }
+
+    /* Arbitrage Alert */
+    .arbitrage-alert {
+      display: none;
+      margin-top: 20px;
+      padding: 20px;
+      border-radius: var(--radius-sm);
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      animation: glowPulse 2s ease-in-out infinite alternate;
+    }
+
+    .arbitrage-alert.show { display: block; }
+
+    @keyframes glowPulse {
+      0% { box-shadow: 0 0 10px rgba(16, 185, 129, 0.2); }
+      100% { box-shadow: 0 0 25px rgba(16, 185, 129, 0.4); }
+    }
+
+    .arbitrage-alert h3 {
+      color: var(--accent-green);
+      font-size: 1.1rem;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Strategy Cards */
+    .strategy-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .strategy-card {
+      padding: 18px;
+      border-radius: var(--radius-sm);
+      background: rgba(30, 41, 59, 0.4);
+      border: 1px solid rgba(148, 163, 184, 0.1);
+    }
+
+    .strategy-card h4 {
+      font-size: 0.95rem;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .strategy-card .strategy-value {
+      font-size: 1.4rem;
+      font-weight: 700;
+      font-family: 'Inter', monospace;
+      margin-bottom: 6px;
+    }
+
+    .strategy-card .strategy-desc {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Amazon Affiliate Card */
+    .affiliate-card {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(17, 24, 39, 0.9));
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 30px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .affiliate-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 16px;
+      background: rgba(245, 158, 11, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      color: var(--accent-amber);
+      flex-shrink: 0;
+    }
+
+    .affiliate-content { flex: 1; min-width: 250px; }
+
+    .affiliate-content h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .affiliate-content p {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 14px;
+    }
+
+    .affiliate-links {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .affiliate-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.88rem;
+      transition: all 0.3s ease;
+    }
+
+    .affiliate-btn.us {
+      background: rgba(6, 182, 212, 0.15);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+    }
+
+    .affiliate-btn.jp {
+      background: rgba(239, 68, 68, 0.12);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .affiliate-btn:hover { transform: translateY(-2px); }
+    .affiliate-btn.us:hover { box-shadow: var(--glow-cyan); }
+    .affiliate-btn.jp:hover { box-shadow: 0 0 20px rgba(239, 68, 68, 0.3); }
+
+    /* SEO Section */
+    .seo-section {
+      margin-top: 50px;
+    }
+
+    .seo-section h2 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: var(--text-primary);
+    }
+
+    .seo-section h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-top: 24px;
+      margin-bottom: 10px;
+      color: var(--accent-cyan);
+    }
+
+    .seo-section p {
+      color: var(--text-secondary);
+      line-height: 1.8;
+      margin-bottom: 12px;
+      font-size: 0.95rem;
+    }
+
+    .seo-section ul {
+      color: var(--text-secondary);
+      padding-left: 24px;
+      margin-bottom: 12px;
+    }
+
+    .seo-section li {
+      margin-bottom: 6px;
+      font-size: 0.92rem;
+    }
+
+    /* Disclaimer */
+    .disclaimer {
+      margin-top: 40px;
+      padding: 20px;
+      border-radius: var(--radius-sm);
+      background: rgba(239, 68, 68, 0.06);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+
+    .disclaimer strong { color: var(--accent-red); }
+
+    /* Ko-fi Button */
+    .kofi-section {
+      text-align: center;
+      margin-top: 40px;
+      padding: 30px;
+    }
+
+    .kofi-button {
+      background: #72a4f2;
+      color: #fff;
+      padding: 12px 22px;
+      border-radius: 8px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: bold;
+      font-size: 0.95rem;
+      transition: all 0.3s ease;
+    }
+
+    .kofi-button:hover {
+      background: #5a8de0;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(114, 164, 242, 0.4);
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 30px 20px;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      border-top: 1px solid var(--border-glass);
+      margin-top: 40px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 1.6rem; }
+      .card { padding: 22px; }
+      .form-row { grid-template-columns: 1fr; }
+      .result-grid { grid-template-columns: 1fr 1fr; }
+      .strategy-cards { grid-template-columns: 1fr; }
+      .affiliate-card { flex-direction: column; text-align: center; }
+      .affiliate-links { justify-content: center; }
+      .top-nav { padding: 10px 16px; }
+    }
+
+    @media (max-width: 480px) {
+      .hero h1 { font-size: 1.35rem; }
+      .result-grid { grid-template-columns: 1fr; }
+      .result-item .value { font-size: 1.05rem; }
+    }
+
+    /* Utility */
+    .mt-4 { margin-top: 16px; }
+    .text-center { text-align: center; }
+  </style>
+<link rel="canonical" href="https://gugopro.com/fr/tools/finance/sports-hedging-calculator.html">
+<link rel="alternate" hreflang="zh-TW" href="https://gugopro.com/tools/finance/sports-hedging-calculator.html">
+<link rel="alternate" hreflang="zh-CN" href="https://gugopro.com/zh-CN/tools/finance/sports-hedging-calculator.html">
+<link rel="alternate" hreflang="en" href="https://gugopro.com/en/tools/finance/sports-hedging-calculator.html">
+<link rel="alternate" hreflang="ja" href="https://gugopro.com/ja/tools/finance/sports-hedging-calculator.html">
+<link rel="alternate" hreflang="de" href="https://gugopro.com/de/tools/finance/sports-hedging-calculator.html">
+<link rel="alternate" hreflang="fr" href="https://gugopro.com/fr/tools/finance/sports-hedging-calculator.html">
+<link rel="alternate" hreflang="es" href="https://gugopro.com/es/tools/finance/sports-hedging-calculator.html">
+<link rel="alternate" hreflang="pt" href="https://gugopro.com/pt/tools/finance/sports-hedging-calculator.html">
+<link rel="alternate" hreflang="x-default" href="https://gugopro.com/tools/finance/sports-hedging-calculator.html">
+<meta name="static-locale-route" content="true">
+<meta name="i18n-status" content="machine-draft">
+<link rel="stylesheet" href="/tools/finance/finance-locale.css?v=20260827">
+<script src="/tools/finance/finance-i18n.js?v=20260827" defer></script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body data-finance-static-locale="zh-TW" data-finance-static-locale="fr">
+<!-- Top Navigation -->
+<nav class="top-nav">
+<a class="btn-back-home" href="https://gugopro.com">
+<i class="fa-solid fa-house"></i> Retour à la page d'accueil de GugoPro
+    </a>
+<div class="nav-brand">Gugo<span>Pro</span></div>
+</nav>
+<div class="container">
+<!-- Hero -->
+<header class="hero">
+<h1><i class="fa-solid fa-calculator"></i> Convertisseur de cotes et calculateur d'arbitrage/hedging pour paris sportifs</h1>
+<p>Convertisseur de cotes de paris sportifs et calculateur d'hedging/arbitrage — conversion de cotes en temps réel, hedging en direct pour protéger le capital, détection d'arbitrage sans risque ; outil tout-en-un pour les stratégies de paris sportifs.</p>
+</header>
+<!-- Module 1: Odds Converter -->
+<section class="card" id="odds-converter">
+<div class="card-header">
+<div class="icon icon-cyan"><i class="fa-solid fa-exchange-alt"></i></div>
+<h2>Module 1 : convertisseur bidirectionnel des cotes et de la probabilité implicite</h2>
+</div>
+<p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.92rem;">
+        Saisissez une valeur dans n'importe quel champ, les autres champs seront convertis automatiquement en temps réel. Prend en charge la conversion entre quatre formats : décimal européen, cote américaine, fraction britannique et probabilité implicite.
+      </p>
+<div class="form-row">
+<div class="form-group">
+<label><span class="tag">Européen</span> Cotes décimales (Decimal)</label>
+<input class="form-input" id="decimal-odds" min="1.01" placeholder="例：2.50" step="0.01" type="number"/>
+</div>
+<div class="form-group">
+<label><span class="tag">Américain</span> Cotes américaines (American)</label>
+<input class="form-input" id="american-odds" placeholder="例：+150 或 -200" type="text"/>
+</div>
+<div class="form-group">
+<label><span class="tag">Anglais</span> Cotes fractionnaires (Fractional)</label>
+<input class="form-input" id="fractional-odds" placeholder="例：3/2" type="text"/>
+</div>
+<div class="form-group">
+<label><span class="tag">Probabilité</span> Probabilité implicite (Implied %)</label>
+<input class="form-input" id="implied-prob" max="99.9" min="0.1" placeholder="例：40.0" step="0.1" type="number"/>
+</div>
+</div>
+</section>
+<!-- Module 2: Hedging & Arbitrage -->
+<section class="card" id="hedging-calculator">
+<div class="card-header">
+<div class="icon icon-green"><i class="fa-solid fa-shield-halved"></i></div>
+<h2>Module 2 : calculateur de couverture et d'arbitrage</h2>
+</div>
+<!-- Input Section -->
+<div class="form-row">
+<div class="form-group">
+<label><i class="fa-solid fa-flag"></i> Montant du premier pari (pari principal)</label>
+<div class="currency-input">
+<span class="prefix">$</span>
+<input class="form-input" id="bet1-amount" min="1" placeholder="100" type="number"/>
+</div>
+</div>
+<div class="form-group">
+<label><i class="fa-solid fa-chart-bar"></i> Cote au moment de la première mise</label>
+<input class="form-input" id="bet1-odds" min="1.01" placeholder="2.00" step="0.01" type="number"/>
+</div>
+<div class="form-group">
+<label><i class="fa-solid fa-clock-rotate-left"></i> Dernière cote pour le deuxième pari de couverture (en direct)</label>
+<input class="form-input" id="bet2-odds" min="1.01" placeholder="1.60" step="0.01" type="number"/>
+</div>
+</div>
+<button id="calc-hedge" style="
+        width: 100%;
+        padding: 14px;
+        border-radius: var(--radius-sm);
+        border: none;
+        background: linear-gradient(135deg, var(--accent-green), #059669);
+        color: #fff;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 8px;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      ">
+<i class="fa-solid fa-bolt"></i> Calculer immédiatement le plan de couverture
+      </button>
+<!-- Results Section -->
+<div id="hedge-results" style="display: none; margin-top: 24px;">
+<h3 style="font-size: 1.05rem; margin-bottom: 16px; color: var(--accent-green);">
+<i class="fa-solid fa-chart-pie"></i> Résultats de l'analyse de la stratégie de couverture
+        </h3>
+<div class="strategy-cards">
+<!-- Break-even Hedge -->
+<div class="strategy-card">
+<h4 style="color: var(--accent-cyan);"><i class="fa-solid fa-shield"></i> Couverture au point mort (Break-even Hedge)</h4>
+<div class="strategy-value value-cyan" id="res-be-amount">$0.00</div>
+<div class="strategy-desc" id="res-be-desc">Un pari inverse de $0.00 permet d'être à l'équilibre si la première mise perd.</div>
+</div>
+<!-- Equal Profit Lock -->
+<div class="strategy-card">
+<h4 style="color: var(--accent-purple);"><i class="fa-solid fa-balance-scale"></i> Verrouillage de profit égal (Equal Profit Lock)</h4>
+<div class="strategy-value value-purple" id="res-ep-amount">$0.00</div>
+<div class="strategy-desc" id="res-ep-desc">Un pari inverse $0.00 garantit que les bénéfices nets des deux côtés sont identiques.</div>
+</div>
+</div>
+<!-- Result Grid -->
+<div class="result-panel mt-4">
+<div class="result-grid">
+<div class="result-item">
+<span class="label">Gain potentiel de la première mise</span>
+<span class="value value-cyan" id="res-bet1-profit">$0.00</span>
+</div>
+<div class="result-item">
+<span class="label">Montant total des mises</span>
+<span class="value value-amber" id="res-total-bet">$0.00</span>
+</div>
+<div class="result-item">
+<span class="label">Profit net égal</span>
+<span class="value value-green" id="res-lock-profit">$0.00</span>
+</div>
+<div class="result-item">
+<span class="label">Part du profit net sur la mise totale</span>
+<span class="value value-green" id="res-roi">0.0%</span>
+</div>
+</div>
+</div>
+<!-- Arbitrage Alert -->
+<div class="arbitrage-alert" id="arbitrage-alert">
+<h3><i class="fa-solid fa-gem"></i> Arbitrage détecté (Arbitrage Found!)</h3>
+<div class="result-grid mt-4">
+<div class="result-item">
+<span class="label">Probabilité totale implicite</span>
+<span class="value value-green" id="res-arb-total-prob">0%</span>
+</div>
+<div class="result-item">
+<span class="label">Taux de rendement garanti</span>
+<span class="value value-amber" id="res-arb-roi">0%</span>
+</div>
+<div class="result-item">
+<span class="label">Proportion optimale d'allocation de capital</span>
+<span class="value value-purple" id="res-arb-ratio">0 : 0</span>
+</div>
+<div class="result-item">
+<span class="label">Profit garanti par tranche de 100 $</span>
+<span class="value value-green" id="res-arb-per100">$0.00</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Amazon Affiliate Card -->
+<section class="affiliate-card">
+<div class="affiliate-icon"><i class="fa-solid fa-book-open"></i></div>
+<div class="affiliate-content">
+<h3>Sélection de livres sur les événements sportifs et l'analyse des paris sportifs</h3>
+<p>Parcourez une sélection de livres sur les statistiques sportives et les stratégies de jeu pour améliorer votre analyse de paris.</p>
+<div class="affiliate-links">
+<a class="affiliate-btn us" href="https://www.amazon.com/s?k=sports+betting+strategy+books&amp;tag=9908qq-20" rel="noopener sponsored" target="_blank">
+<i class="fa-brands fa-amazon"></i> Recherche Amazon États-Unis
+          </a>
+<a class="affiliate-btn jp" href="https://www.amazon.co.jp/s?k=スポーツ賭け+データ分析+本&amp;tag=gugopro-22" rel="noopener sponsored" target="_blank">
+<i class="fa-brands fa-amazon"></i> Recherche Amazon Japon
+          </a>
+</div>
+</div>
+</section>
+<!-- SEO Section -->
+<section class="seo-section">
+<h2><i class="fa-solid fa-graduation-cap"></i> Guide d'utilisation et guide des connaissances</h2>
+<h3>Qu'est-ce que le hedging en direct (Sports Hedging) ?</h3>
+<p>Le hedging en direct (Hedging) est une stratégie de gestion du risque où le parieur sportif place des mises opposées pendant le match ou après des variations de cotes afin de réduire les pertes potentielles ou de verrouiller une partie des gains. Par exemple : vous misez avant le match sur la victoire de l'équipe à domicile à la cote 2,00 pour 100 $ ; si pendant le match l'équipe à domicile mène et que la cote de l'équipe visiteuse grimpe à 1,60, vous pouvez alors parier sur l'équipe visiteuse pour garantir un profit net positif ou au moins ne pas subir de perte.</p>
+<h3>Comment utiliser le calculateur d'arbitrage (Arbitrage) pour sécuriser le profit d'un match ?</h3>
+<p>L'arbitrage (Arbitrage) consiste à répartir des fonds entre différents bookmakers en profitant d'une somme d'espérances implicites inférieure à 100 %, afin d'assurer un profit quelle que soit l'issue. Procédure d'utilisation :</p>
+<ul>
+<li>Saisissez les cotes différentes de deux bookmakers (cote de la première mise et de la deuxième mise).</li>
+<li>Le calculateur détecte automatiquement s'il existe un espace d'arbitrage (probabilité implicite totale &lt; 100 %).</li>
+<li>Si un arbitrage est présent, le calculateur affichera la répartition optimale des fonds et le taux de rendement garanti.</li>
+<li>Répartissez le capital total selon les proportions recommandées entre les deux directions pour verrouiller un profit sans risque.</li>
+</ul>
+<p>Attention : les opportunités d'arbitrage sont généralement très temporaires, nécessitent des décisions rapides et plusieurs comptes sur différentes plateformes.</p>
+<h3>Logique mathématique de conversion entre cotes américaines et cotes décimales</h3>
+<p>L'essence de la conversion des formats de cotes consiste à uniformiser les différentes expressions en 'probabilité implicite' servant de pont. Les formules de conversion spécifiques sont les suivantes :</p>
+<ul>
+<li><strong>Conversion décimale vers probabilité implicite :</strong> Probabilité = 1 / cote décimale × 100%</li>
+<li><strong>Conversion des cotes américaines positives (+) en décimal :</strong> Décimal = 1 + cote américaine / 100（par exemple +150 → 2.50）</li>
+<li><strong>Conversion des cotes américaines négatives (-) en décimal :</strong> Décimal = 1 + 100 / |cote américaine|（par exemple -200 → 1.50）</li>
+<li><strong>Conversion des cotes anglaises (fractionnelles) en décimal :</strong> Décimal = Numérateur / Dénominateur + 1（par exemple 3/2 → 2.50）</li>
+<li><strong>Conversion de la probabilité implicite en décimal :</strong> Cote décimale = 1 / (probabilité / 100)</li>
+</ul>
+<p>Comprendre ces logiques de conversion vous rendra plus précis lors de la comparaison des cotes de différentes plateformes, du calcul du taux de réussite réel et de la valeur attendue.</p>
+</section>
+<!-- Disclaimer -->
+<div class="disclaimer">
+<strong><i class="fa-solid fa-triangle-exclamation"></i> Clause de non-responsabilité :</strong>Cet outil est uniquement destiné aux conversions de probabilités mathématiques, à l'évaluation de modèles statistiques et à l'étude de stratégies à titre récréatif ; il ne constitue en aucun cas un conseil de pari ou d'investissement. Les jeux d'argent comportent des risques : respectez la réglementation locale, jouez de façon responsable et n'engagez jamais plus que ce que vous pouvez vous permettre de perdre.
+    </div>
+<!-- Ko-fi Support -->
+<div class="kofi-section">
+<p style="color: var(--text-secondary); margin-bottom: 14px; font-size: 0.9rem;">Cet outil vous aide ? Soutenez-nous pour continuer à développer davantage d'outils gratuits !</p>
+<a class="kofi-button" href="https://ko-fi.com/R1K123XRS9" rel="noopener sponsored" target="_blank">
+<i class="fa-solid fa-mug-hot"></i> Offrez-moi un café
+      </a>
+</div>
+</div>
+<!-- Footer -->
+<footer class="footer">
+<p>© 2026 GugoPro. Tous droits réservés. | <a href="https://gugopro.com" style="color: var(--accent-cyan); text-decoration: none;">gugopro.com</a></p>
+<div class="site-contact-inline" style="margin:12px 0;line-height:1.8;"><a href="/contact.html" style="color:#67e8f9;font-weight:700;">Contactez‑nous / Contact Us</a> <span style="margin-left:10px;">E-mail de support : <a href="mailto:contact@gugopro.com" style="color:#67e8f9;">contact@gugopro.com</a></span></div></footer>
+<!-- JavaScript -->
+<script>
+    (function() {
+      'use strict';
+
+      // ========== UTILITY FUNCTIONS ==========
+      const fmt = (num) => '$' + num.toFixed(2);
+      const fmtPct = (num) => num.toFixed(1) + '%';
+      const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+
+      // ========== MODULE 1: ODDS CONVERTER ==========
+      const elDecimal = document.getElementById('decimal-odds');
+      const elAmerican = document.getElementById('american-odds');
+      const elFractional = document.getElementById('fractional-odds');
+      const elImplied = document.getElementById('implied-prob');
+
+      let updating = false;
+
+      function gcd(a, b) {
+        a = Math.abs(Math.round(a));
+        b = Math.abs(Math.round(b));
+        while (b) { [a, b] = [b, a % b]; }
+        return a || 1;
+      }
+
+      function decimalToFractional(dec) {
+        const frac = dec - 1;
+        // Try common denominators
+        for (let d = 1; d <= 1000; d++) {
+          const n = frac * d;
+          if (Math.abs(n - Math.round(n)) < 0.001) {
+            const num = Math.round(n);
+            const den = d;
+            const g = gcd(num, den);
+            return (num / g) + '/' + (den / g);
+          }
+        }
+        // Fallback
+        const num = Math.round(frac * 100);
+        const den = 100;
+        const g = gcd(num, den);
+        return (num / g) + '/' + (den / g);
+      }
+
+      function decimalToAmerican(dec) {
+        if (dec >= 2.0) {
+          return '+' + Math.round((dec - 1) * 100);
+        } else {
+          return '-' + Math.round(100 / (dec - 1));
+        }
+      }
+
+      function decimalToImplied(dec) {
+        return (1 / dec) * 100;
+      }
+
+      function americanToDecimal(str) {
+        str = str.replace(/\s/g, '');
+        const isPos = str.startsWith('+');
+        const val = parseFloat(isPos ? str.substring(1) : str);
+        if (isNaN(val) || val === 0) return null;
+        if (val > 0) {
+          return 1 + val / 100;
+        } else {
+          return 1 + 100 / Math.abs(val);
+        }
+      }
+
+      function fractionalToDecimal(str) {
+        str = str.replace(/\s/g, '');
+        const parts = str.split('/');
+        if (parts.length !== 2) return null;
+        const num = parseFloat(parts[0]);
+        const den = parseFloat(parts[1]);
+        if (isNaN(num) || isNaN(den) || den === 0) return null;
+        return (num / den) + 1;
+      }
+
+      function impliedToDecimal(pct) {
+        if (pct <= 0 || pct >= 100) return null;
+        return 1 / (pct / 100);
+      }
+
+      function updateFromDecimal(dec) {
+        if (dec < 1.01) return;
+        elAmerican.value = decimalToAmerican(dec);
+        elFractional.value = decimalToFractional(dec);
+        elImplied.value = decimalToImplied(dec).toFixed(2);
+      }
+
+      function updateAll(source) {
+        if (updating) return;
+        updating = true;
+
+        let dec = null;
+
+        if (source === 'decimal') {
+          const v = parseFloat(elDecimal.value);
+          if (!isNaN(v) && v >= 1.01) {
+            dec = v;
+            updateFromDecimal(dec);
+          }
+        } else if (source === 'american') {
+          const v = elAmerican.value.trim();
+          if (v) {
+            dec = americanToDecimal(v);
+            if (dec !== null) {
+              elDecimal.value = dec.toFixed(2);
+              elFractional.value = decimalToFractional(dec);
+              elImplied.value = decimalToImplied(dec).toFixed(2);
+            }
+          }
+        } else if (source === 'fractional') {
+          const v = elFractional.value.trim();
+          if (v) {
+            dec = fractionalToDecimal(v);
+            if (dec !== null) {
+              elDecimal.value = dec.toFixed(2);
+              elAmerican.value = decimalToAmerican(dec);
+              elImplied.value = decimalToImplied(dec).toFixed(2);
+            }
+          }
+        } else if (source === 'implied') {
+          const v = parseFloat(elImplied.value);
+          if (!isNaN(v) && v > 0 && v < 100) {
+            dec = impliedToDecimal(v);
+            if (dec !== null) {
+              elDecimal.value = dec.toFixed(2);
+              elAmerican.value = decimalToAmerican(dec);
+              elFractional.value = decimalToFractional(dec);
+            }
+          }
+        }
+
+        setTimeout(() => { updating = false; }, 50);
+      }
+
+      elDecimal.addEventListener('input', () => updateAll('decimal'));
+      elAmerican.addEventListener('input', () => updateAll('american'));
+      elFractional.addEventListener('input', () => updateAll('fractional'));
+      elImplied.addEventListener('input', () => updateAll('implied'));
+
+      // ========== MODULE 2: HEDGING & ARBITRAGE ==========
+      const elBet1Amt = document.getElementById('bet1-amount');
+      const elBet1Odds = document.getElementById('bet1-odds');
+      const elBet2Odds = document.getElementById('bet2-odds');
+      const btnCalc = document.getElementById('calc-hedge');
+      const divResults = document.getElementById('hedge-results');
+
+      btnCalc.addEventListener('click', () => {
+        const bet1Amt = parseFloat(elBet1Amt.value);
+        const bet1Odds = parseFloat(elBet1Odds.value);
+        const bet2Odds = parseFloat(elBet2Odds.value);
+
+        if (isNaN(bet1Amt) || bet1Amt <= 0 || isNaN(bet1Odds) || bet1Odds < 1.01 || isNaN(bet2Odds) || bet2Odds < 1.01) {
+          alert('請填入有效的投注金額與賠率（賠率須大於 1.01）');
+          return;
+        }
+
+        const bet1PotentialWin = bet1Amt * bet1Odds; // Total return if bet1 wins
+        const bet1Profit = bet1PotentialWin - bet1Amt; // Pure profit
+
+        // Strategy 1: Break-even Hedge
+        // We need bet2Amount such that: bet2Amount * bet2Odds = bet1Amt (recover first bet if bet1 loses)
+        const hedgeBeAmount = bet1Amt / bet2Odds;
+        const hedgeBePayout = hedgeBeAmount * bet2Odds; // = bet1Amt (break-even)
+        const hedgeBeNetProfit = bet1Profit - hedgeBeAmount; // net if bet1 wins
+
+        // Strategy 2: Equal Profit Lock
+        // We need bet2Amount such that profit is equal whether bet1 or bet2 wins
+        // If bet1 wins: profit = bet1Amt * bet1Odds - bet1Amt - bet2Amt = bet1Amt*(bet1Odds-1) - bet2Amt
+        // If bet2 wins: profit = bet2Amt * bet2Odds - bet2Amt - bet1Amt = bet2Amt*(bet2Odds-1) - bet1Amt
+        // Set equal: bet1Amt*(bet1Odds-1) - bet2Amt = bet2Amt*(bet2Odds-1) - bet1Amt
+        // bet1Amt*bet1Odds - bet1Amt - bet2Amt = bet2Amt*bet2Odds - bet2Amt - bet1Amt
+        // bet1Amt*bet1Odds = bet2Amt*bet2Odds
+        // bet2Amt = bet1Amt * bet1Odds / bet2Odds
+        const hedgeEpAmount = (bet1Amt * bet1Odds) / bet2Odds;
+        const totalBetEp = bet1Amt + hedgeEpAmount;
+        const lockProfit = bet1Amt * bet1Odds - totalBetEp; // same profit either way
+        const roiPct = (lockProfit / totalBetEp) * 100;
+
+        // Arbitrage Detection
+        const impliedBet1 = 1 / bet1Odds;
+        const impliedBet2 = 1 / bet2Odds;
+        const totalImplied = impliedBet1 + impliedBet2;
+        const isArbitrage = totalImplied < 1;
+
+        // Update UI
+        divResults.style.display = 'block';
+
+        // Break-even Hedge
+        document.getElementById('res-be-amount').textContent = fmt(hedgeBeAmount);
+        document.getElementById('res-be-desc').textContent =
+          `反向投注 ${fmt(hedgeBeAmount)} 可在第一單輸時剛好保本。若第一單贏，淨利為 ${fmt(hedgeBeNetProfit)}。`;
+
+        // Equal Profit Lock
+        document.getElementById('res-ep-amount').textContent = fmt(hedgeEpAmount);
+        document.getElementById('res-ep-desc').textContent =
+          `反向投注 ${fmt(hedgeEpAmount)} 可確保兩邊淨利相同，鎖定利潤 ${fmt(lockProfit)}。`;
+
+        // Result Grid
+        document.getElementById('res-bet1-profit').textContent = fmt(bet1Profit);
+        document.getElementById('res-total-bet').textContent = fmt(totalBetEp);
+        document.getElementById('res-lock-profit').textContent = fmt(lockProfit);
+        document.getElementById('res-roi').textContent = roiPct.toFixed(2) + '%';
+
+        // Arbitrage
+        const arbAlert = document.getElementById('arbitrage-alert');
+        if (isArbitrage) {
+          arbAlert.classList.add('show');
+          const arbRoi = ((1 / totalImplied) - 1) * 100;
+          const bet1Ratio = impliedBet1 / totalImplied;
+          const bet2Ratio = impliedBet2 / totalImplied;
+          const per100 = 100 * ((1 / totalImplied) - 1);
+
+          document.getElementById('res-arb-total-prob').textContent = (totalImplied * 100).toFixed(2) + '%';
+          document.getElementById('res-arb-roi').textContent = arbRoi.toFixed(2) + '%';
+          document.getElementById('res-arb-ratio').textContent =
+            (bet1Ratio * 100).toFixed(1) + '% : ' + (bet2Ratio * 100).toFixed(1) + '%';
+          document.getElementById('res-arb-per100').textContent = fmt(per100);
+        } else {
+          arbAlert.classList.remove('show');
+        }
+
+        // Scroll to results
+        divResults.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    })();
+  </script>
+<section class="finance-disclaimer" data-finance-disclaimer><h2>Avertissement sur les risques financiers</h2><p>Cette page, ses calculateurs et ses exemples sont fournis uniquement à des fins éducatives, de recherche et d’estimation de scénarios. Ils ne constituent pas un conseil personnalisé en investissement, trading, paris, fiscalité, droit ou finance. Les marchés et règles locales évoluent ; vérifiez les sources primaires à jour et assumez vos décisions. Les performances passées, sorties de modèle et simulations ne garantissent pas les résultats futurs.</p></section>
+</body>
+</html>

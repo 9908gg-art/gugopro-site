@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+
+<html lang="pt">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>Calculadora de expectativa de negociação | comissões e slippage | GugoPro Academy</title>
+<meta content="Insira entrada, stop, alvo, taxa de acerto, tamanho de posição e custos de transação para calcular em tempo real a expectativa da operação, o múltiplo R líquido e a taxa de acerto de equilíbrio. Somente front‑end; não busca dados de mercado." name="description"/>
+<link href="/academy/academy.css" rel="stylesheet"/>
+<link href="/academy/tools/trade-expectancy.css" rel="stylesheet"/>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Calculadora de expectativa de negociação","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"Calcule expectativa líquida e taxa de break‑even a partir do preço de negociação, taxa de acerto, comissões e slippage.","url":"https://gugopro.com/pt/academy/tools/trade-expectancy.html"}</script>
+<meta content="https://gugopro.com/academy/tools/trade-expectancy.html" property="og:url"/>
+<meta content="index, follow" name="robots"/>
+<link href="https://gugopro.com/pt/academy/tools/trade-expectancy.html" rel="canonical"/>
+<link href="https://gugopro.com/academy/tools/trade-expectancy.html" hreflang="zh-TW" rel="alternate"/>
+<link href="https://gugopro.com/zh-CN/academy/tools/trade-expectancy.html" hreflang="zh-CN" rel="alternate"/>
+<link href="https://gugopro.com/en/academy/tools/trade-expectancy.html" hreflang="en" rel="alternate"/>
+<link href="https://gugopro.com/ja/academy/tools/trade-expectancy.html" hreflang="ja" rel="alternate"/>
+<link href="https://gugopro.com/de/academy/tools/trade-expectancy.html" hreflang="de" rel="alternate"/>
+<link href="https://gugopro.com/fr/academy/tools/trade-expectancy.html" hreflang="fr" rel="alternate"/>
+<link href="https://gugopro.com/es/academy/tools/trade-expectancy.html" hreflang="es" rel="alternate"/>
+<link href="https://gugopro.com/pt/academy/tools/trade-expectancy.html" hreflang="pt" rel="alternate"/>
+<link href="https://gugopro.com/academy/tools/trade-expectancy.html" hreflang="x-default" rel="alternate"/>
+<meta content="true" name="static-locale-route"/>
+<meta content="machine-draft" name="i18n-status"/>
+<link href="/tools/finance/finance-locale.css?v=20260827" rel="stylesheet"/>
+<script src="/i18n/static-locale-runtime.js?v=20260827" defer></script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="quant-page expectancy-page">
+<main class="tool-page exp-page-shell">
+<div class="tool-crumb"><a href="/academy/">← Voltar para GugoPro Academy</a><span>Risco / Retorno · Apenas frontend · Sem dados de mercado em tempo real</span></div>
+<nav aria-label="頁內導覽" class="exp-jump"><a href="#inputs">Inserir parâmetros</a><a href="#costs">Custos de negociação</a><a href="#results">Resultados do cálculo</a><a href="#limits">Restrições e fórmulas</a></nav>
+<div class="exp-hero"><div><div class="eyebrow">Lente de cenário · Expectativa atenta a custos</div><h1>Calculadora de expectativa de negociação</h1><p>Converta o R:R planejado no resultado líquido após taxas e slippage. Recalcule instantaneamente quando as entradas mudarem; todos os números ficam apenas no navegador atual e não são enviados nem preenchidos automaticamente com cotações.</p></div><div class="exp-hero-badge"><strong>3R ≠ garantia</strong><span>Os custos reduzem os lucros e ampliam as perdas</span></div></div>
+<div class="exp-layout">
+<section class="panel exp-panel" id="inputs">
+<div class="eyebrow">Entradas do modelo</div><h2>Definir cenário de negociação</h2>
+<div class="exp-grid two">
+<div><label for="direction">Direção da operação</label><select id="direction"><option value="long">Long (comprado)</option><option value="short">Short（Short）</option></select></div>
+<div><label for="win-rate">Taxa de acerto (%)</label><input id="win-rate" inputmode="decimal" max="100" min="0" step="0.1" type="number" value="25"/><small>Estime usando registros históricos de negociações, não promessas subjetivas.</small></div>
+<div><label for="entry">Preço de entrada (Entry)</label><input id="entry" inputmode="decimal" min="0.0000001" step="0.0001" type="number" value="100"/></div>
+<div><label for="stop">Preço de stop Stop</label><input id="stop" inputmode="decimal" min="0.0000001" step="0.0001" type="number" value="95"/></div>
+<div><label for="target">Preço alvo Target</label><input id="target" inputmode="decimal" min="0.0000001" step="0.0001" type="number" value="115"/></div>
+<div><label for="position-size">Quantidade de posição</label><input id="position-size" inputmode="decimal" min="0.0000001" step="0.0001" type="number" value="200"/><small>Pode inserir número de ações, contratos ou outras unidades de negociação.</small></div>
+<div><label for="trades">Avaliar número de operações</label><input id="trades" inputmode="numeric" min="1" step="1" type="number" value="20"/></div>
+</div>
+<fieldset class="exp-costs" id="costs"><legend>Suposições de custos de negociação</legend><p class="exp-field-help">Insira taxas em percentagem; por exemplo, para 0.10% insira 0.10; slippage é assumido em desfavor do trader. Verifique taxas reais do corretor, impostos e regras de mercado.</p><div class="exp-grid two">
+<div><label for="entry-fee">Comissão de entrada (%)</label><input id="entry-fee" inputmode="decimal" max="99.99" min="0" step="0.01" type="number" value="0.10"/></div>
+<div><label for="exit-fee">Taxa de saída (%)</label><input id="exit-fee" inputmode="decimal" max="99.99" min="0" step="0.01" type="number" value="0.10"/></div>
+<div><label for="entry-slip">Slippage na entrada (%)</label><input id="entry-slip" inputmode="decimal" max="99.99" min="0" step="0.01" type="number" value="0.05"/></div>
+<div><label for="exit-slip">Slippage de saída (%)</label><input id="exit-slip" inputmode="decimal" max="99.99" min="0" step="0.01" type="number" value="0.05"/></div>
+<div><label for="entry-fixed">Taxa fixa de entrada（元）</label><input id="entry-fixed" inputmode="decimal" min="0" step="0.01" type="number" value="0"/></div>
+<div><label for="exit-fixed">Taxa fixa de saída (元)</label><input id="exit-fixed" inputmode="decimal" min="0" step="0.01" type="number" value="0"/></div>
+</div></fieldset>
+<div class="exp-actions"><button class="calc" id="calculate" type="button">Calcular expectativa</button><button class="ghost-btn" id="clear" type="button">limpar resultados</button></div>
+<div aria-live="polite" class="status" id="status">Alterações na entrada são calculadas em tempo real; atualmente se usa 3R, taxa de acerto de 25% e custos como demonstração.</div>
+<div class="formula-note"><strong>Fórmula central:</strong>Valor esperado = taxa de vitória × ganho líquido médio + taxa de derrota × perda líquida média. O resultado líquido primeiro aplica slippage adverso e depois deduz taxas bilaterais calculadas sobre o montante negociado e custos fixos.</div>
+</section>
+<section aria-live="polite" class="result exp-result" id="results">
+<div class="eyebrow">Expectativa líquida</div><h2>Resultados após ajuste de custos</h2><div class="result-big" id="expectancy-r">—</div><div class="exp-result-sub" id="result-message">Aguardando entrada válida</div>
+<div class="metric-grid exp-metrics">
+<div class="metric"><span class="sub">R:R planejado</span><b id="planned-rr">—</b></div>
+<div class="metric"><span class="sub">lucro líquido R</span><b id="net-win-r">—</b></div>
+<div class="metric"><span class="sub">prejuízo líquido R</span><b id="net-loss-r">—</b></div>
+<div class="metric"><span class="sub">Montante esperado por trade</span><b id="expectancy-money">—</b></div>
+<div class="metric"><span class="sub">Taxa de acertos para break‑even</span><b id="break-even">—</b></div>
+<div class="metric"><span class="sub">Expectativas do período de avaliação</span><b id="expected-total">—</b></div>
+<div class="metric"><span class="sub">Preço de entrada real</span><b id="actual-entry">—</b></div>
+<div class="metric"><span class="sub">Direção dos custos</span><b id="cost-direction">—</b></div>
+</div>
+<div class="exp-outcomes"><div class="exp-section-title"><h3>Desagregação de resultados por trade único</h3><span>Valor calculado com base na quantidade de posição</span></div><div class="exp-table-wrap"><table class="exp-table"><thead><tr><th>Cenário</th><th>Resultado bruto</th><th>Custos de negociação</th><th>resultado líquido</th><th>R líquido</th></tr></thead><tbody id="outcome-rows"><tr><td colspan="5">Ainda não calculado</td></tr></tbody></table></div></div>
+<div aria-label="獲利與虧損 R 倍數比較" class="exp-bars"><div class="exp-section-title"><h3>comparação visual dos resultados líquidos</h3><span id="bar-caption">—</span></div><div class="bar-track"><i id="win-bar"></i><i id="loss-bar"></i></div><div class="bar-labels"><span>Cenários de lucro <b id="win-bar-label">—</b></span><span>Cenário de stop <b id="loss-bar-label">—</b></span></div></div>
+<div class="source-box" id="limits"><strong>Finalidade e limitações da pesquisa:</strong>Esta ferramenta calcula apenas um único cenário de lucro e um único cenário de stop‑loss a partir das entradas; não modela saídas parciais, gaps, probabilidade de execução, distribuições reais de P&amp;L, impostos sobre transações, taxas de empréstimo, impacto de liquidez ou mudanças futuras na taxa de acerto. O R:R planejado não é igual ao P&amp;L médio realizado; os resultados não podem ser tratados como instruções de negociação ou aconselhamento financeiro personalizado.</div>
+</section>
+</div>
+<section class="exp-explain"><div><div class="eyebrow">Leia o modelo</div><h2>Como interpretar valor esperado negativo?</h2></div><div class="exp-explain-grid"><div><strong>Veja primeiro o R líquido.</strong><p>3R é a distância de preço sem custos. Se forem incluídos slippage e comissões de ida e volta, o lucro líquido de uma operação vencedora pode ser inferior a +3R, e a perda líquida de uma operação stopada pode exceder −1R.</p></div><div><strong>Rever o limiar de taxa de sucesso</strong><p>Taxa de acertos para break‑even = valor absoluto da perda líquida ÷ (lucro líquido + valor absoluto da perda líquida). Quanto maiores os custos, maior tende a ser o limiar.</p></div><div><strong>Último in‑sample</strong><p>O valor esperado é uma média ponderada por probabilidades, não a previsão da próxima operação. Use registros de operações finalizadas com a mesma metodologia para preencher a taxa de acerto e o lucro/prejuízo médio real.</p></div></div></section>
+</main>
+<script src="/academy/academy.js?v=20260827-i18n1"></script>
+<script src="/academy/tools/trade-expectancy.js"></script><section class="finance-quality-note" data-finance-quality=""><h2>Como usar esta ferramenta financeira</h2><p>Esta página transforma um conceito financeiro em entradas, fórmulas e cenários verificáveis. Leia primeiro as definições e compare os cenários conservador, base e de estresse; um resultado não garante retorno.</p><p>Fluxo recomendado: confirme unidades e períodos, insira suas premissas e revise sensibilidade, custos e cenários desfavoráveis.</p><p><strong>Limitações:</strong> o modelo não prevê os mercados e pode não incluir todos os impostos, slippage, liquidez, crédito, regras ou termos contratuais. Confirme decisões importantes com fontes primárias atualizadas e um profissional qualificado.</p></section>
+<section class="finance-disclaimer" data-finance-disclaimer=""><h2>Aviso de risco financeiro</h2><p>Esta página, suas calculadoras e exemplos servem apenas para educação, pesquisa e estimativa de cenários. Não constituem aconselhamento personalizado de investimento, trading, apostas, fiscal, jurídico ou financeiro. Mercados e regras podem mudar; confirme fontes primárias atuais e assuma a responsabilidade pelas suas decisões. Desempenho passado, saídas do modelo e simulações não garantem resultados futuros.</p></section>
+</body>
+</html>

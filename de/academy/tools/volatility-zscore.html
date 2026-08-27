@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+
+<html lang="de">
+<head>
+<meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>Volatilitäts‑Z‑Score‑Research‑Tool｜GugoPro Academy Z-Score</title>
+<meta content="Berechne aus deinen verifizierten historischen Tagesrenditen Rolling‑Volatilität, Volatilitäts‑Z‑Score und Stress‑Status; komplett front‑end, transparente Formeln, keine Fake‑Daten. Z-Score" name="description"/>
+<link href="/academy/academy.css" rel="stylesheet"/>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Volatilitäts‑Z‑Score‑Research‑Tool Z-Score","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"Berechne Rolling‑Volatilität und Z‑Score aus vom Nutzer verifizierten historischen Renditen. Z-Score","url":"https://academy.gugopro.com/tools/volatility-zscore.html"}</script>
+<meta content="https://gugopro.com/academy/tools/volatility-zscore.html" property="og:url"/>
+<meta content="index, follow" name="robots"/>
+<link href="https://gugopro.com/de/academy/tools/volatility-zscore.html" rel="canonical"/>
+<link href="https://gugopro.com/academy/tools/volatility-zscore.html" hreflang="zh-TW" rel="alternate"/>
+<link href="https://gugopro.com/zh-CN/academy/tools/volatility-zscore.html" hreflang="zh-CN" rel="alternate"/>
+<link href="https://gugopro.com/en/academy/tools/volatility-zscore.html" hreflang="en" rel="alternate"/>
+<link href="https://gugopro.com/ja/academy/tools/volatility-zscore.html" hreflang="ja" rel="alternate"/>
+<link href="https://gugopro.com/de/academy/tools/volatility-zscore.html" hreflang="de" rel="alternate"/>
+<link href="https://gugopro.com/fr/academy/tools/volatility-zscore.html" hreflang="fr" rel="alternate"/>
+<link href="https://gugopro.com/es/academy/tools/volatility-zscore.html" hreflang="es" rel="alternate"/>
+<link href="https://gugopro.com/pt/academy/tools/volatility-zscore.html" hreflang="pt" rel="alternate"/>
+<link href="https://gugopro.com/academy/tools/volatility-zscore.html" hreflang="x-default" rel="alternate"/>
+<meta content="true" name="static-locale-route"/>
+<meta content="machine-draft" name="i18n-status"/>
+<link href="/tools/finance/finance-locale.css?v=20260827" rel="stylesheet"/>
+<script src="/i18n/static-locale-runtime.js?v=20260827" defer></script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="quant-page">
+<main class="tool-page">
+<div class="tool-crumb"><a href="/academy/">← Zurück zu GugoPro Academy</a><span>Quantitative Forschung · nur Frontend · füllt Marktdaten nicht automatisch ein</span></div>
+<div class="tool-layout">
+<section class="panel"><div class="eyebrow">Quant Lab · Volatilität</div><h1>Volatilitäts‑Z‑Score Z-Score</h1><p>Fügen Sie Ihre verifizierten täglichen Renditen in den Browser ein und prüfen Sie, wo die aktuelle rollende Volatilität relativ zur eigenen historischen Verteilung liegt. Das ist ein Forschungs-Klassifikator, kein Kauf-/Verkaufssignal.</p>
+<div class="badge-row"><span>Rollierende σ</span><span>Z-Wert Z-Score</span><span>Client‑side</span></div>
+<label for="returns">Historische Tageserträge (%)，Komma- oder Zeilenumbruch-getrennt</label><textarea id="returns" placeholder="Bsp.: -1.2, 0.4, 0.8 ...; fügen Sie bitte Ihre eigenen verifizierten Daten ein, die Seite füllt keine Marktdaten vor."></textarea>
+<label for="window">Rollendes Fenster（Handelstage）</label><input id="window" max="252" min="5" step="1" type="number" value="20"/>
+<label for="annualize">Annualisierter Multiplikator</label><select id="annualize"><option value="1">Nicht annualisiert: tägliche Volatilität</option><option value="15.8745">Annualisierung：√252</option></select>
+<button class="calc" id="calc" type="button">Volatilitäts Z‑Score berechnen Z-Score</button><div aria-live="polite" class="status" id="status">Bitte mindestens 25 tägliche Returns einfügen, bevor Sie starten.</div>
+<div class="formula-note"><strong>Formel:</strong>Rollendes σ = Stichproben‑Standardabweichung der Fenster‑Renditen; Z =（aktuelle rollende σ − Mittelwert aller rollenden σ）÷ Standardabweichung aller rollenden σ. Sind die Stichproben unzureichend oder ändert sich die Volatilität nicht, behält das Tool sichtbare Fehler bei, anstatt einen erfundenen Z‑Wert zu erzeugen.</div></section>
+<section class="result"><div class="eyebrow">Regime‑Linse</div><h2>Position in der Volatilitätsverteilung</h2><div class="result-big" id="zscore">—</div><div class="sub" id="regime">Wartet auf gültige Eingabe</div>
+<div class="metric-grid"><div class="metric"><span class="sub">Aktuelle Rolling‑Volatilität</span><b id="current">—</b></div><div class="metric"><span class="sub">Benchmark‑Durchschnitt</span><b id="mean">—</b></div><div class="metric"><span class="sub">Stichprobengröße</span><b id="count">—</b></div><div class="metric"><span class="sub">Anzahl rollender Fenster</span><b id="rolls">—</b></div></div>
+<div class="visual"><h3>Serie der rollenden Volatilität</h3><div aria-label="滾動波動度圖表" class="bar-chart" id="chart"></div><div class="axis"><span>Frühere Beobachtungen</span><span>Neueste Beobachtung</span></div></div>
+<div class="source-box"><strong>Daten und Beschränkungen:</strong>Eingabedaten existieren nur in der aktuellen Browserseite; geben Sie an, ob die Preise adjusted close sind, welche Renditefrequenz und welcher Stichprobenzeitraum verwendet wurde. Z‑Score beschreibt nur die relative Position, nicht die Richtung der Volatilität, zukünftige Renditen oder eine Risikogrenze. Z-Score</div></section>
+</div></main>
+<script src="/academy/academy.js?v=20260827-i18n1"></script>
+<script>
+const $=id=>document.getElementById(id);
+const fmt=(n,d=2)=>Number.isFinite(n)?n.toFixed(d):'—';
+function parseReturns(){return $('returns').value.split(/[\\s,，;；]+/).map(Number).filter(Number.isFinite)}
+function setStatus(text,kind=''){const el=$('status');el.textContent=text;el.className='status '+kind}
+function calc(){const data=parseReturns(),w=Math.floor(+$('window').value),factor=+$('annualize').value;if(data.length<w+4||w<5){setStatus('資料不足：至少需要窗口 + 4 筆日報酬，請貼入實際查證序列。','error');return}
+const rolls=[];for(let i=w-1;i<data.length;i++){const s=data.slice(i-w+1,i+1),m=s.reduce((a,b)=>a+b,0)/s.length,sd=Math.sqrt(s.reduce((a,b)=>a+(b-m)**2,0)/(s.length-1));rolls.push(sd*factor)}
+const mean=rolls.reduce((a,b)=>a+b,0)/rolls.length,sd=Math.sqrt(rolls.reduce((a,b)=>a+(b-mean)**2,0)/Math.max(1,rolls.length-1)),cur=rolls.at(-1),z=sd?((cur-mean)/sd):0;
+$('zscore').textContent=fmt(z,2)+' Z';$('current').textContent=fmt(cur,2)+'%';$('mean').textContent=fmt(mean,2)+'%';$('count').textContent=data.length;$('rolls').textContent=rolls.length;$('regime').textContent=z>=2?'高於自身歷史波動分布（研究警示）':z<=-2?'低於自身歷史波動分布（不代表低風險）':'接近自身歷史波動分布中段';
+const max=Math.max(...rolls,1),min=Math.min(...rolls,0),span=Math.max(max-min,1);$('chart').innerHTML=rolls.slice(-80).map(v=>{const h=Math.max(3,((v-min)/span)*150);return '<i style="height:'+h+'px" class="'+(v===cur?'alert':'')+'" title="'+fmt(v,2)+'%"></i>'}).join('');setStatus('計算完成：已使用 '+data.length+' 筆使用者輸入報酬。','ok')}
+$('calc').addEventListener('click',calc);$('returns').addEventListener('input',()=>setStatus('資料已變更，按下計算後更新。'));$('window').addEventListener('change',()=>setStatus('窗口已變更，按下計算後更新。'));
+</script><section class="finance-quality-note" data-finance-quality=""><h2>So nutzen Sie dieses Finanztool</h2><p>Diese Seite zerlegt ein Finanzkonzept in überprüfbare Eingaben, Formeln und Szenarien. Lesen Sie zuerst die Variablendefinitionen und vergleichen Sie vorsichtige, Basis- und Stressfälle; ein Ergebnis ist keine Renditezusage.</p><p>Empfohlener Ablauf: Einheiten und Zeiträume prüfen, eigene Annahmen eingeben und anschließend Sensitivität, Kosten und Verlustszenarien prüfen.</p><p><strong>Einschränkungen:</strong> Das Modell prognostiziert keine Märkte und enthält möglicherweise nicht jede Steuer, Slippage, Liquiditäts-, Kredit-, Regulierungs- oder Vertragsbedingung. Wichtige Entscheidungen mit aktuellen Primärquellen und qualifizierten Fachleuten prüfen.</p></section>
+<section class="finance-disclaimer" data-finance-disclaimer=""><h2>Finanzrisiko-Hinweis</h2><p>Diese Seite, ihre Rechner und Beispiele dienen ausschließlich der Bildung, Recherche und Szenarioschätzung. Sie sind keine persönliche Anlage-, Handels-, Wett-, Steuer-, Rechts- oder Finanzberatung. Märkte und lokale Regeln können sich ändern; prüfen Sie aktuelle Primärquellen und tragen Sie die Verantwortung für Ihre Entscheidungen. Vergangene Ergebnisse, Modellwerte und Simulationen garantieren keine Zukunftsergebnisse.</p></section>
+</body></html>

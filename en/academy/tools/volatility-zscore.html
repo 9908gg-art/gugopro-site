@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>Volatility Z‑Score research tool｜GugoPro Academy Z-Score</title>
+<meta content="From your verified historical daily returns, compute rolling volatility, volatility Z‑score and stress state; pure front‑end, transparent formulas, no fabricated market data. Z-Score" name="description"/>
+<link href="/academy/academy.css" rel="stylesheet"/>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Volatility Z‑Score research tool Z-Score","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"Compute rolling volatility and Z‑score from user‑verified historical returns. Z-Score","url":"https://academy.gugopro.com/tools/volatility-zscore.html"}</script>
+<meta content="https://gugopro.com/academy/tools/volatility-zscore.html" property="og:url"/>
+<meta content="index, follow" name="robots"/>
+<link href="https://gugopro.com/en/academy/tools/volatility-zscore.html" rel="canonical"/>
+<link href="https://gugopro.com/academy/tools/volatility-zscore.html" hreflang="zh-TW" rel="alternate"/>
+<link href="https://gugopro.com/zh-CN/academy/tools/volatility-zscore.html" hreflang="zh-CN" rel="alternate"/>
+<link href="https://gugopro.com/en/academy/tools/volatility-zscore.html" hreflang="en" rel="alternate"/>
+<link href="https://gugopro.com/ja/academy/tools/volatility-zscore.html" hreflang="ja" rel="alternate"/>
+<link href="https://gugopro.com/de/academy/tools/volatility-zscore.html" hreflang="de" rel="alternate"/>
+<link href="https://gugopro.com/fr/academy/tools/volatility-zscore.html" hreflang="fr" rel="alternate"/>
+<link href="https://gugopro.com/es/academy/tools/volatility-zscore.html" hreflang="es" rel="alternate"/>
+<link href="https://gugopro.com/pt/academy/tools/volatility-zscore.html" hreflang="pt" rel="alternate"/>
+<link href="https://gugopro.com/academy/tools/volatility-zscore.html" hreflang="x-default" rel="alternate"/>
+<meta content="true" name="static-locale-route"/>
+<meta content="machine-draft" name="i18n-status"/>
+<link href="/tools/finance/finance-locale.css?v=20260827" rel="stylesheet"/>
+<script src="/i18n/static-locale-runtime.js?v=20260827" defer></script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="quant-page">
+<main class="tool-page">
+<div class="tool-crumb"><a href="/academy/">← Back to GugoPro Academy</a><span>Quantitative research · front‑end only · does not auto‑fill market data</span></div>
+<div class="tool-layout">
+<section class="panel"><div class="eyebrow">Quant lab · Volatility</div><h1>Volatility Z‑Score Z-Score</h1><p>Paste your verified daily returns into the browser and observe where current rolling volatility sits relative to your own historical distribution. This is a research classifier, not a buy/sell signal.</p>
+<div class="badge-row"><span>Rolling σ</span><span>Z-Score</span><span>Client‑side</span></div>
+<label for="returns">Historical daily returns (%)，comma or newline separated</label><textarea id="returns" placeholder="Ex: -1.2, 0.4, 0.8 ...; please paste your own verified data — the page does not prefill market quotes."></textarea>
+<label for="window">rolling window（trading days）</label><input id="window" max="252" min="5" step="1" type="number" value="20"/>
+<label for="annualize">Annualized multiplier</label><select id="annualize"><option value="1">Not annualized: daily volatility</option><option value="15.8745">Annualize：√252</option></select>
+<button class="calc" id="calc" type="button">Compute volatility Z‑Score Z-Score</button><div aria-live="polite" class="status" id="status">Please paste at least 25 daily returns before starting.</div>
+<div class="formula-note"><strong>Formula:</strong>rolling σ = sample standard deviation of window returns; Z =（current rolling σ − mean of all rolling σ）÷ standard deviation of all rolling σ. When samples are insufficient or volatility does not change, the tool preserves a visible error instead of producing a spurious Z value.</div></section>
+<section class="result"><div class="eyebrow">Regime lens</div><h2>Position in the volatility distribution</h2><div class="result-big" id="zscore">—</div><div class="sub" id="regime">Awaiting valid input</div>
+<div class="metric-grid"><div class="metric"><span class="sub">Current rolling volatility</span><b id="current">—</b></div><div class="metric"><span class="sub">Benchmark average</span><b id="mean">—</b></div><div class="metric"><span class="sub">Sample count</span><b id="count">—</b></div><div class="metric"><span class="sub">number of rolling windows</span><b id="rolls">—</b></div></div>
+<div class="visual"><h3>rolling volatility series</h3><div aria-label="滾動波動度圖表" class="bar-chart" id="chart"></div><div class="axis"><span>Earlier observations</span><span>Latest observation</span></div></div>
+<div class="source-box"><strong>Data and limitations:</strong>Input data exists only in the current browser page; please state whether prices are adjusted close, the return frequency and the sample period. Z‑Score only describes relative position, not direction of volatility, future returns or a cap on risk. Z-Score</div></section>
+</div></main>
+<script src="/academy/academy.js?v=20260827-i18n1"></script>
+<script>
+const $=id=>document.getElementById(id);
+const fmt=(n,d=2)=>Number.isFinite(n)?n.toFixed(d):'—';
+function parseReturns(){return $('returns').value.split(/[\\s,，;；]+/).map(Number).filter(Number.isFinite)}
+function setStatus(text,kind=''){const el=$('status');el.textContent=text;el.className='status '+kind}
+function calc(){const data=parseReturns(),w=Math.floor(+$('window').value),factor=+$('annualize').value;if(data.length<w+4||w<5){setStatus('資料不足：至少需要窗口 + 4 筆日報酬，請貼入實際查證序列。','error');return}
+const rolls=[];for(let i=w-1;i<data.length;i++){const s=data.slice(i-w+1,i+1),m=s.reduce((a,b)=>a+b,0)/s.length,sd=Math.sqrt(s.reduce((a,b)=>a+(b-m)**2,0)/(s.length-1));rolls.push(sd*factor)}
+const mean=rolls.reduce((a,b)=>a+b,0)/rolls.length,sd=Math.sqrt(rolls.reduce((a,b)=>a+(b-mean)**2,0)/Math.max(1,rolls.length-1)),cur=rolls.at(-1),z=sd?((cur-mean)/sd):0;
+$('zscore').textContent=fmt(z,2)+' Z';$('current').textContent=fmt(cur,2)+'%';$('mean').textContent=fmt(mean,2)+'%';$('count').textContent=data.length;$('rolls').textContent=rolls.length;$('regime').textContent=z>=2?'高於自身歷史波動分布（研究警示）':z<=-2?'低於自身歷史波動分布（不代表低風險）':'接近自身歷史波動分布中段';
+const max=Math.max(...rolls,1),min=Math.min(...rolls,0),span=Math.max(max-min,1);$('chart').innerHTML=rolls.slice(-80).map(v=>{const h=Math.max(3,((v-min)/span)*150);return '<i style="height:'+h+'px" class="'+(v===cur?'alert':'')+'" title="'+fmt(v,2)+'%"></i>'}).join('');setStatus('計算完成：已使用 '+data.length+' 筆使用者輸入報酬。','ok')}
+$('calc').addEventListener('click',calc);$('returns').addEventListener('input',()=>setStatus('資料已變更，按下計算後更新。'));$('window').addEventListener('change',()=>setStatus('窗口已變更，按下計算後更新。'));
+</script><section class="finance-quality-note" data-finance-quality=""><h2>How to use this finance tool</h2><p>This page turns a finance concept into checkable inputs, formulas, and scenarios. Read the variable definitions first, then compare conservative, base, and stress cases; one result is not a promise of return.</p><p>Suggested workflow: confirm units and time periods, enter your own assumptions, then review sensitivity, costs, and downside cases.</p><p><strong>Limitations:</strong> the model does not forecast markets and may not include every tax, slippage, liquidity, credit, regulatory, or contract term. Verify important decisions with current primary information and a qualified professional.</p></section>
+<section class="finance-disclaimer" data-finance-disclaimer=""><h2>Financial risk disclaimer</h2><p>This page, its calculators, and examples are for education, research, and scenario estimation only. They are not personalized investment, trading, betting, tax, legal, or financial advice. Markets and local rules can change quickly; verify current primary information and take responsibility for your decisions. Past performance, model outputs, and simulations do not guarantee future results.</p></section>
+</body></html>

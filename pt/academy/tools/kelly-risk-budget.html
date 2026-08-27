@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+
+<html lang="pt">
+<head>
+<meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>Ferramenta de orçamento de risco Kelly｜GugoPro Academy</title>
+<meta content="A partir do resumo das suas operações, calcule o limite de Kelly, o orçamento de risco fractional‑Kelly e a posição de stop‑loss; não trate a taxa de acerto histórica como garantia futura." name="description"/>
+<link href="/academy/academy.css" rel="stylesheet"/>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Ferramenta de orçamento de risco Kelly","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"Estime orçamentos de risco Kelly e fractional‑Kelly a partir do resumo de negociações do usuário.","url":"https://academy.gugopro.com/tools/kelly-risk-budget.html"}</script>
+<meta content="https://gugopro.com/academy/tools/kelly-Orçamento de risco.html" property="og:url"/>
+<meta content="index, follow" name="robots"/>
+<link href="https://gugopro.com/pt/academy/tools/kelly-risk-budget.html" rel="canonical"/>
+<link href="https://gugopro.com/academy/tools/kelly-risk-budget.html" hreflang="zh-TW" rel="alternate"/>
+<link href="https://gugopro.com/zh-CN/academy/tools/kelly-risk-budget.html" hreflang="zh-CN" rel="alternate"/>
+<link href="https://gugopro.com/en/academy/tools/kelly-risk-budget.html" hreflang="en" rel="alternate"/>
+<link href="https://gugopro.com/ja/academy/tools/kelly-risk-budget.html" hreflang="ja" rel="alternate"/>
+<link href="https://gugopro.com/de/academy/tools/kelly-risk-budget.html" hreflang="de" rel="alternate"/>
+<link href="https://gugopro.com/fr/academy/tools/kelly-risk-budget.html" hreflang="fr" rel="alternate"/>
+<link href="https://gugopro.com/es/academy/tools/kelly-risk-budget.html" hreflang="es" rel="alternate"/>
+<link href="https://gugopro.com/pt/academy/tools/kelly-risk-budget.html" hreflang="pt" rel="alternate"/>
+<link href="https://gugopro.com/academy/tools/kelly-risk-budget.html" hreflang="x-default" rel="alternate"/>
+<meta content="true" name="static-locale-route"/>
+<meta content="machine-draft" name="i18n-status"/>
+<link href="/tools/finance/finance-locale.css?v=20260827" rel="stylesheet"/>
+<script src="/i18n/static-locale-runtime.js?v=20260827" defer></script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="quant-page">
+<main class="tool-page"><div class="tool-crumb"><a href="/academy/">← Voltar para GugoPro Academy</a><span>Gestão de risco · Entrada pessoal · Não constitui aconselhamento financeiro</span></div>
+<div class="tool-layout"><section class="panel"><div class="eyebrow">Quant lab · Orçamento de risco</div><h1>Orçamento de risco Kelly</h1><p>Usando o resumo estatístico das suas operações concluídas, converta a 'vantagem' em um limite superior e em um Kelly fracionário conservador. Se taxa de acerto, razão payoff ou amostra forem instáveis, o resultado não deve ser usado como proporção de posição automática.</p>
+<label for="win">Taxa de acerto (%)</label><input id="win" max="99.99" min="0.01" placeholder="Colar resumo de trades encerrados" step="0.1" type="number"/>
+<label for="avgwin">Lucro médio（R）</label><input id="avgwin" min="0.01" placeholder="ex. 1.8R" step="0.01" type="number"/>
+<label for="avgloss">Prejuízo médio（R）</label><input id="avgloss" min="0.01" placeholder="ex. 1R" step="0.01" type="number"/>
+<label for="fraction">Kelly fracionário</label><select id="fraction"><option value="1">Full Kelly (teto de pesquisa)</option><option selected="" value="0.5">Half Kelly</option><option value="0.25">Quarter Kelly</option></select>
+<label for="account">Fundos da conta（元）</label><input id="account" min="0" placeholder="Insira sua base de conta" step="1" type="number"/>
+<label for="stop">Distância do stop por trade (%)</label><input id="stop" max="100" min="0.01" placeholder="Insira suas suposições de stop‑loss" step="0.1" type="number"/>
+<button class="calc" id="calc" type="button">Calcular orçamento de risco</button><div aria-live="polite" class="status" id="status">Insira um resumo com base nas suas negociações encerradas; esta página não guarda registros.</div>
+<div class="formula-note"><strong>Fórmula:</strong>b＝平均獲利 R ÷ 平均虧損 R；Full Kelly＝p−(1−p)÷b；分數 Kelly＝Full Kelly×fraction。O valor da posição é então estimado por conta × fração de risco e distância do stop; gaps, slippage, correlações e regras de margem não estão incluídos。</div></section>
+<section class="result"><div class="eyebrow">Orçamento de risco</div><h2>Limite teórico e proporção conservadora</h2><div class="result-big" id="fractionKelly">—</div><div class="sub" id="edge">Aguardando cálculo</div>
+<div class="metric-grid"><div class="metric"><span class="sub">Full Kelly</span><b id="fullKelly">—</b></div><div class="metric"><span class="sub">Razão lucro/prejuízo b</span><b id="ratio">—</b></div><div class="metric"><span class="sub">Orçamento de risco</span><b id="riskBudget">—</b></div><div class="metric"><span class="sub">Teto de posição para stop</span><b id="position">—</b></div></div>
+<div class="visual"><h3>Full Kelly e Kelly fracionário</h3><div class="bar-chart" id="chart"><i style="height:6px"></i><i style="height:6px"></i></div><div class="axis"><span>Completo</span><span>Fracionário</span></div></div>
+<div class="source-box"><strong>Restrições importantes:</strong>Kelly é altamente sensível a erros de estimativa na taxa de acerto e na relação ganho/prejuízo; se o Full Kelly for menor que 0, isso significa que a vantagem histórica é insuficiente para suportar um Kelly positivo — não se deve inverter um valor negativo para obter alavancagem. Esta página é uma calculadora de pesquisa, não um aconselhamento de investimento ou trading personalizado.</div></section></div></main>
+<script src="/academy/academy.js?v=20260827-i18n1"></script><script>
+const $=id=>document.getElementById(id),fmt=(n,d=2)=>Number.isFinite(n)?n.toFixed(d):'—';
+function calc(){const p=+$('win').value/100,w=+$('avgwin').value,l=+$('avgloss').value,f=+$('fraction').value,acct=+$('account').value,stop=+$('stop').value/100;if(![p,w,l,f,acct,stop].every(Number.isFinite)||p<=0||p>=1||w<=0||l<=0||f<=0||acct<0||stop<=0){for(const id of ['fractionKelly','fullKelly','ratio','riskBudget','position'])$(id).textContent='—';$('edge').textContent='等待有效輸入';$('chart').innerHTML='';$('status').textContent='輸入錯誤：請填入 0–100% 的勝率、正數 R 倍數、資金與停損距離。';$('status').className='status error';return}const b=w/l,full=p-(1-p)/b,frac=Math.max(0,full*f),budget=acct*frac,pos=stop?budget/stop:0;$('fractionKelly').textContent=fmt(frac*100,2)+'%';$('fullKelly').textContent=fmt(full*100,2)+'%';$('ratio').textContent=fmt(b,2)+' R';$('riskBudget').textContent='NT$ '+Math.round(budget).toLocaleString('zh-TW');$('position').textContent='NT$ '+Math.round(pos).toLocaleString('zh-TW');$('edge').textContent=full>0?'輸入統計呈現正 Kelly；仍需做樣本外與壓力測試。':'輸入統計的 Full Kelly 不為正；不要用負數結果製造槓桿。';const scale=Math.max(Math.abs(full),Math.abs(frac),.01);$('chart').innerHTML='<i style="height:'+Math.max(5,Math.max(0,full)/scale*145)+'px" title="Full Kelly"></i><i style="height:'+Math.max(5,frac/scale*145)+'px" title="Fractional Kelly"></i>';$('status').textContent='計算完成：結果只反映輸入的交易紀錄摘要與停損假設。';$('status').className='status ok'}
+$('calc').addEventListener('click',calc);</script><section class="finance-quality-note" data-finance-quality=""><h2>Como usar esta ferramenta financeira</h2><p>Esta página transforma um conceito financeiro em entradas, fórmulas e cenários verificáveis. Leia primeiro as definições e compare os cenários conservador, base e de estresse; um resultado não garante retorno.</p><p>Fluxo recomendado: confirme unidades e períodos, insira suas premissas e revise sensibilidade, custos e cenários desfavoráveis.</p><p><strong>Limitações:</strong> o modelo não prevê os mercados e pode não incluir todos os impostos, slippage, liquidez, crédito, regras ou termos contratuais. Confirme decisões importantes com fontes primárias atualizadas e um profissional qualificado.</p></section>
+<section class="finance-disclaimer" data-finance-disclaimer=""><h2>Aviso de risco financeiro</h2><p>Esta página, suas calculadoras e exemplos servem apenas para educação, pesquisa e estimativa de cenários. Não constituem aconselhamento personalizado de investimento, trading, apostas, fiscal, jurídico ou financeiro. Mercados e regras podem mudar; confirme fontes primárias atuais e assuma a responsabilidade pelas suas decisões. Desempenho passado, saídas do modelo e simulações não garantem resultados futuros.</p></section>
+</body></html>

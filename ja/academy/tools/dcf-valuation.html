@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+
+<html lang="ja"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>DCF バリュエーションシナリオ｜GugoPro Academy</title><link href="/academy/academy.css" rel="stylesheet"/>
+<meta content="https://gugopro.com/academy/tools/dcf-valuation.html" property="og:url"/>
+<meta content="index, follow" name="robots"/>
+<link rel="canonical" href="https://gugopro.com/ja/academy/tools/dcf-valuation.html">
+<link rel="alternate" hreflang="zh-TW" href="https://gugopro.com/academy/tools/dcf-valuation.html">
+<link rel="alternate" hreflang="zh-CN" href="https://gugopro.com/zh-CN/academy/tools/dcf-valuation.html">
+<link rel="alternate" hreflang="en" href="https://gugopro.com/en/academy/tools/dcf-valuation.html">
+<link rel="alternate" hreflang="ja" href="https://gugopro.com/ja/academy/tools/dcf-valuation.html">
+<link rel="alternate" hreflang="de" href="https://gugopro.com/de/academy/tools/dcf-valuation.html">
+<link rel="alternate" hreflang="fr" href="https://gugopro.com/fr/academy/tools/dcf-valuation.html">
+<link rel="alternate" hreflang="es" href="https://gugopro.com/es/academy/tools/dcf-valuation.html">
+<link rel="alternate" hreflang="pt" href="https://gugopro.com/pt/academy/tools/dcf-valuation.html">
+<link rel="alternate" hreflang="x-default" href="https://gugopro.com/academy/tools/dcf-valuation.html">
+<meta name="static-locale-route" content="true">
+<meta name="i18n-status" content="machine-draft">
+<meta name="description" content="GugoProの金融教育：DCF バリュエーションシナリオ｜GugoPro Academy provides practical explanations, formulas, and scenario checks for education and research.">
+<link rel="stylesheet" href="/tools/finance/finance-locale.css?v=20260827">
+<script src="/i18n/static-locale-runtime.js?v=20260827" defer></script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head><body><header class="nav"><div class="shell navin"><a class="brand" href="/academy/">GugoPro <span>Academy</span></a><button class="theme" data-theme="">ダーク切替</button></div></header><main class="shell tool-page"><a class="back" href="/academy/">← コースとツールに戻る</a><div class="tool-layout"><section class="panel"><div class="eyebrow">インタラクティブラボ · 06</div><h1>DCF バリュエーションシナリオ</h1><p>簡略化した二段階DCFで仮定が企業価値にどう影響するかを観察します。感度分析として扱い、精密な目標株価とは見なさないでください。 DCF</p><label>現在のフリーキャッシュフロー（百万元）</label><input id="fcf" type="number" value="100"/><label>過去5年成長率（％）</label><input id="growth" step="0.5" type="number" value="8"/><label>持続可能成長率（%）</label><input id="terminal" step="0.1" type="number" value="3"/><label>割引率 WACC（%）</label><input id="wacc" step="0.1" type="number" value="10"/><label>純負債（百萬元）</label><input id="debt" type="number" value="200"/><label>流通株数（百万株）</label><input id="shares" type="number" value="100"/><button class="calc" id="calc">シナリオ価値を計算</button></section><section class="result"><div class="eyebrow">バリュエーションの視点</div><h2>企業価値の分解</h2><div class="metric-grid"><div class="metric"><span class="sub">営業の現在価値</span><b id="pv">—</b></div><div class="metric"><span class="sub">終価 / 現価</span><b id="tv">—</b></div><div class="metric"><span class="sub">1株当たりの示意価値</span><b id="eq">—</b></div></div><table class="table"><thead><tr><th>年度</th><th>推定FCF</th><th>割引因子</th><th>現在価値</th></tr></thead><tbody id="rows"></tbody></table><p class="note">割引率が永続成長率に近いかそれ以下だとモデルの意義は薄れます；実務では税後資本コスト、希薄化、運転資本や循環性も扱う必要があります。</p></section></div></main><script src="/academy/academy.js?v=20260827-i18n1"></script><script>bindCalc('calc',()=>{let f=num('fcf'),g=num('growth')/100,t=num('terminal')/100,w=num('wacc')/100,d=num('debt'),s=num('shares'),pv=0,html='';for(let n=1;n<=5;n++){let cf=f*Math.pow(1+g,n),df=1/Math.pow(1+w,n),v=cf*df;pv+=v;html+=`<tr><td>${n}</td><td>${cf.toFixed(1)}</td><td>${df.toFixed(3)}</td><td>${v.toFixed(1)}</td></tr>`}let last=f*Math.pow(1+g,5),tv=w>t?last*(1+t)/(w-t):0,tvp=tv/Math.pow(1+w,5),ev=pv+tvp,eq=(ev-d)/s;document.getElementById('pv').textContent= pv.toFixed(1)+' M';document.getElementById('tv').textContent=tvp.toFixed(1)+' M';document.getElementById('eq').textContent=eq.toFixed(2)+' / 股';document.getElementById('rows').innerHTML=html});</script><section class="finance-quality-note" data-finance-quality><h2>財務ツールの使い方</h2><p>このページでは、財務の概念を検証可能な入力、計算式、シナリオに分けています。変数の定義を確認し、保守・基本・ストレスケースを比較してください。単一の結果は収益を保証しません。</p><p>手順：単位と期間を確認し、自分の前提を入力してから、感応度、コスト、下振れケースを確認します。</p><p><strong>制限：市場を予測するものではなく、税金、スリッページ、流動性、信用、規制、契約条件をすべて含むとは限りません。重要な判断は最新の一次情報と有資格者に確認してください。:</strong>制限：市場を予測するものではなく、税金、スリッページ、流動性、信用、規制、契約条件をすべて含むとは限りません。重要な判断は最新の一次情報と有資格者に確認してください。</p></section>
+<section class="finance-disclaimer" data-finance-disclaimer><h2>投資リスクに関する免責事項</h2><p>本ページの内容、計算ツール、例示は教育・研究・シナリオ試算のみを目的とし、個別の投資、取引、賭け、税務、法律その他の金融助言ではありません。市場や制度は変化するため、最新の一次情報を確認し、判断はご自身の責任で行ってください。過去の実績、モデル出力、シミュレーションは将来を保証しません。</p></section>
+</body></html>

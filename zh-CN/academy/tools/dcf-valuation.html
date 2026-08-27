@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>DCF 估值情景｜GugoPro Academy</title><link href="/academy/academy.css" rel="stylesheet"/>
+<meta content="https://gugopro.com/academy/tools/dcf-valuation.html" property="og:url"/>
+<meta content="index, follow" name="robots"/>
+<link rel="canonical" href="https://gugopro.com/zh-CN/academy/tools/dcf-valuation.html">
+<link rel="alternate" hreflang="zh-TW" href="https://gugopro.com/academy/tools/dcf-valuation.html">
+<link rel="alternate" hreflang="zh-CN" href="https://gugopro.com/zh-CN/academy/tools/dcf-valuation.html">
+<link rel="alternate" hreflang="en" href="https://gugopro.com/en/academy/tools/dcf-valuation.html">
+<link rel="alternate" hreflang="ja" href="https://gugopro.com/ja/academy/tools/dcf-valuation.html">
+<link rel="alternate" hreflang="de" href="https://gugopro.com/de/academy/tools/dcf-valuation.html">
+<link rel="alternate" hreflang="fr" href="https://gugopro.com/fr/academy/tools/dcf-valuation.html">
+<link rel="alternate" hreflang="es" href="https://gugopro.com/es/academy/tools/dcf-valuation.html">
+<link rel="alternate" hreflang="pt" href="https://gugopro.com/pt/academy/tools/dcf-valuation.html">
+<link rel="alternate" hreflang="x-default" href="https://gugopro.com/academy/tools/dcf-valuation.html">
+<meta name="static-locale-route" content="true">
+<meta name="i18n-status" content="machine-draft">
+<meta name="description" content="GugoPro 财经教育内容：DCF 估值情景｜GugoPro Academy 提供可操作的概念說明、公式與情境檢查，結果僅供教育與研究使用。">
+<link rel="stylesheet" href="/tools/finance/finance-locale.css?v=20260827">
+<script src="/i18n/static-locale-runtime.js?v=20260827" defer></script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head><body><header class="nav"><div class="shell navin"><a class="brand" href="/academy/">GugoPro <span>学院</span></a><button class="theme" data-theme="">切换深色</button></div></header><main class="shell tool-page"><a class="back" href="/academy/">← 返回课程与工具</a><div class="tool-layout"><section class="panel"><div class="eyebrow">交互实验室 · 06</div><h1>DCF 估值情景</h1><p>以简化的两阶段 DCF 观察假设如何影响企业价值。请把它当成敏感度练习，不是精确目标价。</p><label>目前自由现金流（百万元）</label><input id="fcf" type="number" value="100"/><label>前五年成长率（%）</label><input id="growth" step="0.5" type="number" value="8"/><label>永续增长率（%）</label><input id="terminal" step="0.1" type="number" value="3"/><label>折现率 WACC（%）</label><input id="wacc" step="0.1" type="number" value="10"/><label>净负债（百万元）</label><input id="debt" type="number" value="200"/><label>流通股数（百万股）</label><input id="shares" type="number" value="100"/><button class="calc" id="calc">計算情境價值</button></section><section class="result"><div class="eyebrow">估值视角</div><h2>企业价值拆解</h2><div class="metric-grid"><div class="metric"><span class="sub">营运现值</span><b id="pv">—</b></div><div class="metric"><span class="sub">终值/现值</span><b id="tv">—</b></div><div class="metric"><span class="sub">每股示意价值</span><b id="eq">—</b></div></div><table class="table"><thead><tr><th>年度</th><th>预估 FCF</th><th>折现因子</th><th>现值</th></tr></thead><tbody id="rows"></tbody></table><p class="note">若折现率接近或低于永续增长率，模型会失去意义；实务上还需处理税后资本成本、稀释股数、营运资本与周期性因素。</p></section></div></main><script src="/academy/academy.js?v=20260827-i18n1"></script><script>bindCalc('calc',()=>{let f=num('fcf'),g=num('growth')/100,t=num('terminal')/100,w=num('wacc')/100,d=num('debt'),s=num('shares'),pv=0,html='';for(let n=1;n<=5;n++){let cf=f*Math.pow(1+g,n),df=1/Math.pow(1+w,n),v=cf*df;pv+=v;html+=`<tr><td>${n}</td><td>${cf.toFixed(1)}</td><td>${df.toFixed(3)}</td><td>${v.toFixed(1)}</td></tr>`}let last=f*Math.pow(1+g,5),tv=w>t?last*(1+t)/(w-t):0,tvp=tv/Math.pow(1+w,5),ev=pv+tvp,eq=(ev-d)/s;document.getElementById('pv').textContent= pv.toFixed(1)+' M';document.getElementById('tv').textContent=tvp.toFixed(1)+' M';document.getElementById('eq').textContent=eq.toFixed(2)+' / 股';document.getElementById('rows').innerHTML=html});</script><section class="finance-quality-note" data-finance-quality><h2>财经工具使用说明</h2><p>本页把财经概念拆成可检查的输入、公式与情境结果。请先阅读变量定义，再比较保守、中性与压力情境；单一结果不代表收益承诺。</p><p>建议流程：确认资料单位与期间，输入自己的假设，接着检查敏感度、成本与下行情境。</p><p><strong>限制：模型不会预测市场，也不包含所有税费、滑点、流动性、信用、法规或个别合约条款；重要决策请以最新官方资料及合格专业意见复核。:</strong>限制：模型不会预测市场，也不包含所有税费、滑点、流动性、信用、法规或个别合约条款；重要决策请以最新官方资料及合格专业意见复核。</p></section>
+<section class="finance-disclaimer" data-finance-disclaimer><h2>投资风险免责声明</h2><p>本页内容、计算器与示例仅供教育、研究与情境估算，不构成投资、交易、投注、税务、法律或其他个性化金融建议。金融市场与个别制度可能快速变化，请核对最新官方资料并承担决策责任。过去表现、模型输出或模拟结果不代表未来结果。</p></section>
+</body></html>
