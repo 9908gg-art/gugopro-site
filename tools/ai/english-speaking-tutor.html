@@ -1312,6 +1312,14 @@
 
 
 
+
+
+
+
+
+
+
+
 <style id="gugo-capsule-dock-style">
 /* GugoPro Gemini-style capsule composer */
 html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
@@ -5254,15 +5262,19 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         if (session.silenceProbeTimer) { clearTimeout(session.silenceProbeTimer); session.silenceProbeTimer = null; }
         if (session.countdownTimer) { clearTimeout(session.countdownTimer); session.countdownTimer = null; }
         session.silenceDeadline = null;
+        session.smartCountdownActive = false;
     }
-    function stopRecognitionAfterSmartFinalize() {
+    function stopRecognitionAfterSmartFinalize(session) {
+        if (session?.autoFinalizeRequested !== true) return;
         const native = window.GugoProNativeSpeech?.isNativeSpeechAvailable?.() ? window.GugoProNativeSpeech : null;
-        if (native?.stopRecognition) native.stopRecognition().catch(() => {});
-        else if (typeof recognition !== 'undefined' && recognition) { try { recognition.stop(); } catch (_) {} }
+        if (native?.cancelRecognition) native.cancelRecognition().catch(() => {});
+        else if (native?.stopRecognition) native.stopRecognition().catch(() => {});
+        else if (typeof recognition !== 'undefined' && recognition) { try { if (typeof recognition.abort === 'function') recognition.abort(); else recognition.stop(); } catch (_) {} }
     }
     function beginSmartCountdown(session) {
-        if (!session || session.finalized || session.stopRequested || session.mode !== 'smart' || !session.latestTranscript) return;
+        if (!session || session.finalized || session.autoFinalizeRequested || session.stopRequested || session.mode !== 'smart' || !session.latestTranscript) return;
         if (session.countdownTimer || session.silenceDeadline) return;
+        session.smartCountdownActive = true;
         const silenceMs = Math.max(1000, Math.min(15000, Number(window.GugoGetSmartSilenceMs?.() || 6000)));
         session.state = 'waiting';
         session.silenceDeadline = Date.now() + silenceMs;
@@ -5272,8 +5284,10 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             const remaining = Math.max(0, session.silenceDeadline - Date.now());
             if (remaining <= 0) {
                 session.silenceDeadline = null;
+                session.smartCountdownActive = false;
+                session.autoFinalizeRequested = true;
                 finalizeSession(session);
-                stopRecognitionAfterSmartFinalize();
+                stopRecognitionAfterSmartFinalize(session);
                 return;
             }
             const seconds = Math.max(1, Math.ceil(remaining / 1000));
@@ -5281,13 +5295,21 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             session.countdownTimer = setTimeout(tick, Math.min(250, Math.max(50, remaining)));
         };
         tick();
+        // Keep one replacement recognizer available during the countdown so new
+        // speech can resume the same Smart session, but never schedule another
+        // rollover while this deadline is already active.
+        restartRecognition(session, { silent: true });
     }
     function markSessionRecording(session) {
-        if (!session || session.finalized || session.stopRequested || activeSession?.id !== session.id) return;
+        if (!session || session.finalized || session.autoFinalizeRequested || session.stopRequested || activeSession?.id !== session.id) return;
         if (session.startTimer) { clearTimeout(session.startTimer); session.startTimer = null; }
         session.startPending = false;
-        session.state = 'recording';
         session.restartAttempts = 0;
+        if (session.mode === 'smart' && session.silenceDeadline) {
+            session.state = 'waiting';
+            return;
+        }
+        session.state = 'recording';
         if (!session.startCuePlayed) {
             window.GugoPlaySpeechStartCue?.();
             session.startCuePlayed = true;
@@ -5399,7 +5421,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         }
     }
     function restartRecognition(session, options = {}) {
-        if (!session || session.finalized || session.stopRequested || activeSession?.id !== session.id || session.restartTimer) return;
+        if (!session || session.finalized || session.autoFinalizeRequested || session.stopRequested || activeSession?.id !== session.id || session.restartTimer) return;
         const silentRollover = options.silent === true;
         session.restartAttempts = (session.restartAttempts || 0) + 1;
         if (!silentRollover) window.GugoSetSpeechComposerState?.('reconnecting', session.role);
@@ -5418,7 +5440,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         }, retryDelay);
     }
     function finishWithOptionalDelay(session, explicitStop = false) {
-        if (!session || session.finalized) return;
+        if (!session || session.finalized || session.autoFinalizeRequested) return;
         if (explicitStop || session.stopRequested) { finalizeSession(session); return; }
         if (session.segmentedSession && session.mode === 'tap') {
             window.GugoSetSpeechComposerState?.('recording', session.role);
@@ -5429,8 +5451,8 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             restartRecognition(session, { silent: true });
             return;
         }
+        if (session.mode === 'smart' && session.silenceDeadline) return;
         beginSmartCountdown(session);
-        restartRecognition(session, { silent: true });
     }
     function stopActiveSession() {
         const session = activeSession;
@@ -5450,10 +5472,11 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
     window.GugoStopDualSpeech = stopActiveSession;
     function startNativeRecognition(session) {
         const native = window.GugoProNativeSpeech?.isNativeSpeechAvailable?.() ? window.GugoProNativeSpeech : null;
-        if (!native || session.finalized || session.stopRequested || activeSession?.id !== session.id) return;
+        if (!native || session.finalized || session.autoFinalizeRequested || session.stopRequested || activeSession?.id !== session.id) return;
         session.startPending = true;
-        session.state = 'recording';
-        window.GugoSetSpeechComposerState?.('recording', session.role);
+        const waitingForSmartResume = session.mode === 'smart' && session.silenceDeadline;
+        session.state = waitingForSmartResume ? 'waiting' : 'recording';
+        if (!waitingForSmartResume) window.GugoSetSpeechComposerState?.('recording', session.role);
         const startupTimeoutMs = session.mode === 'tap' ? 0 : 10000;
         if (startupTimeoutMs > 0) session.startTimer = setTimeout(() => {
             session.startTimer = null;
@@ -5476,7 +5499,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             onEnd: () => finishWithOptionalDelay(session),
             onError: error => {
                 if (session.startTimer) { clearTimeout(session.startTimer); session.startTimer = null; }
-                if (session.finalized) return;
+                if (session.finalized || session.autoFinalizeRequested) return;
                 console.warn('Dual native STT error:', error);
                 const detail = [error?.code, error?.error, error?.message].filter(value => value !== undefined && value !== null).join(' ').toLowerCase();
                 const permissionError = /permission|denied|not.?allowed|record_audio/.test(detail);
@@ -5492,7 +5515,6 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 }
                 if (silenceError && session.mode === 'smart' && session.latestTranscript) {
                     beginSmartCountdown(session);
-                    restartRecognition(session, { silent: true });
                     return;
                 }
                 if (silenceError) {
@@ -5527,7 +5549,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
     }
     function startWebRecognition(session) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition || session.finalized || session.stopRequested || activeSession?.id !== session.id) {
+        if (!SpeechRecognition || session.finalized || session.autoFinalizeRequested || session.stopRequested || activeSession?.id !== session.id) {
             if (!session.finalized && !session.stopRequested) abortSession(session, '❌ 此瀏覽器不支援語音辨識，請改用支援語音的裝置或直接打字。');
             return;
         }
@@ -5606,6 +5628,8 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             silenceDeadline: null,
             restartTimer: null,
             sendTimer: null,
+            smartCountdownActive: false,
+            autoFinalizeRequested: false,
             stopRequested: false,
             finalized: false
         };
@@ -5719,6 +5743,14 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
     };
 })();
 </script>
+
+
+
+
+
+
+
+
 
 
 
