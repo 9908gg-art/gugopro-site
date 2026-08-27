@@ -1291,6 +1291,13 @@
 
 
 
+
+
+
+
+<script src="native-admob-bridge.js"></script>
+
+
 <style id="gugo-capsule-dock-style">
 /* GugoPro Gemini-style capsule composer */
 html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
@@ -1472,7 +1479,18 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
     .capsule-dock.has-speech-status #user-text { padding-top: 51px; }
     .capsule-dock #user-text::placeholder { font-size: .78rem; }
     .btn-header-material { width: 36px; height: 36px; min-width: 36px; min-height: 36px; }
+    .lang-panel { width: 90%; max-width: 400px; min-width: 280px; box-sizing: border-box; right: 50%; transform: translateX(50%); }
+    .lang-settings-grid { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 7px; width: 100%; }
+    .lang-box { min-width: 0; }
+    .lang-label { font-size: .68rem; }
+    .lang-select { width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; font-size: .72rem; padding: 5px 4px; }
 }
+.lang-panel { width: 90%; max-width: 400px; min-width: 280px; box-sizing: border-box; }
+.lang-settings-grid { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: end; width: 100%; }
+.lang-box { min-width: 0; }
+.lang-select { width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; }
+.admob-banner-slot { display: none; width: 100%; min-height: 0; max-height: 0; overflow: hidden; pointer-events: none; }
+.admob-banner-slot[data-enabled="true"] { display: block; min-height: 50px; max-height: 100px; pointer-events: auto; }
 </style>
 </head>
 <body>
@@ -1583,6 +1601,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 </div>
 
 
+                <div id="admob-banner-slot" class="admob-banner-slot" data-enabled="false" data-ad-unit-id="ca-app-pub-3940256099942544/6300978111" aria-hidden="true"></div>
                 <div class="capsule-composer-row">
                     <button id="btn-mic" class="btn-circle btn-mic dual-speech-button capsule-voice-button learning-speech" type="button" aria-label="學習語言發話與發音評分">
                         <span id="learning-speech-label" class="speech-button-language">🇬🇧</span><span class="capsule-mic-badge"><i class="fa-solid fa-microphone"></i></span>
@@ -5784,6 +5803,12 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
 
 
 
+
+
+
+
+
+
 <script id="gugo-capsule-dock-modes-js">
 // GugoPro Gemini-style Capsule Dock + three speech modes
 (() => {
@@ -5792,6 +5817,8 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
 
     const MODE_KEY = 'gugopro_ai_tutor_speech_mode_v1';
     const SMART_SILENCE_KEY = 'gugopro_ai_tutor_smart_silence_seconds_v1';
+    const UI_LANG_KEY = 'gugopro_tutor_ui_lang';
+    const ADMOB_TEST_BANNER_ID = 'ca-app-pub-3940256099942544/6300978111';
     const MODES = {
         hold: { label: '模式 A：按住發話', description: '按住學習語言或母語國旗錄音，放開即結束並送出。' },
         tap: { label: '模式 B：點擊開關', description: '點擊國旗開始錄音，再次點擊停止並送出。' },
@@ -5822,6 +5849,30 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
     }
     window.GugoSpeechMode = getMode();
     window.GugoGetSpeechMode = getMode;
+    window.GugoAdMobConfig = { testBannerId: ADMOB_TEST_BANNER_ID, enabledByNativeHook: false, requiresOwnUnitForRelease: true };
+    window.GugoGetUiLanguage = () => localStorage.getItem(UI_LANG_KEY) || 'zh-TW';
+    window.GugoSetUiLanguage = value => {
+        const lang = String(value || 'zh-TW');
+        localStorage.setItem(UI_LANG_KEY, lang);
+        document.documentElement.lang = lang;
+        document.documentElement.dataset.uiLang = lang;
+        window.dispatchEvent(new CustomEvent('gugopro:ui-language-change', { detail: { lang } }));
+        return lang;
+    };
+    window.GugoShowTestAdMobBanner = () => {
+        if (window.GugoAdMob && typeof window.GugoAdMob.showTestBanner === 'function') {
+            window.GugoAdMob.showTestBanner();
+            return true;
+        }
+        return false;
+    };
+    window.GugoHideTestAdMobBanner = () => {
+        if (window.GugoAdMob && typeof window.GugoAdMob.hideTestBanner === 'function') {
+            window.GugoAdMob.hideTestBanner();
+            return true;
+        }
+        return false;
+    };
     window.GugoGetSmartSilenceMs = () => getSmartSilenceSeconds() * 1000;
     window.GugoSetSmartSilenceSeconds = setSmartSilenceSeconds;
 
@@ -5957,7 +6008,30 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         const description = document.getElementById('speech-mode-description');
         if (description) description.textContent = MODES[mode]?.description || MODES.smart.description;
     }
+    function ensureUiLanguagePanel() {
+        const sideMenu = document.getElementById('side-menu');
+        if (!sideMenu || document.getElementById('ui-language-section')) return;
+        const section = document.createElement('div');
+        section.id = 'ui-language-section';
+        section.className = 'menu-section capsule-ui-language-section';
+        section.innerHTML = '<div class="menu-title">🌐 介面語言</div><select id="ui-language-select" class="lang-select" aria-label="選擇介面語言"></select><small class="capsule-speech-mode-description">目前先保存介面語言代碼，翻譯字典可在後續版本載入。</small>';
+        const source = document.getElementById('target-lang');
+        const select = section.querySelector('#ui-language-select');
+        Array.from(source?.options || []).forEach(option => {
+            const item = document.createElement('option');
+            item.textContent = option.textContent;
+            item.value = option.value;
+            select.appendChild(item);
+        });
+        const saved = window.GugoGetUiLanguage();
+        select.value = Array.from(select.options).some(option => option.value === saved) ? saved : 'zh-TW';
+        window.GugoSetUiLanguage(select.value);
+        select.addEventListener('change', () => window.GugoSetUiLanguage(select.value));
+        const anchor = sideMenu.querySelector('.capsule-speech-mode-section, .model-settings-section');
+        if (anchor) anchor.before(section); else sideMenu.appendChild(section);
+    }
     function ensureSpeechModePanel() {
+        ensureUiLanguagePanel();
         const sideMenu = document.getElementById('side-menu');
         if (!sideMenu || document.getElementById('speech-mode-section')) return;
         const section = document.createElement('div');
@@ -6161,6 +6235,11 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
     }
     function bind() {
         ensureSpeechModePanel();
+        const admobSlot = document.getElementById('admob-banner-slot');
+        if (admobSlot) {
+            admobSlot.dataset.adUnitId = ADMOB_TEST_BANNER_ID;
+            admobSlot.setAttribute('aria-hidden', 'true');
+        }
         bindComposerFeedback();
         updateCapsuleLabels();
         updateModeDescription();
