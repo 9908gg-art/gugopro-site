@@ -79,7 +79,7 @@ def check_css() -> None:
 
 def check_registry_and_links() -> None:
     academy = read(ACADEMY)
-    require("<b>16</b><span>互動決策工具" in academy, "academy tool count is not 16")
+    require("<b>19</b><span>互動決策工具" in academy, "academy tool count is not 19")
     require('tools/trade-expectancy.html' in academy, "academy trade expectancy card missing")
 
     registry = json.loads(read(REGISTRY))
@@ -130,7 +130,7 @@ def main() -> None:
     check_registry_and_links()
     check_math()
     print("trade expectancy: PASS")
-    print("academy_tools=16")
+    print("academy_tools=19")
     print("net_win_r=2.9355")
     print("net_loss_r=-1.0585")
     print("expectancy_r_per_trade=-0.0600")

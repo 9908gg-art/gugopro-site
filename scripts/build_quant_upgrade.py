@@ -200,6 +200,9 @@ def add_json_entry():
         {"id":"academy-volatility-zscore","name":"波動度 Z-Score 研究工具","name_en":"Volatility Z-Score Research Tool","category":"finance-academy","url":"/academy/tools/volatility-zscore.html","live_url":"https://academy.gugopro.com/tools/volatility-zscore.html","icon":"fa-solid fa-wave-square","description":"以使用者查證的歷史日報酬計算滾動波動度與 Z-Score，純前端不填假行情。","status":"online","tags":["波動度","Z-Score","量化研究","Rolling Volatility","前端計算"],"color":"blue","created_at":"2026-08-26"},
         {"id":"academy-futures-basis-pairs","name":"臺指期／富台期期現價差工具","name_en":"TAIEX Futures Basis & Pairs Tool","category":"finance-academy","url":"/academy/tools/futures-basis-pairs.html","live_url":"https://academy.gugopro.com/tools/futures-basis-pairs.html","icon":"fa-solid fa-arrows-left-right-to-line","description":"輸入同時點現貨、近月與次月價格，拆解 Basis、年化期現價差與轉倉價差。","status":"online","tags":["臺指期","富台期","Basis","期現價差","轉倉","配對交易"],"color":"amber","created_at":"2026-08-26"},
         {"id":"academy-kelly-risk-budget","name":"Kelly 風險預算工具","name_en":"Kelly Risk Budget Calculator","category":"finance-academy","url":"/academy/tools/kelly-risk-budget.html","live_url":"https://academy.gugopro.com/tools/kelly-risk-budget.html","icon":"fa-solid fa-shield-halved","description":"以交易紀錄摘要計算 Full／Fractional Kelly 與停損部位上限，明示樣本與跳空限制。","status":"online","tags":["Kelly","部位管理","風險預算","Fractional Kelly","交易風控"],"color":"emerald","created_at":"2026-08-26"},
+        {"id":"academy-practical-trade-plan","name":"實戰交易計畫與部位檢查器","name_en":"Practical Trade Plan & Position Checker","category":"finance-academy","url":"/academy/tools/practical-trade-plan.html","live_url":"https://gugopro.com/academy/tools/practical-trade-plan.html","icon":"fa-solid fa-ruler-combined","description":"以帳戶資金、單筆風險、價格、乘數、手續費與滑價反推最大整數部位。","status":"online","tags":["交易計畫","部位大小","風險預算","停損","滑價","交易前檢查","前端計算"],"color":"blue","created_at":"2026-08-27"},
+        {"id":"academy-trade-journal-analyzer","name":"交易日誌分析器","name_en":"Trade Journal Analyzer","category":"finance-academy","url":"/academy/tools/trade-journal-analyzer.html","live_url":"https://gugopro.com/academy/tools/trade-journal-analyzer.html","icon":"fa-solid fa-book-open-reader","description":"貼入已完成交易的 R 結果，計算勝率、平均盈虧、Profit Factor、最大連虧與 R 回撤。","status":"online","tags":["交易日誌","勝率","期望值","Profit Factor","最大連虧","回撤","前端計算"],"color":"teal","created_at":"2026-08-27"},
+        {"id":"academy-trade-rule-checklist","name":"交易前規則檢查器","name_en":"Pre-trade Rule Checklist","category":"finance-academy","url":"/academy/tools/trade-rule-checklist.html","live_url":"https://gugopro.com/academy/tools/trade-rule-checklist.html","icon":"fa-solid fa-list-check","description":"逐項確認進場、失效、目標、部位、成本、事件、不交易條件與交易後日誌欄位。","status":"online","tags":["交易規則","交易計畫","執行紀律","事前檢查","復盤","交易風控","前端工具"],"color":"amber","created_at":"2026-08-27"},
     ]
     for item in additions:
         if item["id"] not in ids:
@@ -221,13 +224,13 @@ def patch_academy_home():
     text = re.sub(r'<a href="#quant-lab">量化研究</a>', '', text)
     text = text.replace('<a href="#tools">互動實驗室</a>', '<a href="#tools">互動實驗室</a><a href="#quant-lab">量化研究</a>', 1)
     text = text.replace('<b>20</b><span>完整課程章節</span>', '<b>22</b><span>完整課程章節</span>')
-    text = text.replace('<b>11</b><span>互動決策工具</span>', '<b>14</b><span>互動決策工具</span>')
+    text = text.replace('<b>11</b><span>互動決策工具</span>', '<b>19</b><span>互動決策工具</span>')
     lesson_anchor = '<a class="card" data-lesson="20" href="../articles/investment/06-sharpe-mdd-risk-control.html"><span class="tag">20 · 統整</span><h3>建立個人投資政策</h3><p>將目標、限制、配置與再平衡規則整合成 IPS。</p><span class="cardlink">閱讀章節 ↗</span></a>'
     lesson_add = lesson_anchor + '<a class="card" data-lesson="21" href="../articles/investment/15-quant-research-workflow.html"><span class="tag">21 · 研究</span><h3>量化研究工作流</h3><p>由 5MA 扣抵、波動 Z-Score 到樣本外回測，建立可複盤的證據鏈。</p><span class="cardlink">閱讀章節 ↗</span></a><a class="card" data-lesson="22" href="../articles/investment/16-futures-pairs-basis.html"><span class="tag">22 · 衍生品</span><h3>臺指期／富台期配對交易</h3><p>把契約單位、Basis、期限結構、避險口數與轉倉風險拆開學。</p><span class="cardlink">閱讀章節 ↗</span></a>'
     if 'data-lesson="21"' not in text:
         text = text.replace(lesson_anchor, lesson_add)
     tool_anchor = '<div class="tool"><small>11 / 目標</small><h3>儲蓄率與目標路徑</h3><a href="tools/savings-rate.html">估算達標時間 →</a></div>'
-    tool_add = tool_anchor + '<div class="tool"><small>12 / 量化研究</small><h3>波動度 Z-Score</h3><a href="tools/volatility-zscore.html">分析波動位置 →</a></div><div class="tool"><small>13 / 期貨</small><h3>臺指期／富台期期現價差</h3><a href="tools/futures-basis-pairs.html">拆解 Basis 與轉倉 →</a></div><div class="tool"><small>14 / 風控</small><h3>Kelly 風險預算</h3><a href="tools/kelly-risk-budget.html">計算分數 Kelly →</a></div>'
+    tool_add = tool_anchor + '<div class="tool"><small>12 / 量化研究</small><h3>波動度 Z-Score</h3><a href="tools/volatility-zscore.html">分析波動位置 →</a></div><div class="tool"><small>13 / 期貨</small><h3>臺指期／富台期期現價差</h3><a href="tools/futures-basis-pairs.html">拆解 Basis 與轉倉 →</a></div><div class="tool"><small>14 / 風控</small><h3>Kelly 風險預算</h3><a href="tools/kelly-risk-budget.html">計算分數 Kelly →</a></div><div class="tool"><small>15 / 實戰</small><h3>交易期望值</h3><a href="tools/trade-expectancy.html">計入成本與滑價 →</a></div><div class="tool"><small>16 / 實戰</small><h3>風險報酬與最大回撤</h3><a href="tools/risk-return-drawdown.html">分析 Sharpe、MDD →</a></div><div class="tool"><small>17 / 實戰</small><h3>實戰計畫與部位檢查</h3><a href="tools/practical-trade-plan.html">反推最大部位 →</a></div><div class="tool"><small>18 / 實戰</small><h3>交易日誌分析</h3><a href="tools/trade-journal-analyzer.html">分析勝率與回撤 →</a></div><div class="tool"><small>19 / 實戰</small><h3>交易前規則檢查</h3><a href="tools/trade-rule-checklist.html">檢查流程完整度 →</a></div>'
     if 'tools/volatility-zscore.html' not in text:
         text = text.replace(tool_anchor, tool_add)
     quant_section = '<section class="section" id="quant-lab"><div class="sectionhead"><div><div class="eyebrow">Quant research desk</div><h2>把研究假設寫成可複盤的流程</h2><p class="lead">量化工具不會替你製造行情；它要求你提供資料口徑、假設與失效條件，再把公式與限制完整攤開。</p></div></div><div class="source-grid"><a href="../articles/investment/15-quant-research-workflow.html"><strong>15 · 量化研究工作流</strong><span>5MA 扣抵、波動 Z-Score、樣本外回測與檢查表。</span></a><a href="../articles/investment/16-futures-pairs-basis.html"><strong>16 · 臺指期／富台期配對</strong><span>契約單位、Basis、期限結構、避險口數與轉倉。</span></a><a href="tools/kelly-risk-budget.html"><strong>研究配套：Kelly 風險預算</strong><span>以交易紀錄摘要檢查 Full／Fractional Kelly 的敏感度。</span></a><a href="research/"><strong>公開資料研究層</strong><span>來源登錄、資料契約、快照 hash、as-of 與品質狀態。</span></a><a href="research/quant-lab.html"><strong>Phase 2 特徵與回測</strong><span>波動特徵、next-bar 基準、成本與 walk-forward windows。</span></a></div></section>'
@@ -241,6 +244,9 @@ def patch_academy_home():
         quant_link = '<a href="research/quant-lab.html"><strong>Phase 2 特徵與回測</strong><span>波動特徵、next-bar 基準、成本與 walk-forward windows。</span></a>'
         marker = '<a href="research/"><strong>公開資料研究層</strong><span>來源登錄、資料契約、快照 hash、as-of 與品質狀態。</span></a>'
         text = text.replace(marker, marker + quant_link, 1)
+    practical_section = '<section class="section" id="practical-trading"><div class="sectionhead"><div><div class="eyebrow">Category 13 · Practical trading</div><h2>實戰交易：從規則到復盤</h2><p class="lead">第 13 類把交易計畫、訂單執行、部位風控、策略驗證、持倉管理與交易日誌串成可操作流程；不提供即時訊號，也不假裝能預測市場。</p></div></div><div class="source-grid"><a href="../articles/investment/17-practical-trading.html"><strong>第 13 類實戰交易知識樹</strong><span>市場選擇、計畫、訂單、風控、策略、回測、持倉與復盤九大章節。</span></a><a href="tools/practical-trade-plan.html"><strong>實戰計畫與部位檢查器</strong><span>以帳戶風險、停損、成本與滑價反推最大整數部位。</span></a><a href="tools/trade-journal-analyzer.html"><strong>交易日誌分析器</strong><span>貼入已完成交易 R 結果，檢查勝率、期望值、連虧與回撤。</span></a><a href="tools/trade-rule-checklist.html"><strong>交易前規則檢查器</strong><span>逐項確認進場、失效、成本、事件與事後復盤欄位。</span></a></div></section>'
+    if 'id="practical-trading"' not in text:
+        text = text.replace('</div></section><section class="section sources" id="sources">', '</div></section>' + practical_section + '<section class="section sources" id="sources">', 1)
     path.write_text(text, encoding="utf-8")
 
 
@@ -262,6 +268,23 @@ def patch_article_index():
         '''
     if 'id="quant-research"' not in text:
         text = text.replace('        <!-- Ko-fi Section -->', '        ' + block + '<!-- Ko-fi Section -->')
+    practical_block = '''<section class="category-block" id="practical-trading">
+                <div class="category-title-flex">
+                    <h3><i class="fa-solid fa-compass-drafting text-blue"></i> 🧭 第 13 類實戰交易 (Practical Trading)</h3>
+                    <span class="cat-count">1 篇總覽 · 4 個工具</span>
+                </div>
+                <div class="tools-grid">
+                    <a href="17-practical-trading.html" class="tool-card"><div class="tool-card-top"><div class="tool-icon icon-intermediate"><i class="fa-solid fa-route"></i></div></div><h4>實戰交易知識樹</h4><p>從市場選擇、交易計畫、訂單執行、部位風控、策略、回測、持倉管理到交易日誌復盤。</p><div class="btn-visit-small">閱讀 13 類總覽 <i class="fa-solid fa-arrow-right"></i></div></a>
+                    <a href="../../academy/tools/practical-trade-plan.html" class="tool-card"><div class="tool-card-top"><div class="tool-icon icon-advanced"><i class="fa-solid fa-ruler-combined"></i></div></div><h4>實戰計畫與部位檢查器</h4><p>以帳戶風險、停損、成本與滑價反推最大整數部位。</p><div class="btn-visit-small">開啟工具 <i class="fa-solid fa-arrow-right"></i></div></a>
+                    <a href="../../academy/tools/trade-expectancy.html" class="tool-card"><div class="tool-card-top"><div class="tool-icon icon-advanced"><i class="fa-solid fa-scale-balanced"></i></div></div><h4>交易期望值與成本</h4><p>計入手續費與滑價，重新計算淨獲利、淨虧損與損益兩平勝率。</p><div class="btn-visit-small">開啟工具 <i class="fa-solid fa-arrow-right"></i></div></a>
+                    <a href="../../academy/tools/trade-journal-analyzer.html" class="tool-card"><div class="tool-card-top"><div class="tool-icon icon-advanced"><i class="fa-solid fa-book-open-reader"></i></div></div><h4>交易日誌分析器</h4><p>貼入已完成交易的 R 結果，檢查勝率、期望值、Profit Factor、連虧與回撤。</p><div class="btn-visit-small">開啟工具 <i class="fa-solid fa-arrow-right"></i></div></a>
+                    <a href="../../academy/tools/trade-rule-checklist.html" class="tool-card"><div class="tool-card-top"><div class="tool-icon icon-advanced"><i class="fa-solid fa-list-check"></i></div></div><h4>交易前規則檢查器</h4><p>逐項核對進場、失效、成本、事件、部位與交易後日誌是否事前寫清楚。</p><div class="btn-visit-small">開啟工具 <i class="fa-solid fa-arrow-right"></i></div></a>
+                </div>
+            </section>
+
+        '''
+    if 'id="practical-trading"' not in text:
+        text = text.replace('        <!-- Ko-fi Section -->', '        ' + practical_block + '<!-- Ko-fi Section -->')
     path.write_text(text, encoding="utf-8")
 
 
@@ -297,6 +320,10 @@ def patch_sitemap():
         '<url><loc>https://academy.gugopro.com/tools/volatility-zscore.html</loc><lastmod>2026-08-26</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>',
         '<url><loc>https://academy.gugopro.com/tools/futures-basis-pairs.html</loc><lastmod>2026-08-26</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>',
         '<url><loc>https://gugopro.com/academy/research/quant-lab.html</loc><lastmod>2026-08-26</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>',
+        '<url><loc>https://gugopro.com/articles/investment/17-practical-trading.html</loc><lastmod>2026-08-27</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>',
+        '<url><loc>https://academy.gugopro.com/tools/practical-trade-plan.html</loc><lastmod>2026-08-27</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>',
+        '<url><loc>https://academy.gugopro.com/tools/trade-journal-analyzer.html</loc><lastmod>2026-08-27</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>',
+        '<url><loc>https://academy.gugopro.com/tools/trade-rule-checklist.html</loc><lastmod>2026-08-27</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>',
     ]
     for entry in additions:
         if entry not in text:

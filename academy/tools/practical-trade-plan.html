@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>實戰交易計畫與部位檢查器｜GugoPro Academy</title>
+<meta name="description" content="輸入帳戶資金、單筆風險、進場、停損、目標與交易成本，估算成本後的最大整數部位與風險使用率。純前端、不抓行情。">
+<link rel="canonical" href="https://gugopro.com/academy/tools/practical-trade-plan.html">
+<link rel="stylesheet" href="../academy.css"><link rel="stylesheet" href="practical-trading.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"實戰交易計畫與部位檢查器","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"以使用者輸入的帳戶風險、價格與交易成本估算最大整數部位。","url":"https://gugopro.com/academy/tools/practical-trade-plan.html"}</script>
+</head>
+<body class="quant-page practical-page">
+<main class="practical-shell">
+  <div class="practical-top"><a class="practical-brand" href="../">← 回到 GugoPro Academy</a><a class="practical-back" href="../../articles/investment/17-practical-trading.html#risk">閱讀第 13 類：部位與風控</a></div>
+  <nav class="practical-jump" aria-label="頁內導覽"><a href="#inputs">交易計畫</a><a href="#costs">成本假設</a><a href="#results">部位結果</a><a href="#limits">模型限制</a></nav>
+  <header class="practical-hero"><div><div class="eyebrow">Category 13 · Pre-trade control</div><h1>實戰交易計畫<br>與部位檢查器</h1><p>先寫下最多願意承擔的損失，再反推最大整數部位。工具不提供標的、方向或價格；所有輸入只在目前瀏覽器本地計算。</p></div><div class="practical-badge"><strong>先風險，後部位</strong><span>把滑價與成本放進停損預算</span></div></header>
+  <div class="practical-layout">
+    <section class="practical-panel" id="inputs"><div class="eyebrow">Pre-trade plan</div><h2>建立一筆交易假設</h2><div class="practical-grid two">
+      <div><label for="direction">方向</label><select id="direction"><option value="long">多頭（Long）</option><option value="short">空頭（Short）</option></select></div>
+      <div><label for="account">帳戶資金（元）</label><input id="account" type="number" min="0.01" step="1" placeholder="例如 100000" inputmode="decimal"></div>
+      <div><label for="risk-percent">單筆風險上限（%）</label><input id="risk-percent" type="number" min="0.01" max="99.99" step="0.1" placeholder="例如 1" inputmode="decimal"><small class="practical-help">這是上限假設，不代表實際一定只損失此數。</small></div>
+      <div><label for="multiplier">每單位價格乘數</label><input id="multiplier" type="number" min="0.000001" step="0.01" value="1" inputmode="decimal"><small class="practical-help">現貨通常為 1；期貨請自行核對契約乘數。</small></div>
+      <div><label for="entry">進場價 Entry</label><input id="entry" type="number" min="0.000001" step="0.0001" placeholder="輸入你的計畫價格" inputmode="decimal"></div>
+      <div><label for="stop">停損價 Stop</label><input id="stop" type="number" min="0.000001" step="0.0001" placeholder="輸入失效價格" inputmode="decimal"></div>
+      <div><label for="target">目標價 Target</label><input id="target" type="number" min="0.000001" step="0.0001" placeholder="輸入計畫目標" inputmode="decimal"></div>
+    </div>
+    <fieldset class="practical-fieldset" id="costs"><legend>成本與滑價假設</legend><p>費率請以百分比填入，例如 0.10% 填寫 0.10。滑價一律按對交易者不利方向估算；固定費按每次進場／出場各一筆計入。</p><div class="practical-grid two">
+      <div><label for="entry-fee">進場手續費（%）</label><input id="entry-fee" type="number" min="0" max="99.99" step="0.01" value="0.10" inputmode="decimal"></div>
+      <div><label for="exit-fee">出場手續費（%）</label><input id="exit-fee" type="number" min="0" max="99.99" step="0.01" value="0.10" inputmode="decimal"></div>
+      <div><label for="entry-slip">進場滑價（%）</label><input id="entry-slip" type="number" min="0" max="99.99" step="0.01" value="0.05" inputmode="decimal"></div>
+      <div><label for="exit-slip">停損出場滑價（%）</label><input id="exit-slip" type="number" min="0" max="99.99" step="0.01" value="0.05" inputmode="decimal"></div>
+      <div><label for="entry-fixed">進場固定費（元）</label><input id="entry-fixed" type="number" min="0" step="0.01" value="0" inputmode="decimal"></div>
+      <div><label for="exit-fixed">出場固定費（元）</label><input id="exit-fixed" type="number" min="0" step="0.01" value="0" inputmode="decimal"></div>
+    </div></fieldset>
+    <div class="practical-actions"><button class="practical-calc" id="calculate" type="button">檢查部位</button><button class="practical-clear" id="clear" type="button">清除結果</button></div><div class="practical-status" id="status" aria-live="polite">填入你的交易假設後即時計算；頁面不帶入任何市場行情。</div><div class="practical-formula"><strong>公式：</strong>可承擔損失＝帳戶資金×風險%；每單位風險＝停損價差×乘數＋變動成本；最大整數部位＝floor（（可承擔損失−固定費）÷每單位風險）。</div>
+    </section>
+    <section class="practical-result" id="results" aria-live="polite"><div class="eyebrow">Position check</div><h2>部位與風險結果</h2><div class="practical-big" id="max-units">—</div><div class="practical-sub" id="result-message">等待有效輸入</div><div class="practical-metrics">
+      <div class="practical-metric"><span>風險預算</span><b id="risk-budget">—</b></div><div class="practical-metric"><span>每單位風險</span><b id="risk-per-unit">—</b></div><div class="practical-metric"><span>估算名目部位</span><b id="notional">—</b></div><div class="practical-metric"><span>預估最壞損失</span><b id="worst-loss">—</b></div><div class="practical-metric"><span>預算使用率</span><b id="budget-usage">—</b></div><div class="practical-metric"><span>成本後 R:R</span><b id="net-rr">—</b></div><div class="practical-metric"><span>實際進場價</span><b id="actual-entry">—</b></div><div class="practical-metric"><span>停損成交假設</span><b id="actual-stop">—</b></div>
+    </div><div class="practical-breakdown"><h3>計算拆解</h3><div class="practical-table-wrap"><table class="practical-table"><thead><tr><th>項目</th><th>數值</th><th>說明</th></tr></thead><tbody id="breakdown-rows"><tr><td colspan="3">尚未計算</td></tr></tbody></table></div></div><div class="practical-note" id="limits"><strong>模型限制：</strong>這是交易前的簡化風險檢查，不會判斷標的是否值得交易。未納入跳空、部分成交、流動性衝擊、追加保證金、稅費、借券費與實際成交機率；期貨、選擇權與槓桿產品必須另行核對契約規格。</div></section>
+  </div>
+  <section class="practical-section"><div class="eyebrow">Use with the category</div><h2>接下來檢查什麼？</h2><div class="practical-cards"><div class="practical-card"><strong>單筆成本</strong><p>把計畫 R:R 轉成淨期望值，不只看價格距離。</p><a href="trade-expectancy.html">開啟交易期望值 →</a></div><div class="practical-card"><strong>完成交易</strong><p>用實際 R 結果檢查勝率、平均盈虧與最大連虧。</p><a href="trade-journal-analyzer.html">開啟交易日誌分析器 →</a></div><div class="practical-card"><strong>歷史風險</strong><p>把權益序列轉成 MDD、恢復期與風險報酬指標。</p><a href="risk-return-drawdown.html">開啟 MDD 工具 →</a></div></div></section>
+  <footer class="practical-footer">資料與計算只使用你輸入的假設，沒有即時報價或伺服器計算。請先核對券商、交易所與產品規格；本頁是研究與教育工具，不是個人化投資或交易建議。</footer>
+</main><script src="../academy.js"></script><script src="practical-trade-plan.js"></script></body></html>

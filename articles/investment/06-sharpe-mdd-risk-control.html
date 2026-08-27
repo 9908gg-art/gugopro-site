@@ -17,7 +17,7 @@
 <header class="rr-nav"><div class="rr-shell rr-navin"><a class="rr-brand" href="https://gugopro.com">GugoPro Academy</a><a class="rr-back" href="../../academy/">← 回到學院</a></div></header>
 <main class="rr-shell">
 <header class="rr-hero"><div class="rr-kicker">Risk · Return · Drawdown</div><h1>風險報酬與最大回撤分析</h1><p>不要只問「賺了多少」。先把單筆交易的風報比、歷史報酬的波動、權益曲線的回撤深度與恢復時間放在同一張圖上，才能知道一個結果是靠穩定優勢，還是靠少數極端行情撐起來。</p><nav class="rr-chapters" aria-label="本篇章節"><a href="#risk-reward">單筆風報比</a><a href="#returns">報酬與波動</a><a href="#drawdown">最大回撤</a><a href="#ratios">績效指標</a><a href="#workflow">分析流程</a><a href="#limits">資料邊界</a></nav></header>
-<div class="rr-callout"><strong>先記住：</strong>單筆 R:R 是進場前的情境結構；Sharpe、Sortino、MDD 是一段歷史序列的事後描述。它們回答不同問題，不能把一個漂亮的單筆 3R 直接當成策略具備高 Sharpe，也不能把低 MDD 當成未來不會大跌。</div>
+<div class="rr-callout"><strong>先記住：</strong>單筆 R:R（風報比）是進場前的情境結構；Sharpe、Sortino、MDD 是一段歷史序列的事後描述。它們回答不同問題，不能把一個漂亮的單筆 3R 直接當成策略具備高 Sharpe，也不能把低 MDD 當成未來不會大跌。</div>
 <section class="rr-grid" aria-label="重點摘要"><div class="rr-card"><h3>報酬不是完整答案</h3><p>相同的累積報酬，可能來自平滑上行，也可能來自長時間盤跌後的一次跳升；波動、偏態與回撤路徑會改變持有者真正承受的體驗。</p></div><div class="rr-card"><h3>MDD 不是波動度</h3><p>波動度把每一期的變動放進統計量；最大回撤只關心從過去高點到後續谷底的最深跌幅，因此兩者應並列，而不是互相替代。</p></div></section>
 <section class="rr-section" id="risk-reward"><h2>一、先拆開「風險報酬比」的兩個世界</h2><p>「風險報酬」在交易對話中至少有兩種意思。第一種是單筆交易的 <strong>R:R（risk-to-reward ratio）</strong>，用停損距離與目標距離描述一個尚未發生的情境；第二種是策略或投資組合的<strong>歷史風險調整績效</strong>，例如 Sharpe、Sortino 與 Calmar，用一串已發生的報酬與權益資料回答「過去拿了多少報酬、付出了什麼代價」。</p>
 <div class="rr-table-wrap"><table class="rr-table"><thead><tr><th>問題</th><th>單筆 R:R</th><th>歷史績效指標</th></tr></thead><tbody><tr><td>資料型態</td><td>進場、停損、目標、方向</td><td>按時間排序的價格或報酬序列</td></tr><tr><td>主要用途</td><td>進場前檢查損失上限與報酬空間</td><td>事後描述波動、下行風險與回撤路徑</td></tr><tr><td>核心盲點</td><td>不包含勝率、滑價、跳空與連續虧損</td><td>歷史樣本不保證未來，且受頻率與資料清理影響</td></tr><tr><td>適合搭配</td><td>部位大小、Kelly 敏感度、交易紀錄</td><td>樣本外測試、壓力情境、回撤預案</td></tr></tbody></table></div>
@@ -26,7 +26,7 @@
 報酬距離（多頭）＝Target − Entry
 R:R 倍數（風報比）＝報酬距離 ÷ 風險距離
 每筆期望值（R）＝勝率 × 平均獲利（R）−（1−勝率）× 平均虧損（R）</div>
-<div class="rr-example"><strong>案例：</strong>若 3R 目標的勝率只有 25%，且每次失敗確實損失 1R，期望值為 0.25×3−0.75×1＝0R，尚未支付手續費、滑價與稅費前就沒有正期望。R:R 越高不等於優勢越高，必須連同可驗證的勝率、實際成交分布與成本檢查。</div>
+<div class="rr-example"><strong>案例：</strong>若 3R 目標的勝率只有 25%，且每次失敗確實損失 1R，期望值為 0.25×3−0.75×1＝0R，尚未支付手續費、滑價與稅費前就沒有正期望。這個風報比越高不等於優勢越高，必須連同可驗證的勝率、實際成交分布與成本檢查。</div>
 <div class="rr-cta"><div><h3>想先檢查單筆情境？</h3><p>先用獨立的<a href="../../academy/tools/trade-expectancy.html#inputs" class="rr-back">交易期望值計算器</a>計入手續費與滑價，再用歷史序列工具檢查波動與最大回撤；也可連到部位大小與 Kelly 風險預算教學。</p></div><a class="rr-btn" href="../../academy/tools/trade-expectancy.html#inputs">計算成本調整後期望值 →</a></div></section>
 <section class="rr-section" id="returns"><h2>二、把價格序列轉成可比較的報酬</h2><p>分析前最重要的不是先挑一個漂亮指標，而是確認資料口徑。若貼入價格序列，工具會按「舊到新」計算簡單報酬；若貼入報酬序列，工具會從起始資金逐期複利建立權益曲線。兩者不能無聲混用，也不能把沒有調整股利與分割的價格直接當作可比較的投資報酬。</p>
 <div class="rr-formula">價格報酬 rₜ＝Pₜ ÷ Pₜ₋₁ − 1

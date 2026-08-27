@@ -27,7 +27,7 @@ for path in required:
 
 academy = (ROOT / "academy" / "index.html").read_text(encoding="utf-8")
 require(len(re.findall(r'data-lesson="', academy)) == 22, "academy lesson count is not 22")
-require(len(re.findall(r'<div class="tool"><small>', academy)) == 16, "academy tool count is not 16")
+require(len(re.findall(r'<div class="tool"><small>', academy)) == 19, "academy tool count is not 19")
 require(academy.count('id="quant-lab"') == 1, "quant-lab section missing or duplicated")
 require(academy.count('href="../articles/investment/15-quant-research-workflow.html"') >= 1, "academy missing article 15 link")
 require(academy.count('href="../articles/investment/16-futures-pairs-basis.html"') >= 1, "academy missing article 16 link")
@@ -90,6 +90,7 @@ for path in sorted(list((ROOT / "academy").rglob("*.html")) + list((ROOT / "arti
 print(f"academy_lessons={academy.count('data-lesson=\"')}")
 print(f"academy_tools={academy.count('<div class=\"tool\"><small>')}")
 print("new_tools=3")
+print("practical_trading_tools=3")
 print("new_articles=2")
 print("schema=ok")
 print("sitemap=ok")

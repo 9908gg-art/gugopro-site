@@ -101,7 +101,7 @@ def check_article() -> tuple[int, int]:
     assert_true(len(text) >= 9000, f"article too short: {len(text)}")
     assert_true(text.count("最大回撤") >= 8, "article lacks MDD explanation")
     assert_true(text.count("風報比") >= 5, "article lacks R:R explanation")
-    assert_true("../../academy/tools/risk-return-drawdown.html#trade-input" in raw, "R:R CTA missing")
+    assert_true("../../academy/tools/trade-expectancy.html#inputs" in raw, "R:R CTA missing")
     assert_true("../../academy/tools/risk-return-drawdown.html#inputs" in raw, "history tool CTA missing")
     assert_true("google-analytics" not in raw.lower(), "unexpected analytics script in rewritten article")
     return len(text), len(re.findall(r"<table\b", raw, flags=re.I))
@@ -150,7 +150,7 @@ def check_css() -> None:
 def check_index() -> None:
     academy = read(ACADEMY)
     index = read(ARTICLE_INDEX)
-    assert_true("<b>15</b><span>互動決策工具" in academy, "academy tool count not updated")
+    assert_true("<b>19</b><span>互動決策工具" in academy, "academy tool count not updated")
     assert_true('tools/risk-return-drawdown.html' in academy, "new tool missing from academy hub")
     assert_true("風險報酬與最大回撤分析" in index, "article index title not updated")
     assert_true("../articles/investment/06-sharpe-mdd-risk-control.html" in academy, "academy article card link missing")
