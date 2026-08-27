@@ -1302,6 +1302,16 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
 <style id="gugo-capsule-dock-style">
 /* GugoPro Gemini-style capsule composer */
 html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
@@ -1614,6 +1624,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
 
 
                 <div id="admob-banner-slot" class="admob-banner-slot" data-enabled="false" data-ad-unit-id="ca-app-pub-3940256099942544/6300978111" aria-hidden="true"></div>
+                <div id="admob-banner-slot" class="admob-banner-slot" data-enabled="false" data-ad-unit-id="ca-app-pub-3940256099942544/6300978111" aria-hidden="true"></div>
                 <div class="capsule-composer-row">
                     <button id="btn-mic" class="btn-circle btn-mic dual-speech-button capsule-voice-button learning-speech" type="button" aria-label="學習語言發話與發音評分">
                         <span id="learning-speech-label" class="speech-button-language">🇬🇧</span><span class="capsule-mic-badge"><i class="fa-solid fa-microphone"></i></span>
@@ -1621,7 +1632,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                     <div class="main-input-group dual-stt-composer capsule-dock">
                         <div id="speech-composer-status" class="speech-composer-status" data-state="idle" aria-live="polite" aria-atomic="true"></div>
                         <div id="speech-composer-hint" class="speech-composer-hint" data-state="idle" data-visible="0" aria-live="polite" aria-atomic="true"></div>
-                        <textarea id="user-text" rows="1" maxlength="8000" placeholder="按住語音按鈕，錄音放開後送出；也可以直接打字" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" data-lpignore="true"></textarea>
+                        <textarea id="user-text" rows="1" maxlength="8000" placeholder="點擊開始，再次點擊停止送出；也可直接打字" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" data-lpignore="true"></textarea>
                         <div class="capsule-actions" aria-label="發送">
                             <button id="btn-send" class="btn-circle btn-send" type="button" aria-label="發送"><i class="fa-solid fa-paper-plane"></i></button>
                         </div>
@@ -2539,6 +2550,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                     <li><i class="fa-solid fa-book-bookmark"></i> 設定中可建立多本生詞字典，為每個教室選擇教材與字典學習清單</li>
                     <li><i class="fa-solid fa-comments"></i> 可指定旅遊、點餐、商務等主題，或依教材進行問答、複習與測驗</li>
                     <li><i class="fa-solid fa-language"></i> 頂部語言選單可設定對話語言；右上角選單可管理教室、教材與模型</li>
+                    <li><i class="fa-solid fa-microphone-lines"></i> 語音可選點擊開始再點擊停止，或自動等待停頓（預設 6 秒，可在設定調整）</li>
                     <li><i class="fa-solid fa-microphone-lines"></i> 語音可選按住放開送出、點擊開始再點擊停止，或自動等待停頓（預設 6 秒，可在設定調整）</li>
                 </ul>
             `;
@@ -5124,7 +5136,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             nativeButton.title = `${motherLabel}（${motherLocale}）語音提問，不進行發音評分`;
             nativeButton.setAttribute('aria-label', `${motherLabel}語音提問，不進行發音評分`);
         }
-        if (input) input.placeholder = '按住語音按鈕，錄音放開後送出；也可以直接打字';
+        if (input) input.placeholder = '點擊開始，再次點擊停止送出；也可直接打字';
         return { targetLocale, motherLocale, targetLabel, motherLabel };
     }
 
@@ -5285,6 +5297,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
     function updateSpeechInput(session, transcript, metadata = {}) {
         if (!session || session.finalized) return;
         if (session.silenceTimer) { clearTimeout(session.silenceTimer); session.silenceTimer = null; }
+        if (session.restartTimer) { clearTimeout(session.restartTimer); session.restartTimer = null; }
         clearSmartCountdown(session);
         session.state = 'recording';
         setDualRecording(session.role, true, session.challengeButton);
@@ -5342,7 +5355,6 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
     }
     function finalizeSession(session) {
         if (!session || session.finalized) return;
-        if (session.mode === 'hold' && !session.releaseRequested) return;
         session.finalized = true;
         session.stopRequested = true;
         session.state = 'finalized';
@@ -5396,7 +5408,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             return;
         }
         session.state = 'restarting';
-        const retryDelay = session.mode === 'hold' ? Math.min(1500, 140 + (session.restartAttempts * 120)) : 140;
+        const retryDelay = 140;
         session.restartTimer = setTimeout(() => {
             session.restartTimer = null;
             if (session.finalized || session.stopRequested || activeSession?.id !== session.id) return;
@@ -5412,18 +5424,18 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             window.GugoSetSpeechComposerState?.('recording', session.role);
             return;
         }
-        if (session.mode === 'hold' || session.mode === 'tap' || (session.mode === 'smart' && !session.latestTranscript)) {
+        if (session.mode === 'tap' || (session.mode === 'smart' && !session.latestTranscript)) {
             if (session.mode !== 'smart' || !session.latestTranscript) window.GugoSetSpeechComposerState?.('recording', session.role);
             restartRecognition(session, { silent: true });
             return;
         }
         beginSmartCountdown(session);
+        restartRecognition(session, { silent: true });
     }
     function stopActiveSession() {
         const session = activeSession;
         if (!session || session.finalized) return;
         session.stopRequested = true;
-        session.releaseRequested = true;
         session.state = 'stopping';
         window.GugoSetSpeechComposerState?.('stopping', session.role);
         clearSpeechTimers(session);
@@ -5447,11 +5459,6 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             session.startTimer = null;
             if (session.finalized || activeSession?.id !== session.id || !session.startPending) return;
             native.stopRecognition().catch(() => {});
-            if (session.mode === 'hold' && !session.stopRequested) {
-                window.GugoSetSpeechComposerState?.('reconnecting', session.role, '語音服務重新連線中，請繼續按住…');
-                restartRecognition(session);
-                return;
-            }
             abortSession(session, '❌ 語音服務啟動逾時，請檢查網路、麥克風權限或稍後重試。');
         }, startupTimeoutMs);
         native.startRecognition({
@@ -5485,6 +5492,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 }
                 if (silenceError && session.mode === 'smart' && session.latestTranscript) {
                     beginSmartCountdown(session);
+                    restartRecognition(session, { silent: true });
                     return;
                 }
                 if (silenceError) {
@@ -5492,7 +5500,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                     restartRecognition(session, { silent: true });
                     return;
                 }
-                if (session.mode === 'hold' || session.mode === 'tap') {
+                if (session.mode === 'tap') {
                     window.GugoSetSpeechComposerState?.('reconnecting', session.role);
                     restartRecognition(session);
                     return;
@@ -5551,7 +5559,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             const detail = String(error?.error || error?.message || '').toLowerCase();
             if (/not.?allowed|permission|service-not-allowed/.test(detail)) {
                 abortSession(session, '❌ 瀏覽器未授予麥克風權限，請允許後再試。');
-            } else if (session.mode === 'hold' || session.mode === 'tap') {
+            } else if (session.mode === 'tap') {
                 restartRecognition(session);
             } else {
                 abortSession(session, '❌ 瀏覽器語音服務暫時無法使用，請稍後再試。');
@@ -5571,7 +5579,8 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         const info = updateComposerLanguageUI();
         const input = document.getElementById('user-text');
         const speechLocale = role === 'learning' ? info.targetLocale : info.motherLocale;
-        const sessionMode = window.GugoGetSpeechMode?.() || window.GugoSpeechMode || 'smart';
+        const requestedMode = window.GugoGetSpeechMode?.() || window.GugoSpeechMode || 'smart';
+        const sessionMode = requestedMode === 'tap' ? 'tap' : 'smart';
         const session = {
             id: ++sessionCounter,
             role,
@@ -5598,7 +5607,6 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             restartTimer: null,
             sendTimer: null,
             stopRequested: false,
-            releaseRequested: false,
             finalized: false
         };
         activeSession = session;
@@ -5765,6 +5773,16 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
 
 
 
+
+
+
+
+
+
+
+
+
+
 <script id="gugo-capsule-dock-modes-js">
 // GugoPro Gemini-style Capsule Dock + three speech modes
 (() => {
@@ -5776,9 +5794,8 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
     const UI_LANG_KEY = 'gugopro_tutor_ui_lang';
     const ADMOB_TEST_BANNER_ID = 'ca-app-pub-3940256099942544/6300978111';
     const MODES = {
-        hold: { label: '模式 A：按住發話', description: '按住學習語言或母語國旗錄音，放開即結束並送出。' },
-        tap: { label: '模式 B：點擊開關', description: '點擊國旗開始錄音，再次點擊停止並送出。' },
-        smart: { label: '模式 C：智慧靜音偵測', description: '點擊語音按鈕開始，停頓設定秒數後自動送出；需要時可再點按鈕提早結束。' }
+        tap: { label: '模式 A：點擊開關', description: '點擊國旗開始錄音，再次點擊停止並送出。' },
+        smart: { label: '模式 B：智慧靜音偵測', description: '點擊語音按鈕開始，停頓設定秒數後自動送出；重新說話會取消倒數並繼續錄音。' }
     };
     const FLAGS = { 'en-US':'🇺🇸', 'zh-TW':'🇹🇼', 'zh-CN':'🇨🇳', 'ja-JP':'🇯🇵', 'ko-KR':'🇰🇷', 'fr-FR':'🇫🇷', 'de-DE':'🇩🇪', 'es-ES':'🇪🇸', 'th-TH':'🇹🇭', 'vi-VN':'🇻🇳', 'id-ID':'🇮🇩', 'pt-BR':'🇧🇷', 'it-IT':'🇮🇹', 'ru-RU':'🇷🇺', 'ar-SA':'🇸🇦', 'hi-IN':'🇮🇳', 'ms-MY':'🇲🇾', 'nl-NL':'🇳🇱', 'pl-PL':'🇵🇱', 'tr-TR':'🇹🇷' };
     const getMode = () => {
@@ -5904,9 +5921,8 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         return String(select?.options?.[select.selectedIndex]?.textContent || fallback || '').trim();
     }
     function speechInputGuide(mode = getMode()) {
-        if (mode === 'hold') return '按住語音按鈕，錄音放開後送出；也可以直接打字';
         if (mode === 'tap') return '點擊開始，再次點擊停止送出；也可直接打字';
-        return `停頓 ${getSmartSilenceSeconds()} 秒自動送出，可點擊提前結束；也可直接打字`;
+        return `停頓 ${getSmartSilenceSeconds()} 秒自動送出，重新說話會繼續錄音；也可直接打字`;
     }
     function updateCapsuleLabels() {
         const targetValue = document.getElementById('target-lang')?.value || 'en-US';
@@ -5940,9 +5956,8 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
     function speechOperationGuide(state, role) {
         const who = role === 'learning' ? '學習語言' : '母語';
         const mode = getMode();
-        if (state === 'recording' && mode === 'hold') return '按住語音按鈕，放開後送出';
         if (state === 'recording' && mode === 'tap') return `再次點擊${who}語音按鈕，停止並送出`;
-        if (state === 'recording' && mode === 'smart') return `停頓 ${getSmartSilenceSeconds()} 秒後自動送出，也可點擊${who}語音按鈕提前結束`;
+        if (state === 'recording' && mode === 'smart') return `停頓 ${getSmartSilenceSeconds()} 秒後自動送出，重新說話會繼續錄音，也可點擊${who}語音按鈕提前結束`;
         if (state === 'waiting') return `倒數期間可點擊${who}語音按鈕立即送出`;
         if (state === 'reconnecting') return '語音服務重新連線中，請繼續說話';
         if (state === 'stopping') return '正在整理語音，請稍候…';
@@ -6030,7 +6045,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         const section = document.createElement('div');
         section.id = 'speech-mode-section';
         section.className = 'menu-section capsule-speech-mode-section';
-        section.innerHTML = `<div class="menu-title">🎙️ 語音操作</div><select id="speech-mode-select" class="lang-select" aria-label="選擇語音操作方式"><option value="hold">按住按鈕，放開送出</option><option value="tap">點擊開始，再點擊停止</option><option value="smart">自動等待停頓後送出</option></select><label class="speech-silence-setting" for="speech-silence-seconds">自動等待秒數 <input id="speech-silence-seconds" type="number" min="1" max="15" step="0.5" inputmode="decimal" aria-label="自動等待秒數"></label><label class="speech-start-cue-setting" for="speech-start-cue-enabled"><input id="speech-start-cue-enabled" type="checkbox" aria-label="啟動語音提示音">按下語音時播放啟動提示音</label><small id="speech-mode-description" class="capsule-speech-mode-description"></small>`;
+        section.innerHTML = `<div class="menu-title">🎙️ 語音操作</div><select id="speech-mode-select" class="lang-select" aria-label="選擇語音操作方式"><option value="tap">點擊開始，再點擊停止</option><option value="smart">自動等待停頓後送出</option></select><label class="speech-silence-setting" for="speech-silence-seconds">自動等待秒數 <input id="speech-silence-seconds" type="number" min="1" max="15" step="0.5" inputmode="decimal" aria-label="自動等待秒數"></label><label class="speech-start-cue-setting" for="speech-start-cue-enabled"><input id="speech-start-cue-enabled" type="checkbox" aria-label="啟動語音提示音">按下語音時播放啟動提示音</label><small id="speech-mode-description" class="capsule-speech-mode-description"></small>`;
         const anchor = sideMenu.querySelector('.model-settings-section');
         if (anchor) anchor.before(section); else sideMenu.appendChild(section);
         const select = section.querySelector('#speech-mode-select');
@@ -6049,15 +6064,6 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         select.addEventListener('change', () => { setMode(select.value); updateCapsuleLabels(); });
     }
 
-    let holdPointerId = null;
-    let holdButton = null;
-    let holdPointerType = null;
-    let holdSuppressClickUntil = 0;
-    function clearHoldPointerState() {
-        holdPointerId = null;
-        holdButton = null;
-        holdPointerType = null;
-    }
     function speechMode() { return window.GugoGetSpeechMode?.() || window.GugoSpeechMode || getMode(); }
     function setSpeechControlActive(button, active) {
         if (!button) return;
@@ -6069,10 +6075,8 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         button.setAttribute('aria-busy', active ? 'true' : 'false');
     }
     function clearSpeechControl() {
-        const button = holdButton || window.GugoSpeechActiveControl || null;
+        const button = window.GugoSpeechActiveControl || null;
         if (button) setSpeechControlActive(button, false);
-        clearHoldPointerState();
-        holdSuppressClickUntil = 0;
         window.GugoSpeechActiveControl = null;
     }
     window.GugoClearSpeechControl = clearSpeechControl;
@@ -6098,21 +6102,12 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         if (!state || !window.GugoSpeechSessionActive || window.GugoSpeechActiveControl !== button) return false;
         event?.preventDefault?.();
         event?.stopPropagation?.();
-        if (speechMode() === 'hold') state.suppressClickUntil = Date.now() + 450;
-        clearHoldPointerState();
         setSpeechComposerState('stopping', state.role);
         window.GugoStopDualSpeech?.();
         return true;
     }
     window.GugoStartSpeechControl = startSpeechControl;
     window.GugoStopSpeechControl = stopSpeechControl;
-    function stopHeldSpeech(event) {
-        if (speechMode() !== 'hold' || !window.GugoSpeechSessionActive || !holdButton) return;
-        const changedTouch = event?.changedTouches?.[0];
-        const pointerId = event?.pointerId ?? changedTouch?.identifier;
-        if (holdPointerId !== null && pointerId !== undefined && String(pointerId) !== String(holdPointerId)) return;
-        stopSpeechControl(holdButton, event);
-    }
     function bindSpeechControl(button, role, config = {}) {
         if (!button) return null;
         const existing = button.__gugoSpeechControlState;
@@ -6122,7 +6117,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         }
         const state = {
             button, role, challengeMessageId: config.challengeMessageId || '', challengeTarget: config.challengeTarget || '',
-            beforeStart: config.beforeStart || null, startFailed: config.startFailed || null, pointerId: null, active: false, suppressClickUntil: 0, suppressNextClick: false
+            beforeStart: config.beforeStart || null, startFailed: config.startFailed || null, active: false, suppressClickUntil: 0, suppressNextClick: false
         };
         button.__gugoSpeechControlState = state;
         button.dataset.capsuleModeBound = '1';
@@ -6134,71 +6129,33 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 return false;
             }
             state.suppressNextClick = false;
-            if (speechMode() === 'hold') return false;
             if (window.GugoSpeechActiveControl === button && window.GugoSpeechSessionActive) stopSpeechControl(button, event);
             else if (!window.GugoSpeechSessionActive) startSpeechControl(button);
             return false;
         };
         const pointerDown = event => {
-            const mode = speechMode();
-            if ((mode === 'tap' || mode === 'smart') && !event?.__gugoSpeechHandled) {
-                event.__gugoSpeechHandled = true;
-                event.preventDefault?.();
-                event.stopPropagation?.();
-                state.suppressNextClick = true;
-                state.suppressClickUntil = Date.now() + 2000;
-                if (window.GugoSpeechActiveControl === button && window.GugoSpeechSessionActive) stopSpeechControl(button, event);
-                else if (!window.GugoSpeechSessionActive) startSpeechControl(button);
-                return;
-            }
-            if (mode !== 'hold' || event?.__gugoSpeechHandled) return;
+            if (event?.__gugoSpeechHandled) return;
             event.__gugoSpeechHandled = true;
             event.preventDefault?.();
             event.stopPropagation?.();
-            if (holdButton || window.GugoSpeechSessionActive) return;
-            state.pointerId = event?.pointerId ?? null;
-            holdPointerId = state.pointerId;
-            holdPointerType = event?.pointerType || 'touch';
-            holdButton = button;
-            try { button.setPointerCapture?.(event?.pointerId); } catch (_) {}
-            if (!startSpeechControl(button)) clearHoldPointerState();
-        };
-        const pointerRelease = event => {
-            if (speechMode() !== 'hold') return;
-            if (holdButton !== button && state.pointerId === null) return;
-            stopHeldSpeech(event);
+            state.suppressNextClick = true;
+            state.suppressClickUntil = Date.now() + 2000;
+            if (window.GugoSpeechActiveControl === button && window.GugoSpeechSessionActive) stopSpeechControl(button, event);
+            else if (!window.GugoSpeechSessionActive) startSpeechControl(button);
         };
         state.pointerDown = pointerDown;
-        state.pointerRelease = pointerRelease;
         button.onpointerdown = pointerDown;
-        button.onpointerup = pointerRelease;
-        button.onpointercancel = pointerRelease;
-        button.onlostpointercapture = pointerRelease;
+        button.onpointerup = null;
+        button.onpointercancel = null;
+        button.onlostpointercapture = null;
         button.ontouchstart = event => {
-            if (window.PointerEvent || event?.__gugoSpeechHandled) return;
-            const mode = speechMode();
-            if (mode === 'tap' || mode === 'smart') {
-                pointerDown(event);
-                return;
-            }
-            if (mode !== 'hold') return;
-            event.__gugoSpeechHandled = true;
-            event.preventDefault?.();
-            event.stopPropagation?.();
-            if (holdButton || window.GugoSpeechSessionActive) return;
-            state.pointerId = event.changedTouches?.[0]?.identifier ?? null;
-            holdPointerId = state.pointerId;
-            holdPointerType = 'touch';
-            holdButton = button;
-            if (!startSpeechControl(button)) clearHoldPointerState();
+            if (!window.PointerEvent && !event?.__gugoSpeechHandled) pointerDown(event);
         };
-        button.ontouchend = event => { if (!window.PointerEvent && speechMode() === 'hold') stopHeldSpeech(event); };
-        button.ontouchcancel = event => { if (!window.PointerEvent && speechMode() === 'hold') stopHeldSpeech(event); };
+        button.ontouchend = null;
+        button.ontouchcancel = null;
         return state;
     }
     window.GugoBindSpeechControl = bindSpeechControl;
-    let retryPointerId = null;
-    let retryPointerButton = null;
     function retryTargetFromButton(button) {
         const messageId = String(button?.dataset?.messageId || '');
         const root = document.querySelector(`[data-id="${messageId.replace(/"/g, '')}"]`);
@@ -6224,45 +6181,15 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         return startSpeechControl(button);
     }
     window.GugoHandlePronunciationRetry = launchPronunciationRetry;
-    function retryButtonFromEvent(event) {
-        return event?.target?.closest?.('.pronunciation-retry') || retryPointerButton;
-    }
     function handleRetryPointerDown(event) {
-        const retry = retryButtonFromEvent(event);
-        if (!retry) return;
+        const retry = event?.target?.closest?.('.pronunciation-retry');
+        if (!retry || event?.__gugoSpeechHandled) return;
         const state = prepareRetryButton(retry);
-        const mode = speechMode();
         if (!state) return;
-        if (mode === 'hold') {
-            if (retryPointerButton || window.GugoSpeechSessionActive) return;
-            event.preventDefault?.();
-            event.stopPropagation?.();
-            retryPointerId = event?.pointerId ?? event?.changedTouches?.[0]?.identifier ?? null;
-            retryPointerButton = retry;
-            state.pointerDown?.(event);
-            return;
-        }
-        if (mode !== 'tap' && mode !== 'smart') return;
-        event.preventDefault?.();
-        event.stopPropagation?.();
         state.pointerDown?.(event);
     }
-    function handleRetryPointerRelease(event) {
-        if (speechMode() !== 'hold' || !retryPointerButton) return;
-        const pointerId = event?.pointerId ?? event?.changedTouches?.[0]?.identifier ?? null;
-        if (retryPointerId !== null && pointerId !== null && String(pointerId) !== String(retryPointerId)) return;
-        const retry = retryPointerButton;
-        retryPointerId = null;
-        retryPointerButton = null;
-        stopSpeechControl(retry, event);
-    }
     document.addEventListener('pointerdown', handleRetryPointerDown, true);
-    document.addEventListener('pointerup', handleRetryPointerRelease, true);
-    document.addEventListener('pointercancel', handleRetryPointerRelease, true);
-    document.addEventListener('lostpointercapture', handleRetryPointerRelease, true);
     document.addEventListener('touchstart', event => { if (!window.PointerEvent) handleRetryPointerDown(event); }, true);
-    document.addEventListener('touchend', handleRetryPointerRelease, true);
-    document.addEventListener('touchcancel', handleRetryPointerRelease, true);
     document.addEventListener('click', event => {
         const retry = event.target?.closest?.('.pronunciation-retry');
         if (!retry) return;
@@ -6280,33 +6207,6 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         launchPronunciationRetry(retry);
     }, true);
     function bindSpeechButton(button, role) { bindSpeechControl(button, role); }
-    document.addEventListener('pointerup', stopHeldSpeech, true);
-    document.addEventListener('pointercancel', stopHeldSpeech, true);
-    document.addEventListener('lostpointercapture', stopHeldSpeech, true);
-    document.addEventListener('pointerdown', event => {
-        const retry = event.target?.closest?.('.pronunciation-retry');
-        if (!retry) return;
-        const messageId = String(retry.dataset.messageId || '');
-        const root = document.querySelector(`[data-id="${messageId.replace(/"/g, '')}"]`);
-        const learning = root?.querySelector?.('.msg-learning');
-        const target = String(learning?.dataset?.rawText || learning?.textContent || '').trim();
-        if (!messageId || !target) return;
-        const state = bindSpeechControl(retry, 'learning', {
-            challengeMessageId: messageId,
-            challengeTarget: target,
-            beforeStart: () => window.GugoSetRetryBusy?.(messageId, true),
-            startFailed: () => window.GugoSetRetryBusy?.(messageId, false)
-        });
-        if (speechMode() === 'hold' && state?.pointerDown) state.pointerDown(event);
-    }, true);
-    document.addEventListener('touchstart', event => {
-        if (window.PointerEvent) return;
-        const retry = event.target?.closest?.('.pronunciation-retry');
-        if (!retry) return;
-        const state = retry.__gugoSpeechControlState;
-        if (state?.pointerDown) state.pointerDown(event);
-    }, true);
-
     window.GugoOpenRoomStudy = roomId => {
         const targetId = String(roomId || '');
         if (typeof switchRoom === 'function' && targetId && targetId !== String(activeRoomId)) switchRoom(targetId);
