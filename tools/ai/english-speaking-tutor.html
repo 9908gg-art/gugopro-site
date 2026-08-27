@@ -569,15 +569,16 @@
 .message.tts-playing .btn-msg-stop i { animation: gugoTtsStopPulse 1.15s ease-in-out infinite; }
 @keyframes gugoTtsStopPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.16); } }
 
-/* Mobile message actions: keep AI controls vertical while user controls stay compact and horizontal. */
+/* Mobile message actions: use the same vertical stack for user and AI messages. */
 @media (max-width: 640px) {
-    .message-tutor .msg-learning { padding-right: 56px; }
+    .message-tutor .msg-learning,
+    .message-user .msg-learning { padding-right: 56px; }
     .message .msg-actions {
         top: 8px;
         right: 7px;
-        flex-direction: row;
+        flex-direction: column;
         align-items: center;
-        gap: 8px;
+        gap: 13px;
         opacity: .72;
     }
     .message .msg-actions .btn-msg-action {
@@ -590,17 +591,13 @@
         justify-content: center;
         padding: 3px;
     }
-    .message-tutor .msg-actions {
-        flex-direction: column;
-        align-items: center;
-        gap: 13px;
-    }
-    .message-tutor .msg-actions .btn-msg-delete { order: 1; }
+    .message-tutor .msg-actions .btn-msg-delete,
+    .message-user .msg-actions .btn-msg-delete { order: 1; }
     .message-tutor .msg-actions .btn-msg-stop { order: 2; }
-    .message-tutor .msg-actions .btn-msg-action:not(.btn-msg-stop):not(.btn-msg-delete) { order: 3; }
-    .message-user .msg-actions { flex-direction: row; gap: 8px; }
-    .message-user .msg-actions .btn-msg-action { order: initial !important; }
+    .message-tutor .msg-actions .btn-msg-action:not(.btn-msg-stop):not(.btn-msg-delete),
+    .message-user .msg-actions .btn-msg-action:not(.btn-msg-stop):not(.btn-msg-delete) { order: 3; }
 }
+
 
 
         .correction-box {
