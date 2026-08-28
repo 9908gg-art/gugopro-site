@@ -1330,6 +1330,12 @@
 
 
 
+
+
+
+
+
+
 <style id="gugo-capsule-dock-style">
 /* GugoPro Gemini-style capsule composer */
 html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
@@ -5285,6 +5291,24 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             button.classList.toggle('retry-recording', Boolean(busy));
         });
     }
+    window.GugoSetRetryBusy = setRetryBusy;
+
+    function retryButtonsFor(messageId) {
+        const key = String(messageId || '');
+        return [...document.querySelectorAll('.pronunciation-retry')].filter(button => String(button.dataset.messageId || '') === key);
+    }
+
+    function setRetryBusy(messageId, busy) {
+        retryButtonsFor(messageId).forEach(button => {
+            button.disabled = false;
+            button.dataset.busy = busy ? '1' : '0';
+            button.setAttribute('aria-busy', busy ? 'true' : 'false');
+            button.setAttribute('aria-label', busy ? '停止重新挑戰語音' : '重新挑戰發音');
+            button.textContent = busy ? '⏹ 停止語音挑戰' : '🔄 重新挑戰';
+            button.classList.toggle('retry-recording', Boolean(busy));
+        });
+    }
+    window.GugoSetRetryBusy = setRetryBusy;
 
     function updateMessageScore(messageId, score) {
         const root = document.querySelector(`[data-id="${String(messageId || '').replace(/"/g, '')}"]`);
@@ -5381,6 +5405,11 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         // a second request here is what caused the end-sound/restart race.
         if (session.requestActive === false) restartRecognition(session, { silent: true });
     }
+    function playSessionStartCue(session) {
+        if (!session || session.finalized || session.autoFinalizeRequested || session.stopRequested || session.startCuePlayed) return;
+        session.startCuePlayed = true;
+        window.GugoPlaySpeechStartCue?.();
+    }
     function markSessionRecording(session) {
         if (!session || session.finalized || session.autoFinalizeRequested || session.stopRequested || activeSession?.id !== session.id) return;
         if (session.startTimer) { clearTimeout(session.startTimer); session.startTimer = null; }
@@ -5407,7 +5436,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         setDualRecording(session.role, true, session.challengeButton);
         window.GugoSetSpeechComposerState?.('recording', session.role);
         const clean = normalize(transcript);
-        if (session.segmentedSession && session.mode === 'tap') {
+        if (session.segmentedSession) {
             if (metadata.fullSession === true) {
                 session.segmentTranscript = clean;
                 session.currentSegmentTranscript = '';
@@ -5468,7 +5497,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         window.GugoClearSpeechControl?.();
         if (String(window.GugoSpeechSessionChallengeId || '') === String(session.challengeMessageId || '')) window.GugoSpeechSessionChallengeId = '';
         if (session.challengeMessageId && typeof setRetryBusy === 'function') setRetryBusy(session.challengeMessageId, false);
-        const transcript = normalize(session.segmentedSession && session.mode === 'tap'
+        const transcript = normalize(session.segmentedSession
             ? mergeSegmentTranscript({ segmentTranscript: session.segmentTranscript }, session.currentSegmentTranscript || session.latestTranscript)
             : session.latestTranscript);
         if (!transcript) {
@@ -5577,6 +5606,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                     native.stopRecognition().catch(() => {});
                     return;
                 }
+                playSessionStartCue(session);
                 markSessionRecording(session);
             },
             onResult: (transcript, matches, metadata) => updateSpeechInput(session, transcript, metadata),
@@ -5653,6 +5683,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 try { recognition.stop(); } catch (_) {}
                 return;
             }
+            playSessionStartCue(session);
             markSessionRecording(session);
         };
         recognition.onresult = event => {
@@ -5697,7 +5728,10 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             id: ++sessionCounter,
             role,
             mode: sessionMode,
-            segmentedSession: sessionMode === 'tap',
+            // Android API 33+ segmented recognition keeps the app-owned audio
+            // source alive through endpoint pauses; Smart owns the six-second
+            // countdown and is the only path allowed to finalize.
+            segmentedSession: true,
             segmentTranscript: '',
             currentSegmentTranscript: '',
             speechLocale,
@@ -5916,6 +5950,12 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
 
 
 
+
+
+
+
+
+
 <script id="gugo-capsule-dock-modes-js">
 // GugoPro Gemini-style Capsule Dock + three speech modes
 (() => {
@@ -5982,11 +6022,36 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
     window.GugoGetSmartSilenceMs = () => getSmartSilenceSeconds() * 1000;
     window.GugoSetSmartSilenceSeconds = setSmartSilenceSeconds;
     const START_CUE_KEY = 'gugopro_ai_tutor_speech_start_cue_v1';
-    // Recording feedback is intentionally silent. Keep the legacy storage API
-    // harmless for existing installations, but never create audio output.
-    function getSpeechStartCueEnabled() { return false; }
-    function setSpeechStartCueEnabled(_) { localStorage.setItem(START_CUE_KEY, '0'); return false; }
-    function playSpeechStartCue() { return false; }
+    function getSpeechStartCueEnabled() { return localStorage.getItem(START_CUE_KEY) === '1'; }
+    function setSpeechStartCueEnabled(enabled) {
+        const value = Boolean(enabled);
+        localStorage.setItem(START_CUE_KEY, value ? '1' : '0');
+        return value;
+    }
+    // Optional feedback is intentionally isolated to the first real onStart of
+    // a session. Smart pause, countdown, resume, stop and finalize never call it.
+    function playSpeechStartCue() {
+        if (!getSpeechStartCueEnabled()) return false;
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return false;
+        try {
+            const context = window.__gugoSpeechStartCueContext || (window.__gugoSpeechStartCueContext = new AudioContextClass());
+            const resume = typeof context.resume === 'function' && context.state === 'suspended' ? context.resume() : Promise.resolve();
+            resume.catch(() => {});
+            const oscillator = context.createOscillator();
+            const gain = context.createGain();
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(880, context.currentTime);
+            gain.gain.setValueAtTime(0.0001, context.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.045, context.currentTime + 0.008);
+            gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.075);
+            oscillator.connect(gain);
+            gain.connect(context.destination);
+            oscillator.start(context.currentTime);
+            oscillator.stop(context.currentTime + 0.08);
+            return true;
+        } catch (_) { return false; }
+    }
     window.GugoGetSpeechStartCueEnabled = getSpeechStartCueEnabled;
     window.GugoSetSpeechStartCueEnabled = setSpeechStartCueEnabled;
     window.GugoPlaySpeechStartCue = playSpeechStartCue;
@@ -6151,7 +6216,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         const section = document.createElement('div');
         section.id = 'speech-mode-section';
         section.className = 'menu-section capsule-speech-mode-section';
-        section.innerHTML = `<div class="menu-title">🎙️ 語音操作</div><select id="speech-mode-select" class="lang-select" aria-label="選擇語音操作方式"><option value="tap">點擊開始，再點擊停止</option><option value="smart">自動等待停頓後送出</option></select><label class="speech-silence-setting" for="speech-silence-seconds">自動等待秒數 <input id="speech-silence-seconds" type="number" min="1" max="15" step="0.5" inputmode="decimal" aria-label="自動等待秒數"></label><small id="speech-mode-description" class="capsule-speech-mode-description"></small>`;
+        section.innerHTML = `<div class="menu-title">🎙️ 語音操作</div><select id="speech-mode-select" class="lang-select" aria-label="選擇語音操作方式"><option value="tap">點擊開始，再點擊停止</option><option value="smart">自動等待停頓後送出</option></select><label class="speech-silence-setting" for="speech-silence-seconds">自動等待秒數 <input id="speech-silence-seconds" type="number" min="1" max="15" step="0.5" inputmode="decimal" aria-label="自動等待秒數"></label><label class="speech-start-cue-setting" for="speech-start-cue-enabled"><input id="speech-start-cue-enabled" type="checkbox" aria-label="啟動語音提示音">按下語音時播放啟動提示音</label><small id="speech-mode-description" class="capsule-speech-mode-description"></small>`;
         const anchor = sideMenu.querySelector('.model-settings-section');
         if (anchor) anchor.before(section); else sideMenu.appendChild(section);
         const select = section.querySelector('#speech-mode-select');
@@ -6163,6 +6228,11 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         }
         updateModeDescription(select.value);
         select.addEventListener('change', () => { setMode(select.value); updateCapsuleLabels(); });
+        const startCue = section.querySelector('#speech-start-cue-enabled');
+        if (startCue) {
+            startCue.checked = window.GugoGetSpeechStartCueEnabled?.() === true;
+            startCue.addEventListener('change', () => window.GugoSetSpeechStartCueEnabled?.(startCue.checked));
+        }
     }
 
     function speechMode() { return window.GugoGetSpeechMode?.() || window.GugoSpeechMode || getMode(); }
