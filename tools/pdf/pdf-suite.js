@@ -3097,7 +3097,7 @@
     var mapping = {
       'pdf-open-button': 'open', 'pdf-undo': 'undo', 'pdf-redo': 'redo', 'pdf-text-edit': 'pdf', 'pdf-fullscreen': 'always', 'pdf-save': 'save-as', 'pdf-clear': 'document',
       'pdf-page-prev': 'page-nav', 'pdf-page-input': 'page-nav', 'pdf-page-next': 'page-nav', 'pdf-zoom-out': 'document', 'pdf-zoom-in': 'document', 'pdf-fit-select': 'document',
-      'pdf-night-mode': 'always', 'pdf-mobile-help': 'always', 'pdf-mobile-thumbnails': 'document', 'pdf-mobile-page-prev': 'page-nav', 'pdf-mobile-page-input': 'page-nav', 'pdf-mobile-page-next': 'page-nav', 'pdf-mobile-ai': 'ai', 'pdf-mobile-bookmark': 'document', 'pdf-mobile-undo': 'undo', 'pdf-mobile-redo': 'redo', 'pdf-mobile-save': 'save-as', 'pdf-annotate-popover': 'pdf', 'pdf-pages-popover': 'pdf', 'pdf-convert-popover': 'always', 'pdf-universal-convert-popover': 'save-as',
+      'pdf-night-mode': 'always', 'pdf-mobile-help': 'always', 'pdf-mobile-edit': 'pdf', 'pdf-mobile-thumbnails': 'document', 'pdf-mobile-page-prev': 'page-nav', 'pdf-mobile-page-input': 'page-nav', 'pdf-mobile-page-next': 'page-nav', 'pdf-mobile-ai': 'ai', 'pdf-mobile-bookmark': 'document', 'pdf-mobile-undo': 'undo', 'pdf-mobile-redo': 'redo', 'pdf-mobile-save': 'save-as', 'pdf-annotate-popover': 'pdf', 'pdf-pages-popover': 'pdf', 'pdf-convert-popover': 'always', 'pdf-universal-convert-popover': 'save-as',
       'pdf-rotate-left': 'pdf', 'pdf-rotate-right': 'pdf', 'pdf-rotate-180': 'pdf', 'pdf-delete-pages': 'pdf', 'pdf-export-pages': 'pdf', 'pdf-split-run': 'pdf', 'pdf-insert-page': 'pdf', 'pdf-crop-run': 'pdf', 'pdf-compress-run': 'pdf',
       'pdf-add-signature': 'pdf', 'pdf-signature-rotate-left': 'pdf', 'pdf-signature-rotate-right': 'pdf', 'pdf-delete-signature': 'pdf', 'pdf-download-current': 'image-or-pdf', 'pdf-download-jpg': 'image-or-pdf', 'pdf-images-to-pdf': 'image-to-pdf', 'pdf-merge-run': 'pdf', 'pdf-lock-run': 'pdf', 'pdf-unlock-run': 'always', 'pdf-merge-pick': 'always', 'pdf-images-pick': 'always', 'pdf-page-flow': 'page-flow',
       'pdf-chat-send': 'ai', 'pdf-preset-run': 'ai', 'pdf-preset-send': 'ai', 'pdf-summary-run': 'ai', 'pdf-risk-run': 'ai', 'pdf-translate-run': 'ai', 'pdf-translate-current': 'ai', 'pdf-project-run': 'ai'
@@ -3114,6 +3114,7 @@
     qsa('[data-mobile-capability]').forEach(function (control) { applyToolCapability(control, control.dataset.mobileCapability); });
     var pdfEditEntry = $('pdf-text-edit'); if (pdfEditEntry) pdfEditEntry.hidden = !state.pdf;
     var mobileTopbar = $('pdf-mobile-reader-topbar'); if (mobileTopbar) mobileTopbar.hidden = !(isMobileReader() && state.file);
+    var mobileEditEntry = $('pdf-mobile-edit'); if (mobileEditEntry) mobileEditEntry.hidden = !(isMobileReader() && state.pdf);
     var mobileSearch = $('pdf-mobile-search'); if (mobileSearch) { var searchCapability = getToolCapability('search'); mobileSearch.hidden = !(isMobileReader() && searchCapability.enabled); applyToolCapability(mobileSearch, 'search'); }
     if (state.file) { loadBookmarks(); syncBookmarkButton(); }
     var universalSelect = $('pdf-universal-format');
@@ -3360,6 +3361,7 @@
     $('pdf-mobile-page-input')?.addEventListener('change', function () { if (!state.file) return toast(messages.choosePdf); var page = Number(this.value); if (state.pageOrder.includes(page)) { state.currentPage = page; renderMainPage(); syncMobilePageControls(); actionGuide('pageInput'); } else { this.value = String(state.currentPage); toast(IS_EN ? 'Enter a valid page number.' : '請輸入有效頁碼', { guide: true }); } });
     $('pdf-empty-open')?.addEventListener('click', function () { actionGuide('open'); $('pdf-file-input')?.click(); });
     $('pdf-mobile-thumbnails')?.addEventListener('click', function () { setMobileSidebar(true); });
+    $('pdf-mobile-edit')?.addEventListener('click', function () { openMobileSubdock('edit'); });
     $('pdf-mobile-ai')?.addEventListener('click', function () { var pane = $('pdf-ai-pane'); setMobileAi(!pane || !pane.classList.contains('is-mobile-open')); });
     $('pdf-mobile-ai-close')?.addEventListener('click', function () { setMobileAi(false); actionGuide('aiBack'); });
     $('pdf-sidebar-close-mobile')?.addEventListener('click', function () { setMobileSidebar(false); actionGuide('aiBack'); });
