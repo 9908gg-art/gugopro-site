@@ -31,6 +31,7 @@
     activeEditorAction: 'edit',
     editorMode: false,
     mobileSubdock: '',
+    mobileInteraction: 'reader',
     annotationImages: {},
     signatures: {},
     activeSignatureId: null,
@@ -44,6 +45,14 @@
     busy: false,
     outline: []
   };
+
+  var MOBILE_INTERACTION_STATES = { reader: true, edit: true, annotate: true, signature: true, fill: true, more: true, 'text-focus': true };
+  function setMobileInteractionState(next) {
+    next = MOBILE_INTERACTION_STATES[next] ? next : 'reader';
+    state.mobileInteraction = next;
+    if (document.body) document.body.dataset.mobilePdfState = next;
+    return next;
+  }
 
   var editHistory = { undo: [], redo: [], applying: false, limit: 60 };
   var mobileOverlayBackTimer = 0;
@@ -629,6 +638,7 @@
     if (editor.host && editor.host !== editor.target && editor.host.parentNode) editor.host.parentNode.removeChild(editor.host);
     if (state.inlineTextEditor === editor) state.inlineTextEditor = null;
     state.activeTextSelection = null;
+    if (isMobileReader()) setMobileInteractionState(state.mobileSubdock || 'reader');
   }
   function cancelInlineTextEditor(editor) {
     editor = editor || state.inlineTextEditor;
@@ -704,6 +714,7 @@
     }
     var editorTextOrdinal = Number(options.textOrdinal != null ? options.textOrdinal : target && target.dataset && target.dataset.textOrdinal != null ? target.dataset.textOrdinal : itemIndex); var editor = { kind: options.kind || 'pdf', pageNumber: Number(pageNumber), itemIndex: Number(itemIndex), blockIndex: Number(options.blockIndex != null ? options.blockIndex : -1), itemIndexes: Array.isArray(options.itemIndexes) && options.itemIndexes.length ? options.itemIndexes.slice() : [Number(itemIndex)], lineItemIndexes: Array.isArray(options.lineItemIndexes) && options.lineItemIndexes.length ? options.lineItemIndexes.map(function (line) { return line.slice(); }) : [[Number(itemIndex)]], itemOriginals: options.itemOriginals && typeof options.itemOriginals === 'object' ? Object.assign({}, options.itemOriginals) : {}, textOrdinals: Array.isArray(options.textOrdinals) && options.textOrdinals.length ? options.textOrdinals.slice() : [editorTextOrdinal], textOrdinal: editorTextOrdinal, original: String(original || ''), target: target, frame: frame, host: host, field: field, geometry: geometry, color: options.color, size: options.size, baseHeight: baseHeight, originalStyle: originalStyle, cancelled: false };
     state.inlineTextEditor = editor;
+    if (isMobileReader()) setMobileInteractionState('text-focus');
     // Clear any legacy focus padding left by an earlier render; the v38 reveal path
     // uses scroll only and must not reserve blank space inside the reader.
     var continuousStack = $('pdf-continuous-stack');
@@ -2575,6 +2586,7 @@
     state.activeTextSelection = null;
     state.activeEditorAction = 'edit';
     state.editorMode = false; state.mobileSubdock = '';
+    setMobileInteractionState('reader');
     state.annotationImages = {};
     state.signatures = {};
     state.activeSignatureId = null;
@@ -2707,12 +2719,14 @@
     var open = Boolean(isMobileReader() && state.file && state.mobileSubdock);
     dock.hidden = !open;
     if (document.body) document.body.classList.toggle('pdf-mobile-subdock-open', open);
+    if (isMobileReader()) setMobileInteractionState(state.inlineTextEditor ? 'text-focus' : (open ? state.mobileSubdock : 'reader'));
     if (state.mobileSubdock) renderMobileSubdock(state.mobileSubdock);
   }
   function closeMobileSubdock() {
     var name = state.mobileSubdock;
     if (state.inlineTextEditor) commitInlineTextEditor({ skipRender: true });
     state.mobileSubdock = '';
+    setMobileInteractionState('reader');
     if (state.editorMode) { state.editorMode = false; state.activeTextSelection = null; }
     state.tool = 'select'; qsa('[data-pdf-tool]').forEach(function (node) { node.classList.toggle('is-active', node.dataset.pdfTool === 'select'); });
     syncEditorDock(); syncMobileActionDock(); syncMobileSubdock();
@@ -2728,6 +2742,7 @@
       state.tool = 'select';
     }
     state.mobileSubdock = name;
+    if (isMobileReader()) setMobileInteractionState(name);
     renderMobileSubdock(name); syncMobileActionDock(); syncMobileSubdock();
     toast(IS_EN ? config.title + ' tools are ready. Choose a function below.' : config.title + '工具已開啟，請從下方選擇功能。', { guide: true });
   }
