@@ -611,6 +611,8 @@
   function removeInlineTextEditor(editor) {
     editor = editor || state.inlineTextEditor;
     if (!editor) return;
+    var continuousStack = $('pdf-continuous-stack');
+    if (continuousStack) continuousStack.style.paddingTop = '';
     if (editor.target) {
       hidePdfTextContextMenu();
       if (editor.target === editor.field && editor.cancelled) editor.target.textContent = editor.original;
@@ -715,7 +717,12 @@
     });
     field.addEventListener('pointerdown', function (event) { event.stopPropagation(); });
     field.addEventListener('blur', function () { window.setTimeout(function () { if (state.inlineTextEditor === editor && (!editor.host.contains(document.activeElement))) commitInlineTextEditor({ skipRender: editor.kind === 'pdf' }); }, 0); });
-    window.setTimeout(function () { try { field.focus({ preventScroll: true }); selectEditableContents(field); } catch (_) { field.focus(); } }, 0);
+    if (target) schedulePdfTextTargetReveal(field);
+    window.setTimeout(function () {
+      if (state.inlineTextEditor !== editor || !field.isConnected) return;
+      try { revealPdfTextTarget(field); field.focus({ preventScroll: true }); selectEditableContents(field); } catch (_) { field.focus(); }
+      schedulePdfTextTargetReveal(field);
+    }, 0);
     actionGuide('textEditReady');
     return true;
   }
@@ -734,6 +741,56 @@
     state.activeTextSelection = { pageNumber: Number(pageNumber), itemIndex: Number(firstIndex), itemIndexes: (block.itemIndexes || [firstIndex]).slice(), blockIndex: Number(block.blockIndex), lineItemIndexes: (block.lineItemIndexes || []).map(function (line) { return line.slice(); }), textOrdinals: (block.textOrdinals || []).slice(), textOrdinal: Number((block.textOrdinals || [firstIndex])[0]), original: String(block.original || ''), element: element, block: block, geometry: textTargetGeometry(element) };
     qsa('.pdf-text-block.is-selected').forEach(function (node) { node.classList.remove('is-selected'); });
     if (element) element.classList.add('is-selected');
+  }
+  function revealPdfTextTarget(element) {
+    if (!element || !isMobileReader()) return;
+    var stage = $('pdf-reader-stage');
+    if (!stage || !element.isConnected) return;
+    var stageRect = stage.getBoundingClientRect();
+    var targetRect = element.getBoundingClientRect();
+    var usableHeight = Math.max(120, Math.min(stage.clientHeight || stageRect.height || 0, (window.visualViewport && window.visualViewport.height ? window.visualViewport.height : window.innerHeight) - stageRect.top - 12));
+    var anchorY = stageRect.top + usableHeight * .38;
+    var targetCenterY = targetRect.top + targetRect.height / 2;
+    var targetCenterX = targetRect.left + targetRect.width / 2;
+    var nextTop = stage.scrollTop + targetCenterY - anchorY;
+    var nextLeft = stage.scrollLeft + targetCenterX - (stageRect.left + stage.clientWidth / 2);
+    var stack = $('pdf-continuous-stack');
+    if (stack && element.closest && element.closest('#pdf-continuous-stack') && targetCenterY < anchorY - 8 && stage.scrollTop <= 2) {
+      var neededTopPadding = Math.min(320, Math.max(0, anchorY - targetCenterY));
+      var currentTopPadding = parseFloat(stack.style.paddingTop) || 0;
+      if (neededTopPadding > currentTopPadding + 2) {
+        stack.style.paddingTop = neededTopPadding + 'px';
+        if (window.requestAnimationFrame) window.requestAnimationFrame(function () { if (element.isConnected) revealPdfTextTarget(element); });
+        else window.setTimeout(function () { if (element.isConnected) revealPdfTextTarget(element); }, 0);
+        return;
+      }
+    }
+    var maxTop = Math.max(0, stage.scrollHeight - stage.clientHeight);
+    var maxLeft = Math.max(0, stage.scrollWidth - stage.clientWidth);
+    stage.scrollTop = Math.max(0, Math.min(maxTop, nextTop));
+    stage.scrollLeft = Math.max(0, Math.min(maxLeft, nextLeft));
+  }
+  function schedulePdfTextTargetReveal(element) {
+    if (!element || !isMobileReader()) return;
+    var attempts = 0;
+    var reveal = function () {
+      if (state.inlineTextEditor && state.inlineTextEditor.host !== element && state.inlineTextEditor.field !== element) return;
+      if (!element.isConnected) return;
+      revealPdfTextTarget(element);
+      attempts += 1;
+      if (attempts < 10) window.setTimeout(reveal, 100);
+    };
+    reveal();
+    if (window.requestAnimationFrame) {
+      window.requestAnimationFrame(reveal);
+      window.requestAnimationFrame(function () { window.requestAnimationFrame(reveal); });
+    }
+    var visualViewport = window.visualViewport;
+    if (visualViewport && visualViewport.addEventListener) {
+      var onViewportChange = function () { reveal(); };
+      visualViewport.addEventListener('resize', onViewportChange, { passive: true });
+      window.setTimeout(function () { visualViewport.removeEventListener('resize', onViewportChange); }, 1200);
+    }
   }
   function handlePdfTextBlockClick(event, pageNumber, block, element) {
     if (state.inlineTextEditor && state.inlineTextEditor.target === element) { event.stopPropagation(); return; }
@@ -986,7 +1043,9 @@
     var cachedKey = getContinuousRenderKey();
     if (stack.dataset.renderKey === cachedKey && stack.children.length === state.pageOrder.length) {
       var cachedActive = syncContinuousActivePage(state.currentPage);
-      if (cachedActive) cachedActive.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      var cachedTextTarget = state.inlineTextEditor && state.inlineTextEditor.field ? state.inlineTextEditor.field : resolvePdfTextTarget(state.activeTextSelection);
+      if (cachedTextTarget) schedulePdfTextTargetReveal(cachedTextTarget);
+      else if (cachedActive) cachedActive.scrollIntoView({ block: 'nearest', inline: 'nearest' });
       syncZoomLabel(state.zoom);
       return;
     }
@@ -1014,6 +1073,7 @@
     stack.dataset.renderKey = getContinuousRenderKey();
     var stage = $('pdf-reader-stage');
     function activatePage(pageNumber) {
+      if (state.inlineTextEditor) return;
       syncContinuousActivePage(pageNumber);
     }
     if (continuousObserver) continuousObserver.disconnect();
@@ -1026,7 +1086,9 @@
       qsa('.pdf-continuous-page', stack).forEach(function (node) { continuousObserver.observe(node); });
     }
     var active = stack.querySelector('.pdf-continuous-page.is-current');
-    if (active) active.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    var textTarget = state.inlineTextEditor && state.inlineTextEditor.field ? state.inlineTextEditor.field : resolvePdfTextTarget(state.activeTextSelection);
+    if (textTarget) schedulePdfTextTargetReveal(textTarget);
+    else if (active) active.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     if (currentViewport) { state.renderedWidth = currentViewport.width; state.renderedHeight = currentViewport.height; }
     syncMobilePageControls();
     syncZoomLabel(state.zoom);
@@ -1040,7 +1102,7 @@
     if (isMobileReader()) {
       var mobileFrame = $('pdf-page-frame');
       var mobileStack = $('pdf-continuous-stack');
-      if (mobileFrame) { mobileFrame.hidden = true; mobileFrame.style.display = 'none'; }
+      if (mobileFrame) { mobileFrame.className = 'pdf-page-frame'; mobileFrame.hidden = true; mobileFrame.style.display = 'none'; }
       if (mobileStack) { mobileStack.hidden = false; mobileStack.style.display = 'flex'; }
       await renderContinuousPages(renderToken);
       if (renderToken !== mainRenderToken) return;
@@ -1056,7 +1118,7 @@
     if (renderToken !== mainRenderToken) return;
     var desktopFrame = $('pdf-page-frame');
     var desktopStack = $('pdf-continuous-stack');
-    if (desktopFrame) { desktopFrame.hidden = false; desktopFrame.style.display = 'inline-block'; }
+    if (desktopFrame) { desktopFrame.className = 'pdf-page-frame'; desktopFrame.hidden = false; desktopFrame.style.display = 'inline-block'; }
     if (desktopStack) { desktopStack.hidden = true; desktopStack.style.display = 'none'; desktopStack.replaceChildren(); }
     var rotation = getPageDisplayRotation(state.currentPage);
     var scale = getPageScale(page, state.currentPage);
