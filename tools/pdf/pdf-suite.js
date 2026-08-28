@@ -541,7 +541,8 @@
     var menu = $('pdf-text-context-menu'); if (!menu || !element) return;
     menu.hidden = false; menu.classList.add('is-visible'); menu.style.visibility = 'hidden';
     var rect = element.getBoundingClientRect();
-    if (rect.bottom < 8 || rect.top > window.innerHeight - 8) { try { element.scrollIntoView({ block: 'center', inline: 'nearest' }); } catch (_) {} rect = element.getBoundingClientRect(); }
+    /* Do not scroll the reader while opening a text action. On touch devices that
+       scroll can blur the selected span before the action button receives its tap. */
     var width = menu.offsetWidth || 212; var height = menu.offsetHeight || 48; var gap = 8;
     var left = Math.max(8, Math.min(Math.max(8, window.innerWidth - width - 8), rect.left + (rect.width - width) / 2));
     var top = rect.bottom + gap; if (top + height > window.innerHeight - 8) top = rect.top - height - gap;
@@ -554,14 +555,36 @@
     if (element) element.classList.add('is-selected');
     showPdfTextContextMenu(element);
   }
+  function resolvePdfTextTarget(selection) {
+    if (!selection) return null;
+    var root = isMobileReader() ? $('pdf-continuous-stack') : $('pdf-page-frame');
+    if (!root) return null;
+    var candidates = Array.prototype.slice.call(root.querySelectorAll('.pdf-text-block'));
+    var target = candidates.find(function (node) {
+      return Number(node.dataset.page) === Number(selection.pageNumber) && Number(node.dataset.blockIndex) === Number(selection.blockIndex);
+    });
+    if (!target && Array.isArray(selection.itemIndexes) && selection.itemIndexes.length) {
+      var expected = selection.itemIndexes.map(Number).join(',');
+      target = candidates.find(function (node) {
+        return Number(node.dataset.page) === Number(selection.pageNumber) && String(node.dataset.textIndexes || '') === expected;
+      });
+    }
+    if (target) {
+      selection.element = target;
+      selection.geometry = textTargetGeometry(target);
+    }
+    return target || null;
+  }
   function runSelectedPdfTextAction(action) {
-    var selected = state.activeTextSelection; if (!selected || !selected.element) return;
+    var selected = state.activeTextSelection; if (!selected) return;
+    var element = resolvePdfTextTarget(selected);
+    if (!element) { hidePdfTextContextMenu(); toast(IS_EN ? 'This text region is no longer visible. Tap the region again.' : '這個文字區塊已重新繪製，請再點一次該區塊。', { guide: true }); return; }
     hidePdfTextContextMenu();
-    if (action === 'edit') { openInlineTextEditor(selected.pageNumber, selected.itemIndex, getPdfBlockValue(selected.pageNumber, selected.block || { itemIndexes: selected.itemIndexes, original: selected.original }), selected.element, { kind: 'pdf', blockIndex: selected.blockIndex, itemIndexes: selected.itemIndexes, lineItemIndexes: selected.lineItemIndexes, itemOriginals: selected.block && selected.block.itemOriginals, textOrdinals: selected.textOrdinals, textOrdinal: selected.textOrdinal }); return; }
+    if (action === 'edit') { openInlineTextEditor(selected.pageNumber, selected.itemIndex, getPdfBlockValue(selected.pageNumber, selected.block || { itemIndexes: selected.itemIndexes, original: selected.original }), element, { kind: 'pdf', blockIndex: selected.blockIndex, itemIndexes: selected.itemIndexes, lineItemIndexes: selected.lineItemIndexes, itemOriginals: selected.block && selected.block.itemOriginals, textOrdinals: selected.textOrdinals, textOrdinal: selected.textOrdinal, geometry: selected.geometry }); return; }
     if (action === 'copy') { copyTextValue(getPdfBlockValue(selected.pageNumber, selected.block || { itemIndexes: selected.itemIndexes, original: selected.original })); return; }
     if (action === 'delete') {
       var current = getPdfBlockValue(selected.pageNumber, selected.block || { itemIndexes: selected.itemIndexes, original: selected.original }); recordEditHistory(); upsertTextEdit(selected.pageNumber, selected.itemIndex, Object.assign({ blockIndex: selected.blockIndex, itemIndexes: selected.itemIndexes.slice(), lineItemIndexes: selected.lineItemIndexes.map(function (line) { return line.slice(); }), itemOriginals: selected.block && selected.block.itemOriginals, textOrdinals: selected.textOrdinals.slice(), original: String(selected.original || ''), replacement: '', deleted: true, textOrdinal: selected.textOrdinal }, selected.geometry));
-      selected.element.classList.add('is-deleted'); selected.element.textContent = ''; state.activeTextSelection = null; renderNotesPanel(); actionGuide('textDeleted');
+      element.classList.add('is-deleted'); element.textContent = ''; state.activeTextSelection = null; renderNotesPanel(); actionGuide('textDeleted');
     }
   }
   function getInlineEditorValue(editor) {
@@ -711,7 +734,6 @@
     state.activeTextSelection = { pageNumber: Number(pageNumber), itemIndex: Number(firstIndex), itemIndexes: (block.itemIndexes || [firstIndex]).slice(), blockIndex: Number(block.blockIndex), lineItemIndexes: (block.lineItemIndexes || []).map(function (line) { return line.slice(); }), textOrdinals: (block.textOrdinals || []).slice(), textOrdinal: Number((block.textOrdinals || [firstIndex])[0]), original: String(block.original || ''), element: element, block: block, geometry: textTargetGeometry(element) };
     qsa('.pdf-text-block.is-selected').forEach(function (node) { node.classList.remove('is-selected'); });
     if (element) element.classList.add('is-selected');
-    showPdfTextContextMenu(element);
   }
   function handlePdfTextBlockClick(event, pageNumber, block, element) {
     if (state.inlineTextEditor && state.inlineTextEditor.target === element) { event.stopPropagation(); return; }
@@ -725,7 +747,9 @@
       recordEditHistory(); upsertTextEdit(pageNumber, block.itemIndexes[0], Object.assign({ blockIndex: block.blockIndex, itemIndexes: block.itemIndexes.slice(), lineItemIndexes: block.lineItemIndexes.map(function (line) { return line.slice(); }), itemOriginals: Object.assign({}, block.itemOriginals), textOrdinals: block.textOrdinals.slice(), original: String(block.original || ''), replacement: '', deleted: true }, textTargetGeometry(element)));
       renderMainPage(); renderNotesPanel(); actionGuide('textDeleted'); return;
     }
-    if (action === 'text-edit' || action === 'edit') showPdfTextContextMenu(element);
+    if (action === 'text-edit' || action === 'edit') {
+      openInlineTextEditor(pageNumber, block.itemIndexes[0], value, element, { kind: 'pdf', blockIndex: block.blockIndex, itemIndexes: block.itemIndexes, lineItemIndexes: block.lineItemIndexes, itemOriginals: block.itemOriginals, textOrdinals: block.textOrdinals, textOrdinal: block.textOrdinals[0], geometry: textTargetGeometry(element) });
+    }
   }
   function buildPdfTextBlocks(content, viewport) {
     var items = []; var textOrdinal = 0;
@@ -755,7 +779,10 @@
       var previous = blocks.length ? blocks[blocks.length - 1] : null;
       var gap = previous ? line.top - previous.bottom : Infinity;
       var left = line.items[0] ? line.items[0].x : 0;
-      var sameRegion = previous && gap <= Math.max(14, line.height * 1.45) && Math.abs(left - previous.left) <= Math.max(34, line.height * 2.6);
+      var previousLine = previous && previous.lines.length ? previous.lines[previous.lines.length - 1] : null;
+      var sizeRatio = previousLine ? Math.max(line.height, previousLine.height) / Math.max(1, Math.min(line.height, previousLine.height)) : 1;
+      var compatibleTextStyle = !previousLine || sizeRatio <= 1.3;
+      var sameRegion = previous && compatibleTextStyle && gap <= Math.max(14, line.height * 1.45) && Math.abs(left - previous.left) <= Math.max(34, line.height * 2.6);
       if (!sameRegion) { previous = { blockIndex: blocks.length, lines: [], left: left, top: line.top, right: 0, bottom: line.bottom, height: line.height }; blocks.push(previous); }
       previous.lines.push(line); previous.left = Math.min(previous.left, left); previous.top = Math.min(previous.top, line.top); previous.right = Math.max(previous.right, line.items.reduce(function (max, item) { return Math.max(max, item.right); }, 0)); previous.bottom = Math.max(previous.bottom, line.bottom); previous.height = Math.max(previous.height, line.height);
     });
@@ -777,6 +804,7 @@
       var edit = getPdfBlockEdit(pageNumber, block); if (edit && edit.deleted) span.classList.add('is-deleted'); else if (edit && edit.replacement !== block.original) span.classList.add('is-edited');
       span.style.left = block.x + 'px'; span.style.top = block.y + 'px'; span.style.width = block.w + 'px'; span.style.height = block.h + 'px'; span.style.fontSize = Math.max(8, block.fontHeight * .82) + 'px'; span.style.lineHeight = Math.max(10, block.fontHeight) + 'px';
       span.addEventListener('click', function (event) { handlePdfTextBlockClick(event, pageNumber, block, span); });
+      span.addEventListener('contextmenu', function (event) { event.preventDefault(); event.stopPropagation(); selectedPdfTextBlock(pageNumber, block, span); showPdfTextContextMenu(span); });
       span.addEventListener('keydown', function (event) { if ((event.key === 'Enter' || event.key === ' ') && !state.inlineTextEditor) { event.preventDefault(); handlePdfTextBlockClick(event, pageNumber, block, span); } });
       layer.appendChild(span);
     });
@@ -2519,6 +2547,7 @@
       title: IS_EN ? 'Edit PDF' : '編輯 PDF', icon: 'fa-pen-to-square', capability: 'pdf',
       actions: [
         { key: 'text-edit', icon: 'fa-pen-to-square', label: IS_EN ? 'Edit text directly' : '直接改文字', hint: IS_EN ? 'Type on page' : '點字直接輸入' },
+        { key: 'apply', icon: 'fa-check', label: IS_EN ? 'Apply change' : '套用變更', hint: IS_EN ? 'Keep this edit' : '保存這次修改' },
         { key: 'copy-text', icon: 'fa-copy', label: IS_EN ? 'Copy text' : '複製文字', hint: IS_EN ? 'Tap text' : '點選文字' },
         { key: 'delete-text', icon: 'fa-trash-can', label: IS_EN ? 'Delete text' : '刪除文字', hint: IS_EN ? 'Tap text' : '點選文字' },
         { key: 'text', icon: 'fa-font', label: IS_EN ? 'Insert text directly' : '直接插入文字', hint: IS_EN ? 'Tap and type' : '點一下就輸入' },
@@ -2598,7 +2627,9 @@
     if (state.mobileSubdock) renderMobileSubdock(state.mobileSubdock);
   }
   function closeMobileSubdock() {
-    var name = state.mobileSubdock; state.mobileSubdock = '';
+    var name = state.mobileSubdock;
+    if (state.inlineTextEditor) commitInlineTextEditor({ skipRender: true });
+    state.mobileSubdock = '';
     if (state.editorMode) { state.editorMode = false; state.activeTextSelection = null; }
     state.tool = 'select'; qsa('[data-pdf-tool]').forEach(function (node) { node.classList.toggle('is-active', node.dataset.pdfTool === 'select'); });
     syncEditorDock(); syncMobileActionDock(); syncMobileSubdock();
@@ -2623,6 +2654,7 @@
     if (item.target === 'pdf-pages-popover' || item.target === 'pdf-universal-convert-popover' || item.target === 'pdf-convert-popover') { openToolbarPopoverById(item.target); return; }
     if (item.target) { var target = $(item.target); if (target) target.click(); return; }
     if (key === 'close') { closePdf(); return; }
+    if (key === 'apply') { if (state.inlineTextEditor) commitInlineTextEditor(); else toast(IS_EN ? 'Tap a PDF text region first, then edit it directly.' : '請先點選 PDF 文字區塊，再直接輸入內容。', { guide: true }); return; }
     if (key === 'undo' || key === 'redo') { if (key === 'undo' ? undoEdit() : redoEdit()) actionGuide(key); return; }
     if (key === 'rotate-left' || key === 'rotate-right' || key === 'delete-signature') { var targetId = key === 'rotate-left' ? 'pdf-signature-rotate-left' : key === 'rotate-right' ? 'pdf-signature-rotate-right' : 'pdf-delete-signature'; var control = $(targetId); if (control) control.click(); return; }
     if (key === 'save') { activateEditorAction('save'); return; }
@@ -2659,10 +2691,11 @@
   }
   function activateEditorAction(action) {
     if (!state.pdf) { explainUnavailable('pdf'); return; }
+    if (action === 'apply') { if (state.inlineTextEditor) commitInlineTextEditor(); else toast(IS_EN ? 'Tap a PDF text region first, then edit it directly.' : '請先點選 PDF 文字區塊，再直接輸入內容。', { guide: true }); return; }
     if (state.inlineTextEditor) closeInlineTextEditor(true);
     state.activeEditorAction = action || 'text-edit';
     state.activeTextSelection = null;
-    if (action === 'save') { exportPdf(state.pageOrder, safeName(state.file.name) + '-edited.pdf'); return; }
+    if (action === 'save') { if (state.inlineTextEditor) commitInlineTextEditor(); exportPdf(state.pageOrder, safeName(state.file.name) + '-edited.pdf'); return; }
     if (action === 'color') { var color = $('annotation-color'); if (color) color.click(); if (state.mobileSubdock) { renderMobileSubdock(state.mobileSubdock); syncMobileSubdock(); } actionGuide('color'); return; }
     if (action === 'signature') { var signature = $('pdf-add-signature'); if (signature) signature.click(); return; }
     if (action === 'highlight' || action === 'area-highlight' || action === 'underline' || action === 'strike' || action === 'draw' || action === 'text') state.tool = action;
@@ -2681,8 +2714,22 @@
   function toggleCurrentBookmark() { if (!state.file) { explainUnavailable('document'); return; } loadBookmarks(); var page = Number(state.currentPage) || 1; var index = state.bookmarks.indexOf(page); if (index >= 0) { state.bookmarks.splice(index, 1); toast(IS_EN ? 'Bookmark removed from this page.' : '已取消收藏目前頁。', { guide: true }); } else { state.bookmarks.push(page); state.bookmarks.sort(function (a, b) { return a - b; }); toast(IS_EN ? 'Page ' + page + ' bookmarked.' : '已收藏第 ' + page + ' 頁。', { guide: true }); } try { localStorage.setItem(bookmarkStorageKey(), JSON.stringify(state.bookmarks)); } catch (_) {} syncBookmarkButton(); }
   function renderSearchResults(results, query) { var list = $('pdf-mobile-search-results'); if (!list) return; list.replaceChildren(); if (!results.length) { var empty = document.createElement('p'); empty.className = 'pdf-mobile-search-empty'; empty.textContent = IS_EN ? 'No matching text was found.' : '找不到符合的文字。'; list.appendChild(empty); return; } results.slice(0, 30).forEach(function (result) { var button = document.createElement('button'); button.type = 'button'; button.className = 'pdf-mobile-search-result'; button.innerHTML = '<strong>' + (IS_EN ? 'Page ' + result.page : '第 ' + result.page + ' 頁') + '</strong>'; var excerpt = document.createElement('span'); excerpt.textContent = result.excerpt; button.appendChild(excerpt); button.addEventListener('click', function () { state.currentPage = Number(result.page); if (state.pdf) renderMainPage(); else renderDocumentPreview(); syncMobilePageControls(); syncBookmarkButton(); var panel = $('pdf-mobile-search-panel'); if (panel) panel.hidden = true; actionGuide('pageInput'); }); list.appendChild(button); }); }
   async function runDocumentSearch() { var input = $('pdf-mobile-search-input'); var query = String(input && input.value || '').trim(); if (!query) { renderSearchResults([], ''); return; } if (!state.file) { explainUnavailable('document'); return; } if (state.documentKind === 'image') { explainUnavailable('search'); return; } try { if (state.pdf) await extractAllText(false); var source = state.pdf ? state.pageTexts : { 1: state.documentText || '' }; var results = []; var matcher = query.toLocaleLowerCase(); Object.keys(source).sort(function (a, b) { return Number(a) - Number(b); }).forEach(function (page) { var value = String(source[page] || ''); var at = value.toLocaleLowerCase().indexOf(matcher); if (at >= 0) results.push({ page: page, excerpt: value.slice(Math.max(0, at - 40), Math.min(value.length, at + query.length + 80)).replace(/\s+/g, ' ') }); }); renderSearchResults(results, query); } catch (error) { toast((IS_EN ? 'Search failed: ' : '搜尋失敗：') + (error.message || (IS_EN ? 'No text layer.' : '沒有文字層。')), { guide: true }); } }
+  function handleMobileBack() {
+    var search = $('pdf-mobile-search-panel');
+    var sidebar = $('pdf-sidebar');
+    var ai = $('pdf-ai-pane');
+    var menu = $('pdf-text-context-menu');
+    if (state.inlineTextEditor) { closeMobileSubdock(); toast(IS_EN ? 'Edit applied. You are still in the document.' : '文字修改已套用，仍留在目前文件。', { guide: true }); return; }
+    if (menu && !menu.hidden) { hidePdfTextContextMenu(); return; }
+    if (search && !search.hidden) { search.hidden = true; return; }
+    if (sidebar && sidebar.classList.contains('is-mobile-open')) { setMobileSidebar(false); return; }
+    if (ai && ai.classList.contains('is-mobile-open')) { setMobileAi(false); return; }
+    if (state.mobileSubdock) { closeMobileSubdock(); return; }
+    if (state.editorMode) { setEditorMode(false); return; }
+    closePdf();
+  }
   function bindMobileReaderTopbar() {
-    $('pdf-mobile-back')?.addEventListener('click', function () { if (state.editorMode) setEditorMode(false); else closePdf(); });
+    $('pdf-mobile-back')?.addEventListener('click', handleMobileBack);
     $('pdf-mobile-help')?.addEventListener('click', function () { toast(IS_EN ? 'Use the page controls to browse. Open Edit for PDF tools, or More for conversion and security.' : '請使用頁碼控制瀏覽文件；PDF 請按「編輯」開啟編輯工具，轉檔與安全功能請從「更多工具」進入。', { guide: true }); });
     $('pdf-mobile-search')?.addEventListener('click', function () { if (!getToolCapability('search').enabled) return explainUnavailable('search'); var panel = $('pdf-mobile-search-panel'); if (panel) { panel.hidden = false; var input = $('pdf-mobile-search-input'); if (input) input.focus(); } });
     $('pdf-mobile-search-close')?.addEventListener('click', function () { var panel = $('pdf-mobile-search-panel'); if (panel) panel.hidden = true; });
@@ -2695,8 +2742,8 @@
   function bindTextContextMenu() {
     qsa('[data-text-context-action]').forEach(function (button) { button.addEventListener('click', function (event) { event.preventDefault(); event.stopPropagation(); runSelectedPdfTextAction(button.dataset.textContextAction); }); });
     document.addEventListener('pointerdown', function (event) { var target = event.target; if (target && target.closest && (target.closest('#pdf-text-context-menu') || target.closest('.pdf-text-item'))) return; hidePdfTextContextMenu(); });
-    window.addEventListener('resize', function () { var selected = state.activeTextSelection; var menu = $('pdf-text-context-menu'); if (menu && !menu.hidden && selected && selected.element && selected.element.isConnected) showPdfTextContextMenu(selected.element); });
-    window.addEventListener('scroll', hidePdfTextContextMenu, true);
+    window.addEventListener('resize', function () { var selected = state.activeTextSelection; var menu = $('pdf-text-context-menu'); var element = resolvePdfTextTarget(selected); if (menu && !menu.hidden && element) showPdfTextContextMenu(element); });
+    window.addEventListener('scroll', function () { if (!state.inlineTextEditor) hidePdfTextContextMenu(); }, true);
   }
   function bindEditorControls() {
     bindTextContextMenu();
@@ -3436,7 +3483,7 @@
     addFileInputListeners(); bindPopovers(); bindToolbar(); bindAi(); bindSidebar(); bindHistoryShortcuts(); bindUnavailableControlGuard(); initSignaturePad(); initAi(); setEmptyState(true); syncMobileLauncherCategory('all'); syncMobilePageControls(); syncHistoryButtons(); syncToolCapabilities(); renderNotesPanel();
     $('pdf-page-input').value = '1'; $('pdf-total-pages').textContent = '0';
     syncVisualViewportHeight();
-    window.addEventListener('resize', function () { syncVisualViewportHeight(); syncToolCapabilities(); syncMobilePageControls(); syncMobileActionDock(); syncEditorDock(); if (state.pdf && state.fitMode !== 'manual' && !state.inlineTextEditor) renderMainPage(); });
+    window.addEventListener('resize', function () { syncVisualViewportHeight(); syncToolCapabilities(); syncMobilePageControls(); syncMobileActionDock(); syncEditorDock(); if (state.pdf && state.fitMode !== 'manual' && !state.inlineTextEditor && !state.activeTextSelection) renderMainPage(); });
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', function () { syncVisualViewportHeight(); syncToolCapabilities(); syncMobilePageControls(); syncMobileActionDock(); syncEditorDock(); }, { passive: true });
       window.visualViewport.addEventListener('scroll', syncVisualViewportHeight, { passive: true });
