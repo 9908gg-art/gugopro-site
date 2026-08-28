@@ -995,7 +995,7 @@
         .material-meta { color: var(--text-dim); font-size: 0.78rem; line-height: 1.45; margin-bottom: 10px; }
         .material-file-note { color: var(--text-dim); font-size: 0.75rem; line-height: 1.45; margin: 8px 0 12px; }
     
-                                                /* GugoPro Tutor Experience v2 */
+                                                                                /* GugoPro Tutor Experience v2 */
         :root {
             --tutor-bubble: rgba(14, 165, 233, 0.11);
             --tutor-bubble-border: rgba(14, 165, 233, 0.30);
@@ -1112,7 +1112,7 @@
     .message-user .pronunciation-retry { margin-left: 10px; }
 }
 
-</style>
+    </style>
 <style id="gugo-stt-locale-scroll-guard-style">
 /* GugoPro STT locale and touch gesture guard */
 .msg-learning .vocab-token {
@@ -1348,6 +1348,16 @@
 
 
 <script src="native-admob-bridge.js"></script>
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1850,16 +1860,39 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             <button id="btn-vocab-close" class="btn-full" style="background:rgba(255,255,255,0.1);color:#fff;">關閉</button>
         </div>
     </div>
-    <div id="modal-study-plan" class="modal-overlay">
+    <div id="modal-study-plan" class="modal-overlay" role="dialog" aria-modal="true" aria-hidden="true">
         <div class="modal-content">
             <h3 class="modal-h3">教室學習清單</h3>
             <p id="study-plan-room" class="modal-p"></p>
             <div class="study-toolbar">
+                <label class="study-preference-label" for="study-language">教學語言</label>
+                <select id="study-language" aria-label="選擇教學語言"></select>
+                <label class="study-preference-label" for="study-level">程度</label>
+                <select id="study-level" aria-label="選擇學習程度">
+                    <option value="A1">A1 初級入門</option><option value="A2">A2 初級進階</option>
+                    <option value="B1">B1 中級</option><option value="B2">B2 中高級</option>
+                    <option value="C1">C1 高級</option><option value="C2">C2 精通</option>
+                </select>
+                <label class="study-preference-label" for="study-mode">教學模式</label>
                 <select id="study-mode" aria-label="選擇學習模式">
                     <option value="conversation">教材／生詞對話練習</option>
                     <option value="review">單字複習與測驗</option>
                     <option value="exam">混合測驗模式</option>
                 </select>
+            </div>
+            <div id="study-mode-explanation" class="study-mode-explanation" aria-live="polite"></div>
+            <div class="study-preference-group">
+                <span class="study-preference-label">學習主題（可複選）</span>
+                <div id="study-topic-options" class="study-option-grid"></div>
+            </div>
+            <div class="study-preference-group">
+                <span class="study-preference-label">學習形式（可複選）</span>
+                <div id="study-format-options" class="study-option-grid"></div>
+            </div>
+            <div class="study-preference-group">
+                <label class="study-preference-label" for="study-assistant-instructions">這個教室希望 AI 怎麼協助你（可選）</label>
+                <textarea id="study-assistant-instructions" class="study-instructions" maxlength="3000" placeholder="例如：請用繁體中文解釋錯誤，先讓我完成對話，再給我三個更自然的說法。"></textarea>
+                <small class="study-check-item small" style="display:block;margin-top:6px;color:var(--text-dim);">這段內容會成為本教室的 AI 教學偏好。</small>
             </div>
             <strong style="color:#bae6fd;">選擇教材檔案</strong>
             <div id="study-material-list" class="study-checklist"></div>
@@ -1869,7 +1902,6 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             <button id="btn-study-close" class="btn-full" style="background:rgba(255,255,255,0.1);color:#fff;">關閉</button>
         </div>
     </div>
-
     <div id="modal-api" class="modal-overlay">
         <div class="modal-content">
             <h3 class="modal-h3">設定您的 API Key</h3>
@@ -2839,7 +2871,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 item.innerHTML = `
                     <span class="room-card-main"><span class="room-name">${room.name}</span><span class="room-study-badge">${studyBadge}</span></span>
                     <div class="room-actions">
-                        <button class="btn-room-action room-study-action" title="管理教材與字典" aria-label="管理教材與字典" onclick='event.stopPropagation(); window.GugoOpenRoomStudy(${JSON.stringify(room.id)})'><i class="fa-solid fa-list-check"></i></button>
+                        <button type="button" class="btn-room-action room-study-action" title="管理教材與字典" aria-label="管理教材與字典" data-room-study-id="${String(room.id).replace(/&/g, '&amp;').replace(/"/g, '&quot;')}"><i class="fa-solid fa-list-check"></i></button>
                         <button class="btn-room-action" title="重新命名" onclick="event.stopPropagation(); editRoomName('${room.id}')"><i class="fa-solid fa-pen"></i></button>
                         <button class="btn-room-action" title="刪除教室" onclick="event.stopPropagation(); deleteRoom('${room.id}')"><i class="fa-solid fa-trash"></i></button>
                     </div>
@@ -4106,6 +4138,10 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
 
 
 
+
+
+
+
 // GugoPro Tutor Experience v2
 (() => {
     if (window.__gugoTutorExperienceV2) return;
@@ -4325,6 +4361,26 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         if (old) old.remove();
     }
 
+    const STUDY_MODE_DETAILS = {
+        conversation: '對話練習：AI 會依照本教室的語言、程度、主題、教材與生詞，和你進行自然對話；需要時糾正文法與用字，但以不中斷對話為原則。',
+        review: '複習與測驗：AI 會從本教室的教材與生詞，安排單字意思、翻譯、造句與回顧題目，逐步檢查理解並提供提示。',
+        exam: '混合測驗：AI 會綜合對話、單字、翻譯、文法與情境題進行練習；會依本教室設定調整語言與難度，並在作答後給予回饋。'
+    };
+    const STUDY_TOPICS = [['daily','日常會話'],['travel','旅遊'],['restaurant','餐廳點餐'],['work','工作／商務'],['grammar','文法'],['listening','聽力'],['interview','面試'],['news','新聞時事']];
+    const STUDY_FORMATS = [['dialogue','情境對話'],['vocabulary','單字學習'],['grammar','文法解說'],['quiz','選擇／填空測驗'],['translation','翻譯練習'],['roleplay','角色扮演'],['pronunciation','發音練習'],['writing','寫作練習']];
+    function updateStudyModeExplanation(mode) {
+        const explanation = document.getElementById('study-mode-explanation');
+        if (explanation) explanation.textContent = STUDY_MODE_DETAILS[mode] || STUDY_MODE_DETAILS.conversation;
+    }
+    function renderStudyOptionGroup(id, options, selected) {
+        const target = document.getElementById(id); if (!target) return;
+        target.replaceChildren();
+        options.forEach(([value, label]) => {
+            const wrapper = document.createElement('label'); wrapper.className = 'study-option-chip';
+            const input = document.createElement('input'); input.type = 'checkbox'; input.value = value; input.checked = selected.includes(value);
+            wrapper.append(input, document.createTextNode(label)); target.appendChild(wrapper);
+        });
+    }
     function renderStudyPlanModal() {
         const room = typeof getActiveRoom === 'function' ? getActiveRoom() : null;
         const materialList = document.getElementById('study-material-list');
@@ -4359,7 +4415,9 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         });
     }
 
-    function openStudyPlanModal() { renderStudyPlanModal(); document.getElementById('modal-study-plan').style.display = 'flex'; }
+    function openStudyPlanModal() { const modal = document.getElementById('modal-study-plan'); if (!modal) return; renderStudyPlanModal(); modal.style.display = 'flex'; modal.classList.add('open'); modal.setAttribute('aria-hidden', 'false'); }
+    function closeStudyPlanModal() { const modal = document.getElementById('modal-study-plan'); if (!modal) return; modal.style.display = 'none'; modal.classList.remove('open'); modal.setAttribute('aria-hidden', 'true'); }
+    window.GugoOpenStudyPlanModal = openStudyPlanModal;
 
     if (typeof openMaterialModal === 'function') {
         const legacyOpenMaterialModal = openMaterialModal;
@@ -4487,17 +4545,17 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         document.getElementById('btn-vocab-create')?.addEventListener('click', () => { const inputName = document.getElementById('vocab-dictionary-name'); const name = inputName?.value.trim() || '新生詞本'; const list = getDictionaries(); const item = { id: makeId('dict'), name, words: [] }; list.push(item); selectedDictionaryId = item.id; saveDictionaries(list); renderVocabModal(); });
         document.getElementById('btn-vocab-rename')?.addEventListener('click', () => { const current = getSelectedDictionary(); const name = document.getElementById('vocab-dictionary-name')?.value.trim(); if (!current || !name) return; current.name = name; const list = getDictionaries().map(item => item.id === current.id ? current : item); saveDictionaries(list); renderVocabModal(); });
         document.getElementById('btn-vocab-delete')?.addEventListener('click', () => { const list = getDictionaries(); const current = getSelectedDictionary(); if (!current || list.length <= 1 || !confirm(`確定刪除「${current.name}」嗎？`)) return; const remaining = list.filter(item => item.id !== current.id); selectedDictionaryId = remaining[0].id; saveDictionaries(remaining); renderVocabModal(); });
-        document.getElementById('btn-study-plan')?.addEventListener('click', () => { openStudyPlanModal(); closeMenu(); });
-        document.getElementById('btn-study-close')?.addEventListener('click', () => { document.getElementById('modal-study-plan').style.display = 'none'; });
+        document.getElementById('btn-study-plan')?.addEventListener('click', () => { openStudyPlanModal(); });
+        document.getElementById('btn-study-close')?.addEventListener('click', closeStudyPlanModal);
         document.getElementById('study-mode')?.addEventListener('change', event => updateStudyModeExplanation(event.target.value));
-        document.getElementById('btn-study-save')?.addEventListener('click', () => { const room = typeof getActiveRoom === 'function' ? getActiveRoom() : null; if (!room) return; ensureRoomLearningState(room); room.studyPlan.materialIds = Array.from(document.querySelectorAll('#study-material-list input[type="checkbox"]:checked')).map(input => input.value); room.studyPlan.dictionaryIds = Array.from(document.querySelectorAll('#study-dictionary-list input[type="checkbox"]:checked')).map(input => input.value); room.studyPlan.mode = document.getElementById('study-mode')?.value || 'conversation'; room.studyPlan.language = document.getElementById('study-language')?.value || document.getElementById('target-lang')?.value || 'en-US'; room.studyPlan.level = document.getElementById('study-level')?.value || 'A1'; room.studyPlan.topics = Array.from(document.querySelectorAll('#study-topic-options input[type="checkbox"]:checked')).map(input => input.value); room.studyPlan.formats = Array.from(document.querySelectorAll('#study-format-options input[type="checkbox"]:checked')).map(input => input.value); room.studyPlan.assistantInstructions = String(document.getElementById('study-assistant-instructions')?.value || '').trim().slice(0, 3000); room.material = room.materials.find(item => room.studyPlan.materialIds.includes(item.id)) || null; saveRoomsToLocal(); renderMaterialBannerV2(); renderStudyPlanSummary(); document.getElementById('modal-study-plan').style.display = 'none'; });
+        document.getElementById('btn-study-save')?.addEventListener('click', () => { const room = typeof getActiveRoom === 'function' ? getActiveRoom() : null; if (!room) return; ensureRoomLearningState(room); room.studyPlan.materialIds = Array.from(document.querySelectorAll('#study-material-list input[type="checkbox"]:checked')).map(input => input.value); room.studyPlan.dictionaryIds = Array.from(document.querySelectorAll('#study-dictionary-list input[type="checkbox"]:checked')).map(input => input.value); room.studyPlan.mode = document.getElementById('study-mode')?.value || 'conversation'; room.studyPlan.language = document.getElementById('study-language')?.value || document.getElementById('target-lang')?.value || 'en-US'; room.studyPlan.level = document.getElementById('study-level')?.value || 'A1'; room.studyPlan.topics = Array.from(document.querySelectorAll('#study-topic-options input[type="checkbox"]:checked')).map(input => input.value); room.studyPlan.formats = Array.from(document.querySelectorAll('#study-format-options input[type="checkbox"]:checked')).map(input => input.value); room.studyPlan.assistantInstructions = String(document.getElementById('study-assistant-instructions')?.value || '').trim().slice(0, 3000); room.material = room.materials.find(item => room.studyPlan.materialIds.includes(item.id)) || null; saveRoomsToLocal(); renderMaterialBannerV2(); renderStudyPlanSummary(); closeStudyPlanModal(); });
         document.getElementById('btn-word-lookup')?.addEventListener('click', runWordLookup);
         document.getElementById('btn-word-speak')?.addEventListener('click', () => speak(selectedLookupTerm, selectedLookupMessageLang));
         document.getElementById('btn-word-add')?.addEventListener('click', addSelectedWordToDictionary);
         document.getElementById('btn-word-close')?.addEventListener('click', () => { document.getElementById('modal-word-lookup').style.display = 'none'; });
         document.getElementById('modal-word-lookup')?.addEventListener('click', event => { if (event.target.id === 'modal-word-lookup') event.target.style.display = 'none'; });
         document.getElementById('modal-vocab')?.addEventListener('click', event => { if (event.target.id === 'modal-vocab') event.target.style.display = 'none'; });
-        document.getElementById('modal-study-plan')?.addEventListener('click', event => { if (event.target.id === 'modal-study-plan') event.target.style.display = 'none'; });
+        document.getElementById('modal-study-plan')?.addEventListener('click', event => { if (event.target.id === 'modal-study-plan') closeStudyPlanModal(); });
         populateLanguageSelect(document.getElementById('word-lookup-lang'), document.getElementById('my-lang')?.value || 'zh-TW');
         renderStudyPlanSummary(); renderMaterialBannerV2();
         document.querySelectorAll('.message').forEach(attachWordSelection);
@@ -4506,6 +4564,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
     window.addEventListener('resize', autoGrowComposer, { passive: true });
     document.addEventListener('DOMContentLoaded', bindExperienceUI);
 })();
+
     </script>
 <script id="gugo-stt-locale-scroll-guard-js">
 // GugoPro STT Locale Binding + Header Sync + Scroll Gesture Guard
@@ -5995,6 +6054,16 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
 
 
 
+
+
+
+
+
+
+
+
+
+
 <script id="gugo-capsule-dock-modes-js">
 // GugoPro Gemini-style Capsule Dock + three speech modes
 (() => {
@@ -6418,7 +6487,12 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
     window.GugoOpenRoomStudy = roomId => {
         const targetId = String(roomId || '');
         if (typeof switchRoom === 'function' && targetId && targetId !== String(activeRoomId)) switchRoom(targetId);
-        setTimeout(() => document.getElementById('btn-study-plan')?.click(), 0);
+        const open = () => {
+            if (typeof window.GugoOpenStudyPlanModal === 'function') window.GugoOpenStudyPlanModal();
+            else document.getElementById('btn-study-plan')?.click();
+        };
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', open, { once: true });
+        else requestAnimationFrame(open);
     };
 
     function bindComposerFeedback() {
@@ -6445,6 +6519,17 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
     }
     function bind() {
         ensureSpeechModePanel();
+        const roomList = document.getElementById('room-list');
+        if (roomList && roomList.dataset.studyOpenBound !== '1') {
+            roomList.dataset.studyOpenBound = '1';
+            roomList.addEventListener('click', event => {
+                const button = event.target?.closest?.('[data-room-study-id]');
+                if (!button || !roomList.contains(button)) return;
+                event.preventDefault();
+                event.stopPropagation();
+                window.GugoOpenRoomStudy(button.dataset.roomStudyId);
+            }, true);
+        }
         const admobSlot = document.getElementById('admob-banner-slot');
         if (admobSlot) {
             admobSlot.dataset.adUnitId = ADMOB_TEST_BANNER_ID;
