@@ -259,7 +259,7 @@
     editorOpen: { zh: '💡 已進入 PDF 編輯模式；請從下方工具列選擇操作。', en: '💡 PDF editing mode is open; choose an action from the tool strip below.' },
     editorClose: { zh: '💡 已離開 PDF 編輯模式；文件內容仍保留在閱讀畫面。', en: '💡 PDF editing mode is closed; the document remains in the reader.' },
     textEdit: { zh: '💡 文字編輯已啟用；直接點擊 PDF 文字，該文字會原地變成可打字狀態。', en: '💡 Text editing is active; click text in the PDF and type directly on the page.' },
-    textEditReady: { zh: '💡 已進入即地編輯：直接在原文字上打字；點擊其他位置會自動保存。', en: '💡 Direct editing is active: type on the original text; clicking elsewhere saves automatically.' },
+    textEditReady: { zh: '💡 已進入即地編輯：直接在原文字上打字；完成後請按「套用變更」保存。', en: '💡 Direct editing is active: type on the original text, then choose Apply change to save it.' },
     textEditCanceled: { zh: '💡 已取消這次文字編輯，原內容保持不變。', en: '💡 This text edit was canceled; the original content is unchanged.' },
     copyText: { zh: '💡 複製文字已啟用；請點選 PDF 中的文字區塊。', en: '💡 Copy text is active; click a text block in the PDF.' },
     deleteText: { zh: '💡 刪除文字已啟用；請點選要移除的 PDF 文字區塊。', en: '💡 Delete text is active; click the PDF text block to remove it.' },
@@ -267,7 +267,7 @@
     textDeleted: { zh: '💡 文字已移除；可按復原恢復，或按「儲存 PDF」下載。', en: '💡 Text removed; use Undo to restore it or Save PDF to download.' },
     areaHighlight: { zh: '💡 區域高亮已啟用；請在 PDF 上拖曳框選要突出的區域。', en: '💡 Area highlight is active; drag a box over the area to emphasize.' },
     color: { zh: '💡 請選擇下一個標註的顏色；選完即可繼續編輯。', en: '💡 Choose the color for the next annotation, then continue editing.' },
-    fill: { zh: '💡 填寫模式已啟用；點擊 PDF 位置後直接輸入，點擊其他位置會自動保存。', en: '💡 Fill mode is active; click a PDF position and type directly; clicking elsewhere saves automatically.' },
+    fill: { zh: '💡 填寫模式已啟用；點擊 PDF 位置後直接輸入，完成後請按「套用變更」保存。', en: '💡 Fill mode is active; click a PDF position and type directly, then choose Apply change to save it.' },
     mobileSubdockClose: { zh: '💡 已返回主工具列；可繼續閱讀或選擇其他文件操作。', en: '💡 Returned to the primary toolbar; continue reading or choose another document action.' }
   };
   function actionGuide(key) {
@@ -704,6 +704,10 @@
     }
     var editorTextOrdinal = Number(options.textOrdinal != null ? options.textOrdinal : target && target.dataset && target.dataset.textOrdinal != null ? target.dataset.textOrdinal : itemIndex); var editor = { kind: options.kind || 'pdf', pageNumber: Number(pageNumber), itemIndex: Number(itemIndex), blockIndex: Number(options.blockIndex != null ? options.blockIndex : -1), itemIndexes: Array.isArray(options.itemIndexes) && options.itemIndexes.length ? options.itemIndexes.slice() : [Number(itemIndex)], lineItemIndexes: Array.isArray(options.lineItemIndexes) && options.lineItemIndexes.length ? options.lineItemIndexes.map(function (line) { return line.slice(); }) : [[Number(itemIndex)]], itemOriginals: options.itemOriginals && typeof options.itemOriginals === 'object' ? Object.assign({}, options.itemOriginals) : {}, textOrdinals: Array.isArray(options.textOrdinals) && options.textOrdinals.length ? options.textOrdinals.slice() : [editorTextOrdinal], textOrdinal: editorTextOrdinal, original: String(original || ''), target: target, frame: frame, host: host, field: field, geometry: geometry, color: options.color, size: options.size, baseHeight: baseHeight, originalStyle: originalStyle, cancelled: false };
     state.inlineTextEditor = editor;
+    // Clear any legacy focus padding left by an earlier render; the v38 reveal path
+    // uses scroll only and must not reserve blank space inside the reader.
+    var continuousStack = $('pdf-continuous-stack');
+    if (continuousStack) continuousStack.style.paddingTop = '';
     if (target) target.classList.add('is-inline-editing');
     field.addEventListener('keydown', function (event) {
       if (event.key === 'Escape') { event.preventDefault(); cancelInlineTextEditor(editor); }
@@ -715,8 +719,23 @@
       try { document.execCommand('insertText', false, text); } catch (_) { field.textContent += text; }
       resizeDirectTextEditor(editor);
     });
-    field.addEventListener('pointerdown', function (event) { event.stopPropagation(); });
-    field.addEventListener('blur', function () { window.setTimeout(function () { if (state.inlineTextEditor === editor && (!editor.host.contains(document.activeElement))) commitInlineTextEditor({ skipRender: editor.kind === 'pdf' }); }, 0); });
+    field.addEventListener('pointerdown', function (event) {
+      // A second tap inside the active editor must stay inside the same field.
+      // Stop page-level selection/reader handlers, but keep the browser's native caret placement.
+      event.stopPropagation();
+      if (state.inlineTextEditor === editor && field.isConnected) {
+        window.setTimeout(function () {
+          if (state.inlineTextEditor === editor && field.isConnected && document.activeElement !== field) field.focus({ preventScroll: true });
+        }, 0);
+      }
+    });
+    field.addEventListener('click', function (event) {
+      event.stopPropagation();
+      if (state.inlineTextEditor === editor && field.isConnected && document.activeElement !== field) field.focus({ preventScroll: true });
+    });
+    // Do not commit on blur: mobile keyboards and visualViewport changes can emit incidental blur.
+    // Apply, Save, switching target, Back, or an intentional render is responsible for committing.
+    field.addEventListener('blur', function () { editor.lastBlurAt = Date.now(); });
     if (target) schedulePdfTextTargetReveal(field);
     window.setTimeout(function () {
       if (state.inlineTextEditor !== editor || !field.isConnected) return;
@@ -755,20 +774,17 @@
     var nextTop = stage.scrollTop + targetCenterY - anchorY;
     var nextLeft = stage.scrollLeft + targetCenterX - (stageRect.left + stage.clientWidth / 2);
     var stack = $('pdf-continuous-stack');
-    if (stack && element.closest && element.closest('#pdf-continuous-stack') && targetCenterY < anchorY - 8 && stage.scrollTop <= 2) {
-      var neededTopPadding = Math.min(320, Math.max(0, anchorY - targetCenterY));
-      var currentTopPadding = parseFloat(stack.style.paddingTop) || 0;
-      if (neededTopPadding > currentTopPadding + 2) {
-        stack.style.paddingTop = neededTopPadding + 'px';
-        if (window.requestAnimationFrame) window.requestAnimationFrame(function () { if (element.isConnected) revealPdfTextTarget(element); });
-        else window.setTimeout(function () { if (element.isConnected) revealPdfTextTarget(element); }, 0);
-        return;
-      }
-    }
+    // Keep the reader stable. Only move the scroll position when the target is outside
+    // a comfortable focus band; never add artificial stack padding, which creates a
+    // blank band above the first page and shifts the entire document.
+    var safeTop = stageRect.top + Math.max(16, usableHeight * .2);
+    var safeBottom = stageRect.top + Math.min(usableHeight - 16, usableHeight * .78);
+    var needsVerticalReveal = targetRect.top < safeTop || targetRect.bottom > safeBottom;
+    var needsHorizontalReveal = targetRect.left < stageRect.left + 8 || targetRect.right > stageRect.right - 8;
     var maxTop = Math.max(0, stage.scrollHeight - stage.clientHeight);
     var maxLeft = Math.max(0, stage.scrollWidth - stage.clientWidth);
-    stage.scrollTop = Math.max(0, Math.min(maxTop, nextTop));
-    stage.scrollLeft = Math.max(0, Math.min(maxLeft, nextLeft));
+    if (needsVerticalReveal) stage.scrollTop = Math.max(0, Math.min(maxTop, nextTop));
+    if (needsHorizontalReveal) stage.scrollLeft = Math.max(0, Math.min(maxLeft, nextLeft));
   }
   function schedulePdfTextTargetReveal(element) {
     if (!element || !isMobileReader()) return;
@@ -793,7 +809,12 @@
     }
   }
   function handlePdfTextBlockClick(event, pageNumber, block, element) {
-    if (state.inlineTextEditor && state.inlineTextEditor.target === element) { event.stopPropagation(); return; }
+    if (state.inlineTextEditor && state.inlineTextEditor.target === element) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (element.isConnected && document.activeElement !== element) element.focus({ preventScroll: true });
+      return;
+    }
     if (state.inlineTextEditor && state.inlineTextEditor.target !== element) commitInlineTextEditor({ skipRender: true });
     event.preventDefault(); event.stopPropagation();
     var value = getPdfBlockValue(pageNumber, block);
