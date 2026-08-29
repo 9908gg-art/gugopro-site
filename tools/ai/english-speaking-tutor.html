@@ -1112,6 +1112,16 @@
     .message-user .pronunciation-retry { margin-left: 10px; }
 }
 
+
+/* User message controls: keep playback/delete in one row and separate retry. */
+.pronunciation-recognized { margin: 0 0 8px; padding: 8px 10px; border-radius: 10px; color: #e5f7ff; background: rgba(0,122,255,.14); border: 1px solid rgba(103,232,249,.28); font-size: .86rem; line-height: 1.45; overflow-wrap: anywhere; }
+.pronunciation-recognized strong { color: #fff; font-weight: 800; }
+@media (max-width: 640px) {
+    .message-user .msg-actions { flex-direction: row; gap: 8px; }
+    .message-user .pronunciation-score { margin-top: 16px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.12); }
+    .message-user .pronunciation-retry { margin-left: 10px; }
+}
+
     </style>
 <style id="gugo-stt-locale-scroll-guard-style">
 /* GugoPro STT locale and touch gesture guard */
@@ -1709,7 +1719,6 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             <div class="input-wrapper">
                 <div id="error-panel" class="error-panel" role="status" aria-live="polite">
                     <span id="error-msg"></span>
-                    <button id="btn-retry-model" class="btn-tool">🔄 手動重試</button>
                     <div id="speech-voice-guide" class="speech-voice-guide" hidden>
                         <strong id="speech-voice-guide-title">如何安裝對應語音</strong>
                         <span id="speech-voice-guide-copy"></span>
@@ -3173,6 +3182,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
 
             const textInput = document.getElementById('user-text');
             const content = String(retryRequest?.content || textInput.value || '').trim();
+            const speechRequest = retryRequest?.source === 'speech';
             if (!content) return;
 
             const apiKey = getGeminiApiKey();
@@ -3246,23 +3256,24 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                     : '';
 
                 if (err.circuitBreaker && (err.status === 503 || err.status === 'TIMEOUT')) {
-                    pendingRetryRequest = { content, myLang, targetLang, inputLang, msgId };
+                    pendingRetryRequest = null;
                     if (userMsgEl) userMsgEl.querySelector('.msg-my').textContent = '所有已啟用模型目前都在忙碌或逾時，尚未完成回覆。';
-                    showError(`${ALL_ENABLED_MODELS_BUSY_MESSAGE}${attemptedText}`, { busy: true, countdownSeconds: 5 });
+                    showError(`${ALL_ENABLED_MODELS_BUSY_MESSAGE}${attemptedText} ${speechRequest ? '請重新按學習語言語音按鈕再測試。' : '請稍後再按發送按鈕再試。'}`, { busy: true, countdownSeconds: 5, showRetryButton: false });
                 } else if (err.status === 429) {
-                    pendingRetryRequest = { content, myLang, targetLang, inputLang, msgId };
+                    pendingRetryRequest = null;
                     if (userMsgEl) userMsgEl.querySelector('.msg-my').textContent = '目前免費模型的請求額度繁忙，尚未完成回覆。';
-                    showError(`⚠️ 免費模型目前請求繁忙 (429)，系統已完成自動輪替；您可以稍後手動重試。${attemptedText}`, { busy: true, countdownSeconds: 5 });
+                    showError(`⚠️ Gemini API 請求額度繁忙（HTTP 429），系統已完成模型輪替。${speechRequest ? '請重新按學習語言語音按鈕再測試。' : '請稍後再按發送按鈕再試。'}${attemptedText}`, { busy: true, countdownSeconds: 5, showRetryButton: false });
                 } else if (err.status === 500) {
-                    pendingRetryRequest = { content, myLang, targetLang, inputLang, msgId };
+                    pendingRetryRequest = null;
                     if (userMsgEl) userMsgEl.querySelector('.msg-my').textContent = '免費模型暫時無法回應，尚未完成回覆。';
-                    showError(`⚠️ 免費模型目前暫時無法回應 (500)，系統已完成自動輪替；您可以稍後手動重試。${attemptedText}`, { busy: true, countdownSeconds: 5 });
+                    showError(`⚠️ Gemini API 伺服器錯誤（HTTP 500），系統已完成模型輪替。${speechRequest ? '請重新按學習語言語音按鈕再測試。' : '請稍後再按發送按鈕再試。'}${attemptedText}`, { busy: true, countdownSeconds: 5, showRetryButton: false });
                 } else if (err.status === 401 || err.status === 403) {
                     if (userMsgEl) userMsgEl.querySelector('.msg-my').textContent = 'API Key 或權限需要確認。';
-                    showError('❌ Gemini API Key 無效或權限受限，請至右側選單重新設定。');
+                    showError(`❌ Gemini API 驗證錯誤（HTTP ${err.status}），請確認右側 API Key 設定後${speechRequest ? '重新按學習語言語音按鈕' : '重新按發送按鈕'}。`, { showRetryButton: false });
                 } else {
                     if (userMsgEl) userMsgEl.querySelector('.msg-my').textContent = '本次請求未完成，請稍後再試。';
-                    showError(`❌ 請求未完成：${err.status || '連線失敗'}。您可以按下「手動重試」。`);
+                    const failureLabel = err.status ? `HTTP ${err.status}` : (err.name === 'TypeError' ? '網路連線錯誤（無法連到 Gemini API）' : '語音／網路請求錯誤');
+                    showError(`❌ ${speechRequest ? '語音辨識已完成，但 AI 回覆失敗' : 'AI 請求未完成'}：${failureLabel}。請${speechRequest ? '重新按學習語言語音按鈕' : '重新按發送按鈕'}再測試。`, { showRetryButton: false });
                 }
             } finally {
                 isSendingMessage = false;
@@ -4064,27 +4075,17 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             clearRetryCountdown();
             const panel = document.getElementById('error-panel');
             const message = document.getElementById('error-msg');
-            const retryButton = document.getElementById('btn-retry-model');
             const voiceGuide = document.getElementById('speech-voice-guide');
             if (voiceGuide) voiceGuide.hidden = true;
             panel.classList.toggle('busy', Boolean(options.busy));
             message.textContent = msg;
             panel.style.display = 'block';
-            retryButton.style.display = options.showRetryButton === false ? 'none' : '';
-            retryButton.disabled = Boolean(options.disabled);
-            retryButton.textContent = options.buttonLabel || '🔄 手動重試';
 
             const seconds = Number(options.countdownSeconds || 0);
             if (seconds > 0) {
                 let remaining = Math.ceil(seconds);
                 const updateCountdown = () => {
-                    if (remaining > 0) {
-                        message.textContent = `${msg} ${remaining} 秒後可按下「手動重試」。`;
-                        retryButton.disabled = true;
-                    } else {
-                        message.textContent = `${msg} 您可以按下「手動重試」。`;
-                        retryButton.disabled = false;
-                    }
+                    message.textContent = remaining > 0 ? `${msg}（${remaining} 秒後可重新測試）` : `${msg} 請重新操作測試。`;
                 };
                 updateCountdown();
                 retryCountdownTimer = setInterval(() => {
@@ -4115,17 +4116,6 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         }
 
         document.getElementById('btn-speech-voice-recheck').onclick = recheckSpeechVoice;
-        async function handleManualRetry() {
-            if (isSendingMessage || retryCountdownTimer !== null) return;
-            const retryRequest = pendingRetryRequest;
-            await fetchLatestModel();
-            if (!currentModel) return;
-            if (retryRequest) {
-                await sendMessage(retryRequest);
-            }
-        }
-
-        document.getElementById('btn-retry-model').onclick = handleManualRetry;
         document.getElementById('btn-send').onclick = sendMessage;
         document.getElementById('user-text').onkeydown = (e) => { if(e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); sendMessage(); } };
     
@@ -5368,14 +5358,17 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         const repeatedSpeech = /(\b[\p{L}\p{N}']+\b)(?:\s+\1){2,}/iu.test(spokenText);
         if (repeatedSpeech && targetTokens.join(' ') !== spokenTokens.join(' ')) similarity = Math.max(0, similarity - 8);
         const score = Math.max(0, Math.min(100, Math.round(confidenceAvailable ? similarity * 0.75 + confidenceScore * 0.25 : similarity)));
-        return { score, confidence: confidenceScore, confidenceAvailable, band: score >= 85 ? 'good' : score >= 70 ? 'ok' : 'low', label: score >= 85 ? '優秀' : score >= 70 ? '良好' : '需要練習' };
+        return { recognizedText: spokenText, score, confidence: confidenceScore, confidenceAvailable, band: score >= 85 ? 'good' : score >= 70 ? 'ok' : 'low', label: score >= 85 ? '優秀' : score >= 70 ? '良好' : '需要練習' };
     }
     window.GugoProScorePronunciation = scorePronunciation;
 
     function renderScore(score, messageId) {
         if (!score) return '';
         const safeMessageId = String(messageId || '').replace(/[&"<>]/g, character => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[character]));
-        return `<div class="pronunciation-score pronunciation-score-${score.band}" data-pronunciation-score="${score.score}"><span class="pronunciation-score-badge">🎯 發音精準度：${score.score} 分（${score.label}）</span><button type="button" class="pronunciation-retry" data-message-id="${safeMessageId}" data-busy="0" aria-busy="false" aria-label="重新挑戰發音">🔄 重新挑戰</button></div>`;
+        const recognized = String(score.recognizedText || '').trim();
+        const safeRecognized = recognized.replace(/[&"<>]/g, character => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[character]));
+        const recognizedHtml = safeRecognized ? `<div class="pronunciation-recognized" data-recognized-text="${safeRecognized}">🎙️ 裝置辨識結果：<strong>${safeRecognized}</strong></div>` : '';
+        return `<div class="pronunciation-score pronunciation-score-${score.band}" data-pronunciation-score="${score.score}">${recognizedHtml}<span class="pronunciation-score-badge">🎯 發音精準度：${score.score} 分（${score.label}）</span><button type="button" class="pronunciation-retry" data-message-id="${safeMessageId}" data-busy="0" aria-busy="false" aria-label="重新挑戰發音">🔄 重新挑戰</button></div>`;
     }
     window.GugoRenderPronunciationScore = renderScore;
 
@@ -5611,7 +5604,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 session.sendTimer = setTimeout(() => {
                     session.sendTimer = null;
                     window.GugoSetSpeechComposerState?.('sending', session.role, '正在送出語音…');
-                    sendMessage({ content: speechContent, inputLang: session.speechLocale });
+                    sendMessage({ content: speechContent, inputLang: session.speechLocale, source: 'speech' });
                     setTimeout(() => window.GugoSetSpeechComposerState?.('idle'), 120);
                 }, 120);
             }
@@ -6452,8 +6445,6 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             startFailed: () => window.GugoSetRetryBusy?.(target.messageId, false)
         });
         if (!state) return null;
-        // Retry uses one delegated click path only. Remove the primary button's
-        // pointer handlers so a physical tap cannot start and stop in one gesture.
         button.onclick = null;
         button.onpointerdown = null;
         button.onpointerup = null;
