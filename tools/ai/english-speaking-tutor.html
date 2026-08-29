@@ -3216,14 +3216,14 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 if (userMsgEl) {
                     const learningElement = userMsgEl.querySelector('.msg-learning');
                     if (learningElement) {
-                        learningElement.dataset.rawText = String(response.user_learning || '');
-                        learningElement.innerHTML = renderTutorMarkdown(response.user_learning);
+                        learningElement.dataset.rawText = String(content || '');
+                        learningElement.innerHTML = renderTutorMarkdown(content);
                     }
                     userMsgEl.querySelector('.msg-my').textContent = response.user_my;
                 }
 
                 const room = chatRooms.find(r => r.id === activeRoomId);
-                room.messages.push({ id: msgId, role: 'user', learning: response.user_learning, my: response.user_my, speechLang: targetLang, pronunciation: pronunciationForMessage || null });
+                room.messages.push({ id: msgId, role: 'user', learning: content, my: response.user_my, rawInput: content, learningTranslation: response.user_learning, speechLang: targetLang, pronunciation: pronunciationForMessage || null });
 
                 if (window.GugoProGlobalAIQuota) {
                     window.GugoProGlobalAIQuota.recordUsage(1, currentModel);
