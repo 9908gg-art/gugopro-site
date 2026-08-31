@@ -196,7 +196,8 @@
         contact: '聯絡我們',
         overview: '主站工具總覽'
     };
-    var home = '../index.html#tools-section';
+    var isRootHub = document.documentElement.classList.contains('root-converter-hub') || (document.body && document.body.classList.contains('root-converter-hub')) || /(?:^|\/)index\.html$/.test(window.location.pathname) || window.location.pathname === '/';
+    var home = isRootHub ? 'index.html#converter-tools' : '../index.html#tools-section';
     var links = [
         ['converter-hub.html', labels.hub],
         ['converter-subtitles.html', labels.subtitles],
@@ -300,7 +301,14 @@
         var toolsButton = document.querySelector('.tools-btn');
         var toolsSelector = document.querySelector('.tools-selector');
         var dropdown = document.querySelector('.tools-dropdown');
-        if (dropdown) dropdown.innerHTML = links.map(function (item) { return '<a href="' + item[0] + '">' + item[1] + '</a>'; }).join('');
+        function resolveLink(path) {
+            if (!isRootHub || /^(?:https?:|\/|#|mailto:|tel:)/i.test(path)) return path;
+            if (path === 'converter-hub.html') return 'index.html#converter-tools';
+            if (path.indexOf('../') === 0) return path.slice(3);
+            if (/^(?:converter-|pdf\/)/.test(path)) return 'tools/' + path;
+            return path;
+        }
+        if (dropdown) dropdown.innerHTML = links.map(function (item) { return '<a href="' + resolveLink(item[0]) + '">' + item[1] + '</a>'; }).join('');
 
         if (toolsButton && toolsSelector) {
             toolsButton.addEventListener('click', function (event) {
