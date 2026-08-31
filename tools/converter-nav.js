@@ -88,6 +88,8 @@
         financeTrading: 'Trading Breakeven Calculator',
         financeLeverage: 'Leverage Liquidation Calculator',
         financeSalary: 'Salary Tax Calculator',
+        financeBasic: 'Everyday Finance',
+        financePro: 'Professional & Quantitative',
         aiTutor: 'Multilingual AI Speaking Tutor',
         aiTranslator: 'Real-time Bilingual Translator',
         aiTarot: 'AI Tarot Master',
@@ -184,6 +186,8 @@
         financeTrading: '交易損益兩平試算器',
         financeLeverage: '槓桿強平價格試算器',
         financeSalary: '薪資所得稅試算器',
+        financeBasic: '基礎生活理財',
+        financePro: '專業實戰與量化',
         aiTutor: 'AI 多國語言對話導師',
         aiTranslator: 'AI 同聲傳譯與即時雙語翻譯器',
         aiTarot: 'AI 塔羅占卜大師',
@@ -197,7 +201,7 @@
         overview: '主站工具總覽'
     };
     var isRootHub = document.documentElement.classList.contains('root-converter-hub') || (document.body && document.body.classList.contains('root-converter-hub')) || /(?:^|\/)index\.html$/.test(window.location.pathname) || window.location.pathname === '/';
-    var home = isRootHub ? 'index.html#converter-tools' : '../index.html#tools-section';
+    var home = isRootHub ? 'index.html#converter-tools' : (en ? '../../index.html#converter-tools' : '../index.html#converter-tools');
     var links = [
         ['converter-hub.html', labels.hub],
         ['converter-subtitles.html', labels.subtitles],
@@ -277,12 +281,8 @@
         ['converter-unit-data.html', labels.unitData],
         ['converter-unit-speed.html', labels.unitSpeed],
         ['converter-unit-pressure.html', labels.unitPressure],
-        ['converter-finance-dca-compound.html', labels.financeDca],
-        ['converter-finance-mortgage.html', labels.financeMortgage],
-        ['converter-finance-dividend-target.html', labels.financeDividend],
-        ['converter-finance-trading-breakeven.html', labels.financeTrading],
-        ['converter-finance-leverage-liquidation.html', labels.financeLeverage],
-        ['converter-finance-salary-tax.html', labels.financeSalary],
+        [isRootHub ? 'index.html#dashboard-category-finance-basic' : '../index.html#dashboard-category-finance-basic', labels.financeBasic],
+        [isRootHub ? 'index.html#dashboard-category-finance-pro' : '../index.html#dashboard-category-finance-pro', labels.financePro],
         ['/tools/ai/english-speaking-tutor.html', labels.aiTutor],
         ['/tools/ai/realtime-translator.html', labels.aiTranslator],
         [en ? '/en/tools/ai/tarot-master.html' : '/tools/ai/tarot-master.html', labels.aiTarot],
@@ -405,7 +405,7 @@
         }
 
         function updateBadges(query) {
-            var totals = { images: 0, 'audio-tools': 0, 'video-tools': 0, 'document-process': 0, 'document-convert': 0, 'smart-text': 0, security: 0, 'data-charts': 0, 'office-tools': 0, 'unit-converter': 0, 'finance-tools': 0, 'ai-tools': 0 };
+            var totals = { 'ai-tools': 0, 'finance-basic': 0, 'finance-pro': 0, images: 0, 'audio-tools': 0, 'video-tools': 0, 'document-process': 0, 'document-convert': 0, 'smart-text': 0, security: 0, 'data-charts': 0, 'office-tools': 0, 'unit-converter': 0 };
             var total = 0;
             cards.forEach(function (card) {
                 if (!matchesQuery(card, query)) return;
