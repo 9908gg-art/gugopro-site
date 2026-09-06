@@ -1,57 +1,58 @@
 <!DOCTYPE html>
+
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="在瀏覽器本地完成 HEX、RGB、HSL、CMYK 色彩代碼互轉與圖片調色盤提取。">
-    <title>色彩代碼轉換器 HEX RGB HSL CMYK | GugoPro Converter Hub</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../css/app.css">
-    <link rel="stylesheet" href="converter-base.css">
-    <link rel="stylesheet" href="converter-hub.css"><link rel="stylesheet" href="converter-compact.css">
-</head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="在瀏覽器本地完成 HEX、RGB、HSL、CMYK 色彩代碼互轉與圖片調色盤提取。" name="description"/>
+<title>色彩代碼轉換器 HEX RGB HSL CMYK | GugoPro Converter Hub</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=Outfit:wght@500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+<link href="../css/app.css" rel="stylesheet"/>
+<link href="converter-base.css" rel="stylesheet"/>
+<link href="converter-hub.css" rel="stylesheet"/><link href="converter-compact.css" rel="stylesheet"/>
+<link href="/tools/seo-content.css" rel="stylesheet"/></head>
 <body class="converter-page compact-tool-page">
-    <header><div class="nav-container">
-        <a href="../index.html#tools-section" class="logo" aria-label="回到 GugoPro 主站首頁"><div class="logo-icon"><i class="fa-solid fa-rocket"></i></div><span class="logo-text">GugoPro</span><span class="logo-tag">生活實用工具</span></a>
-        <div class="tools-selector"><button class="tools-btn" type="button" aria-haspopup="true"><i class="fa-solid fa-screwdriver-wrench"></i> 轉檔工具 <i class="fa-solid fa-caret-down"></i></button><div class="tools-dropdown"></div></div>
-        <div class="nav-actions"><a class="kofi-nav-btn" href="https://ko-fi.com/R1K123XRS9" target="_blank" rel="noopener sponsored"><i class="fa-solid fa-mug-hot"></i> 支持創作</a><a class="converter-home-link" href="../index.html#tools-section"><i class="fa-solid fa-house"></i> 主站首頁</a><a class="converter-language-link" href="../en/tools/converter-color.html"><i class="fa-solid fa-language"></i> English</a></div>
-    </div></header>
-    <section class="hero converter-hero"><div class="hero-badge"><i class="fa-solid fa-palette"></i> Converter Hub / 設計工作流</div><h1>色彩代碼轉換器</h1><p>在瀏覽器本地互轉 HEX、RGB、HSL、CMYK 色彩代碼，還能從圖片提取一組可用的調色盤。</p><div class="hero-actions"><a class="converter-button secondary" href="converter-hub.html"><i class="fa-solid fa-arrow-left"></i> 返回 Converter Hub</a><span class="converter-stat"><strong>Canvas</strong> 圖片本地取樣</span></div></section>
-    <main class="converter-shell"><div class="converter-workbench-wrap">
-        <section class="converter-workbench" aria-labelledby="color-workbench-heading"><div class="converter-section-heading"><div><h2 id="color-workbench-heading">即時色碼互轉</h2><p>編輯任一欄位，其他格式會即時同步。</p></div><input id="color-picker" class="color-picker-input" type="color" value="#55d6ff" aria-label="選擇色彩"></div>
-            <div class="color-converter-grid"><div class="converter-control"><label class="converter-label" for="color-hex">HEX</label><input id="color-hex" type="text" value="#55D6FF" spellcheck="false"></div><div class="converter-control"><label class="converter-label" for="color-rgb">RGB</label><input id="color-rgb" type="text" value="rgb(85, 214, 255)" spellcheck="false"></div><div class="converter-control"><label class="converter-label" for="color-hsl">HSL</label><input id="color-hsl" type="text" value="hsl(193, 100%, 67%)" spellcheck="false"></div><div class="converter-control"><label class="converter-label" for="color-cmyk">CMYK</label><input id="color-cmyk" type="text" value="cmyk(67%, 16%, 0%, 0%)" spellcheck="false"></div></div>
-            <div class="color-swatch-large" id="color-swatch"><span>#55D6FF</span></div><div class="converter-actions"><button class="converter-button primary" id="color-copy-css" type="button"><i class="fa-solid fa-copy"></i> 複製 CSS</button><button class="converter-button secondary" id="color-copy-all" type="button"><i class="fa-solid fa-clipboard"></i> 複製全部色碼</button><button class="converter-button secondary" id="color-reset" type="button"><i class="fa-solid fa-rotate-left"></i> 重設</button></div><div class="converter-progress"><div class="converter-progress-head"><span>處理進度</span><span id="color-progress-label">100%</span></div><div class="converter-progress-track"><div class="converter-progress-bar" id="color-progress-bar" style="width:100%"></div></div></div><p class="converter-status" id="color-status" aria-live="polite">色彩已準備完成。</p>
-            <hr class="converter-divider"><details class="converter-optional-workflow"><summary>圖片調色盤提取</summary><div class="converter-section-heading"><div><h2>圖片調色盤提取</h2><p>從本地圖片取樣主要色彩，適合快速建立品牌或介面配色。</p></div></div><label class="converter-upload-zone compact-upload" id="palette-dropzone" for="palette-file"><input id="palette-file" type="file" accept="image/*"><span><i class="fa-solid fa-image converter-upload-icon"></i><strong>拖曳圖片到這裡</strong><small>Canvas 會在瀏覽器本地取樣，不上傳圖片</small></span></label><div class="converter-file-info" id="palette-file-info"></div><div id="palette-grid" class="palette-grid" aria-live="polite"></div><div class="converter-output"><h3>調色盤 CSS</h3><pre id="palette-output"></pre><button class="converter-button secondary" id="palette-copy" type="button"><i class="fa-solid fa-copy"></i> 複製調色盤</button></div></details>
-        </section><aside><section class="converter-side-card"><h3><i class="fa-solid fa-circle-info"></i> 格式說明</h3><p>HEX 適合網頁標記；RGB 代表螢幕三原色；HSL 以色相、飽和度、明度描述；CMYK 適合印刷流程。</p><h4>取樣方式</h4><p>調色盤會縮小圖片並以色彩分桶統計，提供 5–8 個常見顏色作為起點。</p></section><section class="converter-side-card"><h3><i class="fa-solid fa-shield-halved"></i> 隱私承諾</h3><p>色碼與圖片只經過 JavaScript、Canvas 與 File API，不會離開你的裝置。</p></section></aside>
-    </div><div id="converter-commerce"></div><!-- ad-sense-editorial -->
-<section class="converter-editorial" aria-labelledby="editorial-heading">
-    <div class="converter-editorial-intro">
-        <span class="converter-editorial-kicker">功能特點與使用指南</span>
-        <h2 id="editorial-heading">這個工具適合什麼工作？</h2>
-        <p>HEX、RGB、HSL、CMYK 即時互轉，並用 Canvas 從圖片提取主要調色盤與 CSS 變數。</p>
-    </div>
-    <div class="converter-editorial-grid">
-        <section class="converter-guide-card" aria-labelledby="guide-heading">
-            <h3 id="guide-heading"><i class="fa-solid fa-list-check"></i> 3 步快速操作</h3>
-            <ol class="converter-step-list"><li><span>1</span><div>輸入任一色彩格式或使用取色器。</div></li><li><span>2</span><div>檢查同步更新的 HEX、RGB、HSL 與 CMYK 數值。</div></li><li><span>3</span><div>選擇本地圖片提取調色盤，再複製 CSS。</div></li></ol>
-        </section>
-        <section class="converter-privacy-card" aria-labelledby="privacy-heading-editorial">
-            <h3 id="privacy-heading-editorial"><i class="fa-solid fa-shield-halved"></i> 隱私宣告</h3>
-            <p>色碼與圖片調色盤只在瀏覽器內計算，原始圖片不會送往遠端服務。</p>
-            <p class="converter-editorial-note">沒有檔案上傳端點；實際速度取決於裝置效能與瀏覽器支援。</p>
-        </section>
-    </div>
-    <section class="converter-faq" aria-labelledby="faq-heading">
-        <h3 id="faq-heading"><i class="fa-solid fa-circle-question"></i> 常見問題解答</h3>
-        <details><summary>色彩換算會連到伺服器嗎？</summary><p>不會。數值換算使用本頁 JavaScript，圖片調色盤使用瀏覽器 Canvas。</p></details><details><summary>調色盤會保存原圖嗎？</summary><p>不會。圖片只在記憶體中的 Canvas 取樣，頁面不會上傳或保存原圖。</p></details><details><summary>CMYK 是否適合印刷校樣？</summary><p>這是螢幕色彩近似換算，正式印刷仍應使用印刷商提供的色彩設定與校樣流程。</p></details>
-    </section>
-</section></main>
-    <footer><a class="converter-footer-support" href="https://ko-fi.com/R1K123XRS9" target="_blank" rel="noopener sponsored"><i class="fa-solid fa-mug-hot"></i> 喜歡這個工具？請在 Ko-fi 支持我們</a><div class="footer-links"><a href="../index.html#tools-section">主站首頁</a><a href="converter-hub.html">轉檔工具</a><a href="../privacy.html">隱私權政策</a><a href="../terms.html">服務條款</a></div><p>© 2026 GugoPro. All rights reserved.</p><p class="converter-footer-note">本工具只在瀏覽器本地處理色碼與圖片。Amazon、TradingView 與 Ko-fi 連結可能包含合作推廣標記。</p><div class="site-contact-inline" style="margin:12px 0;line-height:1.8;"><a href="../contact.html" style="color:#67e8f9;font-weight:700;">聯絡我們 / Contact Us</a> <span style="margin-left:10px;">Support Email: <a href="mailto:contact@gugopro.com" style="color:#67e8f9;">contact@gugopro.com</a></span></div></footer>
-    <script src="converter-nav.js"></script><script src="converter-common.js"></script>
-    <script>
+<header><div class="nav-container">
+<a aria-label="回到 GugoPro 主站首頁" class="logo" href="../index.html#tools-section"><div class="logo-icon"><i class="fa-solid fa-rocket"></i></div><span class="logo-text">GugoPro</span><span class="logo-tag">生活實用工具</span></a>
+<div class="tools-selector"><button aria-haspopup="true" class="tools-btn" type="button"><i class="fa-solid fa-screwdriver-wrench"></i> 轉檔工具 <i class="fa-solid fa-caret-down"></i></button><div class="tools-dropdown"></div></div>
+<div class="nav-actions"><a class="kofi-nav-btn" href="https://ko-fi.com/R1K123XRS9" rel="noopener sponsored" target="_blank"><i class="fa-solid fa-mug-hot"></i> 支持創作</a><a class="converter-home-link" href="../index.html#tools-section"><i class="fa-solid fa-house"></i> 主站首頁</a><a class="converter-language-link" href="../en/tools/converter-color.html"><i class="fa-solid fa-language"></i> English</a></div>
+</div></header>
+<section class="hero converter-hero"><div class="hero-badge"><i class="fa-solid fa-palette"></i> Converter Hub / 設計工作流</div><h1>色彩代碼轉換器</h1><p>在瀏覽器本地互轉 HEX、RGB、HSL、CMYK 色彩代碼，還能從圖片提取一組可用的調色盤。</p><div class="hero-actions"><a class="converter-button secondary" href="converter-hub.html"><i class="fa-solid fa-arrow-left"></i> 返回 Converter Hub</a><span class="converter-stat"><strong>Canvas</strong> 圖片本地取樣</span></div></section>
+<main class="converter-shell"><div class="converter-workbench-wrap">
+<section aria-labelledby="color-workbench-heading" class="converter-workbench"><div class="converter-section-heading"><div><h2 id="color-workbench-heading">即時色碼互轉</h2><p>編輯任一欄位，其他格式會即時同步。</p></div><input aria-label="選擇色彩" class="color-picker-input" id="color-picker" type="color" value="#55d6ff"/></div>
+<div class="color-converter-grid"><div class="converter-control"><label class="converter-label" for="color-hex">HEX</label><input id="color-hex" spellcheck="false" type="text" value="#55D6FF"/></div><div class="converter-control"><label class="converter-label" for="color-rgb">RGB</label><input id="color-rgb" spellcheck="false" type="text" value="rgb(85, 214, 255)"/></div><div class="converter-control"><label class="converter-label" for="color-hsl">HSL</label><input id="color-hsl" spellcheck="false" type="text" value="hsl(193, 100%, 67%)"/></div><div class="converter-control"><label class="converter-label" for="color-cmyk">CMYK</label><input id="color-cmyk" spellcheck="false" type="text" value="cmyk(67%, 16%, 0%, 0%)"/></div></div>
+<div class="color-swatch-large" id="color-swatch"><span>#55D6FF</span></div><div class="converter-actions"><button class="converter-button primary" id="color-copy-css" type="button"><i class="fa-solid fa-copy"></i> 複製 CSS</button><button class="converter-button secondary" id="color-copy-all" type="button"><i class="fa-solid fa-clipboard"></i> 複製全部色碼</button><button class="converter-button secondary" id="color-reset" type="button"><i class="fa-solid fa-rotate-left"></i> 重設</button></div><div class="converter-progress"><div class="converter-progress-head"><span>處理進度</span><span id="color-progress-label">100%</span></div><div class="converter-progress-track"><div class="converter-progress-bar" id="color-progress-bar" style="width:100%"></div></div></div><p aria-live="polite" class="converter-status" id="color-status">色彩已準備完成。</p>
+<hr class="converter-divider"/><details class="converter-optional-workflow"><summary>圖片調色盤提取</summary><div class="converter-section-heading"><div><h2>圖片調色盤提取</h2><p>從本地圖片取樣主要色彩，適合快速建立品牌或介面配色。</p></div></div><label class="converter-upload-zone compact-upload" for="palette-file" id="palette-dropzone"><input accept="image/*" id="palette-file" type="file"/><span><i class="fa-solid fa-image converter-upload-icon"></i><strong>拖曳圖片到這裡</strong><small>Canvas 會在瀏覽器本地取樣，不上傳圖片</small></span></label><div class="converter-file-info" id="palette-file-info"></div><div aria-live="polite" class="palette-grid" id="palette-grid"></div><div class="converter-output"><h3>調色盤 CSS</h3><pre id="palette-output"></pre><button class="converter-button secondary" id="palette-copy" type="button"><i class="fa-solid fa-copy"></i> 複製調色盤</button></div></details>
+</section><aside><section class="converter-side-card"><h3><i class="fa-solid fa-circle-info"></i> 格式說明</h3><p>HEX 適合網頁標記；RGB 代表螢幕三原色；HSL 以色相、飽和度、明度描述；CMYK 適合印刷流程。</p><h4>取樣方式</h4><p>調色盤會縮小圖片並以色彩分桶統計，提供 5–8 個常見顏色作為起點。</p></section><section class="converter-side-card"><h3><i class="fa-solid fa-shield-halved"></i> 隱私承諾</h3><p>色碼與圖片只經過 JavaScript、Canvas 與 File API，不會離開你的裝置。</p></section></aside>
+</div><div id="converter-commerce"></div><!-- ad-sense-editorial -->
+<section aria-labelledby="editorial-heading" class="converter-editorial">
+<div class="converter-editorial-intro">
+<span class="converter-editorial-kicker">功能特點與使用指南</span>
+<h2 id="editorial-heading">這個工具適合什麼工作？</h2>
+<p>HEX、RGB、HSL、CMYK 即時互轉，並用 Canvas 從圖片提取主要調色盤與 CSS 變數。</p>
+</div>
+<div class="converter-editorial-grid">
+<section aria-labelledby="guide-heading" class="converter-guide-card">
+<h3 id="guide-heading"><i class="fa-solid fa-list-check"></i> 3 步快速操作</h3>
+<ol class="converter-step-list"><li><span>1</span><div>輸入任一色彩格式或使用取色器。</div></li><li><span>2</span><div>檢查同步更新的 HEX、RGB、HSL 與 CMYK 數值。</div></li><li><span>3</span><div>選擇本地圖片提取調色盤，再複製 CSS。</div></li></ol>
+</section>
+<section aria-labelledby="privacy-heading-editorial" class="converter-privacy-card">
+<h3 id="privacy-heading-editorial"><i class="fa-solid fa-shield-halved"></i> 隱私宣告</h3>
+<p>色碼與圖片調色盤只在瀏覽器內計算，原始圖片不會送往遠端服務。</p>
+<p class="converter-editorial-note">沒有檔案上傳端點；實際速度取決於裝置效能與瀏覽器支援。</p>
+</section>
+</div>
+<section aria-labelledby="faq-heading" class="converter-faq">
+<h3 id="faq-heading"><i class="fa-solid fa-circle-question"></i> 常見問題解答</h3>
+<details><summary>色彩換算會連到伺服器嗎？</summary><p>不會。數值換算使用本頁 JavaScript，圖片調色盤使用瀏覽器 Canvas。</p></details><details><summary>調色盤會保存原圖嗎？</summary><p>不會。圖片只在記憶體中的 Canvas 取樣，頁面不會上傳或保存原圖。</p></details><details><summary>CMYK 是否適合印刷校樣？</summary><p>這是螢幕色彩近似換算，正式印刷仍應使用印刷商提供的色彩設定與校樣流程。</p></details>
+</section>
+</section><section aria-labelledby="seo-guide-title" class="tool-seo-content"><h2 id="seo-guide-title">色彩代碼轉換器：原理、公式與使用教學</h2><p>色彩代碼轉換器的用途：影像資料以像素、色彩通道與畫布尺寸表示；輸出品質同時受像素尺寸、格式壓縮與瀏覽器記憶體影響。</p><h3>處理原理與計算方式</h3><p>RGB、HSL 與 HEX 是不同色彩表示法；例如 HEX #RRGGBB 可拆成三個 0–255 的 RGB 通道。</p><h3>三步驟使用流程</h3><ol><li>選取圖片並確認格式、尺寸與方向。</li><li>設定輸出品質、尺寸或版面，先預覽裁切與色彩結果。</li><li>下載輸出檔並抽查解析度、透明度與檔案大小。</li></ol><h3>常見問題 FAQ</h3><div class="tool-faq-list"><details><summary>為什麼輸出檔變大？</summary><p>無損格式、較高像素或較低壓縮都會保留更多資料；可改用合適格式或降低輸出尺寸。</p></details><details><summary>工具會保留原圖嗎？</summary><p>輸出通常會建立新檔，不會覆寫原始檔；重要照片仍建議自行保留備份。</p></details><details><summary>手機圖片可以處理嗎？</summary><p>可以處理瀏覽器允許選取的圖片，但超大照片可能受裝置記憶體與瀏覽器限制。</p></details></div></section></main>
+<footer><a class="converter-footer-support" href="https://ko-fi.com/R1K123XRS9" rel="noopener sponsored" target="_blank"><i class="fa-solid fa-mug-hot"></i> 喜歡這個工具？請在 Ko-fi 支持我們</a><div class="footer-links"><a href="../index.html#tools-section">主站首頁</a><a href="converter-hub.html">轉檔工具</a><a href="../privacy.html">隱私權政策</a><a href="../terms.html">服務條款</a></div><p>© 2026 GugoPro. All rights reserved.</p><p class="converter-footer-note">本工具只在瀏覽器本地處理色碼與圖片。Amazon、TradingView 與 Ko-fi 連結可能包含合作推廣標記。</p><div class="site-contact-inline" style="margin:12px 0;line-height:1.8;"><a href="../contact.html" style="color:#67e8f9;font-weight:700;">聯絡我們 / Contact Us</a> <span style="margin-left:10px;">Support Email: <a href="mailto:contact@gugopro.com" style="color:#67e8f9;">contact@gugopro.com</a></span></div></footer>
+<script src="converter-nav.js"></script><script src="converter-common.js"></script>
+<script>
     (function () {
         'use strict';
         var C = window.ConverterCommon, fields = { hex: document.getElementById('color-hex'), rgb: document.getElementById('color-rgb'), hsl: document.getElementById('color-hsl'), cmyk: document.getElementById('color-cmyk') }, picker = document.getElementById('color-picker'), swatch = document.getElementById('color-swatch'), status = document.getElementById('color-status'), bar = document.getElementById('color-progress-bar'), label = document.getElementById('color-progress-label'), syncing = false;
@@ -72,5 +73,5 @@
         C.bindDropzone(document.getElementById('palette-dropzone'), document.getElementById('palette-file'), function (files) { if (files[0]) extractPalette(files[0]); }); document.getElementById('palette-copy').addEventListener('click', function () { copy(document.getElementById('palette-output').textContent); }); C.initCommerce('converter-commerce');
     }());
     </script>
-</body>
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"SoftwareApplication","name":"色彩代碼轉換器","applicationCategory":"MultimediaApplication","operatingSystem":"Web Browser","url":"https://gugopro.com/tools/converter-color.html","description":"影像資料以像素、色彩通道與畫布尺寸表示；輸出品質同時受像素尺寸、格式壓縮與瀏覽器記憶體影響。","offers":{"@type":"Offer","price":"0","priceCurrency":"TWD"}},{"@type":"HowTo","name":"如何使用色彩代碼轉換器","description":"影像資料以像素、色彩通道與畫布尺寸表示；輸出品質同時受像素尺寸、格式壓縮與瀏覽器記憶體影響。","step":[{"@type":"HowToStep","position":1,"name":"選取圖片並確認格式、尺寸與方向","text":"選取圖片並確認格式、尺寸與方向。"},{"@type":"HowToStep","position":2,"name":"設定輸出品質、尺寸或版面","text":"設定輸出品質、尺寸或版面，先預覽裁切與色彩結果。"},{"@type":"HowToStep","position":3,"name":"下載輸出檔並抽查解析度、透明度與檔案大小","text":"下載輸出檔並抽查解析度、透明度與檔案大小。"}]},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"為什麼輸出檔變大？","acceptedAnswer":{"@type":"Answer","text":"無損格式、較高像素或較低壓縮都會保留更多資料；可改用合適格式或降低輸出尺寸。"}},{"@type":"Question","name":"工具會保留原圖嗎？","acceptedAnswer":{"@type":"Answer","text":"輸出通常會建立新檔，不會覆寫原始檔；重要照片仍建議自行保留備份。"}},{"@type":"Question","name":"手機圖片可以處理嗎？","acceptedAnswer":{"@type":"Answer","text":"可以處理瀏覽器允許選取的圖片，但超大照片可能受裝置記憶體與瀏覽器限制。"}}]}]}</script></body>
 </html>

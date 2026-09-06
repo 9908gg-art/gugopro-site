@@ -15,10 +15,10 @@
 | 依賴缺失 | 0 |
 | 介面空殼 | 0 |
 | 本地引用缺失工具 | 0 |
-| 文字說明具備但 FAQ／深度不足 | 79 |
+| 文字說明具備但 FAQ／深度不足 | 58 |
 | 純表單／文字量不足 | 2 |
 | 含 FAQ 或 FAQ 文字線索 | 84 |
-| JSON-LD Schema | 25 |
+| JSON-LD Schema | 53 |
 | 廣告預留空位 | 0 |
 
 ### 主要異常與處理建議
@@ -70,34 +70,34 @@
 
 | 工具名稱 | 路徑 | 功能狀態 | 內容深度 | 互動／依賴摘要 | FAQ | Schema | 擴充容器 | 判定備註 |
 |---|---|---|---|---|:---:|:---:|:---:|---|
-| 多功能影像處理器 | `/tools/converter-image.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1241 chars） | 3 script／22 local ref；Convert, addEventListener, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 色彩代碼轉換器 | `/tools/converter-color.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1091 chars） | 3 script／15 local ref；Convert, addEventListener, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 多圖批次轉檔與壓縮 | `/tools/converter-image-batch.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1004 chars） | 5 script／16 local ref；Async, Convert, addEventListener, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 圖片畫質與色彩增強器 | `/tools/converter-image-enhance.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1061 chars） | 3 script／16 local ref；Convert, addEventListener, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 證件照與社群比例裁切器 | `/tools/converter-image-cropper.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1148 chars） | 4 script／16 local ref；Convert, addEventListener, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 純色背景去除器 | `/tools/converter-image-bgremover.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1033 chars） | 3 script／16 local ref；Convert, addEventListener, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 圖片隱私浮水印與馬賽克 | `/tools/converter-image-watermark.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1104 chars） | 3 script／16 local ref；Convert, addEventListener, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| SVG 向量圖轉高清圖 | `/tools/converter-svg-raster.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1039 chars） | 3 script／14 local ref；Convert, addEventListener, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 圖片拼接工具 | `/tools/converter-image-merge.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（953 chars） | 4 script／16 local ref；Convert, addEventListener, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 圖片九宮格／多格分割器 | `/tools/converter-image-splitter.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（984 chars） | 5 script／16 local ref；Async, Convert, addEventListener, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| GIF 動畫製作器 | `/tools/converter-gif-maker.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（983 chars） | 5 script／16 local ref；Convert, Worker, addEventListener, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 圖片調色盤／顏色吸取器 | `/tools/converter-image-colorpicker.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（939 chars） | 4 script／16 local ref；Convert, addEventListener, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 音訊格式轉換器 | `/tools/converter-audio.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1196 chars） | 6 script／15 local ref；Convert, addEventListener, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 視覺化音訊剪輯與裁切器 | `/tools/converter-audio-cutter.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1167 chars） | 4 script／16 local ref；無 inline logic marker | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 音訊音量調整與增益器 | `/tools/converter-audio-volume.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1148 chars） | 4 script／16 local ref；無 inline logic marker | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 音訊淡入淡出效果器 | `/tools/converter-audio-fade.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1100 chars） | 4 script／16 local ref；無 inline logic marker | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 音訊倒放效果器 | `/tools/converter-audio-reverse.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1072 chars） | 4 script／16 local ref；無 inline logic marker | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 多段音訊合併拼接器 | `/tools/converter-audio-merge.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1128 chars） | 4 script／16 local ref；無 inline logic marker | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 音訊格式萬能轉換器 | `/tools/converter-audio-format.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1150 chars） | 6 script／17 local ref；無 inline logic marker | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 字幕格式轉換器 | `/tools/converter-subtitles.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1118 chars） | 3 script／22 local ref；Convert, addEventListener, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 字幕批次同步調時器 | `/tools/converter-subtitles-batch.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（924 chars） | 5 script／16 local ref；Async, Convert, addEventListener, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 影片截圖／影格提取器 | `/tools/converter-video-frame-capture.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1103 chars） | 4 script／17 local ref；無 inline logic marker | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 影片轉 GIF 動態圖轉換器 | `/tools/converter-video-to-gif.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1086 chars） | 5 script／17 local ref；無 inline logic marker | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 影片提取音訊／WAV／MP3 導出器 | `/tools/converter-video-extract-audio.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1182 chars） | 5 script／17 local ref；無 inline logic marker | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 影片旋轉與翻轉修正器 | `/tools/converter-video-rotate.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1193 chars） | 4 script／17 local ref；無 inline logic marker | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 影片變速與快慢動作調整器 | `/tools/converter-video-speed.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1170 chars） | 4 script／17 local ref；無 inline logic marker | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 影片靜音與音軌移除器 | `/tools/converter-video-mute.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1087 chars） | 4 script／17 local ref；無 inline logic marker | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 影片畫面裁切器 | `/tools/converter-video-crop.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1135 chars） | 4 script／17 local ref；無 inline logic marker | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
+| 多功能影像處理器 | `/tools/converter-image.html` | **正常執行** | 內容完整（1590 chars） | 4 script／23 local ref；Convert, addEventListener, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 色彩代碼轉換器 | `/tools/converter-color.html` | **正常執行** | 內容完整（1458 chars） | 4 script／16 local ref；Convert, addEventListener, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 多圖批次轉檔與壓縮 | `/tools/converter-image-batch.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1356 chars） | 6 script／17 local ref；Async, Convert, addEventListener, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 圖片畫質與色彩增強器 | `/tools/converter-image-enhance.html` | **正常執行** | 內容完整（1455 chars） | 4 script／17 local ref；Convert, addEventListener, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 證件照與社群比例裁切器 | `/tools/converter-image-cropper.html` | **正常執行** | 內容完整（1515 chars） | 5 script／17 local ref；Convert, addEventListener, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 純色背景去除器 | `/tools/converter-image-bgremover.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1381 chars） | 4 script／17 local ref；Convert, addEventListener, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 圖片隱私浮水印與馬賽克 | `/tools/converter-image-watermark.html` | **正常執行** | 內容完整（1481 chars） | 4 script／17 local ref；Convert, addEventListener, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| SVG 向量圖轉高清圖 | `/tools/converter-svg-raster.html` | **正常執行** | 內容完整（1406 chars） | 4 script／15 local ref；Convert, addEventListener, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 圖片拼接工具 | `/tools/converter-image-merge.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1300 chars） | 5 script／17 local ref；Convert, addEventListener, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 圖片九宮格／多格分割器 | `/tools/converter-image-splitter.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1338 chars） | 6 script／17 local ref；Async, Convert, addEventListener, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| GIF 動畫製作器 | `/tools/converter-gif-maker.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1339 chars） | 6 script／17 local ref；Convert, Worker, addEventListener, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 圖片調色盤／顏色吸取器 | `/tools/converter-image-colorpicker.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1311 chars） | 5 script／17 local ref；Convert, addEventListener, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 音訊格式轉換器 | `/tools/converter-audio.html` | **正常執行** | 內容完整（1547 chars） | 7 script／16 local ref；Convert, addEventListener, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 視覺化音訊剪輯與裁切器 | `/tools/converter-audio-cutter.html` | **正常執行** | 內容完整（1524 chars） | 5 script／17 local ref；convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 音訊音量調整與增益器 | `/tools/converter-audio-volume.html` | **正常執行** | 內容完整（1515 chars） | 5 script／17 local ref；convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 音訊淡入淡出效果器 | `/tools/converter-audio-fade.html` | **正常執行** | 內容完整（1465 chars） | 5 script／17 local ref；convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 音訊倒放效果器 | `/tools/converter-audio-reverse.html` | **正常執行** | 內容完整（1419 chars） | 5 script／17 local ref；convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 多段音訊合併拼接器 | `/tools/converter-audio-merge.html` | **正常執行** | 內容完整（1484 chars） | 5 script／17 local ref；convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 音訊格式萬能轉換器 | `/tools/converter-audio-format.html` | **正常執行** | 內容完整（1518 chars） | 7 script／18 local ref；convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 字幕格式轉換器 | `/tools/converter-subtitles.html` | **正常執行** | 內容完整（1477 chars） | 4 script／23 local ref；Convert, addEventListener, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 字幕批次同步調時器 | `/tools/converter-subtitles-batch.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1279 chars） | 6 script／17 local ref；Async, Convert, addEventListener, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 影片截圖／影格提取器 | `/tools/converter-video-frame-capture.html` | **正常執行** | 內容完整（1466 chars） | 5 script／18 local ref；convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 影片轉 GIF 動態圖轉換器 | `/tools/converter-video-to-gif.html` | **正常執行** | 內容完整（1456 chars） | 6 script／18 local ref；convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 影片提取音訊／WAV／MP3 導出器 | `/tools/converter-video-extract-audio.html` | **正常執行** | 內容完整（1557 chars） | 6 script／18 local ref；convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 影片旋轉與翻轉修正器 | `/tools/converter-video-rotate.html` | **正常執行** | 內容完整（1553 chars） | 5 script／18 local ref；convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 影片變速與快慢動作調整器 | `/tools/converter-video-speed.html` | **正常執行** | 內容完整（1532 chars） | 5 script／18 local ref；convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 影片靜音與音軌移除器 | `/tools/converter-video-mute.html` | **正常執行** | 內容完整（1437 chars） | 5 script／18 local ref；convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 影片畫面裁切器 | `/tools/converter-video-crop.html` | **正常執行** | 內容完整（1490 chars） | 5 script／18 local ref；convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
 
 ### 第 4 批：AI、文字、加密、單位轉換與辦公輔助
 
