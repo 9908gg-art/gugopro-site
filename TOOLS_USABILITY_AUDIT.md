@@ -15,10 +15,10 @@
 | 依賴缺失 | 0 |
 | 介面空殼 | 0 |
 | 本地引用缺失工具 | 0 |
-| 文字說明具備但 FAQ／深度不足 | 58 |
+| 文字說明具備但 FAQ／深度不足 | 44 |
 | 純表單／文字量不足 | 2 |
 | 含 FAQ 或 FAQ 文字線索 | 84 |
-| JSON-LD Schema | 53 |
+| JSON-LD Schema | 83 |
 | 廣告預留空位 | 0 |
 
 ### 主要異常與處理建議
@@ -112,36 +112,36 @@
 | AI 減肥瘦身教練 | `/tools/health/weight-loss-planner.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1641 chars） | 6 script／6 local ref；Calculate, FileReader, Generate, addEventListener | 否 | 否 | 是 | 已有工具說明，但缺少明確 FAQ 區塊。 |
 | Gemini API 官方額度查詢 | `/tools/ai/gemini-api-quota.html` | **正常執行** | 純表單／文字量不足（78 chars） | 1 script／0 local ref；無 inline logic marker | 否 | 否 | 是 | 相容轉址頁；核心服務位於既有 Quota Hub／R:R Analyzer。 |
 | Amazon AI 智慧選品助手 | `/amazon/` | **正常執行** | 文字說明具備但 FAQ／深度不足（886 chars） | 5 script／4 local ref；FileReader, Process, addEventListener, async | 否 | 否 | 是 | 已有工具說明，但缺少明確 FAQ 區塊。 |
-| Markdown 雙向轉換器 | `/tools/converter-markdown.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1067 chars） | 3 script／16 local ref；Convert, addEventListener, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 文字全半形與編碼轉換器 | `/tools/converter-text-encoding.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1053 chars） | 3 script／14 local ref；Convert, addEventListener, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 安全雜湊與強密碼生成器 | `/tools/converter-hash-generator.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1212 chars） | 3 script／14 local ref；Convert, addEventListener, async, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| AES 文字對稱加解密器 | `/tools/converter-crypto-aes.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（948 chars） | 4 script／16 local ref；無 inline logic marker | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| JWT Token 解析與驗證工具 | `/tools/converter-crypto-jwt.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1066 chars） | 4 script／16 local ref；無 inline logic marker | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| URL／UTF-8／HTML 實體編解碼器 | `/tools/converter-crypto-encode.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1028 chars） | 4 script／16 local ref；無 inline logic marker | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 雜湊值比對校驗器 | `/tools/converter-crypto-checksum.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（904 chars） | 4 script／16 local ref；無 inline logic marker | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| UUID／CUID 批次生成器 | `/tools/converter-crypto-uuid.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（935 chars） | 4 script／16 local ref；無 inline logic marker | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 多功能柱狀圖／長條圖產生器 | `/tools/converter-chart-bar.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1017 chars） | 5 script／17 local ref；Chart, Convert, chart, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 折線圖與面積圖繪製器 | `/tools/converter-chart-line.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（969 chars） | 5 script／17 local ref；Chart, Convert, chart, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 圓餅圖與環形圖產生器 | `/tools/converter-chart-pie.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（952 chars） | 5 script／17 local ref；Chart, Convert, chart, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 雷達圖／多維度評估圖 | `/tools/converter-chart-radar.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（954 chars） | 5 script／17 local ref；Chart, Convert, chart, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 散點圖與氣泡圖分析儀 | `/tools/converter-chart-scatter.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（997 chars） | 5 script／17 local ref；Chart, Convert, chart, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 漏斗圖／轉化率分析圖 | `/tools/converter-chart-funnel.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（965 chars） | 5 script／17 local ref；Chart, Convert, chart, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| QR Code 快速產生器 | `/tools/converter-office-qrcode.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1054 chars） | 5 script／17 local ref；Convert, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 條形碼／條碼生成器 | `/tools/converter-office-barcode.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（942 chars） | 5 script／17 local ref；Convert, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 文字轉圖片便簽生成器 | `/tools/converter-office-text-to-image.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（895 chars） | 4 script／17 local ref；Convert, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| Markdown 即時編輯與預覽器 | `/tools/converter-office-markdown-editor.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（992 chars） | 4 script／17 local ref；Convert, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 高效番茄鐘工作計時器 | `/tools/converter-office-pomodoro.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（915 chars） | 4 script／17 local ref；Convert, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| JSON 格式化與壓縮檢視器 | `/tools/converter-office-json-formatter.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（979 chars） | 4 script／17 local ref；Convert, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 高強度隨機密碼產生器 | `/tools/converter-office-password.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1097 chars） | 3 script／16 local ref；Convert, addEventListener, convert, generate | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 長度與距離轉換器 | `/tools/converter-unit-length.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（962 chars） | 4 script／17 local ref；Convert, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 重量與質量轉換器 | `/tools/converter-unit-weight.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（905 chars） | 4 script／17 local ref；Convert, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 面積與地坪轉換器 | `/tools/converter-unit-area.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（998 chars） | 4 script／17 local ref；Convert, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 體積與容量轉換器 | `/tools/converter-unit-volume.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（890 chars） | 4 script／17 local ref；Convert, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 溫度與溫標轉換器 | `/tools/converter-unit-temperature.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（913 chars） | 4 script／17 local ref；Convert, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 數位儲存與數據流量轉換器 | `/tools/converter-unit-data.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1010 chars） | 4 script／17 local ref；Convert, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 速度與配速轉換器 | `/tools/converter-unit-speed.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（921 chars） | 4 script／17 local ref；Convert, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 壓力與氣壓轉換器 | `/tools/converter-unit-pressure.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（994 chars） | 4 script／17 local ref；Convert, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| Base64 / SVG 編解碼器 | `/tools/converter-base64.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1227 chars） | 3 script／15 local ref；Convert, addEventListener, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
+| Markdown 雙向轉換器 | `/tools/converter-markdown.html` | **正常執行** | 內容完整（1495 chars） | 4 script／17 local ref；Convert, addEventListener, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 文字全半形與編碼轉換器 | `/tools/converter-text-encoding.html` | **正常執行** | 內容完整（1464 chars） | 4 script／15 local ref；Convert, addEventListener, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 安全雜湊與強密碼生成器 | `/tools/converter-hash-generator.html` | **正常執行** | 內容完整（1741 chars） | 4 script／15 local ref；Convert, addEventListener, async, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| AES 文字對稱加解密器 | `/tools/converter-crypto-aes.html` | **正常執行** | 內容完整（1489 chars） | 5 script／17 local ref；convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| JWT Token 解析與驗證工具 | `/tools/converter-crypto-jwt.html` | **正常執行** | 內容完整（1631 chars） | 5 script／17 local ref；convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| URL／UTF-8／HTML 實體編解碼器 | `/tools/converter-crypto-encode.html` | **正常執行** | 內容完整（1560 chars） | 5 script／17 local ref；convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 雜湊值比對校驗器 | `/tools/converter-crypto-checksum.html` | **正常執行** | 內容完整（1402 chars） | 5 script／17 local ref；convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| UUID／CUID 批次生成器 | `/tools/converter-crypto-uuid.html` | **正常執行** | 內容完整（1434 chars） | 5 script／17 local ref；convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 多功能柱狀圖／長條圖產生器 | `/tools/converter-chart-bar.html` | **正常執行** | 內容完整（1412 chars） | 6 script／18 local ref；Chart, Convert, chart, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 折線圖與面積圖繪製器 | `/tools/converter-chart-line.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1362 chars） | 6 script／18 local ref；Chart, Convert, chart, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 圓餅圖與環形圖產生器 | `/tools/converter-chart-pie.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1346 chars） | 6 script／18 local ref；Chart, Convert, chart, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 雷達圖／多維度評估圖 | `/tools/converter-chart-radar.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1361 chars） | 6 script／18 local ref；Chart, Convert, chart, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 散點圖與氣泡圖分析儀 | `/tools/converter-chart-scatter.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1393 chars） | 6 script／18 local ref；Chart, Convert, chart, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 漏斗圖／轉化率分析圖 | `/tools/converter-chart-funnel.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1365 chars） | 6 script／18 local ref；Chart, Convert, chart, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| QR Code 快速產生器 | `/tools/converter-office-qrcode.html` | **正常執行** | 內容完整（1465 chars） | 6 script／18 local ref；Convert, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 條形碼／條碼生成器 | `/tools/converter-office-barcode.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1333 chars） | 6 script／18 local ref；Convert, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 文字轉圖片便簽生成器 | `/tools/converter-office-text-to-image.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1290 chars） | 5 script／18 local ref；Convert, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| Markdown 即時編輯與預覽器 | `/tools/converter-office-markdown-editor.html` | **正常執行** | 內容完整（1433 chars） | 5 script／18 local ref；Convert, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 高效番茄鐘工作計時器 | `/tools/converter-office-pomodoro.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1320 chars） | 5 script／18 local ref；Convert, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| JSON 格式化與壓縮檢視器 | `/tools/converter-office-json-formatter.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1398 chars） | 5 script／18 local ref；Convert, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 高強度隨機密碼產生器 | `/tools/converter-office-password.html` | **正常執行** | 內容完整（1600 chars） | 4 script／17 local ref；Convert, addEventListener, convert, generate | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 長度與距離轉換器 | `/tools/converter-unit-length.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1341 chars） | 5 script／18 local ref；Convert, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 重量與質量轉換器 | `/tools/converter-unit-weight.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1277 chars） | 5 script／18 local ref；Convert, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 面積與地坪轉換器 | `/tools/converter-unit-area.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1373 chars） | 5 script／18 local ref；Convert, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 體積與容量轉換器 | `/tools/converter-unit-volume.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1255 chars） | 5 script／18 local ref；Convert, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 溫度與溫標轉換器 | `/tools/converter-unit-temperature.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1284 chars） | 5 script／18 local ref；Convert, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 數位儲存與數據流量轉換器 | `/tools/converter-unit-data.html` | **正常執行** | 內容完整（1419 chars） | 5 script／18 local ref；Convert, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 速度與配速轉換器 | `/tools/converter-unit-speed.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1295 chars） | 5 script／18 local ref；Convert, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 壓力與氣壓轉換器 | `/tools/converter-unit-pressure.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1367 chars） | 5 script／18 local ref；Convert, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| Base64 / SVG 編解碼器 | `/tools/converter-base64.html` | **正常執行** | 內容完整（1659 chars） | 4 script／16 local ref；Convert, addEventListener, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
 
 ## 三、四批 SEO 優化路線圖
 
