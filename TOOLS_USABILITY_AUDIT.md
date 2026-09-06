@@ -15,10 +15,10 @@
 | 依賴缺失 | 0 |
 | 介面空殼 | 0 |
 | 本地引用缺失工具 | 0 |
-| 文字說明具備但 FAQ／深度不足 | 44 |
+| 文字說明具備但 FAQ／深度不足 | 38 |
 | 純表單／文字量不足 | 2 |
-| 含 FAQ 或 FAQ 文字線索 | 84 |
-| JSON-LD Schema | 83 |
+| 含 FAQ 或 FAQ 文字線索 | 92 |
+| JSON-LD Schema | 92 |
 | 廣告預留空位 | 0 |
 
 ### 主要異常與處理建議
@@ -63,7 +63,7 @@
 | 房貸本息攤還、利息與提前還款工具 | `/tools/realestate-amortization.html` | **正常執行** | 內容完整（1621 chars） | 6 script／33 local ref；無 inline logic marker | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
 | 薪資所得稅與實質淨所得試算器 | `/tools/converter-finance-salary-tax.html` | **正常執行** | 內容完整（1635 chars） | 6 script／21 local ref；convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
 | 風報比 R:R HUD 即時 K 線分析儀 | `/tools/risk-reward-calculator.html` | **正常執行** | 內容完整（2561 chars） | 6 script／29 local ref；無 inline logic marker | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
-| 全市場 R:R Scanner | `/tools/risk-reward-scanner.html` | **正常執行** | 純表單／文字量不足（568 chars） | 3 script／13 local ref；無 inline logic marker | 是 | 是 | 是 | 相容轉址頁；核心服務位於既有 Quota Hub／R:R Analyzer。 |
+| 全市場 R:R Scanner | `/tools/risk-reward-scanner.html` | **正常執行** | 純表單／文字量不足（585 chars） | 3 script／13 local ref；無 inline logic marker | 是 | 是 | 是 | 相容轉址頁；核心服務位於既有 Quota Hub／R:R Analyzer。 |
 | TradingView 註冊與實戰教學指南 | `/tools/tradingview-guide.html` | **正常執行** | 內容完整（1748 chars） | 5 script／25 local ref；無 inline logic marker | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
 
 ### 第 3 批：圖片增強、音訊與影片工具群
@@ -103,15 +103,15 @@
 
 | 工具名稱 | 路徑 | 功能狀態 | 內容深度 | 互動／依賴摘要 | FAQ | Schema | 擴充容器 | 判定備註 |
 |---|---|---|---|---|:---:|:---:|:---:|---|
-| AI 多國語言對話導師 | `/tools/ai/english-speaking-tutor.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1621 chars） | 10 script／6 local ref；FileReader, Worker, addEventListener, async | 否 | 否 | 是 | 已有工具說明，但缺少明確 FAQ 區塊。 |
-| AI 同聲傳譯與即時雙語口說導師 | `/tools/ai/realtime-translator.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1239 chars） | 3 script／1 local ref；addEventListener, async | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| GugoPro AI PDF 全能工作站 | `/tools/pdf/pdf-suite.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（2687 chars） | 8 script／12 local ref；addEventListener | 否 | 否 | 是 | 已有工具說明，但缺少明確 FAQ 區塊。 |
-| AI 塔羅占卜大師 | `/tools/ai/tarot-master.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（885 chars） | 6 script／4 local ref；FileReader, addEventListener, async, generate | 否 | 否 | 是 | 已有工具說明，但缺少明確 FAQ 區塊。 |
-| GugoPro AI 紫微斗數大師 | `/tools/ai/ziwei-astrology.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1578 chars） | 5 script／6 local ref；Chart, Convert, addEventListener, async | 否 | 否 | 是 | 已有工具說明，但缺少明確 FAQ 區塊。 |
-| AI 專屬營養師 | `/tools/health/tdee-macros-calculator.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1332 chars） | 5 script／4 local ref；Calculate, FileReader, Generate, addEventListener | 否 | 否 | 是 | 已有工具說明，但缺少明確 FAQ 區塊。 |
-| AI 減肥瘦身教練 | `/tools/health/weight-loss-planner.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1641 chars） | 6 script／6 local ref；Calculate, FileReader, Generate, addEventListener | 否 | 否 | 是 | 已有工具說明，但缺少明確 FAQ 區塊。 |
-| Gemini API 官方額度查詢 | `/tools/ai/gemini-api-quota.html` | **正常執行** | 純表單／文字量不足（78 chars） | 1 script／0 local ref；無 inline logic marker | 否 | 否 | 是 | 相容轉址頁；核心服務位於既有 Quota Hub／R:R Analyzer。 |
-| Amazon AI 智慧選品助手 | `/amazon/` | **正常執行** | 文字說明具備但 FAQ／深度不足（886 chars） | 5 script／4 local ref；FileReader, Process, addEventListener, async | 否 | 否 | 是 | 已有工具說明，但缺少明確 FAQ 區塊。 |
+| AI 多國語言對話導師 | `/tools/ai/english-speaking-tutor.html` | **正常執行** | 內容完整（1975 chars） | 11 script／7 local ref；FileReader, Worker, addEventListener, async | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| AI 同聲傳譯與即時雙語口說導師 | `/tools/ai/realtime-translator.html` | **正常執行** | 內容完整（1611 chars） | 4 script／2 local ref；addEventListener, async | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| GugoPro AI PDF 全能工作站 | `/tools/pdf/pdf-suite.html` | **正常執行** | 內容完整（3080 chars） | 9 script／13 local ref；addEventListener | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| AI 塔羅占卜大師 | `/tools/ai/tarot-master.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1221 chars） | 7 script／5 local ref；FileReader, addEventListener, async, generate | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| GugoPro AI 紫微斗數大師 | `/tools/ai/ziwei-astrology.html` | **正常執行** | 內容完整（1920 chars） | 6 script／7 local ref；Chart, Convert, addEventListener, async | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| AI 專屬營養師 | `/tools/health/tdee-macros-calculator.html` | **正常執行** | 內容完整（1692 chars） | 6 script／5 local ref；Calculate, FileReader, Generate, addEventListener | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| AI 減肥瘦身教練 | `/tools/health/weight-loss-planner.html` | **正常執行** | 內容完整（1989 chars） | 7 script／7 local ref；Calculate, FileReader, Generate, addEventListener | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| Gemini API 官方額度查詢 | `/tools/ai/gemini-api-quota.html` | **正常執行** | 純表單／文字量不足（479 chars） | 2 script／1 local ref；無 inline logic marker | 是 | 是 | 是 | 相容轉址頁；核心服務位於既有 Quota Hub／R:R Analyzer。 |
+| Amazon AI 智慧選品助手 | `/amazon/` | **正常執行** | 文字說明具備但 FAQ／深度不足（1269 chars） | 6 script／5 local ref；FileReader, Process, addEventListener, async | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
 | Markdown 雙向轉換器 | `/tools/converter-markdown.html` | **正常執行** | 內容完整（1495 chars） | 4 script／17 local ref；Convert, addEventListener, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
 | 文字全半形與編碼轉換器 | `/tools/converter-text-encoding.html` | **正常執行** | 內容完整（1464 chars） | 4 script／15 local ref；Convert, addEventListener, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
 | 安全雜湊與強密碼生成器 | `/tools/converter-hash-generator.html` | **正常執行** | 內容完整（1741 chars） | 4 script／15 local ref；Convert, addEventListener, async, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
