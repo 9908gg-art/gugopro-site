@@ -15,10 +15,10 @@
 | 依賴缺失 | 0 |
 | 介面空殼 | 0 |
 | 本地引用缺失工具 | 0 |
-| 文字說明具備但 FAQ／深度不足 | 85 |
+| 文字說明具備但 FAQ／深度不足 | 79 |
 | 純表單／文字量不足 | 2 |
-| 含 FAQ 或 FAQ 文字線索 | 78 |
-| JSON-LD Schema | 18 |
+| 含 FAQ 或 FAQ 文字線索 | 84 |
+| JSON-LD Schema | 25 |
 | 廣告預留空位 | 0 |
 
 ### 主要異常與處理建議
@@ -58,13 +58,13 @@
 
 | 工具名稱 | 路徑 | 功能狀態 | 內容深度 | 互動／依賴摘要 | FAQ | Schema | 擴充容器 | 判定備註 |
 |---|---|---|---|---|:---:|:---:|:---:|---|
-| 高殖利率複利與退休規劃計算機 | `/tools/compound-interest.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（943 chars） | 5 script／28 local ref；Calculate, Chart, addEventListener, calculate | 否 | 否 | 是 | 已有工具說明，但缺少明確 FAQ 區塊。 |
-| ETF 被動現金流試算機 | `/tools/etf-dividend-calculator.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1285 chars） | 3 script／26 local ref；無 inline logic marker | 否 | 否 | 是 | 已有工具說明，但缺少明確 FAQ 區塊。 |
-| 房貸本息攤還、利息與提前還款工具 | `/tools/realestate-amortization.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1196 chars） | 5 script／32 local ref；無 inline logic marker | 否 | 否 | 是 | 已有工具說明，但缺少明確 FAQ 區塊。 |
-| 薪資所得稅與實質淨所得試算器 | `/tools/converter-finance-salary-tax.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1220 chars） | 5 script／20 local ref；無 inline logic marker | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 風報比 R:R HUD 即時 K 線分析儀 | `/tools/risk-reward-calculator.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（2096 chars） | 5 script／28 local ref；無 inline logic marker | 否 | 否 | 是 | 已有工具說明，但缺少明確 FAQ 區塊。 |
-| 全市場 R:R Scanner | `/tools/risk-reward-scanner.html` | **正常執行** | 純表單／文字量不足（153 chars） | 2 script／12 local ref；無 inline logic marker | 否 | 否 | 是 | 相容轉址頁；核心服務位於既有 Quota Hub／R:R Analyzer。 |
-| TradingView 註冊與實戰教學指南 | `/tools/tradingview-guide.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1290 chars） | 4 script／24 local ref；無 inline logic marker | 否 | 否 | 是 | 已有工具說明，但缺少明確 FAQ 區塊。 |
+| 高殖利率複利與退休規劃計算機 | `/tools/compound-interest.html` | **正常執行** | 內容完整（1422 chars） | 6 script／29 local ref；Calculate, Chart, addEventListener, calculate | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| ETF 被動現金流試算機 | `/tools/etf-dividend-calculator.html` | **正常執行** | 內容完整（1712 chars） | 4 script／27 local ref；無 inline logic marker | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 房貸本息攤還、利息與提前還款工具 | `/tools/realestate-amortization.html` | **正常執行** | 內容完整（1621 chars） | 6 script／33 local ref；無 inline logic marker | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 薪資所得稅與實質淨所得試算器 | `/tools/converter-finance-salary-tax.html` | **正常執行** | 內容完整（1635 chars） | 6 script／21 local ref；convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 風報比 R:R HUD 即時 K 線分析儀 | `/tools/risk-reward-calculator.html` | **正常執行** | 內容完整（2561 chars） | 6 script／29 local ref；無 inline logic marker | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 全市場 R:R Scanner | `/tools/risk-reward-scanner.html` | **正常執行** | 純表單／文字量不足（568 chars） | 3 script／13 local ref；無 inline logic marker | 是 | 是 | 是 | 相容轉址頁；核心服務位於既有 Quota Hub／R:R Analyzer。 |
+| TradingView 註冊與實戰教學指南 | `/tools/tradingview-guide.html` | **正常執行** | 內容完整（1748 chars） | 5 script／25 local ref；無 inline logic marker | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
 
 ### 第 3 批：圖片增強、音訊與影片工具群
 
