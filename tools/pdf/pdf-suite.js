@@ -2713,8 +2713,7 @@
     if (!tools.querySelector('.pdf-mobile-subtool:not(.is-format-disabled)')) { var empty = document.createElement('span'); empty.className = 'pdf-mobile-subdock-empty'; empty.textContent = IS_EN ? 'No tools are available for this document.' : '目前文件沒有可用的子工具。'; tools.appendChild(empty); }
   }
   function syncMobileSubdock() {
-    var dock = $('pdf-mobile-subdock'); var ad = $('pdf-mobile-ad-slot');
-    if (ad) ad.hidden = !(isMobileReader() && state.file);
+    var dock = $('pdf-mobile-subdock');
     if (!dock) return;
     var open = Boolean(isMobileReader() && state.file && state.mobileSubdock);
     dock.hidden = !open;
