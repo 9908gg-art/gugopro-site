@@ -15,10 +15,10 @@
 | 依賴缺失 | 0 |
 | 介面空殼 | 0 |
 | 本地引用缺失工具 | 0 |
-| 文字說明具備但 FAQ／深度不足 | 90 |
+| 文字說明具備但 FAQ／深度不足 | 85 |
 | 純表單／文字量不足 | 2 |
 | 含 FAQ 或 FAQ 文字線索 | 78 |
-| JSON-LD Schema | 0 |
+| JSON-LD Schema | 18 |
 | 廣告預留空位 | 0 |
 
 ### 主要異常與處理建議
@@ -35,24 +35,24 @@
 
 | 工具名稱 | 路徑 | 功能狀態 | 內容深度 | 互動／依賴摘要 | FAQ | Schema | 擴充容器 | 判定備註 |
 |---|---|---|---|---|:---:|:---:|:---:|---|
-| 圖片合併轉 PDF | `/tools/converter-image-pdf.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1107 chars） | 4 script／22 local ref；Convert, addEventListener, convert, generate | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| Excel / CSV 轉 PDF | `/tools/converter-excel-pdf.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1049 chars） | 8 script／16 local ref；Async, Convert, addEventListener, async | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| PDF 頁面拆分與提取 | `/tools/converter-pdf-split.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（971 chars） | 6 script／16 local ref；Async, Convert, addEventListener, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 萬用轉 PDF 神器 | `/tools/converter-universal-pdf.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1045 chars） | 5 script／14 local ref；Convert, addEventListener, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| PDF 多檔合併器 | `/tools/converter-pdf-merge.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（867 chars） | 7 script／16 local ref；Convert, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| PDF 頁面旋轉與修正器 | `/tools/converter-pdf-rotate.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（906 chars） | 7 script／16 local ref；Convert, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| PDF 防盜文字浮水印 | `/tools/converter-pdf-watermark.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（879 chars） | 7 script／16 local ref；Convert, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| PDF 自動頁碼添加器 | `/tools/converter-pdf-pagenumber.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（974 chars） | 7 script／16 local ref；Convert, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 多 Excel 工作簿合併器 | `/tools/converter-excel-merge.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（915 chars） | 7 script／16 local ref；Convert, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| Excel 工作表分割器 | `/tools/converter-excel-split.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（936 chars） | 7 script／16 local ref；Convert, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| PDF 頁面自訂刪除與提取器 | `/tools/converter-pdf-remove-pages.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1076 chars） | 5 script／17 local ref；Convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| 結構化數據轉換器 | `/tools/converter-data.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1195 chars） | 4 script／22 local ref；Convert, addEventListener, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| PDF 轉圖片提取器 | `/tools/converter-pdf-to-images.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（965 chars） | 7 script／16 local ref；Convert, Worker, convert, worker | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| PDF 提取純文字工具 | `/tools/converter-pdf-to-text.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（884 chars） | 6 script／16 local ref；Convert, Worker, convert, worker | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| Excel / CSV 轉 Markdown 表格 | `/tools/converter-excel-to-markdown.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1023 chars） | 5 script／16 local ref；Convert, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| Excel 轉 HTML 網頁表格 | `/tools/converter-excel-to-html.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1030 chars） | 5 script／16 local ref；Convert, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| Word DOCX 轉 Markdown / TXT | `/tools/converter-word-to-markdown.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（989 chars） | 5 script／16 local ref；Convert, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
-| HTML 轉 Word DOCX 文件 | `/tools/converter-html-to-docx.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1078 chars） | 5 script／16 local ref；Convert, convert | 是 | 否 | 是 | 可進入後續 SEO 內容深化。 |
+| 圖片合併轉 PDF | `/tools/converter-image-pdf.html` | **正常執行** | 內容完整（1483 chars） | 5 script／23 local ref；Convert, addEventListener, convert, generate | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| Excel / CSV 轉 PDF | `/tools/converter-excel-pdf.html` | **正常執行** | 內容完整（1436 chars） | 9 script／17 local ref；Async, Convert, addEventListener, async | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| PDF 頁面拆分與提取 | `/tools/converter-pdf-split.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1323 chars） | 7 script／17 local ref；Async, Convert, addEventListener, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 萬用轉 PDF 神器 | `/tools/converter-universal-pdf.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1389 chars） | 6 script／15 local ref；Convert, addEventListener, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| PDF 多檔合併器 | `/tools/converter-pdf-merge.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1215 chars） | 8 script／17 local ref；Convert, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| PDF 頁面旋轉與修正器 | `/tools/converter-pdf-rotate.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1227 chars） | 8 script／17 local ref；Convert, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| PDF 防盜文字浮水印 | `/tools/converter-pdf-watermark.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1221 chars） | 8 script／17 local ref；Convert, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| PDF 自動頁碼添加器 | `/tools/converter-pdf-pagenumber.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1304 chars） | 8 script／17 local ref；Convert, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 多 Excel 工作簿合併器 | `/tools/converter-excel-merge.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1246 chars） | 8 script／17 local ref；Convert, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| Excel 工作表分割器 | `/tools/converter-excel-split.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1254 chars） | 8 script／17 local ref；Convert, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| PDF 頁面自訂刪除與提取器 | `/tools/converter-pdf-remove-pages.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1375 chars） | 6 script／18 local ref；Convert, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| 結構化數據轉換器 | `/tools/converter-data.html` | **正常執行** | 內容完整（1519 chars） | 5 script／23 local ref；Convert, addEventListener, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| PDF 轉圖片提取器 | `/tools/converter-pdf-to-images.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1317 chars） | 8 script／17 local ref；Convert, Worker, convert, worker | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| PDF 提取純文字工具 | `/tools/converter-pdf-to-text.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1219 chars） | 7 script／17 local ref；Convert, Worker, convert, worker | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| Excel / CSV 轉 Markdown 表格 | `/tools/converter-excel-to-markdown.html` | **正常執行** | 內容完整（1403 chars） | 6 script／17 local ref；Convert, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| Excel 轉 HTML 網頁表格 | `/tools/converter-excel-to-html.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1370 chars） | 6 script／17 local ref；Convert, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| Word DOCX 轉 Markdown / TXT | `/tools/converter-word-to-markdown.html` | **正常執行** | 文字說明具備但 FAQ／深度不足（1383 chars） | 6 script／17 local ref；Convert, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
+| HTML 轉 Word DOCX 文件 | `/tools/converter-html-to-docx.html` | **正常執行** | 內容完整（1480 chars） | 6 script／17 local ref；Convert, convert | 是 | 是 | 是 | 可進入後續 SEO 內容深化。 |
 
 ### 第 2 批：基礎生活理財與量化工具群
 
