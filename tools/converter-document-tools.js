@@ -5,7 +5,16 @@
     var C = window.ConverterCommon;
     if (!C) return;
     var en = C.isEnglish();
-    var text = function (zh, english) { return en ? english : zh; };
+    var jaMap = {
+        '請選擇 PDF 檔案。': 'PDF ファイルを選択してください。',
+        '請先選擇至少一個 PDF。': 'PDF を 1 つ以上選択してください。',
+        'PDF 合併失敗：': 'PDF の結合に失敗しました：',
+        '格式不受支援。': 'ファイル形式がサポートされていない可能性があります。',
+        ' 個 PDF 已就緒，請拖曳箭頭調整合併順序。': ' 個の PDF を読み込みました。矢印で順番を変更できます。',
+        ' 個 PDF 已合併，可以下載。': ' 個の PDF を結合しました。ダウンロードできます。',
+        '請選擇一個或多個 PDF 檔案。': 'PDF を 1 つ以上選択してください。'
+    };
+    var text = function (zh, english) { return en ? english : (document.documentElement.lang === 'ja' ? (jaMap[zh] || english) : zh); };
     var t = function (kind, name) { return document.getElementById(kind + '-' + name); };
 
     function status(element, message, kind) { C.setStatus(element, message, kind); }
