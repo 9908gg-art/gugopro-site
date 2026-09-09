@@ -27,14 +27,20 @@ require(feed.get("schema_version") == 1, "feed schema_version missing")
 require(100 <= len(feed.get("pairs", [])) <= 150, "feed does not contain 100-150 pairs")
 require(feed.get("universe", {}).get("taifex_stock_futures_discovered", 0) >= 200, "TAIFEX discovery count is below 200")
 require(feed.get("universe", {}).get("spot_selected", 0) >= 1000, "TWSE universe is not the full listed ordinary-share set")
-required_pair_fields = {"pair_id", "symbol_a", "name_a", "type_a", "symbol_b", "name_b", "type_b", "correlation", "beta", "current_spread", "mean_spread", "std_dev", "z_score", "signal_status", "history"}
+require(feed.get("universe", {}).get("spot_analysis_eligible", 0) > 0, "liquidity/volatility filter produced no eligible stocks")
+require(feed.get("universe", {}).get("liquidity_filter", {}).get("value_20d_min_twd") == 50000000, "liquidity value floor is missing")
+require(feed.get("parameters", {}).get("adf_p_value_threshold") == 0.05, "ADF threshold is missing")
+require(feed.get("parameters", {}).get("backtest", {}).get("lookahead_safe") is True, "backtest lookahead flag is missing")
+required_pair_fields = {"pair_id", "symbol_a", "name_a", "type_a", "symbol_b", "name_b", "type_b", "correlation", "beta", "adf_p_value", "residual_half_life_days", "current_spread", "mean_spread", "std_dev", "z_score", "next_day_backtest", "signal_status", "history"}
 for index_no, pair in enumerate(feed.get("pairs", []), start=1):
     require(required_pair_fields <= set(pair), f"pair {index_no} missing required field")
     history = pair.get("history", {})
     require(len(history.get("dates", [])) == 60, f"pair {index_no} history dates is not 60")
     require(len(history.get("spread", [])) == 60, f"pair {index_no} history spread is not 60")
     require(len(history.get("z_score", [])) == 60, f"pair {index_no} history z-score is not 60")
-    require(float(pair["correlation"]) >= 0.82, f"pair {index_no} below correlation threshold")
+    require(float(pair["correlation"]) >= 0.85, f"pair {index_no} below correlation threshold")
+    require(float(pair["adf_p_value"]) < 0.05, f"pair {index_no} fails ADF threshold")
+    require("win_rate" in pair["next_day_backtest"] and "net_return" in pair["next_day_backtest"], f"pair {index_no} missing next-day backtest fields")
 
 underlying_keys = [tuple(sorted((str(pair.get("underlying_a")), str(pair.get("underlying_b"))))) for pair in feed.get("pairs", [])]
 require(len(underlying_keys) == len(set(underlying_keys)), "feed contains duplicate underlying pairs")
@@ -42,7 +48,7 @@ require(len(underlying_keys) == len(set(underlying_keys)), "feed contains duplic
 for marker in [
     "<title>", "applicationCategory", '"@type":"FAQPage"',
     "language-switch", "type-filter", "corr-filter", "signal-filter",
-    "price-chart", "spread-chart", "z-chart", "equity-chart",
+    "price-chart", "spread-chart", "z-chart", "equity-chart", "metric-adf", "metric-half-life", "metric-bt-win", "metric-bt-return",
     "dropzone", "run-backtest", "localStorage", "TAIFEX", "TWSE",
 ]:
     require(marker in page, f"workstation missing marker: {marker}")
