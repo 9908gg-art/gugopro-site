@@ -2,9 +2,9 @@
 """Taiwan market pair-trading scanner.
 
 The scanner is deliberately batch-oriented: it discovers the current TAIFEX
-single-stock-futures universe, selects the 150 most actively traded TWSE
-stocks for the spot universe, fetches daily histories, and writes a compact
-static feed for the browser workstation.
+single-stock-futures universe, discovers every currently listed TWSE ordinary-share issuer, applies an explicit
+liquidity and price-movement screen before pair analysis, fetches daily histories
+with a local cache, and writes a compact static feed for the browser workstation.
 
 Data-source note:
 * TAIFEX is the authority for contract discovery and the core futures report.
@@ -42,17 +42,20 @@ except ImportError:  # pragma: no cover - the workflow installs pandas
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "data" / "tw-market" / "pairs-scan-results.json"
+CACHE_DIR = ROOT / "data" / "tw-market" / ".cache"
 TAIPEI = timezone(timedelta(hours=8))
 USER_AGENT = "GugoProTaiwanPairScanner/1.0 (+https://gugopro.com/tools/tw-market/taiwan-pair-trading.html)"
+TWSE_COMPANY_URL = "https://openapi.twse.com.tw/v1/opendata/t187ap03_L"
 TWSE_ALL_URL = "https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL"
 TAIFEX_STOCK_LIST_URL = "https://www.taifex.com.tw/enl/eng5/stockMargining"
 YAHOO_CHART_URL = "https://query1.finance.yahoo.com/v8/finance/chart/{symbol}"
 
 CORE_FUTURES = [
-    {"symbol": "TX", "name": "臺指期", "proxy": "^TWII", "proxy_name": "TAIEX proxy"},
-    {"symbol": "MTX", "name": "小型臺指", "proxy": "^TWII", "proxy_name": "TAIEX proxy"},
-    {"symbol": "TE", "name": "電子期", "proxy": "0050.TW", "proxy_name": "Taiwan 50 ETF proxy"},
-    {"symbol": "TF", "name": "金融期", "proxy": "0051.TW", "proxy_name": "Taiwan Mid-Cap ETF proxy"},
+    {"symbol": "TX", "name": "臺指期", "proxy": "^TWII", "proxy_name": "TAIEX proxy", "exchange": "TAIFEX"},
+    {"symbol": "MTX", "name": "小型臺指", "proxy": "^TWII", "proxy_name": "TAIEX proxy", "exchange": "TAIFEX"},
+    {"symbol": "TE", "name": "電子期", "proxy": "0050.TW", "proxy_name": "Taiwan 50 ETF proxy", "exchange": "TAIFEX"},
+    {"symbol": "TF", "name": "金融期", "proxy": "0051.TW", "proxy_name": "Taiwan Mid-Cap ETF proxy", "exchange": "TAIFEX"},
+    {"symbol": "TWN", "name": "富台期", "proxy": "TWN=F", "proxy_name": "SGX FTSE Taiwan Index Futures", "exchange": "SGX"},
 ]
 
 
@@ -163,45 +166,51 @@ class HttpClient:
         raise RuntimeError(f"request failed after {self.retries} attempts: {url}") from last_error
 
 
-def fetch_twse_universe(client: HttpClient, limit: int = 150) -> tuple[list[dict[str, Any]], str]:
-    """Select the current top-150 stock universe by latest traded value.
+def fetch_twse_universe(client: HttpClient) -> tuple[list[dict[str, Any]], str]:
+    """Discover every currently listed TWSE ordinary-share issuer.
 
-    STOCK_DAY_ALL is an official TWSE daily snapshot. In the absence of a
-    stable public market-cap endpoint, traded value is used as the transparent
-    liquidity ranking and is recorded in the output metadata.
+    The company master is the authoritative universe definition. STOCK_DAY_ALL is
+    joined only for the latest close/volume snapshot used by the later liquidity
+    screen; it is never used to rank or truncate the universe.
     """
-    response = client.get(TWSE_ALL_URL)
-    payload = response.json()
-    if not isinstance(payload, list):
-        raise RuntimeError("TWSE STOCK_DAY_ALL did not return a list")
+    companies = client.get(TWSE_COMPANY_URL).json()
+    daily = client.get(TWSE_ALL_URL).json()
+    if not isinstance(companies, list) or not isinstance(daily, list):
+        raise RuntimeError("TWSE official OpenAPI did not return list payloads")
+    daily_by_code = {
+        str(item.get("Code", "")).strip(): item
+        for item in daily
+        if isinstance(item, dict)
+    }
     rows: list[dict[str, Any]] = []
-    for item in payload:
+    seen: set[str] = set()
+    snapshot_date = ""
+    for item in companies:
         if not isinstance(item, dict):
             continue
-        code = str(item.get("Code", "")).strip()
-        if not re.fullmatch(r"[1-9]\d{3}", code):
+        code = str(item.get("公司代號", "")).strip()
+        if not re.fullmatch(r"[1-9]\d{3}", code) or code in seen:
             continue
-        close = number(item.get("ClosingPrice"))
-        traded_value = number(item.get("TradeValue")) or 0.0
-        volume = number(item.get("TradeVolume")) or 0.0
-        if close is None or close <= 0:
-            continue
+        seen.add(code)
+        quote = daily_by_code.get(code, {})
+        close = number(quote.get("ClosingPrice"))
+        volume = number(quote.get("TradeVolume")) or 0.0
+        traded_value = number(quote.get("TradeValue")) or 0.0
+        snapshot_date = snapshot_date or str(quote.get("Date", ""))
         rows.append({
             "code": code,
-            "name": clean_text(str(item.get("Name", code))),
+            "name": clean_text(str(item.get("公司簡稱") or item.get("公司名稱") or code)),
             "close": close,
             "traded_value": traded_value,
             "volume": volume,
-            "market_date_roc": str(item.get("Date", "")),
+            "market_date_roc": str(quote.get("Date", "")),
+            "listed_date": str(item.get("上市日期", "")),
+            "industry_code": str(item.get("產業別", "")),
         })
-    rows.sort(key=lambda row: (row["traded_value"], row["volume"]), reverse=True)
-    selected = rows[:limit]
-    if len(selected) < 30:
-        raise RuntimeError(f"TWSE universe unexpectedly small: {len(selected)}")
-    latest = selected[0].get("market_date_roc", "")
-    log(f"TWSE universe: {len(selected)} stocks ranked by latest traded value (ROC date {latest})")
-    return selected, latest
-
+    if len(rows) < 1000:
+        raise RuntimeError(f"TWSE ordinary-share universe unexpectedly small: {len(rows)}")
+    log(f"TWSE universe: {len(rows)} listed ordinary-share issuers from official company master (ROC date {snapshot_date})")
+    return rows, snapshot_date
 
 def fetch_taifex_contracts(client: HttpClient) -> list[dict[str, str]]:
     """Parse the official TAIFEX stock-futures margining list."""
@@ -233,7 +242,17 @@ def yahoo_symbol(code: str) -> str:
     return f"{code}.TW"
 
 
-def fetch_yahoo_history(client: HttpClient, symbol: str, period_days: int = 540) -> dict[str, float]:
+def fetch_yahoo_history(client: HttpClient, symbol: str, period_days: int = 360) -> dict[str, float]:
+    """Fetch adjusted daily closes with a short-lived local cache."""
+    import hashlib
+    cache_path = CACHE_DIR / "yahoo" / f"{hashlib.sha256(symbol.encode()).hexdigest()}.json"
+    if cache_path.exists() and datetime.now(timezone.utc).timestamp() - cache_path.stat().st_mtime < 18 * 3600:
+        try:
+            cached = json.loads(cache_path.read_text(encoding="utf-8"))
+            if isinstance(cached, dict) and len(cached) >= 80:
+                return {str(key): float(value) for key, value in cached.items()}
+        except (OSError, ValueError, TypeError):
+            pass
     now = datetime.now(timezone.utc)
     period2 = int(now.timestamp())
     period1 = int((now - timedelta(days=period_days)).timestamp())
@@ -258,6 +277,11 @@ def fetch_yahoo_history(client: HttpClient, symbol: str, period_days: int = 540)
         history[date] = parsed
     if len(history) < 80:
         raise RuntimeError(f"Yahoo {symbol}: only {len(history)} usable daily rows")
+    try:
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        cache_path.write_text(json.dumps(history, ensure_ascii=False), encoding="utf-8")
+    except OSError:
+        pass
     return history
 
 
@@ -304,12 +328,15 @@ def classify_signal(z_score: float) -> tuple[str, str]:
 
 
 def build_instruments(stocks: list[dict[str, Any]], contracts: list[dict[str, str]]) -> tuple[list[dict[str, Any]], list[str]]:
+    liquidity_floor_shares = 10000
+    eligible_stocks = [stock for stock in stocks if float(stock.get("volume") or 0) >= liquidity_floor_shares]
+    log(f"Liquidity screen: {len(eligible_stocks)}/{len(stocks)} stocks pass >= {liquidity_floor_shares:,} shares latest-day volume")
     contract_by_underlying: dict[str, dict[str, str]] = {}
     for contract in contracts:
         contract_by_underlying.setdefault(contract["underlying_code"], contract)
     instruments: list[dict[str, Any]] = []
     yahoo_symbols: list[str] = []
-    for stock in stocks:
+    for stock in eligible_stocks:
         code = stock["code"]
         spot_symbol = yahoo_symbol(code)
         yahoo_symbols.append(spot_symbol)
@@ -345,7 +372,8 @@ def build_instruments(stocks: list[dict[str, Any]], contracts: list[dict[str, st
             "underlying_code": item["symbol"],
             "yahoo_symbol": item["proxy"],
             "proxy": True,
-            "source": f"TAIFEX core future + {item['proxy_name']}",
+            "exchange": item.get("exchange", "TAIFEX"),
+            "source": f"{item.get('exchange', 'TAIFEX')} core future + {item['proxy_name']}",
         })
     return instruments, yahoo_symbols
 
@@ -355,6 +383,10 @@ def compute_pairs(instruments: list[dict[str, Any]], histories: dict[str, dict[s
     for instrument in instruments:
         history = histories.get(instrument["yahoo_symbol"])
         if history and len(history) >= 80:
+            values = np.asarray(list(history.values())[-120:], dtype=float)
+            changes = np.diff(values)
+            if len(np.unique(np.round(values, 8))) < 6 or np.count_nonzero(np.abs(changes) > 1e-10) < 5:
+                continue
             item = dict(instrument)
             item["history"] = history
             active.append(item)
@@ -444,10 +476,13 @@ def build_feed(stocks: list[dict[str, Any]], contracts: list[dict[str, str]], pa
         "reference_date": now.date().isoformat(),
         "universe": {
             "spot_selected": len(stocks),
-            "spot_selection_rule": "TWSE listed 4-digit stocks ranked by latest traded value",
+            "spot_universe_definition": "All TWSE-listed ordinary-share issuers from t187ap03_L; no ranking truncation",
+            "spot_analysis_eligible": common_meta.get("analysis_spot_stocks", 0),
+            "liquidity_floor_shares": 10000,
             "taifex_stock_futures_discovered": len(contracts),
             "taifex_stock_futures_in_analysis": futures_for_selected,
             "core_index_futures": [item["symbol"] for item in CORE_FUTURES],
+            "core_index_futures_exchanges": {item["symbol"]: item.get("exchange", "TAIFEX") for item in CORE_FUTURES},
             "analysis_instruments": common_meta.get("analysis_instruments", 0),
             "common_history_days": common_meta.get("common_history_days", 0),
         },
@@ -457,16 +492,18 @@ def build_feed(stocks: list[dict[str, Any]], contracts: list[dict[str, str]], pa
             "correlation_threshold": 0.82,
             "mean_window_days": 20,
             "long_mean_window_days": 60,
-            "max_pairs": 80,
+            "max_pairs": 120,
             "z_score_signal_threshold": 2.0,
         },
         "data_sources": [
-            {"name": "TWSE STOCK_DAY_ALL", "url": TWSE_ALL_URL, "role": "spot universe and latest liquidity snapshot"},
+            {"name": "TWSE listed-company master t187ap03_L", "url": TWSE_COMPANY_URL, "role": "authoritative all-listed ordinary-share universe"},
+            {"name": "TWSE STOCK_DAY_ALL", "url": TWSE_ALL_URL, "role": "latest close and liquidity snapshot for the full universe"},
             {"name": "TAIFEX single stock futures margining", "url": TAIFEX_STOCK_LIST_URL, "role": "official futures contract discovery"},
             {"name": "Yahoo Finance chart endpoint", "url": "https://query1.finance.yahoo.com/v8/finance/chart/{symbol}", "role": "daily adjusted-close history fallback"},
         ],
         "quality_notes": [
             "個股期貨連續歷史價在免費公開端點覆蓋不一致；本 feed 以對應現貨調整收盤價作為方向性代理，並在 pair 上標示 proxy_warning。",
+            "富台期是 SGX 的 FTSE Taiwan Index Futures，不是 TAIFEX 商品；若公開歷史代號不可用，會透明跳過其歷史序列，不以現貨假裝成期貨。",
             "相關係數與 Beta 為最近 60 個共同交易日的估計；市場 regime 改變時，過去統計關係可能失效。",
             "這是研究與教育用途的統計篩選，不包含下單、滑價、借券、交易稅、除權息調整或保證金即時報價。",
         ],
@@ -476,7 +513,7 @@ def build_feed(stocks: list[dict[str, Any]], contracts: list[dict[str, str]], pa
 
 def run(args: argparse.Namespace) -> int:
     client = HttpClient(timeout=args.timeout, retries=args.retries)
-    stocks, twse_date = fetch_twse_universe(client, limit=args.stock_limit)
+    stocks, twse_date = fetch_twse_universe(client)
     contracts = fetch_taifex_contracts(client)
     instruments, symbols = build_instruments(stocks, contracts)
     histories = fetch_histories(client, symbols, workers=args.workers)
@@ -484,7 +521,7 @@ def run(args: argparse.Namespace) -> int:
     if not pairs:
         raise RuntimeError("no pairs passed the correlation and variance filters")
     common_dates = sorted(set.intersection(*(set(histories[item["yahoo_symbol"]]) for item in instruments if item["yahoo_symbol"] in histories)))
-    feed = build_feed(stocks, contracts, pairs, {"analysis_instruments": len(instruments), "common_history_days": min(120, len(common_dates))})
+    feed = build_feed(stocks, contracts, pairs, {"analysis_instruments": len(instruments), "analysis_spot_stocks": sum(1 for item in instruments if item.get("type") == "spot"), "common_history_days": min(120, len(common_dates))})
     feed["twse_snapshot_roc_date"] = twse_date
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(json.dumps(feed, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -495,9 +532,8 @@ def run(args: argparse.Namespace) -> int:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--stock-limit", type=int, default=150)
-    parser.add_argument("--max-pairs", type=int, default=80)
-    parser.add_argument("--workers", type=int, default=8)
+    parser.add_argument("--max-pairs", type=int, default=120)
+    parser.add_argument("--workers", type=int, default=16)
     parser.add_argument("--timeout", type=int, default=25)
     parser.add_argument("--retries", type=int, default=3)
     return parser.parse_args()

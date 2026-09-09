@@ -24,9 +24,9 @@ sitemap = (ROOT / "sitemap.xml").read_text(encoding="utf-8")
 registry = json.loads((ROOT / "data/tools-list.json").read_text(encoding="utf-8"))
 
 require(feed.get("schema_version") == 1, "feed schema_version missing")
-require(len(feed.get("pairs", [])) == 80, "feed does not contain 80 pairs")
+require(100 <= len(feed.get("pairs", [])) <= 150, "feed does not contain 100-150 pairs")
 require(feed.get("universe", {}).get("taifex_stock_futures_discovered", 0) >= 200, "TAIFEX discovery count is below 200")
-require(feed.get("universe", {}).get("spot_selected") == 150, "spot selected count is not 150")
+require(feed.get("universe", {}).get("spot_selected", 0) >= 1000, "TWSE universe is not the full listed ordinary-share set")
 required_pair_fields = {"pair_id", "symbol_a", "name_a", "type_a", "symbol_b", "name_b", "type_b", "correlation", "beta", "current_spread", "mean_spread", "std_dev", "z_score", "signal_status", "history"}
 for index_no, pair in enumerate(feed.get("pairs", []), start=1):
     require(required_pair_fields <= set(pair), f"pair {index_no} missing required field")
@@ -59,7 +59,8 @@ except ElementTree.ParseError as exc:
 
 print(f"pairs={len(feed.get('pairs', []))}")
 print(f"taifex_contracts={feed.get('universe', {}).get('taifex_stock_futures_discovered')}")
-print(f"spot_selected={feed.get('universe', {}).get('spot_selected')}")
+print(f"spot_universe={feed.get('universe', {}).get('spot_selected')}")
+print(f"spot_analysis_eligible={feed.get('universe', {}).get('spot_analysis_eligible')}")
 print(f"page_bytes={len(page.encode('utf-8'))}")
 print(f"errors={len(errors)}")
 for error in errors:
