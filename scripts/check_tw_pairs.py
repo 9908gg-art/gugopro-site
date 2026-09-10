@@ -26,7 +26,7 @@ sitemap = (ROOT / "sitemap.xml").read_text(encoding="utf-8")
 registry = json.loads((ROOT / "data/tools-list.json").read_text(encoding="utf-8"))
 
 require(feed.get("schema_version") == 1, "feed schema_version missing")
-require(100 <= len(feed.get("pairs", [])) <= 150, "feed does not contain 100-150 pairs")
+require(20 <= len(feed.get("pairs", [])) <= 150, "feed does not contain a usable grouped opportunity set")
 require(feed.get("universe", {}).get("taifex_stock_futures_discovered", 0) >= 200, "TAIFEX discovery count is below 200")
 require(feed.get("universe", {}).get("spot_selected", 0) >= 1000, "TWSE universe is not the full listed ordinary-share set")
 require(feed.get("universe", {}).get("spot_analysis_eligible", 0) > 0, "liquidity/volatility filter produced no eligible stocks")
@@ -36,7 +36,8 @@ require(feed.get("parameters", {}).get("backtest", {}).get("lookahead_safe") is 
 require(isinstance(trade_records.get("records"), dict) and sum(len(rows) for rows in trade_records["records"].values()) > 0, "trade record file is empty")
 require(feed.get("parameters", {}).get("更新排程"), "update schedule metadata is missing")
 require(feed.get("universe", {}).get("歷史資料起日") and feed.get("universe", {}).get("歷史資料迄日"), "history date range is missing")
-required_pair_fields = {"pair_id", "symbol_a", "name_a", "type_a", "symbol_b", "name_b", "type_b", "correlation", "beta", "adf_p_value", "residual_half_life_days", "current_spread", "mean_spread", "std_dev", "z_score", "next_day_backtest", "signal_status", "history"}
+require(feed.get("universe", {}).get("correlation_clusters", 0) > 0, "correlation clusters are missing")
+required_pair_fields = {"pair_id", "group_id", "group_size", "group_average_correlation", "multivariate_beta", "alpha", "fair_value_current", "fair_value_deviation_pct", "symbol_a", "name_a", "type_a", "symbol_b", "name_b", "type_b", "correlation", "beta", "adf_p_value", "residual_half_life_days", "current_spread", "mean_spread", "std_dev", "z_score", "next_day_backtest", "signal_status", "history"}
 for index_no, pair in enumerate(feed.get("pairs", []), start=1):
     require(required_pair_fields <= set(pair), f"pair {index_no} missing required field")
     history = pair.get("history", {})
@@ -45,11 +46,13 @@ for index_no, pair in enumerate(feed.get("pairs", []), start=1):
     require(len(history.get("z_score", [])) == 60, f"pair {index_no} history z-score is not 60")
     require(float(pair["correlation"]) >= 0.85, f"pair {index_no} below correlation threshold")
     require(float(pair["adf_p_value"]) < 0.05, f"pair {index_no} fails ADF threshold")
+    require(3 <= int(pair["group_size"]) <= 8, f"pair {index_no} group size outside 3-8")
+    require(len(pair["multivariate_beta"]) >= 2, f"pair {index_no} has insufficient multivariate beta peers")
     require("win_rate" in pair["next_day_backtest"] and "net_return" in pair["next_day_backtest"], f"pair {index_no} missing next-day backtest fields")
 
 instrument_keys = [tuple(sorted((str(pair.get("pair_id")), str(pair.get("type_a")), str(pair.get("type_b"))))) for pair in feed.get("pairs", [])]
 require(len(instrument_keys) == len(set(instrument_keys)), "feed contains duplicate instrument pairs")
-require(any(pair.get("type_a") == "futures" and pair.get("type_b") == "futures" for pair in feed.get("pairs", [])), "feed contains no futures-to-futures pair")
+require(any(pair.get("type_b") == "basket" and pair.get("group_size", 0) >= 3 for pair in feed.get("pairs", [])), "feed contains no grouped target-versus-fair-value model")
 
 for marker in [
     "<title>", "applicationCategory", '"@type":"FAQPage"',

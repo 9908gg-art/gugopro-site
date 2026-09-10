@@ -478,104 +478,100 @@ def build_instruments(stocks: list[dict[str, Any]], contracts: list[dict[str, st
     return instruments, yahoo_symbols, {"universe": len(stocks), "latest_volume_pass": len(volume_ok), "eligible": len(eligible_stocks)}
 
 
-def compute_pairs(instruments: list[dict[str, Any]], histories: dict[str, dict[str, float]], ohlcv: dict[str, dict[str, dict[str, float]]], max_pairs: int = 80) -> list[dict[str, Any]]:
-    active: list[dict[str, Any]] = []
+def correlation_clusters(active: list[dict[str, Any]], correlations: np.ndarray, threshold: float = 0.85, min_size: int = 3, max_size: int = 8) -> list[list[int]]:
+    """Greedy high-correlation groups; every member must average >= threshold to the group."""
+    remaining = set(range(len(active)))
+    clusters: list[list[int]] = []
+    while remaining:
+        seed = max(remaining, key=lambda i: sum(max(0.0, float(correlations[i, j])) for j in remaining))
+        group = [seed]; remaining.remove(seed)
+        while len(group) < max_size:
+            candidates = [(float(np.mean([correlations[c, g] for g in group])), c) for c in remaining]
+            candidates = [(score, c) for score, c in candidates if math.isfinite(score) and score >= threshold]
+            if not candidates: break
+            _, chosen = max(candidates)
+            group.append(chosen); remaining.remove(chosen)
+        if len(group) >= min_size:
+            clusters.append(group)
+        else:
+            # A small leftover cannot form a multivariate model; it is intentionally excluded.
+            remaining.update(group)
+            break
+    return clusters
+
+
+def multivariate_fair_value(target: np.ndarray, peers: np.ndarray) -> tuple[float, np.ndarray, np.ndarray]:
+    """OLS target = alpha + peers @ beta; return fair price, beta, residual."""
+    design = np.column_stack([np.ones(len(target)), peers])
+    coeff, *_ = np.linalg.lstsq(design, target, rcond=None)
+    fair = design @ coeff
+    return float(coeff[0]), np.asarray(coeff[1:], dtype=float), target - fair
+
+
+def next_day_target_fair_backtest(dates: list[str], target_raw: dict[str, dict[str, float]], fair_raw: dict[str, dict[str, float]], z_scores: np.ndarray, entry: float = 2.0, cost_rate: float = 0.00375) -> dict[str, Any]:
+    """T close signal, T+1 open target-vs-fair position, T+1 close exit."""
+    common = [d for d in dates if d in target_raw and d in fair_raw]
+    returns=[]; records=[]
+    for i in range(min(len(common)-1, len(z_scores)-1)):
+        z=float(z_scores[i])
+        if abs(z)<entry: continue
+        signal_date,next_day=common[i],common[i+1]; a,b=target_raw[next_day],fair_raw[next_day]
+        if not all(float(x.get('open',0))>0 and float(x.get('close',0))>0 for x in (a,b)): continue
+        direction=-1.0 if z>0 else 1.0
+        gross=direction*((a['close']-a['open'])-(b['close']-b['open']))
+        net=float(gross/max(1e-9,a['open']+b['open'])-cost_rate)
+        returns.append(net)
+        records.append({'訊號日':signal_date,'進場日':next_day,'進場時間':'次日開盤','出場時間':'次日收盤','方向':'放空目標／做多理論價' if direction<0 else '做多目標／放空理論價','Z分數':finite_round(z,4),'目標進場':finite_round(a['open'],4),'目標出場':finite_round(a['close'],4),'理論價進場':finite_round(b['open'],4),'理論價出場':finite_round(b['close'],4),'淨報酬率':finite_round(net*100,4),'結果':'獲利' if net>0 else '虧損'})
+    wins=sum(x>0 for x in returns); gross_win=sum(x for x in returns if x>0); gross_loss=sum(-x for x in returns if x<0)
+    cumulative=float(np.prod([1+x for x in returns])-1) if returns else 0.0
+    return {'lookback_days':len(common),'entry_z':entry,'cost_rate_round_trip':cost_rate,'trades':len(returns),'wins':wins,'losses':len(returns)-wins,'win_rate':finite_round(wins/len(returns)*100,2) if returns else None,'average_risk_reward':finite_round(gross_win/gross_loss,3) if gross_loss else None,'net_return':finite_round(cumulative*100,2),'trade_returns':[finite_round(x*100,4) for x in returns[-60:]],'trade_records':records}
+
+
+def compute_pairs(instruments: list[dict[str, Any]], histories: dict[str, dict[str, float]], ohlcv: dict[str, dict[str, dict[str, float]]], max_pairs: int = 120) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    active=[]
+    seen_history_symbols=set()
     for instrument in instruments:
-        history = histories.get(instrument["yahoo_symbol"])
-        if history and len(history) >= 80:
-            values = np.asarray(list(history.values())[-120:], dtype=float)
-            changes = np.diff(values)
-            if len(np.unique(np.round(values, 8))) < 6 or np.count_nonzero(np.abs(changes) > 1e-10) < 5:
+        history=histories.get(instrument['yahoo_symbol'])
+        if history and len(history)>=80:
+            values=np.asarray(list(history.values())[-120:],dtype=float)
+            if len(np.unique(np.round(values,8)))<6 or np.count_nonzero(np.abs(np.diff(values))>1e-10)<5: continue
+            if instrument['yahoo_symbol'] in seen_history_symbols:
                 continue
-            item = dict(instrument)
-            item["history"] = history
-            item["ohlcv"] = ohlcv.get(instrument["yahoo_symbol"], {})
-            active.append(item)
-    if len(active) < 10:
-        raise RuntimeError(f"not enough instruments with history: {len(active)}")
-    common_dates = sorted(set.intersection(*(set(item["history"]) for item in active)))
-    common_dates = common_dates[-120:]
-    if len(common_dates) < 60:
-        raise RuntimeError(f"only {len(common_dates)} common dates available; need at least 60")
-    matrix = np.asarray([[item["history"][date] for date in common_dates] for item in active], dtype=float)
-    window = matrix[:, -60:]
-    correlations = np.corrcoef(window)
-    pairs_by_key: dict[tuple[Any, ...], dict[str, Any]] = {}
-    for i in range(len(active)):
-        for j in range(i + 1, len(active)):
-            left = active[i]
-            right = active[j]
-            # Do not report the trivial spot-vs-its-own-future proxy as an opportunity.
-            if left.get("underlying_code") == right.get("underlying_code"):
-                continue
-            correlation = float(correlations[i, j])
-            if not math.isfinite(correlation) or correlation < 0.85:
-                continue
-            a = window[i]
-            b = window[j]
-            variance_b = float(np.var(b))
-            if variance_b <= 1e-12:
-                continue
-            beta = float(np.cov(a, b, ddof=0)[0, 1] / variance_b)
-            if not math.isfinite(beta) or beta <= 0:
-                continue
-            spread = a - beta * b
-            adf_p = approximate_adf_pvalue(spread)
-            half_life = residual_half_life(spread)
-            if adf_p is None or adf_p >= 0.05:
-                continue
-            mean20 = float(np.mean(spread[-20:]))
-            std20 = float(np.std(spread[-20:]))
-            mean60 = float(np.mean(spread))
-            std60 = float(np.std(spread))
-            if std20 <= 1e-10:
-                continue
-            z_score = float((spread[-1] - mean20) / std20)
-            signal_key, signal_label = classify_signal(z_score)
-            candidate = {
-                "pair_id": f"{left['id']}__{right['id']}",
-                "symbol_a": left["symbol"],
-                "name_a": left["name"],
-                "type_a": left["type"],
-                "symbol_b": right["symbol"],
-                "name_b": right["name"],
-                "type_b": right["type"],
-                "underlying_a": left.get("underlying_code"),
-                "underlying_b": right.get("underlying_code"),
-                "correlation": finite_round(correlation, 5),
-                "beta": finite_round(beta, 5),
-                "adf_p_value": adf_p,
-                "residual_half_life_days": half_life,
-                "current_spread": finite_round(float(spread[-1]), 4),
-                "mean_spread": finite_round(mean20, 4),
-                "std_dev": finite_round(std20, 4),
-                "mean_spread_20": finite_round(mean20, 4),
-                "std_dev_20": finite_round(std20, 4),
-                "mean_spread_60": finite_round(mean60, 4),
-                "std_dev_60": finite_round(std60, 4),
-                "z_score": finite_round(z_score, 4),
-                "signal_status": signal_label,
-                "signal_status_key": signal_key,
-                "proxy_warning": bool(left.get("proxy") or right.get("proxy")),
-                "history": {
-                    "dates": common_dates[-60:],
-                    "price_a": normalized(matrix[i, -60:]),
-                    "price_b": normalized(matrix[j, -60:]),
-                    "open_a": [round(float(active[i]["ohlcv"].get(date, {}).get("open", matrix[i, k])), 6) for k, date in enumerate(common_dates[-60:])],
-                    "open_b": [round(float(active[j]["ohlcv"].get(date, {}).get("open", matrix[j, k])), 6) for k, date in enumerate(common_dates[-60:])],
-                    "spread": [round(float(value), 6) for value in spread[-60:]],
-                    "z_score": [round(float((value - mean20) / std20), 6) for value in spread[-60:]],
-                },
-            }
-            bt = next_day_open_close_backtest(common_dates[-60:], left["ohlcv"], right["ohlcv"], beta, np.asarray([(value - mean20) / std20 for value in spread]), cost_rate=0.00375)
-            candidate["next_day_backtest"] = bt
-            pair_key = tuple(sorted((str(left.get("id")), str(right.get("id")))))
-            existing = pairs_by_key.get(pair_key)
-            if existing is None or abs(float(candidate["z_score"])) > abs(float(existing["z_score"])):
-                pairs_by_key[pair_key] = candidate
-    pairs = list(pairs_by_key.values())
-    pairs.sort(key=lambda pair: (abs(float(pair["z_score"])), float(pair["correlation"])), reverse=True)
-    return pairs[:max_pairs]
+            seen_history_symbols.add(instrument['yahoo_symbol'])
+            item=dict(instrument); item['history']=history; item['ohlcv']=ohlcv.get(instrument['yahoo_symbol'],{}); active.append(item)
+    if len(active)<10: raise RuntimeError(f'not enough instruments with history: {len(active)}')
+    common_dates=sorted(set.intersection(*(set(item['history']) for item in active)))[-120:]
+    if len(common_dates)<60: raise RuntimeError(f'only {len(common_dates)} common dates available; need at least 60')
+    matrix=np.asarray([[item['history'][d] for d in common_dates] for item in active],dtype=float)
+    window=matrix[:,-60:]; correlations=np.corrcoef(window)
+    clusters=correlation_clusters(active,correlations,threshold=0.85,min_size=3,max_size=8)
+    candidates=[]
+    for group_no, members in enumerate(clusters,1):
+        group_corr=float(np.mean([correlations[i,j] for pos,i in enumerate(members) for j in members[pos+1:]]))
+        group_id=f'G{group_no:03d}'
+        for target_pos,target_idx in enumerate(members):
+            peer_idxs=[x for x in members if x!=target_idx]
+            target=window[target_idx]; peers=window[peer_idxs].T
+            alpha,betas,residual=multivariate_fair_value(target,peers)
+            if not np.all(np.isfinite(residual)): continue
+            mean20=float(np.mean(residual[-20:])); std20=float(np.std(residual[-20:])); mean60=float(np.mean(residual)); std60=float(np.std(residual))
+            if std20<=1e-10: continue
+            adf=approximate_adf_pvalue(residual); half=residual_half_life(residual)
+            if adf is None or adf>=0.05: continue
+            z=float((residual[-1]-mean20)/std20); key,label_text=classify_signal(z)
+            fair_series=alpha+peers@betas
+            peer_raw=[active[x]['ohlcv'] for x in peer_idxs]
+            target_raw=active[target_idx]['ohlcv']; fair_raw={}
+            for d in common_dates[-60:]:
+                vals=[raw.get(d,{}) for raw in peer_raw]
+                if not all(v.get('open',0)>0 and v.get('close',0)>0 for v in vals): continue
+                fair_raw[d]={'open':alpha+sum(float(b)*float(v['open']) for b,v in zip(betas,vals)),'close':alpha+sum(float(b)*float(v['close']) for b,v in zip(betas,vals))}
+            bt=next_day_target_fair_backtest(common_dates[-60:],target_raw,fair_raw,np.asarray([(x-mean20)/std20 for x in residual]),cost_rate=0.00375)
+            target_item=active[target_idx]
+            candidate={'pair_id':f'{group_id}::{target_item["id"]}','group_id':group_id,'group_label':f'同盟群組 {group_no}','group_size':len(members),'group_average_correlation':finite_round(group_corr,5),'symbol_a':target_item['symbol'],'name_a':target_item['name'],'type_a':target_item['type'],'symbol_b':'／'.join(active[x]['symbol'] for x in peer_idxs),'name_b':f'{len(peer_idxs)} 檔群組合成理論價','type_b':'basket','underlying_a':target_item.get('underlying_code'),'underlying_b':'MULTI_BETA','correlation':finite_round(group_corr,5),'beta':finite_round(float(np.linalg.norm(betas)),5),'multivariate_beta':{active[x]['symbol']:finite_round(float(b),6) for x,b in zip(peer_idxs,betas)},'alpha':finite_round(alpha,6),'fair_value_current':finite_round(float(fair_series[-1]),4),'actual_price_current':finite_round(float(target[-1]),4),'fair_value_deviation_pct':finite_round(float((target[-1]/fair_series[-1]-1)*100) if fair_series[-1] else 0,4),'adf_p_value':adf,'residual_half_life_days':half,'current_spread':finite_round(float(residual[-1]),4),'mean_spread':finite_round(mean20,4),'std_dev':finite_round(std20,4),'mean_spread_20':finite_round(mean20,4),'std_dev_20':finite_round(std20,4),'mean_spread_60':finite_round(mean60,4),'std_dev_60':finite_round(std60,4),'z_score':finite_round(z,4),'signal_status':label_text,'signal_status_key':key,'proxy_warning':bool(target_item.get('proxy') or any(active[x].get('proxy') for x in peer_idxs)),'history':{'dates':common_dates[-60:],'price_a':normalized(target[-60:]),'price_b':normalized(fair_series[-60:]),'fair_value':[round(float(x),6) for x in fair_series[-60:]],'actual_price':[round(float(x),6) for x in target[-60:]],'spread':[round(float(x),6) for x in residual[-60:]],'z_score':[round(float((x-mean20)/std20),6) for x in residual[-60:]]},'next_day_backtest':bt}
+            candidates.append(candidate)
+    candidates.sort(key=lambda p:(abs(float(p['z_score'])),float(p['group_average_correlation'])),reverse=True)
+    return candidates[:max_pairs],{'clusters':len(clusters),'cluster_sizes':[len(x) for x in clusters],'active_instruments':len(active),'clustered_instruments':sum(len(x) for x in clusters),'common_dates':common_dates}
 
 
 def build_feed(stocks: list[dict[str, Any]], contracts: list[dict[str, str]], pairs: list[dict[str, Any]], common_meta: dict[str, Any]) -> dict[str, Any]:
@@ -596,6 +592,9 @@ def build_feed(stocks: list[dict[str, Any]], contracts: list[dict[str, str]], pa
             "core_index_futures": [item["symbol"] for item in CORE_FUTURES],
             "core_index_futures_exchanges": {item["symbol"]: item.get("exchange", "TAIFEX") for item in CORE_FUTURES},
             "analysis_instruments": common_meta.get("analysis_instruments", 0),
+            "clustered_instruments": common_meta.get("clustered_instruments", 0),
+            "correlation_clusters": common_meta.get("clusters", 0),
+            "cluster_sizes": common_meta.get("cluster_sizes", []),
             "common_history_days": common_meta.get("common_history_days", 0),
             "歷史資料起日": common_meta.get("history_start"),
             "歷史資料迄日": common_meta.get("history_end"),
@@ -609,6 +608,9 @@ def build_feed(stocks: list[dict[str, Any]], contracts: list[dict[str, str]], pa
             "mean_window_days": 20,
             "long_mean_window_days": 60,
             "max_pairs": 120,
+            "model": "高相關群組聚類 + 多元 OLS Beta 理論價",
+            "cluster_threshold": 0.85,
+            "cluster_size_range": [3, 8],
             "z_score_signal_threshold": 2.0,
             "更新排程": "每個交易日台北時間 15:00（GitHub Actions，實際啟動可能有數分鐘延遲）",
             "資料更新說明": "TWSE／TAIFEX 清單與公開日 K 資料於排程執行時重新抓取；週末與休市日不會產生新交易日資料。",
@@ -637,11 +639,11 @@ def run(args: argparse.Namespace) -> int:
     # Fetch OHLCV once, then screen the complete universe before matrix operations.
     histories, ohlcv = fetch_histories(client, [yahoo_symbol(stock["code"]) for stock in stocks] + [item["proxy"] for item in CORE_FUTURES], workers=args.workers)
     instruments, symbols, filter_counts = build_instruments(stocks, contracts, ohlcv)
-    pairs = compute_pairs(instruments, histories, ohlcv, max_pairs=args.max_pairs)
+    pairs, cluster_meta = compute_pairs(instruments, histories, ohlcv, max_pairs=args.max_pairs)
     if not pairs:
         raise RuntimeError("no pairs passed the correlation and variance filters")
     common_dates = sorted(set.intersection(*(set(histories[item["yahoo_symbol"]]) for item in instruments if item["yahoo_symbol"] in histories)))
-    feed = build_feed(stocks, contracts, pairs, {"analysis_instruments": len(instruments), "analysis_spot_stocks": sum(1 for item in instruments if item.get("type") == "spot"), "filter_counts": filter_counts, "common_history_days": min(120, len(common_dates)), "history_start": common_dates[-60] if len(common_dates) >= 60 else common_dates[0], "history_end": common_dates[-1]})
+    feed = build_feed(stocks, contracts, pairs, {"analysis_instruments": len(instruments), "analysis_spot_stocks": sum(1 for item in instruments if item.get("type") == "spot"), "filter_counts": filter_counts, "common_history_days": min(120, len(common_dates)), "clusters": cluster_meta.get("clusters", 0), "cluster_sizes": cluster_meta.get("cluster_sizes", []), "clustered_instruments": cluster_meta.get("clustered_instruments", 0), "history_start": common_dates[-60] if len(common_dates) >= 60 else common_dates[0], "history_end": common_dates[-1]})
     feed["twse_snapshot_roc_date"] = twse_date
     trade_records = {pair["pair_id"]: pair.get("next_day_backtest", {}).pop("trade_records", []) for pair in feed["pairs"]}
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
