@@ -394,22 +394,26 @@ def next_day_open_close_backtest(dates: list[str], raw_a: dict[str, dict[str, fl
     """Use T close Z to enter at T+1 open and flatten at T+1 close; no overnight."""
     common = [d for d in dates if d in raw_a and d in raw_b]
     trades: list[float] = []
-    for i in range(len(common) - 1):
+    records: list[dict[str, Any]] = []
+    for i in range(min(len(common) - 1, len(z_scores) - 1)):
         z = float(z_scores[i])
         if abs(z) < entry:
             continue
+        signal_date = common[i]
         next_day = common[i + 1]
         a = raw_a[next_day]; b = raw_b[next_day]
         if not all(float(x.get("open", 0)) > 0 and float(x.get("close", 0)) > 0 for x in (a, b)):
             continue
-        # Positive spread: short A / long beta*B; negative: long A / short beta*B.
         direction = -1.0 if z > 0 else 1.0
+        direction_text = "放空 A／做多 B" if direction < 0 else "做多 A／放空 B"
         gross = direction * ((a["close"] - a["open"]) - beta * (b["close"] - b["open"]))
         gross_return = gross / max(1e-9, a["open"] + abs(beta) * b["open"])
-        trades.append(float(gross_return - cost_rate))
+        net = float(gross_return - cost_rate)
+        trades.append(net)
+        records.append({"訊號日": signal_date, "進場日": next_day, "進場時間": "次日開盤", "出場時間": "次日收盤", "方向": direction_text, "Z分數": finite_round(z, 4), "A進場": finite_round(a["open"], 4), "A出場": finite_round(a["close"], 4), "B進場": finite_round(b["open"], 4), "B出場": finite_round(b["close"], 4), "淨報酬率": finite_round(net * 100.0, 4), "結果": "獲利" if net > 0 else "虧損"})
     cumulative = float(np.prod([1.0 + r for r in trades]) - 1.0) if trades else 0.0
     wins = sum(r > 0 for r in trades)
-    return {"lookback_days": len(common), "entry_z": entry, "cost_rate_round_trip": cost_rate, "trades": len(trades), "wins": wins, "win_rate": finite_round(wins / len(trades) * 100.0, 2) if trades else None, "net_return": finite_round(cumulative * 100.0, 2), "trade_returns": [finite_round(r * 100.0, 4) for r in trades[-60:]]}
+    return {"lookback_days": len(common), "entry_z": entry, "cost_rate_round_trip": cost_rate, "trades": len(trades), "wins": wins, "losses": len(trades) - wins, "win_rate": finite_round(wins / len(trades) * 100.0, 2) if trades else None, "net_return": finite_round(cumulative * 100.0, 2), "trade_returns": [finite_round(r * 100.0, 4) for r in trades[-60:]], "trade_records": records}
 
 
 def build_instruments(stocks: list[dict[str, Any]], contracts: list[dict[str, str]], ohlcv: dict[str, dict[str, dict[str, float]]]) -> tuple[list[dict[str, Any]], list[str], dict[str, int]]:
@@ -564,7 +568,7 @@ def compute_pairs(instruments: list[dict[str, Any]], histories: dict[str, dict[s
             }
             bt = next_day_open_close_backtest(common_dates[-60:], left["ohlcv"], right["ohlcv"], beta, np.asarray([(value - mean20) / std20 for value in spread]), cost_rate=0.00375)
             candidate["next_day_backtest"] = bt
-            pair_key = tuple(sorted((str(left.get("underlying_code")), str(right.get("underlying_code")))))
+            pair_key = tuple(sorted((str(left.get("id")), str(right.get("id")))))
             existing = pairs_by_key.get(pair_key)
             if existing is None or abs(float(candidate["z_score"])) > abs(float(existing["z_score"])):
                 pairs_by_key[pair_key] = candidate
@@ -592,6 +596,8 @@ def build_feed(stocks: list[dict[str, Any]], contracts: list[dict[str, str]], pa
             "core_index_futures_exchanges": {item["symbol"]: item.get("exchange", "TAIFEX") for item in CORE_FUTURES},
             "analysis_instruments": common_meta.get("analysis_instruments", 0),
             "common_history_days": common_meta.get("common_history_days", 0),
+            "歷史資料起日": common_meta.get("history_start"),
+            "歷史資料迄日": common_meta.get("history_end"),
         },
         "parameters": {
             "history_days_requested": 120,
@@ -603,6 +609,8 @@ def build_feed(stocks: list[dict[str, Any]], contracts: list[dict[str, str]], pa
             "long_mean_window_days": 60,
             "max_pairs": 120,
             "z_score_signal_threshold": 2.0,
+            "更新排程": "每個交易日台北時間 15:00（GitHub Actions，實際啟動可能有數分鐘延遲）",
+            "資料更新說明": "TWSE／TAIFEX 清單與公開日 K 資料於排程執行時重新抓取；週末與休市日不會產生新交易日資料。",
         },
         "data_sources": [
             {"name": "TWSE listed-company master t187ap03_L", "url": TWSE_COMPANY_URL, "role": "authoritative all-listed ordinary-share universe"},
@@ -632,7 +640,7 @@ def run(args: argparse.Namespace) -> int:
     if not pairs:
         raise RuntimeError("no pairs passed the correlation and variance filters")
     common_dates = sorted(set.intersection(*(set(histories[item["yahoo_symbol"]]) for item in instruments if item["yahoo_symbol"] in histories)))
-    feed = build_feed(stocks, contracts, pairs, {"analysis_instruments": len(instruments), "analysis_spot_stocks": sum(1 for item in instruments if item.get("type") == "spot"), "filter_counts": filter_counts, "common_history_days": min(120, len(common_dates))})
+    feed = build_feed(stocks, contracts, pairs, {"analysis_instruments": len(instruments), "analysis_spot_stocks": sum(1 for item in instruments if item.get("type") == "spot"), "filter_counts": filter_counts, "common_history_days": min(120, len(common_dates)), "history_start": common_dates[-60] if len(common_dates) >= 60 else common_dates[0], "history_end": common_dates[-1]})
     feed["twse_snapshot_roc_date"] = twse_date
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(json.dumps(feed, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

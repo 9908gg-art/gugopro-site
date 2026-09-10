@@ -31,6 +31,8 @@ require(feed.get("universe", {}).get("spot_analysis_eligible", 0) > 0, "liquidit
 require(feed.get("universe", {}).get("liquidity_filter", {}).get("value_20d_min_twd") == 50000000, "liquidity value floor is missing")
 require(feed.get("parameters", {}).get("adf_p_value_threshold") == 0.05, "ADF threshold is missing")
 require(feed.get("parameters", {}).get("backtest", {}).get("lookahead_safe") is True, "backtest lookahead flag is missing")
+require(feed.get("parameters", {}).get("更新排程"), "update schedule metadata is missing")
+require(feed.get("universe", {}).get("歷史資料起日") and feed.get("universe", {}).get("歷史資料迄日"), "history date range is missing")
 required_pair_fields = {"pair_id", "symbol_a", "name_a", "type_a", "symbol_b", "name_b", "type_b", "correlation", "beta", "adf_p_value", "residual_half_life_days", "current_spread", "mean_spread", "std_dev", "z_score", "next_day_backtest", "signal_status", "history"}
 for index_no, pair in enumerate(feed.get("pairs", []), start=1):
     require(required_pair_fields <= set(pair), f"pair {index_no} missing required field")
@@ -40,10 +42,11 @@ for index_no, pair in enumerate(feed.get("pairs", []), start=1):
     require(len(history.get("z_score", [])) == 60, f"pair {index_no} history z-score is not 60")
     require(float(pair["correlation"]) >= 0.85, f"pair {index_no} below correlation threshold")
     require(float(pair["adf_p_value"]) < 0.05, f"pair {index_no} fails ADF threshold")
-    require("win_rate" in pair["next_day_backtest"] and "net_return" in pair["next_day_backtest"], f"pair {index_no} missing next-day backtest fields")
+    require("win_rate" in pair["next_day_backtest"] and "net_return" in pair["next_day_backtest"] and "trade_records" in pair["next_day_backtest"], f"pair {index_no} missing next-day backtest fields")
 
-underlying_keys = [tuple(sorted((str(pair.get("underlying_a")), str(pair.get("underlying_b"))))) for pair in feed.get("pairs", [])]
-require(len(underlying_keys) == len(set(underlying_keys)), "feed contains duplicate underlying pairs")
+instrument_keys = [tuple(sorted((str(pair.get("pair_id")), str(pair.get("type_a")), str(pair.get("type_b"))))) for pair in feed.get("pairs", [])]
+require(len(instrument_keys) == len(set(instrument_keys)), "feed contains duplicate instrument pairs")
+require(any(pair.get("type_a") == "futures" and pair.get("type_b") == "futures" for pair in feed.get("pairs", [])), "feed contains no futures-to-futures pair")
 
 for marker in [
     "<title>", "applicationCategory", '"@type":"FAQPage"',
