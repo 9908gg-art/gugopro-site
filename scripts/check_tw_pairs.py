@@ -16,8 +16,10 @@ def require(condition: bool, message: str) -> None:
         errors.append(message)
 
 feed_path = ROOT / "data/tw-market/pairs-scan-results.json"
+trade_records_path = ROOT / "data/tw-market/pair-trade-records.json"
 page_path = ROOT / "tools/tw-market/taiwan-pair-trading.html"
 feed = json.loads(feed_path.read_text(encoding="utf-8"))
+trade_records = json.loads(trade_records_path.read_text(encoding="utf-8"))
 page = page_path.read_text(encoding="utf-8")
 index = (ROOT / "index.html").read_text(encoding="utf-8")
 sitemap = (ROOT / "sitemap.xml").read_text(encoding="utf-8")
@@ -31,6 +33,7 @@ require(feed.get("universe", {}).get("spot_analysis_eligible", 0) > 0, "liquidit
 require(feed.get("universe", {}).get("liquidity_filter", {}).get("value_20d_min_twd") == 50000000, "liquidity value floor is missing")
 require(feed.get("parameters", {}).get("adf_p_value_threshold") == 0.05, "ADF threshold is missing")
 require(feed.get("parameters", {}).get("backtest", {}).get("lookahead_safe") is True, "backtest lookahead flag is missing")
+require(isinstance(trade_records.get("records"), dict) and sum(len(rows) for rows in trade_records["records"].values()) > 0, "trade record file is empty")
 require(feed.get("parameters", {}).get("更新排程"), "update schedule metadata is missing")
 require(feed.get("universe", {}).get("歷史資料起日") and feed.get("universe", {}).get("歷史資料迄日"), "history date range is missing")
 required_pair_fields = {"pair_id", "symbol_a", "name_a", "type_a", "symbol_b", "name_b", "type_b", "correlation", "beta", "adf_p_value", "residual_half_life_days", "current_spread", "mean_spread", "std_dev", "z_score", "next_day_backtest", "signal_status", "history"}
@@ -42,7 +45,7 @@ for index_no, pair in enumerate(feed.get("pairs", []), start=1):
     require(len(history.get("z_score", [])) == 60, f"pair {index_no} history z-score is not 60")
     require(float(pair["correlation"]) >= 0.85, f"pair {index_no} below correlation threshold")
     require(float(pair["adf_p_value"]) < 0.05, f"pair {index_no} fails ADF threshold")
-    require("win_rate" in pair["next_day_backtest"] and "net_return" in pair["next_day_backtest"] and "trade_records" in pair["next_day_backtest"], f"pair {index_no} missing next-day backtest fields")
+    require("win_rate" in pair["next_day_backtest"] and "net_return" in pair["next_day_backtest"], f"pair {index_no} missing next-day backtest fields")
 
 instrument_keys = [tuple(sorted((str(pair.get("pair_id")), str(pair.get("type_a")), str(pair.get("type_b"))))) for pair in feed.get("pairs", [])]
 require(len(instrument_keys) == len(set(instrument_keys)), "feed contains duplicate instrument pairs")
@@ -71,6 +74,7 @@ print(f"taifex_contracts={feed.get('universe', {}).get('taifex_stock_futures_dis
 print(f"spot_universe={feed.get('universe', {}).get('spot_selected')}")
 print(f"spot_analysis_eligible={feed.get('universe', {}).get('spot_analysis_eligible')}")
 print(f"page_bytes={len(page.encode('utf-8'))}")
+print(f"trade_records={sum(len(rows) for rows in trade_records.get('records', {}).values())}")
 print(f"errors={len(errors)}")
 for error in errors:
     print("ERROR:", error)

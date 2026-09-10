@@ -43,6 +43,7 @@ except ImportError:  # pragma: no cover - the workflow installs pandas
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "data" / "tw-market" / "pairs-scan-results.json"
+TRADE_RECORDS_OUTPUT = ROOT / "data" / "tw-market" / "pair-trade-records.json"
 CACHE_DIR = ROOT / "data" / "tw-market" / ".cache"
 TAIPEI = timezone(timedelta(hours=8))
 USER_AGENT = "GugoProTaiwanPairScanner/1.0 (+https://gugopro.com/tools/tw-market/taiwan-pair-trading.html)"
@@ -642,9 +643,12 @@ def run(args: argparse.Namespace) -> int:
     common_dates = sorted(set.intersection(*(set(histories[item["yahoo_symbol"]]) for item in instruments if item["yahoo_symbol"] in histories)))
     feed = build_feed(stocks, contracts, pairs, {"analysis_instruments": len(instruments), "analysis_spot_stocks": sum(1 for item in instruments if item.get("type") == "spot"), "filter_counts": filter_counts, "common_history_days": min(120, len(common_dates)), "history_start": common_dates[-60] if len(common_dates) >= 60 else common_dates[0], "history_end": common_dates[-1]})
     feed["twse_snapshot_roc_date"] = twse_date
+    trade_records = {pair["pair_id"]: pair.get("next_day_backtest", {}).pop("trade_records", []) for pair in feed["pairs"]}
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    OUTPUT.write_text(json.dumps(feed, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    OUTPUT.write_text(json.dumps(feed, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
+    TRADE_RECORDS_OUTPUT.write_text(json.dumps({"generated_at": feed["generated_at"], "records": trade_records}, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
     log(f"wrote {OUTPUT.relative_to(ROOT)} with {len(pairs)} pairs")
+    log(f"wrote {TRADE_RECORDS_OUTPUT.relative_to(ROOT)} with {sum(len(rows) for rows in trade_records.values())} trade records")
     log(f"top pair: {pairs[0]['symbol_a']} / {pairs[0]['symbol_b']} r={pairs[0]['correlation']} z={pairs[0]['z_score']}")
     return 0
 
