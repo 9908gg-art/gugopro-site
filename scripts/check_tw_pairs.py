@@ -37,6 +37,8 @@ require(isinstance(trade_records.get("records"), dict) and sum(len(rows) for row
 require(feed.get("parameters", {}).get("更新排程"), "update schedule metadata is missing")
 require(feed.get("universe", {}).get("歷史資料起日") and feed.get("universe", {}).get("歷史資料迄日"), "history date range is missing")
 require(feed.get("universe", {}).get("correlation_clusters", 0) > 0, "correlation clusters are missing")
+require(len(feed.get("mtx_benchmark_pairs", [])) > 0, "MTX benchmark pair set is empty")
+require(feed.get("mtx_benchmark", {}).get("benchmark") == "MTX", "MTX benchmark metadata is missing")
 required_pair_fields = {"pair_id", "group_id", "group_size", "group_average_correlation", "multivariate_beta", "alpha", "fair_value_current", "fair_value_deviation_pct", "symbol_a", "name_a", "type_a", "symbol_b", "name_b", "type_b", "correlation", "beta", "adf_p_value", "residual_half_life_days", "current_spread", "mean_spread", "std_dev", "z_score", "next_day_backtest", "signal_status", "history"}
 for index_no, pair in enumerate(feed.get("pairs", []), start=1):
     require(required_pair_fields <= set(pair), f"pair {index_no} missing required field")
@@ -58,7 +60,7 @@ for marker in [
     "<title>", "applicationCategory", '"@type":"FAQPage"',
     "language-switch", "type-filter", "corr-filter", "signal-filter",
     "price-chart", "spread-chart", "z-chart", "equity-chart", "metric-adf", "metric-half-life", "metric-bt-win", "metric-bt-return",
-    "dropzone", "run-backtest", "localStorage", "TAIFEX", "TWSE",
+    "dropzone", "run-backtest", "localStorage", "TAIFEX", "TWSE", "mtx-benchmark", "mtx_benchmark_pairs",
 ]:
     require(marker in page, f"workstation missing marker: {marker}")
 require(page.count('"@type":"Question"') == 3, "FAQ schema does not contain 3 questions")

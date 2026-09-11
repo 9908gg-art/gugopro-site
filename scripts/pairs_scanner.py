@@ -527,6 +527,59 @@ def next_day_target_fair_backtest(dates: list[str], target_raw: dict[str, dict[s
     return {'lookback_days':len(common),'entry_z':entry,'cost_rate_round_trip':cost_rate,'trades':len(returns),'wins':wins,'losses':len(returns)-wins,'win_rate':finite_round(wins/len(returns)*100,2) if returns else None,'average_risk_reward':finite_round(gross_win/gross_loss,3) if gross_loss else None,'net_return':finite_round(cumulative*100,2),'trade_returns':[finite_round(x*100,4) for x in returns[-60:]],'trade_records':records}
 
 
+
+def mtx_benchmark_backtest(dates: list[str], future_raw: dict[str, dict[str, float]], mtx_raw: dict[str, dict[str, float]], z_scores: np.ndarray, beta: float, entry: float = 2.0, hedge_cost: float = 0.00375, single_cost: float = 0.00375) -> dict[str, Any]:
+    """T close signal; next-open to same-close, both hedged and single-leg results."""
+    common = [d for d in dates if d in future_raw and d in mtx_raw]
+    hedged, single, records = [], [], []
+    for i in range(min(len(common)-1, len(z_scores)-1)):
+        z = float(z_scores[i])
+        if abs(z) < entry: continue
+        signal_date, next_day = common[i], common[i+1]
+        f, m = future_raw[next_day], mtx_raw[next_day]
+        if not all(float(x.get('open', 0)) > 0 and float(x.get('close', 0)) > 0 for x in (f, m)): continue
+        fr = float(f['close']) / float(f['open']) - 1.0
+        mr = float(m['close']) / float(m['open']) - 1.0
+        direction = -1.0 if z > 0 else 1.0
+        single_net = direction * fr - single_cost
+        hedge_net = direction * (fr - beta * mr) - hedge_cost
+        single.append(single_net); hedged.append(hedge_net)
+        records.append({'訊號日': signal_date, '進場日': next_day, '進場時間': '次日開盤', '出場時間': '次日收盤', '方向': '放空股票期貨／做多 MTX' if direction < 0 else '做多股票期貨／放空 MTX', 'Z分數': finite_round(z, 4), '股票期貨報酬率': finite_round(fr*100, 4), 'MTX報酬率': finite_round(mr*100, 4), '對沖淨報酬率': finite_round(hedge_net*100, 4), '單腿淨報酬率': finite_round(single_net*100, 4), '對沖結果': '獲利' if hedge_net > 0 else '虧損', '單腿結果': '獲利' if single_net > 0 else '虧損'})
+    def summary(values: list[float], cost: float) -> dict[str, Any]:
+        wins = sum(x > 0 for x in values); gross_win = sum(x for x in values if x > 0); gross_loss = sum(-x for x in values if x < 0)
+        return {'trades': len(values), 'wins': wins, 'losses': len(values)-wins, 'win_rate': finite_round(wins/len(values)*100, 2) if values else None, 'average_risk_reward': finite_round(gross_win/gross_loss, 3) if gross_loss else None, 'net_return': finite_round((np.prod([1+x for x in values])-1)*100, 2) if values else 0.0, 'cost_rate_round_trip': cost}
+    return {'lookback_days': len(common), 'entry_z': entry, 'data_mode': '現貨代理日 K（MTX 近月連續合約公開歷史不可用）', 'hedged': summary(hedged, hedge_cost), 'single_leg': summary(single, single_cost), 'trade_records': records}
+
+
+def compute_mtx_benchmark_pairs(instruments: list[dict[str, Any]], histories: dict[str, dict[str, float]], ohlcv: dict[str, dict[str, dict[str, float]]], max_pairs: int = 120) -> list[dict[str, Any]]:
+    """Build one-to-one stock-futures vs MTX benchmark candidates."""
+    benchmark_symbol = '^TWII'
+    benchmark = histories.get(benchmark_symbol, {})
+    benchmark_raw = ohlcv.get(benchmark_symbol, {})
+    if len(benchmark) < 60: return []
+    candidates = []
+    for item in instruments:
+        if item.get('type') != 'futures' or not item.get('contract_symbol'): continue
+        future = histories.get(item.get('yahoo_symbol'), {})
+        raw = ohlcv.get(item.get('yahoo_symbol'), {})
+        dates = sorted(set(future) & set(benchmark))[-120:]
+        if len(dates) < 60: continue
+        f = np.asarray([future[d] for d in dates], dtype=float); m = np.asarray([benchmark[d] for d in dates], dtype=float)
+        fr = np.diff(np.log(f)); mr = np.diff(np.log(m))
+        corr = float(np.corrcoef(fr[-60:], mr[-60:])[0, 1]) if len(fr) >= 60 else float('nan')
+        if not math.isfinite(corr) or corr < 0.60: continue
+        # Price-level OLS gives the fair-value spread used for the signal.
+        design = np.column_stack([np.ones(len(m)), m]); coeff, *_ = np.linalg.lstsq(design, f, rcond=None); alpha, beta = float(coeff[0]), float(coeff[1])
+        fair = design @ coeff; residual = f - fair; mean20 = float(np.mean(residual[-20:])); sd20 = float(np.std(residual[-20:]))
+        if sd20 <= 1e-10: continue
+        adf = approximate_adf_pvalue(residual); half = residual_half_life(residual)
+        if adf is None or adf >= 0.10: continue
+        zseries = (residual - mean20) / sd20; z = float(zseries[-1]); key, label_text = classify_signal(z)
+        bt = mtx_benchmark_backtest(dates[-60:], raw, benchmark_raw, zseries[-60:], beta)
+        candidates.append({'pair_id': f'MTX::{item["id"]}', 'model': 'mtx-benchmark', 'benchmark_symbol': 'MTX', 'benchmark_name': '小型臺指期（近月連續基準）', 'symbol_a': item['symbol'], 'name_a': item['name'], 'type_a': 'futures', 'contract_symbol': item['contract_symbol'], 'is_stock_futures': True, 'symbol_b': 'MTX', 'name_b': '小型臺指期', 'type_b': 'futures', 'data_mode': '現貨代理日 K', 'proxy_warning': True, 'correlation': finite_round(corr, 5), 'beta': finite_round(beta, 6), 'alpha': finite_round(alpha, 6), 'fair_value_current': finite_round(float(fair[-1]), 4), 'actual_price_current': finite_round(float(f[-1]), 4), 'fair_value_deviation_pct': finite_round(float((f[-1]/fair[-1]-1)*100) if fair[-1] else 0, 4), 'adf_p_value': finite_round(adf, 5), 'residual_half_life_days': finite_round(half, 4), 'current_spread': finite_round(float(residual[-1]), 4), 'mean_spread': finite_round(mean20, 4), 'std_dev': finite_round(sd20, 4), 'z_score': finite_round(z, 4), 'signal_status': label_text, 'signal_status_key': key, 'history': {'dates': dates[-60:], 'price_a': normalized(f[-60:]), 'price_b': normalized(m[-60:]), 'fair_value': [round(float(x), 6) for x in fair[-60:]], 'actual_price': [round(float(x), 6) for x in f[-60:]], 'spread': [round(float(x), 6) for x in residual[-60:]], 'z_score': [round(float(x), 6) for x in zseries[-60:]]}, 'mtx_backtest': bt})
+    candidates.sort(key=lambda x: (abs(float(x['z_score'])), float(x['correlation'])), reverse=True)
+    return candidates[:max_pairs]
+
 def compute_pairs(instruments: list[dict[str, Any]], histories: dict[str, dict[str, float]], ohlcv: dict[str, dict[str, dict[str, float]]], max_pairs: int = 120) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     active=[]
     seen_history_symbols=set()
@@ -647,12 +700,16 @@ def run(args: argparse.Namespace) -> int:
     histories, ohlcv = fetch_histories(client, [yahoo_symbol(stock["code"]) for stock in stocks] + [item["proxy"] for item in CORE_FUTURES], workers=args.workers)
     instruments, symbols, filter_counts = build_instruments(stocks, contracts, ohlcv)
     pairs, cluster_meta = compute_pairs(instruments, histories, ohlcv, max_pairs=args.max_pairs)
+    mtx_pairs = compute_mtx_benchmark_pairs(instruments, histories, ohlcv, max_pairs=args.max_pairs)
     if not pairs:
         raise RuntimeError("no pairs passed the correlation and variance filters")
     common_dates = sorted(set.intersection(*(set(histories[item["yahoo_symbol"]]) for item in instruments if item["yahoo_symbol"] in histories)))
     feed = build_feed(stocks, contracts, pairs, {"analysis_instruments": len(instruments), "analysis_spot_stocks": sum(1 for item in instruments if item.get("type") == "spot"), "filter_counts": filter_counts, "common_history_days": min(120, len(common_dates)), "clusters": cluster_meta.get("clusters", 0), "cluster_sizes": cluster_meta.get("cluster_sizes", []), "clustered_instruments": cluster_meta.get("clustered_instruments", 0), "history_start": common_dates[-60] if len(common_dates) >= 60 else common_dates[0], "history_end": common_dates[-1]})
     feed["twse_snapshot_roc_date"] = twse_date
+    feed["mtx_benchmark_pairs"] = mtx_pairs
+    feed["mtx_benchmark"] = {"benchmark": "MTX", "benchmark_name": "小型臺指期", "continuous_contract_mode": "近月連續基準", "public_history_mode": "現貨代理日 K", "note": "MTX=F 在目前公開 Yahoo 歷史端點不可用；研究頁同時保留代理結果，正式交易前請替換為 TAIFEX／券商近月連續結算價。", "pairs_count": len(mtx_pairs)}
     trade_records = {pair["pair_id"]: pair.get("next_day_backtest", {}).pop("trade_records", []) for pair in feed["pairs"]}
+    trade_records.update({pair["pair_id"]: pair.get("mtx_backtest", {}).pop("trade_records", []) for pair in mtx_pairs})
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(json.dumps(feed, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
     TRADE_RECORDS_OUTPUT.write_text(json.dumps({"generated_at": feed["generated_at"], "records": trade_records}, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
