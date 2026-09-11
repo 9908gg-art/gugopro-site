@@ -431,9 +431,9 @@ def build_instruments(stocks: list[dict[str, Any]], contracts: list[dict[str, st
         if avg_volume >= volume_floor_shares and avg_value >= traded_value_floor and atr_pct >= atr_floor_pct:
             item = dict(stock); item.update({"avg_volume_20": avg_volume, "avg_value_20": avg_value, "atr_pct_14": atr_pct}); eligible_stocks.append(item)
     log(f"Liquidity/volatility screen: {len(eligible_stocks)}/{len(stocks)} pass 20D volume >= {volume_floor_shares:,} shares, value >= {traded_value_floor:,}, ATR14% >= {atr_floor_pct:.1f}%")
-    contract_by_underlying: dict[str, dict[str, str]] = {}
+    contracts_by_underlying: dict[str, list[dict[str, str]]] = {}
     for contract in contracts:
-        contract_by_underlying.setdefault(contract["underlying_code"], contract)
+        contracts_by_underlying.setdefault(contract["underlying_code"], []).append(contract)
     instruments: list[dict[str, Any]] = []
     yahoo_symbols: list[str] = []
     for stock in eligible_stocks:
@@ -449,18 +449,18 @@ def build_instruments(stocks: list[dict[str, Any]], contracts: list[dict[str, st
             "yahoo_symbol": spot_symbol,
             "source": "TWSE STOCK_DAY_ALL + Yahoo chart history",
         })
-        contract = contract_by_underlying.get(code)
-        if contract:
+        for contract in contracts_by_underlying.get(code, []):
             instruments.append({
-                "id": f"TAIFEX:{contract['ticker']}",
+                "id": f"TAIFEX:{contract['ticker']}:{code}",
                 "symbol": contract["ticker"],
-                "name": f"{stock['name']} 期貨",
+                "name": f"{stock['name']} 股票期貨",
                 "type": "futures",
                 "underlying_code": code,
                 "contract_symbol": contract["ticker"],
                 "yahoo_symbol": spot_symbol,
                 "proxy": True,
-                "source": "TAIFEX contract discovery + Yahoo/TWSE spot proxy",
+                "contract_name": contract.get("name", ""),
+                "source": "TAIFEX 官方股票期貨契約清單 + 對應上市現貨日 K 方向性代理",
             })
     for item in CORE_FUTURES:
         yahoo_symbols.append(item["proxy"])
@@ -535,9 +535,13 @@ def compute_pairs(instruments: list[dict[str, Any]], histories: dict[str, dict[s
         if history and len(history)>=80:
             values=np.asarray(list(history.values())[-120:],dtype=float)
             if len(np.unique(np.round(values,8)))<6 or np.count_nonzero(np.abs(np.diff(values))>1e-10)<5: continue
-            if instrument['yahoo_symbol'] in seen_history_symbols:
+            # Keep stock-futures contracts distinct even when they share the
+            # same transparent spot-history proxy. Collapsing by Yahoo symbol
+            # would silently remove the TAIFEX stock-futures universe.
+            history_key = instrument['id']
+            if history_key in seen_history_symbols:
                 continue
-            seen_history_symbols.add(instrument['yahoo_symbol'])
+            seen_history_symbols.add(history_key)
             item=dict(instrument); item['history']=history; item['ohlcv']=ohlcv.get(instrument['yahoo_symbol'],{}); active.append(item)
     if len(active)<10: raise RuntimeError(f'not enough instruments with history: {len(active)}')
     common_dates=sorted(set.intersection(*(set(item['history']) for item in active)))[-120:]
@@ -568,7 +572,7 @@ def compute_pairs(instruments: list[dict[str, Any]], histories: dict[str, dict[s
                 fair_raw[d]={'open':alpha+sum(float(b)*float(v['open']) for b,v in zip(betas,vals)),'close':alpha+sum(float(b)*float(v['close']) for b,v in zip(betas,vals))}
             bt=next_day_target_fair_backtest(common_dates[-60:],target_raw,fair_raw,np.asarray([(x-mean20)/std20 for x in residual]),cost_rate=0.00375)
             target_item=active[target_idx]
-            candidate={'pair_id':f'{group_id}::{target_item["id"]}','group_id':group_id,'group_label':f'同盟群組 {group_no}','group_size':len(members),'group_average_correlation':finite_round(group_corr,5),'symbol_a':target_item['symbol'],'name_a':target_item['name'],'type_a':target_item['type'],'symbol_b':'／'.join(active[x]['symbol'] for x in peer_idxs),'name_b':f'{len(peer_idxs)} 檔群組合成理論價','type_b':'basket','underlying_a':target_item.get('underlying_code'),'underlying_b':'MULTI_BETA','correlation':finite_round(group_corr,5),'beta':finite_round(float(np.linalg.norm(betas)),5),'multivariate_beta':{active[x]['symbol']:finite_round(float(b),6) for x,b in zip(peer_idxs,betas)},'alpha':finite_round(alpha,6),'fair_value_current':finite_round(float(fair_series[-1]),4),'actual_price_current':finite_round(float(target[-1]),4),'fair_value_deviation_pct':finite_round(float((target[-1]/fair_series[-1]-1)*100) if fair_series[-1] else 0,4),'adf_p_value':adf,'residual_half_life_days':half,'current_spread':finite_round(float(residual[-1]),4),'mean_spread':finite_round(mean20,4),'std_dev':finite_round(std20,4),'mean_spread_20':finite_round(mean20,4),'std_dev_20':finite_round(std20,4),'mean_spread_60':finite_round(mean60,4),'std_dev_60':finite_round(std60,4),'z_score':finite_round(z,4),'signal_status':label_text,'signal_status_key':key,'proxy_warning':bool(target_item.get('proxy') or any(active[x].get('proxy') for x in peer_idxs)),'history':{'dates':common_dates[-60:],'price_a':normalized(target[-60:]),'price_b':normalized(fair_series[-60:]),'fair_value':[round(float(x),6) for x in fair_series[-60:]],'actual_price':[round(float(x),6) for x in target[-60:]],'spread':[round(float(x),6) for x in residual[-60:]],'z_score':[round(float((x-mean20)/std20),6) for x in residual[-60:]]},'next_day_backtest':bt}
+            candidate={'pair_id':f'{group_id}::{target_item["id"]}','group_id':group_id,'group_label':f'同盟群組 {group_no}','group_size':len(members),'group_average_correlation':finite_round(group_corr,5),'symbol_a':target_item['symbol'],'name_a':target_item['name'],'type_a':target_item['type'],'symbol_b':'／'.join(active[x]['symbol'] for x in peer_idxs),'name_b':f'{len(peer_idxs)} 檔群組合成理論價','type_b':'basket','contract_symbol':target_item.get('contract_symbol'),'is_stock_futures':bool(target_item.get('type') == 'futures' and target_item.get('contract_symbol')),'underlying_a':target_item.get('underlying_code'),'underlying_b':'MULTI_BETA','correlation':finite_round(group_corr,5),'beta':finite_round(float(np.linalg.norm(betas)),5),'multivariate_beta':{active[x]['symbol']:finite_round(float(b),6) for x,b in zip(peer_idxs,betas)},'alpha':finite_round(alpha,6),'fair_value_current':finite_round(float(fair_series[-1]),4),'actual_price_current':finite_round(float(target[-1]),4),'fair_value_deviation_pct':finite_round(float((target[-1]/fair_series[-1]-1)*100) if fair_series[-1] else 0,4),'adf_p_value':adf,'residual_half_life_days':half,'current_spread':finite_round(float(residual[-1]),4),'mean_spread':finite_round(mean20,4),'std_dev':finite_round(std20,4),'mean_spread_20':finite_round(mean20,4),'std_dev_20':finite_round(std20,4),'mean_spread_60':finite_round(mean60,4),'std_dev_60':finite_round(std60,4),'z_score':finite_round(z,4),'signal_status':label_text,'signal_status_key':key,'proxy_warning':bool(target_item.get('proxy') or any(active[x].get('proxy') for x in peer_idxs)),'history':{'dates':common_dates[-60:],'price_a':normalized(target[-60:]),'price_b':normalized(fair_series[-60:]),'fair_value':[round(float(x),6) for x in fair_series[-60:]],'actual_price':[round(float(x),6) for x in target[-60:]],'spread':[round(float(x),6) for x in residual[-60:]],'z_score':[round(float((x-mean20)/std20),6) for x in residual[-60:]]},'next_day_backtest':bt}
             candidates.append(candidate)
     candidates.sort(key=lambda p:(abs(float(p['z_score'])),float(p['group_average_correlation'])),reverse=True)
     return candidates[:max_pairs],{'clusters':len(clusters),'cluster_sizes':[len(x) for x in clusters],'active_instruments':len(active),'clustered_instruments':sum(len(x) for x in clusters),'common_dates':common_dates}
@@ -576,7 +580,8 @@ def compute_pairs(instruments: list[dict[str, Any]], histories: dict[str, dict[s
 
 def build_feed(stocks: list[dict[str, Any]], contracts: list[dict[str, str]], pairs: list[dict[str, Any]], common_meta: dict[str, Any]) -> dict[str, Any]:
     now = datetime.now(TAIPEI)
-    futures_for_selected = sum(1 for stock in stocks if any(c["underlying_code"] == stock["code"] for c in contracts))
+    selected_codes = {str(stock.get("code")) for stock in stocks}
+    futures_for_selected = sum(1 for contract in contracts if contract.get("underlying_code") in selected_codes)
     return {
         "schema_version": 1,
         "generated_at": now.isoformat(timespec="seconds"),
@@ -589,6 +594,7 @@ def build_feed(stocks: list[dict[str, Any]], contracts: list[dict[str, str]], pa
             "filter_counts": common_meta.get("filter_counts", {}),
             "taifex_stock_futures_discovered": len(contracts),
             "taifex_stock_futures_in_analysis": futures_for_selected,
+            "taifex_stock_futures_history_mode": "TAIFEX contract universe retained; daily series uses corresponding TWSE/Yahoo spot proxy until continuous settlement history is available",
             "core_index_futures": [item["symbol"] for item in CORE_FUTURES],
             "core_index_futures_exchanges": {item["symbol"]: item.get("exchange", "TAIFEX") for item in CORE_FUTURES},
             "analysis_instruments": common_meta.get("analysis_instruments", 0),
@@ -622,6 +628,7 @@ def build_feed(stocks: list[dict[str, Any]], contracts: list[dict[str, str]], pa
             {"name": "Yahoo Finance chart endpoint", "url": "https://query1.finance.yahoo.com/v8/finance/chart/{symbol}", "role": "daily adjusted-close history fallback"},
         ],
         "quality_notes": [
+            "股票期貨契約不再因共用現貨代理而被去重；每一個 TAIFEX 股票／ETF 期貨代碼均保留為獨立分析標的。免費公開端點缺少完整連續期貨結算序列時，日 K 仍以對應上市現貨作為方向性代理，頁面會標示此限制。",
             "個股期貨連續歷史價在免費公開端點覆蓋不一致；本 feed 以對應現貨調整收盤價作為方向性代理，並在 pair 上標示 proxy_warning。",
             "富台期是 SGX 的 FTSE Taiwan Index Futures，不是 TAIFEX 商品；若公開歷史代號不可用，會透明跳過其歷史序列，不以現貨假裝成期貨。",
             "相關係數與 Beta 為最近 60 個共同交易日的估計；僅保留近似 ADF 殘差 p-value < 0.05 的均值回歸候選，並報告殘差半衰期。",
