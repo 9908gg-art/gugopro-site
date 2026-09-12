@@ -3,7 +3,8 @@
   const LOCALES={
     'zh-TW':{native:'繁體中文'},'zh-CN':{native:'简体中文'},en:{native:'English'},ja:{native:'日本語'},de:{native:'Deutsch'},fr:{native:'Français'},es:{native:'Español'},pt:{native:'Português'}
   };
-  const SUPPORTED=Object.keys(LOCALES), SOURCE='zh-TW', STORAGE_KEY='gugopro_locale';
+  const IS_AI=/\/tools\/ai(?:\/|-)|\/tools\/ai-media\//i.test(location.pathname);
+  const SUPPORTED=IS_AI?Object.keys(LOCALES):['zh-TW','en','ja'], SOURCE='zh-TW', STORAGE_KEY='gugopro_locale';
   let current=SOURCE, textMap=new Map(), fragments=[], catalogRows=[];
   const norm=v=>String(v??'').replace(/\u00a0/g,' ').replace(/\s+/g,' ').trim();
   const hasCjk=v=>/[\u3400-\u9fff]/.test(String(v||''));
@@ -13,11 +14,15 @@
   const localeFromLocation=()=>{
     const param=new URLSearchParams(location.search).get('lang');
     if(SUPPORTED.includes(param))return param;
+    if(!IS_AI&&param){try{const clean=new URL(location.href);clean.searchParams.delete('lang');history.replaceState({},'',clean.pathname+(clean.search?clean.search:'')+clean.hash);}catch(e){}}
     try{const saved=localStorage.getItem(STORAGE_KEY);if(SUPPORTED.includes(saved))return saved;}catch(e){}
     const html=(document.documentElement.lang||'').toLowerCase();
     if(html==='zh-hant'||html==='zh-tw'||html.startsWith('zh-tw'))return 'zh-TW';
     if(html==='zh-hans'||html==='zh-cn'||html.startsWith('zh-cn'))return 'zh-CN';
-    return SUPPORTED.includes(html)?html:SOURCE;
+    if(SUPPORTED.includes(html))return html;
+    let device='en';
+    try{const nav=String(navigator.language||'').toLowerCase();if(nav.startsWith('zh'))device=nav.includes('cn')||nav.includes('sg')?'zh-CN':'zh-TW';else if(nav.startsWith('ja'))device='ja';else if(nav.startsWith('en'))device='en';}catch(e){}
+    return SUPPORTED.includes(device)?device:SOURCE;
   };
   const resource=name=>new URL('/i18n/'+name,location.origin).toString();
   const addPair=(source,target)=>{

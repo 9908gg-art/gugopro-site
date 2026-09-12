@@ -1,28 +1,25 @@
 <!DOCTYPE html>
+
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mahjong Discard Calculator 線上工具｜免安裝瀏覽器本機處理、零檔案外洩隱私 - GugoPro</title>
-    
-    <!-- SEO Tags -->
-    <meta name="description" content="使用 GugoPro Mahjong Discard Calculator 工具在瀏覽器完成轉換、整理或計算，免安裝、免上傳，結果可直接下載。">
-    <meta name="keywords" content="麻將切牌推薦, 麻將算牌, 聽牌分析, 麻將副露, 安牌指示, 麻將勝率計算, 台灣16張, 日本麻將, 廣東麻將, 算牌器">
-    
-    <!-- Google Analytics 4 (GA4) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-GF1DYLWMKX"></script>
-    <script>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Mahjong Discard Calculator 線上工具｜免安裝瀏覽器本機處理、零檔案外洩隱私 - GugoPro</title>
+<!-- SEO Tags -->
+<meta content="使用 GugoPro Mahjong Discard Calculator 工具在瀏覽器完成轉換、整理或計算，免安裝、免上傳，結果可直接下載。" name="description"/>
+<meta content="麻將切牌推薦, 麻將算牌, 聽牌分析, 麻將副露, 安牌指示, 麻將勝率計算, 台灣16張, 日本麻將, 廣東麻將, 算牌器" name="keywords"/>
+<!-- Google Analytics 4 (GA4) -->
+<script async="" src="https://www.googletagmanager.com/gtag/js?id=G-GF1DYLWMKX"></script>
+<script>
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
         gtag('config', 'G-GF1DYLWMKX');
     </script>
-
-    <!-- Fonts & Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+TC:wght@400;700;900&family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
-
-    <style>
+<!-- Fonts & Icons -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&amp;family=Noto+Sans+TC:wght@400;700;900&amp;family=Outfit:wght@400;700;900&amp;display=swap" rel="stylesheet"/>
+<style>
         :root {
             --primary-neon: #00f2ff;
             --secondary-neon: #7000ff;
@@ -447,150 +444,143 @@
             .advisor-stats { gap: 10px; }
         }
     </style>
+<link rel="alternate" hreflang="zh-TW" href="./mahjong-discard-calculator.html">
+<link rel="alternate" hreflang="en" href="./mahjong-discard-calculator.html?lang=en">
+<link rel="alternate" hreflang="ja" href="./mahjong-discard-calculator.html?lang=ja">
+<link rel="alternate" hreflang="x-default" href="./mahjong-discard-calculator.html">
+<script src="/i18n/gugopro-i18n.js?v=tri-locale-20260912" defer></script>
 </head>
 <body>
-
-    <header>
-        <a href="https://gugopro.com" class="btn-back-home">
-            <i class="fa-solid fa-house"></i> 返回 GugoPro
+<header>
+<a class="btn-back-home" href="https://gugopro.com">
+<i class="fa-solid fa-house"></i> 返回 GugoPro
         </a>
-        <div class="logo-text">MJ ADVISOR V3.2</div>
-    </header>
-
-    <div class="container">
-        <!-- Advisor Banner -->
-        <div id="advisor-banner" class="advisor-banner">
-            <div class="advisor-title"><i class="fa-solid fa-lightbulb"></i> 最佳切牌決策推薦</div>
-            <div class="best-tile-display">
-                <div id="best-tile-icon" class="tile"></div>
-                <div id="best-tile-text" class="best-tile-name">--</div>
-            </div>
-            <div class="advisor-stats">
-                <div class="stat-item">聽牌進張：<span id="best-waits" class="stat-val">--</span></div>
-                <div class="stat-item">真實剩餘：<span id="best-remains" class="stat-val">0</span> 張</div>
-                <div class="stat-item">進張勝率：<span id="best-prob" class="stat-val">0.0</span>%</div>
-            </div>
-        </div>
-
-        <!-- Mode Selector -->
-        <div class="rule-bar">
-            <div class="rule-selector">
-                <button id="btn-16" class="rule-btn active" onclick="setMode(16)">台灣 16 張</button>
-                <button id="btn-13" class="rule-btn" onclick="setMode(13)">日麻 13 張</button>
-            </div>
-        </div>
-
-        <!-- Table -->
-        <div class="battle-table">
-            <div class="player-zone zone-top" onclick="setTarget('top')">
-                <div class="player-label">對家 (TOP) <span id="count-top">0</span></div>
-                <div id="river-top" class="tile-list"></div>
-            </div>
-            <div class="player-zone zone-left" onclick="setTarget('left')">
-                <div class="player-label">上家 (LEFT) <span id="count-left">0</span></div>
-                <div id="river-left" class="tile-list"></div>
-            </div>
-            <div class="table-center">
-                <div style="font-size: 0.7rem; color: var(--text-dim); font-weight: 800; margin-bottom: 5px;">實時勝率分析</div>
-                <div id="main-prob" style="font-size: 2.5rem; font-weight: 900; color: var(--primary-neon); text-shadow: 0 0 20px rgba(0,242,255,0.4);">0.0%</div>
-                <div id="main-remains" style="font-size: 0.8rem; color: var(--accent-gold); margin-top: 5px; font-weight: 700;">剩餘未知: 0 張</div>
-            </div>
-            <div class="player-zone zone-right" onclick="setTarget('right')">
-                <div class="player-label">下家 (RIGHT) <span id="count-right">0</span></div>
-                <div id="river-right" class="tile-list"></div>
-            </div>
-            <div class="player-zone zone-bottom active" onclick="setTarget('self')">
-                <div class="player-label">自家手牌 (SELF) <span id="count-self">0</span> / <span id="max-self">17</span></div>
-                <div id="hand-self" class="tile-list"></div>
-                
-                <!-- Detail 1: Melds Area -->
-                <div class="melds-section" onclick="event.stopPropagation()">
-                    <div class="melds-header">
-                        <span><i class="fa-solid fa-puzzle-piece"></i> 門前副露 (吃/碰/槓)</span>
-                        <button class="btn-add-meld" onclick="openMeldPrompt()"><i class="fa-solid fa-plus"></i> 新增副露</button>
-                    </div>
-                    <div id="melds-container" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+<div class="logo-text">MJ ADVISOR V3.2</div>
+</header>
+<div class="container">
+<!-- Advisor Banner -->
+<div class="advisor-banner" id="advisor-banner">
+<div class="advisor-title"><i class="fa-solid fa-lightbulb"></i> 最佳切牌決策推薦</div>
+<div class="best-tile-display">
+<div class="tile" id="best-tile-icon"></div>
+<div class="best-tile-name" id="best-tile-text">--</div>
+</div>
+<div class="advisor-stats">
+<div class="stat-item">聽牌進張：<span class="stat-val" id="best-waits">--</span></div>
+<div class="stat-item">真實剩餘：<span class="stat-val" id="best-remains">0</span> 張</div>
+<div class="stat-item">進張勝率：<span class="stat-val" id="best-prob">0.0</span>%</div>
+</div>
+</div>
+<!-- Mode Selector -->
+<div class="rule-bar">
+<div class="rule-selector">
+<button class="rule-btn active" id="btn-16" onclick="setMode(16)">台灣 16 張</button>
+<button class="rule-btn" id="btn-13" onclick="setMode(13)">日麻 13 張</button>
+</div>
+</div>
+<!-- Table -->
+<div class="battle-table">
+<div class="player-zone zone-top" onclick="setTarget('top')">
+<div class="player-label">對家 (TOP) <span id="count-top">0</span></div>
+<div class="tile-list" id="river-top"></div>
+</div>
+<div class="player-zone zone-left" onclick="setTarget('left')">
+<div class="player-label">上家 (LEFT) <span id="count-left">0</span></div>
+<div class="tile-list" id="river-left"></div>
+</div>
+<div class="table-center">
+<div style="font-size: 0.7rem; color: var(--text-dim); font-weight: 800; margin-bottom: 5px;">實時勝率分析</div>
+<div id="main-prob" style="font-size: 2.5rem; font-weight: 900; color: var(--primary-neon); text-shadow: 0 0 20px rgba(0,242,255,0.4);">0.0%</div>
+<div id="main-remains" style="font-size: 0.8rem; color: var(--accent-gold); margin-top: 5px; font-weight: 700;">剩餘未知: 0 張</div>
+</div>
+<div class="player-zone zone-right" onclick="setTarget('right')">
+<div class="player-label">下家 (RIGHT) <span id="count-right">0</span></div>
+<div class="tile-list" id="river-right"></div>
+</div>
+<div class="player-zone zone-bottom active" onclick="setTarget('self')">
+<div class="player-label">自家手牌 (SELF) <span id="count-self">0</span> / <span id="max-self">17</span></div>
+<div class="tile-list" id="hand-self"></div>
+<!-- Detail 1: Melds Area -->
+<div class="melds-section" onclick="event.stopPropagation()">
+<div class="melds-header">
+<span><i class="fa-solid fa-puzzle-piece"></i> 門前副露 (吃/碰/槓)</span>
+<button class="btn-add-meld" onclick="openMeldPrompt()"><i class="fa-solid fa-plus"></i> 新增副露</button>
+</div>
+<div id="melds-container" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+</div>
+</div>
+</div>
+<!-- Keyboard -->
+<div class="keyboard-section">
+<div class="keyboard-header">
+<div id="target-info" style="color: var(--primary-neon); font-weight: 800; font-size: 1rem;">
+<i class="fa-solid fa-bullseye"></i> 正在記錄：自家手牌
                 </div>
-            </div>
-        </div>
-
-        <!-- Keyboard -->
-        <div class="keyboard-section">
-            <div class="keyboard-header">
-                <div id="target-info" style="color: var(--primary-neon); font-weight: 800; font-size: 1rem;">
-                    <i class="fa-solid fa-bullseye"></i> 正在記錄：自家手牌
-                </div>
-                <button onclick="clearCurrentZone()" style="background:none; border:none; color:var(--error-red); cursor:pointer; font-weight:800; font-size:0.85rem;">
-                    <i class="fa-solid fa-trash"></i> 清空此區
+<button onclick="clearCurrentZone()" style="background:none; border:none; color:var(--error-red); cursor:pointer; font-weight:800; font-size:0.85rem;">
+<i class="fa-solid fa-trash"></i> 清空此區
                 </button>
+</div>
+<div class="keyboard-tabs">
+<button class="tab-btn active" onclick="switchSuit('man')">萬子</button>
+<button class="tab-btn" onclick="switchSuit('pin')">筒子</button>
+<button class="tab-btn" onclick="switchSuit('sou')">條子</button>
+<button class="tab-btn" onclick="switchSuit('honor')">字牌</button>
+</div>
+<div class="keyboard-grid" id="keyboard-grid"></div>
+</div>
+<!-- Ranking Matrix -->
+<div class="ranking-card" id="matrix-card" style="display:none;">
+<div style="font-family:'Outfit'; font-weight:900; color:var(--primary-neon); margin-bottom:20px; display:flex; align-items:center; gap:10px;">
+<i class="fa-solid fa-list-ol"></i> 切牌決策與防守安全矩陣 (Discard &amp; Safety Matrix)
             </div>
-            <div class="keyboard-tabs">
-                <button class="tab-btn active" onclick="switchSuit('man')">萬子</button>
-                <button class="tab-btn" onclick="switchSuit('pin')">筒子</button>
-                <button class="tab-btn" onclick="switchSuit('sou')">條子</button>
-                <button class="tab-btn" onclick="switchSuit('honor')">字牌</button>
-            </div>
-            <div id="keyboard-grid" class="keyboard-grid"></div>
-        </div>
-
-        <!-- Ranking Matrix -->
-        <div id="matrix-card" class="ranking-card" style="display:none;">
-            <div style="font-family:'Outfit'; font-weight:900; color:var(--primary-neon); margin-bottom:20px; display:flex; align-items:center; gap:10px;">
-                <i class="fa-solid fa-list-ol"></i> 切牌決策與防守安全矩陣 (Discard & Safety Matrix)
-            </div>
-            <div style="overflow-x:auto;">
-                <table class="matrix-table">
-                    <thead>
-                        <tr>
-                            <th>切出</th>
-                            <th>進張牌型</th>
-                            <th>剩餘</th>
-                            <th>勝率</th>
-                            <th>安全等級</th>
-                            <th>評估</th>
-                        </tr>
-                    </thead>
-                    <tbody id="matrix-body"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Detail 2: Fast-Tap Floating Bar (Mobile) -->
-        <div class="fast-tap-bar">
-            <div class="fast-tap-targets">
-                <button id="ft-top" class="ft-target-btn" onclick="setFastTapTarget('top')">對家</button>
-                <button id="ft-left" class="ft-target-btn" onclick="setFastTapTarget('left')">上家</button>
-                <button id="ft-right" class="ft-target-btn" onclick="setFastTapTarget('right')">下家</button>
-                <button id="ft-self" class="ft-target-btn active" onclick="setFastTapTarget('self')">自家</button>
-            </div>
-            <div id="ft-tiles" class="fast-tap-tiles"></div>
-        </div>
-
-        <!-- Amazon -->
-        <div class="amazon-card">
-            <div class="amazon-title"><i class="fa-brands fa-amazon"></i> 麻將與桌遊用品推薦：高品質靜音麻將與墊</div>
-            <div class="amazon-links">
-                <a href="https://www.amazon.com/s?k=mahjong+set+and+mat&tag=9908qq-20" target="_blank" class="amazon-btn">US Amazon</a>
-                <a href="https://www.amazon.co.jp/s?k=麻雀パイ+麻雀マット&tag=gugopro-22" target="_blank" class="amazon-btn">JP Amazon</a>
-            </div>
-        </div>
-
-        <!-- Ko-fi -->
-        <div style="text-align:center;">
-            <a href="https://ko-fi.com/R1K123XRS9" target="_blank" rel="noopener" class="kofi-btn">
-                <i class="fa-solid fa-mug-hot"></i> Buy me a coffee
+<div style="overflow-x:auto;">
+<table class="matrix-table">
+<thead>
+<tr>
+<th>切出</th>
+<th>進張牌型</th>
+<th>剩餘</th>
+<th>勝率</th>
+<th>安全等級</th>
+<th>評估</th>
+</tr>
+</thead>
+<tbody id="matrix-body"></tbody>
+</table>
+</div>
+</div>
+<!-- Detail 2: Fast-Tap Floating Bar (Mobile) -->
+<div class="fast-tap-bar">
+<div class="fast-tap-targets">
+<button class="ft-target-btn" id="ft-top" onclick="setFastTapTarget('top')">對家</button>
+<button class="ft-target-btn" id="ft-left" onclick="setFastTapTarget('left')">上家</button>
+<button class="ft-target-btn" id="ft-right" onclick="setFastTapTarget('right')">下家</button>
+<button class="ft-target-btn active" id="ft-self" onclick="setFastTapTarget('self')">自家</button>
+</div>
+<div class="fast-tap-tiles" id="ft-tiles"></div>
+</div>
+<!-- Amazon -->
+<div class="amazon-card">
+<div class="amazon-title"><i class="fa-brands fa-amazon"></i> 麻將與桌遊用品推薦：高品質靜音麻將與墊</div>
+<div class="amazon-links">
+<a class="amazon-btn" href="https://www.amazon.com/s?k=mahjong+set+and+mat&amp;tag=9908qq-20" target="_blank">US Amazon</a>
+<a class="amazon-btn" href="https://www.amazon.co.jp/s?k=麻雀パイ+麻雀マット&amp;tag=gugopro-22" target="_blank">JP Amazon</a>
+</div>
+</div>
+<!-- Ko-fi -->
+<div style="text-align:center;">
+<a class="kofi-btn" href="https://ko-fi.com/R1K123XRS9" rel="noopener" target="_blank">
+<i class="fa-solid fa-mug-hot"></i> Buy me a coffee
             </a>
-        </div>
-
-        <!-- Info -->
-        <div class="info-section">
-            <h2>3大實戰細節：副露扣減、極速河牌與安牌指示</h2>
-            <p>MJ Advisor V3.2 全面升級實戰功能：支援<b>門前副露管理（吃碰槓自動扣減手牌上限）</b>、手機專屬<b>0.5秒極速河牌懸浮列</b>，以及在切牌決策矩陣中新增<b>安牌與潛在危險牌（生牌）安全指示</b>。讓您在牌桌上攻守兼備，精準避開放槍風險。</p>
-            <div class="disclaimer">免責聲明：本工具計算結果僅供麻將技巧研究與機率統計評估參考，不保證勝率亦不鼓勵博弈行為。</div>
-        </div>
-    </div>
-
-    <script>
+</div>
+<!-- Info -->
+<div class="info-section">
+<h2>3大實戰細節：副露扣減、極速河牌與安牌指示</h2>
+<p>MJ Advisor V3.2 全面升級實戰功能：支援<b>門前副露管理（吃碰槓自動扣減手牌上限）</b>、手機專屬<b>0.5秒極速河牌懸浮列</b>，以及在切牌決策矩陣中新增<b>安牌與潛在危險牌（生牌）安全指示</b>。讓您在牌桌上攻守兼備，精準避開放槍風險。</p>
+<div class="disclaimer">免責聲明：本工具計算結果僅供麻將技巧研究與機率統計評估參考，不保證勝率亦不鼓勵博弈行為。</div>
+</div>
+</div>
+<script>
         // --- Core State ---
         let mode = 16;
         let activeTarget = 'self';
@@ -1012,10 +1002,10 @@
         updateUI();
     </script>
 <footer class="site-contact-footer" style="padding:24px 20px;text-align:center;border-top:1px solid rgba(255,255,255,.08);color:#94a3b8;"><div class="site-contact-inline" style="margin:12px 0;line-height:1.8;"><a href="../../contact.html" style="color:#67e8f9;font-weight:700;">聯絡我們 / Contact Us</a> <span style="margin-left:10px;">Support Email: <a href="mailto:contact@gugopro.com" style="color:#67e8f9;">contact@gugopro.com</a></span></div></footer>
-<section class="tool-seo-content" id="tool-seo-mahjong-discard-calculator" data-seo-content>
+<section class="tool-seo-content" data-seo-content="" id="tool-seo-mahjong-discard-calculator">
 <div data-locale-content="zh-TW"><h2>Mahjong Discard Calculator 線上工具：運作機制與隱私解析</h2><p>本工具把 Mahjong Discard Calculator 的輸入解析、運算與輸出放在瀏覽器 JavaScript 執行，依頁面功能使用 Canvas、Web Audio、Web Crypto、原生 Blob 或純數學函式。檔案不會經過 GugoPro 上傳端點；遇到格式不符、空值或極端輸入時，介面會顯示錯誤並停止輸出。</p><h3>3 步驟完成</h3><ol><li>上傳或輸入資料，先確認格式與大小。</li><li>依畫面配置頁碼、品質、欄位或輸出格式。</li><li>執行處理，檢查預覽與狀態後下載結果。</li></ol><h3>使用者常見問題</h3><details><summary>為什麼工具需要在瀏覽器處理？</summary><p>本工具將檔案解析與輸出放在目前分頁，減少上傳等待與原始資料外洩風險；裝置記憶體不足時請分批處理。</p></details><details><summary>輸入格式或數值錯誤時會怎樣？</summary><p>工具會在執行前檢查副檔名、必要欄位與範圍；不符合條件時顯示可理解的提示，不會下載空白結果。</p></details><details><summary>手機也能使用嗎？</summary><p>可以，但 PDF、影像或多檔輸出會占用記憶體；手機建議降低解析度、縮小批次並保持分頁開啟至下載完成。</p></details></div>
-<div data-locale-content="en" hidden><h2>Mahjong Discard Calculator 線上工具: how it works and privacy</h2><p>本工具把 Mahjong Discard Calculator 的輸入解析、運算與輸出放在瀏覽器 JavaScript 執行，依頁面功能使用 Canvas、Web Audio、Web Crypto、原生 Blob 或純數學函式。檔案不會經過 GugoPro 上傳端點；遇到格式不符、空值或極端輸入時，介面會顯示錯誤並停止輸出。 All processing stays in this browser tab unless an explicit external action is selected.</p><h3>Complete it in 3 steps</h3><ol><li>Choose or enter the source data and confirm the format.</li><li>Set the page, quality, field or output options.</li><li>Run the tool, review the status and download the result.</li></ol><h3>Common questions</h3><details><summary>Why does this tool run in the browser?</summary><p>Parsing and export happen in this tab to reduce upload delay and exposure; process large files in smaller batches if memory is limited.</p></details><details><summary>What happens when input is invalid?</summary><p>The tool checks file types, required fields and ranges before running, then shows a clear message instead of downloading an empty result.</p></details><details><summary>Can I use it on a phone?</summary><p>Yes, but PDF, image and batch exports use memory; on mobile, lower resolution, use smaller batches and keep the tab open until download completes.</p></details></div>
-<div data-locale-content="ja" hidden><h2>Mahjong Discard Calculator 線上工具：仕組みとプライバシー</h2><p>本工具把 Mahjong Discard Calculator 的輸入解析、運算與輸出放在瀏覽器 JavaScript 執行，依頁面功能使用 Canvas、Web Audio、Web Crypto、原生 Blob 或純數學函式。檔案不會經過 GugoPro 上傳端點；遇到格式不符、空值或極端輸入時，介面會顯示錯誤並停止輸出。 明示的に外部機能を選ばない限り、処理はこのブラウザのタブ内で完了します。</p><h3>3ステップで完了</h3><ol><li>ファイルまたはデータを選び、形式を確認します。</li><li>ページ、品質、項目、出力形式を設定します。</li><li>実行後に状態とプレビューを確認して保存します。</li></ol><h3>よくある質問</h3><details><summary>なぜブラウザで処理するのですか？</summary><p>解析と書き出しを現在のタブで行い、アップロード待ち時間と漏えいリスクを減らします。大きなファイルは分けて処理してください。</p></details><details><summary>形式や数値が不正な場合は？</summary><p>実行前に形式、必須項目、範囲を確認し、条件に合わない場合は空の結果を保存せず説明を表示します。</p></details><details><summary>スマートフォンでも使えますか？</summary><p>使えますが、PDF・画像・一括出力はメモリを使います。解像度と一括数を下げ、ダウンロード完了までタブを閉じないでください。</p></details></div></section>
-<script type="application/ld+json" data-tool-seo-schema>{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Mahjong Discard Calculator 線上工具", "applicationCategory": "WebApplication", "operatingSystem": "Web Browser", "description": "使用 GugoPro Mahjong Discard Calculator 工具在瀏覽器完成轉換、整理或計算，免安裝、免上傳，結果可直接下載。", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "TWD"}, "isAccessibleForFree": true}</script>
+<div data-locale-content="en" hidden=""><h2>Mahjong Discard Calculator 線上工具: how it works and privacy</h2><p>本工具把 Mahjong Discard Calculator 的輸入解析、運算與輸出放在瀏覽器 JavaScript 執行，依頁面功能使用 Canvas、Web Audio、Web Crypto、原生 Blob 或純數學函式。檔案不會經過 GugoPro 上傳端點；遇到格式不符、空值或極端輸入時，介面會顯示錯誤並停止輸出。 All processing stays in this browser tab unless an explicit external action is selected.</p><h3>Complete it in 3 steps</h3><ol><li>Choose or enter the source data and confirm the format.</li><li>Set the page, quality, field or output options.</li><li>Run the tool, review the status and download the result.</li></ol><h3>Common questions</h3><details><summary>Why does this tool run in the browser?</summary><p>Parsing and export happen in this tab to reduce upload delay and exposure; process large files in smaller batches if memory is limited.</p></details><details><summary>What happens when input is invalid?</summary><p>The tool checks file types, required fields and ranges before running, then shows a clear message instead of downloading an empty result.</p></details><details><summary>Can I use it on a phone?</summary><p>Yes, but PDF, image and batch exports use memory; on mobile, lower resolution, use smaller batches and keep the tab open until download completes.</p></details></div>
+<div data-locale-content="ja" hidden=""><h2>Mahjong Discard Calculator 線上工具：仕組みとプライバシー</h2><p>本工具把 Mahjong Discard Calculator 的輸入解析、運算與輸出放在瀏覽器 JavaScript 執行，依頁面功能使用 Canvas、Web Audio、Web Crypto、原生 Blob 或純數學函式。檔案不會經過 GugoPro 上傳端點；遇到格式不符、空值或極端輸入時，介面會顯示錯誤並停止輸出。 明示的に外部機能を選ばない限り、処理はこのブラウザのタブ内で完了します。</p><h3>3ステップで完了</h3><ol><li>ファイルまたはデータを選び、形式を確認します。</li><li>ページ、品質、項目、出力形式を設定します。</li><li>実行後に状態とプレビューを確認して保存します。</li></ol><h3>よくある質問</h3><details><summary>なぜブラウザで処理するのですか？</summary><p>解析と書き出しを現在のタブで行い、アップロード待ち時間と漏えいリスクを減らします。大きなファイルは分けて処理してください。</p></details><details><summary>形式や数値が不正な場合は？</summary><p>実行前に形式、必須項目、範囲を確認し、条件に合わない場合は空の結果を保存せず説明を表示します。</p></details><details><summary>スマートフォンでも使えますか？</summary><p>使えますが、PDF・画像・一括出力はメモリを使います。解像度と一括数を下げ、ダウンロード完了までタブを閉じないでください。</p></details></div></section>
+<script data-tool-seo-schema="" type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Mahjong Discard Calculator 線上工具", "applicationCategory": "WebApplication", "operatingSystem": "Web Browser", "description": "使用 GugoPro Mahjong Discard Calculator 工具在瀏覽器完成轉換、整理或計算，免安裝、免上傳，結果可直接下載。", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "TWD"}, "isAccessibleForFree": true}</script><script data-faq-schema="true" type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "為什麼工具需要在瀏覽器處理？", "acceptedAnswer": {"@type": "Answer", "text": "本工具將檔案解析與輸出放在目前分頁，減少上傳等待與原始資料外洩風險；裝置記憶體不足時請分批處理。"}}, {"@type": "Question", "name": "輸入格式或數值錯誤時會怎樣？", "acceptedAnswer": {"@type": "Answer", "text": "工具會在執行前檢查副檔名、必要欄位與範圍；不符合條件時顯示可理解的提示，不會下載空白結果。"}}, {"@type": "Question", "name": "手機也能使用嗎？", "acceptedAnswer": {"@type": "Answer", "text": "可以，但 PDF、影像或多檔輸出會占用記憶體；手機建議降低解析度、縮小批次並保持分頁開啟至下載完成。"}}]}</script>
 </body>
 </html>
