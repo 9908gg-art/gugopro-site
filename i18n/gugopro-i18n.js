@@ -128,8 +128,9 @@
       try{const phrasesResponse=await fetch(resource('phrases.json'),{cache:'no-store'});if(phrasesResponse.ok){const phrases=await phrasesResponse.json();Object.entries(phrases.phrases||{}).forEach(([source,map])=>addPair(source,map[current]||source));}}catch(e){}
       try{const dynamicResponse=await fetch(resource(current+'.dynamic.json'),{cache:'no-store'});if(dynamicResponse.ok){const dynamic=await dynamicResponse.json();Object.entries(dynamic.templates||{}).forEach(([id,target])=>{const row=catalogRows.find(item=>String(item.id)===String(id));if(row)addDynamicFragments(row.text,target);});}}catch(e){}
       translateDom();observeRuntime();
+      document.documentElement.removeAttribute('data-gugo-i18n-pending');
       window.GugoProI18n={locale:current,supported:SUPPORTED,status:'machine-draft',catalogKeys:catalogRows.length,missingKeys:catalogRows.filter(row=>!Object.prototype.hasOwnProperty.call(translations,String(row.id))).length};
-    }catch(error){document.documentElement.dataset.i18nStatus='machine-draft-resource-error';console.warn('[GugoPro i18n] resource load failed; zh-TW DOM retained.',error);}
+    }catch(error){document.documentElement.dataset.i18nStatus='machine-draft-resource-error';document.documentElement.removeAttribute('data-gugo-i18n-pending');console.warn('[GugoPro i18n] resource load failed; zh-TW DOM retained.',error);}
   };
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',load,{once:true});else load();
 })();
