@@ -5,7 +5,7 @@ import argparse
 from pathlib import Path
 import re
 
-LOCALES = ['zh-TW', 'zh-CN', 'en', 'ja', 'de', 'fr', 'es', 'pt']
+LOCALES = ['zh-TW', 'en', 'ja']
 VERSION = 'machine-draft-20260827'
 SCRIPT_MARKER = 'gugopro-i18n.js'
 
@@ -49,7 +49,7 @@ def target_pages(repo: Path, mode: str) -> list[Path]:
             if root.is_file():
                 pages.append(root)
             elif root.is_dir():
-                pages.extend(p for p in root.rglob('*.html') if not (set(p.relative_to(repo).parts) & excluded))
+                pages.extend(p for p in root.rglob('*.html') if not (set(p.relative_to(repo).parts) & excluded) and not re.search(r'/tools/health/(?:tdee-macros-calculator|weight-loss-planner)(?:\.html)?', '/'+p.relative_to(repo).as_posix(), re.I))
         return sorted(set(pages))
     if mode == 'site':
         # Exact catalog-backed finance surface: Academy subtree, investment articles,

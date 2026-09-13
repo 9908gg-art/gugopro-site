@@ -417,12 +417,7 @@ body::before {
 <header class="site-header">
 <a aria-label="GugoPro Home" class="btn-back-home" href="https://gugopro.com"><i class="fa-solid fa-house"></i> <span data-i18n="backHome">Back to GugoPro</span></a>
 <div style="display:flex;align-items:center;gap:12px;">
-<div class="lang-selector">
-<button aria-label="Language selector" class="lang-btn" onclick="toggleLangMenu()">
-<i class="fa-solid fa-globe"></i> <span id="currentLangName">English</span>
-</button>
-<div class="lang-dropdown" id="langDropdown"></div>
-</div>
+
 <div class="site-logo">GugoPro</div>
 </div>
 </header>
@@ -642,22 +637,8 @@ body::before {
 // ===== I18N DICTIONARY =====
 var LANGS = [
   {code:'zh-TW', name:'繁體中文', flag:'🇹🇼'},
-  {code:'zh-HK', name:'繁體中文', flag:'🇭🇰'},
-  {code:'zh-CN', name:'简体中文', flag:'🇨🇳'},
   {code:'en', name:'English', flag:'🇺🇸'},
-  {code:'ja', name:'日本語', flag:'🇯🇵'},
-  {code:'ko', name:'한국어', flag:'🇰🇷'},
-  {code:'hi', name:'हिन्दी', flag:'🇮🇳'},
-  {code:'pt-BR', name:'Português', flag:'🇧🇷'},
-  {code:'id', name:'Bahasa Indonesia', flag:'🇮🇩'},
-  {code:'bn', name:'বাংলা', flag:'🇧🇩'},
-  {code:'es', name:'Español', flag:'🇪🇸'},
-  {code:'fr', name:'Français', flag:'🇫🇷'},
-  {code:'de', name:'Deutsch', flag:'🇩🇪'},
-  {code:'ru', name:'Русский', flag:'🇷🇺'},
-  {code:'ar', name:'العربية', flag:'🇸🇦'},
-  {code:'vi', name:'Tiếng Việt', flag:'🇻🇳'},
-  {code:'th', name:'ภาษาไทย', flag:'🇹🇭'}
+  {code:'ja', name:'日本語', flag:'🇯🇵'}
 ];
 
 var I18N = {
@@ -2308,24 +2289,23 @@ function getT(key) {
 }
 
 function detectLanguage() {
+  var query = new URLSearchParams(window.location.search).get('lang');
+  if (LANGS.some(function(l) { return l.code === query; })) return query;
   var saved = null;
-  try { saved = localStorage.getItem('gugopro_gacha_lang'); } catch(e) {}
-  if (saved && I18N[saved]) return saved;
-  var nav = navigator.language || navigator.userLanguage || '';
-  var codes = ['zh-TW','zh-HK','zh-CN','en','ja','ko','hi','pt-BR','id','bn','es','fr','de','ru','ar','vi','th'];
-  for (var i = 0; i < codes.length; i++) {
-    if (nav.toLowerCase().indexOf(codes[i].toLowerCase()) === 0) return codes[i];
-  }
-  if (nav.toLowerCase().startsWith('zh')) return 'zh-TW';
+  try { saved = localStorage.getItem('gugopro_locale') || localStorage.getItem('gugopro_gacha_lang'); } catch(e) {}
+  if (LANGS.some(function(l) { return l.code === saved; })) return saved;
+  var nav = String(navigator.language || navigator.userLanguage || '').toLowerCase();
+  if (nav.indexOf('zh') === 0) return 'zh-TW';
+  if (nav.indexOf('ja') === 0) return 'ja';
   return 'en';
 }
 
 function setLanguage(lang) {
-  if (!I18N[lang]) lang = 'en';
+  if (!LANGS.some(function(l) { return l.code === lang; })) lang = 'en';
   currentLang = lang;
-  try { localStorage.setItem('gugopro_gacha_lang', lang); } catch(e) {}
-  document.documentElement.lang = lang === 'zh-CN' ? 'zh-Hans' : (lang === 'ar' ? 'ar' : (lang.startsWith('zh') ? 'zh-Hant' : lang));
-  document.body.classList.toggle('rtl', lang === 'ar');
+  try { localStorage.setItem('gugopro_locale', lang); localStorage.setItem('gugopro_gacha_lang', lang); } catch(e) {}
+  document.documentElement.lang = lang;
+  document.body.classList.remove('rtl');
 
   // Update all data-i18n elements
   var els = document.querySelectorAll('[data-i18n]');
@@ -2381,20 +2361,11 @@ function updateOffBannerOptions() {
 }
 
 function updateLangButton() {
-  var langInfo = LANGS.find(function(l) { return l.code === currentLang; });
-  document.getElementById('currentLangName').textContent = langInfo ? langInfo.name : currentLang;
+  return;
 }
 
 function updateLangDropdown() {
-  var dd = document.getElementById('langDropdown');
-  dd.innerHTML = '';
-  LANGS.forEach(function(l) {
-    var div = document.createElement('div');
-    div.className = 'lang-option' + (l.code === currentLang ? ' active' : '');
-    div.innerHTML = '<span class="flag">' + l.flag + '</span> ' + l.name + ' <small>(' + l.code + ')</small>';
-    div.onclick = function() { setLanguage(l.code); closeLangMenu(); };
-    dd.appendChild(div);
-  });
+  return;
 }
 
 function updateAmazonLinks() {
@@ -2403,13 +2374,14 @@ function updateAmazonLinks() {
 
 function toggleLangMenu() {
   var dd = document.getElementById('langDropdown');
-  dd.classList.toggle('open');
+  if (dd) dd.classList.toggle('open');
 }
 function closeLangMenu() {
-  document.getElementById('langDropdown').classList.remove('open');
+  var dd = document.getElementById('langDropdown');
+  if (dd) dd.classList.remove('open');
 }
 document.addEventListener('click', function(e) {
-  if (!e.target.closest('.lang-selector')) { closeLangMenu(); }
+  if (!e.target.closest('.lang-selector')) closeLangMenu();
 });
 
 // ===== GAME PRESETS =====

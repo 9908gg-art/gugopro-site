@@ -5779,7 +5779,6 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
 
     const MODE_KEY = 'gugopro_ai_tutor_speech_mode_v1';
     const SMART_SILENCE_KEY = 'gugopro_ai_tutor_smart_silence_seconds_v1';
-    const UI_LANG_KEY = 'gugopro_tutor_ui_lang';
     const ADMOB_TEST_BANNER_ID = 'ca-app-pub-3940256099942544/6300978111';
     const MODES = {
         tap: { label: '模式 A：點擊開關', description: '點擊國旗開始錄音，再次點擊停止並送出。' },
@@ -5811,15 +5810,6 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
     window.GugoSpeechMode = getMode();
     window.GugoGetSpeechMode = getMode;
     window.GugoAdMobConfig = { testBannerId: ADMOB_TEST_BANNER_ID, enabledByNativeHook: false, requiresOwnUnitForRelease: true };
-    window.GugoGetUiLanguage = () => localStorage.getItem(UI_LANG_KEY) || 'zh-TW';
-    window.GugoSetUiLanguage = value => {
-        const lang = String(value || 'zh-TW');
-        localStorage.setItem(UI_LANG_KEY, lang);
-        document.documentElement.lang = lang;
-        document.documentElement.dataset.uiLang = lang;
-        window.dispatchEvent(new CustomEvent('gugopro:ui-language-change', { detail: { lang } }));
-        return lang;
-    };
     window.GugoShowTestAdMobBanner = () => {
         if (window.GugoAdMob && typeof window.GugoAdMob.showTestBanner === 'function') {
             window.GugoAdMob.showTestBanner();
@@ -6002,30 +5992,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         const description = document.getElementById('speech-mode-description');
         if (description) description.textContent = MODES[mode]?.description || MODES.smart.description;
     }
-    function ensureUiLanguagePanel() {
-        const sideMenu = document.getElementById('side-menu');
-        if (!sideMenu || document.getElementById('ui-language-section')) return;
-        const section = document.createElement('div');
-        section.id = 'ui-language-section';
-        section.className = 'menu-section capsule-ui-language-section';
-        section.innerHTML = '<div class="menu-title">🌐 介面語言</div><select id="ui-language-select" class="lang-select" aria-label="選擇介面語言"></select><small class="capsule-speech-mode-description">目前先保存介面語言代碼，翻譯字典可在後續版本載入。</small>';
-        const source = document.getElementById('target-lang');
-        const select = section.querySelector('#ui-language-select');
-        Array.from(source?.options || []).forEach(option => {
-            const item = document.createElement('option');
-            item.textContent = option.textContent;
-            item.value = option.value;
-            select.appendChild(item);
-        });
-        const saved = window.GugoGetUiLanguage();
-        select.value = Array.from(select.options).some(option => option.value === saved) ? saved : 'zh-TW';
-        window.GugoSetUiLanguage(select.value);
-        select.addEventListener('change', () => window.GugoSetUiLanguage(select.value));
-        const anchor = sideMenu.querySelector('.capsule-speech-mode-section, .model-settings-section');
-        if (anchor) anchor.before(section); else sideMenu.appendChild(section);
-    }
     function ensureSpeechModePanel() {
-        ensureUiLanguagePanel();
         const sideMenu = document.getElementById('side-menu');
         if (!sideMenu || document.getElementById('speech-mode-section')) return;
         const section = document.createElement('div');
