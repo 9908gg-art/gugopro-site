@@ -89,7 +89,7 @@
     if (toggle) {
       const label = toggle.querySelector('#lang-display-label');
       if (label) label.textContent = nativeName(locale);
-      toggle.setAttribute('aria-label', `${translate('介面語言')}：${nativeName(locale)}`);
+      toggle.setAttribute('aria-label', `${translate('系統語言')}：${nativeName(locale)}`);
     }
     const interfaceSelect = document.getElementById('ui-language-select');
     if (interfaceSelect) interfaceSelect.value = locale;
@@ -102,7 +102,7 @@
     const section = document.createElement('div');
     section.id = 'ui-language-section';
     section.className = 'menu-section tutor-interface-language-section';
-    section.innerHTML = '<div class="menu-title">🌐 <span data-tutor-ui-source="介面語言">介面語言</span></div><select id="ui-language-select" class="lang-select" aria-label="選擇介面語言"></select><small class="capsule-speech-mode-description" data-tutor-ui-source="介面語言會套用到導師所有選單、按鈕、設定、教材與學習面板。">介面語言會套用到導師所有選單、按鈕、設定、教材與學習面板。</small>';
+    section.innerHTML = '<div class="menu-title">🌐 <span data-tutor-ui-source="系統語言">系統語言</span></div><select id="ui-language-select" class="lang-select" aria-label="選擇系統語言"></select><small class="capsule-speech-mode-description" data-tutor-ui-source="系統語言會套用到導師所有選單、按鈕、設定、教材與學習面板。">系統語言會套用到導師所有選單、按鈕、設定、教材與學習面板。</small>';
     const select = section.querySelector('#ui-language-select');
     LANGUAGE_OPTIONS.forEach(([code, name]) => {
       const option = document.createElement('option');
