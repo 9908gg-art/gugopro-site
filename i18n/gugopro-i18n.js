@@ -94,20 +94,30 @@
       }
       .gugo-locale-select:hover,.gugo-locale-select:focus{border-color:#f97316;outline:2px solid rgba(249,115,22,.25);outline-offset:1px}
       .gugo-locale-select option{background:#141824;color:#fff;font-weight:700}
-      .gugo-locale-host{display:inline-flex;align-items:center;min-width:0}
-      @media(max-width:650px){.gugo-locale-select{min-width:108px;height:34px;font-size:12px}.gugo-locale-host{max-width:120px}}
+      .gugo-locale-host{display:inline-flex;align-items:center;flex:0 0 auto;min-width:0}
+      @media(max-width:760px){.gugo-locale-select{width:100px;min-width:100px;height:34px;padding-left:8px;padding-right:22px;font-size:11px}.gugo-locale-host{max-width:100px}}
+      @media(max-width:420px){.gugo-locale-select{width:92px;min-width:92px;font-size:10px}.gugo-locale-host{max-width:92px}}
     `;document.head.appendChild(style);
   };
   const removeLegacyControls=()=>{
     document.querySelectorAll('.converter-language-link,.lang-selector,.gugo-static-locale-select').forEach(el=>el.remove());
   };
-  const findHost=()=>document.querySelector('.nav-actions,.navlinks,.navin,.top,.tool-crumb,header .container,header')||document.body;
+  const findHost=()=>{
+    const actionHost=document.querySelector('header .nav-actions,header .header-actions,header .nav-right');
+    if(actionHost)return {host:actionHost,before:null};
+    const nav=document.querySelector('header .nav-container,header .header-container,header .site-header .container,header .container');
+    if(nav){
+      const before=nav.querySelector(':scope > .nav-actions,:scope > .header-actions,:scope > .nav-right,:scope > .nav-links');
+      return {host:nav,before};
+    }
+    return {host:document.querySelector('.navlinks,.navin,.top,.tool-crumb,header')||document.body,before:null};
+  };
   const mountSwitcher=()=>{
     addStyles();
     removeLegacyControls();
     let select=document.querySelector('.gugo-locale-host .gugo-locale-select');
     if(!select){
-      const host=findHost();
+      const {host,before}=findHost();
       const wrapper=document.createElement('span');
       wrapper.className='gugo-locale-host';
       select=document.createElement('select');
@@ -115,8 +125,14 @@
       select.className='gugo-locale-select';
       select.setAttribute('aria-label','Language');
       wrapper.appendChild(select);
-      host.appendChild(wrapper);
+      if(before)host.insertBefore(wrapper,before);else host.appendChild(wrapper);
       select.addEventListener('change',()=>{current=select.value;try{localStorage.setItem(STORAGE_KEY,current);}catch(e){}const url=new URL(location.href);url.searchParams.set('lang',current);location.assign(url.toString());});
+    }else{
+      const {host,before}=findHost();
+      if(select.parentElement!==host){
+        const wrapper=select.closest('.gugo-locale-host');
+        if(wrapper){if(before)host.insertBefore(wrapper,before);else host.appendChild(wrapper);}
+      }
     }
     select.replaceChildren();
     SUPPORTED.forEach(code=>{const option=document.createElement('option');option.value=code;option.textContent=LOCALES[code].native;select.appendChild(option);});
