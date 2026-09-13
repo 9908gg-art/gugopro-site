@@ -1492,7 +1492,10 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
     .side-menu .menu-close { display: none !important; }
 }
 </style>
-<link href="/tools/seo-content.css" rel="stylesheet"/><link href="/tools/ai-seo-drawer.css" rel="stylesheet"/><script defer="True" src="/tools/ai-seo-drawer.js"></script></head>
+<style>
+.side-menu .tutor-faq-section { margin-top: 10px; padding: 0 20px; }
+.side-menu .tutor-faq-section .ai-seo-help-toggle { position: static; top: auto; right: auto; z-index: auto; width: 100%; box-sizing: border-box; justify-content: center; }
+</style><link href="/tools/seo-content.css" rel="stylesheet"/><link href="/tools/ai-seo-drawer.css" rel="stylesheet"/><script defer="True" src="/tools/ai-seo-drawer.js"></script></head>
 <body>
 <div id="app-main">
 <header id="main-header">
@@ -1662,6 +1665,14 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
 <p style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 12px;">語言學習推薦書單：</p>
 <a class="amazon-link" href="https://www.amazon.com/s?k=language+learning+and+speaking+books&amp;tag=9908qq-20" target="_blank"><i class="fa-brands fa-amazon"></i> 美國亞馬遜 (Amazon US)</a>
 <a class="amazon-link" href="https://www.amazon.co.jp/s?k=語學+英會話+學習&amp;tag=gugopro-22" target="_blank"><i class="fa-brands fa-amazon"></i> 日本亞馬遜 (Amazon JP)</a>
+</div>
+<div class="menu-section tutor-system-language-section">
+<div class="menu-title">🌐 系統語言</div>
+<select aria-label="選擇系統語言" class="lang-select" id="system-language-select"></select>
+<small class="capsule-speech-mode-description">系統語言偏好會保存在本機，供導師介面使用。</small>
+</div>
+<div class="menu-section tutor-faq-section">
+<button aria-controls="ai-seo-help-drawer" aria-expanded="false" class="ai-seo-help-toggle" type="button"><span aria-hidden="true">ℹ️</span><span>說明與常見問題</span></button>
 </div>
 <div style="margin-top: auto; padding: 20px 20px 10px; text-align: center;">
 <a class="kofi-button" href="https://ko-fi.com/R1K123XRS9" rel="noopener" style="background:#72a4f2; color:#fff; padding:12px 20px; border-radius:10px; text-decoration:none; display:inline-flex; align-items:center; gap:8px; font-weight:bold; font-size: 0.9rem;" target="_blank">
@@ -4134,6 +4145,21 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         if (value && Object.prototype.hasOwnProperty.call(LANG_NAMES || {}, value)) select.value = value;
     }
 
+    function setupTutorSystemLanguage() {
+        const select = document.getElementById('system-language-select');
+        if (!select) return;
+        const key = 'gugopro_tutor_system_language_v1';
+        let saved = 'zh-TW';
+        try { saved = localStorage.getItem(key) || saved; } catch (_) {}
+        populateLanguageSelect(select, Object.prototype.hasOwnProperty.call(LANG_NAMES, saved) ? saved : 'zh-TW');
+        select.addEventListener('change', () => {
+            try { localStorage.setItem(key, select.value); } catch (_) {}
+            document.documentElement.dataset.tutorSystemLanguage = select.value;
+            window.dispatchEvent(new CustomEvent('gugopro:tutor-system-language-change', { detail: { language: select.value } }));
+        });
+        document.documentElement.dataset.tutorSystemLanguage = select.value;
+    }
+
     function renderMaterialBannerV2() {
         const room = typeof getActiveRoom === 'function' ? getActiveRoom() : null;
         if (!room) return;
@@ -4393,6 +4419,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         document.getElementById('modal-vocab')?.addEventListener('click', event => { if (event.target.id === 'modal-vocab') event.target.style.display = 'none'; });
         document.getElementById('modal-study-plan')?.addEventListener('click', event => { if (event.target.id === 'modal-study-plan') closeStudyPlanModal(); });
         populateLanguageSelect(document.getElementById('word-lookup-lang'), document.getElementById('my-lang')?.value || 'zh-TW');
+        setupTutorSystemLanguage();
         renderStudyPlanSummary(); renderMaterialBannerV2();
         document.querySelectorAll('.message').forEach(attachWordSelection);
     }
@@ -6227,5 +6254,5 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
     else bind();
 })();
 </script>
-<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"SoftwareApplication","name":"AI 多國語言對話導師","applicationCategory":"WebApplication","operatingSystem":"Web Browser","url":"https://gugopro.com/tools/ai/english-speaking-tutor.html","description":"以語音輸入、語音合成與多語情境對話練習口說；示範內容僅供語言學習，不是正式翻譯或能力認證。","offers":{"@type":"Offer","price":"0","priceCurrency":"TWD"},"isAccessibleForFree":true},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"需要安裝麥克風嗎？","acceptedAnswer":{"@type":"Answer","text":"需要瀏覽器允許麥克風；沒有麥克風時仍可依頁面支援改用文字輸入。"}},{"@type":"Question","name":"AI 的發音修正一定正確嗎？","acceptedAnswer":{"@type":"Answer","text":"不一定。環境噪音、口音與語言模型都可能造成誤判，重要學習成果應由老師或可靠教材複核。"}},{"@type":"Question","name":"語音資料會被保存嗎？","acceptedAnswer":{"@type":"Answer","text":"請依工具當前的隱私說明與瀏覽器權限判斷；不要輸入不必要的個人或機密內容。"}}]}]}</script><button aria-controls="ai-seo-help-drawer" aria-expanded="false" class="ai-seo-help-toggle" type="button"><span aria-hidden="true">ℹ️</span><span>說明與常見問題</span></button><div aria-hidden="true" class="ai-seo-backdrop"></div><aside aria-hidden="true" aria-label="說明與常見問題" aria-modal="true" class="ai-seo-drawer" id="ai-seo-help-drawer" role="dialog"><div class="ai-seo-drawer__header"><h2 class="ai-seo-drawer__title">說明與常見問題</h2><button aria-label="關閉說明與常見問題" class="ai-seo-drawer__close" type="button"><span aria-hidden="true">×</span></button></div><div class="ai-seo-drawer__body"><section aria-labelledby="seo-guide-title" class="tool-seo-content"><h2 id="seo-guide-title">AI 多國語言對話導師：原理、操作與常見問題</h2><p>以語音輸入、語音合成與多語情境對話練習口說；示範內容僅供語言學習，不是正式翻譯或能力認證。</p><h3>功能原理與使用限制</h3><p>語音辨識會將聲音轉成文字，再由對話流程產生回應；延遲與辨識準確率會受瀏覽器、麥克風與語言模型支援影響。</p><h3>三步驟使用指南</h3><ol><li>本機允許麥克風後選擇語言與情境。</li><li>先用短句對話並查看文字轉錄與修正。</li><li>下載或記錄練習內容，離開頁面前確認是否需要保存。</li></ol><h3>實用 FAQ</h3><div class="tool-faq-list"><details><summary>需要安裝麥克風嗎？</summary><p>需要瀏覽器允許麥克風；沒有麥克風時仍可依頁面支援改用文字輸入。</p></details><details><summary>AI 的發音修正一定正確嗎？</summary><p>不一定。環境噪音、口音與語言模型都可能造成誤判，重要學習成果應由老師或可靠教材複核。</p></details><details><summary>語音資料會被保存嗎？</summary><p>請依工具當前的隱私說明與瀏覽器權限判斷；不要輸入不必要的個人或機密內容。</p></details></div></section></div></aside></body>
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"SoftwareApplication","name":"AI 多國語言對話導師","applicationCategory":"WebApplication","operatingSystem":"Web Browser","url":"https://gugopro.com/tools/ai/english-speaking-tutor.html","description":"以語音輸入、語音合成與多語情境對話練習口說；示範內容僅供語言學習，不是正式翻譯或能力認證。","offers":{"@type":"Offer","price":"0","priceCurrency":"TWD"},"isAccessibleForFree":true},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"需要安裝麥克風嗎？","acceptedAnswer":{"@type":"Answer","text":"需要瀏覽器允許麥克風；沒有麥克風時仍可依頁面支援改用文字輸入。"}},{"@type":"Question","name":"AI 的發音修正一定正確嗎？","acceptedAnswer":{"@type":"Answer","text":"不一定。環境噪音、口音與語言模型都可能造成誤判，重要學習成果應由老師或可靠教材複核。"}},{"@type":"Question","name":"語音資料會被保存嗎？","acceptedAnswer":{"@type":"Answer","text":"請依工具當前的隱私說明與瀏覽器權限判斷；不要輸入不必要的個人或機密內容。"}}]}]}</script><div aria-hidden="true" class="ai-seo-backdrop"></div><aside aria-hidden="true" aria-label="說明與常見問題" aria-modal="true" class="ai-seo-drawer" id="ai-seo-help-drawer" role="dialog"><div class="ai-seo-drawer__header"><h2 class="ai-seo-drawer__title">說明與常見問題</h2><button aria-label="關閉說明與常見問題" class="ai-seo-drawer__close" type="button"><span aria-hidden="true">×</span></button></div><div class="ai-seo-drawer__body"><section aria-labelledby="seo-guide-title" class="tool-seo-content"><h2 id="seo-guide-title">AI 多國語言對話導師：原理、操作與常見問題</h2><p>以語音輸入、語音合成與多語情境對話練習口說；示範內容僅供語言學習，不是正式翻譯或能力認證。</p><h3>功能原理與使用限制</h3><p>語音辨識會將聲音轉成文字，再由對話流程產生回應；延遲與辨識準確率會受瀏覽器、麥克風與語言模型支援影響。</p><h3>三步驟使用指南</h3><ol><li>本機允許麥克風後選擇語言與情境。</li><li>先用短句對話並查看文字轉錄與修正。</li><li>下載或記錄練習內容，離開頁面前確認是否需要保存。</li></ol><h3>實用 FAQ</h3><div class="tool-faq-list"><details><summary>需要安裝麥克風嗎？</summary><p>需要瀏覽器允許麥克風；沒有麥克風時仍可依頁面支援改用文字輸入。</p></details><details><summary>AI 的發音修正一定正確嗎？</summary><p>不一定。環境噪音、口音與語言模型都可能造成誤判，重要學習成果應由老師或可靠教材複核。</p></details><details><summary>語音資料會被保存嗎？</summary><p>請依工具當前的隱私說明與瀏覽器權限判斷；不要輸入不必要的個人或機密內容。</p></details></div></section></div></aside></body>
 </html>
