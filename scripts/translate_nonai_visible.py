@@ -5,7 +5,7 @@ import json,re,time,os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from openai import OpenAI
 ROOT=Path(__file__).resolve().parents[1]; OUT=ROOT/'i18n/nonai-visible-translations.json'; TMP=OUT.with_suffix('.tmp.json')
-cat=json.loads((ROOT/'i18n/catalog.json').read_text(encoding='utf-8')); known={str(x['text']) for x in cat['strings']}
+cat=json.loads((ROOT/'i18n/catalog.json').read_text(encoding='utf-8'))
 texts=set()
 for p in ROOT.rglob('*.html'):
  if '.git' in p.parts or 'tools/ai/' in p.as_posix() or 'tools/ai-media/' in p.as_posix(): continue
@@ -13,9 +13,9 @@ for p in ROOT.rglob('*.html'):
  for n in soup.find_all(string=True):
   if n.parent.name in {'script','style','noscript','template'} or n.parent.has_attr('data-i18n-ignore'): continue
   t=' '.join(n.split()).strip()
-  if len(t)>=2 and re.search(r'[\u3400-\u9fff]',t) and t not in known: texts.add(t)
+  if len(t)>=2 and re.search(r'[\u3400-\u9fff]',t): texts.add(t)
 existing=json.loads(OUT.read_text(encoding='utf-8')) if OUT.exists() else {'en':{},'ja':{}}
-need=[t for t in sorted(texts) if not existing.get('en',{}).get(t) or not existing.get('ja',{}).get(t)]
+need=[t for t in sorted(texts) if not existing.get('en',{}).get(t) or not existing.get('ja',{}).get(t) or re.search(r'[\u3400-\u9fff]',str(existing.get('en',{}).get(t,'')))]
 client=OpenAI()
 def batch(start,items):
  payload='\n'.join(f'{i}\t{s}' for i,s in enumerate(items))
