@@ -68,6 +68,13 @@
   const translateSvg=()=>{
     document.querySelectorAll('svg text,[data-i18n-svg]').forEach(el=>{const raw=el.textContent,out=translateValue(raw);if(out!==raw)el.textContent=out;});
   };
+  const selectLocaleBlocks=()=>{
+    document.querySelectorAll('[data-locale-content]').forEach(el=>{
+      const locale=el.getAttribute('data-locale-content');
+      el.hidden=locale!==current;
+      el.setAttribute('aria-hidden',locale===current?'false':'true');
+    });
+  };
   const updatePageMetadata=()=>{
     document.documentElement.lang=current;
     document.documentElement.dataset.i18nStatus='machine-draft';
@@ -79,7 +86,7 @@
     const canonical=document.querySelector('link[rel="canonical"]');
     if(canonical){const url=new URL(canonical.href||location.href);url.search='';if(current!==SOURCE)url.searchParams.set('lang',current);canonical.href=url.toString();}
   };
-  const translateDom=()=>{walkAndTranslate(document.body);translateAttributes();translateSvg();updatePageMetadata();};
+  const translateDom=()=>{selectLocaleBlocks();walkAndTranslate(document.body);translateAttributes();translateSvg();updatePageMetadata();};
   const observeRuntime=()=>{
     const observer=new MutationObserver(records=>{if(current===SOURCE)return;records.forEach(record=>{
       if(record.type==='characterData'&&!excluded(record.target)){const raw=record.target.nodeValue,out=translateValue(raw);if(out!==raw)record.target.nodeValue=out;}
@@ -117,6 +124,7 @@
       const localeResponse=await fetch(resource(current+'.json'),{cache:'no-store'});if(!localeResponse.ok)throw new Error('locale '+localeResponse.status);
       const locale=await localeResponse.json();const translations=locale.translations||{};
       catalogRows.forEach(row=>addPair(row.text,translations[String(row.id)]||row.text));
+      if(!IS_AI){try{const pageResponse=await fetch(resource('nonai-visible-translations.json'),{cache:'no-store'});if(pageResponse.ok){const pageMap=await pageResponse.json();const map=pageMap[current]||{};Object.entries(map).forEach(([source,target])=>addPair(source,target));}}catch(e){} }
       try{const phrasesResponse=await fetch(resource('phrases.json'),{cache:'no-store'});if(phrasesResponse.ok){const phrases=await phrasesResponse.json();Object.entries(phrases.phrases||{}).forEach(([source,map])=>addPair(source,map[current]||source));}}catch(e){}
       try{const dynamicResponse=await fetch(resource(current+'.dynamic.json'),{cache:'no-store'});if(dynamicResponse.ok){const dynamic=await dynamicResponse.json();Object.entries(dynamic.templates||{}).forEach(([id,target])=>{const row=catalogRows.find(item=>String(item.id)===String(id));if(row)addDynamicFragments(row.text,target);});}}catch(e){}
       translateDom();observeRuntime();
