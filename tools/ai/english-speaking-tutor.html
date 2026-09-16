@@ -1792,12 +1792,12 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         <div class="menu-section model-settings-section">
             <div class="menu-title">
                 <span id="model-settings-title">模型設定 / Model Settings</span>
-                <button id="btn-refresh-models" class="btn-room-action model-refresh-button" title="重新整理免費模型清單" aria-label="重新整理免費模型清單"><i class="fa-solid fa-rotate"></i></button>
+                <button id="btn-refresh-models" class="btn-room-action model-refresh-button" title="Refresh free model list" aria-label="Refresh free model list"><i class="fa-solid fa-rotate"></i></button>
             </div>
             <p id="model-settings-status" class="model-settings-status" aria-live="polite">正在載入站內免費模型清單...</p>
             <p id="model-current-status" class="model-current-status" aria-live="polite">目前使用模型：載入中…</p>
             <p id="global-ai-quota-status" class="global-ai-quota-status" aria-live="polite"></p>
-            <p id="global-ai-quota-reset" class="global-ai-quota-reset" aria-live="polite">配額重置倒數：計算中…</p>
+            <p id="global-ai-quota-reset" class="global-ai-quota-reset" aria-live="polite" data-i18n="quotaReset">Loading…</p>
             <div id="global-ai-quota-pill" class="global-ai-quota-pill" aria-live="polite">
                 <div class="global-ai-quota-item"><span id="quota-free-limit-label">📊 今日免費用量上限</span><strong id="global-ai-quota-limit">讀取中…</strong></div>
                 <div class="global-ai-quota-item"><span id="quota-used-label">⚡ 今日已使用量</span><strong id="global-ai-quota-used">讀取中…</strong></div>
@@ -2500,7 +2500,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             body.appendChild(heading);
             const modelUsed = getModelUsageCount(value);
             const modelQuota = Number(model.dailyQuota || 0);
-            appendModelText(body, 'div', 'model-option-quota', `每日上限：${modelQuota} 次 · 今日已用：${modelUsed} 次`);
+            appendModelText(body, 'div', 'model-option-quota', runtimeUiText('modelDailyLimit').replace('{limit}', modelQuota).replace('{used}', modelUsed));
             const quotaMeters = document.createElement('div');
             quotaMeters.className = 'model-quota-meters';
             appendModelQuotaMeter(quotaMeters, model, 'rpd', modelUsed);
@@ -2523,15 +2523,15 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             toggle.checked = enabled;
             toggle.setAttribute('role', 'switch');
             toggle.setAttribute('aria-checked', String(enabled));
-            toggle.setAttribute('aria-label', `啟用 ${model.display_name}`);
-            toggle.title = enabled ? `停用 ${model.display_name}` : `啟用 ${model.display_name}`;
+            toggle.setAttribute('aria-label', runtimeUiText('modelToggleEnable').replace('{model}', model.display_name));
+            toggle.title = (enabled ? runtimeUiText('modelToggleDisable') : runtimeUiText('modelToggleEnable')).replace('{model}', model.display_name);
             toggle.addEventListener('click', (event) => event.stopPropagation());
             toggle.addEventListener('change', (event) => {
                 event.stopPropagation();
                 setModelEnabled(model.api_name, toggle.checked);
             });
             toggleWrap.appendChild(toggle);
-            appendModelText(toggleWrap, 'span', 'model-toggle-label', enabled ? '啟用' : '停用');
+            appendModelText(toggleWrap, 'span', 'model-toggle-label', enabled ? runtimeUiText('disableModel') : runtimeUiText('enableModel'));
             control.appendChild(toggleWrap);
             option.appendChild(control);
             return option;
@@ -2557,7 +2557,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             if (enabledModels.length === 0) {
                 setModelSettingsStatus(runtimeUiText('noEnabledShort'), 'error');
             } else {
-                setModelSettingsStatus(`已${enabled ? '啟用' : '停用'} ${getModelDisplayName(apiName)}；目前有 ${enabledModels.length} 個模型可供輪替。`, '');
+                setModelSettingsStatus(runtimeUiText('modelsRotateStatus').replace('{action}', enabled ? runtimeUiText('enableModel') : runtimeUiText('disableModel')).replace('{model}', getModelDisplayName(apiName)).replace('{count}', enabledModels.length), '');
             }
             renderModelOptions();
             renderCurrentModelStatus();
@@ -2622,8 +2622,8 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                     currentModelIndex = 0;
                     renderModelOptions();
                     renderCurrentModelStatus();
-                    setModelSettingsStatus('站內模型清單暫時無法載入，請按右側重新整理。', 'error');
-                    if (!silent) showError('❌ 站內免費模型清單暫時無法載入，請稍後再試。');
+                    setModelSettingsStatus(runtimeUiText('modelFetchError'), 'error');
+                    if (!silent) showError(`❌ ${runtimeUiText('modelFetchError')}`);
                     return [];
                 } finally {
                     modelCatalogPromise = null;
@@ -3263,7 +3263,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
 
                 if (err.circuitBreaker && (err.status === 503 || err.status === 'TIMEOUT')) {
                     pendingRetryRequest = null;
-                    if (userMsgEl) userMsgEl.querySelector('.msg-my').textContent = '所有已啟用模型目前都在忙碌或逾時，尚未完成回覆。';
+                    if (userMsgEl) userMsgEl.querySelector('.msg-my').textContent = runtimeUiText('allModelsBusy');
                     showError(`${ALL_ENABLED_MODELS_BUSY_MESSAGE}${attemptedText} ${speechRequest ? '請重新按學習語言語音按鈕再測試。' : '請稍後再按發送按鈕再試。'}`, { busy: true, countdownSeconds: 5, showRetryButton: false });
                 } else if (err.status === 429) {
                     pendingRetryRequest = null;
@@ -5376,7 +5376,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         const recognized = String(score.recognizedText || '').trim();
         const safeRecognized = recognized.replace(/[&"<>]/g, character => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[character]));
         const recognizedHtml = safeRecognized ? `<div class="pronunciation-recognized" data-recognized-text="${safeRecognized}">🎙️ 裝置辨識結果：<strong>${safeRecognized}</strong></div>` : '';
-        return `<div class="pronunciation-score pronunciation-score-${score.band}" data-pronunciation-score="${score.score}">${recognizedHtml}<span class="pronunciation-score-badge">🎯 發音精準度：${score.score} 分（${score.label}）</span><button type="button" class="pronunciation-retry" data-message-id="${safeMessageId}" data-busy="0" aria-busy="false" aria-label="重新挑戰發音">🔄 重新挑戰</button></div>`;
+        return `<div class="pronunciation-score pronunciation-score-${score.band}" data-pronunciation-score="${score.score}">${recognizedHtml}<span class="pronunciation-score-badge">🎯 ${runtimeUiText('formatPronunciation')}: ${score.score}</span><button type="button" class="pronunciation-retry" data-message-id="${safeMessageId}" data-busy="0" aria-busy="false" aria-label="${runtimeUiText('retrySpeech')}">🔄 ${runtimeUiText('retrySpeech')}</button></div>`;
     }
     window.GugoRenderPronunciationScore = renderScore;
 
@@ -5390,8 +5390,8 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             button.disabled = false;
             button.dataset.busy = busy ? '1' : '0';
             button.setAttribute('aria-busy', busy ? 'true' : 'false');
-            button.setAttribute('aria-label', busy ? '停止重新挑戰語音' : '重新挑戰發音');
-            button.textContent = busy ? '⏹ 停止語音挑戰' : '🔄 重新挑戰';
+            button.setAttribute('aria-label', busy ? runtimeUiText('stopSpeechChallenge') : runtimeUiText('retrySpeech'));
+            button.textContent = busy ? `⏹ ${runtimeUiText('stopSpeechChallenge')}` : `🔄 ${runtimeUiText('retrySpeech')}`;
             button.classList.toggle('retry-recording', Boolean(busy));
         });
     }
@@ -5483,7 +5483,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 return;
             }
             const seconds = Math.max(1, Math.ceil(remaining / 1000));
-            window.GugoSetSpeechComposerState?.('waiting', session.role, `倒數：${seconds} 秒後自動送出`);
+            window.GugoSetSpeechComposerState?.('waiting', session.role, runtimeUiText('speechCountdown').replace('{seconds}', seconds));
             session.countdownTimer = setTimeout(tick, Math.min(250, Math.max(50, remaining)));
         };
         tick();
@@ -5611,7 +5611,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 else if (input) { input.value = ''; input.style.height = 'auto'; }
                 session.sendTimer = setTimeout(() => {
                     session.sendTimer = null;
-                    window.GugoSetSpeechComposerState?.('sending', session.role, '正在送出語音…');
+                    window.GugoSetSpeechComposerState?.('sending', session.role, runtimeUiText('speechSend'));
                     sendMessage({ content: speechContent, inputLang: session.speechLocale, source: 'speech' });
                     setTimeout(() => window.GugoSetSpeechComposerState?.('idle'), 120);
                 }, 120);
@@ -5624,7 +5624,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         session.restartAttempts = (session.restartAttempts || 0) + 1;
         if (!silentRollover) window.GugoSetSpeechComposerState?.('reconnecting', session.role);
         if (session.mode === 'smart' && session.restartAttempts > 3) {
-            abortSession(session, '❌ 語音服務暫時無法使用，請檢查網路或稍後再試。');
+            abortSession(session, `❌ ${runtimeUiText('speechServiceError')}`);
             return;
         }
         session.state = 'restarting';
@@ -5681,7 +5681,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             session.startTimer = null;
             if (session.finalized || activeSession?.id !== session.id || !session.startPending) return;
             native.stopRecognition().catch(() => {});
-            abortSession(session, '❌ 語音服務啟動逾時，請檢查網路、麥克風權限或稍後重試。');
+            abortSession(session, `❌ ${runtimeUiText('speechStartTimeout')}`);
         }, startupTimeoutMs);
         native.startRecognition({
             language: session.speechLocale,
@@ -5707,7 +5707,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 const permissionError = /permission|denied|not.?allowed|record_audio/.test(detail);
                 if (session.stopRequested) { finalizeSession(session); return; }
                 if (permissionError) {
-                    abortSession(session, '❌ 麥克風權限未開啟，請到 Android 設定允許麥克風後再試。');
+                    abortSession(session, `❌ ${runtimeUiText('microphonePermission')}`);
                     return;
                 }
                 const silenceError = /no speech input|speech.?timeout|no.?match|timeout/.test(detail);
@@ -5729,7 +5729,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                     restartRecognition(session);
                     return;
                 }
-                abortSession(session, '❌ 語音服務暫時無法使用，請稍後再試。');
+                abortSession(session, `❌ ${runtimeUiText('speechServiceError')}`);
             }
         }).then(result => {
             if (result?.started && !session.finalized && activeSession?.id === session.id && session.startPending) {
@@ -5739,21 +5739,21 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             if (!result?.started && !session.finalized) {
                 const denied = /permission|denied|not.?allowed|record_audio/i.test(String(result?.reason || result?.error?.message || ''));
                 if (session.stopRequested) finalizeSession(session);
-                else if (denied) abortSession(session, '❌ 麥克風權限未開啟，請到 Android 設定允許麥克風後再試。');
-                else abortSession(session, '❌ 語音服務暫時無法使用，請稍後再試。');
+                else if (denied) abortSession(session, `❌ ${runtimeUiText('microphonePermission')}`);
+                else abortSession(session, `❌ ${runtimeUiText('speechServiceError')}`);
             }
         }).catch(error => {
             if (session.startTimer) { clearTimeout(session.startTimer); session.startTimer = null; }
             if (session.finalized) return;
             console.warn('Dual native STT start rejection:', error);
             if (session.stopRequested) finalizeSession(session);
-            else abortSession(session, '❌ 語音服務無法連線，請檢查網路後再試。');
+            else abortSession(session, `❌ ${runtimeUiText('speechConnectionError')}`);
         });
     }
     function startWebRecognition(session) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition || session.finalized || session.autoFinalizeRequested || session.stopRequested || activeSession?.id !== session.id) {
-            if (!session.finalized && !session.stopRequested) abortSession(session, '❌ 此瀏覽器不支援語音辨識，請改用支援語音的裝置或直接打字。');
+            if (!session.finalized && !session.stopRequested) abortSession(session, `❌ ${runtimeUiText('browserSpeechUnsupported')}`);
             return;
         }
         if (!recognition) recognition = new SpeechRecognition();
@@ -5788,11 +5788,11 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             if (session.stopRequested) { finalizeSession(session); return; }
             const detail = String(error?.error || error?.message || '').toLowerCase();
             if (/not.?allowed|permission|service-not-allowed/.test(detail)) {
-                abortSession(session, '❌ 瀏覽器未授予麥克風權限，請允許後再試。');
+                abortSession(session, `❌ ${runtimeUiText('browserMicrophonePermission')}`);
             } else if (session.mode === 'tap') {
                 restartRecognition(session);
             } else {
-                abortSession(session, '❌ 瀏覽器語音服務暫時無法使用，請稍後再試。');
+                abortSession(session, `❌ ${runtimeUiText('browserSpeechUnavailable')}`);
             }
         };
         recognition.onend = () => { session.requestActive = false; finishWithOptionalDelay(session); };
@@ -6076,8 +6076,8 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
     const UI_LANG_KEY = 'gugopro_tutor_ui_lang';
     const ADMOB_TEST_BANNER_ID = 'ca-app-pub-3940256099942544/6300978111';
     const MODES = {
-        tap: { label: '模式 A：點擊開關', description: '點擊國旗開始錄音，再次點擊停止並送出。' },
-        smart: { label: '模式 B：智慧靜音偵測', description: '點擊語音按鈕開始，停頓設定秒數後自動送出；重新說話會取消倒數並繼續錄音。' }
+        tap: { label: 'modeTapLabel', description: 'modeTapDescription' },
+        smart: { label: 'modeSmartLabel', description: 'modeSmartDescription' }
     };
     const FLAGS = { 'en-US':'🇺🇸', 'zh-TW':'🇹🇼', 'zh-CN':'🇨🇳', 'ja-JP':'🇯🇵', 'ko-KR':'🇰🇷', 'fr-FR':'🇫🇷', 'de-DE':'🇩🇪', 'es-ES':'🇪🇸', 'th-TH':'🇹🇭', 'vi-VN':'🇻🇳', 'id-ID':'🇮🇩', 'pt-BR':'🇧🇷', 'it-IT':'🇮🇹', 'ru-RU':'🇷🇺', 'ar-SA':'🇸🇦', 'hi-IN':'🇮🇳', 'ms-MY':'🇲🇾', 'nl-NL':'🇳🇱', 'pl-PL':'🇵🇱', 'tr-TR':'🇹🇷' };
     const getMode = () => {
@@ -6253,7 +6253,29 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 "noQuota": "無可用配額",
                 "uses": "使用次數",
                 "used": "已使用",
-                "remaining": "剩餘"
+                "remaining": "剩餘",
+                "modelDailyLimit": "每日上限：{limit} 次 · 今日已用：{used} 次",
+                "enableModel": "啟用",
+                "disableModel": "停用",
+                "modelToggleEnable": "啟用 {model}",
+                "modelToggleDisable": "停用 {model}",
+                "modelsRotateStatus": "已{action} {model}；目前有 {count} 個模型可供輪替。",
+                "allModelsBusy": "所有已啟用模型目前都在忙碌或逾時，尚未完成回覆。",
+                "retrySpeech": "重新挑戰發音",
+                "stopSpeechChallenge": "停止語音挑戰",
+                "speechCountdown": "倒數 {seconds} 秒後自動送出",
+                "speechServiceError": "語音服務暫時無法使用，請檢查網路或稍後再試。",
+                "speechStartTimeout": "語音服務啟動逾時，請檢查網路、麥克風權限或稍後重試。",
+                "microphonePermission": "麥克風權限未開啟，請到 Android 設定允許麥克風後再試。",
+                "speechConnectionError": "語音服務無法連線，請檢查網路後再試。",
+                "browserSpeechUnsupported": "此瀏覽器不支援語音辨識，請改用支援語音的裝置或直接打字。",
+                "browserMicrophonePermission": "瀏覽器未授予麥克風權限，請允許後再試。",
+                "browserSpeechUnavailable": "瀏覽器語音服務暫時無法使用，請稍後再試。",
+                "modeTapLabel": "模式 A：點擊開始／停止",
+                "modeTapDescription": "點擊語言按鈕開始錄音，再次點擊即可停止並送出。",
+                "modeSmartLabel": "模式 B：智慧停頓偵測",
+                "modeSmartDescription": "點擊語言按鈕開始；停頓設定秒數後自動送出，重新說話會取消倒數並繼續同一段錄音。",
+                "rightsReserved": "© 2026 GugoPro。保留所有權利。"
         },
         "en-US": {
                 "backHome": "Back to GugoPro",
@@ -6402,7 +6424,29 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 "noQuota": "No quota available",
                 "uses": "uses",
                 "used": "used",
-                "remaining": "remaining"
+                "remaining": "remaining",
+                "modelDailyLimit": "Daily limit: {limit} uses · Used today: {used}",
+                "enableModel": "Enable",
+                "disableModel": "Disable",
+                "modelToggleEnable": "Enable {model}",
+                "modelToggleDisable": "Disable {model}",
+                "modelsRotateStatus": "{action} {model}; {count} models are available for rotation.",
+                "allModelsBusy": "All enabled models are busy or timed out; no reply has been completed yet.",
+                "retrySpeech": "Retry pronunciation",
+                "stopSpeechChallenge": "Stop speech challenge",
+                "speechCountdown": "Sending automatically in {seconds}s",
+                "speechServiceError": "Speech service is temporarily unavailable. Check your connection or try again later.",
+                "speechStartTimeout": "Speech service start timed out. Check your network and microphone permission, then try again.",
+                "microphonePermission": "Microphone permission is not enabled. Allow microphone access in Android Settings and try again.",
+                "speechConnectionError": "Speech service could not connect. Check your network and try again.",
+                "browserSpeechUnsupported": "This browser does not support speech recognition. Use a compatible device or type instead.",
+                "browserMicrophonePermission": "The browser has not been granted microphone permission. Allow it and try again.",
+                "browserSpeechUnavailable": "The browser speech service is temporarily unavailable. Try again later.",
+                "modeTapLabel": "Mode A: Tap to start/stop",
+                "modeTapDescription": "Tap a language button to start recording; tap it again to stop and send.",
+                "modeSmartLabel": "Mode B: Smart pause detection",
+                "modeSmartDescription": "Tap a language button to start; speech is sent after the configured pause, and speaking again cancels the countdown and continues the same recording.",
+                "rightsReserved": "© 2026 GugoPro. All rights reserved."
         },
         "ja-JP": {
                 "backHome": "GugoPro に戻る",
@@ -6470,7 +6514,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 "nativeVoice": "ネイティブ言語での質問（発音スコアなし）",
                 "speechStart": "録音中…",
                 "speechStop": "音声を準備中…",
-                "speechSend": "音声を送信中…",
+                "speechSend": "スピーチを送信中…",
                 "speechError": "音声機能は利用できません。後で再試行してください。",
                 "retry": "再挑戦",
                 "delete": "メッセージを削除",
@@ -6551,7 +6595,29 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 "noQuota": "利用可能な割当がありません",
                 "uses": "使用回数",
                 "used": "使用済み",
-                "remaining": "残り"
+                "remaining": "残り",
+                "modelDailyLimit": "1 日の制限: {limit} の使用数 · 今日の使用数: {used}",
+                "enableModel": "有効にする",
+                "disableModel": "無効にする",
+                "modelToggleEnable": "{model} を有効にする",
+                "modelToggleDisable": "{model}を無効にする",
+                "modelsRotateStatus": "{アクション} {model}; {count} モデルはローテーション可能です。",
+                "allModelsBusy": "有効なモデルはすべてビジーまたはタイムアウトになっています。まだ返信は完了していません。",
+                "retrySpeech": "発音を再試行する",
+                "stopSpeechChallenge": "スピーチチャレンジをやめる",
+                "speechCountdown": "{seconds}s で自動送信",
+                "speechServiceError": "音声サービスは一時的にご利用いただけません。接続を確認するか、後でもう一度試してください。",
+                "speechStartTimeout": "音声サービスの開始がタイムアウトしました。ネットワークとマイクの許可を確認して、もう一度試してください。",
+                "microphonePermission": "マイクの許可が有効になっていません。 Android 設定でマイクへのアクセスを許可し、もう一度試してください。",
+                "speechConnectionError": "音声サービスに接続できませんでした。ネットワークを確認して、もう一度試してください。",
+                "browserSpeechUnsupported": "このブラウザは音声認識をサポートしていません。代わりに、互換性のあるデバイスまたはタイプを使用してください。",
+                "browserMicrophonePermission": "ブラウザにはマイクの許可が与えられていません。許可して再試行してください。",
+                "browserSpeechUnavailable": "ブラウザ音声サービスは一時的に利用できなくなります。後でもう一度試してください。",
+                "modeTapLabel": "モードA: タップして開始/停止します",
+                "modeTapDescription": "言語ボタンをタップして録音を開始します。もう一度タップすると停止して送信されます。",
+                "modeSmartLabel": "モード B: スマート一時停止検出",
+                "modeSmartDescription": "言語ボタンをタップして開始します。設定された一時停止の後に音声が送信され、再度話すとカウントダウンがキャンセルされ、同じ録音が継続されます。",
+                "rightsReserved": "© 2026 グーゴプロ。無断転載を禁じます。"
         },
         "fr-FR": {
                 "backHome": "Retour à GugoPro",
@@ -6619,7 +6685,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 "nativeVoice": "Question en langue maternelle, pas de score de prononciation",
                 "speechStart": "Enregistrement…",
                 "speechStop": "Préparation de la parole…",
-                "speechSend": "Envoi de l'audio…",
+                "speechSend": "Envoi du discours…",
                 "speechError": "La reconnaissance vocale est indisponible. Veuillez réessayer plus tard.",
                 "retry": "Réessayer",
                 "delete": "Supprimer le message",
@@ -6700,7 +6766,29 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 "noQuota": "Aucun quota disponible",
                 "uses": "utilisations",
                 "used": "utilisé",
-                "remaining": "restant"
+                "remaining": "restant",
+                "modelDailyLimit": "Limite quotidienne : {limit} utilise · Utilisé aujourd'hui : {used}",
+                "enableModel": "Activer",
+                "disableModel": "Désactiver",
+                "modelToggleEnable": "Activer {model}",
+                "modelToggleDisable": "Désactiver {model}",
+                "modelsRotateStatus": "{action} {model} ; Les modèles {count} sont disponibles pour la rotation.",
+                "allModelsBusy": "Tous les modèles activés sont occupés ou ont expiré ; aucune réponse n'a encore été complétée.",
+                "retrySpeech": "Réessayer la prononciation",
+                "stopSpeechChallenge": "Arrêter le défi de parole",
+                "speechCountdown": "Envoi automatique en {seconds}s",
+                "speechServiceError": "Le service vocal est temporairement indisponible. Vérifiez votre connexion ou réessayez plus tard.",
+                "speechStartTimeout": "Le délai de démarrage du service vocal a expiré. Vérifiez l'autorisation de votre réseau et de votre microphone, puis réessayez.",
+                "microphonePermission": "L'autorisation du microphone n'est pas activée. Autorisez l'accès au microphone dans les paramètres Android et réessayez.",
+                "speechConnectionError": "Le service vocal n'a pas pu se connecter. Vérifiez votre réseau et réessayez.",
+                "browserSpeechUnsupported": "Ce navigateur ne prend pas en charge la reconnaissance vocale. Utilisez plutôt un appareil compatible ou tapez.",
+                "browserMicrophonePermission": "Le navigateur n'a pas reçu l'autorisation de microphone. Autorisez-le et réessayez.",
+                "browserSpeechUnavailable": "Le service vocal du navigateur est temporairement indisponible. Réessayez plus tard.",
+                "modeTapLabel": "Mode A : appuyez pour démarrer/arrêter",
+                "modeTapDescription": "Appuyez sur un bouton de langue pour démarrer l'enregistrement ; appuyez dessus à nouveau pour arrêter et envoyer.",
+                "modeSmartLabel": "Mode B : détection de pause intelligente",
+                "modeSmartDescription": "Appuyez sur un bouton de langue pour commencer ; la parole est envoyée après la pause configurée, et parler à nouveau annule le compte à rebours et continue le même enregistrement.",
+                "rightsReserved": "© 2026 GugoPro. Tous droits réservés."
         },
         "de-DE": {
                 "backHome": "Zurück zu GugoPro",
@@ -6768,7 +6856,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 "nativeVoice": "Frage in Muttersprache, keine Aussprachebewertung",
                 "speechStart": "Aufnahme…",
                 "speechStop": "Sprache wird vorbereitet…",
-                "speechSend": "Sprache wird gesendet…",
+                "speechSend": "Rede senden…",
                 "speechError": "Sprachfunktion ist nicht verfügbar. Bitte später erneut versuchen.",
                 "retry": "Erneut versuchen",
                 "delete": "Nachricht löschen",
@@ -6849,7 +6937,29 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 "noQuota": "Kein Kontingent verfügbar",
                 "uses": "Verwendungen",
                 "used": "verwendet",
-                "remaining": "verbleibend"
+                "remaining": "verbleibend",
+                "modelDailyLimit": "Tageslimit: {limit} verwendet · Heute verwendet: {used}",
+                "enableModel": "Aktivieren",
+                "disableModel": "Deaktivieren",
+                "modelToggleEnable": "Aktivieren Sie {model}",
+                "modelToggleDisable": "Deaktivieren Sie {model}",
+                "modelsRotateStatus": "{action} {model}; {count}-Modelle stehen für die Rotation zur Verfügung.",
+                "allModelsBusy": "Alle aktivierten Modelle sind ausgelastet oder haben eine Zeitüberschreitung. Es ist noch keine Antwort abgeschlossen.",
+                "retrySpeech": "Wiederholen Sie die Aussprache",
+                "stopSpeechChallenge": "Stoppen Sie die Sprachherausforderung",
+                "speechCountdown": "Automatisches Senden in {seconds}s",
+                "speechServiceError": "Der Sprachdienst ist vorübergehend nicht verfügbar. Überprüfen Sie Ihre Verbindung oder versuchen Sie es später noch einmal.",
+                "speechStartTimeout": "Zeitüberschreitung beim Start des Sprachdiensts. Überprüfen Sie Ihre Netzwerk- und Mikrofonberechtigungen und versuchen Sie es dann erneut.",
+                "microphonePermission": "Die Mikrofonberechtigung ist nicht aktiviert. Erlauben Sie den Mikrofonzugriff in den Android-Einstellungen und versuchen Sie es erneut.",
+                "speechConnectionError": "Der Speech-Dienst konnte keine Verbindung herstellen. Überprüfen Sie Ihr Netzwerk und versuchen Sie es erneut.",
+                "browserSpeechUnsupported": "Dieser Browser unterstützt keine Spracherkennung. Verwenden Sie stattdessen ein kompatibles Gerät oder einen kompatiblen Typ.",
+                "browserMicrophonePermission": "Dem Browser wurde keine Mikrofonberechtigung erteilt. Lassen Sie es zu und versuchen Sie es erneut.",
+                "browserSpeechUnavailable": "Der Browser-Sprachdienst ist vorübergehend nicht verfügbar. Versuchen Sie es später noch einmal.",
+                "modeTapLabel": "Modus A: Zum Starten/Stoppen tippen",
+                "modeTapDescription": "Tippen Sie auf eine Sprachschaltfläche, um die Aufnahme zu starten. Tippen Sie erneut darauf, um den Vorgang zu stoppen und zu senden.",
+                "modeSmartLabel": "Modus B: Intelligente Pausenerkennung",
+                "modeSmartDescription": "Tippen Sie zum Starten auf eine Sprachschaltfläche. Nach der konfigurierten Pause wird die Sprache gesendet. Durch erneutes Sprechen wird der Countdown abgebrochen und die gleiche Aufzeichnung fortgesetzt.",
+                "rightsReserved": "© 2026 GugoPro. Alle Rechte vorbehalten."
         },
         "es-ES": {
                 "backHome": "Volver a GugoPro",
@@ -6917,7 +7027,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 "nativeVoice": "Pregunta en idioma nativo, sin puntuación de pronunciación",
                 "speechStart": "Grabando…",
                 "speechStop": "Preparando audio…",
-                "speechSend": "Enviando audio…",
+                "speechSend": "Enviando discurso…",
                 "speechError": "El reconocimiento de voz no está disponible. Por favor, inténtalo más tarde.",
                 "retry": "Reintentar",
                 "delete": "Eliminar mensaje",
@@ -6998,7 +7108,29 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 "noQuota": "No hay cuota disponible",
                 "uses": "usos",
                 "used": "usado",
-                "remaining": "restante"
+                "remaining": "restante",
+                "modelDailyLimit": "Límite diario: usos de {limit} · Usado hoy: {used}",
+                "enableModel": "Permitir",
+                "disableModel": "Desactivar",
+                "modelToggleEnable": "Habilitar {model}",
+                "modelToggleDisable": "Deshabilitar {model}",
+                "modelsRotateStatus": "{acción} {model}; Los modelos {count} están disponibles para rotación.",
+                "allModelsBusy": "Todos los modelos habilitados están ocupados o se agotó el tiempo de espera; aún no se ha completado ninguna respuesta.",
+                "retrySpeech": "Reintentar la pronunciación",
+                "stopSpeechChallenge": "Detener el desafío del habla",
+                "speechCountdown": "Envío automático en {seconds}s",
+                "speechServiceError": "El servicio de voz no está disponible temporalmente. Comprueba tu conexión o vuelve a intentarlo más tarde.",
+                "speechStartTimeout": "Se agotó el tiempo de inicio del servicio de voz. Verifique el permiso de su red y micrófono, luego inténtelo nuevamente.",
+                "microphonePermission": "El permiso del micrófono no está habilitado. Permita el acceso al micrófono en la configuración de Android y vuelva a intentarlo.",
+                "speechConnectionError": "El servicio de voz no pudo conectarse. Verifique su red e inténtelo nuevamente.",
+                "browserSpeechUnsupported": "Este navegador no admite el reconocimiento de voz. Utilice un dispositivo compatible o escriba en su lugar.",
+                "browserMicrophonePermission": "Al navegador no se le ha concedido permiso de micrófono. Permítelo y vuelve a intentarlo.",
+                "browserSpeechUnavailable": "El servicio de voz del navegador no está disponible temporalmente. Vuelve a intentarlo más tarde.",
+                "modeTapLabel": "Modo A: toque para iniciar/detener",
+                "modeTapDescription": "Toque un botón de idioma para comenzar a grabar; tóquelo nuevamente para detenerlo y enviarlo.",
+                "modeSmartLabel": "Modo B: Detección de pausa inteligente",
+                "modeSmartDescription": "Toque un botón de idioma para comenzar; La voz se envía después de la pausa configurada, y al volver a hablar se cancela la cuenta regresiva y se continúa con la misma grabación.",
+                "rightsReserved": "© 2026 GugoPro. Reservados todos los derechos."
         },
         "zh-CN": {
                 "backHome": "返回 GugoPro",
@@ -7066,7 +7198,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 "nativeVoice": "母语提问，不评分发音",
                 "speechStart": "正在录音…",
                 "speechStop": "正在准备语音…",
-                "speechSend": "正在发送语音…",
+                "speechSend": "发送演讲...",
                 "speechError": "语音不可用。请稍后重试。",
                 "retry": "重试挑战",
                 "delete": "删除消息",
@@ -7147,7 +7279,29 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 "noQuota": "没有可用配额",
                 "uses": "使用次数",
                 "used": "已使用",
-                "remaining": "剩余"
+                "remaining": "剩余",
+                "modelDailyLimit": "每日限额：{limit} 使用 · 今日使用：{used}",
+                "enableModel": "使能够",
+                "disableModel": "禁用",
+                "modelToggleEnable": "启用{model}",
+                "modelToggleDisable": "禁用{model}",
+                "modelsRotateStatus": "{动作} {model}; {count} 模型可供轮换。",
+                "allModelsBusy": "所有启用的模型都忙或超时；尚未完成答复。",
+                "retrySpeech": "重试发音",
+                "stopSpeechChallenge": "停止演讲挑战",
+                "speechCountdown": "在 {seconds} 中自动发送",
+                "speechServiceError": "语音服务暂时不可用。检查您的连接或稍后重试。",
+                "speechStartTimeout": "语音服务启动超时。检查您的网络和麦克风权限，然后重试。",
+                "microphonePermission": "麦克风权限未启用。在 Android 设置中允许麦克风访问，然后重试。",
+                "speechConnectionError": "语音服务无法连接。检查您的网络并重试。",
+                "browserSpeechUnsupported": "该浏览器不支持语音识别。请改用兼容的设备或类型。",
+                "browserMicrophonePermission": "浏览器尚未获得麦克风权限。允许它并重试。",
+                "browserSpeechUnavailable": "浏览器语音服务暂时不可用。稍后再试。",
+                "modeTapLabel": "模式A：点击开始/停止",
+                "modeTapDescription": "点击语言按钮开始录音；再次点击即可停止并发送。",
+                "modeSmartLabel": "模式B：智能暂停检测",
+                "modeSmartDescription": "点击语言按钮即可开始；在配置的暂停后发送语音，再次讲话将取消倒计时并继续相同的录音。",
+                "rightsReserved": "© 2026 GugoPro。保留所有权利。"
         },
         "ko-KR": {
                 "backHome": "GugoPro로 돌아가기",
@@ -7215,7 +7369,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 "nativeVoice": "원어민 언어의 질문(발음 점수 없음)",
                 "speechStart": "녹음 중…",
                 "speechStop": "음성 준비 중…",
-                "speechSend": "음성 전송 중…",
+                "speechSend": "연설을 보내는 중…",
                 "speechError": "음성 기능을 사용할 수 없습니다. 나중에 다시 시도해 주세요.",
                 "retry": "다시 도전",
                 "delete": "메시지 삭제",
@@ -7296,7 +7450,29 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 "noQuota": "사용 가능한 할당량이 없습니다",
                 "uses": "사용 횟수",
                 "used": "사용됨",
-                "remaining": "남은"
+                "remaining": "남은",
+                "modelDailyLimit": "일일 한도: {limit} 사용 · 금일 사용: {used}",
+                "enableModel": "할 수 있게 하다",
+                "disableModel": "장애를 입히다",
+                "modelToggleEnable": "{model} 활성화",
+                "modelToggleDisable": "{model} 비활성화",
+                "modelsRotateStatus": "{작업} {model}; {count} 모델은 교체가 가능합니다.",
+                "allModelsBusy": "활성화된 모든 모델이 사용 중이거나 시간 초과되었습니다. 아직 답변이 완료되지 않았습니다.",
+                "retrySpeech": "재시도 발음",
+                "stopSpeechChallenge": "말하기 챌린지 중지",
+                "speechCountdown": "{seconds}으로 자동 전송",
+                "speechServiceError": "음성 서비스를 일시적으로 사용할 수 없습니다. 연결을 확인하거나 나중에 다시 시도하세요.",
+                "speechStartTimeout": "음성 서비스 시작 시간이 초과되었습니다. 네트워크 및 마이크 권한을 확인한 후 다시 시도하세요.",
+                "microphonePermission": "마이크 권한이 활성화되어 있지 않습니다. Android 설정에서 마이크 액세스를 허용하고 다시 시도하세요.",
+                "speechConnectionError": "음성 서비스를 연결할 수 없습니다. 네트워크를 확인하고 다시 시도하세요.",
+                "browserSpeechUnsupported": "이 브라우저는 음성 인식을 지원하지 않습니다. 대신 호환되는 장치나 유형을 사용하세요.",
+                "browserMicrophonePermission": "브라우저에 마이크 권한이 부여되지 않았습니다. 허용하고 다시 시도해 보세요.",
+                "browserSpeechUnavailable": "브라우저 음성 서비스를 일시적으로 사용할 수 없습니다. 나중에 다시 시도하세요.",
+                "modeTapLabel": "모드 A: 탭하여 시작/중지",
+                "modeTapDescription": "녹음을 시작하려면 언어 버튼을 탭하세요. 중지하고 보내려면 다시 탭하세요.",
+                "modeSmartLabel": "모드 B: 스마트 일시 정지 감지",
+                "modeSmartDescription": "시작하려면 언어 버튼을 탭하세요. 구성된 일시 중지 후에 음성이 전송되고, 다시 말하면 카운트다운이 취소되고 동일한 녹음이 계속됩니다.",
+                "rightsReserved": "© 2026 구고프로. 모든 권리 보유."
         },
         "th-TH": {
                 "backHome": "กลับสู่ GugoPro",
@@ -7364,7 +7540,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 "nativeVoice": "คำถามเป็นภาษาพื้นเมือง ไม่มีคะแนนการออกเสียง",
                 "speechStart": "กำลังอัดเสียง…",
                 "speechStop": "กำลังเตรียมเสียง…",
-                "speechSend": "กำลังส่งเสียง…",
+                "speechSend": "กำลังส่งคำพูด...",
                 "speechError": "ไม่สามารถใช้ฟีเจอร์เสียงได้ กรุณาลองอีกครั้งภายหลัง.",
                 "retry": "ลองอีกครั้ง",
                 "delete": "ลบข้อความ",
@@ -7445,7 +7621,29 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 "noQuota": "ไม่มีโควต้า",
                 "uses": "การใช้งาน",
                 "used": "ใช้แล้ว",
-                "remaining": "เหลือ"
+                "remaining": "เหลือ",
+                "modelDailyLimit": "ขีดจำกัดรายวัน: {limit} ใช้ · ใช้แล้ววันนี้: {used}",
+                "enableModel": "เปิดใช้งาน",
+                "disableModel": "ปิดการใช้งาน",
+                "modelToggleEnable": "เปิดใช้งาน {model}",
+                "modelToggleDisable": "ปิดการใช้งาน {model}",
+                "modelsRotateStatus": "{การกระทำ} {model}; {count} รุ่นมีให้หมุนเวียน",
+                "allModelsBusy": "รุ่นที่เปิดใช้งานทั้งหมดไม่ว่างหรือหมดเวลา ยังไม่มีการตอบกลับเสร็จสมบูรณ์",
+                "retrySpeech": "ลองออกเสียงอีกครั้ง",
+                "stopSpeechChallenge": "หยุดความท้าทายในการพูด",
+                "speechCountdown": "ส่งอัตโนมัติใน {seconds}",
+                "speechServiceError": "บริการคำพูดไม่พร้อมใช้งานชั่วคราว ตรวจสอบการเชื่อมต่อของคุณหรือลองอีกครั้งในภายหลัง",
+                "speechStartTimeout": "หมดเวลาเริ่มบริการคำพูด ตรวจสอบการอนุญาตเครือข่ายและไมโครโฟนของคุณ แล้วลองอีกครั้ง",
+                "microphonePermission": "ไม่ได้เปิดใช้งานการอนุญาตไมโครโฟน อนุญาตให้เข้าถึงไมโครโฟนในการตั้งค่า Android แล้วลองอีกครั้ง",
+                "speechConnectionError": "ไม่สามารถเชื่อมต่อบริการคำพูดได้ ตรวจสอบเครือข่ายของคุณแล้วลองอีกครั้ง",
+                "browserSpeechUnsupported": "เบราว์เซอร์นี้ไม่รองรับการรู้จำเสียง ใช้อุปกรณ์หรือประเภทที่รองรับแทน",
+                "browserMicrophonePermission": "เบราว์เซอร์ไม่ได้รับอนุญาตให้ใช้ไมโครโฟน อนุญาตและลองอีกครั้ง",
+                "browserSpeechUnavailable": "บริการเสียงพูดของเบราว์เซอร์ไม่พร้อมใช้งานชั่วคราว ลองอีกครั้งในภายหลัง",
+                "modeTapLabel": "โหมด A: แตะเพื่อเริ่ม/หยุด",
+                "modeTapDescription": "แตะปุ่มภาษาเพื่อเริ่มการบันทึก แตะอีกครั้งเพื่อหยุดและส่ง",
+                "modeSmartLabel": "โหมด B: การตรวจจับการหยุดชั่วคราวอัจฉริยะ",
+                "modeSmartDescription": "แตะปุ่มภาษาเพื่อเริ่มต้น คำพูดจะถูกส่งหลังจากการหยุดชั่วคราวที่กำหนดไว้ และการพูดอีกครั้งจะยกเลิกการนับถอยหลังและดำเนินการบันทึกต่อเหมือนเดิม",
+                "rightsReserved": "© 2026 กูโกโปร. สงวนลิขสิทธิ์."
         },
         "vi-VN": {
                 "backHome": "Trở về GugoPro",
@@ -7513,7 +7711,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 "nativeVoice": "Câu hỏi bằng ngôn ngữ bản ngữ, không có điểm phát âm",
                 "speechStart": "Đang ghi âm…",
                 "speechStop": "Đang chuẩn bị giọng nói…",
-                "speechSend": "Đang gửi giọng nói…",
+                "speechSend": "Đang gửi bài phát biểu…",
                 "speechError": "Tính năng giọng nói hiện không khả dụng. Vui lòng thử lại sau.",
                 "retry": "Thử lại",
                 "delete": "Xóa tin nhắn",
@@ -7594,7 +7792,29 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 "noQuota": "Không có hạn mức",
                 "uses": "lượt sử dụng",
                 "used": "đã sử dụng",
-                "remaining": "còn lại"
+                "remaining": "còn lại",
+                "modelDailyLimit": "Giới hạn hàng ngày: Số lượt sử dụng {limit} · Được sử dụng hôm nay: {used}",
+                "enableModel": "Cho phép",
+                "disableModel": "Vô hiệu hóa",
+                "modelToggleEnable": "Kích hoạt {model}",
+                "modelToggleDisable": "Vô hiệu hóa {model}",
+                "modelsRotateStatus": "{hành động} {model}; Các mô hình {count} có sẵn để xoay vòng.",
+                "allModelsBusy": "Tất cả các kiểu máy được kích hoạt đều bận hoặc hết thời gian chờ; vẫn chưa có câu trả lời nào được hoàn thành",
+                "retrySpeech": "Thử phát âm lại",
+                "stopSpeechChallenge": "Thử thách dừng lời nói",
+                "speechCountdown": "Gửi tự động bằng {seconds}",
+                "speechServiceError": "Dịch vụ lời nói tạm thời không khả dụng. Hãy kiểm tra kết nối của bạn hoặc thử lại sau.",
+                "speechStartTimeout": "Đã hết thời gian bắt đầu dịch vụ giọng nói. Hãy kiểm tra quyền truy cập mạng và micrô của bạn rồi thử lại.",
+                "microphonePermission": "Quyền sử dụng micrô chưa được bật. Cho phép truy cập micrô trong Cài đặt Android và thử lại.",
+                "speechConnectionError": "Dịch vụ lời nói không thể kết nối. Hãy kiểm tra mạng của bạn và thử lại.",
+                "browserSpeechUnsupported": "Trình duyệt này không hỗ trợ nhận dạng giọng nói. Thay vào đó hãy sử dụng một thiết bị hoặc loại tương thích.",
+                "browserMicrophonePermission": "Trình duyệt chưa được cấp quyền sử dụng micrô. Cho phép nó và thử lại.",
+                "browserSpeechUnavailable": "Dịch vụ giọng nói của trình duyệt tạm thời không khả dụng. Hãy thử lại sau.",
+                "modeTapLabel": "Chế độ A: Nhấn để bắt đầu/dừng",
+                "modeTapDescription": "Nhấn vào nút ngôn ngữ để bắt đầu ghi; chạm vào nó một lần nữa để dừng và gửi.",
+                "modeSmartLabel": "Chế độ B: Phát hiện tạm dừng thông minh",
+                "modeSmartDescription": "Nhấn vào nút ngôn ngữ để bắt đầu; lời nói được gửi sau khoảng dừng được định cấu hình và việc nói lại sẽ hủy đếm ngược và tiếp tục ghi âm tương tự.",
+                "rightsReserved": "© 2026 GugoPro. Mọi quyền được bảo lưu."
         },
         "id-ID": {
                 "backHome": "Kembali ke GugoPro",
@@ -7662,7 +7882,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 "nativeVoice": "Pertanyaan dalam bahasa asli, tanpa skor pengucapan",
                 "speechStart": "Merekam…",
                 "speechStop": "Mempersiapkan ucapan…",
-                "speechSend": "Mengirim ucapan…",
+                "speechSend": "Mengirim pidato…",
                 "speechError": "Pengenalan ucapan tidak tersedia. Silakan coba lagi nanti.",
                 "retry": "Coba lagi",
                 "delete": "Hapus pesan",
@@ -7743,7 +7963,29 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 "noQuota": "Tidak ada kuota tersedia",
                 "uses": "penggunaan",
                 "used": "digunakan",
-                "remaining": "tersisa"
+                "remaining": "tersisa",
+                "modelDailyLimit": "Batas harian: Penggunaan {limit} · Digunakan hari ini: {used}",
+                "enableModel": "Memungkinkan",
+                "disableModel": "Cacat",
+                "modelToggleEnable": "Aktifkan {model}",
+                "modelToggleDisable": "Nonaktifkan {model}",
+                "modelsRotateStatus": "{aksi} {model}; Model {count} tersedia untuk rotasi.",
+                "allModelsBusy": "Semua model yang diaktifkan sedang sibuk atau waktunya habis; belum ada balasan yang selesai.",
+                "retrySpeech": "Coba lagi pengucapannya",
+                "stopSpeechChallenge": "Hentikan tantangan bicara",
+                "speechCountdown": "Mengirim secara otomatis dalam {seconds}",
+                "speechServiceError": "Layanan ucapan untuk sementara tidak tersedia. Periksa koneksi Anda atau coba lagi nanti.",
+                "speechStartTimeout": "Waktu mulai layanan ucapan habis. Periksa izin jaringan dan mikrofon Anda, lalu coba lagi.",
+                "microphonePermission": "Izin mikrofon tidak diaktifkan. Izinkan akses mikrofon di Pengaturan Android dan coba lagi.",
+                "speechConnectionError": "Layanan ucapan tidak dapat tersambung. Periksa jaringan Anda dan coba lagi.",
+                "browserSpeechUnsupported": "Browser ini tidak mendukung pengenalan suara. Gunakan perangkat yang kompatibel atau ketik saja.",
+                "browserMicrophonePermission": "Browser belum diberikan izin mikrofon. Izinkan dan coba lagi.",
+                "browserSpeechUnavailable": "Layanan ucapan browser untuk sementara tidak tersedia. Coba lagi nanti.",
+                "modeTapLabel": "Mode A: Ketuk untuk memulai/berhenti",
+                "modeTapDescription": "Ketuk tombol bahasa untuk mulai merekam; ketuk lagi untuk berhenti dan mengirim.",
+                "modeSmartLabel": "Mode B: Deteksi jeda cerdas",
+                "modeSmartDescription": "Ketuk tombol bahasa untuk memulai; ucapan dikirim setelah jeda yang dikonfigurasi, dan berbicara lagi membatalkan hitungan mundur dan melanjutkan rekaman yang sama.",
+                "rightsReserved": "© 2026 GugoPro. Semua hak dilindungi undang-undang."
         },
         "pt-BR": {
                 "backHome": "Voltar ao GugoPro",
@@ -7811,7 +8053,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 "nativeVoice": "Pergunta no idioma nativo, sem pontuação de pronúncia",
                 "speechStart": "Gravando…",
                 "speechStop": "Preparando fala…",
-                "speechSend": "Enviando fala…",
+                "speechSend": "Enviando discurso…",
                 "speechError": "Reconhecimento de fala indisponível. Por favor, tente novamente mais tarde.",
                 "retry": "Tentar novamente",
                 "delete": "Excluir mensagem",
@@ -7892,7 +8134,29 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 "noQuota": "Não há cota disponível",
                 "uses": "usos",
                 "used": "utilizado",
-                "remaining": "restante"
+                "remaining": "restante",
+                "modelDailyLimit": "Limite diário: {limit} usa · Usado hoje: {used}",
+                "enableModel": "Habilitar",
+                "disableModel": "Desativar",
+                "modelToggleEnable": "Habilitar {model}",
+                "modelToggleDisable": "Desativar {model}",
+                "modelsRotateStatus": "{ação} {model}; Os modelos {count} estão disponíveis para rotação.",
+                "allModelsBusy": "Todos os modelos habilitados estão ocupados ou expirados; nenhuma resposta foi concluída ainda.",
+                "retrySpeech": "Tentar novamente a pronúncia",
+                "stopSpeechChallenge": "Pare o desafio da fala",
+                "speechCountdown": "Enviando automaticamente em {seconds}s",
+                "speechServiceError": "O serviço de fala está temporariamente indisponível. Verifique sua conexão ou tente novamente mais tarde.",
+                "speechStartTimeout": "O início do serviço de fala expirou. Verifique a permissão da sua rede e do microfone e tente novamente.",
+                "microphonePermission": "A permissão do microfone não está habilitada. Permita o acesso ao microfone nas configurações do Android e tente novamente.",
+                "speechConnectionError": "O serviço de fala não pôde se conectar. Verifique sua rede e tente novamente.",
+                "browserSpeechUnsupported": "Este navegador não oferece suporte ao reconhecimento de fala. Use um dispositivo ou tipo compatível.",
+                "browserMicrophonePermission": "O navegador não recebeu permissão de microfone. Permita e tente novamente.",
+                "browserSpeechUnavailable": "O serviço de fala do navegador está temporariamente indisponível. Tente novamente mais tarde.",
+                "modeTapLabel": "Modo A: Toque para iniciar/parar",
+                "modeTapDescription": "Toque em um botão de idioma para iniciar a gravação; toque novamente para parar e enviar.",
+                "modeSmartLabel": "Modo B: detecção de pausa inteligente",
+                "modeSmartDescription": "Toque em um botão de idioma para começar; a fala é enviada após a pausa configurada e falar novamente cancela a contagem regressiva e continua a mesma gravação.",
+                "rightsReserved": "© 2026 GugoPro. Todos os direitos reservados."
         },
         "it-IT": {
                 "backHome": "Torna a GugoPro",
@@ -7960,7 +8224,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 "nativeVoice": "Domanda nella lingua madre, senza punteggio di pronuncia",
                 "speechStart": "Registrazione…",
                 "speechStop": "Preparazione audio…",
-                "speechSend": "Invio audio…",
+                "speechSend": "Invio discorso…",
                 "speechError": "Audio non disponibile. Riprova più tardi.",
                 "retry": "Riprova",
                 "delete": "Elimina messaggio",
@@ -8041,7 +8305,29 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 "noQuota": "Nessuna quota disponibile",
                 "uses": "usi",
                 "used": "usato",
-                "remaining": "rimanente"
+                "remaining": "rimanente",
+                "modelDailyLimit": "Limite giornaliero: utilizzi {limit} · Utilizzato oggi: {used}",
+                "enableModel": "Abilitare",
+                "disableModel": "Disabilita",
+                "modelToggleEnable": "Abilita {model}",
+                "modelToggleDisable": "Disabilita {model}",
+                "modelsRotateStatus": "{azione} {model}; I modelli {count} sono disponibili per la rotazione.",
+                "allModelsBusy": "Tutti i modelli abilitati sono occupati o in timeout; nessuna risposta è stata ancora completata.",
+                "retrySpeech": "Riprova la pronuncia",
+                "stopSpeechChallenge": "Interrompi la sfida vocale",
+                "speechCountdown": "Invio automatico in {seconds}",
+                "speechServiceError": "Il servizio vocale è temporaneamente non disponibile. Controlla la connessione o riprova più tardi.",
+                "speechStartTimeout": "Timeout per l'avvio del servizio vocale. Controlla l'autorizzazione della rete e del microfono, quindi riprova.",
+                "microphonePermission": "L'autorizzazione del microfono non è abilitata. Consenti l'accesso al microfono nelle Impostazioni Android e riprova.",
+                "speechConnectionError": "Il servizio vocale non è riuscito a connettersi. Controlla la tua rete e riprova.",
+                "browserSpeechUnsupported": "Questo browser non supporta il riconoscimento vocale. Utilizza invece un dispositivo o un tipo compatibile.",
+                "browserMicrophonePermission": "Al browser non è stata concessa l'autorizzazione per l'uso del microfono. Consentilo e riprova.",
+                "browserSpeechUnavailable": "Il servizio vocale del browser è temporaneamente non disponibile. Riprova più tardi.",
+                "modeTapLabel": "Modalità A: toccare per avviare/interrompere",
+                "modeTapDescription": "Tocca il pulsante della lingua per avviare la registrazione; toccalo di nuovo per interrompere e inviare.",
+                "modeSmartLabel": "Modalità B: rilevamento intelligente della pausa",
+                "modeSmartDescription": "Tocca il pulsante della lingua per iniziare; la voce viene inviata dopo la pausa configurata e parlare nuovamente annulla il conto alla rovescia e continua la stessa registrazione.",
+                "rightsReserved": "© 2026 GugoPro. Tutti i diritti riservati."
         },
         "ru-RU": {
                 "backHome": "Вернуться в GugoPro",
@@ -8190,7 +8476,29 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 "noQuota": "Нет доступной квоты",
                 "uses": "использования",
                 "used": "использовано",
-                "remaining": "Осталось"
+                "remaining": "Осталось",
+                "modelDailyLimit": "Дневной лимит: используется {limit} · Использовано сегодня: {used}",
+                "enableModel": "Давать возможность",
+                "disableModel": "Запрещать",
+                "modelToggleEnable": "Включить {model}",
+                "modelToggleDisable": "Отключить {model}",
+                "modelsRotateStatus": "{действие} ТОКЕН0ТОКЕН; Модели {count} доступны для ротации.",
+                "allModelsBusy": "Все включенные модели заняты или время ожидания истекло; ни один ответ еще не завершен.",
+                "retrySpeech": "Повторить произношение",
+                "stopSpeechChallenge": "Остановить речевой вызов",
+                "speechCountdown": "Автоматическая отправка в {seconds}",
+                "speechServiceError": "Речевой сервис временно недоступен. Проверьте подключение или повторите попытку позже.",
+                "speechStartTimeout": "Время запуска речевой службы истекло. Проверьте разрешения вашей сети и микрофона, а затем повторите попытку.",
+                "microphonePermission": "Разрешение микрофона не включено. Разрешите доступ к микрофону в настройках Android и повторите попытку.",
+                "speechConnectionError": "Речевой сервис не удалось подключиться. Проверьте свою сеть и повторите попытку.",
+                "browserSpeechUnsupported": "Этот браузер не поддерживает распознавание речи. Вместо этого используйте совместимое устройство или тип.",
+                "browserMicrophonePermission": "Браузеру не предоставлено разрешение на использование микрофона. Разрешите это и повторите попытку.",
+                "browserSpeechUnavailable": "Служба речи браузера временно недоступна. Повторите попытку позже.",
+                "modeTapLabel": "Режим A: нажмите, чтобы запустить/остановить",
+                "modeTapDescription": "Нажмите кнопку языка, чтобы начать запись; коснитесь его еще раз, чтобы остановить и отправить.",
+                "modeSmartLabel": "Режим B: интеллектуальное обнаружение паузы",
+                "modeSmartDescription": "Нажмите кнопку языка, чтобы начать; речь отправляется после настроенной паузы, а повторный разговор отменяет обратный отсчет и продолжает ту же запись.",
+                "rightsReserved": "© 2026 ГугоПро. Все права защищены."
         },
         "ar-SA": {
                 "backHome": "العودة إلى GugoPro",
@@ -8258,7 +8566,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 "nativeVoice": "أسئلة باللغة الأم، بدون تقييم للنطق",
                 "speechStart": "جارٍ التسجيل…",
                 "speechStop": "جارٍ تحضير الكلام…",
-                "speechSend": "جارٍ إرسال الصوت…",
+                "speechSend": "جارٍ إرسال الكلام...",
                 "speechError": "الخدمة الصوتية غير متاحة. يرجى المحاولة لاحقًا.",
                 "retry": "أعد المحاولة",
                 "delete": "حذف الرسالة",
@@ -8339,7 +8647,29 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 "noQuota": "لا توجد حصة متاحة",
                 "uses": "استخدامات",
                 "used": "تم الاستخدام",
-                "remaining": "المتبقي"
+                "remaining": "المتبقي",
+                "modelDailyLimit": "الحد اليومي: استخدامات {limit} · المستخدم اليوم: {used}",
+                "enableModel": "يُمكَِن",
+                "disableModel": "إبطال",
+                "modelToggleEnable": "تمكين {model}",
+                "modelToggleDisable": "تعطيل {model}",
+                "modelsRotateStatus": "{الإجراء} الرمز المميز0TOKEN؛ نماذج {count} متاحة للتناوب.",
+                "allModelsBusy": "كافة النماذج الممكّنة مشغولة أو انتهت مهلةها؛ لم يكتمل الرد بعد.",
+                "retrySpeech": "أعد محاولة النطق",
+                "stopSpeechChallenge": "وقف التحدي الكلام",
+                "speechCountdown": "الإرسال تلقائيًا في {seconds}s",
+                "speechServiceError": "خدمة الكلام غير متاحة مؤقتًا. تحقق من اتصالك أو حاول مرة أخرى لاحقًا.",
+                "speechStartTimeout": "انتهت مهلة بدء خدمة الكلام. تحقق من إذن الشبكة والميكروفون، ثم حاول مرة أخرى.",
+                "microphonePermission": "لم يتم تمكين إذن الميكروفون. اسمح بالوصول إلى الميكروفون في إعدادات Android وحاول مرة أخرى.",
+                "speechConnectionError": "تعذر الاتصال بخدمة الكلام. تحقق من شبكتك وحاول مرة أخرى.",
+                "browserSpeechUnsupported": "هذا المتصفح لا يدعم التعرف على الكلام. استخدم جهازًا متوافقًا أو اكتب بدلاً من ذلك.",
+                "browserMicrophonePermission": "لم يتم منح المتصفح إذن الميكروفون. اسمح بذلك وحاول مرة أخرى.",
+                "browserSpeechUnavailable": "خدمة الكلام في المتصفح غير متاحة مؤقتًا. حاول مرة أخرى لاحقًا.",
+                "modeTapLabel": "الوضع أ: اضغط لبدء/إيقاف",
+                "modeTapDescription": "اضغط على زر اللغة لبدء التسجيل؛ اضغط عليه مرة أخرى للتوقف والإرسال.",
+                "modeSmartLabel": "الوضع ب: كشف الإيقاف المؤقت الذكي",
+                "modeSmartDescription": "اضغط على زر اللغة للبدء؛ يتم إرسال الكلام بعد الإيقاف المؤقت الذي تم تكوينه، ويؤدي التحدث مرة أخرى إلى إلغاء العد التنازلي ويستمر في نفس التسجيل.",
+                "rightsReserved": "© 2026 جوجوبرو. جميع الحقوق محفوظة."
         },
         "hi-IN": {
                 "backHome": "GugoPro पर वापस जाएँ",
@@ -8407,7 +8737,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 "nativeVoice": "मूल भाषा में प्रश्न, कोई उच्चारण स्कोर नहीं",
                 "speechStart": "रिकॉर्डिंग…",
                 "speechStop": "भाषण तैयार किया जा रहा है…",
-                "speechSend": "भाषण भेजा जा रहा है…",
+                "speechSend": "भाषण भेजा जा रहा है...",
                 "speechError": "भाषण उपलब्ध नहीं है। कृपया बाद में पुनः प्रयास करें।",
                 "retry": "फिर से प्रयास करें",
                 "delete": "संदेश हटाएँ",
@@ -8488,7 +8818,29 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 "noQuota": "कोई कोटा उपलब्ध नहीं है",
                 "uses": "उपयोग",
                 "used": "उपयोग किया",
-                "remaining": "शेष"
+                "remaining": "शेष",
+                "modelDailyLimit": "दैनिक सीमा: {limit} उपयोग · आज उपयोग किया गया: {used}",
+                "enableModel": "सक्षम",
+                "disableModel": "अक्षम करना",
+                "modelToggleEnable": "{model} सक्षम करें",
+                "modelToggleDisable": "{model} अक्षम करें",
+                "modelsRotateStatus": "{कार्रवाई} {model}; {count} मॉडल रोटेशन के लिए उपलब्ध हैं।",
+                "allModelsBusy": "सभी सक्षम मॉडल व्यस्त हैं या समयबाह्य हैं; अभी तक कोई उत्तर पूरा नहीं हुआ है.",
+                "retrySpeech": "उच्चारण पुनः प्रयास करें",
+                "stopSpeechChallenge": "भाषण बंद करो चुनौती",
+                "speechCountdown": "{seconds}s में स्वचालित रूप से भेजा जा रहा है",
+                "speechServiceError": "भाषण सेवा अस्थायी रूप से अनुपलब्ध है. अपना कनेक्शन जाँचें या बाद में पुनः प्रयास करें।",
+                "speechStartTimeout": "भाषण सेवा प्रारंभ होने का समय समाप्त हो गया. अपने नेटवर्क और माइक्रोफ़ोन की अनुमति जांचें, फिर पुनः प्रयास करें।",
+                "microphonePermission": "माइक्रोफ़ोन अनुमति सक्षम नहीं है. Android सेटिंग में माइक्रोफ़ोन एक्सेस की अनुमति दें और पुनः प्रयास करें।",
+                "speechConnectionError": "वाक् सेवा कनेक्ट नहीं हो सकी. अपना नेटवर्क जाँचें और पुनः प्रयास करें।",
+                "browserSpeechUnsupported": "यह ब्राउज़र वाक् पहचान का समर्थन नहीं करता. इसके बजाय किसी संगत डिवाइस या प्रकार का उपयोग करें।",
+                "browserMicrophonePermission": "ब्राउज़र को माइक्रोफ़ोन अनुमति नहीं दी गई है. इसे अनुमति दें और पुनः प्रयास करें।",
+                "browserSpeechUnavailable": "ब्राउज़र वाक् सेवा अस्थायी रूप से अनुपलब्ध है. बाद में पुन: प्रयास।",
+                "modeTapLabel": "मोड ए: शुरू/बंद करने के लिए टैप करें",
+                "modeTapDescription": "रिकॉर्डिंग शुरू करने के लिए भाषा बटन पर टैप करें; रोकने और भेजने के लिए इसे फिर से टैप करें।",
+                "modeSmartLabel": "मोड बी: स्मार्ट पॉज़ डिटेक्शन",
+                "modeSmartDescription": "आरंभ करने के लिए भाषा बटन टैप करें; कॉन्फ़िगर किए गए विराम के बाद भाषण भेजा जाता है, और दोबारा बोलने से उलटी गिनती रद्द हो जाती है और वही रिकॉर्डिंग जारी रहती है।",
+                "rightsReserved": "© 2026 गुगोप्रो। सर्वाधिकार सुरक्षित।"
         },
         "ms-MY": {
                 "backHome": "Kembali ke GugoPro",
@@ -8637,7 +8989,29 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 "noQuota": "Tiada kuota tersedia",
                 "uses": "penggunaan",
                 "used": "digunakan",
-                "remaining": "tersisa"
+                "remaining": "tersisa",
+                "modelDailyLimit": "Had harian: penggunaan {limit} · Digunakan hari ini: {used}",
+                "enableModel": "Dayakan",
+                "disableModel": "Lumpuhkan",
+                "modelToggleEnable": "Dayakan {model}",
+                "modelToggleDisable": "Lumpuhkan {model}",
+                "modelsRotateStatus": "{action} {model}; Model {count} tersedia untuk putaran.",
+                "allModelsBusy": "Semua model yang didayakan sibuk atau tamat masa; tiada balasan telah selesai.",
+                "retrySpeech": "Cuba semula sebutan",
+                "stopSpeechChallenge": "Hentikan cabaran ucapan",
+                "speechCountdown": "Menghantar secara automatik dalam {seconds}",
+                "speechServiceError": "Perkhidmatan pertuturan tidak tersedia buat sementara waktu. Semak sambungan anda atau cuba lagi kemudian.",
+                "speechStartTimeout": "Perkhidmatan pertuturan mula tamat masa. Semak kebenaran rangkaian dan mikrofon anda, kemudian cuba lagi.",
+                "microphonePermission": "Kebenaran mikrofon tidak didayakan. Benarkan akses mikrofon dalam Tetapan Android dan cuba lagi.",
+                "speechConnectionError": "Perkhidmatan pertuturan tidak dapat disambungkan. Semak rangkaian anda dan cuba lagi.",
+                "browserSpeechUnsupported": "Penyemak imbas ini tidak menyokong pengecaman pertuturan. Gunakan peranti atau taip yang serasi sebaliknya.",
+                "browserMicrophonePermission": "Penyemak imbas belum diberikan kebenaran mikrofon. Benarkan dan cuba lagi.",
+                "browserSpeechUnavailable": "Perkhidmatan pertuturan penyemak imbas tidak tersedia buat sementara waktu. Cuba lagi nanti.",
+                "modeTapLabel": "Mod A: Ketik untuk mula/berhenti",
+                "modeTapDescription": "Ketik butang bahasa untuk mula merakam; ketik sekali lagi untuk berhenti dan menghantar.",
+                "modeSmartLabel": "Mod B: Pengesanan jeda pintar",
+                "modeSmartDescription": "Ketik butang bahasa untuk bermula; pertuturan dihantar selepas jeda yang dikonfigurasikan, dan bercakap sekali lagi membatalkan kira detik dan meneruskan rakaman yang sama.",
+                "rightsReserved": "© 2026 GugoPro. Semua hak terpelihara."
         },
         "nl-NL": {
                 "backHome": "Terug naar GugoPro",
@@ -8786,7 +9160,29 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 "noQuota": "Geen quotum beschikbaar",
                 "uses": "gebruik",
                 "used": "gebruikt",
-                "remaining": "overig"
+                "remaining": "overig",
+                "modelDailyLimit": "Dagelijkse limiet: {limit} gebruikt · Vandaag gebruikt: {used}",
+                "enableModel": "Inschakelen",
+                "disableModel": "Uitzetten",
+                "modelToggleEnable": "{model} inschakelen",
+                "modelToggleDisable": "{model} uitschakelen",
+                "modelsRotateStatus": "{actie} {model}; {count}-modellen zijn beschikbaar voor rotatie.",
+                "allModelsBusy": "Alle ingeschakelde modellen zijn bezet of er is een time-out opgetreden; er is nog geen antwoord voltooid.",
+                "retrySpeech": "Probeer de uitspraak opnieuw",
+                "stopSpeechChallenge": "Stop de spraakuitdaging",
+                "speechCountdown": "Automatisch verzenden in {seconds}s",
+                "speechServiceError": "De spraakservice is tijdelijk niet beschikbaar. Controleer uw verbinding of probeer het later opnieuw.",
+                "speechStartTimeout": "Er is een time-out opgetreden bij het starten van de spraakservice. Controleer uw netwerk- en microfoonrechten en probeer het opnieuw.",
+                "microphonePermission": "Microfoontoestemming is niet ingeschakeld. Sta microfoontoegang toe in de Android-instellingen en probeer het opnieuw.",
+                "speechConnectionError": "Spraakservice kan geen verbinding maken. Controleer uw netwerk en probeer het opnieuw.",
+                "browserSpeechUnsupported": "Deze browser ondersteunt geen spraakherkenning. Gebruik in plaats daarvan een compatibel apparaat of type.",
+                "browserMicrophonePermission": "Er is geen microfoontoestemming verleend aan de browser. Laat het toe en probeer het opnieuw.",
+                "browserSpeechUnavailable": "De browserspraakservice is tijdelijk niet beschikbaar. Probeer het later opnieuw.",
+                "modeTapLabel": "Modus A: Tik om te starten/stoppen",
+                "modeTapDescription": "Tik op een taalknop om de opname te starten; tik er nogmaals op om te stoppen en te verzenden.",
+                "modeSmartLabel": "Modus B: Slimme pauzedetectie",
+                "modeSmartDescription": "Tik op een taalknop om te starten; spraak wordt verzonden na de geconfigureerde pauze, en opnieuw spreken annuleert het aftellen en gaat door met dezelfde opname.",
+                "rightsReserved": "© 2026 GugoPro. Alle rechten voorbehouden."
         },
         "pl-PL": {
                 "backHome": "Powrót do GugoPro",
@@ -8854,7 +9250,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 "nativeVoice": "Pytanie w języku ojczystym, bez oceny wymowy",
                 "speechStart": "Nagrywanie…",
                 "speechStop": "Przygotowywanie mowy…",
-                "speechSend": "Wysyłanie nagrania…",
+                "speechSend": "Wysyłam mowę…",
                 "speechError": "Rozpoznawanie mowy niedostępne. Spróbuj ponownie później.",
                 "retry": "Spróbuj ponownie",
                 "delete": "Usuń wiadomość",
@@ -8935,7 +9331,29 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 "noQuota": "Brak dostępnego limitu",
                 "uses": "użycia",
                 "used": "użyto",
-                "remaining": "pozostały"
+                "remaining": "pozostały",
+                "modelDailyLimit": "Limit dzienny: użycia {limit} · Używany dzisiaj: {used}",
+                "enableModel": "Włączać",
+                "disableModel": "Wyłączyć",
+                "modelToggleEnable": "Włącz {model}",
+                "modelToggleDisable": "Wyłącz {model}",
+                "modelsRotateStatus": "{akcja} {model}; Modele {count} są dostępne do rotacji.",
+                "allModelsBusy": "Wszystkie włączone modele są zajęte lub przekroczono limit czasu; żadna odpowiedź nie została jeszcze ukończona.",
+                "retrySpeech": "Spróbuj ponownie wymówić",
+                "stopSpeechChallenge": "Zatrzymaj wyzwanie mowy",
+                "speechCountdown": "Automatyczne wysyłanie w {seconds}-ach",
+                "speechServiceError": "Usługa mowy jest chwilowo niedostępna. Sprawdź połączenie lub spróbuj ponownie później.",
+                "speechStartTimeout": "Upłynął limit czasu uruchomienia usługi mowy. Sprawdź uprawnienia sieci i mikrofonu, a następnie spróbuj ponownie.",
+                "microphonePermission": "Uprawnienia do mikrofonu nie są włączone. Zezwól na dostęp do mikrofonu w Ustawieniach Androida i spróbuj ponownie.",
+                "speechConnectionError": "Usługa mowy nie mogła się połączyć. Sprawdź swoją sieć i spróbuj ponownie.",
+                "browserSpeechUnsupported": "Ta przeglądarka nie obsługuje rozpoznawania mowy. Zamiast tego użyj kompatybilnego urządzenia lub napisz.",
+                "browserMicrophonePermission": "Przeglądarka nie uzyskała uprawnień do korzystania z mikrofonu. Zezwól na to i spróbuj ponownie.",
+                "browserSpeechUnavailable": "Usługa mowy przeglądarki jest chwilowo niedostępna. Spróbuj ponownie później.",
+                "modeTapLabel": "Tryb A: Stuknij, aby rozpocząć/zatrzymać",
+                "modeTapDescription": "Stuknij przycisk języka, aby rozpocząć nagrywanie; dotknij go ponownie, aby zatrzymać i wysłać.",
+                "modeSmartLabel": "Tryb B: Inteligentne wykrywanie pauzy",
+                "modeSmartDescription": "Naciśnij przycisk języka, aby rozpocząć; mowa jest wysyłana po skonfigurowanej pauzie, a ponowne mówienie anuluje odliczanie i kontynuuje to samo nagrywanie.",
+                "rightsReserved": "© 2026 GugoPro. Wszelkie prawa zastrzeżone."
         },
         "tr-TR": {
                 "backHome": "GugoPro'ya geri dön",
@@ -9084,7 +9502,29 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 "noQuota": "Kota yok",
                 "uses": "kullanımlar",
                 "used": "kullanıldı",
-                "remaining": "kalan"
+                "remaining": "kalan",
+                "modelDailyLimit": "Günlük limit: {limit} kullanımları · Bugün kullanılan: {used}",
+                "enableModel": "Olanak vermek",
+                "disableModel": "Devre dışı bırakmak",
+                "modelToggleEnable": "{model}'i etkinleştir",
+                "modelToggleDisable": "{model}'i devre dışı bırak",
+                "modelsRotateStatus": "{action} {model}; {count} modelleri rotasyona uygundur.",
+                "allModelsBusy": "Etkinleştirilen tüm modeller meşgul veya zaman aşımına uğradı; henüz cevap tamamlanmadı.",
+                "retrySpeech": "Telaffuzu yeniden dene",
+                "stopSpeechChallenge": "Konuşma meydan okumasını durdur",
+                "speechCountdown": "{seconds}'lerde otomatik olarak gönderme",
+                "speechServiceError": "Konuşma hizmeti geçici olarak kullanılamıyor. Bağlantınızı kontrol edin veya daha sonra tekrar deneyin.",
+                "speechStartTimeout": "Konuşma hizmetinin başlatılması zaman aşımına uğradı. Ağınızı ve mikrofon izninizi kontrol edip tekrar deneyin.",
+                "microphonePermission": "Mikrofon izni etkin değil. Android Ayarlarında mikrofon erişimine izin verin ve tekrar deneyin.",
+                "speechConnectionError": "Konuşma hizmeti bağlanamadı. Ağınızı kontrol edip tekrar deneyin.",
+                "browserSpeechUnsupported": "Bu tarayıcı konuşma tanımayı desteklemiyor. Uyumlu bir cihaz kullanın veya bunun yerine yazın.",
+                "browserMicrophonePermission": "Tarayıcıya mikrofon izni verilmedi. İzin verin ve tekrar deneyin.",
+                "browserSpeechUnavailable": "Tarayıcı konuşma hizmeti geçici olarak kullanılamıyor. Daha sonra tekrar deneyin.",
+                "modeTapLabel": "Mod A: Başlatmak/durdurmak için dokunun",
+                "modeTapDescription": "Kaydı başlatmak için bir dil düğmesine dokunun; Durdurmak ve göndermek için tekrar dokunun.",
+                "modeSmartLabel": "Mod B: Akıllı duraklatma tespiti",
+                "modeSmartDescription": "Başlamak için bir dil düğmesine dokunun; yapılandırılmış duraklamanın ardından konuşma gönderilir ve tekrar konuşmak geri sayımı iptal eder ve aynı kayda devam eder.",
+                "rightsReserved": "© 2026 GugoPro. Her hakkı saklıdır."
         }
 };
     const UI_FALLBACK_LANG = 'en-US';
@@ -9115,6 +9555,9 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         const reset = document.getElementById('global-ai-quota-reset'); if (reset && /計算中|calculating/i.test(reset.textContent)) reset.textContent = uiText('quotaReset');
         const quotaItems = document.querySelectorAll('#global-ai-quota-pill .global-ai-quota-item'); if (quotaItems[0]) quotaItems[0].childNodes[0].textContent = `📊 ${uiText('freeLimit')}`; if (quotaItems[1]) quotaItems[1].childNodes[0].textContent = `⚡ ${uiText('usedToday')}`;
         const amazon = document.querySelectorAll('.amazon-link'); if (amazon[0]) amazon[0].lastChild.textContent = ` ${uiText('amazonUS')}`; if (amazon[1]) amazon[1].lastChild.textContent = ` ${uiText('amazonJP')}`;
+        const kofi = document.querySelector('.kofi-button'); if (kofi) kofi.textContent = uiText('buyCoffee');
+        const copyright = document.querySelector('.drawer-contact-copyright'); if (copyright) copyright.textContent = uiText('rightsReserved');
+        const modelTitle = document.getElementById('model-settings-title'); if (modelTitle) modelTitle.textContent = uiText('modelSettings');
         const levelLabels = {A1:'levelA1',A2:'levelA2',B1:'levelB1',B2:'levelB2',C1:'levelC1',C2:'levelC2'}; const levelSelect = document.getElementById('study-level'); if (levelSelect) Array.from(levelSelect.options).forEach(option => { if (levelLabels[option.value]) option.textContent = uiText(levelLabels[option.value]); });
         const studyModeLabels = {conversation:'modeConversation',review:'modeReview',exam:'modeExam'}; const studyModeSelect = document.getElementById('study-mode'); if (studyModeSelect) Array.from(studyModeSelect.options).forEach(option => { if (studyModeLabels[option.value]) option.textContent = uiText(studyModeLabels[option.value]); });
         const studyTitle = document.getElementById('study-plan-room'); if (studyTitle && typeof getActiveRoom === 'function' && getActiveRoom()) studyTitle.textContent = uiText('currentRoomHint').replace('{room}', getActiveRoom().name);
@@ -9123,14 +9566,20 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         const speechSection = document.getElementById('speech-mode-section'); if (speechSection) { const title = speechSection.querySelector('.menu-title'); if (title) title.textContent = `🎙️ ${uiText('speechVoice') || 'Voice input'}`; const silence = speechSection.querySelector('.speech-silence-setting'); if (silence) silence.childNodes[0].textContent = `${uiText('silenceSeconds')} `; const cue = speechSection.querySelector('.speech-start-cue-setting'); if (cue) cue.childNodes[1].textContent = uiText('startCue'); }
         document.querySelectorAll('.modal-overlay button, .btn-full').forEach(button => { if (button.textContent.trim() === '關閉') button.textContent = uiText('close'); if (button.textContent.trim() === '取消') button.textContent = uiText('cancel'); });
         const welcomeKeys = ['welcomeDock','welcomeMaterial','welcomeVocab','welcomeDictionaries','welcomeTopics','welcomeLanguage','welcomeSpeech']; document.querySelectorAll('.welcome-card li').forEach((li, index) => { const textNode = Array.from(li.childNodes).find(node => node.nodeType === Node.TEXT_NODE); if (textNode && welcomeKeys[index]) textNode.nodeValue = ` ${uiText(welcomeKeys[index])}`; });
+        const speechModeSelect = document.getElementById('speech-mode-select');
+        if (speechModeSelect) Array.from(speechModeSelect.options).forEach(option => { if (option.value === 'tap') option.textContent = uiText('modeTap'); if (option.value === 'smart') option.textContent = uiText('modeSmart'); });
+        const refreshModels = document.getElementById('btn-refresh-models'); if (refreshModels) { refreshModels.textContent = uiText('refreshModels'); refreshModels.setAttribute('aria-label', uiText('refreshModels')); }
         if (typeof updateComposerLanguageUI === 'function') updateComposerLanguageUI();
         if (typeof updateCapsuleLabels === 'function') updateCapsuleLabels();
+        if (typeof renderModelOptions === 'function') renderModelOptions();
         if (typeof renderCurrentModelStatus === 'function') renderCurrentModelStatus();
         if (typeof renderGlobalAIQuota === 'function') renderGlobalAIQuota();
     }
     window.GugoUiText = uiText;
     window.GugoApplyUiTranslations = applyUiTranslations;
     window.GugoGetUiLanguage = () => localStorage.getItem(UI_LANG_KEY) || 'zh-TW';
+    window.addEventListener('DOMContentLoaded', () => { window.GugoApplyUiTranslations?.(); }, { once: true });
+    window.addEventListener('load', () => { window.GugoApplyUiTranslations?.(); }, { once: true });
     window.GugoSetUiLanguage = value => {
         const lang = String(value || 'zh-TW');
         localStorage.setItem(UI_LANG_KEY, lang);
@@ -9399,7 +9848,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         state.beforeStart?.();
         window.GugoSpeechMode = speechMode();
         window.GugoSpeechActiveControl = button;
-        setSpeechComposerState('recording', state.role, `${state.role === 'learning' ? '學習語言' : '母語'}正在錄音…`);
+        setSpeechComposerState('recording', state.role, `${state.role === 'learning' ? runtimeUiText('learningLanguage') : runtimeUiText('myLanguage')}正在錄音…`);
         const result = window.GugoStartDualSpeech(state.role, state.challengeMessageId || null, state.challengeTarget || '', button);
         if (!window.GugoSpeechSessionActive && result !== true && result !== false) {
             state.startFailed?.();
@@ -9534,7 +9983,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             sendButton.onclick = event => {
                 const input = document.getElementById('user-text');
                 if (!String(input?.value || '').trim()) return originalSend?.call(sendButton, event);
-                setSpeechComposerState('sending', '', '正在送出訊息…');
+                setSpeechComposerState('sending', '', runtimeUiText('speechSend'));
                 const result = originalSend?.call(sendButton, event);
                 Promise.resolve(result).catch(() => {}).finally(() => setTimeout(() => setSpeechComposerState('idle'), 250));
                 return result;
