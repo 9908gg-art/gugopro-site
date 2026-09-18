@@ -173,19 +173,12 @@
             cursor: pointer;
         }
 
-        /* Keep the fixed SEO help control clear of the header language menu. */
+        /* Keep the FAQ control in normal document flow so it scrolls like the rest of the page. */
         body .ai-seo-help-toggle {
-            top: 0.75rem !important;
-            right: 13rem !important;
-        }
-        @media (max-width: 900px) {
-            body .ai-seo-help-toggle { right: 14rem !important; }
-        }
-        @media (max-width: 600px) {
-            body .ai-seo-help-toggle {
-                top: 3.65rem !important;
-                right: 0.65rem !important;
-            }
+            position: static !important;
+            display: flex !important;
+            width: fit-content;
+            margin: 14px auto !important;
         }
 
         /* Main Container - Uniform Symmetrical Layout */
@@ -938,6 +931,75 @@
             if (partnerButton) partnerButton.title = partnerText;
         }
 
+        const seoCopy = {
+            'zh-TW': { title: 'AI 同聲傳譯與即時雙語口說導師：原理、操作與常見問題', intro: '以即時語音與文字輸入協助雙向翻譯、會議及旅行溝通；輸出內容應視為輔助草稿。', principleTitle: '功能原理與使用限制', principle: '即時翻譯流程可抽象為語音轉文字 → 語言翻譯 → 文字轉語音；任何一層的辨識或語境錯誤都可能傳遞到最後結果。', guideTitle: '三步驟使用指南', steps: ['選擇來源與目標語言並確認麥克風權限。','以短句測試轉錄、翻譯與播放，必要時手動修正。','正式溝通前核對專有名詞、數字、法律與醫療用語。'], faqTitle: '實用 FAQ', faq: [['能取代專業口譯嗎？','不能。正式、法律、醫療或高風險情境應由合格專業人員確認。'],['為什麼翻譯會延遲？','語音辨識、網路、模型回應與語音合成都可能增加延遲；縮短句子通常較容易即時處理。'],['會保證翻譯完全正確嗎？','不會。方言、噪音、上下文與專有名詞都可能造成錯誤。']] },
+            'zh-CN': { title: 'AI 同声传译与实时双语口语助手：原理、操作与常见问题', intro: '通过实时语音和文字输入协助双向翻译、会议与旅行沟通；输出内容仅作为辅助草稿。', principleTitle: '功能原理与使用限制', principle: '实时翻译流程可概括为语音转文字 → 语言翻译 → 文字转语音；任何环节的识别或语境错误都可能影响最终结果。', guideTitle: '三步使用指南', steps: ['选择来源和目标语言并确认麦克风权限。','用短句测试转录、翻译和播放，必要时手动修正。','正式沟通前核对专有名词、数字、法律和医疗用语。'], faqTitle: '实用 FAQ', faq: [['能取代专业口译吗？','不能。正式、法律、医疗或高风险场景应由合格专业人员确认。'],['为什么翻译会延迟？','语音识别、网络、模型响应和语音合成都可能增加延迟；缩短句子通常更容易即时处理。'],['能保证翻译完全正确吗？','不能。方言、噪音、上下文和专有名词都可能造成错误。']] },
+            'ja-JP': { title: 'AI 対面リアルタイム翻訳：仕組み・使い方・よくある質問', intro: 'リアルタイムの音声と文字入力で、会話・会議・旅行の双方向翻訳を支援します。出力は参考用の下書きです。', principleTitle: '仕組みと注意点', principle: '翻訳は音声認識 → 言語翻訳 → 音声合成の流れで処理されます。各段階の誤りが結果に影響する場合があります。', guideTitle: '3ステップの使い方', steps: ['入力言語と出力言語を選び、マイクの許可を確認します。','短い文で認識・翻訳・再生をテストし、必要なら修正します。','正式な会話では固有名詞、数字、法律・医療用語を確認します。'], faqTitle: 'よくある質問', faq: [['専門通訳の代わりになりますか？','いいえ。正式・法律・医療など重要な場面では専門家に確認してください。'],['翻訳が遅いのはなぜですか？','音声認識、ネットワーク、モデル応答、音声合成が遅延の原因になる場合があります。'],['完全な正確さは保証されますか？','保証されません。方言、雑音、文脈、固有名詞で誤りが生じることがあります。']] },
+            'ko-KR': { title: 'AI 실시간 양방향 통역기: 원리와 사용법 및 FAQ', intro: '실시간 음성과 텍스트 입력으로 대화, 회의, 여행의 양방향 번역을 돕습니다. 결과는 참고용 초안입니다.', principleTitle: '작동 원리와 한계', principle: '음성 인식 → 언어 번역 → 음성 합성 단계로 처리되며 각 단계의 오류가 최종 결과에 영향을 줄 수 있습니다.', guideTitle: '3단계 사용법', steps: ['입력·출력 언어를 선택하고 마이크 권한을 확인합니다.','짧은 문장으로 인식·번역·재생을 테스트합니다.','중요한 대화에서는 고유명사, 숫자, 법률·의료 용어를 확인합니다.'], faqTitle: '자주 묻는 질문', faq: [['전문 통역을 대신할 수 있나요?','아니요. 공식·법률·의료 등 중요한 상황에서는 전문가에게 확인하세요.'],['번역이 지연되는 이유는 무엇인가요?','음성 인식, 네트워크, 모델 응답, 음성 합성에 시간이 걸릴 수 있습니다.'],['완벽한 정확도를 보장하나요?','보장하지 않습니다. 방언, 소음, 문맥, 고유명사로 오류가 생길 수 있습니다.']] },
+            'fr-FR': { title: 'Traducteur vocal en temps réel : fonctionnement, guide et FAQ', intro: 'Aide à traduire les conversations, réunions et voyages avec la voix et le texte en temps réel. Les résultats sont indicatifs.', principleTitle: 'Fonctionnement et limites', principle: 'Le flux est parole → texte → traduction → synthèse vocale ; une erreur à chaque étape peut affecter le résultat.', guideTitle: 'Guide en trois étapes', steps: ['Choisissez les langues et vérifiez l’autorisation du microphone.','Testez avec des phrases courtes et corrigez si nécessaire.','Vérifiez les noms propres, chiffres et termes juridiques ou médicaux.'], faqTitle: 'FAQ', faq: [['Remplace-t-il un interprète professionnel ?','Non. Faites vérifier les échanges officiels, juridiques ou médicaux par un professionnel.'],['Pourquoi la traduction est-elle lente ?','La reconnaissance vocale, le réseau, le modèle et la synthèse vocale peuvent ajouter un délai.'],['La précision est-elle garantie ?','Non. Les accents, le bruit, le contexte et les noms propres peuvent provoquer des erreurs.']] },
+            'de-DE': { title: 'Echtzeit-Übersetzer: Funktionsweise, Anleitung und FAQ', intro: 'Unterstützt Gespräche, Meetings und Reisen mit Sprache und Text in Echtzeit. Die Ausgabe dient nur als Orientierung.', principleTitle: 'Funktionsweise und Grenzen', principle: 'Der Ablauf ist Sprache → Text → Übersetzung → Sprachausgabe; Fehler in jeder Stufe können das Ergebnis beeinflussen.', guideTitle: 'Anleitung in drei Schritten', steps: ['Sprachen auswählen und Mikrofonberechtigung prüfen.','Mit kurzen Sätzen testen und bei Bedarf korrigieren.','Eigennamen, Zahlen sowie rechtliche und medizinische Begriffe prüfen.'], faqTitle: 'FAQ', faq: [['Ersetzt das Tool professionelle Dolmetscher?','Nein. Offizielle, rechtliche oder medizinische Gespräche müssen fachlich geprüft werden.'],['Warum dauert die Übersetzung?','Spracherkennung, Netzwerk, Modellantwort und Sprachausgabe können Verzögerungen verursachen.'],['Ist die Genauigkeit garantiert?','Nein. Akzente, Geräusche, Kontext und Eigennamen können Fehler verursachen.']] },
+            'es-ES': { title: 'Traductor en tiempo real: funcionamiento, guía y preguntas frecuentes', intro: 'Ayuda a traducir conversaciones, reuniones y viajes con voz y texto en tiempo real. El resultado es orientativo.', principleTitle: 'Funcionamiento y límites', principle: 'El flujo es voz → texto → traducción → síntesis de voz; un error en cualquier etapa puede afectar al resultado.', guideTitle: 'Guía en tres pasos', steps: ['Elige los idiomas y comprueba el permiso del micrófono.','Prueba con frases cortas y corrige cuando sea necesario.','Comprueba nombres propios, cifras y términos legales o médicos.'], faqTitle: 'Preguntas frecuentes', faq: [['¿Sustituye a un intérprete profesional?','No. Los intercambios oficiales, legales o médicos deben ser revisados por un profesional.'],['¿Por qué se retrasa la traducción?','El reconocimiento de voz, la red, el modelo y la síntesis pueden añadir demora.'],['¿Se garantiza la precisión?','No. Los acentos, el ruido, el contexto y los nombres propios pueden causar errores.']] }
+        };
+        const seoEnglish = { title: 'AI Real-Time Conversation Translator: How It Works, Guide and FAQ', intro: 'Use real-time voice and text input to assist conversations, meetings and travel. Outputs are reference drafts only.', principleTitle: 'How it works and limitations', principle: 'The flow is speech recognition → language translation → text-to-speech. Errors at any stage can affect the final result.', guideTitle: 'Three-step guide', steps: ['Choose the source and target languages and allow microphone access.','Test with short sentences and correct the result when needed.','Verify names, numbers, legal terms and medical terms before important conversations.'], faqTitle: 'Frequently asked questions', faq: [['Can it replace a professional interpreter?','No. Have official, legal, medical or high-risk communication checked by a qualified professional.'],['Why can translation be delayed?','Speech recognition, network conditions, model responses and speech synthesis can add latency.'],['Is perfect accuracy guaranteed?','No. Accents, noise, context and proper names can cause errors.']] };
+        function updateSeoContent(langKey) {
+            const copy = seoCopy[langKey] || seoEnglish;
+            const section = document.querySelector('.tool-seo-content');
+            if (!section) return;
+            const h2 = section.querySelector('h2'); const p = section.querySelector('p'); const h3 = section.querySelectorAll('h3');
+            if (h2) h2.textContent = copy.title; if (p) p.textContent = copy.intro;
+            if (h3[0]) h3[0].textContent = copy.principleTitle; if (h3[1]) h3[1].textContent = copy.guideTitle; if (h3[2]) h3[2].textContent = copy.faqTitle;
+            const paragraphs = section.querySelectorAll('p'); if (paragraphs[1]) paragraphs[1].textContent = copy.principle;
+            section.querySelectorAll('ol li').forEach((li, i) => { if (copy.steps[i]) li.textContent = copy.steps[i]; });
+            section.querySelectorAll('details').forEach((detail, i) => { if (!copy.faq[i]) return; const summary=detail.querySelector('summary'); const answer=detail.querySelector('p'); summary.textContent=copy.faq[i][0]; answer.textContent=copy.faq[i][1]; });
+            const drawer=document.getElementById('ai-seo-help-drawer');
+            if (drawer) {
+                drawer.setAttribute('aria-label', copy.faqTitle);
+                const drawerTitle = drawer.querySelector('.ai-seo-drawer__title');
+                if (drawerTitle) drawerTitle.textContent = copy.faqTitle;
+                const closeButton = drawer.querySelector('.ai-seo-drawer__close');
+                if (closeButton) closeButton.setAttribute('aria-label', copy.faqTitle);
+            }
+            const faqToggleLabel = document.querySelector('.ai-seo-help-toggle span:last-child');
+            if (faqToggleLabel) faqToggleLabel.textContent = i18n[langKey]?.faq || copy.faqTitle;
+        }
+        function updateVisibleSeo(langKey) {
+            const section = document.querySelector('.seo-section');
+            if (!section || langKey === 'zh-TW') return;
+            const copy = seoEnglish;
+            const heading = section.querySelector('h2');
+            const intro = section.querySelector(':scope > p');
+            if (heading) heading.innerHTML = '<i class="fa-solid fa-language"></i> GugoPro AI Real-Time Face-to-Face Conversation Translator';
+            if (intro) intro.innerHTML = 'A <strong>two-way real-time voice translator</strong> for travelers, international teams and language learners. Use the browser speech engine to translate conversations from either side of the phone without installing an app.';
+            const cards = section.querySelectorAll(':scope > div > div');
+            const cardCopy = [
+                ['180° face-to-face view', 'Tap the flip control to rotate the other speaker’s text 180 degrees for comfortable reading when the phone is placed on a table.'],
+                ['Two conversation modes', 'Choose tap mode or walkie-talkie mode to match short exchanges, longer sentences and noisy environments.'],
+                ['18 supported languages', 'Choose from the language menu and use the repeat control to replay the latest spoken translation.']
+            ];
+            cards.forEach((card, i) => { if (!cardCopy[i]) return; const h=card.querySelector('h3'); const p=card.querySelector('p'); if (h) h.innerHTML = `${h.querySelector('i')?.outerHTML || ''} ${cardCopy[i][0]}`; if (p) p.textContent = cardCopy[i][1]; });
+            const faqHeading = section.querySelector(':scope > div:last-child h3');
+            if (faqHeading) faqHeading.innerHTML = '<i class="fa-solid fa-circle-question" style="color: var(--primary-neon);"></i> Usage Guide and Frequently Asked Questions (FAQ)';
+            const faqCopy = [
+                ['Q1: How do I start a face-to-face conversation?', 'Place the phone between both speakers and use the flip control when needed. Tap the upper or lower card to speak; the tool translates and reads the result aloud.'],
+                ['Q2: Why is speech recognition not responding?', 'Check microphone permission and volume. Safari on iOS and Chrome on Android generally provide the broadest browser speech support.'],
+                ['Q3: How do I copy a translated result?', 'Use the copy control at the top-right of a card to copy the translated text to the clipboard.']
+            ];
+            section.querySelectorAll('h4').forEach((h, i) => { if (!faqCopy[i]) return; h.textContent = faqCopy[i][0]; const p=h.parentElement.querySelector('p'); if (p) p.textContent = faqCopy[i][1]; });
+        }
+        function updateSeoFooter(langKey) {
+            const footer = document.querySelector('.site-contact-footer');
+            if (!footer) return;
+            const labels = { 'zh-TW':['聯絡我們 / Contact Us','支援信箱'], 'zh-CN':['联系我们 / Contact Us','支持邮箱'], 'ja-JP':['お問い合わせ / Contact Us','サポートメール'], 'ko-KR':['문의하기 / Contact Us','지원 이메일'], 'fr-FR':['Nous contacter / Contact Us','E-mail support'], 'de-DE':['Kontakt / Contact Us','Support-E-Mail'], 'es-ES':['Contacto / Contact Us','Correo de soporte'] }[langKey] || ['Contact Us','Support Email'];
+            const link = footer.querySelector('a[href*="contact.html"]'); if (link) link.textContent = labels[0];
+            const email = footer.querySelector('a[href^="mailto:"]'); if (email && email.previousSibling) email.previousSibling.textContent = ` ${labels[1]}: `;
+            const bottom = document.querySelector('.footer-bottom');
+            if (bottom && langKey !== 'zh-TW') {
+                const links = bottom.querySelectorAll('a');
+                ['Home', 'About', 'Disclaimer', 'Privacy Policy', 'Terms of Service', 'Contact Us', 'Support'].forEach((label, i) => { if (links[i]) links[i].textContent = label; });
+                const disclaimer = bottom.querySelector('.disclaimer'); if (disclaimer) disclaimer.textContent = 'Disclaimer: This tool uses browser speech engines and public translation endpoints for everyday communication, travel and learning reference only.';
+                const copyright = bottom.querySelector('p:not(.disclaimer)'); if (copyright) copyright.textContent = '© 2026 GugoPro (gugopro.com). All rights reserved. AI two-way voice translation tools.';
+            }
+        }
         function updateUI(langKey) {
             currentLangKey = langKey;
             const t = i18n[langKey] || i18n['zh'];
@@ -961,6 +1023,9 @@
             document.documentElement.lang = langKey || 'en-US';
             const uiSelector = document.getElementById('ui-lang-toggle');
             if (uiSelector) uiSelector.value = langKey;
+            updateSeoContent(langKey);
+            updateVisibleSeo(langKey);
+            updateSeoFooter(langKey);
         }
 
         function initSelectors(defaultSelfCode = 'zh-TW') {
@@ -1415,6 +1480,9 @@
         // Initialize key status on load
         document.addEventListener('DOMContentLoaded', () => {
             updateTranslatorKeyUI();
+            updateSeoContent(currentLangKey);
+            updateVisibleSeo(currentLangKey);
+            updateSeoFooter(currentLangKey);
         });
 
     </script>
