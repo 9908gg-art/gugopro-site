@@ -804,19 +804,51 @@
         };
 
         const languages = [
-            { code: 'zh-TW', name: '繁體中文 (台灣)' },
-            { code: 'zh-CN', name: '简体中文' },
-            { code: 'en-US', name: 'English (US)' },
-            { code: 'ja-JP', name: '日本語' },
-            { code: 'ko-KR', name: '한국어' },
-            { code: 'th-TH', name: 'ไทย' },
-            { code: 'vi-VN', name: 'Tiếng Việt' },
-            { code: 'fr-FR', name: 'Français' },
-            { code: 'de-DE', name: 'Deutsch' },
-            { code: 'es-ES', name: 'Español' },
-            { code: 'it-IT', name: 'Italiano' },
-            { code: 'ru-RU', name: 'Русский' }
+            { code: 'zh-TW', name: '繁體中文 (台灣)' }, { code: 'zh-CN', name: '简体中文' },
+            { code: 'en-US', name: 'English (US)' }, { code: 'ja-JP', name: '日本語' },
+            { code: 'ko-KR', name: '한국어' }, { code: 'th-TH', name: 'ไทย' },
+            { code: 'vi-VN', name: 'Tiếng Việt' }, { code: 'fr-FR', name: 'Français' },
+            { code: 'de-DE', name: 'Deutsch' }, { code: 'es-ES', name: 'Español' },
+            { code: 'it-IT', name: 'Italiano' }, { code: 'ru-RU', name: 'Русский' },
+            { code: 'id-ID', name: 'Bahasa Indonesia' }, { code: 'ar-SA', name: 'العربية' },
+            { code: 'pt-BR', name: 'Português (Brasil)' }, { code: 'nl-NL', name: 'Nederlands' },
+            { code: 'tr-TR', name: 'Türkçe' }, { code: 'pl-PL', name: 'Polski' }
         ];
+
+        // Keep the UI language menu synchronized with every supported translation locale.
+        const uiLocaleText = {
+            'zh-TW': { title: '手機面對面即時對話翻譯機 | 免費語音雙向翻譯', backHome: '🏠 返回首頁', statusRecording: '正在聆聽...', statusTranslating: '翻譯中...', partnerWaiting: '等待中...', partnerInit: '你好！點擊此區域開始說話', selfWaiting: '等待中...', selfInit: '你好！點擊此區域開始說話', partnerHint: '對方點擊發話', selfHint: '我方點擊發話', repeatSelf: '重複發話', repeatPartner: '重複發話', modeLabel: '對話模式：', modeTap: '點擊模式', modeWalkie: '對講機模式', disclaimer: '免責聲明：本工具使用瀏覽器語音引擎與公開翻譯服務，僅供參考。', copied: '已複製到剪貼簿', repeated: '已重複播放上一段翻譯' },
+            'en-US': { title: 'Face-to-Face Real-time Translator | Free Voice Translation', backHome: '🏠 Back home', statusRecording: 'Listening...', statusTranslating: 'Translating...', partnerWaiting: 'Waiting...', partnerInit: 'Hello! Tap this area to speak', selfWaiting: 'Waiting...', selfInit: 'Hello! Tap this area to speak', partnerHint: 'Partner tap to speak', selfHint: 'Self tap to speak', repeatSelf: 'Repeat speech', repeatPartner: 'Repeat speech', modeLabel: 'Mode:', modeTap: 'Tap mode', modeWalkie: 'Walkie-talkie mode', disclaimer: 'Disclaimer: Browser speech and public translation services are for reference only.', copied: 'Copied to clipboard', repeated: 'Repeated the last translation' },
+            'ja-JP': { title: '対面式リアルタイム翻訳機 | 無料音声翻訳', backHome: '🏠 ホームへ戻る', statusRecording: '聞き取り中...', statusTranslating: '翻訳中...', partnerWaiting: '待機中...', partnerInit: 'ここをタップして発話', selfWaiting: '待機中...', selfInit: 'ここをタップして発話', partnerHint: '相手側タップで発話', selfHint: '自分側タップで発話', repeatSelf: 'もう一度再生', repeatPartner: 'もう一度再生', modeLabel: 'モード：', modeTap: 'タップモード', modeWalkie: 'トランシーバーモード', disclaimer: '免責事項：ブラウザ音声と公開翻訳サービスは参考用です。', copied: 'クリップボードにコピーしました', repeated: '前回の翻訳を再生しました' },
+            'zh-CN': { title: '面对面实时翻译机｜免费语音翻译', backHome: '🏠 返回首页', statusRecording: '正在聆听...', statusTranslating: '翻译中...', partnerWaiting: '等待中...', partnerInit: '你好！点击此区域开始说话', selfWaiting: '等待中...', selfInit: '你好！点击此区域开始说话', partnerHint: '对方点击发话', selfHint: '我方点击发话', repeatSelf: '重复播放', repeatPartner: '重复播放', modeLabel: '对话模式：', modeTap: '点击模式', modeWalkie: '对讲机模式', disclaimer: '免责声明：浏览器语音和公开翻译服务仅供参考。', copied: '已复制到剪贴板', repeated: '已重复播放上一段翻译' },
+            'ko-KR': { title: '대면 실시간 번역기 | 무료 음성 번역', backHome: '🏠 홈으로', statusRecording: '듣는 중...', statusTranslating: '번역 중...', partnerWaiting: '대기 중...', partnerInit: '이 영역을 눌러 말하세요', selfWaiting: '대기 중...', selfInit: '이 영역을 눌러 말하세요', partnerHint: '상대방 말하기', selfHint: '내 말하기', repeatSelf: '다시 재생', repeatPartner: '다시 재생', modeLabel: '대화 모드:', modeTap: '탭 모드', modeWalkie: '무전기 모드', disclaimer: '안내: 브라우저 음성 및 공개 번역 서비스는 참고용입니다.', copied: '클립보드에 복사했습니다', repeated: '이전 번역을 다시 재생했습니다' },
+            'fr-FR': { title: 'Traducteur en temps réel face à face', backHome: '🏠 Accueil', statusRecording: 'Écoute...', statusTranslating: 'Traduction...', partnerWaiting: 'En attente...', partnerInit: 'Touchez ici pour parler', selfWaiting: 'En attente...', selfInit: 'Touchez ici pour parler', partnerHint: 'Parole du partenaire', selfHint: 'Ma parole', repeatSelf: 'Répéter', repeatPartner: 'Répéter', modeLabel: 'Mode :', modeTap: 'Mode tactile', modeWalkie: 'Mode talkie-walkie', disclaimer: 'Avertissement : les services vocaux et de traduction publics sont indicatifs.', copied: 'Copié dans le presse-papiers', repeated: 'Dernière traduction relue' },
+            'de-DE': { title: 'Echtzeit-Übersetzer im Gespräch', backHome: '🏠 Startseite', statusRecording: 'Zuhören...', statusTranslating: 'Übersetzen...', partnerWaiting: 'Warten...', partnerInit: 'Hier tippen und sprechen', selfWaiting: 'Warten...', selfInit: 'Hier tippen und sprechen', partnerHint: 'Partner spricht', selfHint: 'Ich spreche', repeatSelf: 'Wiederholen', repeatPartner: 'Wiederholen', modeLabel: 'Modus:', modeTap: 'Tippen-Modus', modeWalkie: 'Walkie-Talkie-Modus', disclaimer: 'Hinweis: Sprach- und öffentliche Übersetzungsdienste dienen nur als Referenz.', copied: 'In die Zwischenablage kopiert', repeated: 'Letzte Übersetzung wiederholt' },
+            'es-ES': { title: 'Traductor de conversación en tiempo real', backHome: '🏠 Inicio', statusRecording: 'Escuchando...', statusTranslating: 'Traduciendo...', partnerWaiting: 'Esperando...', partnerInit: 'Toca aquí para hablar', selfWaiting: 'Esperando...', selfInit: 'Toca aquí para hablar', partnerHint: 'Habla la otra persona', selfHint: 'Hablo yo', repeatSelf: 'Repetir', repeatPartner: 'Repetir', modeLabel: 'Modo:', modeTap: 'Modo táctil', modeWalkie: 'Modo walkie-talkie', disclaimer: 'Aviso: los servicios de voz y traducción públicos son solo orientativos.', copied: 'Copiado al portapapeles', repeated: 'Última traducción repetida' },
+            'it-IT': { title: 'Traduttore di conversazione in tempo reale', backHome: '🏠 Home', statusRecording: 'In ascolto...', statusTranslating: 'Traduzione...', partnerWaiting: 'In attesa...', partnerInit: 'Tocca qui per parlare', selfWaiting: 'In attesa...', selfInit: 'Tocca qui per parlare', partnerHint: 'Parla l’altra persona', selfHint: 'Parlo io', repeatSelf: 'Ripeti', repeatPartner: 'Ripeti', modeLabel: 'Modalità:', modeTap: 'Modalità tocco', modeWalkie: 'Modalità walkie-talkie', disclaimer: 'Nota: i servizi vocali e di traduzione pubblici sono indicativi.', copied: 'Copiato negli appunti', repeated: 'Ultima traduzione ripetuta' },
+            'ru-RU': { title: 'Переводчик для живого разговора', backHome: '🏠 На главную', statusRecording: 'Слушаю...', statusTranslating: 'Перевод...', partnerWaiting: 'Ожидание...', partnerInit: 'Нажмите здесь, чтобы говорить', selfWaiting: 'Ожидание...', selfInit: 'Нажмите здесь, чтобы говорить', partnerHint: 'Говорит собеседник', selfHint: 'Говорю я', repeatSelf: 'Повторить', repeatPartner: 'Повторить', modeLabel: 'Режим:', modeTap: 'Режим нажатия', modeWalkie: 'Режим рации', disclaimer: 'Примечание: голосовые и открытые переводческие сервисы предназначены только для справки.', copied: 'Скопировано', repeated: 'Последний перевод воспроизведён' },
+            'th-TH': { title: 'เครื่องแปลบทสนทนาแบบเรียลไทม์', backHome: '🏠 กลับหน้าหลัก', statusRecording: 'กำลังฟัง...', statusTranslating: 'กำลังแปล...', partnerWaiting: 'รออยู่...', partnerInit: 'แตะที่นี่เพื่อพูด', selfWaiting: 'รออยู่...', selfInit: 'แตะที่นี่เพื่อพูด', partnerHint: 'คู่สนทนาพูด', selfHint: 'ฉันพูด', repeatSelf: 'เล่นซ้ำ', repeatPartner: 'เล่นซ้ำ', modeLabel: 'โหมด:', modeTap: 'โหมดแตะ', modeWalkie: 'โหมดวิทยุสื่อสาร', disclaimer: 'หมายเหตุ: บริการเสียงและแปลภาษาสาธารณะใช้เพื่อการอ้างอิงเท่านั้น', copied: 'คัดลอกแล้ว', repeated: 'เล่นคำแปลล่าสุดซ้ำ' },
+            'vi-VN': { title: 'Máy dịch hội thoại thời gian thực', backHome: '🏠 Về trang chủ', statusRecording: 'Đang nghe...', statusTranslating: 'Đang dịch...', partnerWaiting: 'Đang chờ...', partnerInit: 'Chạm vào đây để nói', selfWaiting: 'Đang chờ...', selfInit: 'Chạm vào đây để nói', partnerHint: 'Đối phương nói', selfHint: 'Tôi nói', repeatSelf: 'Phát lại', repeatPartner: 'Phát lại', modeLabel: 'Chế độ:', modeTap: 'Chế độ chạm', modeWalkie: 'Chế độ bộ đàm', disclaimer: 'Lưu ý: dịch vụ giọng nói và dịch công khai chỉ dùng để tham khảo.', copied: 'Đã sao chép', repeated: 'Đã phát lại bản dịch cuối' },
+            'id-ID': { title: 'Penerjemah Percakapan Real-Time', backHome: '🏠 Beranda', statusRecording: 'Mendengarkan...', statusTranslating: 'Menerjemahkan...', partnerWaiting: 'Menunggu...', partnerInit: 'Ketuk di sini untuk berbicara', selfWaiting: 'Menunggu...', selfInit: 'Ketuk di sini untuk berbicara', partnerHint: 'Pasangan berbicara', selfHint: 'Saya berbicara', repeatSelf: 'Putar ulang', repeatPartner: 'Putar ulang', modeLabel: 'Mode:', modeTap: 'Mode ketuk', modeWalkie: 'Mode walkie-talkie', disclaimer: 'Catatan: layanan suara dan terjemahan publik hanya untuk referensi.', copied: 'Disalin ke papan klip', repeated: 'Terjemahan terakhir diputar ulang' },
+            'ar-SA': { title: 'مترجم المحادثة الفوري', backHome: '🏠 الصفحة الرئيسية', statusRecording: 'جارٍ الاستماع...', statusTranslating: 'جارٍ الترجمة...', partnerWaiting: 'انتظار...', partnerInit: 'اضغط هنا للتحدث', selfWaiting: 'انتظار...', selfInit: 'اضغط هنا للتحدث', partnerHint: 'تحدث الطرف الآخر', selfHint: 'أتحدث أنا', repeatSelf: 'إعادة التشغيل', repeatPartner: 'إعادة التشغيل', modeLabel: 'الوضع:', modeTap: 'وضع النقر', modeWalkie: 'وضع اللاسلكي', disclaimer: 'تنبيه: خدمات الصوت والترجمة العامة للاسترشاد فقط.', copied: 'تم النسخ', repeated: 'تم تشغيل آخر ترجمة' },
+            'pt-BR': { title: 'Tradutor de conversa em tempo real', backHome: '🏠 Início', statusRecording: 'Ouvindo...', statusTranslating: 'Traduzindo...', partnerWaiting: 'Aguardando...', partnerInit: 'Toque aqui para falar', selfWaiting: 'Aguardando...', selfInit: 'Toque aqui para falar', partnerHint: 'Fala do parceiro', selfHint: 'Minha fala', repeatSelf: 'Repetir', repeatPartner: 'Repetir', modeLabel: 'Modo:', modeTap: 'Modo toque', modeWalkie: 'Modo walkie-talkie', disclaimer: 'Aviso: serviços públicos de voz e tradução são apenas referenciais.', copied: 'Copiado', repeated: 'Última tradução repetida' },
+            'nl-NL': { title: 'Realtime gesprekvertaler', backHome: '🏠 Home', statusRecording: 'Luisteren...', statusTranslating: 'Vertalen...', partnerWaiting: 'Wachten...', partnerInit: 'Tik hier om te spreken', selfWaiting: 'Wachten...', selfInit: 'Tik hier om te spreken', partnerHint: 'Partner spreekt', selfHint: 'Ik spreek', repeatSelf: 'Herhalen', repeatPartner: 'Herhalen', modeLabel: 'Modus:', modeTap: 'Tikmodus', modeWalkie: 'Walkietalkiemodus', disclaimer: 'Let op: openbare spraak- en vertaaldiensten zijn alleen ter referentie.', copied: 'Gekopieerd', repeated: 'Laatste vertaling opnieuw afgespeeld' },
+            'tr-TR': { title: 'Gerçek zamanlı konuşma çevirmeni', backHome: '🏠 Ana sayfa', statusRecording: 'Dinleniyor...', statusTranslating: 'Çevriliyor...', partnerWaiting: 'Bekliyor...', partnerInit: 'Konuşmak için buraya dokunun', selfWaiting: 'Bekliyor...', selfInit: 'Konuşmak için buraya dokunun', partnerHint: 'Karşı taraf konuşuyor', selfHint: 'Ben konuşuyorum', repeatSelf: 'Tekrar oynat', repeatPartner: 'Tekrar oynat', modeLabel: 'Mod:', modeTap: 'Dokunma modu', modeWalkie: 'Telsiz modu', disclaimer: 'Not: genel ses ve çeviri hizmetleri yalnızca referans içindir.', copied: 'Panoya kopyalandı', repeated: 'Son çeviri tekrar oynatıldı' },
+            'pl-PL': { title: 'Tłumacz rozmów w czasie rzeczywistym', backHome: '🏠 Strona główna', statusRecording: 'Słuchanie...', statusTranslating: 'Tłumaczenie...', partnerWaiting: 'Oczekiwanie...', partnerInit: 'Dotknij tutaj, aby mówić', selfWaiting: 'Oczekiwanie...', selfInit: 'Dotknij tutaj, aby mówić', partnerHint: 'Mówi rozmówca', selfHint: 'Mówię ja', repeatSelf: 'Powtórz', repeatPartner: 'Powtórz', modeLabel: 'Tryb:', modeTap: 'Tryb dotykania', modeWalkie: 'Tryb krótkofalówki', disclaimer: 'Uwaga: publiczne usługi głosowe i tłumaczeniowe służą wyłącznie jako pomoc.', copied: 'Skopiowano', repeated: 'Odtworzono ostatnie tłumaczenie' }
+        };
+        const uiExtras = {
+            'zh-TW': { apiSettings: 'API 設定', apiConnected: 'API 已連線 ⚙️', faq: '說明與常見問題' }, 'zh-CN': { apiSettings: 'API 设置', apiConnected: 'API 已连接 ⚙️', faq: '说明与常见问题' },
+            'en-US': { apiSettings: 'API settings', apiConnected: 'API connected ⚙️', faq: 'Help & FAQ' }, 'ja-JP': { apiSettings: 'API設定', apiConnected: 'API接続済み ⚙️', faq: 'ヘルプとFAQ' },
+            'ko-KR': { apiSettings: 'API 설정', apiConnected: 'API 연결됨 ⚙️', faq: '도움말 및 FAQ' }, 'th-TH': { apiSettings: 'ตั้งค่า API', apiConnected: 'เชื่อมต่อ API แล้ว ⚙️', faq: 'ช่วยเหลือและคำถามที่พบบ่อย' },
+            'vi-VN': { apiSettings: 'Cài đặt API', apiConnected: 'API đã kết nối ⚙️', faq: 'Trợ giúp & FAQ' }, 'fr-FR': { apiSettings: 'Paramètres API', apiConnected: 'API connectée ⚙️', faq: 'Aide et FAQ' },
+            'de-DE': { apiSettings: 'API-Einstellungen', apiConnected: 'API verbunden ⚙️', faq: 'Hilfe & FAQ' }, 'es-ES': { apiSettings: 'Configuración API', apiConnected: 'API conectada ⚙️', faq: 'Ayuda y FAQ' },
+            'it-IT': { apiSettings: 'Impostazioni API', apiConnected: 'API connessa ⚙️', faq: 'Aiuto e FAQ' }, 'ru-RU': { apiSettings: 'Настройки API', apiConnected: 'API подключён ⚙️', faq: 'Помощь и FAQ' },
+            'id-ID': { apiSettings: 'Pengaturan API', apiConnected: 'API terhubung ⚙️', faq: 'Bantuan & FAQ' }, 'ar-SA': { apiSettings: 'إعدادات API', apiConnected: 'تم اتصال API ⚙️', faq: 'المساعدة والأسئلة الشائعة' },
+            'pt-BR': { apiSettings: 'Configurações da API', apiConnected: 'API conectada ⚙️', faq: 'Ajuda e FAQ' }, 'nl-NL': { apiSettings: 'API-instellingen', apiConnected: 'API verbonden ⚙️', faq: 'Help en FAQ' },
+            'tr-TR': { apiSettings: 'API ayarları', apiConnected: 'API bağlı ⚙️', faq: 'Yardım ve SSS' }, 'pl-PL': { apiSettings: 'Ustawienia API', apiConnected: 'API połączone ⚙️', faq: 'Pomoc i FAQ' }
+        };
+        const englishUi = i18n.en;
+        Object.entries(uiLocaleText).forEach(([code, text]) => { i18n[code] = { ...englishUi, ...text, ...(uiExtras[code] || {}) }; });
 
         let isRecording = false;
         let activeRecordMode = null;
@@ -850,7 +882,13 @@
             'de-DE': { self: 'Wiederholen', partner: 'Wiederholen' },
             'es-ES': { self: 'Repetir', partner: 'Repetir' },
             'it-IT': { self: 'Ripeti', partner: 'Ripeti' },
-            'ru-RU': { self: 'Повторить', partner: 'Повторить' }
+            'ru-RU': { self: 'Повторить', partner: 'Повторить' },
+            'id-ID': { self: 'Putar ulang', partner: 'Putar ulang' },
+            'ar-SA': { self: 'إعادة التشغيل', partner: 'إعادة التشغيل' },
+            'pt-BR': { self: 'Repetir', partner: 'Repetir' },
+            'nl-NL': { self: 'Herhalen', partner: 'Herhalen' },
+            'tr-TR': { self: 'Tekrar oynat', partner: 'Tekrar oynat' },
+            'pl-PL': { self: 'Powtórz', partner: 'Powtórz' }
         };
 
         function updateRepeatLabels() {
@@ -878,12 +916,22 @@
             document.getElementById('mode-walkie').textContent = t.modeWalkie;
             document.getElementById('ui-hint-partner').textContent = t.partnerHint;
             document.getElementById('ui-hint-self').textContent = t.selfHint;
+            const navStatus = document.getElementById('nav-key-status');
+            if (navStatus && !getGlobalApiKey()) navStatus.textContent = t.apiSettings;
+            const faqLabel = document.querySelector('.ai-seo-help-toggle span:last-child');
+            if (faqLabel) faqLabel.textContent = t.faq;
+            setTimeout(() => {
+                const deferredFaqLabel = document.querySelector('.ai-seo-help-toggle span:last-child');
+                if (deferredFaqLabel) deferredFaqLabel.textContent = t.faq;
+            }, 0);
             updateRepeatLabels();
             document.getElementById('ui-disclaimer').textContent = t.disclaimer;
-            document.documentElement.lang = langKey === 'zh' ? 'zh-TW' : (langKey === 'ja' ? 'ja' : 'en');
+            document.documentElement.lang = langKey || 'en-US';
+            const uiSelector = document.getElementById('ui-lang-toggle');
+            if (uiSelector) uiSelector.value = langKey;
         }
 
-        function initSelectors() {
+        function initSelectors(defaultSelfCode = 'zh-TW') {
             const selectors = document.querySelectorAll('.lang-selector');
             selectors.forEach(select => {
                 select.innerHTML = '';
@@ -894,20 +942,50 @@
                     select.appendChild(opt);
                 });
             });
-            document.getElementById('self-lang').value = 'zh-TW';
-            document.getElementById('partner-lang').value = 'en-US';
+            const selfCode = languages.some(lang => lang.code === defaultSelfCode) ? defaultSelfCode : 'en-US';
+            document.getElementById('self-lang').value = selfCode;
+            document.getElementById('partner-lang').value = selfCode === 'en-US' ? 'zh-TW' : 'en-US';
         }
 
-        const userLang = navigator.language || navigator.userLanguage || '';
-        let initialLang = 'zh';
-        if (userLang.startsWith('en')) initialLang = 'en';
-        if (userLang.startsWith('ja')) initialLang = 'ja';
-        
-        document.getElementById('ui-lang-toggle').value = initialLang;
+        function localeForBrowser(locale) {
+            const value = String(locale || '').toLowerCase();
+            if (value.startsWith('zh-tw') || value.startsWith('zh-hk') || value.startsWith('zh-mo') || value === 'zh') return 'zh-TW';
+            if (value.startsWith('zh')) return 'zh-CN';
+            const match = languages.find(lang => lang.code.toLowerCase() === value) || languages.find(lang => lang.code.split('-')[0].toLowerCase() === value.split('-')[0]);
+            return match ? match.code : null;
+        }
+        function detectUiLocale() {
+            try {
+                const saved = localeForBrowser(localStorage.getItem('ui_lang'));
+                if (saved) return saved;
+            } catch (e) {}
+            const candidates = (Array.isArray(navigator.languages) ? navigator.languages : []).concat(navigator.language || navigator.userLanguage || '');
+            for (const candidate of candidates) {
+                const detected = localeForBrowser(candidate);
+                if (detected) return detected;
+            }
+            return 'en-US';
+        }
+        function initUiLanguageSelector(selectedCode) {
+            const selector = document.getElementById('ui-lang-toggle');
+            selector.innerHTML = '';
+            languages.forEach(lang => {
+                const option = document.createElement('option');
+                option.value = lang.code;
+                option.textContent = `🌐 ${lang.name}`;
+                selector.appendChild(option);
+            });
+            selector.value = selectedCode;
+        }
+        const initialLang = detectUiLocale();
+        initUiLanguageSelector(initialLang);
+        initSelectors(initialLang);
         updateUI(initialLang);
-        initSelectors();
 
-        document.getElementById('ui-lang-toggle').addEventListener('change', (e) => updateUI(e.target.value));
+        document.getElementById('ui-lang-toggle').addEventListener('change', (e) => {
+            try { localStorage.setItem('ui_lang', e.target.value); } catch (error) {}
+            updateUI(e.target.value);
+        });
 
         // Mode Switch
         document.getElementById('mode-tap').addEventListener('click', (e) => {
@@ -999,7 +1077,13 @@
             'de-DE': 'Hallo! Zum Sprechen hier tippen',
             'es-ES': '¡Hola! Toca aquí para hablar',
             'it-IT': 'Ciao! Tocca qui per parlare',
-            'ru-RU': 'Привет! Нажмите здесь, чтобы говорить'
+            'ru-RU': 'Привет! Нажмите здесь, чтобы говорить',
+            'id-ID': 'Halo! Ketuk di sini untuk berbicara',
+            'ar-SA': 'مرحبًا! اضغط هنا للتحدث',
+            'pt-BR': 'Olá! Toque aqui para falar',
+            'nl-NL': 'Hallo! Tik hier om te spreken',
+            'tr-TR': 'Merhaba! Konuşmak için buraya dokunun',
+            'pl-PL': 'Cześć! Dotknij tutaj, aby mówić'
         };
 
         function updateInitialTexts() {
@@ -1248,7 +1332,7 @@
             const maskedDisplay = document.getElementById('translator-masked-key-display');
             const clearBtn = document.getElementById('btn-clear-translator-key');
             if (navStatus) {
-                navStatus.textContent = key ? 'API 已連線 ⚙️' : 'API 設定 ⚙️';
+                navStatus.textContent = key ? (i18n[currentLangKey]?.apiConnected || 'API connected ⚙️') : (i18n[currentLangKey]?.apiSettings || 'API settings');
             }
             if (key) {
                 if (statusBox) statusBox.style.display = '';
