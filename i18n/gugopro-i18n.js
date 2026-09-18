@@ -25,6 +25,7 @@
     return SUPPORTED.includes(device)?device:SOURCE;
   };
   const resource=name=>new URL('/i18n/'+name,location.origin).toString();
+  const fetchResource=(url,options={})=>{const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),2500);return fetch(url,{...options,signal:controller.signal}).finally(()=>clearTimeout(timer));};
   const addPair=(source,target)=>{
     const s=norm(source),t=norm(target);
     if(!s||!t||s===t)return;
@@ -163,14 +164,14 @@
     mountSwitcher();
     installCanvasBridge();
     try{
-      const catalogResponse=await fetch(resource('catalog.json'),{cache:'no-store'});if(!catalogResponse.ok)throw new Error('catalog '+catalogResponse.status);
+      const catalogResponse=await fetchResource(resource('catalog.json'),{cache:'no-store'});if(!catalogResponse.ok)throw new Error('catalog '+catalogResponse.status);
       const raw=await catalogResponse.json();catalogRows=raw.strings||raw.sourceStrings||[];
-      const localeResponse=await fetch(resource(current+'.json'),{cache:'no-store'});if(!localeResponse.ok)throw new Error('locale '+localeResponse.status);
+      const localeResponse=await fetchResource(resource(current+'.json'),{cache:'no-store'});if(!localeResponse.ok)throw new Error('locale '+localeResponse.status);
       const locale=await localeResponse.json();const translations=locale.translations||{};
       catalogRows.forEach(row=>addPair(row.text,translations[String(row.id)]||row.text));
-      if(!IS_AI){try{const pageResponse=await fetch(resource('nonai-visible-translations.json'),{cache:'no-store'});if(pageResponse.ok){const pageMap=await pageResponse.json();const map=pageMap[current]||{};Object.entries(map).forEach(([source,target])=>addPair(source,target));}}catch(e){} }
-      try{const phrasesResponse=await fetch(resource('phrases.json'),{cache:'no-store'});if(phrasesResponse.ok){const phrases=await phrasesResponse.json();Object.entries(phrases.phrases||{}).forEach(([source,map])=>addPair(source,map[current]||source));}}catch(e){}
-      try{const dynamicResponse=await fetch(resource(current+'.dynamic.json'),{cache:'no-store'});if(dynamicResponse.ok){const dynamic=await dynamicResponse.json();Object.entries(dynamic.templates||{}).forEach(([id,target])=>{const row=catalogRows.find(item=>String(item.id)===String(id));if(row)addDynamicFragments(row.text,target);});}}catch(e){}
+      if(!IS_AI){try{const pageResponse=await fetchResource(resource('nonai-visible-translations.json'),{cache:'no-store'});if(pageResponse.ok){const pageMap=await pageResponse.json();const map=pageMap[current]||{};Object.entries(map).forEach(([source,target])=>addPair(source,target));}}catch(e){} }
+      try{const phrasesResponse=await fetchResource(resource('phrases.json'),{cache:'no-store'});if(phrasesResponse.ok){const phrases=await phrasesResponse.json();Object.entries(phrases.phrases||{}).forEach(([source,map])=>addPair(source,map[current]||source));}}catch(e){}
+      try{const dynamicResponse=await fetchResource(resource(current+'.dynamic.json'),{cache:'no-store'});if(dynamicResponse.ok){const dynamic=await dynamicResponse.json();Object.entries(dynamic.templates||{}).forEach(([id,target])=>{const row=catalogRows.find(item=>String(item.id)===String(id));if(row)addDynamicFragments(row.text,target);});}}catch(e){}
       translateDom();observeRuntime();mountSwitcher();
       document.documentElement.removeAttribute('data-gugo-i18n-pending');
       window.GugoProI18n={locale:current,supported:SUPPORTED,status:'machine-draft',catalogKeys:catalogRows.length,missingKeys:catalogRows.filter(row=>!Object.prototype.hasOwnProperty.call(translations,String(row.id))).length};
