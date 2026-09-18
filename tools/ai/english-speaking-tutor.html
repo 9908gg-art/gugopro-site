@@ -2260,8 +2260,14 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             const limitEl = document.getElementById('global-ai-quota-limit');
             const usedEl = document.getElementById('global-ai-quota-used');
             const statusEl = document.getElementById('global-ai-quota-status');
-            if (!tracker || !limitEl || !usedEl) return;
-            const current = snapshot || tracker.getSnapshot();
+            if (!limitEl || !usedEl) return;
+            // Android bundles can omit the site's external quota script. Never
+            // leave the initial Chinese "讀取中…" placeholder in that case.
+            const current = snapshot || (tracker?.getSnapshot ? tracker.getSnapshot() : {
+                dailyLimit: null,
+                usedCount: 0,
+                remainingCount: null
+            });
             const noQuota = runtimeUiText('noQuota');
             const uses = runtimeUiText('uses');
             const used = runtimeUiText('used');
@@ -2278,11 +2284,15 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
 
         function renderGlobalAIQuota() {
             const tracker = window.GugoProGlobalAIQuota;
-            if (!tracker) return;
-            tracker.resetIfNewPacificDay();
-            const limit = getEnabledDailyQuota();
-            tracker.setDailyLimit(limit, 'quota.gugopro.com enabled chat models');
-            renderGlobalAIQuotaDisplay(tracker.getSnapshot());
+            if (tracker) {
+                tracker.resetIfNewPacificDay();
+                const limit = getEnabledDailyQuota();
+                tracker.setDailyLimit(limit, 'quota.gugopro.com enabled chat models');
+                renderGlobalAIQuotaDisplay(tracker.getSnapshot());
+            } else {
+                // Graceful fallback for the self-contained Android WebView build.
+                renderGlobalAIQuotaDisplay();
+            }
         }
 
         async function fetchQuotaModelsWithTimeout() {
@@ -9569,6 +9579,9 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         const currentStatus = document.getElementById('model-current-status'); if (currentStatus && (!currentStatus.textContent.trim() || currentStatus.textContent.includes('載入中') || currentStatus.textContent.includes('loading'))) currentStatus.textContent = uiText('currentModel');
         const quotaLimitLabel = document.getElementById('quota-free-limit-label'); if (quotaLimitLabel) quotaLimitLabel.textContent = `📊 ${uiText('freeLimit')}`;
         const quotaUsedLabel = document.getElementById('quota-used-label'); if (quotaUsedLabel) quotaUsedLabel.textContent = `⚡ ${uiText('usedToday')}`;
+        // Also repaint the value nodes: their HTML fallback is intentionally
+        // language-neutral and must never remain as the old Chinese loading text.
+        if (typeof renderGlobalAIQuotaDisplay === 'function') renderGlobalAIQuotaDisplay();
         const levelLabels = {A1:'levelA1',A2:'levelA2',B1:'levelB1',B2:'levelB2',C1:'levelC1',C2:'levelC2'}; const levelSelect = document.getElementById('study-level'); if (levelSelect) Array.from(levelSelect.options).forEach(option => { if (levelLabels[option.value]) option.textContent = uiText(levelLabels[option.value]); });
         const studyModeLabels = {conversation:'modeConversation',review:'modeReview',exam:'modeExam'}; const studyModeSelect = document.getElementById('study-mode'); if (studyModeSelect) Array.from(studyModeSelect.options).forEach(option => { if (studyModeLabels[option.value]) option.textContent = uiText(studyModeLabels[option.value]); });
         const studyTitle = document.getElementById('study-plan-room'); if (studyTitle && typeof getActiveRoom === 'function' && getActiveRoom()) studyTitle.textContent = uiText('currentRoomHint').replace('{room}', getActiveRoom().name);
