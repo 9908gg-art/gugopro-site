@@ -1794,7 +1794,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 <span id="model-settings-title">模型設定 / Model Settings</span>
                 <button id="btn-refresh-models" class="btn-room-action model-refresh-button" title="Refresh free model list" aria-label="Refresh free model list"><i class="fa-solid fa-rotate"></i></button>
             </div>
-            <p id="model-settings-status" class="model-settings-status" aria-live="polite">正在載入站內免費模型清單...</p>
+            <p id="model-settings-status" class="model-settings-status loading" data-state="loading" aria-live="polite">正在載入站內免費模型清單...</p>
             <p id="model-current-status" class="model-current-status" aria-live="polite">目前使用模型：載入中…</p>
             <p id="global-ai-quota-status" class="global-ai-quota-status" aria-live="polite"></p>
             <p id="global-ai-quota-reset" class="global-ai-quota-reset" aria-live="polite" data-i18n="quotaReset">Loading…</p>
@@ -2371,6 +2371,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             if (!status) return;
             status.textContent = text;
             status.className = `model-settings-status ${state}`.trim();
+            status.dataset.state = state || 'ready';
         }
 
         function getModelByName(apiName) {
@@ -2446,7 +2447,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             if (metric.limit !== null && metric.current >= metric.limit) fill.classList.add('is-exhausted');
             track.appendChild(fill);
             row.appendChild(track);
-            const limitLabel = metric.limit === null ? '不限額' : metric.limit;
+            const limitLabel = metric.limit === null ? '—' : metric.limit;
             appendModelText(row, 'span', 'model-quota-value', `${metric.current} / ${limitLabel}`);
             parent.appendChild(row);
         }
@@ -2465,8 +2466,8 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         function getModelBusyLabel(apiName) {
             const busyState = modelBusyStates.get(apiName);
             if (!busyState) return '';
-            const label = busyState.status === 'TIMEOUT' ? '超時' : busyState.status;
-            return `⚠️ 伺服器忙碌中 (${label})`;
+            const label = busyState.status === 'TIMEOUT' ? runtimeUiText('timeout') : busyState.status;
+            return `⚠️ ${runtimeUiText('allModelsBusy')} (${label})`;
         }
 
         function appendModelText(parent, tagName, className, text) {
@@ -2486,7 +2487,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             option.dataset.model = value;
             option.setAttribute('role', 'listitem');
             option.setAttribute('aria-pressed', String(preferred));
-            option.title = enabled ? `點擊選擇 ${model.display_name}；目前${current ? '正在使用' : preferred ? '為首選' : '非首選'}模型` : `${model.display_name} 已停用`;
+            option.title = enabled ? (current ? runtimeUiText('currentModelLabel').replace('{model}', model.display_name) : runtimeUiText('modelToggleEnable').replace('{model}', model.display_name)) : runtimeUiText('modelToggleDisable').replace('{model}', model.display_name);
             option.addEventListener('click', () => {
                 if (enabled) setPreferredModel(value);
             });
@@ -2507,7 +2508,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             appendModelQuotaMeter(quotaMeters, model, 'rpm', getLocalRPMUsage(value));
             if (quotaMeters.childElementCount > 0) body.appendChild(quotaMeters);
             if (modelQuota > 0 && modelUsed >= modelQuota) {
-                appendModelText(body, 'div', 'model-busy-badge model-quota-exhausted', '⚠️ 今日額度已用完');
+                appendModelText(body, 'div', 'model-busy-badge model-quota-exhausted', `⚠️ ${runtimeUiText('quotaExhausted')}`);
             }
             const busyLabel = getModelBusyLabel(value);
             if (busyLabel) appendModelText(body, 'div', 'model-busy-badge', busyLabel);
@@ -2587,6 +2588,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         async function fetchLatestModel({ silent = false } = {}) {
             if (modelCatalogPromise) return modelCatalogPromise;
             setModelSettingsStatus(runtimeUiText('modelLoadingStatus'), 'loading');
+            const loadingGuard = setTimeout(() => { const status = document.getElementById('model-settings-status'); if (status && status.classList.contains('loading')) setModelSettingsStatus(runtimeUiText('modelFetchError'), 'error'); }, REQUEST_TIMEOUT_MS + 1500);
             modelCatalogPromise = (async () => {
                 try {
                     const res = await fetchQuotaModelsWithTimeout();
@@ -2626,6 +2628,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                     if (!silent) showError(`❌ ${runtimeUiText('modelFetchError')}`);
                     return [];
                 } finally {
+                    clearTimeout(loadingGuard);
                     modelCatalogPromise = null;
                 }
             })();
@@ -2864,6 +2867,10 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             renderMaterialBanner();
         }
         // --- Room Management ---
+        function getRoomDisplayName(room) {
+            if (!room) return '';
+            return (room.id === 'default' || room.name === '一般對話') ? runtimeUiText('chatRooms') : room.name;
+        }
         function renderRoomList() {
             const list = document.getElementById('room-list');
             list.innerHTML = '';
@@ -2884,7 +2891,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 item.onclick = () => switchRoom(room.id);
 
                 item.innerHTML = `
-                    <span class="room-card-main"><span class="room-name">${room.name}</span><span class="room-study-badge">${studyBadge}</span></span>
+                    <span class="room-card-main"><span class="room-name">${getRoomDisplayName(room)}</span><span class="room-study-badge">${studyBadge}</span></span>
                     <div class="room-actions">
                         <button type="button" class="btn-room-action room-study-action" title="${t('manageMaterials')}" aria-label="${t('manageMaterials')}" data-room-study-id="${String(room.id).replace(/&/g, '&amp;').replace(/"/g, '&quot;')}"><i class="fa-solid fa-list-check"></i></button>
                         <button class="btn-room-action" title="${t('renameRoom')}" onclick="event.stopPropagation(); editRoomName('${room.id}')"><i class="fa-solid fa-pen"></i></button>
@@ -4384,7 +4391,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         const title = document.getElementById('study-plan-room');
         if (!room || !materialList || !dictionaryList) return;
         ensureRoomLearningState(room);
-        if (title) title.textContent = runtimeUiText('currentRoomHint').replace('{room}', room.name);
+        if (title) title.textContent = runtimeUiText('currentRoomHint').replace('{room}', getRoomDisplayName(room));
         const language = document.getElementById('study-language');
         if (language) {
             language.replaceChildren();
@@ -9558,6 +9565,10 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         const kofi = document.querySelector('.kofi-button'); if (kofi) kofi.textContent = uiText('buyCoffee');
         const copyright = document.querySelector('.drawer-contact-copyright'); if (copyright) copyright.textContent = uiText('rightsReserved');
         const modelTitle = document.getElementById('model-settings-title'); if (modelTitle) modelTitle.textContent = uiText('modelSettings');
+        const modelStatus = document.getElementById('model-settings-status'); if (modelStatus && !modelStatus.dataset.state && (!modelStatus.textContent.trim() || modelStatus.textContent.includes('正在載入') || modelStatus.textContent.includes('讀取中'))) { modelStatus.textContent = uiText('modelLoadingStatus'); modelStatus.className = 'model-settings-status loading'; modelStatus.dataset.state = 'loading'; }
+        const currentStatus = document.getElementById('model-current-status'); if (currentStatus && (!currentStatus.textContent.trim() || currentStatus.textContent.includes('載入中') || currentStatus.textContent.includes('loading'))) currentStatus.textContent = uiText('currentModel');
+        const quotaLimitLabel = document.getElementById('quota-free-limit-label'); if (quotaLimitLabel) quotaLimitLabel.textContent = `📊 ${uiText('freeLimit')}`;
+        const quotaUsedLabel = document.getElementById('quota-used-label'); if (quotaUsedLabel) quotaUsedLabel.textContent = `⚡ ${uiText('usedToday')}`;
         const levelLabels = {A1:'levelA1',A2:'levelA2',B1:'levelB1',B2:'levelB2',C1:'levelC1',C2:'levelC2'}; const levelSelect = document.getElementById('study-level'); if (levelSelect) Array.from(levelSelect.options).forEach(option => { if (levelLabels[option.value]) option.textContent = uiText(levelLabels[option.value]); });
         const studyModeLabels = {conversation:'modeConversation',review:'modeReview',exam:'modeExam'}; const studyModeSelect = document.getElementById('study-mode'); if (studyModeSelect) Array.from(studyModeSelect.options).forEach(option => { if (studyModeLabels[option.value]) option.textContent = uiText(studyModeLabels[option.value]); });
         const studyTitle = document.getElementById('study-plan-room'); if (studyTitle && typeof getActiveRoom === 'function' && getActiveRoom()) studyTitle.textContent = uiText('currentRoomHint').replace('{room}', getActiveRoom().name);
