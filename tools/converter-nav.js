@@ -405,7 +405,7 @@
         }
 
         function updateBadges(query) {
-            var totals = { 'ai-tools': 0, 'finance-basic': 0, 'finance-pro': 0, images: 0, 'audio-tools': 0, 'video-tools': 0, 'document-process': 0, 'document-convert': 0, 'smart-text': 0, security: 0, 'data-charts': 0, 'office-tools': 0, 'unit-converter': 0 };
+            var totals = { 'ai-tools': 0, 'ai-media': 0, 'english-learning': 0, 'finance-basic': 0, 'finance-pro': 0, images: 0, 'audio-tools': 0, 'video-tools': 0, 'document-process': 0, 'document-convert': 0, 'smart-text': 0, security: 0, 'data-charts': 0, 'office-tools': 0, 'unit-converter': 0 };
             var total = 0;
             cards.forEach(function (card) {
                 if (!matchesQuery(card, query)) return;
