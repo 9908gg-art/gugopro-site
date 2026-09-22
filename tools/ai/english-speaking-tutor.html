@@ -1124,7 +1124,30 @@
     .message-user .pronunciation-retry { margin-left: 10px; }
 }
 
-    </style>
+
+        /* Keep injected AdSense compliance links inside the drawer, never as a flex-row body column. */
+        body > .site-compliance-footer {
+            position: fixed !important;
+            inset: auto 0 0 !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            height: auto !important;
+            min-height: 0 !important;
+            flex: none !important;
+            z-index: 2100 !important;
+            box-sizing: border-box !important;
+        }
+        #side-menu > .site-compliance-footer {
+            position: sticky !important;
+            inset: auto 0 0 !important;
+            width: 100% !important;
+            height: auto !important;
+            min-height: 0 !important;
+            flex: 0 0 auto !important;
+            margin-top: auto !important;
+            box-sizing: border-box !important;
+        }
+</style>
 <style id="gugo-stt-locale-scroll-guard-style">
 /* GugoPro STT locale and touch gesture guard */
 .msg-learning .vocab-token {
@@ -10066,5 +10089,19 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
     else bind();
 })();
 </script>
-<footer class="site-compliance-footer"><nav><a href="../../en/legal/privacy.html">Privacy Policy</a> · <a href="../../en/legal/terms.html">Terms of Service</a> · <a href="../../en/legal/contact.html">Contact Us</a> · <a href="../../en/legal/about.html">About GugoPro</a> · <a href="../../en/legal/disclaimer.html">Disclaimer</a></nav><p>© 2026 GugoPro · <a href="mailto:contact@gugopro.com">contact@gugopro.com</a></p></footer></body>
+<footer class="site-compliance-footer"><nav><a href="../../en/legal/privacy.html">Privacy Policy</a> · <a href="../../en/legal/terms.html">Terms of Service</a> · <a href="../../en/legal/contact.html">Contact Us</a> · <a href="../../en/legal/about.html">About GugoPro</a> · <a href="../../en/legal/disclaimer.html">Disclaimer</a></nav><p>© 2026 GugoPro · <a href="mailto:contact@gugopro.com">contact@gugopro.com</a></p></footer>
+<script>
+(() => {
+    const placeComplianceFooter = () => {
+        const menu = document.getElementById('side-menu');
+        if (!menu) return;
+        document.querySelectorAll('body > .site-compliance-footer').forEach(footer => {
+            if (!menu.contains(footer)) menu.appendChild(footer);
+        });
+    };
+    placeComplianceFooter();
+    new MutationObserver(placeComplianceFooter).observe(document.body, { childList: true });
+})();
+</script>
+</body>
 </html>

@@ -948,7 +948,30 @@
         .lang-select-header option { background: #161b27; color: #fff; }
         @media (max-width: 620px) { .nutrition-quick-grid { grid-template-columns: 1fr; } .nutrition-dashboard-summary { grid-template-columns: repeat(2, 1fr); } }
 
-    </style>
+
+        /* Keep injected AdSense compliance links inside the drawer, never as a flex-row body column. */
+        body > .site-compliance-footer {
+            position: fixed !important;
+            inset: auto 0 0 !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            height: auto !important;
+            min-height: 0 !important;
+            flex: none !important;
+            z-index: 2100 !important;
+            box-sizing: border-box !important;
+        }
+        #side-menu > .site-compliance-footer {
+            position: sticky !important;
+            inset: auto 0 0 !important;
+            width: 100% !important;
+            height: auto !important;
+            min-height: 0 !important;
+            flex: 0 0 auto !important;
+            margin-top: auto !important;
+            box-sizing: border-box !important;
+        }
+</style>
 
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4756902118634553" crossorigin="anonymous"></script>
 </head>
@@ -2728,5 +2751,19 @@
         document.getElementById('btn-send').onclick = sendMessage;
         document.getElementById('user-text').onkeypress = (e) => { if(e.key === 'Enter') sendMessage(); };
     </script>
-<footer class="site-compliance-footer"><nav><a href="../../en/legal/privacy.html">Privacy Policy</a> · <a href="../../en/legal/terms.html">Terms of Service</a> · <a href="../../en/legal/contact.html">Contact Us</a> · <a href="../../en/legal/about.html">About GugoPro</a> · <a href="../../en/legal/disclaimer.html">Disclaimer</a></nav><p>© 2026 GugoPro · <a href="mailto:contact@gugopro.com">contact@gugopro.com</a></p></footer></body>
+<footer class="site-compliance-footer"><nav><a href="../../en/legal/privacy.html">Privacy Policy</a> · <a href="../../en/legal/terms.html">Terms of Service</a> · <a href="../../en/legal/contact.html">Contact Us</a> · <a href="../../en/legal/about.html">About GugoPro</a> · <a href="../../en/legal/disclaimer.html">Disclaimer</a></nav><p>© 2026 GugoPro · <a href="mailto:contact@gugopro.com">contact@gugopro.com</a></p></footer>
+<script>
+(() => {
+    const placeComplianceFooter = () => {
+        const menu = document.getElementById('side-menu');
+        if (!menu) return;
+        document.querySelectorAll('body > .site-compliance-footer').forEach(footer => {
+            if (!menu.contains(footer)) menu.appendChild(footer);
+        });
+    };
+    placeComplianceFooter();
+    new MutationObserver(placeComplianceFooter).observe(document.body, { childList: true });
+})();
+</script>
+</body>
 </html>
