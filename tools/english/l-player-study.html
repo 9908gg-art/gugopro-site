@@ -176,8 +176,78 @@ function setLoading(isLoading){[$('status'),$('playerState')].forEach(el=>{if(!e
 function applyPair(primary,secondary=[]){state.captions=combineExactTlang(primary,secondary);state.active=state.pendingRestore?-1:(state.captions.length?0:-1);state.paused=false;state.loadingVideo=false;state.player?.pauseVideo?.();setPauseActions(false);$('status').textContent=t('statusLoaded',{n:state.captions.length});$('playerState').textContent=t('statusLoaded',{n:state.captions.length});setLoading(false);if(state.pendingRestore){restoreAfterCaptions()}else{render();saveProgress()}}
 async function loadTracks(id){const catalog=await getOfficialCatalog(id);if(state.id!==id)return;updateLanguageOptions(catalog.tracks);const primaryLang=$('learnLang').value||'en',helperLang=$('helperLang').value||'none';const primaryTrack=findTrack(catalog,primaryLang)||catalog.tracks[0];if(!primaryTrack)throw Error('no official learning track');let primary;let primaryTrackUsed=primaryTrack;let selectedError=null;for(const candidate of [primaryTrack,...catalog.tracks.filter(x=>x.lang!==primaryTrack.lang)]){try{primary=await getOfficialTrack(id,candidate);primaryTrackUsed=candidate;break}catch(error){selectedError=error}}if(!primary)throw selectedError||Error('no learning track');if(state.id!==id)return;let translated=[];if(helperLang!=='none'&&helperLang!==primaryTrackUsed.lang){try{translated=await getOfficialTrack(id,primaryTrackUsed,helperLang)}catch{translated=[]}}if(state.id===id)applyPair(primary,translated)}
 function applyCachedLanguage(){const cache=state.captionCache.get(state.id);if(!cache)return false;const primary=cache[$('learnLang').value]||cache.en||Object.values(cache)[0];const secondary=cache[$('helperLang').value]||cache['zh-Hant']||[];if(primary){applyPair(primary,secondary);return true}return false}
-async function fetchTracks(id){const requestId=id;try{const learnLang=$('learnLang').value||'en',helperLang=$('helperLang').value||'none',params=new URLSearchParams({v:id,lang:learnLang});if(helperLang!=='none'&&helperLang!==learnLang)params.set('tlang',helperLang);const response=await fetch('https://yt-sub-proxy.9908qq.workers.dev/?'+params.toString(),{headers:{Accept:'application/json'},cache:'no-store'});if(!response.ok)throw Error('caption worker HTTP '+response.status);const data=await response.json();if(!Array.isArray(data.captions)||!data.captions.length)throw Error(data.error||'caption worker returned no captions');if(state.id!==requestId)return;state.captions=data.captions.map(cue=>({start:Number(cue.start),end:Number(cue.end),primary:String(cue.primary??''),secondary:String(cue.secondary??'')})).filter(cue=>Number.isFinite(cue.start)&&Number.isFinite(cue.end)&&cue.end>cue.start&&(cue.primary||cue.secondary));if(!state.captions.length)throw Error('caption worker returned invalid captions');state.active=state.pendingRestore?-1:0;state.loadingVideo=false;state.player?.pauseVideo?.();setLoading(false);$('status').textContent=t('statusLoaded',{n:state.captions.length});$('playerState').textContent=t('statusLoaded',{n:state.captions.length});if(state.pendingRestore)restoreAfterCaptions();else{render();saveProgress()}}catch(e){if(state.id!==requestId)return;state.loadingVideo=false;state.player?.pauseVideo?.();setLoading(false);$('status').textContent=t('fetchFail');$('playerState').textContent=t('fetchFail');toast(t('fetchFail'));render()}}
-
+function cuesFromJson3(data){
+  return (data?.events||[]).flatMap(e=>{
+    const text=(e.segs||[]).map(x=>x.utf8||'').join('').replace(/\n/g,' ').trim();
+    if(!text)return [];
+    const start=Number(e.tStartMs||0)/1000;
+    const end=start+Math.max(.5,Number(e.dDurationMs||0)/1000);
+    return [{start,end,text}];
+  });
+}
+function cuesFromTimedTextXml(text){
+  const doc=new DOMParser().parseFromString(text,'text/xml');
+  return [...doc.querySelectorAll('text')].map(node=>{
+    const start=Number(node.getAttribute('start')||0),dur=Number(node.getAttribute('dur')||.5);
+    return {start,end:start+Math.max(.5,dur),text:(node.textContent||'').replace(/\s+/g,' ').trim()};
+  }).filter(x=>x.text);
+}
+async function requestTimedText(id,lang,tlang){
+  const params=new URLSearchParams({v:id,lang,fmt:'json3'});
+  if(tlang&&tlang!=='none')params.set('tlang',tlang);
+  const url='https://www.youtube.com/api/timedtext?'+params.toString();
+  const response=await fetch(url,{mode:'cors',credentials:'omit',headers:{Accept:'application/json, text/xml'},cache:'no-store'});
+  if(!response.ok)throw Error('YouTube TimedText HTTP '+response.status);
+  const body=await response.text();
+  if(!body.trim())return [];
+  try{return cuesFromJson3(JSON.parse(body))}catch(_){return cuesFromTimedTextXml(body)}
+}
+async function translateCaptionText(text,target){
+  const url='https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl='+encodeURIComponent(target)+'&dt=t&q='+encodeURIComponent(text);
+  const response=await fetch(url,{mode:'cors',credentials:'omit',cache:'no-store'});
+  if(!response.ok)return '';
+  const data=await response.json();
+  return (data[0]||[]).map(x=>x[0]||'').join('').trim();
+}
+async function translateCaptionBatch(cues,target){
+  const translated=[];
+  for(let i=0;i<cues.length;i+=12){
+    const batch=cues.slice(i,i+12),joined=batch.map(x=>x.text).join('\n');
+    try{
+      const result=await translateCaptionText(joined,target);
+      const parts=result.split(/\n/);
+      if(parts.length===batch.length)translated.push(...parts);
+      else for(const cue of batch)translated.push(await translateCaptionText(cue.text,target));
+    }catch(_){translated.push(...batch.map(()=>''))}
+  }
+  return translated;
+}
+async function fetchTracks(id){
+  const requestId=id;
+  try{
+    const learnLang=$('learnLang').value||'en',helperLang=$('helperLang').value||'none';
+    let original=await requestTimedText(id,learnLang,'none');
+    if(!original.length)throw Error('YouTube has no readable captions for this language');
+    let secondary=[];
+    if(helperLang!=='none'&&helperLang!==learnLang){
+      try{secondary=await requestTimedText(id,learnLang,helperLang)}catch(_){secondary=[]}
+      if(!secondary.length&&learnLang.toLowerCase().startsWith('en')){
+        const translated=await translateCaptionBatch(original,'zh-TW');
+        secondary=translated.map((text,i)=>({start:original[i].start,end:original[i].end,text}));
+      }
+    }
+    if(state.id!==requestId)return;
+    state.captions=original.map((cue,i)=>({start:Number(cue.start),end:Number(cue.end),primary:String(cue.text||''),secondary:String(secondary[i]?.text||'')})).filter(cue=>Number.isFinite(cue.start)&&Number.isFinite(cue.end)&&cue.end>cue.start&&(cue.primary||cue.secondary));
+    if(!state.captions.length)throw Error('No usable caption cues returned');
+    state.active=state.pendingRestore?-1:0;state.loadingVideo=false;state.player?.pauseVideo?.();setLoading(false);$('status').textContent=t('statusLoaded',{n:state.captions.length});$('playerState').textContent=t('statusLoaded',{n:state.captions.length});if(state.pendingRestore)restoreAfterCaptions();else{render();saveProgress()}
+  }catch(e){
+    if(state.id!==requestId)return;
+    state.loadingVideo=false;state.player?.pauseVideo?.();setLoading(false);
+    const message=String(e?.message||e);
+    $('status').textContent=message.includes('Failed to fetch')?'瀏覽器無法讀取 YouTube 字幕（CORS 或網路限制）':t('fetchFail');
+    $('playerState').textContent=$('status').textContent;toast($('status').textContent);render()
+  }
+}
 function createPlayer(id){if(!window.YT?.Player)return;state.player=new YT.Player('player',{videoId:id,playerVars:{playsinline:1,rel:0,modestbranding:1,cc_load_policy:0,iv_load_policy:3},events:{onReady:()=>{state.ready=true;state.player.setPlaybackRate(speedValue());if(state.loadingVideo)state.player.pauseVideo();if(state.pendingRestore)restoreAfterCaptions();startMonitor()},onStateChange:e=>{if(e.data===YT.PlayerState.PLAYING){if(state.loadingVideo){state.player.pauseVideo();return}if(state.paused&&$('autoPause').classList.contains('active')){const next=state.captions[state.active+1];state.paused=false;state.ignorePauseUntil=Date.now()+600;if(next){state.active+=1;state.player.seekTo(next.start+state.offset,true);}render();return}state.paused=false;$('playPause').textContent=t('pause');startMonitor()}else if(e.data===YT.PlayerState.PAUSED){$('playPause').textContent=t('play');saveProgress();startMonitor()}}}})}
 function startMonitor(){clearInterval(state.monitor);state.monitor=setInterval(tick,100)}
 window.onYouTubeIframeAPIReady=()=>{if(state.id)createPlayer(state.id)};
