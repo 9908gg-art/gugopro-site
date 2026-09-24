@@ -167,14 +167,73 @@ function findTrack(catalog,lang){const aliases=languageAliases[lang]||[lang];ret
 async function getOfficialTrack(id,track,tlang=''){const key=id+'|'+track.lang+'|'+tlang+'|'+track.name;if(state.trackCache.has(key))return state.trackCache.get(key);if(track.fallback){const requestedLang=tlang||track.lang;const fallbackLang=requestedLang==='zh-Hant'||requestedLang==='zh-TW'?'zh-TW':requestedLang;const parsed=parseTranscriptFallback(await fetchText('https://youtube-transcript.ai/transcript/'+encodeURIComponent(id)+'.txt?lang='+encodeURIComponent(fallbackLang)));state.trackCache.set(key,parsed);return parsed}const urls=[];if(track.baseUrl){urls.push(track.baseUrl+(track.baseUrl.includes('?')?'&':'?')+'fmt=vtt'+(tlang?'&tlang='+encodeURIComponent(tlang):''))}const extras=[];if(track.name||track.kind){let named='';if(track.name)named+='&name='+encodeURIComponent(track.name);if(track.kind)named+='&kind='+encodeURIComponent(track.kind);extras.push(named)}extras.push('');extras.forEach(extraBase=>urls.push(officialUrl(id,track.lang,extraBase+(tlang?'&tlang='+encodeURIComponent(tlang):''))));let lastError=null;for(const url of urls){try{const parsed=parseTimedText(await fetchText(url));if(parsed.length){state.trackCache.set(key,parsed);return parsed}lastError=Error('empty subtitle track')}catch(error){lastError=error}}throw lastError||Error('empty subtitle track')}
 
 function exactCueKey(cue){return Number(cue.start).toFixed(3)}
-function splitSentenceText(text,zh){const value=String(text||'').replace(/\s+/g,' ').trim();if(!value)return[];const pieces=zh?value.match(/[^。！？!?]+[。！？!?]+|[^。！？!?]+$/g):value.match(/[^.!?]+[.!?]+|[^.!?]+$/g);return(pieces||[value]).map(x=>x.trim()).filter(Boolean)}
-function distributeSecondary(parts,count){if(!parts.length)return Array.from({length:count},()=>'' );const groups=[];for(let i=0;i<count;i++){const a=Math.floor(i*parts.length/count),b=Math.max(a+1,Math.floor((i+1)*parts.length/count));groups.push(parts.slice(a,Math.min(b,parts.length)).join(' ').trim()||parts[Math.min(a,parts.length-1)])}return groups}
-function segmentCuePair(primary,secondary=''){const p=splitSentenceText(primary.primary,false);const q=splitSentenceText(secondary,true);if(p.length<=1)return[{...primary,primary:p[0]||primary.primary,secondary:q.join(' ')||secondary||''}];const qGroups=distributeSecondary(q,p.length);const total=p.reduce((n,x)=>n+x.length,0)||p.length;const duration=Math.max(.05,primary.end-primary.start);let cursor=primary.start;return p.map((text,i)=>{const next=i===p.length-1?primary.end:cursor+duration*(text.length/total);const cue={start:cursor,end:Math.max(next,cursor+.05),primary:text,secondary:qGroups[i]||''};cursor=cue.end;return cue})}
-function combineExactTlang(primary,translated){const byTime=new Map((translated||[]).map(cue=>[exactCueKey(cue),cue]));return(primary||[]).flatMap(cue=>segmentCuePair(cue,byTime.get(exactCueKey(cue))?.primary||''))}
+function countSyllables(word){
+  const w=String(word||'').toLowerCase().replace(/[^a-z]/g,'');
+  if(!w)return 0;
+  if(w.length<=3)return 1;
+  const groups=(w.match(/[aeiouy]+/g)||[]).length;
+  const silentE=/e$/.test(w)&&!/[^aeiou]le$/.test(w);
+  const ending=/[^aeiou]ed$/.test(w)&&!/(ted|ded)$/.test(w);
+  return Math.max(1,groups-(silentE?1:0)-(ending?1:0));
+}
+function wordCount(text){return String(text||'').match(/[A-Za-z0-9]+(?:['’][A-Za-z]+)?/g)?.length||0}
+function splitSentenceText(text){
+  let value=String(text||'').replace(/\s+/g,' ').trim();
+  if(!value)return[];
+  const protectedTokens=[];
+  const protect=(match)=>{const token='§'+protectedTokens.length+'§';protectedTokens.push(match);return match.replace(/\./g,'<DOT>')};
+  value=value.replace(/\b(?:Mr|Mrs|Ms|Dr|Prof|Sr|Jr|St|vs|etc|e\.g|i\.e|a\.m|p\.m)\./gi,protect);
+  value=value.replace(/(\d)\.(\d)/g,'$1<DOT>$2').replace(/(\d),(\d)/g,'$1<COMMA>$2');
+  const pieces=(value.match(/[^.!?]+[.!?]+["'”’)\]]*(?=\s+|$)|[^.!?]+$/g)||[value]).map(x=>x.replace(/<DOT>/g,'.').replace(/<COMMA>/g,',').trim()).filter(Boolean);
+  const merged=[];
+  for(const piece of pieces){
+    if(!merged.length){merged.push(piece);continue}
+    const prior=merged[merged.length-1], priorWords=wordCount(prior), nextWords=wordCount(piece);
+    if(priorWords<3||(priorWords<4&&priorWords+nextWords<=18)){merged[merged.length-1]=prior+' '+piece}
+    else merged.push(piece);
+  }
+  return merged;
+}
+function sentenceWeight(text){return String(text||'').split(/\s+/).filter(Boolean).reduce((sum,word)=>sum+countSyllables(word),0)+2}
+function allocateSentenceTimes(parts,start,end){
+  const duration=Math.max(.05,Number(end)-Number(start));
+  if(!parts.length)return[];
+  const pause=parts.length>1&&duration>parts.length*.45?Math.min(.35,(duration/parts.length)*.22):0;
+  const speech=Math.max(.05,duration-pause*parts.length),weights=parts.map(sentenceWeight),total=weights.reduce((a,b)=>a+b,0)||parts.length;
+  let cursor=Number(start);
+  return parts.map((text,i)=>{const spoken=speech*weights[i]/total;const next=i===parts.length-1?Number(end):Math.min(Number(end),cursor+spoken+pause);const cue={start:Number(cursor.toFixed(2)),end:Number(Math.max(cursor+.05,next).toFixed(2)),primary:text,secondary:''};cursor=next;return cue});
+}
+function segmentCuePair(primary,secondary=''){
+  const parts=splitSentenceText(primary?.primary||primary||'');
+  if(!parts.length)return[];
+  const cues=allocateSentenceTimes(parts,primary.start,primary.end);
+  const translated=splitSentenceText(secondary);
+  if(translated.length===cues.length)cues.forEach((cue,i)=>cue.secondary=translated[i]);
+  return cues;
+}
+function combineExactTlang(primary,translated){
+  const byTime=new Map((translated||[]).map(cue=>[exactCueKey(cue),cue]));
+  return(primary||[]).flatMap(cue=>segmentCuePair(cue,byTime.get(exactCueKey(cue))?.primary||''));
+}
+const sentenceTranslationCache=new Map();
+async function translateSentence(text,target){
+  const clean=String(text||'').replace(/\s+/g,' ').trim(),lang=target==='zh-Hant'||target==='zh-TW'?'zh-TW':target;
+  if(!clean)return'';
+  const key=lang+'|'+clean.toLowerCase();
+  if(sentenceTranslationCache.has(key))return sentenceTranslationCache.get(key);
+  const promise=translateCaptionText(clean,lang).catch(()=>'' );
+  sentenceTranslationCache.set(key,promise);
+  return promise;
+}
+async function translateSentenceCues(cues,target){
+  for(const cue of cues)if(!cue.secondary)cue.secondary=await translateSentence(cue.primary,target);
+  return cues;
+}
 function setPauseActions(){ /* actions are permanently visible */ }
 function setLoading(isLoading){[$('status'),$('playerState')].forEach(el=>{if(!el)return;el.classList.toggle('is-loading',isLoading)})}
 function applyPair(primary,secondary=[]){state.captions=combineExactTlang(primary,secondary);state.active=state.pendingRestore?-1:(state.captions.length?0:-1);state.paused=false;state.loadingVideo=false;state.player?.pauseVideo?.();setPauseActions(false);$('status').textContent=t('statusLoaded',{n:state.captions.length});$('playerState').textContent=t('statusLoaded',{n:state.captions.length});setLoading(false);if(state.pendingRestore){restoreAfterCaptions()}else{render();saveProgress()}}
-async function loadTracks(id){const catalog=await getOfficialCatalog(id);if(state.id!==id)return;updateLanguageOptions(catalog.tracks);const primaryLang=$('learnLang').value||'en',helperLang=$('helperLang').value||'none';const primaryTrack=findTrack(catalog,primaryLang)||catalog.tracks[0];if(!primaryTrack)throw Error('no official learning track');let primary;let primaryTrackUsed=primaryTrack;let selectedError=null;for(const candidate of [primaryTrack,...catalog.tracks.filter(x=>x.lang!==primaryTrack.lang)]){try{primary=await getOfficialTrack(id,candidate);primaryTrackUsed=candidate;break}catch(error){selectedError=error}}if(!primary)throw selectedError||Error('no learning track');if(state.id!==id)return;let translated=[];if(helperLang!=='none'&&helperLang!==primaryTrackUsed.lang){try{translated=await getOfficialTrack(id,primaryTrackUsed,helperLang)}catch{translated=[]}}if(state.id===id)applyPair(primary,translated)}
+function applyCaptionList(captions){state.captions=captions;state.active=state.pendingRestore?-1:(captions.length?0:-1);state.paused=false;state.loadingVideo=false;state.player?.pauseVideo?.();setPauseActions(false);$('status').textContent=t('statusLoaded',{n:captions.length});$('playerState').textContent=t('statusLoaded',{n:captions.length});setLoading(false);if(state.pendingRestore){restoreAfterCaptions()}else{render();saveProgress()}}
+async function loadTracks(id){const catalog=await getOfficialCatalog(id);if(state.id!==id)return;updateLanguageOptions(catalog.tracks);const primaryLang=$('learnLang').value||'en',helperLang=$('helperLang').value||'none';const primaryTrack=findTrack(catalog,primaryLang)||catalog.tracks[0];if(!primaryTrack)throw Error('no official learning track');let primary;let primaryTrackUsed=primaryTrack;let selectedError=null;for(const candidate of [primaryTrack,...catalog.tracks.filter(x=>x.lang!==primaryTrack.lang)]){try{primary=await getOfficialTrack(id,candidate);primaryTrackUsed=candidate;break}catch(error){selectedError=error}}if(!primary)throw selectedError||Error('no learning track');if(state.id!==id)return;let translated=[];if(helperLang!=='none'&&helperLang!==primaryTrackUsed.lang){try{translated=await getOfficialTrack(id,primaryTrackUsed,helperLang)}catch{translated=[]}}if(state.id!==id)return;const captions=combineExactTlang(primary,translated);if(helperLang!=='none'&&primaryTrackUsed.lang.toLowerCase().startsWith('en'))await translateSentenceCues(captions,helperLang);if(state.id===id)applyCaptionList(captions)}
 function applyCachedLanguage(){const cache=state.captionCache.get(state.id);if(!cache)return false;const primary=cache[$('learnLang').value]||cache.en||Object.values(cache)[0];const secondary=cache[$('helperLang').value]||cache['zh-Hant']||[];if(primary){applyPair(primary,secondary);return true}return false}
 function cuesFromJson3(data){
   return (data?.events||[]).flatMap(e=>{
