@@ -225,15 +225,19 @@ async function translateSentence(text,target){
   sentenceTranslationCache.set(key,promise);
   return promise;
 }
-async function translateSentenceCues(cues,target){
-  for(const cue of cues)if(!cue.secondary)cue.secondary=await translateSentence(cue.primary,target);
+async function translateSentenceCues(cues,target,onBatch){
+  for(let i=0;i<cues.length;i+=6){
+    const batch=cues.slice(i,i+6);
+    await Promise.all(batch.map(async cue=>{if(!cue.secondary)cue.secondary=await translateSentence(cue.primary,target)}));
+    try{onBatch?.(i+batch.length)}catch{}
+  }
   return cues;
 }
 function setPauseActions(){ /* actions are permanently visible */ }
 function setLoading(isLoading){[$('status'),$('playerState')].forEach(el=>{if(!el)return;el.classList.toggle('is-loading',isLoading)})}
 function applyPair(primary,secondary=[]){state.captions=combineExactTlang(primary,secondary);state.active=state.pendingRestore?-1:(state.captions.length?0:-1);state.paused=false;state.loadingVideo=false;state.player?.pauseVideo?.();setPauseActions(false);$('status').textContent=t('statusLoaded',{n:state.captions.length});$('playerState').textContent=t('statusLoaded',{n:state.captions.length});setLoading(false);if(state.pendingRestore){restoreAfterCaptions()}else{render();saveProgress()}}
 function applyCaptionList(captions){state.captions=captions;state.active=state.pendingRestore?-1:(captions.length?0:-1);state.paused=false;state.loadingVideo=false;state.player?.pauseVideo?.();setPauseActions(false);$('status').textContent=t('statusLoaded',{n:captions.length});$('playerState').textContent=t('statusLoaded',{n:captions.length});setLoading(false);if(state.pendingRestore){restoreAfterCaptions()}else{render();saveProgress()}}
-async function loadTracks(id){const catalog=await getOfficialCatalog(id);if(state.id!==id)return;updateLanguageOptions(catalog.tracks);const primaryLang=$('learnLang').value||'en',helperLang=$('helperLang').value||'none';const primaryTrack=findTrack(catalog,primaryLang)||catalog.tracks[0];if(!primaryTrack)throw Error('no official learning track');let primary;let primaryTrackUsed=primaryTrack;let selectedError=null;for(const candidate of [primaryTrack,...catalog.tracks.filter(x=>x.lang!==primaryTrack.lang)]){try{primary=await getOfficialTrack(id,candidate);primaryTrackUsed=candidate;break}catch(error){selectedError=error}}if(!primary)throw selectedError||Error('no learning track');if(state.id!==id)return;let translated=[];if(helperLang!=='none'&&helperLang!==primaryTrackUsed.lang){try{translated=await getOfficialTrack(id,primaryTrackUsed,helperLang)}catch{translated=[]}}if(state.id!==id)return;const captions=combineExactTlang(primary,translated);if(helperLang!=='none'&&primaryTrackUsed.lang.toLowerCase().startsWith('en'))await translateSentenceCues(captions,helperLang);if(state.id===id)applyCaptionList(captions)}
+async function loadTracks(id){const catalog=await getOfficialCatalog(id);if(state.id!==id)return;updateLanguageOptions(catalog.tracks);const primaryLang=$('learnLang').value||'en',helperLang=$('helperLang').value||'none';const primaryTrack=findTrack(catalog,primaryLang)||catalog.tracks[0];if(!primaryTrack)throw Error('no official learning track');let primary;let primaryTrackUsed=primaryTrack;let selectedError=null;for(const candidate of [primaryTrack,...catalog.tracks.filter(x=>x.lang!==primaryTrack.lang)]){try{primary=await getOfficialTrack(id,candidate);primaryTrackUsed=candidate;break}catch(error){selectedError=error}}if(!primary)throw selectedError||Error('no learning track');if(state.id!==id)return;let translated=[];if(helperLang!=='none'&&helperLang!==primaryTrackUsed.lang){try{translated=await getOfficialTrack(id,primaryTrackUsed,helperLang)}catch{translated=[]}}if(state.id!==id)return;const captions=combineExactTlang(primary,translated);applyCaptionList(captions);if(helperLang!=='none'&&primaryTrackUsed.lang.toLowerCase().startsWith('en')){translateSentenceCues(captions,helperLang,()=>{if(state.id===id)render()}).then(()=>{if(state.id===id)saveProgress()}).catch(()=>{})}}
 function applyCachedLanguage(){const cache=state.captionCache.get(state.id);if(!cache)return false;const primary=cache[$('learnLang').value]||cache.en||Object.values(cache)[0];const secondary=cache[$('helperLang').value]||cache['zh-Hant']||[];if(primary){applyPair(primary,secondary);return true}return false}
 function cuesFromJson3(data){
   return (data?.events||[]).flatMap(e=>{
@@ -284,27 +288,20 @@ async function translateCaptionBatch(cues,target){
 async function fetchTracks(id){
   const requestId=id;
   try{
-    const learnLang=$('learnLang').value||'en',helperLang=$('helperLang').value||'none';
-    let original=await requestTimedText(id,learnLang,'none');
-    if(!original.length)throw Error('YouTube has no readable captions for this language');
-    let secondary=[];
-    if(helperLang!=='none'&&helperLang!==learnLang){
-      try{secondary=await requestTimedText(id,learnLang,helperLang)}catch(_){secondary=[]}
-      if(!secondary.length&&learnLang.toLowerCase().startsWith('en')){
-        const translated=await translateCaptionBatch(original,'zh-TW');
-        secondary=translated.map((text,i)=>({start:original[i].start,end:original[i].end,text}));
-      }
-    }
+    if(state.demo&&applyCachedLanguage())return;
+    await Promise.race([
+      loadTracks(id),
+      new Promise((_,reject)=>setTimeout(()=>reject(Error('caption load deadline exceeded')),20000))
+    ]);
+  }catch(error){
     if(state.id!==requestId)return;
-    state.captions=original.map((cue,i)=>({start:Number(cue.start),end:Number(cue.end),primary:String(cue.text||''),secondary:String(secondary[i]?.text||'')})).filter(cue=>Number.isFinite(cue.start)&&Number.isFinite(cue.end)&&cue.end>cue.start&&(cue.primary||cue.secondary));
-    if(!state.captions.length)throw Error('No usable caption cues returned');
-    state.active=state.pendingRestore?-1:0;state.loadingVideo=false;state.player?.pauseVideo?.();setLoading(false);$('status').textContent=t('statusLoaded',{n:state.captions.length});$('playerState').textContent=t('statusLoaded',{n:state.captions.length});if(state.pendingRestore)restoreAfterCaptions();else{render();saveProgress()}
-  }catch(e){
-    if(state.id!==requestId)return;
-    state.loadingVideo=false;state.player?.pauseVideo?.();setLoading(false);
-    const message=String(e?.message||e);
-    $('status').textContent=message.includes('Failed to fetch')?'瀏覽器無法讀取 YouTube 字幕（CORS 或網路限制）':t('fetchFail');
-    $('playerState').textContent=$('status').textContent;toast($('status').textContent);render()
+    state.loadingVideo=false;
+    state.player?.pauseVideo?.();
+    setLoading(false);
+    $('status').textContent=t('fetchFail');
+    $('playerState').textContent=t('fetchFail');
+    toast(t('fetchFail'));
+    render();
   }
 }
 function createPlayer(id){if(!window.YT?.Player)return;state.player=new YT.Player('player',{videoId:id,playerVars:{playsinline:1,rel:0,modestbranding:1,cc_load_policy:0,iv_load_policy:3},events:{onReady:()=>{state.ready=true;state.player.setPlaybackRate(speedValue());if(state.loadingVideo)state.player.pauseVideo();if(state.pendingRestore)restoreAfterCaptions();startMonitor()},onStateChange:e=>{if(e.data===YT.PlayerState.PLAYING){if(state.loadingVideo){state.player.pauseVideo();return}if(state.paused&&$('autoPause').classList.contains('active')){const next=state.captions[state.active+1];state.paused=false;state.ignorePauseUntil=Date.now()+600;if(next){state.active+=1;state.player.seekTo(next.start+state.offset,true);}render();return}state.paused=false;$('playPause').textContent=t('pause');startMonitor()}else if(e.data===YT.PlayerState.PAUSED){$('playPause').textContent=t('play');saveProgress();startMonitor()}}}})}
