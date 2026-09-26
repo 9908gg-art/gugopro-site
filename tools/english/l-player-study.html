@@ -199,10 +199,12 @@ function sentenceWeight(text){return String(text||'').split(/\s+/).filter(Boolea
 function allocateSentenceTimes(parts,start,end){
   const duration=Math.max(.05,Number(end)-Number(start));
   if(!parts.length)return[];
-  const pause=parts.length>1&&duration>parts.length*.45?Math.min(.35,(duration/parts.length)*.22):0;
-  const speech=Math.max(.05,duration-pause*parts.length),weights=parts.map(sentenceWeight),total=weights.reduce((a,b)=>a+b,0)||parts.length;
+  // Keep the same deterministic rule as the Worker: preserve the source cue
+  // interval and divide it only by visible character length. Never add an
+  // invented pause; invented pauses are the main cause of cumulative drift.
+  const weights=parts.map(text=>Math.max(1,String(text||'').length)),total=weights.reduce((a,b)=>a+b,0)||parts.length;
   let cursor=Number(start);
-  return parts.map((text,i)=>{const spoken=speech*weights[i]/total;const next=i===parts.length-1?Number(end):Math.min(Number(end),cursor+spoken+pause);const cue={start:Number(cursor.toFixed(2)),end:Number(Math.max(cursor+.05,next).toFixed(2)),primary:text,secondary:''};cursor=next;return cue});
+  return parts.map((text,i)=>{const next=i===parts.length-1?Number(end):Number((cursor+duration*weights[i]/total).toFixed(3));const cue={start:Number(cursor.toFixed(3)),end:Number(Math.max(cursor+.05,next).toFixed(3)),primary:text,secondary:''};cursor=next;return cue});
 }
 function segmentCuePair(primary,secondary=''){
   const parts=splitSentenceText(primary?.primary||primary||'');
@@ -213,8 +215,13 @@ function segmentCuePair(primary,secondary=''){
   return cues;
 }
 function combineExactTlang(primary,translated){
-  const byTime=new Map((translated||[]).map(cue=>[exactCueKey(cue),cue]));
-  return(primary||[]).flatMap(cue=>segmentCuePair(cue,byTime.get(exactCueKey(cue))?.primary||''));
+  const list=(translated||[]).filter(c=>String(c.primary||c.text||'').trim());
+  return(primary||[]).flatMap(cue=>{
+    const exact=list.find(x=>Math.abs(Number(x.start)-Number(cue.start))<.02);
+    const overlap=list.filter(x=>Number(x.end)>Number(cue.start)-.15&&Number(x.start)<Number(cue.end)+.15);
+    const nearest=(exact||overlap.sort((a,b)=>Math.abs(Number(a.start)-Number(cue.start))-Math.abs(Number(b.start)-Number(cue.start)))[0]);
+    return segmentCuePair(cue,nearest?.primary||nearest?.text||'');
+  });
 }
 const sentenceTranslationCache=new Map();
 async function translateSentence(text,target){
@@ -238,15 +245,17 @@ function setPauseActions(){ /* actions are permanently visible */ }
 function setLoading(isLoading){[$('status'),$('playerState')].forEach(el=>{if(!el)return;el.classList.toggle('is-loading',isLoading)})}
 function applyPair(primary,secondary=[]){state.captions=combineExactTlang(primary,secondary);state.active=state.pendingRestore?-1:(state.captions.length?0:-1);state.paused=false;state.loadingVideo=false;state.player?.pauseVideo?.();setPauseActions(false);$('status').textContent=t('statusLoaded',{n:state.captions.length});$('playerState').textContent=t('statusLoaded',{n:state.captions.length});setLoading(false);if(state.pendingRestore){restoreAfterCaptions()}else{render();saveProgress()}}
 function applyCaptionList(captions){state.captions=captions;state.active=state.pendingRestore?-1:(captions.length?0:-1);state.paused=false;state.loadingVideo=false;state.player?.pauseVideo?.();setPauseActions(false);$('status').textContent=t('statusLoaded',{n:captions.length});$('playerState').textContent=t('statusLoaded',{n:captions.length});setLoading(false);if(state.pendingRestore){restoreAfterCaptions()}else{render();saveProgress()}}
-async function loadTracks(id){try{if(await fetchWorkerCaptions(id))return}catch(_){ }const catalog=await getOfficialCatalog(id);if(state.id!==id)return;updateLanguageOptions(catalog.tracks);const primaryLang=$('learnLang').value||'en',helperLang=$('helperLang').value||'none';const primaryTrack=findTrack(catalog,primaryLang)||catalog.tracks[0];if(!primaryTrack)throw Error('no official learning track');let primary;let primaryTrackUsed=primaryTrack;let selectedError=null;for(const candidate of [primaryTrack,...catalog.tracks.filter(x=>x.lang!==primaryTrack.lang)]){try{primary=await getOfficialTrack(id,candidate);primaryTrackUsed=candidate;break}catch(error){selectedError=error}}if(!primary)throw selectedError||Error('no learning track');if(state.id!==id)return;let translated=[];if(helperLang!=='none'&&helperLang!==primaryTrackUsed.lang){try{translated=await getOfficialTrack(id,primaryTrackUsed,helperLang)}catch{translated=[]}}if(state.id!==id)return;const captions=combineExactTlang(primary,translated);applyCaptionList(captions);if(helperLang!=='none'&&primaryTrackUsed.lang.toLowerCase().startsWith('en')){translateSentenceCues(captions,helperLang,()=>{if(state.id===id)render()}).then(()=>{if(state.id===id)saveProgress()}).catch(()=>{})}}
+async function loadTracks(id){try{if(await fetchWorkerCaptions(id))return}catch(_){ }const catalog=await getOfficialCatalog(id);if(state.id!==id)return;updateLanguageOptions(catalog.tracks);const primaryLang=$('learnLang').value||'en',helperLang=$('helperLang').value||'none';const primaryTrack=findTrack(catalog,primaryLang)||catalog.tracks[0];if(!primaryTrack)throw Error('no official learning track');let primary;let primaryTrackUsed=primaryTrack;let selectedError=null;for(const candidate of [primaryTrack,...catalog.tracks.filter(x=>x.lang!==primaryTrack.lang)]){try{primary=await getOfficialTrack(id,candidate);primaryTrackUsed=candidate;break}catch(error){selectedError=error}}if(!primary)throw selectedError||Error('no learning track');if(state.id!==id)return;let translated=[];if(helperLang!=='none'&&helperLang!==primaryTrackUsed.lang){try{translated=await getOfficialTrack(id,primaryTrackUsed,helperLang)}catch{translated=[]}}if(state.id!==id)return;const captions=combineExactTlang(primary,translated);applyCaptionList(captions);if(helperLang!=='none'&&captions.some(c=>!c.secondary)){translateSentenceCues(captions,helperLang,()=>{if(state.id===id)render()}).then(()=>{if(state.id===id)saveProgress()}).catch(()=>{})}}
 async function fetchWorkerCaptions(id){
  const lang=$('learnLang').value||'en',tlang=$('helperLang').value||'none';
  const response=await fetch(workerEndpoint+'?v='+encodeURIComponent(id)+'&lang='+encodeURIComponent(lang)+'&tlang='+encodeURIComponent(tlang)+'&cb='+Date.now(),{headers:{Accept:'application/json'},cache:'no-store',signal:AbortSignal.timeout(12000)});
  if(!response.ok)throw Error('caption worker '+response.status);
  const data=await response.json();
  if(!Array.isArray(data.captions)||!data.captions.length)throw Error('caption worker returned no captions');
- applyCaptionList(data.captions.map(c=>({start:Number(c.start),end:Number(c.end),primary:String(c.primary||''),secondary:String(c.secondary||'')})).filter(c=>c.primary));
+ const captions=data.captions.map(c=>({start:Number(c.start),end:Number(c.end),primary:String(c.primary||''),secondary:String(c.secondary||'')})).filter(c=>c.primary);
+ applyCaptionList(captions);
  state.timingQuality=data.timingQuality||'exact';
+ if(tlang!=='none'&&captions.some(c=>!c.secondary))translateSentenceCues(captions,tlang,()=>{if(state.id===id)render()}).then(()=>{if(state.id===id)saveProgress()}).catch(()=>{});
  return true;
 }
 function applyCachedLanguage(){const cache=state.captionCache.get(state.id);if(!cache)return false;const primary=cache[$('learnLang').value]||cache.en||Object.values(cache)[0];const secondary=cache[$('helperLang').value]||cache['zh-Hant']||[];if(primary){applyPair(primary,secondary);return true}return false}
