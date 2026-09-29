@@ -211,7 +211,9 @@ body{min-height:100dvh}
       nextSentence: "⏭️ 播放下一句",
       timeline: "多語言字幕時間軸",
       statusReady: "待載入",
-      statusLoading: "⏳ 正在向專屬雲端伺服器提取字幕…",
+      statusLoading: "⏳ 正在向專屬雲端伺服器提取高精確字幕；首次解析可能需要 20–75 秒，請稍候…",
+      statusRetrying: "⏳ 字幕請求逾時或連線暫時不穩；1.5 秒後將自動重試一次…",
+      timeoutFail: "字幕解析逾時，請再試一次或使用手動匯入 SRT/VTT 檔案。",
       statusLoaded: "已載入 {n} 句",
       learnLang: "學習語言（原文）",
       helperLang: "輔助對照（譯文）",
@@ -292,7 +294,9 @@ body{min-height:100dvh}
       nextSentence: "⏭️ Play next sentence",
       timeline: "Multilingual caption timeline",
       statusReady: "Ready",
-      statusLoading: "⏳ Fetching captions from the dedicated cloud server…",
+      statusLoading: "⏳ Fetching high-accuracy captions; first-time parsing may take 20–75 seconds. Please wait…",
+      statusRetrying: "⏳ The caption request timed out or briefly lost its connection; retrying once in 1.5 seconds…",
+      timeoutFail: "Caption parsing timed out. Please try again or manually import an SRT/VTT file.",
       statusLoaded: "Loaded {n} lines",
       learnLang: "Learning language (original)",
       helperLang: "Helper language (translation)",
@@ -378,7 +382,9 @@ body{min-height:100dvh}
       nextSentence: "⏭️ 次の文を再生",
       timeline: "多言語字幕タイムライン",
       statusReady: "準備完了",
-      statusLoading: "⏳ 専用クラウドサーバーから字幕を取得中…",
+      statusLoading: "⏳ 高精度字幕を取得中です。初回解析には20〜75秒かかる場合があります。お待ちください…",
+      statusRetrying: "⏳ 字幕リクエストがタイムアウトしたか接続が不安定です。1.5秒後に一度再試行します…",
+      timeoutFail: "字幕の解析がタイムアウトしました。再試行するか、SRT/VTTを手動で読み込んでください。",
       statusLoaded: "{n}行を読み込みました",
       learnLang: "学習言語（原文）",
       helperLang: "補助言語（訳文）",
@@ -941,6 +947,40 @@ body{min-height:100dvh}
       .filter(Boolean);
   }
   const apiSubtitleCache = new Map();
+  const API_TIMEOUTS = [75000, 90000];
+  const API_RETRY_DELAY_MS = 1500;
+  function setSubtitleLoadingStatus(key) {
+    if (!state.loadingVideo) return;
+    const message = t(key);
+    [$("status"), $("playerState")].forEach((el) => {
+      if (el) el.textContent = message;
+    });
+  }
+  function makeSubtitleApiError(message, kind, status, cause) {
+    const error = new Error(message || "Subtitle API request failed");
+    error.kind = kind;
+    if (Number.isFinite(status)) error.status = status;
+    if (cause) error.cause = cause;
+    return error;
+  }
+  function classifySubtitleApiError(error) {
+    if (error?.kind) return error;
+    const name = String(error?.name || "");
+    const kind =
+      name === "TimeoutError" || name === "AbortError"
+        ? "timeout"
+        : error instanceof TypeError
+          ? "network"
+          : "service";
+    const wrapped = makeSubtitleApiError(
+      error?.message || "Subtitle API request failed",
+      kind,
+      error?.status,
+      error,
+    );
+    wrapped.name = name || "Error";
+    return wrapped;
+  }
   async function fetchApiSubtitles(id, language) {
     const lang = apiLanguageCode(language),
       key = id + "|" + lang;
@@ -949,22 +989,70 @@ body{min-height:100dvh}
       const url = new URL(SUBTITLE_API);
       url.searchParams.set("v", id);
       url.searchParams.set("lang", lang);
-      const response = await fetch(url.toString(), {
-        method: "GET",
-        mode: "cors",
-        credentials: "omit",
-        headers: { Accept: "application/json" },
-        cache: "no-store",
-        signal: AbortSignal.timeout(45000),
-      });
-      let data = {};
-      try {
-        data = await response.json();
-      } catch (_) {}
-      if (response.status === 404) return [];
-      if (!response.ok)
-        throw Error(data.error || "Subtitle API HTTP " + response.status);
-      return apiCues(data);
+      let lastError = null;
+      for (let attempt = 0; attempt < API_TIMEOUTS.length; attempt++) {
+        if (attempt > 0) {
+          setSubtitleLoadingStatus("statusRetrying");
+          await new Promise((resolve) => setTimeout(resolve, API_RETRY_DELAY_MS));
+        }
+        try {
+          const response = await fetch(url.toString(), {
+            method: "GET",
+            mode: "cors",
+            credentials: "omit",
+            headers: { Accept: "application/json" },
+            cache: "no-store",
+            signal: AbortSignal.timeout(API_TIMEOUTS[attempt]),
+          });
+          if (response.status === 404) return [];
+          if (!response.ok) {
+            let body = "";
+            try {
+              body = await response.text();
+            } catch (_) {}
+            const kind =
+              response.status === 504
+                ? "timeout"
+                : response.status >= 500
+                  ? "service"
+                  : "request";
+            const apiError = makeSubtitleApiError(
+              body || "Subtitle API HTTP " + response.status,
+              kind,
+              response.status,
+            );
+            if (response.status >= 500 && attempt === 0) {
+              lastError = apiError;
+              continue;
+            }
+            throw apiError;
+          }
+          let data;
+          try {
+            data = await response.json();
+          } catch (error) {
+            throw makeSubtitleApiError(
+              "Subtitle API returned invalid JSON",
+              "service",
+              response.status,
+              error,
+            );
+          }
+          return apiCues(data);
+        } catch (error) {
+          const classified = classifySubtitleApiError(error);
+          const retryable =
+            classified.kind === "network" ||
+            classified.kind === "timeout" ||
+            (classified.kind === "service" && classified.status >= 500);
+          if (attempt === 0 && retryable) {
+            lastError = classified;
+            continue;
+          }
+          throw classified;
+        }
+      }
+      throw lastError || makeSubtitleApiError("Subtitle API request failed", "service");
     })();
     apiSubtitleCache.set(key, request);
     try {
@@ -1087,13 +1175,15 @@ body{min-height:100dvh}
       selectedLearn === "none" ? "en" : selectedLearn,
     );
     let nativeTarget = [];
+    let nativeTargetError = null;
 
     // Prefer a creator/native target-language track before using machine translation.
     if (helperLang !== "none" && apiLanguageCode(helperLang) !== sourceLang) {
       try {
         nativeTarget = await fetchApiSubtitles(id, helperLang);
-      } catch (_) {
+      } catch (error) {
         nativeTarget = [];
+        nativeTargetError = classifySubtitleApiError(error);
       }
     }
     if (state.id !== id || state.captionRequestId !== requestId) return;
@@ -1146,7 +1236,7 @@ body{min-height:100dvh}
       }
     }
     if (!primary.length) {
-      const requestError = englishError || primaryError;
+      const requestError = englishError || primaryError || nativeTargetError;
       if (requestError) throw requestError;
       const error = Error("No subtitle segments available");
       error.noCaptions = true;
@@ -1224,7 +1314,11 @@ body{min-height:100dvh}
       state.loadingVideo = false;
       state.player?.pauseVideo?.();
       setLoading(false);
-      const message = error?.noCaptions ? t("noTrack") : t("fetchFail");
+      const message = error?.noCaptions
+        ? t("noTrack")
+        : error?.kind === "timeout"
+          ? t("timeoutFail")
+          : t("fetchFail");
       $("status").textContent = message;
       $("playerState").textContent = message;
       toast(message);
