@@ -884,14 +884,31 @@ body{min-height:100dvh}
     });
   }
   function idOf(v) {
+    const raw = String(v || "").trim();
+    if (/^[A-Za-z0-9_-]{11}$/.test(raw)) return raw;
+    let candidate = raw;
+    if (
+      /^(?:(?:www|m|music)\.)?youtube\.com\//i.test(candidate) ||
+      /^(?:www\.)?youtu\.be\//i.test(candidate)
+    )
+      candidate = "https://" + candidate;
     try {
-      const u = new URL(v);
-      if (u.hostname.includes("youtu.be"))
-        return u.pathname.slice(1).split("/")[0];
-      if (u.hostname.includes("youtube.com"))
-        return u.searchParams.get("v") || u.pathname.split("/").pop();
-    } catch {}
-    return v.trim().match(/^[\w-]{11}$/)?.[0] || null;
+      const url = new URL(candidate);
+      const host = url.hostname.toLowerCase().replace(/^www\./, "");
+      const path = url.pathname.replace(/\/+$/, "");
+      let id = "";
+      if (host === "youtu.be") {
+        id = path.split("/").filter(Boolean)[0] || "";
+      } else if (
+        ["youtube.com", "m.youtube.com", "music.youtube.com", "youtube-nocookie.com"].includes(host)
+      ) {
+        if (path === "/watch") id = url.searchParams.get("v") || "";
+        else id = path.match(/^\/(?:embed|shorts|live|v)\/([^/]+)/i)?.[1] || "";
+      }
+      return /^[A-Za-z0-9_-]{11}$/.test(id) ? id : null;
+    } catch {
+      return null;
+    }
   }
   function apiLanguageCode(language) {
     const value = String(language || "en");
@@ -938,7 +955,7 @@ body{min-height:100dvh}
         credentials: "omit",
         headers: { Accept: "application/json" },
         cache: "no-store",
-        signal: AbortSignal.timeout(15000),
+        signal: AbortSignal.timeout(45000),
       });
       let data = {};
       try {
@@ -1065,7 +1082,7 @@ body{min-height:100dvh}
   }
   async function loadTracks(id, requestId) {
     const selectedLearn = $("learnLang").value || "en";
-    const helperLang = $("helperLang").value || "none";
+    let helperLang = $("helperLang").value || "none";
     let sourceLang = apiLanguageCode(
       selectedLearn === "none" ? "en" : selectedLearn,
     );
@@ -1081,20 +1098,56 @@ body{min-height:100dvh}
     }
     if (state.id !== id || state.captionRequestId !== requestId) return;
 
-    let primary = await fetchApiSubtitles(id, sourceLang);
+    let primary = [];
+    let primaryError = null;
+    try {
+      primary = await fetchApiSubtitles(id, sourceLang);
+    } catch (error) {
+      primaryError = error;
+    }
+    let englishError = null;
     if (!primary.length && sourceLang !== "en") {
-      const englishFallback = await fetchApiSubtitles(id, "en");
+      let englishFallback = [];
+      try {
+        englishFallback = await fetchApiSubtitles(id, "en");
+      } catch (error) {
+        englishError = error;
+      }
       if (englishFallback.length) {
         primary = englishFallback;
         sourceLang = "en";
         if (selectedLearn !== "none") {
           $("learnLang").value = "en";
           localStorage.setItem("learn_lang", "en");
+          if (
+            apiLanguageCode(helperLang) === "en" &&
+            apiLanguageCode(selectedLearn) !== "en" &&
+            [...$("helperLang").options].some((option) => option.value === selectedLearn)
+          ) {
+            helperLang = selectedLearn;
+            $("helperLang").value = helperLang;
+            localStorage.setItem("helper_lang", helperLang);
+            nativeTarget = [];
+          }
         }
       }
     }
     if (state.id !== id || state.captionRequestId !== requestId) return;
     if (!primary.length) {
+      if (nativeTarget.length) {
+        primary = nativeTarget;
+        sourceLang = apiLanguageCode(helperLang);
+        $("learnLang").value = helperLang;
+        localStorage.setItem("learn_lang", helperLang);
+        helperLang = "none";
+        $("helperLang").value = "none";
+        localStorage.setItem("helper_lang", "none");
+        nativeTarget = [];
+      }
+    }
+    if (!primary.length) {
+      const requestError = englishError || primaryError;
+      if (requestError) throw requestError;
       const error = Error("No subtitle segments available");
       error.noCaptions = true;
       throw error;
@@ -1411,6 +1464,7 @@ body{min-height:100dvh}
     $("status").textContent = t("statusLoading");
     $("playerState").textContent = t("statusLoading");
     setLoading(true);
+    render();
     if (state.player?.cueVideoById) state.player.cueVideoById(id);
     else if (state.player?.loadVideoById) {
       state.player.loadVideoById(id);
@@ -1457,7 +1511,14 @@ body{min-height:100dvh}
   function effectiveCueEnd(index) {
     const cue = state.captions[index];
     if (!cue) return 0;
-    return Number.isFinite(cue.duration) ? cue.start + cue.duration : cue.end;
+    const cueEnd = Number.isFinite(cue.duration)
+      ? cue.start + cue.duration
+      : cue.end;
+    const next = state.captions[index + 1];
+    // Keep a slow-spoken cue visible through the natural hand-off to the next.
+    return next && Number.isFinite(next.start) && next.start > cueEnd
+      ? Math.max(cueEnd, next.start - 0.04)
+      : cueEnd;
   }
   function scrollActiveCaptionIntoView() {
     const list = $("captionList"),
