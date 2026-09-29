@@ -92,7 +92,9 @@ body{min-height:100dvh}
 
 }
 .helper-language-label>span{color:#55dfd1;font-weight:700}.is-loading{animation:lplayer-loading 1.1s ease-in-out infinite}.is-loading::after{content:' …';display:inline-block;min-width:1.4em}@keyframes lplayer-loading{0%,100%{opacity:.55}50%{opacity:1}}
-@media(max-width:768px){.video-caption-overlay{left:2%;right:2%;bottom:10px;z-index:99}.video-caption-overlay span{font-size:clamp(14px,4vw,18px);padding:6px 10px;background:rgba(0,0,0,.85)}.video-caption-overlay .overlay-secondary{font-size:clamp(12px,3.5vw,16px)}}</style>
+@media(max-width:768px){.video-caption-overlay{left:2%;right:2%;bottom:10px;z-index:99}.video-caption-overlay span{font-size:clamp(14px,4vw,18px);padding:6px 10px;background:rgba(0,0,0,.85)}.video-caption-overlay .overlay-secondary{font-size:clamp(12px,3.5vw,16px)}}
+.speed-slider-wrap{flex:0 0 auto;gap:5px}.caption-actions .download-srt{height:28px;color:var(--text);border-style:solid;border-color:var(--line);background:#122239;text-decoration:none;font-size:10px}.caption-actions .download-srt:hover{border-color:var(--cyan);color:var(--cyan)}.auto-scroll-setting{margin-left:6px}.caption-actions .download-srt[hidden]{display:none}@media(max-width:600px){.control-row-top{flex-wrap:wrap}.control-row-top .player-state{flex:1 0 100%;margin-left:0}.sync-bar{flex-wrap:wrap}.auto-scroll-setting{margin-left:auto}.caption-actions{flex-wrap:wrap}.caption-search{flex-basis:100%}}
+.search-hit{background:rgba(245,193,93,.4);color:#fff;border-radius:2px;padding:0 1px}</style>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"點擊字幕跳轉時，如果台詞與聲音有延遲該如何調整？","acceptedAnswer":{"@type":"Answer","text":"部分影片帶有片頭片尾，您可使用字幕面板頂部的 -0.5s、+0.5s 微調按鈕，即時平移校準時間軸。"}},{"@type":"Question","name":"遇到完全沒有字幕的 YouTube 影片可以如何使用？","acceptedAnswer":{"@type":"Answer","text":"本工具優先讀取 YouTube 官方與自動生成字幕；若影片沒有字幕，可點擊手動匯入，貼上或匯入外部語音辨識軟體產出的 SRT 或 VTT 文本。"}},{"@type":"Question","name":"如何利用句尾自動暫停與單句循環訓練口說？","acceptedAnswer":{"@type":"Answer","text":"開啟句尾自動暫停後，每句播放結束會自動停住留給您複述，按空白鍵即可播放下一句；遇到生疏語調可開啟單句循環反覆練習。"}}]}</script>
 
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4756902118634553" crossorigin="anonymous"></script>
@@ -102,291 +104,1702 @@ body{min-height:100dvh}
 <main>
 <section class="shell stage">
 <div class="card left-card"><div class="video"><div id="player"></div><div id="videoCaptionOverlay" class="video-caption-overlay" hidden></div><div class="video-click-capture" id="videoClickCapture"></div><div class="placeholder" id="placeholder"><div><div class="play-icon">▶</div><strong data-i18n="choose">選擇影片開始練習</strong><span data-i18n="chooseHint">貼上 YouTube 網址，或選擇上方範例。</span></div></div></div><div class="control-panel"><div class="control-row-top"><button class="btn secondary" id="repeatCurrent" data-i18n="repeatCurrent">🔁 重播本句</button><button class="btn secondary" id="playPause" data-i18n="play">▶ 播放</button><div class="speed-slider-wrap"><span data-i18n="speed">速度</span><button type="button" id="speedDown" aria-label="降低播放速度">−</button><output id="speedVal">1.0x</output><button type="button" id="speedUp" aria-label="提高播放速度">＋</button></div><div class="player-state" id="playerState" data-i18n="ready">就緒：載入影片後自動讀取字幕。</div></div><div class="control-row-bottom"><label class="caption-mode"><span id="overlayModeLabel">畫面字幕</span><select id="captionMode"><option value="both">雙語</option><option value="primary">僅原文</option><option value="secondary" selected>僅譯文</option><option value="off">隱藏</option></select></label><button class="caption-toggle" id="captionToggle" data-i18n="captionToggle">👁️ 隱藏字幕 (C)</button><span class="control-divider" aria-hidden="true"></span><button class="toggle-btn" id="repeat" data-i18n="repeat">🔁 單句循環</button><button class="toggle-btn" id="autoPause" data-i18n="autoPause">⏸️ 句尾自動暫停</button></div></div></div></div>
-<aside class="card right-card"><div class="caption-head"><div class="caption-head-row"><h1 data-i18n="timeline">多語言字幕時間軸</h1><span class="status" id="status" data-i18n="statusReady">待載入</span><button class="mobile-settings-toggle" id="mobileSettingsToggle" type="button" aria-expanded="false">⚙️ 語言與設定 ▾</button></div><div class="caption-settings-drawer" id="captionSettingsDrawer"><div class="language-grid"><label><span data-i18n="learnLang">學習語言（原文）</span><select id="learnLang"><option value="none">不顯示 (Hide)</option><option value="en">English</option><option value="ja">日本語</option><option value="ko">한국어</option><option value="fr">Français</option><option value="de">Deutsch</option><option value="es">Español</option><option value="zh-Hant">繁體中文</option><option value="zh-Hans">简体中文</option></select></label><label class="helper-language-label"><span data-i18n="helperLang">輔助對照（譯文）</span><select id="helperLang"><option value="none">不顯示 (Hide)</option><option value="zh-Hant">繁體中文</option><option value="en">English</option><option value="ja">日本語</option><option value="ko">한국어</option><option value="fr">Français</option><option value="de">Deutsch</option><option value="es">Español</option></select></label></div><div class="caption-actions"><input class="caption-search" id="search" type="search" placeholder="搜尋字幕…" data-i18n-placeholder="search"><label class="file-label"><span data-i18n="import">📁 手動匯入</span><input id="subtitleFile" type="file" accept=".srt,.vtt,text/vtt,application/x-subrip"></label></div><div class="sync-bar"><span data-i18n="sync">時間軸校準</span><button id="syncMinus">⏪ -0.5s</button><button id="syncReset">0.0s</button><button id="syncPlus">+0.5s ⏩</button></div></div></div><ol class="caption-list" id="captionList"></ol></aside>
+<aside class="card right-card"><div class="caption-head"><div class="caption-head-row"><h1 data-i18n="timeline">多語言字幕時間軸</h1><span class="status" id="status" data-i18n="statusReady">待載入</span><button class="mobile-settings-toggle" id="mobileSettingsToggle" type="button" aria-expanded="false">⚙️ 語言與設定 ▾</button></div><div class="caption-settings-drawer" id="captionSettingsDrawer"><div class="language-grid"><label><span data-i18n="learnLang">學習語言（原文）</span><select id="learnLang"><option value="none">不顯示 (Hide)</option><option value="en">English</option><option value="ja">日本語</option><option value="ko">한국어</option><option value="fr">Français</option><option value="de">Deutsch</option><option value="es">Español</option><option value="zh-Hant">繁體中文</option><option value="zh-Hans">简体中文</option></select></label><label class="helper-language-label"><span data-i18n="helperLang">輔助對照（譯文）</span><select id="helperLang"><option value="none">不顯示 (Hide)</option><option value="zh-Hant">繁體中文</option><option value="en">English</option><option value="ja">日本語</option><option value="ko">한국어</option><option value="fr">Français</option><option value="de">Deutsch</option><option value="es">Español</option></select></label></div><div class="caption-actions"><input class="caption-search" id="search" type="search" placeholder="搜尋字幕…" data-i18n-placeholder="search"><label class="file-label"><span data-i18n="import">📁 手動匯入</span><input id="subtitleFile" type="file" accept=".srt,.vtt,text/vtt,application/x-subrip"></label><a class="file-label download-srt" data-i18n="downloadSrt" href="#" id="downloadEnglishSrt" target="_blank" rel="noopener" hidden>下載英文字幕 (.srt)</a></div><div class="sync-bar"><span data-i18n="sync">時間軸校準</span><button id="syncMinus">⏪ -0.5s</button><button id="syncReset">0.0s</button><button id="syncPlus">+0.5s ⏩</button><label class="switch auto-scroll-setting"><input id="autoScroll" type="checkbox" checked><span data-i18n="autoScroll">播放時自動置中</span></label></div></div></div><ol class="caption-list" id="captionList"></ol></aside>
 </section>
 <section class="seo"><div class="kicker" data-i18n="guideKicker">學習方法導讀</div><h2 data-i18n="guideTitle">用影子跟讀，把字幕變成語音迴路</h2><p class="seo-intro" data-i18n="guideCopy">逐句精聽會把連音、重音、語調與句尾收斂成可處理的聲音單位；先不看字幕聽一次，再用原文確認，再模仿原音。影子跟讀（Shadowing）要求學習者在原音之後快速複述，會同時調動顳葉的語音辨識、工作記憶與口腔動作，讓聲音與意義的連結更穩固。建議先用 0.75x 找出音節，再回到 1.0x，每句循環三至五次；遇到片頭偏移，就用時間軸校準按鈕修正。最後關閉字幕，以聲音檢查自己是否真正理解。</p><div class="steps"><article class="step"><b>1</b><h3 data-i18n="step1">貼上網址</h3><p data-i18n="step1Copy">載入 YouTube 影片，播放器會嘗試讀取可用字幕軌道。</p></article><article class="step"><b>2</b><h3 data-i18n="step2">選擇語言</h3><p data-i18n="step2Copy">指定學習語言與輔助對照語言，自由組合多國字幕。</p></article><article class="step"><b>3</b><h3 data-i18n="step3">循環與微調</h3><p data-i18n="step3Copy">使用單句循環、句尾暫停與時間軸校準完成跟讀。</p></article></div><div class="faq"><div class="kicker" data-i18n="faqKicker">常見問題</div><h2 data-i18n="faqTitle">使用播放器時</h2><details><summary data-i18n="faq1q">點擊字幕跳轉時，如果台詞與聲音有延遲該如何調整？</summary><p data-i18n="faq1a">部分影片帶有片頭片尾，您可使用字幕面板頂部的 -0.5s、+0.5s 微調按鈕，即時平移校準時間軸。</p></details><details><summary data-i18n="faq2q">遇到完全沒有字幕的 YouTube 影片可以如何使用？</summary><p data-i18n="faq2a">本工具優先讀取 YouTube 官方與自動生成字幕；若影片沒有字幕，可點擊手動匯入，貼上或匯入外部語音辨識軟體產出的 SRT 或 VTT 文本。</p></details><details><summary data-i18n="faq3q">如何利用句尾自動暫停與單句循環訓練口說？</summary><p data-i18n="faq3a">開啟句尾自動暫停後，每句播放結束會自動停住留給您複述，按空白鍵即可播放下一句；遇到生疏語調可開啟單句循環反覆練習。</p></details></div></section>
 </main>
 <footer class="site-footer"><div class="footer-links"><a href="../../index.html" data-i18n="home">首頁</a><a href="../../contact.html" data-i18n="contactLink">聯絡我們 / Contact Us</a><a href="../../privacy.html" data-i18n="privacyLink">隱私權政策</a><a href="../../terms.html" data-i18n="termsLink">服務條款</a><a href="../../support.html" data-i18n="supportLink">贊助支持</a></div><div class="footer-contact">Support Email: <a href="mailto:contact@gugopro.com">contact@gugopro.com</a></div><div class="footer-copy" data-i18n="copyright">© 2026 GugoPro. All rights reserved. 瀏覽器本地工具會將選取檔案留在你的裝置上。</div></footer><div class="toast" id="toast"></div>
 <script src="https://www.youtube.com/iframe_api"></script>
 <script>
-	(()=>{
-const $=id=>document.getElementById(id);
-const state={player:null,ready:false,id:'',captions:[],active:-1,offset:0,paused:false,monitor:null,demo:false,loadingVideo:false,lang:localStorage.getItem('gugopro_locale')||'zh-TW',catalogs:new Map(),trackCache:new Map(),captionCache:new Map(),userScrollUntil:0,captionsHidden:false,ignorePauseUntil:0,pendingRestore:null,lastSavedAt:0};
-const officialTimedText='https://www.youtube.com/api/timedtext';
-const workerEndpoint='https://yt-sub-proxy.9908qq.workers.dev/';const officialWatch='https://www.youtube.com/watch?v=';
-const corsProxies=['https://api.allorigins.win/raw?url=','https://api.codetabs.com/v1/proxy?quest='];
-const requestTimeout=2500;const fetchDeadline=6000;
-const languageAliases={'zh-Hant':['zh-TW','zh-Hant','zh'],'zh-Hans':['zh-CN','zh-Hans'],'en':['en'],'ja':['ja'],'ko':['ko'],'fr':['fr'],'de':['de'],'es':['es']};
-const samples={body:[['00:00:00,000','00:00:04,300','Your body language may shape who you are.','你的肢體語言可能改變你是誰。'],['00:00:04,300','00:00:08,600','It can change the way other people see us.','它能改變別人看待自己的方式。'],['00:00:08,600','00:00:13,000','And it may even change the way we see ourselves.','甚至可能改變我們看待自己的方式。'],['00:00:13,000','00:00:18,000','Try a power pose before an important moment.','在重要時刻前試試高能量姿勢。']],api:[['00:00:00,000','00:00:05,000','This is a YouTube player API demonstration.','這是 YouTube 播放器 API 示範。'],['00:00:05,000','00:00:10,000','Click any caption to jump to that moment.','點擊任一句字幕即可跳到該時刻。'],['00:00:10,000','00:00:15,000','Repeat one sentence until it feels natural.','反覆練習一句，直到說起來自然。']]};;
-const d={
-'zh-TW':{brand:'YouTube 多國影音學習播放器',home:'← 首頁',url:'貼上 YouTube 影片網址',load:'載入影片',demo:'🎬 載入精選示範影片',ui:'介面',choose:'選擇影片開始練習',chooseHint:'貼上 YouTube 網址，或選擇上方範例。',back:'⏪ 倒退 3 秒',play:'▶ 播放',pause:'⏸️ 暫停',forward:'⏩ 快進 3 秒',repeat:'🔁 單句循環',autoPause:'⏸️ 句尾自動暫停',playMode:'播放模式',modeContinuous:'連續播放',modeLoop:'🔁 單句循環',modePause:'⏸️ 句尾自動暫停',ready:'就緒：載入影片後自動讀取字幕。',spaceNext:'已暫停：按空白鍵播放下一句。',repeatCurrent:'🔁 重播本句',nextSentence:'⏭️ 播放下一句',timeline:'多語言字幕時間軸',statusReady:'待載入',statusLoading:'⏳ 字幕載入中…',statusLoaded:'已載入 {n} 句',learnLang:'學習語言（原文）',helperLang:'輔助對照（譯文）',search:'搜尋字幕…',import:'📁 手動匯入',sync:'時間軸校準',manual:'找不到字幕？貼上 SRT / VTT 文本',manualPlaceholder:'1\n00:00:00,000 --> 00:00:02,000\nHello world',apply:'套用',drop:'也可以把字幕檔拖曳到這裡',guideKicker:'學習方法導讀',guideTitle:'用影子跟讀，把字幕變成語音迴路',guideCopy:'逐句精聽會把連音、重音、語調與句尾收斂成可處理的聲音單位；先不看字幕聽一次，再用原文確認，再模仿原音。影子跟讀（Shadowing）要求學習者在原音之後快速複述，會同時調動顳葉的語音辨識、工作記憶與口腔動作，讓聲音與意義的連結更穩固。建議先用 0.75x 找出音節，再回到 1.0x，每句循環三至五次；遇到片頭偏移，就用時間軸校準按鈕修正。最後關閉字幕，以聲音檢查自己是否真正理解。',step1:'貼上網址',step1Copy:'載入 YouTube 影片，播放器會嘗試讀取可用字幕軌道。',step2:'選擇語言',step2Copy:'指定學習語言與輔助對照語言，自由組合多國字幕。',step3:'循環與微調',step3Copy:'使用單句循環、句尾暫停與時間軸校準完成跟讀。',faqKicker:'常見問題',faqTitle:'使用播放器時',faq1q:'點擊字幕跳轉時，如果台詞與聲音有延遲該如何調整？',faq1a:'部分影片帶有片頭片尾，您可使用字幕面板頂部的 -0.5s、+0.5s 微調按鈕，即時平移校準時間軸。',faq2q:'遇到完全沒有字幕的 YouTube 影片可以如何使用？',faq2a:'本工具優先讀取 YouTube 官方與自動生成字幕；若影片沒有字幕，可點擊手動匯入，貼上或匯入外部語音辨識軟體產出的 SRT 或 VTT 文本。',faq3q:'如何利用句尾自動暫停與單句循環訓練口說？',faq3a:'開啟句尾自動暫停後，每句播放結束會自動停住留給您複述，按空白鍵即可播放下一句；遇到生疏語調可開啟單句循環反覆練習。',contactLink:'聯絡我們 / Contact Us',privacyLink:'隱私權政策',termsLink:'服務條款',supportLink:'贊助支持',copyright:'© 2026 GugoPro. All rights reserved. 瀏覽器本地工具會將選取檔案留在你的裝置上。',noCaptions:'尚未取得字幕',noCaptionsHint:'可改用手動匯入或貼上 SRT / VTT 文本。',invalid:'請輸入有效的 YouTube 網址。',noTrack:'此影片無內建字幕，可使用手動匯入功能。',fetchFail:'字幕自動抓取受瀏覽器限制，請使用手動匯入或貼上字幕。',fileError:'字幕格式無法解析，請確認是 SRT 或 VTT。',loaded:'已載入 {n} 句字幕',offset:'校準：{n}s',speed:'速度',captionToggle:'👁️ 隱藏字幕 (C)',captionRestore:'👁️ 顯示字幕 (C)',hide:'不顯示 (Hide)'},
-en:{brand:'YouTube Multilingual Immersion Player',home:'← Home',url:'Paste YouTube video URL',load:'Load Video',demo:'Load Featured Demo',ui:'UI',choose:'Choose a video to practice',chooseHint:'Paste a YouTube URL or choose an example above.',back:'⏪ Back 3s',play:'▶ Play',pause:'⏸️ Pause',forward:'⏩ Forward 3s',repeat:'🔁 Sentence repeat',autoPause:'⏸️ Auto-pause at sentence end',playMode:'Playback mode',modeContinuous:'Continuous',modeLoop:'🔁 Loop sentence',modePause:'⏸️ Auto-pause at end',ready:'Ready: captions will be fetched after loading.',spaceNext:'Paused: press Space to play the next sentence.',repeatCurrent:'🔁 Replay sentence',nextSentence:'⏭️ Play next sentence',timeline:'Multilingual caption timeline',statusReady:'Ready',statusLoading:'⏳ Loading captions…',statusLoaded:'Loaded {n} lines',learnLang:'Learning language (original)',helperLang:'Helper language (translation)',search:'Search captions…',import:'📁 Manual import',sync:'Timeline calibration',manual:'No captions? Paste SRT / VTT text',manualPlaceholder:'1\n00:00:00,000 --> 00:00:02,000\nHello world',apply:'Apply',drop:'Drop a caption file here',guideKicker:'Learning guide',guideTitle:'Turn shadowing into a speech circuit',guideCopy:'Intensive listening reduces linking, stress, intonation, and endings to a manageable sound unit: listen once without captions, verify with the original line, then imitate. Shadowing asks you to reproduce speech soon after the source, engaging temporal-lobe speech perception, working memory, and articulation together. Start at 0.75x to find the syllables, return to 1.0x, repeat each sentence three to five times, and use calibration when an intro creates an offset. Finally hide the captions and test whether sound alone is enough.',step1:'Paste the URL',step1Copy:'Load a YouTube video and let the player look for available caption tracks.',step2:'Choose languages',step2Copy:'Combine an original learning language with a helper translation language.',step3:'Repeat and calibrate',step3Copy:'Use sentence repeat, auto-pause, and timeline calibration for shadowing.',faqKicker:'FAQ',faqTitle:'Using the player',faq1q:'How can I fix a delay between a caption and the audio after clicking?',faq1a:'Some videos include an intro or outro. Use the -0.5s and +0.5s buttons above the timeline to shift all timestamps.',faq2q:'How can I use a YouTube video with no captions?',faq2a:'The player first tries official and auto-generated YouTube tracks. If none are available, use Manual import and paste or load an SRT/VTT file from a speech-recognition tool.',faq3q:'How do sentence repeat and auto-pause help speaking practice?',faq3a:'Auto-pause stops at the end of each line so you can repeat it; press Space to continue. Sentence repeat loops the current line until the rhythm feels natural.',contactLink:'Contact Us',privacyLink:'Privacy Policy',termsLink:'Terms of Service',supportLink:'Support',copyright:'© 2026 GugoPro. All rights reserved. Browser-local tools keep selected files on your device.',noCaptions:'No captions loaded',noCaptionsHint:'Use manual import or paste SRT/VTT text.',invalid:'Please enter a valid YouTube URL.',noTrack:'This video has no built-in captions. Use Manual Import to add subtitles.',fetchFail:'Automatic caption fetching is restricted by the browser. Use manual import or paste captions.',fileError:'Could not parse this caption file. Use SRT or VTT.',loaded:'Loaded {n} lines',offset:'Calibration: {n}s',speed:'Speed',captionToggle:'👁️ Hide captions (C)',captionRestore:'👁️ Show captions (C)',hide:'Hide (不顯示)'},
-ja:{brand:'YouTube 多言語イマージョンプレーヤー',home:'← ホーム',url:'YouTube URLを貼り付け',load:'動画を読み込む',demo:'デモ動画を読み込む',ui:'UI',choose:'動画を選んで練習開始',chooseHint:'YouTube URLを貼るか、上のサンプルを選びます。',back:'⏪ 3秒戻る',play:'▶ 再生',pause:'⏸️ 一時停止',forward:'⏩ 3秒進む',repeat:'🔁 一文リピート',autoPause:'⏸️ 文末で自動一時停止',playMode:'再生モード',modeContinuous:'連続再生',modeLoop:'🔁 一文リピート',modePause:'⏸️ 文末で自動停止',ready:'準備完了：読み込み後に字幕を取得します。',spaceNext:'一時停止中：Spaceで次の文を再生します。',repeatCurrent:'🔁 この文をリピート',nextSentence:'⏭️ 次の文を再生',timeline:'多言語字幕タイムライン',statusReady:'準備完了',statusLoading:'⏳ 字幕を読み込み中…',statusLoaded:'{n}行を読み込みました',learnLang:'学習言語（原文）',helperLang:'補助言語（訳文）',search:'字幕を検索…',import:'📁 手動読み込み',sync:'タイムライン調整',manual:'字幕がない？SRT / VTTを貼り付け',manualPlaceholder:'1\n00:00:00,000 --> 00:00:02,000\nHello world',apply:'適用',drop:'字幕ファイルをここへドロップ',guideKicker:'学習ガイド',guideTitle:'シャドーイングを発話回路へ',guideCopy:'精聴ではリエゾン、強勢、イントネーション、語尾を小さな音声単位に絞ります。字幕なしで一度聞き、原文で確認し、すぐに真似しましょう。シャドーイングは原音の直後に再現するため、側頭葉の音声知覚、ワーキングメモリ、発音動作を同時に働かせます。0.75倍で音節を確認し、1.0倍に戻して一文を3〜5回繰り返し、片頭のずれは調整ボタンで補正します。最後に字幕を隠して音だけで理解できるか試しましょう。',step1:'URLを貼る',step1Copy:'YouTube動画を読み込み、利用可能な字幕を自動検索します。',step2:'言語を選ぶ',step2Copy:'原文の学習言語と補助翻訳言語を自由に組み合わせます。',step3:'リピートと調整',step3Copy:'一文リピート、自動停止、タイムライン調整で音読します。',faqKicker:'よくある質問',faqTitle:'プレーヤーの使い方',faq1q:'字幕と音声に遅れがある場合は？',faq1a:'動画の冒頭や末尾の影響がある場合、タイムライン上の-0.5秒/+0.5秒で全字幕を移動できます。',faq2q:'字幕のない動画はどう使いますか？',faq2a:'公式字幕と自動字幕を先に検索します。見つからなければ手動読み込みでSRT/VTTを貼り付けてください。',faq3q:'一文リピートと自動停止の使い方は？',faq3a:'自動停止は文末で止まり、Spaceで次へ進みます。一文リピートは自然に言えるまで現在の文を繰り返します。',contactLink:'お問い合わせ',privacyLink:'プライバシー',termsLink:'利用規約',supportLink:'サポート',copyright:'© 2026 GugoPro. All rights reserved. 選択したファイルはブラウザ内に保持されます。',noCaptions:'字幕がありません',noCaptionsHint:'手動読み込みまたはSRT/VTTを貼り付けてください。',invalid:'有効なYouTube URLを入力してください。',noTrack:'この動画には字幕がありません。手動読み込みを使ってください。',fetchFail:'ブラウザの制限で自動取得できません。手動読み込みを使ってください。',fileError:'字幕を解析できません。SRTまたはVTTを使用してください。',loaded:'{n}行を読み込みました',offset:'調整：{n}秒',speed:'速度',captionToggle:'👁️ 字幕を隠す (C)',captionRestore:'👁️ 字幕を表示 (C)',hide:'非表示 (Hide)'}};
-if(!d[state.lang])state.lang='zh-TW';
-$('interfaceLang').value=state.lang;
-const t=(k,v={})=>(d[state.lang][k]||d['zh-TW'][k]||k).replace(/\{(\w+)\}/g,(_,x)=>v[x]??'');
-const browserLang=(navigator.language||'en').toLowerCase();const isCjk=/^(zh|ja|ko)/.test(browserLang);const languageOptions=()=>[...$('learnLang').options].map(o=>o.value);function learnVisible(){return $('learnLang').value!=='none'}function helperVisible(){return $('helperLang').value!=='none'}function enforceLanguages(changed){const learn=$('learnLang'),helper=$('helperLang');if(learn.value!=='none'&&helper.value!=='none'&&learn.value===helper.value){if(changed==='learn')helper.value=learn.value==='en'?'zh-Hant':'en';else learn.value=helper.value==='en'?'zh-Hant':'en'}localStorage.setItem('learn_lang',learn.value);localStorage.setItem('helper_lang',helper.value)}function initLanguages(){const savedLearn=localStorage.getItem('learn_lang'),savedHelper=localStorage.getItem('helper_lang');$('learnLang').value=languageOptions().includes(savedLearn)?savedLearn:'en';const preferred=savedHelper||((isCjk&&browserLang.startsWith('zh'))?'zh-Hant':'en');$('helperLang').value=[...$('helperLang').options].some(o=>o.value===preferred)?preferred:'zh-Hant';enforceLanguages('init')}function toggleCaptions(){state.captionsHidden=!state.captionsHidden;$('captionToggle').classList.toggle('active',state.captionsHidden);$('captionToggle').textContent=state.captionsHidden?t('captionRestore'):t('captionToggle');render();}let tooltipTimer=0;let tooltip=null;function hideTooltip(){clearTimeout(tooltipTimer);if(tooltip){tooltip.classList.remove('visible');setTimeout(()=>{tooltip?.remove();tooltip=null},180)}}function showTooltip(anchor,cue){if(state.captionsHidden)return;clearTimeout(tooltipTimer);hideTooltip();tooltipTimer=setTimeout(()=>{tooltip=document.createElement('div');tooltip.className='caption-tooltip';const primary=learnVisible()?cue.primary:'';const secondary=helperVisible()?cue.secondary:'';tooltip.innerHTML='<div class="tooltip-primary">'+esc(primary||'—')+'</div>'+(secondary?'<div class="tooltip-secondary">'+esc(secondary)+'</div>':'')+'<div class="tooltip-meta">'+(state.lang==='zh-TW'?'時長':'Duration')+'：'+Math.max(0,cue.end-cue.start).toFixed(1)+'s · '+(state.lang==='zh-TW'?'點擊立即精聽':'Click to focus-listen')+'</div><button type="button" class="speak-btn">🔊 '+(state.lang==='zh-TW'?'語音播放':'Speak')+'</button>';document.body.appendChild(tooltip);const r=anchor.getBoundingClientRect();tooltip.style.left=Math.min(Math.max(8,r.left),window.innerWidth-338)+'px';tooltip.style.top=Math.max(8,r.top-tooltip.offsetHeight-8)+'px';requestAnimationFrame(()=>tooltip.classList.add('visible'));tooltip.querySelector('.speak-btn').onclick=()=>{if(window.speechSynthesis){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(cue.primary);u.lang='en-US';u.rate=0.95;speechSynthesis.speak(u)}}},250)}
-function requestWithTimeout(url){return fetch(url,{signal:AbortSignal.timeout(requestTimeout)}).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.text()}).then(text=>{if(!text.trim())throw Error('empty response');return text})}
-async function fetchText(url){const errors=[];const started=Date.now();const candidates=[url,...corsProxies.map(proxy=>proxy+encodeURIComponent(url))];for(const candidate of candidates){if(Date.now()-started>=fetchDeadline)break;try{return await requestWithTimeout(candidate)}catch(e){errors.push(candidate+' -> '+String(e))}}throw Error('caption request failed: '+errors.join(' | '))}
-function toast(s){const e=$('toast');e.textContent=s;e.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>e.classList.remove('show'),2800)}
-function time(s){const p=s.trim().replace(',','.').split(':').map(Number);return p.length===3?p[0]*3600+p[1]*60+p[2]:p.length===2?p[0]*60+p[1]:Number(p[0])||0}
-function fmt(n){n=Math.max(0,n);return String(Math.floor(n/60)).padStart(2,'0')+':'+String(Math.floor(n%60)).padStart(2,'0')}
-function parse(text){const out=[];for(const b of text.replace(/^\uFEFF/,'').replace(/\r/g,'').split(/\n\s*\n/)){const l=b.split('\n').map(x=>x.trim()).filter(Boolean),i=l.findIndex(x=>x.includes('-->'));if(i<0)continue;const a=l[i].split(/\s+-->\s+/);if(a.length<2)continue;const lines=l.slice(i+1).map(x=>x.replace(/<[^>]+>/g,'').trim()).filter(Boolean);if(!lines.length)continue;out.push({start:time(a[0]),end:Math.max(time(a[1].split(/\s+/)[0]),time(a[0])+.05),primary:lines[0],secondary:lines[1]||''})}return out}
-function esc(s){return String(s||'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]))}
-const quickDictionary={body:['名詞','身體；主體'],language:['名詞','語言'],learn:['動詞','學習'],practice:['名詞／動詞','練習'],listen:['動詞','聆聽'],speak:['動詞','說；講'],sentence:['名詞','句子'],word:['名詞','單字；詞語'],video:['名詞','影片'],repeat:['動詞','重複；反覆'],natural:['形容詞','自然的'],important:['形容詞','重要的'],change:['動詞／名詞','改變'],people:['名詞','人們'],time:['名詞','時間'],help:['動詞／名詞','幫助'],click:['動詞','點擊'],play:['動詞','播放；玩'],pause:['動詞','暫停'],seo:['名詞','搜尋引擎最佳化'],search:['動詞／名詞','搜尋；搜索'],engine:['名詞','引擎'],optimization:['名詞','最佳化；優化'],online:['形容詞／副詞','線上；在線'],business:['名詞','商業；業務'],most:['形容詞／副詞','大多數；最'],never:['副詞','從不；永不'],heard:['動詞','聽見；聽說'],podcast:['名詞','播客；網路節目'],youtube:['名詞','YouTube 影音平台'],learned:['動詞','學會；學習'],watch:['動詞／名詞','觀看；手錶'],start:['動詞／名詞','開始；起點'],world:['名詞','世界'],make:['動詞','製作；使'],know:['動詞','知道；了解'],want:['動詞','想要'],need:['動詞','需要'],good:['形容詞','好的'],new:['形容詞','新的'],first:['形容詞／副詞','第一的；首先'],last:['形容詞／名詞','最後的；上次'],show:['動詞／名詞','顯示；節目'],free:['形容詞','免費的；自由的']};let dictCard=null;let dictRequest=0;let wordTimer=0;let dictCloseTimer=0;function cancelDictionaryClose(){clearTimeout(dictCloseTimer);dictCloseTimer=0}function scheduleDictionaryClose(){cancelDictionaryClose();dictCloseTimer=setTimeout(closeDictionary,2000)}function closeDictionary(){clearTimeout(wordTimer);cancelDictionaryClose();if(dictCard){const card=dictCard;dictCard=null;card.classList.add('closing');setTimeout(()=>card.remove(),180)}}document.addEventListener('click',e=>{if(!e.target.closest('.dict-card')&&!e.target.closest('.dict-word'))closeDictionary()});async function translateWordZh(word){
-    const local = quickDictionary[word.toLowerCase()];
-    if(local) return {pos: local[0], meaning: local[1]};
-    try {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 4500);
-        // 改用 Google Translate 免費公開 API
-        const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=zh-TW&dt=t&q=' + encodeURIComponent(word);
-        const res = await fetch(url, { signal: controller.signal });
-        clearTimeout(timer);
-        const data = await res.json();
-        const translated = String(data[0][0][0] || '').trim();
-        if (translated && translated.toLowerCase() !== word.toLowerCase() && /[\u3400-\u9fff]/.test(translated)) {
-            return {pos: '單字', meaning: translated};
-        }
-    } catch (e) {
-        console.error("Translation error:", e);
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const state = {
+    player: null,
+    ready: false,
+    id: "",
+    captions: [],
+    active: -1,
+    offset: 0,
+    paused: false,
+    monitor: null,
+    demo: false,
+    loadingVideo: false,
+    lang: localStorage.getItem("gugopro_locale") || "zh-TW",
+    captionCache: new Map(),
+    captionRequestId: 0,
+    autoScroll: localStorage.getItem("caption_auto_scroll") !== "false",
+    userScrollUntil: 0,
+    captionsHidden: false,
+    ignorePauseUntil: 0,
+    pendingRestore: null,
+    lastSavedAt: 0,
+  };
+  const SUBTITLE_API_BASE = "https://35.197.102.134.sslip.io";
+  const SUBTITLE_API = SUBTITLE_API_BASE + "/api/subtitles";
+  const SRT_DOWNLOAD_API = SUBTITLE_API_BASE + "/api/download-srt";
+  const samples = {
+    body: [
+      [
+        "00:00:00,000",
+        "00:00:04,300",
+        "Your body language may shape who you are.",
+        "你的肢體語言可能改變你是誰。",
+      ],
+      [
+        "00:00:04,300",
+        "00:00:08,600",
+        "It can change the way other people see us.",
+        "它能改變別人看待自己的方式。",
+      ],
+      [
+        "00:00:08,600",
+        "00:00:13,000",
+        "And it may even change the way we see ourselves.",
+        "甚至可能改變我們看待自己的方式。",
+      ],
+      [
+        "00:00:13,000",
+        "00:00:18,000",
+        "Try a power pose before an important moment.",
+        "在重要時刻前試試高能量姿勢。",
+      ],
+    ],
+    api: [
+      [
+        "00:00:00,000",
+        "00:00:05,000",
+        "This is a YouTube player API demonstration.",
+        "這是 YouTube 播放器 API 示範。",
+      ],
+      [
+        "00:00:05,000",
+        "00:00:10,000",
+        "Click any caption to jump to that moment.",
+        "點擊任一句字幕即可跳到該時刻。",
+      ],
+      [
+        "00:00:10,000",
+        "00:00:15,000",
+        "Repeat one sentence until it feels natural.",
+        "反覆練習一句，直到說起來自然。",
+      ],
+    ],
+  };
+  const d = {
+    "zh-TW": {
+      brand: "YouTube 多國影音學習播放器",
+      home: "← 首頁",
+      url: "貼上 YouTube 影片網址",
+      load: "載入影片",
+      demo: "🎬 載入精選示範影片",
+      ui: "介面",
+      choose: "選擇影片開始練習",
+      chooseHint: "貼上 YouTube 網址，或選擇上方範例。",
+      back: "⏪ 倒退 3 秒",
+      play: "▶ 播放",
+      pause: "⏸️ 暫停",
+      forward: "⏩ 快進 3 秒",
+      repeat: "🔁 單句循環",
+      autoPause: "⏸️ 句尾自動暫停",
+      playMode: "播放模式",
+      modeContinuous: "連續播放",
+      modeLoop: "🔁 單句循環",
+      modePause: "⏸️ 句尾自動暫停",
+      ready: "就緒：載入影片後自動讀取字幕。",
+      spaceNext: "已暫停：按空白鍵播放下一句。",
+      repeatCurrent: "🔁 重播本句",
+      nextSentence: "⏭️ 播放下一句",
+      timeline: "多語言字幕時間軸",
+      statusReady: "待載入",
+      statusLoading: "⏳ 正在向專屬雲端伺服器提取字幕…",
+      statusLoaded: "已載入 {n} 句",
+      learnLang: "學習語言（原文）",
+      helperLang: "輔助對照（譯文）",
+      search: "搜尋字幕…",
+      statusTranslating: "⏳ 正在翻譯字幕…",
+      statusTranslatingProgress: "翻譯進度 {done}/{total}",
+      downloadSrt: "下載英文字幕 (.srt)",
+      autoScroll: "播放時自動置中",
+      import: "📁 手動匯入",
+      sync: "時間軸校準",
+      manual: "找不到字幕？貼上 SRT / VTT 文本",
+      manualPlaceholder: "1\n00:00:00,000 --> 00:00:02,000\nHello world",
+      apply: "套用",
+      drop: "也可以把字幕檔拖曳到這裡",
+      guideKicker: "學習方法導讀",
+      guideTitle: "用影子跟讀，把字幕變成語音迴路",
+      guideCopy:
+        "逐句精聽會把連音、重音、語調與句尾收斂成可處理的聲音單位；先不看字幕聽一次，再用原文確認，再模仿原音。影子跟讀（Shadowing）要求學習者在原音之後快速複述，會同時調動顳葉的語音辨識、工作記憶與口腔動作，讓聲音與意義的連結更穩固。建議先用 0.75x 找出音節，再回到 1.0x，每句循環三至五次；遇到片頭偏移，就用時間軸校準按鈕修正。最後關閉字幕，以聲音檢查自己是否真正理解。",
+      step1: "貼上網址",
+      step1Copy: "載入 YouTube 影片，播放器會透過專屬雲端 API 讀取字幕。",
+      step2: "選擇語言",
+      step2Copy: "指定學習語言與輔助對照語言，自由組合多國字幕。",
+      step3: "循環與微調",
+      step3Copy: "使用單句循環、句尾暫停與時間軸校準完成跟讀。",
+      faqKicker: "常見問題",
+      faqTitle: "使用播放器時",
+      faq1q: "點擊字幕跳轉時，如果台詞與聲音有延遲該如何調整？",
+      faq1a:
+        "部分影片帶有片頭片尾，您可使用字幕面板頂部的 -0.5s、+0.5s 微調按鈕，即時平移校準時間軸。",
+      faq2q: "遇到完全沒有字幕的 YouTube 影片可以如何使用？",
+      faq2a:
+        "播放器透過專屬雲端 API 讀取字幕；若影片沒有字幕，可點擊手動匯入，貼上或匯入 SRT / VTT 字幕檔。",
+      faq3q: "如何利用句尾自動暫停與單句循環訓練口說？",
+      faq3a:
+        "開啟句尾自動暫停後，每句播放結束會自動停住留給您複述，按空白鍵即可播放下一句；遇到生疏語調可開啟單句循環反覆練習。",
+      contactLink: "聯絡我們 / Contact Us",
+      privacyLink: "隱私權政策",
+      termsLink: "服務條款",
+      supportLink: "贊助支持",
+      copyright:
+        "© 2026 GugoPro. All rights reserved. 瀏覽器本地工具會將選取檔案留在你的裝置上。",
+      noCaptions: "尚未取得字幕",
+      noCaptionsHint: "可改用手動匯入或貼上 SRT / VTT 文本。",
+      invalid: "請輸入有效的 YouTube 網址。",
+      noTrack: "影片目前沒有可用字幕，請使用「📁 手動匯入」載入 SRT/VTT 檔案。",
+      fetchFail:
+        "專屬雲端字幕服務暫時無法連線，請稍後重試或使用手動匯入 SRT/VTT 檔案。",
+      fileError: "字幕格式無法解析，請確認是 SRT 或 VTT。",
+      loaded: "已載入 {n} 句字幕",
+      offset: "校準：{n}s",
+      speed: "速度",
+      captionToggle: "👁️ 隱藏字幕 (C)",
+      captionRestore: "👁️ 顯示字幕 (C)",
+      hide: "不顯示 (Hide)",
+    },
+    en: {
+      brand: "YouTube Multilingual Immersion Player",
+      home: "← Home",
+      url: "Paste YouTube video URL",
+      load: "Load Video",
+      demo: "Load Featured Demo",
+      ui: "UI",
+      choose: "Choose a video to practice",
+      chooseHint: "Paste a YouTube URL or choose an example above.",
+      back: "⏪ Back 3s",
+      play: "▶ Play",
+      pause: "⏸️ Pause",
+      forward: "⏩ Forward 3s",
+      repeat: "🔁 Sentence repeat",
+      autoPause: "⏸️ Auto-pause at sentence end",
+      playMode: "Playback mode",
+      modeContinuous: "Continuous",
+      modeLoop: "🔁 Loop sentence",
+      modePause: "⏸️ Auto-pause at end",
+      ready: "Ready: captions will be fetched after loading.",
+      spaceNext: "Paused: press Space to play the next sentence.",
+      repeatCurrent: "🔁 Replay sentence",
+      nextSentence: "⏭️ Play next sentence",
+      timeline: "Multilingual caption timeline",
+      statusReady: "Ready",
+      statusLoading: "⏳ Fetching captions from the dedicated cloud server…",
+      statusLoaded: "Loaded {n} lines",
+      learnLang: "Learning language (original)",
+      helperLang: "Helper language (translation)",
+      search: "Search captions…",
+      statusTranslating: "⏳ Translating captions…",
+      statusTranslatingProgress: "Translation progress {done}/{total}",
+      downloadSrt: "Download English subtitles (.srt)",
+      autoScroll: "Auto-center while playing",
+      import: "📁 Manual import",
+      sync: "Timeline calibration",
+      manual: "No captions? Paste SRT / VTT text",
+      manualPlaceholder: "1\n00:00:00,000 --> 00:00:02,000\nHello world",
+      apply: "Apply",
+      drop: "Drop a caption file here",
+      guideKicker: "Learning guide",
+      guideTitle: "Turn shadowing into a speech circuit",
+      guideCopy:
+        "Intensive listening reduces linking, stress, intonation, and endings to a manageable sound unit: listen once without captions, verify with the original line, then imitate. Shadowing asks you to reproduce speech soon after the source, engaging temporal-lobe speech perception, working memory, and articulation together. Start at 0.75x to find the syllables, return to 1.0x, repeat each sentence three to five times, and use calibration when an intro creates an offset. Finally hide the captions and test whether sound alone is enough.",
+      step1: "Paste the URL",
+      step1Copy:
+        "Load a YouTube video and let the player look for available caption tracks.",
+      step2: "Choose languages",
+      step2Copy:
+        "Combine an original learning language with a helper translation language.",
+      step3: "Repeat and calibrate",
+      step3Copy:
+        "Use sentence repeat, auto-pause, and timeline calibration for shadowing.",
+      faqKicker: "FAQ",
+      faqTitle: "Using the player",
+      faq1q:
+        "How can I fix a delay between a caption and the audio after clicking?",
+      faq1a:
+        "Some videos include an intro or outro. Use the -0.5s and +0.5s buttons above the timeline to shift all timestamps.",
+      faq2q: "How can I use a YouTube video with no captions?",
+      faq2a:
+        "The player loads captions from its dedicated cloud API. If the video has no captions, use Manual import and paste or load an SRT/VTT file.",
+      faq3q: "How do sentence repeat and auto-pause help speaking practice?",
+      faq3a:
+        "Auto-pause stops at the end of each line so you can repeat it; press Space to continue. Sentence repeat loops the current line until the rhythm feels natural.",
+      contactLink: "Contact Us",
+      privacyLink: "Privacy Policy",
+      termsLink: "Terms of Service",
+      supportLink: "Support",
+      copyright:
+        "© 2026 GugoPro. All rights reserved. Browser-local tools keep selected files on your device.",
+      noCaptions: "No captions loaded",
+      noCaptionsHint: "Use manual import or paste SRT/VTT text.",
+      invalid: "Please enter a valid YouTube URL.",
+      noTrack:
+        "No captions are available for this video. Use Manual Import to load an SRT/VTT file.",
+      fetchFail:
+        "The dedicated cloud caption service could not be reached. Try again or use Manual import with an SRT/VTT file.",
+      fileError: "Could not parse this caption file. Use SRT or VTT.",
+      loaded: "Loaded {n} lines",
+      offset: "Calibration: {n}s",
+      speed: "Speed",
+      captionToggle: "👁️ Hide captions (C)",
+      captionRestore: "👁️ Show captions (C)",
+      hide: "Hide (不顯示)",
+    },
+    ja: {
+      brand: "YouTube 多言語イマージョンプレーヤー",
+      home: "← ホーム",
+      url: "YouTube URLを貼り付け",
+      load: "動画を読み込む",
+      demo: "デモ動画を読み込む",
+      ui: "UI",
+      choose: "動画を選んで練習開始",
+      chooseHint: "YouTube URLを貼るか、上のサンプルを選びます。",
+      back: "⏪ 3秒戻る",
+      play: "▶ 再生",
+      pause: "⏸️ 一時停止",
+      forward: "⏩ 3秒進む",
+      repeat: "🔁 一文リピート",
+      autoPause: "⏸️ 文末で自動一時停止",
+      playMode: "再生モード",
+      modeContinuous: "連続再生",
+      modeLoop: "🔁 一文リピート",
+      modePause: "⏸️ 文末で自動停止",
+      ready: "準備完了：読み込み後に字幕を取得します。",
+      spaceNext: "一時停止中：Spaceで次の文を再生します。",
+      repeatCurrent: "🔁 この文をリピート",
+      nextSentence: "⏭️ 次の文を再生",
+      timeline: "多言語字幕タイムライン",
+      statusReady: "準備完了",
+      statusLoading: "⏳ 専用クラウドサーバーから字幕を取得中…",
+      statusLoaded: "{n}行を読み込みました",
+      learnLang: "学習言語（原文）",
+      helperLang: "補助言語（訳文）",
+      search: "字幕を検索…",
+      statusTranslating: "⏳ 字幕を翻訳中…",
+      statusTranslatingProgress: "翻訳進捗 {done}/{total}",
+      downloadSrt: "英語字幕をダウンロード (.srt)",
+      autoScroll: "再生中に自動で中央表示",
+      import: "📁 手動読み込み",
+      sync: "タイムライン調整",
+      manual: "字幕がない？SRT / VTTを貼り付け",
+      manualPlaceholder: "1\n00:00:00,000 --> 00:00:02,000\nHello world",
+      apply: "適用",
+      drop: "字幕ファイルをここへドロップ",
+      guideKicker: "学習ガイド",
+      guideTitle: "シャドーイングを発話回路へ",
+      guideCopy:
+        "精聴ではリエゾン、強勢、イントネーション、語尾を小さな音声単位に絞ります。字幕なしで一度聞き、原文で確認し、すぐに真似しましょう。シャドーイングは原音の直後に再現するため、側頭葉の音声知覚、ワーキングメモリ、発音動作を同時に働かせます。0.75倍で音節を確認し、1.0倍に戻して一文を3〜5回繰り返し、片頭のずれは調整ボタンで補正します。最後に字幕を隠して音だけで理解できるか試しましょう。",
+      step1: "URLを貼る",
+      step1Copy: "YouTube動画を読み込み、専用クラウドAPIから字幕を取得します。",
+      step2: "言語を選ぶ",
+      step2Copy: "原文の学習言語と補助翻訳言語を自由に組み合わせます。",
+      step3: "リピートと調整",
+      step3Copy: "一文リピート、自動停止、タイムライン調整で音読します。",
+      faqKicker: "よくある質問",
+      faqTitle: "プレーヤーの使い方",
+      faq1q: "字幕と音声に遅れがある場合は？",
+      faq1a:
+        "動画の冒頭や末尾の影響がある場合、タイムライン上の-0.5秒/+0.5秒で全字幕を移動できます。",
+      faq2q: "字幕のない動画はどう使いますか？",
+      faq2a:
+        "専用クラウドAPIから字幕を取得します。字幕がない場合は手動読み込みでSRT/VTTファイルを追加してください。",
+      faq3q: "一文リピートと自動停止の使い方は？",
+      faq3a:
+        "自動停止は文末で止まり、Spaceで次へ進みます。一文リピートは自然に言えるまで現在の文を繰り返します。",
+      contactLink: "お問い合わせ",
+      privacyLink: "プライバシー",
+      termsLink: "利用規約",
+      supportLink: "サポート",
+      copyright:
+        "© 2026 GugoPro. All rights reserved. 選択したファイルはブラウザ内に保持されます。",
+      noCaptions: "字幕がありません",
+      noCaptionsHint: "手動読み込みまたはSRT/VTTを貼り付けてください。",
+      invalid: "有効なYouTube URLを入力してください。",
+      noTrack:
+        "この動画で利用できる字幕がありません。手動読み込みからSRT/VTTを追加してください。",
+      fetchFail:
+        "専用クラウド字幕サービスに接続できません。再試行するか手動読み込みをご利用ください。",
+      fileError: "字幕を解析できません。SRTまたはVTTを使用してください。",
+      loaded: "{n}行を読み込みました",
+      offset: "調整：{n}秒",
+      speed: "速度",
+      captionToggle: "👁️ 字幕を隠す (C)",
+      captionRestore: "👁️ 字幕を表示 (C)",
+      hide: "非表示 (Hide)",
+    },
+  };
+  if (!d[state.lang]) state.lang = "zh-TW";
+  $("interfaceLang").value = state.lang;
+  const t = (k, v = {}) =>
+    (d[state.lang][k] || d["zh-TW"][k] || k).replace(
+      /\{(\w+)\}/g,
+      (_, x) => v[x] ?? "",
+    );
+  const browserLang = (navigator.language || "en").toLowerCase();
+  const isCjk = /^(zh|ja|ko)/.test(browserLang);
+  const languageOptions = () => [...$("learnLang").options].map((o) => o.value);
+  function learnVisible() {
+    return $("learnLang").value !== "none";
+  }
+  function helperVisible() {
+    return $("helperLang").value !== "none";
+  }
+  function enforceLanguages(changed) {
+    const learn = $("learnLang"),
+      helper = $("helperLang");
+    if (
+      learn.value !== "none" &&
+      helper.value !== "none" &&
+      learn.value === helper.value
+    ) {
+      if (changed === "learn")
+        helper.value = learn.value === "en" ? "zh-Hant" : "en";
+      else learn.value = helper.value === "en" ? "zh-Hant" : "en";
     }
-    return {pos: '單字', meaning: '暫無詞條，可點擊發音練習'};
-}async function openDictionary(anchor,raw){const word=String(raw||'').replace(/[^A-Za-z'’-]/g,'');if(!word)return;clearTimeout(wordTimer);cancelDictionaryClose();closeDictionary();const request=++dictRequest;dictCard=document.createElement('div');dictCard.className='dict-card';dictCard.innerHTML='<div class=\"dict-head\"><span class=\"dict-word-title\">'+esc(word)+'</span><span class=\"dict-pos\">單字</span></div><div class=\"dict-meaning\">釋義載入中…</div><button type=\"button\" class=\"dict-speak\">🔊 發音</button>';document.body.appendChild(dictCard);const r=anchor.getBoundingClientRect();dictCard.style.left=Math.min(Math.max(8,r.left),window.innerWidth-288)+'px';dictCard.style.top=Math.max(8,r.top-dictCard.offsetHeight-8)+'px';dictCard.addEventListener('mouseenter',cancelDictionaryClose);dictCard.addEventListener('mouseleave',scheduleDictionaryClose);dictCard.addEventListener('click',e=>e.stopPropagation());dictCard.querySelector('.dict-speak').onclick=()=>{if(window.speechSynthesis){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(word);u.lang='en-US';u.rate=.9;speechSynthesis.speak(u)}};const result=await translateWordZh(word);if(request===dictRequest&&dictCard){dictCard.querySelector('.dict-pos').textContent=result.pos;dictCard.querySelector('.dict-meaning').textContent=result.meaning}}function wordTokens(text){return esc(text).replace(/[A-Za-z][A-Za-z'’-]*/g,w=>'<span class=\"dict-word\" tabindex=\"0\" data-word=\"'+w.replace(/&amp;/g,'&amp;')+'\">'+w+'</span>')}
-function updateOverlay(cue){
- const overlay=$('videoCaptionOverlay');
- if(!overlay)return;
- const mode=$('captionMode')?.value||'secondary',learn=$('learnLang')?.value||'en',helper=$('helperLang')?.value||'zh-Hant';
- if(!cue||state.captionsHidden||mode==='off'){overlay.hidden=true;overlay.innerHTML='';return}
- const primary=learn!=='none'&&cue.primary?esc(cue.primary):'';
- const secondary=helper!=='none'&&cue.secondary?esc(cue.secondary):'';
- const parts=[];
- if((mode==='both'||mode==='primary')&&primary)parts.push('<span class="overlay-primary">'+primary+'</span>');
- if((mode==='both'||mode==='secondary')&&secondary)parts.push('<span class="overlay-secondary">'+secondary+'</span>');
- overlay.innerHTML=parts.join('');overlay.hidden=parts.length===0;
-}
-function render(){updateOverlay(state.captions[state.active]||null);const q=$('search').value.trim().toLowerCase(),list=$('captionList'),learn=$('learnLang').value,helper=$('helperLang').value;list.innerHTML='';const rows=state.captions.map((x,i)=>({...x,i})).filter(x=>!q||((learn!=='none'?x.primary:'')+' '+(helper!=='none'?x.secondary:'')).toLowerCase().includes(q));if(!rows.length){list.innerHTML='<li class=\"empty\"><strong>'+t('noCaptions')+'</strong>'+t('noCaptionsHint')+'</li>';return}rows.forEach(x=>{const li=document.createElement('li'),b=document.createElement('button');b.type='button';b.className='caption-item'+(x.i===state.active?' active':'');b.dataset.index=x.i;const primary=learn!=='none'&&!state.captionsHidden?'<span class=\"line-primary\">'+wordTokens(x.primary)+'</span>':'';const secondary=helper!=='none'&&!state.captionsHidden&&x.secondary?'<span class=\"line-secondary\">'+esc(x.secondary)+'</span>':'';b.innerHTML='<span class=\"caption-time\">'+fmt(x.start+state.offset)+'</span><span class=\"caption-main\">'+primary+secondary+'</span>';b.onclick=()=>jump(x.i);b.querySelectorAll('.dict-word').forEach(token=>{token.onmouseenter=()=>{clearTimeout(wordTimer);cancelDictionaryClose();wordTimer=setTimeout(()=>openDictionary(token,token.dataset.word),1000)};token.onmouseleave=()=>{clearTimeout(wordTimer);scheduleDictionaryClose()};token.onclick=e=>{e.preventDefault();e.stopPropagation();openDictionary(token,token.dataset.word)};token.ontouchend=e=>{e.preventDefault();e.stopPropagation();openDictionary(token,token.dataset.word)};token.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openDictionary(token,token.dataset.word)}}});li.appendChild(b);list.appendChild(li)})}
-function idOf(v){try{const u=new URL(v);if(u.hostname.includes('youtu.be'))return u.pathname.slice(1).split('/')[0];if(u.hostname.includes('youtube.com'))return u.searchParams.get('v')||u.pathname.split('/').pop()}catch{}return v.trim().match(/^[\w-]{11}$/)?.[0]||null}
-function officialUrl(id,lang,extra=''){return officialTimedText+'?v='+encodeURIComponent(id)+'&lang='+encodeURIComponent(lang)+'&fmt=vtt'+extra}
-function parseTrackList(xml){const doc=new DOMParser().parseFromString(xml,'text/xml');const tracks=[...doc.querySelectorAll('track')].map(x=>({lang:x.getAttribute('lang_code')||'',label:x.getAttribute('name')||x.getAttribute('lang_code')||'',kind:x.getAttribute('kind')||'',name:x.getAttribute('name')||'',baseUrl:''})).filter(x=>x.lang);if(!tracks.length)throw Error('no YouTube caption tracks');return tracks}
-function parseWatchCaptionTracks(html){const match=html.match(/var ytInitialPlayerResponse = (\{.*?\});/s);if(!match)throw Error('watch page has no player response');let player;try{player=JSON.parse(match[1])}catch(error){throw Error('watch player response parse failed: '+error.message)}const rows=player?.captions?.playerCaptionsTracklistRenderer?.captionTracks||[];const tracks=rows.map(x=>({lang:x.languageCode||'',label:x.name?.simpleText||x.languageCode||'',kind:x.kind||'',name:'',baseUrl:x.baseUrl||''})).filter(x=>x.lang&&x.baseUrl);if(!tracks.length)throw Error('watch player has no accessible caption tracks');return tracks}
-function parseTimedText(text){if(/^\s*</.test(text)){const doc=new DOMParser().parseFromString(text,'text/xml');const nodes=[...doc.querySelectorAll('text')];if(nodes.length)return nodes.map(n=>{const start=Number(n.getAttribute('start'))||0;const end=start+(Number(n.getAttribute('dur'))||1);return {start,end:Math.max(end,start+.05),primary:(n.textContent||'').replace(/\s+/g,' ').trim(),secondary:''}}).filter(x=>x.primary)}return parse(text)}
-function parseTranscriptFallback(text){const clean=String(text||'').replace(/<[^>]+>/g,' ').replace(/&nbsp;/gi,' ').replace(/&amp;/gi,'&').replace(/&quot;/gi,'\"').replace(/&#39;/gi,"'");const marks=[...clean.matchAll(/(?:^|\n)\s*\[(?:(\d+):)?(\d{1,2}):(\d{2})\]\s*/g)];if(!marks.length)throw Error('fallback transcript has no timestamps');const out=[];marks.forEach((m,i)=>{const start=(m[1]?Number(m[1])*3600:0)+Number(m[2])*60+Number(m[3]);const end=i+1<marks.length?(marks[i+1].index||0):clean.length;const primary=clean.slice(m.index+m[0].length,end).replace(/\s+/g,' ').trim();if(primary)out.push({start,end:i+1<marks.length?((marks[i+1].index||0)>=0?((marks[i+1][1]?Number(marks[i+1][1])*3600:0)+Number(marks[i+1][2])*60+Number(marks[i+1][3])):start+4):start+4,primary,secondary:''})});return out.filter(x=>x.end>x.start&&x.primary)}
-function labelForTrack(track){return track.label+(track.kind==='asr'?' · auto':'')}
-function updateLanguageOptions(tracks){const learn=$('learnLang'),helper=$('helperLang');const choose=(select,preferred)=>{const aliases=languageAliases[preferred]||[preferred];const match=tracks.find(x=>aliases.includes(x.lang))||tracks.find(x=>x.lang===preferred);if(match&&[...select.options].some(o=>o.value===preferred||o.value===match.lang)){select.value=[...select.options].some(o=>o.value===preferred)?preferred:match.lang}};choose(learn,learn.value||'en');choose(helper,helper.value||'zh-Hant')}
-function guessedOfficialTracks(){return ['en','zh-Hant','zh-Hans','ja','ko','fr','de','es','pt','it','ru'].map(lang=>({lang,label:lang+' · transcript fallback',kind:'',name:'',fallback:true}))}
-async function getOfficialCatalog(id){if(state.catalogs.has(id))return state.catalogs.get(id);let watchError=null;try{const html=await fetchText(officialWatch+encodeURIComponent(id)+'&hl=en');const catalog={tracks:parseWatchCaptionTracks(html),source:'official-watch'};state.catalogs.set(id,catalog);return catalog}catch(error){watchError=error}try{const xml=await fetchText(officialTimedText+'?type=list&v='+encodeURIComponent(id));const catalog={tracks:parseTrackList(xml),source:'official-list'};state.catalogs.set(id,catalog);return catalog}catch(listError){const catalog={tracks:guessedOfficialTracks(),source:'transcript-fallback',listError:String(watchError)+' | '+String(listError)};state.catalogs.set(id,catalog);return catalog}}
-function findTrack(catalog,lang){const aliases=languageAliases[lang]||[lang];return catalog.tracks.find(x=>aliases.includes(x.lang))||catalog.tracks.find(x=>x.lang===lang)||catalog.tracks.find(x=>x.label.toLowerCase().includes(String(lang).toLowerCase()))}
-async function getOfficialTrack(id,track,tlang=''){const key=id+'|'+track.lang+'|'+tlang+'|'+track.name;if(state.trackCache.has(key))return state.trackCache.get(key);if(track.fallback){const requestedLang=tlang||track.lang;const fallbackLang=requestedLang==='zh-Hant'||requestedLang==='zh-TW'?'zh-TW':requestedLang;const parsed=parseTranscriptFallback(await fetchText('https://youtube-transcript.ai/transcript/'+encodeURIComponent(id)+'.txt?lang='+encodeURIComponent(fallbackLang)));state.trackCache.set(key,parsed);return parsed}const urls=[];if(track.baseUrl){urls.push(track.baseUrl+(track.baseUrl.includes('?')?'&':'?')+'fmt=vtt'+(tlang?'&tlang='+encodeURIComponent(tlang):''))}const extras=[];if(track.name||track.kind){let named='';if(track.name)named+='&name='+encodeURIComponent(track.name);if(track.kind)named+='&kind='+encodeURIComponent(track.kind);extras.push(named)}extras.push('');extras.forEach(extraBase=>urls.push(officialUrl(id,track.lang,extraBase+(tlang?'&tlang='+encodeURIComponent(tlang):''))));let lastError=null;for(const url of urls){try{const parsed=parseTimedText(await fetchText(url));if(parsed.length){state.trackCache.set(key,parsed);return parsed}lastError=Error('empty subtitle track')}catch(error){lastError=error}}throw lastError||Error('empty subtitle track')}
-
-function exactCueKey(cue){return Number(cue.start).toFixed(3)}
-function countSyllables(word){
-  const w=String(word||'').toLowerCase().replace(/[^a-z]/g,'');
-  if(!w)return 0;
-  if(w.length<=3)return 1;
-  const groups=(w.match(/[aeiouy]+/g)||[]).length;
-  const silentE=/e$/.test(w)&&!/[^aeiou]le$/.test(w);
-  const ending=/[^aeiou]ed$/.test(w)&&!/(ted|ded)$/.test(w);
-  return Math.max(1,groups-(silentE?1:0)-(ending?1:0));
-}
-function wordCount(text){return String(text||'').match(/[A-Za-z0-9]+(?:['’][A-Za-z]+)?/g)?.length||0}
-function splitSentenceText(text){
-  let value=String(text||'').replace(/\s+/g,' ').trim();
-  if(!value)return[];
-  const protectedTokens=[];
-  const protect=(match)=>{const token='§'+protectedTokens.length+'§';protectedTokens.push(match);return match.replace(/\./g,'<DOT>')};
-  value=value.replace(/\b(?:Mr|Mrs|Ms|Dr|Prof|Sr|Jr|St|vs|etc|e\.g|i\.e|a\.m|p\.m)\./gi,protect);
-  value=value.replace(/(\d)\.(\d)/g,'$1<DOT>$2').replace(/(\d),(\d)/g,'$1<COMMA>$2');
-  const pieces=(value.match(/[^.!?]+[.!?]+["'”’)\]]*(?=\s+|$)|[^.!?]+$/g)||[value]).map(x=>x.replace(/<DOT>/g,'.').replace(/<COMMA>/g,',').trim()).filter(Boolean);
-  const merged=[];
-  for(const piece of pieces){
-    if(!merged.length){merged.push(piece);continue}
-    const prior=merged[merged.length-1], priorWords=wordCount(prior), nextWords=wordCount(piece);
-    if(priorWords<3||(priorWords<4&&priorWords+nextWords<=18)){merged[merged.length-1]=prior+' '+piece}
-    else merged.push(piece);
+    localStorage.setItem("learn_lang", learn.value);
+    localStorage.setItem("helper_lang", helper.value);
   }
-  return merged;
-}
-function sentenceWeight(text){return String(text||'').split(/\s+/).filter(Boolean).reduce((sum,word)=>sum+countSyllables(word),0)+2}
-function allocateSentenceTimes(parts,start,end){
-  const duration=Math.max(.05,Number(end)-Number(start));
-  if(!parts.length)return[];
-  // Keep the same deterministic rule as the Worker: preserve the source cue
-  // interval and divide it only by visible character length. Never add an
-  // invented pause; invented pauses are the main cause of cumulative drift.
-  const weights=parts.map(text=>Math.max(1,String(text||'').length)),total=weights.reduce((a,b)=>a+b,0)||parts.length;
-  let cursor=Number(start);
-  return parts.map((text,i)=>{const next=i===parts.length-1?Number(end):Number((cursor+duration*weights[i]/total).toFixed(3));const cue={start:Number(cursor.toFixed(3)),end:Number(Math.max(cursor+.05,next).toFixed(3)),primary:text,secondary:''};cursor=next;return cue});
-}
-function segmentCuePair(primary,secondary=''){
-  const parts=splitSentenceText(primary?.primary||primary||'');
-  if(!parts.length)return[];
-  const cues=allocateSentenceTimes(parts,primary.start,primary.end);
-  const translated=splitSentenceText(secondary);
-  if(translated.length===cues.length)cues.forEach((cue,i)=>cue.secondary=translated[i]);
-  return cues;
-}
-function combineExactTlang(primary,translated){
-  const list=(translated||[]).filter(c=>String(c.primary||c.text||'').trim());
-  return(primary||[]).flatMap(cue=>{
-    const exact=list.find(x=>Math.abs(Number(x.start)-Number(cue.start))<.02);
-    const overlap=list.filter(x=>Number(x.end)>Number(cue.start)-.15&&Number(x.start)<Number(cue.end)+.15);
-    const nearest=(exact||overlap.sort((a,b)=>Math.abs(Number(a.start)-Number(cue.start))-Math.abs(Number(b.start)-Number(cue.start)))[0]);
-    return segmentCuePair(cue,nearest?.primary||nearest?.text||'');
-  });
-}
-const sentenceTranslationCache=new Map();
-async function translateSentence(text,target){
-  const clean=String(text||'').replace(/\s+/g,' ').trim(),lang=target==='zh-Hant'||target==='zh-TW'?'zh-TW':target;
-  if(!clean)return'';
-  const key=lang+'|'+clean.toLowerCase();
-  if(sentenceTranslationCache.has(key))return sentenceTranslationCache.get(key);
-  const promise=translateCaptionText(clean,lang).catch(()=>'' );
-  sentenceTranslationCache.set(key,promise);
-  return promise;
-}
-async function translateSentenceCues(cues,target,onBatch){
-  for(let i=0;i<cues.length;i+=6){
-    const batch=cues.slice(i,i+6);
-    await Promise.all(batch.map(async cue=>{if(!cue.secondary)cue.secondary=await translateSentence(cue.primary,target)}));
-    try{onBatch?.(i+batch.length)}catch{}
+  function initLanguages() {
+    const savedLearn = localStorage.getItem("learn_lang"),
+      savedHelper = localStorage.getItem("helper_lang");
+    $("learnLang").value = languageOptions().includes(savedLearn)
+      ? savedLearn
+      : "en";
+    const preferred =
+      savedHelper || (isCjk && browserLang.startsWith("zh") ? "zh-Hant" : "en");
+    $("helperLang").value = [...$("helperLang").options].some(
+      (o) => o.value === preferred,
+    )
+      ? preferred
+      : "zh-Hant";
+    enforceLanguages("init");
   }
-  return cues;
-}
-function setPauseActions(){ /* actions are permanently visible */ }
-function setLoading(isLoading){[$('status'),$('playerState')].forEach(el=>{if(!el)return;el.classList.toggle('is-loading',isLoading)})}
-function applyPair(primary,secondary=[]){state.captions=combineExactTlang(primary,secondary);state.active=state.pendingRestore?-1:(state.captions.length?0:-1);state.paused=false;state.loadingVideo=false;state.player?.pauseVideo?.();setPauseActions(false);$('status').textContent=t('statusLoaded',{n:state.captions.length});$('playerState').textContent=t('statusLoaded',{n:state.captions.length});setLoading(false);if(state.pendingRestore){restoreAfterCaptions()}else{render();saveProgress()}}
-function applyCaptionList(captions){state.captions=captions;state.active=state.pendingRestore?-1:(captions.length?0:-1);state.paused=false;state.loadingVideo=false;state.player?.pauseVideo?.();setPauseActions(false);$('status').textContent=t('statusLoaded',{n:captions.length});$('playerState').textContent=t('statusLoaded',{n:captions.length});setLoading(false);if(state.pendingRestore){restoreAfterCaptions()}else{render();saveProgress()}}
-async function loadTracks(id){try{if(await fetchWorkerCaptions(id))return}catch(_){ }const catalog=await getOfficialCatalog(id);if(state.id!==id)return;updateLanguageOptions(catalog.tracks);const primaryLang=$('learnLang').value||'en',helperLang=$('helperLang').value||'none';const primaryTrack=findTrack(catalog,primaryLang)||catalog.tracks[0];if(!primaryTrack)throw Error('no official learning track');let primary;let primaryTrackUsed=primaryTrack;let selectedError=null;for(const candidate of [primaryTrack,...catalog.tracks.filter(x=>x.lang!==primaryTrack.lang)]){try{primary=await getOfficialTrack(id,candidate);primaryTrackUsed=candidate;break}catch(error){selectedError=error}}if(!primary)throw selectedError||Error('no learning track');if(state.id!==id)return;let translated=[];if(helperLang!=='none'&&helperLang!==primaryTrackUsed.lang){try{translated=await getOfficialTrack(id,primaryTrackUsed,helperLang)}catch{translated=[]}}if(state.id!==id)return;const captions=combineExactTlang(primary,translated);applyCaptionList(captions);if(helperLang!=='none'&&captions.some(c=>!c.secondary)){translateSentenceCues(captions,helperLang,()=>{if(state.id===id)render()}).then(()=>{if(state.id===id)saveProgress()}).catch(()=>{})}}
-async function fetchWorkerCaptions(id){
- const lang=$('learnLang').value||'en',tlang=$('helperLang').value||'none';
- const response=await fetch(workerEndpoint+'?v='+encodeURIComponent(id)+'&lang='+encodeURIComponent(lang)+'&tlang='+encodeURIComponent(tlang)+'&cb='+Date.now(),{headers:{Accept:'application/json'},cache:'no-store',signal:AbortSignal.timeout(12000)});
- if(!response.ok)throw Error('caption worker '+response.status);
- const data=await response.json();
- if(!Array.isArray(data.captions)||!data.captions.length)throw Error('caption worker returned no captions');
- const captions=data.captions.map(c=>({start:Number(c.start),end:Number(c.end),primary:String(c.primary||''),secondary:String(c.secondary||'')})).filter(c=>c.primary);
- applyCaptionList(captions);
- state.timingQuality=data.timingQuality||'exact';
- if(tlang!=='none'&&captions.some(c=>!c.secondary))translateSentenceCues(captions,tlang,()=>{if(state.id===id)render()}).then(()=>{if(state.id===id)saveProgress()}).catch(()=>{});
- return true;
-}
-function applyCachedLanguage(){const cache=state.captionCache.get(state.id);if(!cache)return false;const primary=cache[$('learnLang').value]||cache.en||Object.values(cache)[0];const secondary=cache[$('helperLang').value]||cache['zh-Hant']||[];if(primary){applyPair(primary,secondary);return true}return false}
-function cuesFromJson3(data){
-  return (data?.events||[]).flatMap(e=>{
-    const text=(e.segs||[]).map(x=>x.utf8||'').join('').replace(/\n/g,' ').trim();
-    if(!text)return [];
-    const start=Number(e.tStartMs||0)/1000;
-    const end=start+Math.max(.5,Number(e.dDurationMs||0)/1000);
-    return [{start,end,text}];
-  });
-}
-function cuesFromTimedTextXml(text){
-  const doc=new DOMParser().parseFromString(text,'text/xml');
-  return [...doc.querySelectorAll('text')].map(node=>{
-    const start=Number(node.getAttribute('start')||0),dur=Number(node.getAttribute('dur')||.5);
-    return {start,end:start+Math.max(.5,dur),text:(node.textContent||'').replace(/\s+/g,' ').trim()};
-  }).filter(x=>x.text);
-}
-async function requestTimedText(id,lang,tlang){
-  const params=new URLSearchParams({v:id,lang,fmt:'json3'});
-  if(tlang&&tlang!=='none')params.set('tlang',tlang);
-  const url='https://www.youtube.com/api/timedtext?'+params.toString();
-  const response=await fetch(url,{mode:'cors',credentials:'omit',headers:{Accept:'application/json, text/xml'},cache:'no-store'});
-  if(!response.ok)throw Error('YouTube TimedText HTTP '+response.status);
-  const body=await response.text();
-  if(!body.trim())return [];
-  try{return cuesFromJson3(JSON.parse(body))}catch(_){return cuesFromTimedTextXml(body)}
-}
-async function translateCaptionText(text,target){
-  const url='https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl='+encodeURIComponent(target)+'&dt=t&q='+encodeURIComponent(text);
-  const response=await fetch(url,{mode:'cors',credentials:'omit',cache:'no-store'});
-  if(!response.ok)return '';
-  const data=await response.json();
-  return (data[0]||[]).map(x=>x[0]||'').join('').trim();
-}
-async function translateCaptionBatch(cues,target){
-  const translated=[];
-  for(let i=0;i<cues.length;i+=12){
-    const batch=cues.slice(i,i+12),joined=batch.map(x=>x.text).join('\n');
-    try{
-      const result=await translateCaptionText(joined,target);
-      const parts=result.split(/\n/);
-      if(parts.length===batch.length)translated.push(...parts);
-      else for(const cue of batch)translated.push(await translateCaptionText(cue.text,target));
-    }catch(_){translated.push(...batch.map(()=>''))}
-  }
-  return translated;
-}
-async function fetchTracks(id){
-  const requestId=id;
-  try{
-    if(state.demo&&applyCachedLanguage())return;
-    await Promise.race([
-      loadTracks(id),
-      new Promise((_,reject)=>setTimeout(()=>reject(Error('caption load deadline exceeded')),20000))
-    ]);
-  }catch(error){
-    if(state.id!==requestId)return;
-    state.loadingVideo=false;
-    state.player?.pauseVideo?.();
-    setLoading(false);
-    $('status').textContent=t('fetchFail');
-    $('playerState').textContent=t('fetchFail');
-    toast(t('fetchFail'));
+  function toggleCaptions() {
+    state.captionsHidden = !state.captionsHidden;
+    $("captionToggle").classList.toggle("active", state.captionsHidden);
+    $("captionToggle").textContent = state.captionsHidden
+      ? t("captionRestore")
+      : t("captionToggle");
     render();
   }
-}
-function createPlayer(id){if(!window.YT?.Player)return;state.player=new YT.Player('player',{videoId:id,playerVars:{playsinline:1,rel:0,modestbranding:1,cc_load_policy:0,iv_load_policy:3},events:{onReady:()=>{state.ready=true;state.player.setPlaybackRate(speedValue());if(state.loadingVideo)state.player.pauseVideo();if(state.pendingRestore)restoreAfterCaptions();startMonitor()},onStateChange:e=>{if(e.data===YT.PlayerState.PLAYING){if(state.loadingVideo){state.player.pauseVideo();return}if(state.paused&&$('autoPause').classList.contains('active')){const next=state.captions[state.active+1];state.paused=false;state.ignorePauseUntil=Date.now()+600;if(next){state.active+=1;state.player.seekTo(next.start+state.offset,true);}render();return}state.paused=false;$('playPause').textContent=t('pause');startMonitor()}else if(e.data===YT.PlayerState.PAUSED){$('playPause').textContent=t('play');saveProgress();startMonitor()}}}})}
-function startMonitor(){clearInterval(state.monitor);state.monitor=setInterval(tick,100)}
-window.onYouTubeIframeAPIReady=()=>{if(state.id)createPlayer(state.id)};
-const HISTORY_KEY='l_player_history';
-function readHistory(){try{const x=JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]');return Array.isArray(x)?x.filter(v=>v&&v.id):[]}catch{return []}}
-function writeHistory(items){localStorage.setItem(HISTORY_KEY,JSON.stringify(items.slice(0,15)));renderHistory()}
-function speedValue(){return Number(localStorage.getItem('player_speed'))||1}function setSpeedValue(raw){const val=Math.min(1.5,Math.max(.5,Math.round(Number(raw)*20)/20));$('speedVal').textContent=val.toFixed(2).replace(/0$/,'')+'x';localStorage.setItem('player_speed',String(val));state.player?.setPlaybackRate(val);return val}
-function historySettings(){return {speed:speedValue(),mode:$('autoPause').classList.contains('active')?'autoPause':$('repeat').classList.contains('active')?'repeat':'',learnLang:$('learnLang').value,helperLang:$('helperLang').value,captionMode:$('captionMode').value}}
-function saveProgress(){if(!state.id||!state.captions.length)return;const items=readHistory(),idx=items.findIndex(v=>v.id===state.id),entry={id:state.id,title:'YouTube · '+state.id,time:state.player?.getCurrentTime?.()||0,activeSentence:state.active,timestamp:Date.now(),settings:historySettings()};if(idx>=0)items.splice(idx,1);items.unshift(entry);writeHistory(items);state.lastSavedAt=Date.now()}
-function renderHistory(){const list=$('historyList');if(!list)return;const items=readHistory();list.innerHTML=items.length?items.map((v,i)=>'<div class="history-entry"><button class="history-load" type="button" data-history-index="'+i+'">'+esc(v.title||('YouTube · '+v.id))+'</button><button class="history-delete" type="button" data-history-delete="'+i+'" aria-label="刪除歷史紀錄">🗑️</button></div>').join(''):'<div class="history-empty">尚無播放紀錄</div>';list.querySelectorAll('.history-load').forEach(b=>b.onclick=()=>{const v=readHistory()[Number(b.dataset.historyIndex)];if(v){$('historyDrawer').hidden=true;load(v.id,v)}});list.querySelectorAll('.history-delete').forEach(b=>b.onclick=e=>{e.stopPropagation();const a=readHistory();a.splice(Number(b.dataset.historyDelete),1);writeHistory(a)})}
-function applyRestoreSettings(entry){const x=entry?.settings||{};if(x.learnLang&&[...$('learnLang').options].some(o=>o.value===x.learnLang))$('learnLang').value=x.learnLang;if(x.helperLang&&[...$('helperLang').options].some(o=>o.value===x.helperLang))$('helperLang').value=x.helperLang;if(x.captionMode&&[...$('captionMode').options].some(o=>o.value===x.captionMode))$('captionMode').value=x.captionMode;if(Number.isFinite(Number(x.speed))&&Number(x.speed)>=.5&&Number(x.speed)<=1.5)setSpeedValue(Number(x.speed));if(x.mode==='repeat'||x.mode==='autoPause'){setMode(x.mode)}else{$('repeat').classList.remove('active');$('autoPause').classList.remove('active')}}
-function restoreAfterCaptions(){const entry=state.pendingRestore;if(!entry||!state.captions.length)return;state.active=Math.max(0,Math.min(state.captions.length-1,Number(entry.activeSentence)||0));state.paused=false;render();const cue=state.captions[state.active];if(state.player&&state.ready){const t=Number(entry.time);state.player.seekTo(Number.isFinite(t)&&t>0?t+state.offset:cue.start+state.offset,true);state.player.pauseVideo();state.pendingRestore=null;state.lastSavedAt=Date.now()}}
- function load(id,restore,isDemo=false){if(!id){toast(t('invalid'));return}state.pendingRestore=restore||null;applyRestoreSettings(restore);state.id=id;state.demo=Boolean(isDemo);state.offset=0;state.captions=[];state.active=-1;state.paused=false;state.loadingVideo=true;setPauseActions(false);$('syncReset').textContent='0.0s';$('placeholder').hidden=true;$('status').textContent=t('statusLoading');$('playerState').textContent=t('statusLoading');setLoading(true);if(state.player?.cueVideoById)state.player.cueVideoById(id);else if(state.player?.loadVideoById){state.player.loadVideoById(id);state.player.pauseVideo?.()}else createPlayer(id);if(!state.demo)fetchTracks(id)}
-function jump(i){const c=state.captions[i];if(!c)return;state.active=i;state.paused=false;state.ignorePauseUntil=Date.now()+600;setPauseActions(false);closeDictionary();if(!state.player||!state.ready){toast(t('ready'));render();return}state.player.seekTo(Math.max(0,c.start+state.offset),true);state.player.playVideo();render();saveProgress()}
-function replayCurrent(){const c=state.captions[state.active];if(!c)return;state.paused=false;state.ignorePauseUntil=Date.now()+600;setPauseActions(false);if(state.player&&state.ready){state.player.seekTo(Math.max(0,c.start+state.offset),true);state.player.playVideo()}render();saveProgress()}
-function playNextSentence(){if(!state.captions.length)return;const next=Math.min(state.captions.length-1,state.active+1);jump(next)}
-function effectiveCueEnd(index){
- const cue=state.captions[index];
- if(!cue)return 0;
- const next=state.captions[index+1];
- // Some slow-spoken videos publish a cue end before the speaker finishes.
- // Keep the cue visible through the natural hand-off to the next cue.
- return next&&Number.isFinite(next.start)&&next.start>cue.end
-   ? Math.max(cue.end,next.start-0.04)
-   : cue.end;
-}
-function scrollActiveCaptionIntoView(){const list=$('captionList'),item=list?.querySelector('.caption-item.active');if(!list||!item)return;const listRect=list.getBoundingClientRect(),itemRect=item.getBoundingClientRect();const targetTop=list.scrollTop+(itemRect.top-listRect.top)-(list.clientHeight-itemRect.height)/2;const maxTop=Math.max(0,list.scrollHeight-list.clientHeight);list.scrollTo({top:Math.min(maxTop,Math.max(0,targetTop)),behavior:'smooth'})}
-function tick(){if(!state.player||!state.ready||!state.captions.length)return;if(Date.now()-state.lastSavedAt>1000)saveProgress();const now=state.player.getCurrentTime()-state.offset;if(Date.now()<state.ignorePauseUntil)return;const currentCue=state.active>=0?state.captions[state.active]:null;if(currentCue&&now>=effectiveCueEnd(state.active)-.08){if($('repeat').classList.contains('active')){state.paused=false;state.player.seekTo(currentCue.start+state.offset,true);state.player.playVideo();return}if($('autoPause').classList.contains('active')&&!state.paused){state.paused=true;state.player.pauseVideo();state.player.seekTo(Math.max(0,effectiveCueEnd(state.active)+state.offset-.02),true);setPauseActions(true);$('playerState').textContent=t('spaceNext');render();return}}if(state.paused&&currentCue)return;const i=state.captions.findIndex((x,index)=>now>=x.start&&now<effectiveCueEnd(index));if(i!==state.active){state.active=i;render();if(Date.now()>state.userScrollUntil||window.matchMedia('(max-width:768px)').matches){scrollActiveCaptionIntoView()}}}
-    function setOffset(n){state.offset=Math.round((state.offset+n)*10)/10;$('syncReset').textContent=state.offset.toFixed(1)+'s';$('playerState').textContent=t('offset',{n:state.offset.toFixed(1)});render()}
-function resetOffset(){state.offset=0;$('syncReset').textContent='0.0s';render()}
-function moveSentence(delta){if(!state.captions.length)return;const next=Math.max(0,Math.min(state.captions.length-1,state.active+(delta||1)));jump(next)}
-const list=$('captionList');['wheel','touchmove'].forEach(type=>list.addEventListener(type,()=>{state.userScrollUntil=Date.now()+3000},{passive:true}));
-function applyLang(){document.querySelectorAll('[data-i18n]').forEach(e=>{const key=e.dataset.i18n;if(d[state.lang]?.[key])e.textContent=t(key)});document.querySelectorAll('[data-i18n-placeholder]').forEach(e=>{const key=e.dataset.i18nPlaceholder;if(d[state.lang]?.[key])e.placeholder=t(key)});const labels={ 'zh-TW':['畫面字幕','雙語','僅原文','僅譯文','隱藏'],en:['On-screen captions','Bilingual','Original only','Translation only','Hidden'],ja:['画面字幕','二言語','原文のみ','訳文のみ','非表示'] }[state.lang]||[];if(labels.length){$('overlayModeLabel').textContent=labels[0];const opts=[...$('captionMode').options];opts.forEach((o,i)=>o.textContent=labels[i+1])}}
-$('mobileSettingsToggle').onclick=()=>{const drawer=$('captionSettingsDrawer'),open=!drawer.classList.contains('open');drawer.classList.toggle('open',open);$('mobileSettingsToggle').setAttribute('aria-expanded',String(open));$('mobileSettingsToggle').textContent=open?'⚙️ 語言與設定 ▴':'⚙️ 語言與設定 ▾'};
-$('interfaceLang').onchange=e=>{state.lang=e.target.value;localStorage.setItem('gugopro_locale',state.lang);applyLang();if(state.captionsHidden)$('captionToggle').textContent=t('captionRestore')};
-document.querySelectorAll('button').forEach(el=>el.addEventListener('click',()=>el.blur()));
-function setMode(id){const other=id==='repeat'?'autoPause':'repeat';$(id).classList.toggle('active',!$(id).classList.contains('active'));if($(id).classList.contains('active'))$(other).classList.remove('active');state.paused=false;setPauseActions(false);$('playerState').textContent=t('ready');saveProgress()}
-$('repeat').onclick=()=>setMode('repeat');$('autoPause').onclick=()=>setMode('autoPause');
-$('pasteVideoUrl').onclick=()=>{const fallback=()=>{$('videoUrl').focus();$('videoUrl').select()};if(!navigator.clipboard?.readText){fallback();return}navigator.clipboard.readText().then(text=>{const value=String(text||'').trim();if(value){$('videoUrl').value=value;$('loadVideo').click()}else fallback()}).catch(fallback)};
-$('loadVideo').onclick=()=>load(idOf($('videoUrl').value));
-$('videoClickCapture').onclick=()=>$('playPause').click();
-$('playPause').onclick=()=>{if(!state.player||!state.ready)return;if(state.player.getPlayerState()===YT.PlayerState.PLAYING){state.player.pauseVideo();return}if(state.paused&&$('autoPause').classList.contains('active')){const current=state.captions[state.active],next=state.captions[state.active+1];state.paused=false;state.ignorePauseUntil=Date.now()+600;if(next){state.active+=1;state.player.seekTo(next.start+state.offset,true);}else if(current){state.player.seekTo(current.end+state.offset+.1,true);}state.player.playVideo();render();return}state.player.playVideo()};
-$('repeatCurrent').onclick=replayCurrent;
+  let tooltipTimer = 0;
+  let tooltip = null;
+  function hideTooltip() {
+    clearTimeout(tooltipTimer);
+    if (tooltip) {
+      tooltip.classList.remove("visible");
+      setTimeout(() => {
+        tooltip?.remove();
+        tooltip = null;
+      }, 180);
+    }
+  }
+  function showTooltip(anchor, cue) {
+    if (state.captionsHidden) return;
+    clearTimeout(tooltipTimer);
+    hideTooltip();
+    tooltipTimer = setTimeout(() => {
+      tooltip = document.createElement("div");
+      tooltip.className = "caption-tooltip";
+      const primary = learnVisible() ? cue.primary : "";
+      const secondary = helperVisible() ? cue.secondary : "";
+      tooltip.innerHTML =
+        '<div class="tooltip-primary">' +
+        esc(primary || "—") +
+        "</div>" +
+        (secondary
+          ? '<div class="tooltip-secondary">' + esc(secondary) + "</div>"
+          : "") +
+        '<div class="tooltip-meta">' +
+        (state.lang === "zh-TW" ? "時長" : "Duration") +
+        "：" +
+        Math.max(0, cue.end - cue.start).toFixed(1) +
+        "s · " +
+        (state.lang === "zh-TW" ? "點擊立即精聽" : "Click to focus-listen") +
+        '</div><button type="button" class="speak-btn">🔊 ' +
+        (state.lang === "zh-TW" ? "語音播放" : "Speak") +
+        "</button>";
+      document.body.appendChild(tooltip);
+      const r = anchor.getBoundingClientRect();
+      tooltip.style.left =
+        Math.min(Math.max(8, r.left), window.innerWidth - 338) + "px";
+      tooltip.style.top = Math.max(8, r.top - tooltip.offsetHeight - 8) + "px";
+      requestAnimationFrame(() => tooltip.classList.add("visible"));
+      tooltip.querySelector(".speak-btn").onclick = () => {
+        if (window.speechSynthesis) {
+          speechSynthesis.cancel();
+          const u = new SpeechSynthesisUtterance(cue.primary);
+          u.lang = "en-US";
+          u.rate = 0.95;
+          speechSynthesis.speak(u);
+        }
+      };
+    }, 250);
+  }
+  function toast(s) {
+    const e = $("toast");
+    e.textContent = s;
+    e.classList.add("show");
+    clearTimeout(toast.timer);
+    toast.timer = setTimeout(() => e.classList.remove("show"), 2800);
+  }
+  function time(s) {
+    const p = s.trim().replace(",", ".").split(":").map(Number);
+    return p.length === 3
+      ? p[0] * 3600 + p[1] * 60 + p[2]
+      : p.length === 2
+        ? p[0] * 60 + p[1]
+        : Number(p[0]) || 0;
+  }
+  function fmt(n) {
+    n = Math.max(0, n);
+    return (
+      String(Math.floor(n / 60)).padStart(2, "0") +
+      ":" +
+      String(Math.floor(n % 60)).padStart(2, "0")
+    );
+  }
+  function parse(text) {
+    const out = [];
+    for (const b of text
+      .replace(/^\uFEFF/, "")
+      .replace(/\r/g, "")
+      .split(/\n\s*\n/)) {
+      const l = b
+          .split("\n")
+          .map((x) => x.trim())
+          .filter(Boolean),
+        i = l.findIndex((x) => x.includes("-->"));
+      if (i < 0) continue;
+      const a = l[i].split(/\s+-->\s+/);
+      if (a.length < 2) continue;
+      const lines = l
+        .slice(i + 1)
+        .map((x) => x.replace(/<[^>]+>/g, "").trim())
+        .filter(Boolean);
+      if (!lines.length) continue;
+      out.push({
+        start: time(a[0]),
+        end: Math.max(time(a[1].split(/\s+/)[0]), time(a[0]) + 0.05),
+        primary: lines[0],
+        secondary: lines[1] || "",
+      });
+    }
+    return out;
+  }
+  function esc(s) {
+    return String(s || "").replace(
+      /[&<>"']/g,
+      (x) =>
+        ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#39;",
+        })[x],
+    );
+  }
+  const quickDictionary = {
+    body: ["名詞", "身體；主體"],
+    language: ["名詞", "語言"],
+    learn: ["動詞", "學習"],
+    practice: ["名詞／動詞", "練習"],
+    listen: ["動詞", "聆聽"],
+    speak: ["動詞", "說；講"],
+    sentence: ["名詞", "句子"],
+    word: ["名詞", "單字；詞語"],
+    video: ["名詞", "影片"],
+    repeat: ["動詞", "重複；反覆"],
+    natural: ["形容詞", "自然的"],
+    important: ["形容詞", "重要的"],
+    change: ["動詞／名詞", "改變"],
+    people: ["名詞", "人們"],
+    time: ["名詞", "時間"],
+    help: ["動詞／名詞", "幫助"],
+    click: ["動詞", "點擊"],
+    play: ["動詞", "播放；玩"],
+    pause: ["動詞", "暫停"],
+    seo: ["名詞", "搜尋引擎最佳化"],
+    search: ["動詞／名詞", "搜尋；搜索"],
+    engine: ["名詞", "引擎"],
+    optimization: ["名詞", "最佳化；優化"],
+    online: ["形容詞／副詞", "線上；在線"],
+    business: ["名詞", "商業；業務"],
+    most: ["形容詞／副詞", "大多數；最"],
+    never: ["副詞", "從不；永不"],
+    heard: ["動詞", "聽見；聽說"],
+    podcast: ["名詞", "播客；網路節目"],
+    youtube: ["名詞", "YouTube 影音平台"],
+    learned: ["動詞", "學會；學習"],
+    watch: ["動詞／名詞", "觀看；手錶"],
+    start: ["動詞／名詞", "開始；起點"],
+    world: ["名詞", "世界"],
+    make: ["動詞", "製作；使"],
+    know: ["動詞", "知道；了解"],
+    want: ["動詞", "想要"],
+    need: ["動詞", "需要"],
+    good: ["形容詞", "好的"],
+    new: ["形容詞", "新的"],
+    first: ["形容詞／副詞", "第一的；首先"],
+    last: ["形容詞／名詞", "最後的；上次"],
+    show: ["動詞／名詞", "顯示；節目"],
+    free: ["形容詞", "免費的；自由的"],
+  };
+  let dictCard = null;
+  let dictRequest = 0;
+  let wordTimer = 0;
+  let dictCloseTimer = 0;
+  function cancelDictionaryClose() {
+    clearTimeout(dictCloseTimer);
+    dictCloseTimer = 0;
+  }
+  function scheduleDictionaryClose() {
+    cancelDictionaryClose();
+    dictCloseTimer = setTimeout(closeDictionary, 2000);
+  }
+  function closeDictionary() {
+    clearTimeout(wordTimer);
+    cancelDictionaryClose();
+    if (dictCard) {
+      const card = dictCard;
+      dictCard = null;
+      card.classList.add("closing");
+      setTimeout(() => card.remove(), 180);
+    }
+  }
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".dict-card") && !e.target.closest(".dict-word"))
+      closeDictionary();
+  });
+  async function translateWordZh(word) {
+    const local = quickDictionary[word.toLowerCase()];
+    if (local) return { pos: local[0], meaning: local[1] };
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 4500);
+      // 改用 Google Translate 免費公開 API
+      const url =
+        "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=zh-TW&dt=t&q=" +
+        encodeURIComponent(word);
+      const res = await fetch(url, { signal: controller.signal });
+      clearTimeout(timer);
+      const data = await res.json();
+      const translated = String(data[0][0][0] || "").trim();
+      if (
+        translated &&
+        translated.toLowerCase() !== word.toLowerCase() &&
+        /[\u3400-\u9fff]/.test(translated)
+      ) {
+        return { pos: "單字", meaning: translated };
+      }
+    } catch (e) {
+      console.error("Translation error:", e);
+    }
+    return { pos: "單字", meaning: "暫無詞條，可點擊發音練習" };
+  }
+  async function openDictionary(anchor, raw) {
+    const word = String(raw || "").replace(/[^A-Za-z'’-]/g, "");
+    if (!word) return;
+    clearTimeout(wordTimer);
+    cancelDictionaryClose();
+    closeDictionary();
+    const request = ++dictRequest;
+    dictCard = document.createElement("div");
+    dictCard.className = "dict-card";
+    dictCard.innerHTML =
+      '<div class=\"dict-head\"><span class=\"dict-word-title\">' +
+      esc(word) +
+      '</span><span class=\"dict-pos\">單字</span></div><div class=\"dict-meaning\">釋義載入中…</div><button type=\"button\" class=\"dict-speak\">🔊 發音</button>';
+    document.body.appendChild(dictCard);
+    const r = anchor.getBoundingClientRect();
+    dictCard.style.left =
+      Math.min(Math.max(8, r.left), window.innerWidth - 288) + "px";
+    dictCard.style.top = Math.max(8, r.top - dictCard.offsetHeight - 8) + "px";
+    dictCard.addEventListener("mouseenter", cancelDictionaryClose);
+    dictCard.addEventListener("mouseleave", scheduleDictionaryClose);
+    dictCard.addEventListener("click", (e) => e.stopPropagation());
+    dictCard.querySelector(".dict-speak").onclick = () => {
+      if (window.speechSynthesis) {
+        speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(word);
+        u.lang = "en-US";
+        u.rate = 0.9;
+        speechSynthesis.speak(u);
+      }
+    };
+    const result = await translateWordZh(word);
+    if (request === dictRequest && dictCard) {
+      dictCard.querySelector(".dict-pos").textContent = result.pos;
+      dictCard.querySelector(".dict-meaning").textContent = result.meaning;
+    }
+  }
+  function wordTokens(text) {
+    return esc(text).replace(
+      /[A-Za-z][A-Za-z'’-]*/g,
+      (w) =>
+        '<span class=\"dict-word\" tabindex=\"0\" data-word=\"' +
+        w.replace(/&amp;/g, "&amp;") +
+        '\">' +
+        w +
+        "</span>",
+    );
+  }
+  function highlightHtml(html, query) {
+    const terms = String(query || "")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .sort((a, b) => b.length - a.length);
+    if (!terms.length) return html;
+    const pattern = new RegExp(
+      terms
+        .map((term) => esc(term).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+        .join("|"),
+      "gi",
+    );
+    return html.replace(/(<[^>]*>|[^<]+)/g, (part) =>
+      part.startsWith("<")
+        ? part
+        : part.replace(pattern, '<mark class="search-hit">$&</mark>'),
+    );
+  }
+  function updateOverlay(cue) {
+    const overlay = $("videoCaptionOverlay");
+    if (!overlay) return;
+    const mode = $("captionMode")?.value || "secondary",
+      learn = $("learnLang")?.value || "en",
+      helper = $("helperLang")?.value || "zh-Hant";
+    if (!cue || state.captionsHidden || mode === "off") {
+      overlay.hidden = true;
+      overlay.innerHTML = "";
+      return;
+    }
+    const primary = learn !== "none" && cue.primary ? esc(cue.primary) : "";
+    const secondary =
+      helper !== "none" && cue.secondary ? esc(cue.secondary) : "";
+    const parts = [];
+    if ((mode === "both" || mode === "primary") && primary)
+      parts.push('<span class="overlay-primary">' + primary + "</span>");
+    if ((mode === "both" || mode === "secondary") && secondary)
+      parts.push('<span class="overlay-secondary">' + secondary + "</span>");
+    overlay.innerHTML = parts.join("");
+    overlay.hidden = parts.length === 0;
+  }
+  function render() {
+    updateOverlay(state.captions[state.active] || null);
+    const q = $("search").value.trim().toLowerCase(),
+      list = $("captionList"),
+      learn = $("learnLang").value,
+      helper = $("helperLang").value;
+    list.innerHTML = "";
+    const rows = state.captions
+      .map((x, i) => ({ ...x, i }))
+      .filter(
+        (x) =>
+          !q ||
+          (
+            (learn !== "none" ? x.primary : "") +
+            " " +
+            (helper !== "none" ? x.secondary : "")
+          )
+            .toLowerCase()
+            .includes(q),
+      );
+    if (!rows.length) {
+      list.innerHTML =
+        '<li class=\"empty\"><strong>' +
+        t("noCaptions") +
+        "</strong>" +
+        t("noCaptionsHint") +
+        "</li>";
+      return;
+    }
+    rows.forEach((x) => {
+      const li = document.createElement("li"),
+        b = document.createElement("button");
+      b.type = "button";
+      b.className = "caption-item" + (x.i === state.active ? " active" : "");
+      b.dataset.index = x.i;
+      const primary =
+        learn !== "none" && !state.captionsHidden
+          ? '<span class=\"line-primary\">' +
+            highlightHtml(wordTokens(x.primary), q) +
+            "</span>"
+          : "";
+      const secondary =
+        helper !== "none" && !state.captionsHidden && x.secondary
+          ? '<span class=\"line-secondary\">' +
+            highlightHtml(esc(x.secondary), q) +
+            "</span>"
+          : "";
+      b.innerHTML =
+        '<span class=\"caption-time\">' +
+        fmt(x.start + state.offset) +
+        '</span><span class=\"caption-main\">' +
+        primary +
+        secondary +
+        "</span>";
+      b.onclick = () => jump(x.i);
+      b.querySelectorAll(".dict-word").forEach((token) => {
+        token.onmouseenter = () => {
+          clearTimeout(wordTimer);
+          cancelDictionaryClose();
+          wordTimer = setTimeout(
+            () => openDictionary(token, token.dataset.word),
+            1000,
+          );
+        };
+        token.onmouseleave = () => {
+          clearTimeout(wordTimer);
+          scheduleDictionaryClose();
+        };
+        token.onclick = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          openDictionary(token, token.dataset.word);
+        };
+        token.ontouchend = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          openDictionary(token, token.dataset.word);
+        };
+        token.onkeydown = (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            openDictionary(token, token.dataset.word);
+          }
+        };
+      });
+      li.appendChild(b);
+      list.appendChild(li);
+    });
+  }
+  function idOf(v) {
+    try {
+      const u = new URL(v);
+      if (u.hostname.includes("youtu.be"))
+        return u.pathname.slice(1).split("/")[0];
+      if (u.hostname.includes("youtube.com"))
+        return u.searchParams.get("v") || u.pathname.split("/").pop();
+    } catch {}
+    return v.trim().match(/^[\w-]{11}$/)?.[0] || null;
+  }
+  function apiLanguageCode(language) {
+    const value = String(language || "en");
+    if (/^zh(?:-|$)/i.test(value)) return "zh";
+    return value.split("-")[0] || "en";
+  }
+  function apiCues(data) {
+    if (!Array.isArray(data?.segments)) return [];
+    return data.segments
+      .map((segment) => {
+        const start = Number(segment?.start);
+        const duration = Number(segment?.duration);
+        const primary = String(segment?.text || "").trim();
+        if (
+          !Number.isFinite(start) ||
+          start < 0 ||
+          !Number.isFinite(duration) ||
+          duration <= 0 ||
+          !primary
+        )
+          return null;
+        return {
+          start,
+          duration,
+          end: start + duration,
+          primary,
+          secondary: "",
+        };
+      })
+      .filter(Boolean);
+  }
+  const apiSubtitleCache = new Map();
+  async function fetchApiSubtitles(id, language) {
+    const lang = apiLanguageCode(language),
+      key = id + "|" + lang;
+    if (apiSubtitleCache.has(key)) return apiSubtitleCache.get(key);
+    const request = (async () => {
+      const url = new URL(SUBTITLE_API);
+      url.searchParams.set("v", id);
+      url.searchParams.set("lang", lang);
+      const response = await fetch(url.toString(), {
+        method: "GET",
+        mode: "cors",
+        credentials: "omit",
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+        signal: AbortSignal.timeout(15000),
+      });
+      let data = {};
+      try {
+        data = await response.json();
+      } catch (_) {}
+      if (response.status === 404) return [];
+      if (!response.ok)
+        throw Error(data.error || "Subtitle API HTTP " + response.status);
+      return apiCues(data);
+    })();
+    apiSubtitleCache.set(key, request);
+    try {
+      return await request;
+    } catch (error) {
+      apiSubtitleCache.delete(key);
+      throw error;
+    }
+  }
+  function pairByTimestamp(primary, translated) {
+    const secondary = (translated || []).filter((cue) => cue && cue.primary);
+    return (primary || []).map((cue) => {
+      const exact = secondary.filter(
+        (item) => Math.abs(item.start - cue.start) < 0.15,
+      );
+      const overlaps = secondary.filter(
+        (item) => item.end > cue.start && item.start < cue.end,
+      );
+      const matches = exact.length ? exact : overlaps;
+      return {
+        ...cue,
+        secondary: matches
+          .map((item) => item.primary)
+          .join(" ")
+          .replace(/\s+/g, " ")
+          .trim(),
+      };
+    });
+  }
+  const sentenceTranslationCache = new Map();
+  async function translateSentence(text, target) {
+    const clean = String(text || "")
+        .replace(/\s+/g, " ")
+        .trim(),
+      lang =
+        target === "zh-Hans" || target === "zh-CN"
+          ? "zh-CN"
+          : target === "zh-Hant" || target === "zh-TW"
+            ? "zh-TW"
+            : target;
+    if (!clean) return "";
+    const key = lang + "|" + clean.toLowerCase();
+    if (sentenceTranslationCache.has(key))
+      return sentenceTranslationCache.get(key);
+    const promise = translateCaptionText(clean, lang).catch(() => "");
+    sentenceTranslationCache.set(key, promise);
+    return promise;
+  }
+  async function translateSentenceCues(
+    cues,
+    target,
+    onBatch,
+    isCurrent = () => true,
+  ) {
+    for (let i = 0; i < cues.length; i += 6) {
+      if (!isCurrent()) return cues;
+      const batch = cues.slice(i, i + 6);
+      await Promise.all(
+        batch.map(async (cue) => {
+          if (!cue.secondary)
+            cue.secondary = await translateSentence(cue.primary, target);
+        }),
+      );
+      if (!isCurrent()) return cues;
+      try {
+        onBatch?.(Math.min(i + batch.length, cues.length), cues.length);
+      } catch (_) {}
+    }
+    return cues;
+  }
+  function setPauseActions() {
+    /* actions are permanently visible */
+  }
+  function setLoading(isLoading) {
+    [$("status"), $("playerState")].forEach((el) => {
+      if (!el) return;
+      el.classList.toggle("is-loading", isLoading);
+    });
+  }
+  function applyPair(primary, secondary = []) {
+    state.captions = pairByTimestamp(primary, secondary);
+    state.active = state.pendingRestore ? -1 : state.captions.length ? 0 : -1;
+    state.paused = false;
+    state.loadingVideo = false;
+    state.player?.pauseVideo?.();
+    setPauseActions(false);
+    $("status").textContent = t("statusLoaded", { n: state.captions.length });
+    $("playerState").textContent = t("statusLoaded", {
+      n: state.captions.length,
+    });
+    setLoading(false);
+    if (state.pendingRestore) {
+      restoreAfterCaptions();
+    } else {
+      render();
+      saveProgress();
+    }
+  }
+  function applyCaptionList(captions) {
+    state.captions = captions;
+    state.active = state.pendingRestore ? -1 : captions.length ? 0 : -1;
+    state.paused = false;
+    state.loadingVideo = false;
+    state.player?.pauseVideo?.();
+    setPauseActions(false);
+    $("status").textContent = t("statusLoaded", { n: captions.length });
+    $("playerState").textContent = t("statusLoaded", { n: captions.length });
+    setLoading(false);
+    if (state.pendingRestore) {
+      restoreAfterCaptions();
+    } else {
+      render();
+      saveProgress();
+    }
+  }
+  async function loadTracks(id, requestId) {
+    const selectedLearn = $("learnLang").value || "en";
+    const helperLang = $("helperLang").value || "none";
+    let sourceLang = apiLanguageCode(
+      selectedLearn === "none" ? "en" : selectedLearn,
+    );
+    let nativeTarget = [];
 
-$('speedDown').onclick=()=>{setSpeedValue(speedValue()-.05);saveProgress()};$('speedUp').onclick=()=>{setSpeedValue(speedValue()+.05);saveProgress()};setSpeedValue(speedValue())
-document.querySelectorAll('.quick button').forEach(b=>b.onclick=()=>{const id=b.dataset.video;const s=samples[b.dataset.sample];const primary=s.map(x=>({start:time(x[0]),end:time(x[1]),primary:x[2],secondary:''}));const secondary=s.map(x=>({start:time(x[0]),end:time(x[1]),primary:x[3],secondary:''}));state.captionCache.set(id,{en:primary,'zh-Hant':secondary});load(id,null,true);applyCachedLanguage()});
-$('captionMode').onchange=()=>{render();saveProgress()};$('captionToggle').onclick=toggleCaptions;$('search').oninput=render;$('syncMinus').onclick=()=>setOffset(-.5);$('syncPlus').onclick=()=>setOffset(.5);$('syncReset').onclick=resetOffset;
-$('learnLang').onchange=()=>{enforceLanguages('learn');render();saveProgress();if(state.id){$('status').textContent=t('statusLoading');$('playerState').textContent=t('statusLoading');setLoading(true);if(state.demo)applyCachedLanguage();else fetchTracks(state.id)}};$('helperLang').onchange=()=>{enforceLanguages('helper');render();saveProgress();if(state.id){$('status').textContent=t('statusLoading');$('playerState').textContent=t('statusLoading');setLoading(true);if(state.demo)applyCachedLanguage();else fetchTracks(state.id)}};
-$('subtitleFile').onchange=e=>{const f=e.target.files[0];if(f){const r=new FileReader();r.onload=()=>{const a=parse(r.result);if(!a.length){toast(t('fileError'));return}state.demo=false;state.captions=a;state.active=-1;state.paused=false;setPauseActions(false);$('status').textContent=t('statusLoaded',{n:a.length});setLoading(false);render()};r.readAsText(f)}};
-document.addEventListener('keydown',e=>{const target=e.target;if(target?.closest?.('input,textarea,select,[contenteditable="true"]'))return;if(e.key.toLowerCase()==='c'){e.preventDefault();toggleCaptions();return}if(e.code==='Space'){e.preventDefault();$('playPause').click()}else if(e.key==='ArrowLeft'){e.preventDefault();state.player?.seekTo(Math.max(0,state.player.getCurrentTime()-3),true)}else if(e.key==='ArrowRight'){e.preventDefault();state.player?.seekTo(state.player.getCurrentTime()+3,true)}else if(e.key==='ArrowUp'){e.preventDefault();moveSentence(-1)}else if(e.key==='ArrowDown'){e.preventDefault();moveSentence(1)}});
-$('historyToggle').onclick=e=>{e.stopPropagation();$('historyDrawer').hidden=!$('historyDrawer').hidden;renderHistory()};$('clearHistory').onclick=()=>{localStorage.removeItem(HISTORY_KEY);renderHistory()};document.addEventListener('click',e=>{if(!$('historyDrawer').hidden&&!e.target.closest('.history-drawer,.history-toggle'))$('historyDrawer').hidden=true});window.addEventListener('beforeunload',saveProgress);renderHistory();initLanguages();const lastHistory=readHistory()[0];if(lastHistory)setTimeout(()=>load(lastHistory.id,lastHistory),0);applyLang();render();
-	})();
+    // Prefer a creator/native target-language track before using machine translation.
+    if (helperLang !== "none" && apiLanguageCode(helperLang) !== sourceLang) {
+      try {
+        nativeTarget = await fetchApiSubtitles(id, helperLang);
+      } catch (_) {
+        nativeTarget = [];
+      }
+    }
+    if (state.id !== id || state.captionRequestId !== requestId) return;
+
+    let primary = await fetchApiSubtitles(id, sourceLang);
+    if (!primary.length && sourceLang !== "en") {
+      const englishFallback = await fetchApiSubtitles(id, "en");
+      if (englishFallback.length) {
+        primary = englishFallback;
+        sourceLang = "en";
+        if (selectedLearn !== "none") {
+          $("learnLang").value = "en";
+          localStorage.setItem("learn_lang", "en");
+        }
+      }
+    }
+    if (state.id !== id || state.captionRequestId !== requestId) return;
+    if (!primary.length) {
+      const error = Error("No subtitle segments available");
+      error.noCaptions = true;
+      throw error;
+    }
+
+    // Every row inherits the source cue's exact start/end. Pairing or translation
+    // only fills `secondary`; it never splits cues or mutates their timestamps.
+    const captions = pairByTimestamp(primary, nativeTarget);
+    applyCaptionList(captions);
+    const needsTranslation =
+      helperLang !== "none" &&
+      apiLanguageCode(helperLang) !== sourceLang &&
+      captions.some((cue) => !cue.secondary);
+    if (needsTranslation) {
+      $("status").textContent = t("statusTranslating", { n: captions.length });
+      translateSentenceCues(
+        captions,
+        helperLang,
+        (done, total) => {
+          if (state.id === id && state.captionRequestId === requestId)
+            $("status").textContent = t("statusTranslatingProgress", {
+              done,
+              total,
+            });
+        },
+        () => state.id === id && state.captionRequestId === requestId,
+      )
+        .then(() => {
+          if (state.id !== id || state.captionRequestId !== requestId) return;
+          $("status").textContent = t("statusLoaded", { n: captions.length });
+          render();
+          saveProgress();
+        })
+        .catch(() => {});
+    }
+  }
+  function applyCachedLanguage() {
+    const cache = state.captionCache.get(state.id);
+    if (!cache) return false;
+    const primary =
+      cache[$("learnLang").value] || cache.en || Object.values(cache)[0];
+    const secondary = cache[$("helperLang").value] || cache["zh-Hant"] || [];
+    if (primary) {
+      applyPair(primary, secondary);
+      return true;
+    }
+    return false;
+  }
+  async function translateCaptionText(text, target) {
+    const url =
+      "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=" +
+      encodeURIComponent(target) +
+      "&dt=t&q=" +
+      encodeURIComponent(text);
+    const response = await fetch(url, {
+      mode: "cors",
+      credentials: "omit",
+      cache: "no-store",
+    });
+    if (!response.ok) return "";
+    const data = await response.json();
+    return (data[0] || [])
+      .map((x) => x[0] || "")
+      .join("")
+      .trim();
+  }
+  async function fetchTracks(id) {
+    const requestId = ++state.captionRequestId;
+    try {
+      if (state.demo && applyCachedLanguage()) return;
+      await loadTracks(id, requestId);
+    } catch (error) {
+      if (state.id !== id || state.captionRequestId !== requestId) return;
+      state.loadingVideo = false;
+      state.player?.pauseVideo?.();
+      setLoading(false);
+      const message = error?.noCaptions ? t("noTrack") : t("fetchFail");
+      $("status").textContent = message;
+      $("playerState").textContent = message;
+      toast(message);
+      render();
+    }
+  }
+  function createPlayer(id) {
+    if (!window.YT?.Player) return;
+    state.player = new YT.Player("player", {
+      videoId: id,
+      playerVars: {
+        playsinline: 1,
+        rel: 0,
+        modestbranding: 1,
+        cc_load_policy: 0,
+        iv_load_policy: 3,
+      },
+      events: {
+        onReady: () => {
+          state.ready = true;
+          state.player.setPlaybackRate(speedValue());
+          if (state.loadingVideo) state.player.pauseVideo();
+          if (state.pendingRestore) restoreAfterCaptions();
+          startMonitor();
+        },
+        onStateChange: (e) => {
+          if (e.data === YT.PlayerState.PLAYING) {
+            if (state.loadingVideo) {
+              state.player.pauseVideo();
+              return;
+            }
+            if (state.paused && $("autoPause").classList.contains("active")) {
+              const next = state.captions[state.active + 1];
+              state.paused = false;
+              state.ignorePauseUntil = Date.now() + 600;
+              if (next) {
+                state.active += 1;
+                state.player.seekTo(next.start + state.offset, true);
+              }
+              render();
+              return;
+            }
+            state.paused = false;
+            $("playPause").textContent = t("pause");
+            startMonitor();
+          } else if (e.data === YT.PlayerState.PAUSED) {
+            $("playPause").textContent = t("play");
+            saveProgress();
+            startMonitor();
+          }
+        },
+      },
+    });
+  }
+  function startMonitor() {
+    clearInterval(state.monitor);
+    state.monitor = setInterval(tick, 100);
+  }
+  window.onYouTubeIframeAPIReady = () => {
+    if (state.id) createPlayer(state.id);
+  };
+  const HISTORY_KEY = "l_player_history";
+  function readHistory() {
+    try {
+      const x = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+      return Array.isArray(x) ? x.filter((v) => v && v.id) : [];
+    } catch {
+      return [];
+    }
+  }
+  function writeHistory(items) {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(items.slice(0, 15)));
+    renderHistory();
+  }
+  function speedValue() {
+    return Number(localStorage.getItem("player_speed")) || 1;
+  }
+  function setSpeedValue(raw) {
+    const val = Math.min(1.5, Math.max(0.5, Math.round(Number(raw) * 20) / 20));
+    $("speedVal").textContent = val.toFixed(2).replace(/0$/, "") + "x";
+    localStorage.setItem("player_speed", String(val));
+    state.player?.setPlaybackRate(val);
+    return val;
+  }
+  function historySettings() {
+    return {
+      speed: speedValue(),
+      mode: $("autoPause").classList.contains("active")
+        ? "autoPause"
+        : $("repeat").classList.contains("active")
+          ? "repeat"
+          : "",
+      learnLang: $("learnLang").value,
+      helperLang: $("helperLang").value,
+      captionMode: $("captionMode").value,
+      autoScroll: state.autoScroll,
+    };
+  }
+  function saveProgress() {
+    if (!state.id || !state.captions.length) return;
+    const items = readHistory(),
+      idx = items.findIndex((v) => v.id === state.id),
+      entry = {
+        id: state.id,
+        title: "YouTube · " + state.id,
+        time: state.player?.getCurrentTime?.() || 0,
+        activeSentence: state.active,
+        timestamp: Date.now(),
+        settings: historySettings(),
+      };
+    if (idx >= 0) items.splice(idx, 1);
+    items.unshift(entry);
+    writeHistory(items);
+    state.lastSavedAt = Date.now();
+  }
+  function renderHistory() {
+    const list = $("historyList");
+    if (!list) return;
+    const items = readHistory();
+    list.innerHTML = items.length
+      ? items
+          .map(
+            (v, i) =>
+              '<div class="history-entry"><button class="history-load" type="button" data-history-index="' +
+              i +
+              '">' +
+              esc(v.title || "YouTube · " + v.id) +
+              '</button><button class="history-delete" type="button" data-history-delete="' +
+              i +
+              '" aria-label="刪除歷史紀錄">🗑️</button></div>',
+          )
+          .join("")
+      : '<div class="history-empty">尚無播放紀錄</div>';
+    list.querySelectorAll(".history-load").forEach(
+      (b) =>
+        (b.onclick = () => {
+          const v = readHistory()[Number(b.dataset.historyIndex)];
+          if (v) {
+            $("historyDrawer").hidden = true;
+            load(v.id, v);
+          }
+        }),
+    );
+    list.querySelectorAll(".history-delete").forEach(
+      (b) =>
+        (b.onclick = (e) => {
+          e.stopPropagation();
+          const a = readHistory();
+          a.splice(Number(b.dataset.historyDelete), 1);
+          writeHistory(a);
+        }),
+    );
+  }
+  function applyRestoreSettings(entry) {
+    const x = entry?.settings || {};
+    if (
+      x.learnLang &&
+      [...$("learnLang").options].some((o) => o.value === x.learnLang)
+    )
+      $("learnLang").value = x.learnLang;
+    if (
+      x.helperLang &&
+      [...$("helperLang").options].some((o) => o.value === x.helperLang)
+    )
+      $("helperLang").value = x.helperLang;
+    if (
+      x.captionMode &&
+      [...$("captionMode").options].some((o) => o.value === x.captionMode)
+    )
+      $("captionMode").value = x.captionMode;
+    if (typeof x.autoScroll === "boolean") {
+      state.autoScroll = x.autoScroll;
+      $("autoScroll").checked = x.autoScroll;
+      localStorage.setItem("caption_auto_scroll", String(x.autoScroll));
+    }
+    if (
+      Number.isFinite(Number(x.speed)) &&
+      Number(x.speed) >= 0.5 &&
+      Number(x.speed) <= 1.5
+    )
+      setSpeedValue(Number(x.speed));
+    if (x.mode === "repeat" || x.mode === "autoPause") {
+      setMode(x.mode);
+    } else {
+      $("repeat").classList.remove("active");
+      $("autoPause").classList.remove("active");
+    }
+  }
+  function restoreAfterCaptions() {
+    const entry = state.pendingRestore;
+    if (!entry || !state.captions.length) return;
+    state.active = Math.max(
+      0,
+      Math.min(state.captions.length - 1, Number(entry.activeSentence) || 0),
+    );
+    state.paused = false;
+    render();
+    const cue = state.captions[state.active];
+    if (state.player && state.ready) {
+      const t = Number(entry.time);
+      state.player.seekTo(
+        Number.isFinite(t) && t > 0
+          ? t + state.offset
+          : cue.start + state.offset,
+        true,
+      );
+      state.player.pauseVideo();
+      state.pendingRestore = null;
+      state.lastSavedAt = Date.now();
+    }
+  }
+  function load(id, restore, isDemo = false) {
+    if (!id) {
+      toast(t("invalid"));
+      return;
+    }
+    state.pendingRestore = restore || null;
+    applyRestoreSettings(restore);
+    state.id = id;
+    state.demo = Boolean(isDemo);
+    state.offset = 0;
+    state.captions = [];
+    state.active = -1;
+    state.paused = false;
+    state.loadingVideo = true;
+    setPauseActions(false);
+    $("syncReset").textContent = "0.0s";
+    const download = $("downloadEnglishSrt");
+    if (download) {
+      const url = new URL(SRT_DOWNLOAD_API);
+      url.searchParams.set("v", id);
+      url.searchParams.set("lang", "en");
+      download.href = url.toString();
+      download.hidden = false;
+    }
+    $("placeholder").hidden = true;
+    $("status").textContent = t("statusLoading");
+    $("playerState").textContent = t("statusLoading");
+    setLoading(true);
+    if (state.player?.cueVideoById) state.player.cueVideoById(id);
+    else if (state.player?.loadVideoById) {
+      state.player.loadVideoById(id);
+      state.player.pauseVideo?.();
+    } else createPlayer(id);
+    if (!state.demo) fetchTracks(id);
+  }
+  function jump(i) {
+    const c = state.captions[i];
+    if (!c) return;
+    state.active = i;
+    state.paused = false;
+    state.ignorePauseUntil = Date.now() + 600;
+    setPauseActions(false);
+    closeDictionary();
+    if (!state.player || !state.ready) {
+      toast(t("ready"));
+      render();
+      return;
+    }
+    state.player.seekTo(Math.max(0, c.start + state.offset), true);
+    state.player.playVideo();
+    render();
+    saveProgress();
+  }
+  function replayCurrent() {
+    const c = state.captions[state.active];
+    if (!c) return;
+    state.paused = false;
+    state.ignorePauseUntil = Date.now() + 600;
+    setPauseActions(false);
+    if (state.player && state.ready) {
+      state.player.seekTo(Math.max(0, c.start + state.offset), true);
+      state.player.playVideo();
+    }
+    render();
+    saveProgress();
+  }
+  function playNextSentence() {
+    if (!state.captions.length) return;
+    const next = Math.min(state.captions.length - 1, state.active + 1);
+    jump(next);
+  }
+  function effectiveCueEnd(index) {
+    const cue = state.captions[index];
+    if (!cue) return 0;
+    return Number.isFinite(cue.duration) ? cue.start + cue.duration : cue.end;
+  }
+  function scrollActiveCaptionIntoView() {
+    const list = $("captionList"),
+      item = list?.querySelector(".caption-item.active");
+    if (!list || !item) return;
+    const listRect = list.getBoundingClientRect(),
+      itemRect = item.getBoundingClientRect();
+    const targetTop =
+      list.scrollTop +
+      (itemRect.top - listRect.top) -
+      (list.clientHeight - itemRect.height) / 2;
+    const maxTop = Math.max(0, list.scrollHeight - list.clientHeight);
+    list.scrollTo({
+      top: Math.min(maxTop, Math.max(0, targetTop)),
+      behavior: "smooth",
+    });
+  }
+  function tick() {
+    if (!state.player || !state.ready || !state.captions.length) return;
+    if (Date.now() - state.lastSavedAt > 1000) saveProgress();
+    const now = state.player.getCurrentTime() - state.offset;
+    if (Date.now() < state.ignorePauseUntil) return;
+    const currentCue = state.active >= 0 ? state.captions[state.active] : null;
+    if (currentCue && now >= effectiveCueEnd(state.active)) {
+      if ($("repeat").classList.contains("active")) {
+        state.paused = false;
+        state.player.seekTo(currentCue.start + state.offset, true);
+        state.player.playVideo();
+        return;
+      }
+      if ($("autoPause").classList.contains("active") && !state.paused) {
+        state.paused = true;
+        state.player.pauseVideo();
+        state.player.seekTo(
+          Math.max(0, effectiveCueEnd(state.active) + state.offset - 0.02),
+          true,
+        );
+        setPauseActions(true);
+        $("playerState").textContent = t("spaceNext");
+        render();
+        return;
+      }
+    }
+    if (state.paused && currentCue) return;
+    const i = state.captions.findIndex(
+      (x, index) => now >= x.start && now < effectiveCueEnd(index),
+    );
+    if (i !== state.active) {
+      state.active = i;
+      render();
+      if (state.autoScroll && Date.now() > state.userScrollUntil) {
+        scrollActiveCaptionIntoView();
+      }
+    }
+  }
+  function setOffset(n) {
+    state.offset = Math.round((state.offset + n) * 10) / 10;
+    $("syncReset").textContent = state.offset.toFixed(1) + "s";
+    $("playerState").textContent = t("offset", { n: state.offset.toFixed(1) });
+    render();
+  }
+  function resetOffset() {
+    state.offset = 0;
+    $("syncReset").textContent = "0.0s";
+    render();
+  }
+  function moveSentence(delta) {
+    if (!state.captions.length) return;
+    const next = Math.max(
+      0,
+      Math.min(state.captions.length - 1, state.active + (delta || 1)),
+    );
+    jump(next);
+  }
+  const list = $("captionList");
+  ["wheel", "touchmove"].forEach((type) =>
+    list.addEventListener(
+      type,
+      () => {
+        state.userScrollUntil = Date.now() + 3000;
+      },
+      { passive: true },
+    ),
+  );
+  function applyLang() {
+    document.querySelectorAll("[data-i18n]").forEach((e) => {
+      const key = e.dataset.i18n;
+      if (d[state.lang]?.[key]) e.textContent = t(key);
+    });
+    document.querySelectorAll("[data-i18n-placeholder]").forEach((e) => {
+      const key = e.dataset.i18nPlaceholder;
+      if (d[state.lang]?.[key]) e.placeholder = t(key);
+    });
+    const labels =
+      {
+        "zh-TW": ["畫面字幕", "雙語", "僅原文", "僅譯文", "隱藏"],
+        en: [
+          "On-screen captions",
+          "Bilingual",
+          "Original only",
+          "Translation only",
+          "Hidden",
+        ],
+        ja: ["画面字幕", "二言語", "原文のみ", "訳文のみ", "非表示"],
+      }[state.lang] || [];
+    if (labels.length) {
+      $("overlayModeLabel").textContent = labels[0];
+      const opts = [...$("captionMode").options];
+      opts.forEach((o, i) => (o.textContent = labels[i + 1]));
+    }
+  }
+  $("mobileSettingsToggle").onclick = () => {
+    const drawer = $("captionSettingsDrawer"),
+      open = !drawer.classList.contains("open");
+    drawer.classList.toggle("open", open);
+    $("mobileSettingsToggle").setAttribute("aria-expanded", String(open));
+    $("mobileSettingsToggle").textContent = open
+      ? "⚙️ 語言與設定 ▴"
+      : "⚙️ 語言與設定 ▾";
+  };
+  $("interfaceLang").onchange = (e) => {
+    state.lang = e.target.value;
+    localStorage.setItem("gugopro_locale", state.lang);
+    applyLang();
+    if (state.captionsHidden)
+      $("captionToggle").textContent = t("captionRestore");
+  };
+  document
+    .querySelectorAll("button")
+    .forEach((el) => el.addEventListener("click", () => el.blur()));
+  function setMode(id) {
+    const other = id === "repeat" ? "autoPause" : "repeat";
+    $(id).classList.toggle("active", !$(id).classList.contains("active"));
+    if ($(id).classList.contains("active")) $(other).classList.remove("active");
+    state.paused = false;
+    setPauseActions(false);
+    $("playerState").textContent = t("ready");
+    saveProgress();
+  }
+  $("repeat").onclick = () => setMode("repeat");
+  $("autoPause").onclick = () => setMode("autoPause");
+  $("pasteVideoUrl").onclick = () => {
+    const fallback = () => {
+      $("videoUrl").focus();
+      $("videoUrl").select();
+    };
+    if (!navigator.clipboard?.readText) {
+      fallback();
+      return;
+    }
+    navigator.clipboard
+      .readText()
+      .then((text) => {
+        const value = String(text || "").trim();
+        if (value) {
+          $("videoUrl").value = value;
+          $("loadVideo").click();
+        } else fallback();
+      })
+      .catch(fallback);
+  };
+  $("loadVideo").onclick = () => load(idOf($("videoUrl").value));
+  $("downloadEnglishSrt").onclick = (event) => {
+    if (!state.id) {
+      event.preventDefault();
+      toast(t("invalid"));
+    }
+  };
+  $("videoClickCapture").onclick = () => $("playPause").click();
+  $("playPause").onclick = () => {
+    if (!state.player || !state.ready) return;
+    if (state.player.getPlayerState() === YT.PlayerState.PLAYING) {
+      state.player.pauseVideo();
+      return;
+    }
+    if (state.paused && $("autoPause").classList.contains("active")) {
+      const current = state.captions[state.active],
+        next = state.captions[state.active + 1];
+      state.paused = false;
+      state.ignorePauseUntil = Date.now() + 600;
+      if (next) {
+        state.active += 1;
+        state.player.seekTo(next.start + state.offset, true);
+      } else if (current) {
+        state.player.seekTo(current.end + state.offset + 0.1, true);
+      }
+      state.player.playVideo();
+      render();
+      return;
+    }
+    state.player.playVideo();
+  };
+  $("repeatCurrent").onclick = replayCurrent;
+
+  $("speedDown").onclick = () => {
+    setSpeedValue(speedValue() - 0.05);
+    saveProgress();
+  };
+  $("speedUp").onclick = () => {
+    setSpeedValue(speedValue() + 0.05);
+    saveProgress();
+  };
+  $("autoScroll").checked = state.autoScroll;
+  $("autoScroll").onchange = (event) => {
+    state.autoScroll = event.target.checked;
+    localStorage.setItem("caption_auto_scroll", String(state.autoScroll));
+    if (state.autoScroll) {
+      state.userScrollUntil = 0;
+      scrollActiveCaptionIntoView();
+    }
+    saveProgress();
+  };
+  setSpeedValue(speedValue());
+  document.querySelectorAll(".quick button").forEach(
+    (b) =>
+      (b.onclick = () => {
+        const id = b.dataset.video;
+        const s = samples[b.dataset.sample];
+        const primary = s.map((x) => ({
+          start: time(x[0]),
+          end: time(x[1]),
+          primary: x[2],
+          secondary: "",
+        }));
+        const secondary = s.map((x) => ({
+          start: time(x[0]),
+          end: time(x[1]),
+          primary: x[3],
+          secondary: "",
+        }));
+        state.captionCache.set(id, { en: primary, "zh-Hant": secondary });
+        load(id, null, true);
+        applyCachedLanguage();
+      }),
+  );
+  $("captionMode").onchange = () => {
+    render();
+    saveProgress();
+  };
+  $("captionToggle").onclick = toggleCaptions;
+  $("search").oninput = render;
+  $("syncMinus").onclick = () => setOffset(-0.5);
+  $("syncPlus").onclick = () => setOffset(0.5);
+  $("syncReset").onclick = resetOffset;
+  $("learnLang").onchange = () => {
+    enforceLanguages("learn");
+    render();
+    saveProgress();
+    if (state.id) {
+      $("status").textContent = t("statusLoading");
+      $("playerState").textContent = t("statusLoading");
+      setLoading(true);
+      if (state.demo) applyCachedLanguage();
+      else fetchTracks(state.id);
+    }
+  };
+  $("helperLang").onchange = () => {
+    enforceLanguages("helper");
+    render();
+    saveProgress();
+    if (state.id) {
+      $("status").textContent = t("statusLoading");
+      $("playerState").textContent = t("statusLoading");
+      setLoading(true);
+      if (state.demo) applyCachedLanguage();
+      else fetchTracks(state.id);
+    }
+  };
+  $("subtitleFile").onchange = (e) => {
+    const f = e.target.files[0];
+    if (f) {
+      const r = new FileReader();
+      r.onload = () => {
+        const a = parse(r.result);
+        if (!a.length) {
+          toast(t("fileError"));
+          return;
+        }
+        state.demo = false;
+        state.captions = a;
+        state.active = -1;
+        state.paused = false;
+        setPauseActions(false);
+        $("status").textContent = t("statusLoaded", { n: a.length });
+        setLoading(false);
+        render();
+      };
+      r.readAsText(f);
+    }
+  };
+  document.addEventListener("keydown", (e) => {
+    const target = e.target;
+    if (target?.closest?.('input,textarea,select,[contenteditable="true"]'))
+      return;
+    if (e.key.toLowerCase() === "c") {
+      e.preventDefault();
+      toggleCaptions();
+      return;
+    }
+    if (e.code === "Space") {
+      e.preventDefault();
+      $("playPause").click();
+    } else if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      state.player?.seekTo(
+        Math.max(0, state.player.getCurrentTime() - 3),
+        true,
+      );
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      state.player?.seekTo(state.player.getCurrentTime() + 3, true);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      moveSentence(-1);
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      moveSentence(1);
+    }
+  });
+  $("historyToggle").onclick = (e) => {
+    e.stopPropagation();
+    $("historyDrawer").hidden = !$("historyDrawer").hidden;
+    renderHistory();
+  };
+  $("clearHistory").onclick = () => {
+    localStorage.removeItem(HISTORY_KEY);
+    renderHistory();
+  };
+  document.addEventListener("click", (e) => {
+    if (
+      !$("historyDrawer").hidden &&
+      !e.target.closest(".history-drawer,.history-toggle")
+    )
+      $("historyDrawer").hidden = true;
+  });
+  window.addEventListener("beforeunload", saveProgress);
+  renderHistory();
+  initLanguages();
+  const lastHistory = readHistory()[0];
+  if (lastHistory) setTimeout(() => load(lastHistory.id, lastHistory), 0);
+  applyLang();
+  render();
+})();
 </script>
 </body></html>
