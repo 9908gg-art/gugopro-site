@@ -105,6 +105,24 @@ body{min-height:100dvh}
 @media(max-width:768px){.line-primary{font-size:15px}.line-secondary{font-size:.86rem}}
 @media(max-width:600px){.caption-actions{flex-wrap:wrap}.caption-search{flex:1 1 100%}.caption-action-group{flex:1 1 100%;width:100%}.caption-action-group .file-label{flex:1 1 0;justify-content:center;min-width:0;padding:0 5px;font-size:9px}.download-srt{margin-left:auto}}
 </style>
+<style>
+.caption-item{grid-template-columns:48px minmax(0,1fr);align-items:start}
+.caption-meta{min-width:0;display:flex;flex-direction:column;align-items:center;gap:5px}
+.caption-time{display:block;width:100%;padding:0;border:0;background:transparent;text-align:center;cursor:pointer}
+.caption-speak{display:grid;place-items:center;width:27px;height:25px;padding:0;border:1px solid rgba(85,223,209,.42);border-radius:6px;color:var(--cyan);background:rgba(85,223,209,.07);transition:color .18s,background .18s,border-color .18s,box-shadow .18s,transform .18s}
+.caption-speak svg{display:block;width:15px;height:15px;fill:currentColor}
+.caption-speak:hover,.caption-speak:focus-visible{border-color:var(--cyan);background:rgba(85,223,209,.16);outline:none;box-shadow:0 0 0 2px rgba(85,223,209,.13)}
+.caption-speak:active{transform:scale(.93)}
+.caption-speak:disabled{opacity:.38;cursor:not-allowed}
+.caption-speak.speaking{color:#06101c;background:var(--cyan);border-color:var(--cyan);box-shadow:0 0 0 2px rgba(85,223,209,.18),0 0 15px rgba(85,223,209,.7);animation:tts-pulse .75s ease-in-out infinite alternate}
+@keyframes tts-pulse{from{filter:brightness(.9);transform:scale(.97)}to{filter:brightness(1.18);transform:scale(1.06)}}
+.caption-main{display:flex;flex-direction:column;gap:5px;min-width:0;padding:0;border:0;color:inherit;background:transparent;text-align:left;cursor:pointer}
+.caption-main:focus-visible{outline:2px solid rgba(85,165,255,.8);outline-offset:2px;border-radius:3px}
+.line-primary{display:block;margin:0;color:#fff;font-size:16px;font-weight:600;line-height:1.5;overflow-wrap:anywhere}
+.line-secondary{display:block;margin:0;color:#93c5fd;font-size:.92rem;font-weight:500;line-height:1.5;overflow-wrap:anywhere}
+@media(max-width:768px){.line-primary{font-size:15px;line-height:1.45}.line-secondary{font-size:.86rem;line-height:1.4}}
+@media(prefers-reduced-motion:reduce){.caption-speak.speaking{animation:none}}
+</style>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"點擊字幕跳轉時，如果台詞與聲音有延遲該如何調整？","acceptedAnswer":{"@type":"Answer","text":"部分影片帶有片頭片尾，您可使用字幕面板頂部的 -0.5s、+0.5s 微調按鈕，即時平移校準時間軸。"}},{"@type":"Question","name":"遇到完全沒有字幕的 YouTube 影片可以如何使用？","acceptedAnswer":{"@type":"Answer","text":"本工具優先讀取 YouTube 官方與自動生成字幕；若影片沒有字幕，可點擊手動匯入，貼上或匯入外部語音辨識軟體產出的 SRT 或 VTT 文本。"}},{"@type":"Question","name":"如何利用句尾自動暫停與單句循環訓練口說？","acceptedAnswer":{"@type":"Answer","text":"開啟句尾自動暫停後，每句播放結束會自動停住留給您複述，按空白鍵即可播放下一句；遇到生疏語調可開啟單句循環反覆練習。"}}]}</script>
 
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4756902118634553" crossorigin="anonymous"></script>
@@ -638,14 +656,9 @@ body{min-height:100dvh}
         Math.min(Math.max(8, r.left), window.innerWidth - 338) + "px";
       tooltip.style.top = Math.max(8, r.top - tooltip.offsetHeight - 8) + "px";
       requestAnimationFrame(() => tooltip.classList.add("visible"));
-      tooltip.querySelector(".speak-btn").onclick = () => {
-        if (window.speechSynthesis) {
-          speechSynthesis.cancel();
-          const u = new SpeechSynthesisUtterance(cue.primary);
-          u.lang = "en-US";
-          u.rate = 0.95;
-          speechSynthesis.speak(u);
-        }
+      tooltip.querySelector(".speak-btn").onclick = (event) => {
+        event.stopPropagation();
+        speakText(cue.primary, tooltip.querySelector(".speak-btn"));
       };
     }, 250);
   }
@@ -655,6 +668,68 @@ body{min-height:100dvh}
     e.classList.add("show");
     clearTimeout(toast.timer);
     toast.timer = setTimeout(() => e.classList.remove("show"), 2800);
+  }
+  let activeSpeechButton = null;
+  function bestEnglishVoice() {
+    const voices = (window.speechSynthesis?.getVoices?.() || []).filter((voice) =>
+      /^en(?:[-_]|$)/i.test(String(voice.lang || "")),
+    );
+    return (
+      voices.find((voice) => /Google\s+US\s+English/i.test(voice.name)) ||
+      voices.find((voice) => /Google\s+UK\s+English/i.test(voice.name)) ||
+      voices.find(
+        (voice) =>
+          /Microsoft/i.test(voice.name) && /Natural|Online|Neural/i.test(voice.name),
+      ) ||
+      voices[0] ||
+      null
+    );
+  }
+  function speakText(text, button = null) {
+    const synthesis = window.speechSynthesis;
+    if (!synthesis || typeof window.SpeechSynthesisUtterance !== "function") return;
+    const cleanText = cleanCaptionText(text);
+    if (!cleanText) return;
+    if (state.player && typeof state.player.getPlayerState === "function") {
+      try {
+        const playingState = window.YT?.PlayerState?.PLAYING ?? 1;
+        if (
+          state.player.getPlayerState() === playingState &&
+          typeof state.player.pauseVideo === "function"
+        )
+          state.player.pauseVideo();
+      } catch (_) {}
+    }
+    if (activeSpeechButton) {
+      activeSpeechButton.classList.remove("speaking");
+      activeSpeechButton.setAttribute("aria-pressed", "false");
+    }
+    activeSpeechButton = null;
+    synthesis.cancel();
+    const utterance = new window.SpeechSynthesisUtterance(cleanText);
+    const voice = bestEnglishVoice();
+    utterance.lang = voice?.lang || "en-US";
+    if (voice) utterance.voice = voice;
+    utterance.rate = 0.95;
+    utterance.pitch = 1.0;
+    const finish = () => {
+      button?.classList.remove("speaking");
+      button?.setAttribute("aria-pressed", "false");
+      if (activeSpeechButton === button) activeSpeechButton = null;
+    };
+    utterance.onend = finish;
+    utterance.onerror = finish;
+    utterance.oncancel = finish;
+    if (button) {
+      activeSpeechButton = button;
+      button.classList.add("speaking");
+      button.setAttribute("aria-pressed", "true");
+    }
+    try {
+      synthesis.speak(utterance);
+    } catch (_) {
+      finish();
+    }
   }
   function time(s) {
     const p = s.trim().replace(",", ".").split(":").map(Number);
@@ -887,13 +962,7 @@ body{min-height:100dvh}
     dictCard.addEventListener("mouseleave", scheduleDictionaryClose);
     dictCard.addEventListener("click", (e) => e.stopPropagation());
     dictCard.querySelector(".dict-speak").onclick = () => {
-      if (window.speechSynthesis) {
-        speechSynthesis.cancel();
-        const u = new SpeechSynthesisUtterance(word);
-        u.lang = "en-US";
-        u.rate = 0.9;
-        speechSynthesis.speak(u);
-      }
+      speakText(word, dictCard.querySelector(".dict-speak"));
     };
     const result = await translateWordZh(word);
     if (request === dictRequest && dictCard) {
@@ -997,30 +1066,46 @@ body{min-height:100dvh}
     }
     rows.forEach((x) => {
       const li = document.createElement("li"),
-        b = document.createElement("button");
-      b.type = "button";
+        b = document.createElement("div");
       b.className = "caption-item" + (x.i === state.active ? " active" : "");
       b.dataset.index = x.i;
       const primary =
         learn !== "none" && !state.captionsHidden
-          ? '<span class=\"line-primary\">' +
+          ? '<div class=\"line-primary\">' +
             highlightHtml(wordTokens(x.primary), q) +
-            "</span>"
+            "</div>"
           : "";
       const secondary =
         helper !== "none" && !state.captionsHidden && x.secondary
-          ? '<span class=\"line-secondary\">' +
+          ? '<div class=\"line-secondary\">' +
             highlightHtml(esc(cleanCaptionText(x.secondary)), q) +
-            "</span>"
+            "</div>"
           : "";
       b.innerHTML =
-        '<span class=\"caption-time\">' +
+        '<span class=\"caption-meta\"><button type=\"button\" class=\"caption-time\" aria-label=\"Jump to this caption\">' +
         fmt(x.start + state.offset) +
-        '</span><span class=\"caption-main\">' +
+        '</button><button type=\"button\" class=\"caption-speak\" aria-label=\"Speak this sentence\" title=\"Speak this sentence\" aria-pressed=\"false\"' +
+        (primary ? "" : " disabled") +
+        '><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3 9v6h4l5 4V5L7 9H3z\"/><path d=\"M16.5 7.5a6 6 0 0 1 0 9l1.4 1.4a8 8 0 0 0 0-11.8l-1.4 1.4zm-2.1 2.1v5a3.5 3.5 0 0 0 0-5z\"/></svg></button></span><div class=\"caption-main\" role=\"button\" tabindex=\"0\" aria-label=\"Jump to this caption\">' +
         primary +
         secondary +
-        "</span>";
-      b.onclick = () => jump(x.i);
+        "</div>";
+      const jumpMain = b.querySelector(".caption-main");
+      jumpMain.onclick = () => jump(x.i);
+      jumpMain.onkeydown = (event) => {
+        if (event.target === jumpMain && (event.key === "Enter" || event.key === " ")) {
+          event.preventDefault();
+          jump(x.i);
+        }
+      };
+      b.querySelector(".caption-time").onclick = (event) => {
+        event.stopPropagation();
+        jump(x.i);
+      };
+      b.querySelector(".caption-speak").onclick = (event) => {
+        event.stopPropagation();
+        speakText(x.primary, event.currentTarget);
+      };
       b.querySelectorAll(".dict-word").forEach((token) => {
         token.onmouseenter = () => {
           clearTimeout(wordTimer);
