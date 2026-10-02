@@ -10,7 +10,6 @@
 
     <!-- SEO Tags -->
     <meta name="description" content="AI多國語言對話導師（GugoPro）支援多語言情境對話、教材與生詞複習；語音分數反映辨識文字和目標句的相似度，並非專業口音鑑定。">
-    <meta name="keywords" content="AI語言導師, 英文口說練習, 雙語對照, 語法校正, 情境對話, Gemini AI, 語音辨識, 語言學習工具">
 
     <script type="application/ld+json">
     {
@@ -35,6 +34,7 @@
     </script>
 
     <script src="../../js/global-ai-quota.js"></script>
+    <script defer src="../../js/english-speaking-tutor-locales.js"></script>
 
     <!-- Fonts & Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -492,9 +492,13 @@
         .welcome-card h4 { color: var(--primary-neon); margin-bottom: 10px; font-family: 'Outfit', sans-serif; }
         .welcome-card ul { list-style: none; }
         .welcome-card li { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+        .welcome-card li > span { min-width: 0; overflow-wrap: anywhere; }
         .welcome-card i { color: var(--primary-neon); margin-top: 4px; font-size: 0.8rem; }
 
         .welcome-guide { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--glass-border); }
+        .welcome-guide, .welcome-guide-panel, .welcome-faq-item { overflow-wrap: anywhere; }
+        #welcome-guide[dir="rtl"] { text-align: right; }
+        #welcome-guide[dir="rtl"] .welcome-disclaimer { border-left: 0; border-right: 3px solid #fbbf24; }
         .welcome-guide-eyebrow { margin-bottom: 4px; color: #67e8f9; font-size: .72rem; font-weight: 800; letter-spacing: .08em; }
         .welcome-guide h5 { margin: 0 0 8px; color: #f8fafc; font-size: 1.04rem; line-height: 1.45; }
         .welcome-guide-lead { margin: 0 0 14px; color: var(--text-dim); }
@@ -946,7 +950,7 @@
                 min-height: 0;
                 height: 0;
                 max-width: 1180px;
-                padding: 40px 28px 34px;
+                padding: 40px 28px 40px;
                 overflow-y: auto;
                 overflow-x: hidden;
                 scroll-padding-top: 40px;
@@ -996,7 +1000,7 @@
             header { padding: 10px 12px; flex-wrap: wrap; row-gap: 8px; }
             .header-left { flex: 1 1 100%; min-width: 0; justify-content: space-between; gap: 12px; }
             .logo-text { display: block; font-size: 0.72rem; }
-            .header-right { width: 100%; justify-content: flex-end; gap: 6px; }
+            .header-right { width: 100%; justify-content: flex-end; gap: 6px; flex-wrap: wrap; }
             .btn-circle { width: 42px; height: 42px; }
             .bottom-controls { padding: 10px 12px 15px; }
             #chat-container { padding: 24px 12px 170px; }
@@ -1031,7 +1035,7 @@
         .material-banner { display: flex; align-items: center; gap: 8px; width: 100%; max-width: 900px; margin: 0 auto 2px; padding: 8px 10px; border: 1px solid rgba(14, 165, 233, 0.42); border-radius: 10px; background: rgba(14, 165, 233, 0.12); color: #bae6fd; }
         .material-banner[hidden] { display: none; }
         .material-banner-trigger { flex: 1; min-width: 0; border: 0; padding: 0; overflow: hidden; background: transparent; color: inherit; text-align: left; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; font-size: 0.78rem; font-weight: 700; }
-        .material-banner-clear { border: 0; padding: 2px 6px; background: transparent; color: #bae6fd; cursor: pointer; font-size: 1rem; }
+        .material-banner-clear { display: grid; place-items: center; flex: 0 0 44px; width: 44px; height: 44px; border: 0; border-radius: 10px; padding: 0; background: transparent; color: #bae6fd; cursor: pointer; font-size: 1rem; }
         .material-banner-clear:hover { color: #fff; }
         .btn-material { background: #0ea5e9; color: #02111f; }
         .btn-material:hover { background: #38bdf8; }
@@ -1123,7 +1127,7 @@
                 min-height: 0;
                 overflow-y: auto;
                 overflow-x: hidden;
-                padding: 22px 12px 24px;
+                padding: 22px 12px 40px;
                 overscroll-behavior: contain;
                 -webkit-overflow-scrolling: touch;
                 scrollbar-gutter: stable;
@@ -1467,7 +1471,8 @@
 /* GugoPro Gemini-style capsule composer */
 html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .bottom-controls {
-    padding: 5px 12px max(16px, env(safe-area-inset-bottom));
+    /* Keep the composer in normal flow and reserve clear space below it for possible mobile anchor ads. */
+    padding: 5px 12px max(56px, calc(44px + env(safe-area-inset-bottom)));
     background: linear-gradient(180deg, rgba(10,11,16,.94), rgba(10,11,16,1)) !important;
     border-top: 1px solid rgba(255,255,255,.08);
 }
@@ -1669,7 +1674,6 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
 }
 </style>
 
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4756902118634553" crossorigin="anonymous"></script>
 <style id="settings-help-section-style">
 .settings-help-section { margin: 12px 16px 0; padding: 10px 0; border-top: 1px solid rgba(255,255,255,.08); color: var(--text-dim); }
 .settings-help-section > summary { cursor: pointer; color: #67e8f9; font-weight: 700; }
@@ -1763,64 +1767,68 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
 
         <main id="chat-container">
             <!-- Room study state is shown in the side-menu room badge. -->
+            <div id="material-banner" class="material-banner" hidden>
+                <button id="btn-material-banner" class="material-banner-trigger" type="button"></button>
+                <button id="btn-material-clear" class="material-banner-clear" type="button" title="清除本房間教材" aria-label="清除本房間教材"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
+            </div>
             <article class="welcome-card" id="welcome-guide" aria-labelledby="welcome-guide-title">
-                <h4 id="welcome-guide-title">👋 歡迎使用 AI多國語言對話導師！</h4>
+                <h4 id="welcome-guide-title" data-page-copy="welcomeTitle">👋 歡迎使用 AI多國語言對話導師！</h4>
                 <ul>
-                    <li><i class="fa-solid fa-keyboard" aria-hidden="true"></i> 底部輸入列支援多行文字；Enter 發送、Shift＋Enter 換行</li>
-                    <li><i class="fa-solid fa-paperclip" aria-hidden="true"></i> 使用紙夾導入 TXT、Markdown 或 PDF 教材，並綁定目前教室</li>
-                    <li><i class="fa-solid fa-book-open" aria-hidden="true"></i> 選取歷史對話中的單字，可查意思、重聽發音並加入生詞字典</li>
-                    <li><i class="fa-solid fa-book-bookmark" aria-hidden="true"></i> 建立多本生詞字典，為各教室選擇教材與學習清單</li>
-                    <li><i class="fa-solid fa-comments" aria-hidden="true"></i> 從情境對話開始，也可依教材進行問答、複習與測驗</li>
-                    <li><i class="fa-solid fa-language" aria-hidden="true"></i> 頂部語言選單設定對話語言；右上選單管理教室、教材與模型</li>
-                    <li><i class="fa-solid fa-microphone-lines" aria-hidden="true"></i> 語音可點擊開始／停止，或設定停頓後自動送出；也可隨時改用打字</li>
+                    <li><i class="fa-solid fa-keyboard" aria-hidden="true"></i><span data-page-copy="quickDock">底部輸入列支援多行文字；Enter 發送、Shift＋Enter 換行</span></li>
+                    <li><i class="fa-solid fa-paperclip" aria-hidden="true"></i><span data-page-copy="quickMaterial">使用紙夾導入 TXT、Markdown 或 PDF 教材，並綁定目前教室</span></li>
+                    <li><i class="fa-solid fa-book-open" aria-hidden="true"></i><span data-page-copy="quickVocab">選取歷史對話中的單字，可查意思、重聽發音並加入生詞字典</span></li>
+                    <li><i class="fa-solid fa-book-bookmark" aria-hidden="true"></i><span data-page-copy="quickDictionaries">建立多本生詞字典，為各教室選擇教材與學習清單</span></li>
+                    <li><i class="fa-solid fa-comments" aria-hidden="true"></i><span data-page-copy="quickTopics">從情境對話開始，也可依教材進行問答、複習與測驗</span></li>
+                    <li><i class="fa-solid fa-language" aria-hidden="true"></i><span data-page-copy="quickLanguage">頂部語言選單設定對話語言；右上選單管理教室、教材與模型</span></li>
+                    <li><i class="fa-solid fa-microphone-lines" aria-hidden="true"></i><span data-page-copy="quickSpeech">語音可點擊開始／停止，或設定停頓後自動送出；也可隨時改用打字</span></li>
                 </ul>
 
                 <section class="welcome-guide" aria-labelledby="welcome-learning-title">
-                    <p class="welcome-guide-eyebrow">語言練習指南</p>
-                    <h5 id="welcome-learning-title">把語言設定、情境輸出與回顧串成可重複的學習循環</h5>
-                    <p class="welcome-guide-lead">有效練習不是只看翻譯或背答案，而是先嘗試表達、辨認差距，再用新句子重新輸出。開始前選好母語與學習語言，並交代程度、目的與情境；例如：「我正在練習旅行英文，請扮演飯店櫃檯人員，每次只問一題，等我回答後再指出最重要的一項修正。」清楚的角色和回饋規則，能讓每一輪對話都有明確練習目標。</p>
+                    <p class="welcome-guide-eyebrow" data-page-copy="guideEyebrow">語言練習指南</p>
+                    <h5 id="welcome-learning-title" data-page-copy="guideHeading">把語言設定、情境輸出與回顧串成可重複的學習循環</h5>
+                    <p class="welcome-guide-lead" data-page-copy="guideLead">有效練習不是只看翻譯或背答案，而是先嘗試表達、辨認差距，再用新句子重新輸出。開始前選好母語與學習語言，並交代程度、目的與情境；例如：「我正在練習旅行英文，請扮演飯店櫃檯人員，每次只問一題，等我回答後再指出最重要的一項修正。」清楚的角色和回饋規則，能讓每一輪對話都有明確練習目標。</p>
 
                     <section class="welcome-guide-block" aria-labelledby="welcome-benefits-title">
-                        <h6 id="welcome-benefits-title">四大核心學習優點</h6>
+                        <h6 id="welcome-benefits-title" data-page-copy="benefitsHeading">四大核心學習優點</h6>
                         <div class="welcome-guide-grid">
-                            <article class="welcome-guide-panel"><h6>01｜多語言雙向切換</h6><p>分別設定「我的語言」與「學習語言」，可練習不同語言組合。先用目標語言完成情境對話，再用熟悉的語言追問差異，逐步減少依賴逐字翻譯。</p></article>
-                            <article class="welcome-guide-panel"><h6>02｜語音輸入與可重試回饋</h6><p>以學習語言按鈕錄下回答，查看裝置辨識文字與練習分數，必要時重試。這能協助發現辨識結果是否接近目標句；分數不是音素、口音或語速的專業測量。</p></article>
-                            <article class="welcome-guide-panel"><h6>03｜自己的教材變成情境</h6><p>匯入 TXT、Markdown、PDF 或貼上短文，把課文、考題和商務信件轉成摘要、角色問答、翻譯或小測驗。先選本教室教材，再指定一個具體任務，答案更容易回到原文核對。</p></article>
-                            <article class="welcome-guide-panel"><h6>04｜單字與教室形成複習閉環</h6><p>從對話選詞查義、重聽並加入生詞字典，再把教材和字典納入特定教室的複習或測驗。旅遊、工作、考試各用獨立教室，可減少主題與歷史紀錄互相干擾。</p></article>
+                            <article class="welcome-guide-panel"><h6>01｜<span data-page-copy="benefit1Title">多語言雙向切換</span></h6><p data-page-copy="benefit1Body">分別設定「我的語言」與「學習語言」，可練習不同語言組合。先用目標語言完成情境對話，再用熟悉的語言追問差異，逐步減少依賴逐字翻譯。</p></article>
+                            <article class="welcome-guide-panel"><h6>02｜<span data-page-copy="benefit2Title">語音輸入與可重試回饋</span></h6><p data-page-copy="benefit2Body">以學習語言按鈕錄下回答，查看裝置辨識文字與練習分數，必要時重試。這能協助發現辨識結果是否接近目標句；分數不是音素、口音或語速的專業測量。</p></article>
+                            <article class="welcome-guide-panel"><h6>03｜<span data-page-copy="benefit3Title">自己的教材變成情境</span></h6><p data-page-copy="benefit3Body">匯入 TXT、Markdown、PDF 或貼上短文，把課文、考題和商務信件轉成摘要、角色問答、翻譯或小測驗。先選本教室教材，再指定一個具體任務，答案更容易回到原文核對。</p></article>
+                            <article class="welcome-guide-panel"><h6>04｜<span data-page-copy="benefit4Title">單字與教室形成複習閉環</span></h6><p data-page-copy="benefit4Body">從對話選詞查義、重聽並加入生詞字典，再把教材和字典納入特定教室的複習或測驗。旅遊、工作、考試各用獨立教室，可減少主題與歷史紀錄互相干擾。</p></article>
                         </div>
                     </section>
 
                     <section class="welcome-guide-block" aria-labelledby="welcome-sop-title">
-                        <h6 id="welcome-sop-title">系統化練習 SOP：每輪都留下下一步</h6>
+                        <h6 id="welcome-sop-title" data-page-copy="sopHeading">系統化練習 SOP：每輪都留下下一步</h6>
                         <div class="welcome-guide-panel welcome-guide-steps">
-                            <div class="welcome-guide-step"><span class="welcome-guide-number">01</span><p><strong>定義本次目標：</strong>選擇母語、學習語言和程度；把「學英文」縮小為「練習入住飯店時確認早餐時間」等可完成的情境。</p></div>
-                            <div class="welcome-guide-step"><span class="welcome-guide-number">02</span><p><strong>設定教室與回饋方式：</strong>建立或切換主題教室，選擇教材對話、複習或混合測驗；可補充「先讓我說完，再改一個最重要的錯誤」。</p></div>
-                            <div class="welcome-guide-step"><span class="welcome-guide-number">03</span><p><strong>先自己輸出：</strong>用文字或學習語言語音作答。卡住時先說出已知的片語，再請 AI 用簡短提示引導，而不是立即索取整段標準答案。</p></div>
-                            <div class="welcome-guide-step"><span class="welcome-guide-number">04</span><p><strong>比較並重說：</strong>找出一項文法、用字或表達差異，請 AI 解釋原因並給替代句；用自己的版本再說一次，檢查辨識文字和句意是否更貼近目標。</p></div>
-                            <div class="welcome-guide-step"><span class="welcome-guide-number">05</span><p><strong>回收重點：</strong>把值得記住的單字加入字典，稍後用本教室的複習或測驗模式回想；能脫離原對話再次造句，才算把回饋轉成可遷移的能力。</p></div>
+                            <div class="welcome-guide-step"><span class="welcome-guide-number">01</span><p><strong data-page-copy="sop1Title">定義本次目標</strong>: <span data-page-copy="sop1Body">選擇母語、學習語言和程度；把「學英文」縮小為「練習入住飯店時確認早餐時間」等可完成的情境。</span></p></div>
+                            <div class="welcome-guide-step"><span class="welcome-guide-number">02</span><p><strong data-page-copy="sop2Title">設定教室與回饋方式</strong>: <span data-page-copy="sop2Body">建立或切換主題教室，選擇教材對話、複習或混合測驗；可補充「先讓我說完，再改一個最重要的錯誤」。</span></p></div>
+                            <div class="welcome-guide-step"><span class="welcome-guide-number">03</span><p><strong data-page-copy="sop3Title">先自己輸出</strong>: <span data-page-copy="sop3Body">用文字或學習語言語音作答。卡住時先說出已知的片語，再請 AI 用簡短提示引導，而不是立即索取整段標準答案。</span></p></div>
+                            <div class="welcome-guide-step"><span class="welcome-guide-number">04</span><p><strong data-page-copy="sop4Title">比較並重說</strong>: <span data-page-copy="sop4Body">找出一項文法、用字或表達差異，請 AI 解釋原因並給替代句；用自己的版本再說一次，檢查辨識文字和句意是否更貼近目標。</span></p></div>
+                            <div class="welcome-guide-step"><span class="welcome-guide-number">05</span><p><strong data-page-copy="sop5Title">回收重點</strong>: <span data-page-copy="sop5Body">把值得記住的單字加入字典，稍後用本教室的複習或測驗模式回想；能脫離原對話再次造句，才算把回饋轉成可遷移的能力。</span></p></div>
                         </div>
                     </section>
 
                     <section class="welcome-guide-block" aria-labelledby="welcome-feature-guide-title">
-                        <h6 id="welcome-feature-guide-title">功能深度實戰指南</h6>
+                        <h6 id="welcome-feature-guide-title" data-page-copy="featuresHeading">功能深度實戰指南</h6>
                         <div class="welcome-guide-grid">
-                            <article class="welcome-guide-panel"><h6>語音分數：看辨識差異，不把它當口音鑑定</h6><p>點擊學習語言麥克風並朗讀目標句，畫面會顯示語音辨識文字和 0–100 練習分數。程式以辨識文字和目標句的字詞相似度計算，若瀏覽器提供信心值也會納入；它不會直接量測音素、口音或每分鐘語速。請先核對辨識文字，再放慢到片語、重聽朗讀並重試；母語提問按鈕不做這項評分。</p></article>
-                            <article class="welcome-guide-panel"><h6>教材：由短而可核對的材料開始</h6><p>用頁首紙夾匯入 .txt、.md、可選取文字的 .pdf，或在教材視窗貼上內容；材料先綁定目前教室。可要求摘要、關鍵詞解釋或依段落出題，並回原文核對。掃描影像 PDF 若沒有文字層可能無法抽取；匯入資料留在目前瀏覽器，但對話使用時相關內容會送往所選 AI 服務，請勿放入機密或可識別個資。</p></article>
-                            <article class="welcome-guide-panel"><h6>生詞：從理解走到再次提取</h6><p>在歷史訊息選取單字，先查意思，再按重聽發音並加入指定字典；查詢使用公開字典／翻譯服務。之後開啟教室學習清單，勾選教材與字典，選複習或測驗模式，練習釋義、翻譯和造句。只收藏自己能放進新句子的詞，比大量收集更容易檢查學會與否。</p></article>
-                            <article class="welcome-guide-panel"><h6>教室：把情境、教材與目標分開管理</h6><p>可為旅行、商務、面試或考試各建一間教室。每間教室保留自己的對話脈絡和語言設定，並可選 A1–C2 程度、主題、練習形式、教材、生詞字典及自訂教學指示；遇到切換情境就切換教室，讓 AI 參照更集中。</p></article>
+                            <article class="welcome-guide-panel"><h6 data-page-copy="speechFeatureTitle">語音分數：看辨識差異，不把它當口音鑑定</h6><p data-page-copy="speechFeatureBody">點擊學習語言麥克風並朗讀目標句，畫面會顯示語音辨識文字和 0–100 練習分數。程式以辨識文字和目標句的字詞相似度計算，若瀏覽器提供信心值也會納入；它不會直接量測音素、口音或每分鐘語速。請先核對辨識文字，再放慢到片語、重聽朗讀並重試；母語提問按鈕不做這項評分。</p></article>
+                            <article class="welcome-guide-panel"><h6 data-page-copy="materialFeatureTitle">教材：由短而可核對的材料開始</h6><p data-page-copy="materialFeatureBody">用頁首紙夾匯入 .txt、.md、可選取文字的 .pdf，或在教材視窗貼上內容；材料先綁定目前教室。可要求摘要、關鍵詞解釋或依段落出題，並回原文核對。掃描影像 PDF 若沒有文字層可能無法抽取；匯入資料留在目前瀏覽器，但對話使用時相關內容會送往所選 AI 服務，請勿放入機密或可識別個資。</p></article>
+                            <article class="welcome-guide-panel"><h6 data-page-copy="vocabFeatureTitle">生詞：從理解走到再次提取</h6><p data-page-copy="vocabFeatureBody">在歷史訊息選取單字，先查意思，再按重聽發音並加入指定字典；查詢使用公開字典／翻譯服務。之後開啟教室學習清單，勾選教材與字典，選複習或測驗模式，練習釋義、翻譯和造句。只收藏自己能放進新句子的詞，比大量收集更容易檢查學會與否。</p></article>
+                            <article class="welcome-guide-panel"><h6 data-page-copy="classroomFeatureTitle">教室：把情境、教材與目標分開管理</h6><p data-page-copy="classroomFeatureBody">可為旅行、商務、面試或考試各建一間教室。每間教室保留自己的對話脈絡和語言設定，並可選 A1–C2 程度、主題、練習形式、教材、生詞字典及自訂教學指示；遇到切換情境就切換教室，讓 AI 參照更集中。</p></article>
                         </div>
                     </section>
 
                     <section class="welcome-faq" aria-labelledby="welcome-faq-title">
-                        <h6 id="welcome-faq-title">常見問題 FAQ</h6>
+                        <h6 id="welcome-faq-title" data-page-copy="faqHeading">常見問題 FAQ</h6>
                         <div class="welcome-faq-list">
-                            <article class="welcome-faq-item"><p class="welcome-faq-question">AI 的文法修正與翻譯一定正確嗎？</p><p>不一定。模型可能誤解上下文，或把一種可行說法說成唯一答案。請要求它解釋修正理由、提供替代句，並以可靠教材或母語使用情境核對重要內容；流暢的語氣不等於事實保證。</p></article>
-                            <article class="welcome-faq-item"><p class="welcome-faq-question">如何匯入教材，教材會套用到哪裡？</p><p>用頁首紙夾或右上選單匯入 TXT、Markdown、PDF，也可在教材視窗貼上文字。教材與教室學習清單是分開管理的；可在學習清單中選擇要使用的材料，再指定對話、複習或測驗模式。</p></article>
-                            <article class="welcome-faq-item"><p class="welcome-faq-question">沒有麥克風或語音辨識權限，還能使用嗎？</p><p>可以。允許瀏覽器使用麥克風後，可用語音輸入或跟讀；語音辨識也受裝置、瀏覽器、網路與語言支援影響。若無法啟動，改用文字輸入仍可進行對話練習，並可使用訊息朗讀功能。</p></article>
-                            <article class="welcome-faq-item"><p class="welcome-faq-question">教材或個人資料可以直接貼給 AI 嗎？</p><p>教材會保存在目前瀏覽器的本機儲存空間，AI 對話則會送往所選模型服務處理。請只提供完成練習所需內容，不要輸入密碼、身分資料、私人對話或他人可識別資訊；重要答案請自行查證。</p></article>
+                            <article class="welcome-faq-item"><p class="welcome-faq-question" data-page-copy="faq1Question">AI 的文法修正與翻譯一定正確嗎？</p><p data-page-copy="faq1Answer">不一定。模型可能誤解上下文，或把一種可行說法說成唯一答案。請要求它解釋修正理由、提供替代句，並以可靠教材或母語使用情境核對重要內容；流暢的語氣不等於事實保證。</p></article>
+                            <article class="welcome-faq-item"><p class="welcome-faq-question" data-page-copy="faq2Question">如何匯入教材，教材會套用到哪裡？</p><p data-page-copy="faq2Answer">用頁首紙夾或右上選單匯入 TXT、Markdown、PDF，也可在教材視窗貼上文字。教材與教室學習清單是分開管理的；可在學習清單中選擇要使用的材料，再指定對話、複習或測驗模式。</p></article>
+                            <article class="welcome-faq-item"><p class="welcome-faq-question" data-page-copy="faq3Question">沒有麥克風或語音辨識權限，還能使用嗎？</p><p data-page-copy="faq3Answer">可以。允許瀏覽器使用麥克風後，可用語音輸入或跟讀；語音辨識也受裝置、瀏覽器、網路與語言支援影響。若無法啟動，改用文字輸入仍可進行對話練習，並可使用訊息朗讀功能。</p></article>
+                            <article class="welcome-faq-item"><p class="welcome-faq-question" data-page-copy="faq4Question">教材或個人資料可以直接貼給 AI 嗎？</p><p data-page-copy="faq4Answer">教材會保存在目前瀏覽器的本機儲存空間，AI 對話則會送往所選模型服務處理。請只提供完成練習所需內容，不要輸入密碼、身分資料、私人對話或他人可識別資訊；重要答案請自行查證。</p></article>
                         </div>
                     </section>
-                    <p class="welcome-disclaimer"><strong>AI 使用提醒：</strong>本工具的生成內容僅供語言學習參考，可能不完整或有誤，不能取代教師指導、正式教材或專業意見。請核對重要資訊、遵守課程與考試規範，並避免輸入個人或敏感資料。</p>
+                    <p class="welcome-disclaimer"><strong data-page-copy="disclaimerLabel">AI 使用提醒：</strong><span data-page-copy="disclaimerBody">本工具的生成內容僅供語言學習參考，可能不完整或有誤，不能取代教師指導、正式教材或專業意見。請核對重要資訊、遵守課程與考試規範，並避免輸入個人或敏感資料。</span></p>
                 </section>
             </article>
         </main>
@@ -1928,7 +1936,25 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 <p id="drawer-disclaimer">免責聲明：本工具語音辨識與 AI 診斷建議由 LLM 模型即時處理，僅供參考。</p>
             </div>
         </div>
-        <details class="settings-help-section"><summary>說明與常見問題</summary><div class="tool-seo-content"><h2>使用說明與常見問題</h2><p>選擇母語與學習語言後開始對話，可使用語音輸入、逐句翻譯與學習紀錄功能。</p><h3>三步驟使用指南</h3><ol><li>設定母語、目標語言與學習模式。</li><li>輸入或說出句子，閱讀 AI 回覆與發音提示。</li><li>重要內容請自行核對，學習建議不取代專業翻譯或教學。</li></ol><h3>常見問題</h3><div class="tool-faq-list"><details><summary>需要輸入個人資料嗎？</summary><p>不需要，請避免輸入密碼、身分證號或其他敏感資訊。</p></details><details><summary>語音辨識不準怎麼辦？</summary><p>請檢查麥克風權限、環境噪音與語言設定後再試。</p></details></div></div></details><div class="drawer-contact-section" aria-label="聯絡與政策資訊">
+        <details class="settings-help-section">
+            <summary data-page-copy="helpSummary">說明與常見問題</summary>
+            <div class="tool-seo-content">
+                <h2 data-page-copy="helpHeading">使用說明與常見問題</h2>
+                <p data-page-copy="helpIntro">選擇母語與學習語言後開始對話，可使用語音輸入、逐句翻譯與學習紀錄功能。</p>
+                <h3 data-page-copy="helpStepsHeading">三步驟使用指南</h3>
+                <ol>
+                    <li data-page-copy="helpStep1">設定母語、目標語言與學習模式。</li>
+                    <li data-page-copy="helpStep2">輸入或說出句子，閱讀 AI 回覆與發音提示。</li>
+                    <li data-page-copy="helpStep3">重要內容請自行核對，學習建議不取代專業翻譯或教學。</li>
+                </ol>
+                <h3 data-page-copy="helpFaqHeading">常見問題</h3>
+                <div class="tool-faq-list">
+                    <details><summary data-page-copy="helpFaq1Question">需要輸入個人資料嗎？</summary><p data-page-copy="helpFaq1Answer">不需要，請避免輸入密碼、身分證號或其他敏感資訊。</p></details>
+                    <details><summary data-page-copy="helpFaq2Question">語音辨識不準怎麼辦？</summary><p data-page-copy="helpFaq2Answer">請檢查麥克風權限、環境噪音與語言設定後再試。</p></details>
+                </div>
+            </div>
+        </details>
+        <div class="drawer-contact-section" aria-label="聯絡與政策資訊">
             <div class="drawer-contact-links">
                 <a href="../../contact.html">聯絡我們 / Contact Us</a>
                 <a href="mailto:contact@gugopro.com">Support: contact@gugopro.com</a>
@@ -3048,7 +3074,9 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
 
             const container = document.getElementById('chat-container');
             const welcomeCard = container.querySelector('.welcome-card');
+            const materialBanner = container.querySelector('.material-banner');
             container.replaceChildren();
+            if (materialBanner) container.appendChild(materialBanner);
             if (welcomeCard) container.appendChild(welcomeCard);
             else addWelcomeCard();
             room.messages.forEach(m => addMessageToUI(
@@ -4443,6 +4471,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             : `📘 ${runtimeUiText('materialLoadedMany').replace('{count}', selected.length)}`;
         banner.hidden = false;
     }
+    window.addEventListener('gugopro:ui-language-change', renderMaterialBannerV2);
 
     if (typeof renderMaterialBanner === 'function') {
         const legacyRenderMaterialBanner = renderMaterialBanner;
@@ -9665,9 +9694,59 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
     const UI_FALLBACK_LANG = 'en-US';
     function uiLang() { return window.GugoGetUiLanguage?.() || localStorage.getItem(UI_LANG_KEY) || 'zh-TW'; }
     function uiText(key) { const lang = uiLang(); return UI_TRANSLATIONS[lang]?.[key] || UI_TRANSLATIONS[UI_FALLBACK_LANG]?.[key] || UI_TRANSLATIONS['zh-TW']?.[key] || key; }
+    const PAGE_COPY_UI_FALLBACK_KEYS = {
+        backHome: 'backHome', importMaterial: 'importMaterial', welcomeTitle: 'welcomeTitle',
+        quickDock: 'welcomeDock', quickMaterial: 'welcomeMaterial', quickVocab: 'welcomeVocab',
+        quickDictionaries: 'welcomeDictionaries', quickTopics: 'welcomeTopics',
+        quickLanguage: 'welcomeLanguage', quickSpeech: 'welcomeSpeech'
+    };
+    function applyLocalizedPageCopy(lang = uiLang()) {
+        const copy = window.GugoTutorPageCopy?.[lang] || null;
+        document.querySelectorAll('[data-page-copy]').forEach(node => {
+            const key = node.dataset.pageCopy;
+            const value = copy?.[key];
+            if (typeof value === 'string') node.textContent = value;
+            else if (PAGE_COPY_UI_FALLBACK_KEYS[key]) node.textContent = uiText(PAGE_COPY_UI_FALLBACK_KEYS[key]);
+        });
+
+        const backHome = document.querySelector('.web-only-nav');
+        const backHomeLabel = copy?.backHome || uiText('backHome');
+        if (backHome) {
+            const backHomeText = backHome.querySelector('span');
+            if (backHomeText) backHomeText.textContent = backHomeLabel;
+            backHome.setAttribute('aria-label', backHomeLabel);
+        }
+
+        const materialButton = document.getElementById('btn-material-import-inline');
+        const materialLabel = copy?.importMaterial || uiText('importMaterial');
+        if (materialButton) {
+            const materialText = materialButton.querySelector('span');
+            if (materialText) materialText.textContent = materialLabel;
+            materialButton.setAttribute('title', materialLabel);
+            materialButton.setAttribute('aria-label', materialLabel);
+        }
+        const materialMenuButton = document.getElementById('btn-material-import');
+        const materialTextNode = materialMenuButton && Array.from(materialMenuButton.childNodes).find(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim());
+        if (materialTextNode) materialTextNode.textContent = ` ${materialLabel}`;
+
+        const welcomeGuide = document.getElementById('welcome-guide');
+        if (welcomeGuide) welcomeGuide.setAttribute('dir', lang === 'ar-SA' ? 'rtl' : 'ltr');
+
+        if (copy?.metaDescription) {
+            const metaDescription = document.querySelector('meta[name="description"]');
+            if (metaDescription) metaDescription.setAttribute('content', copy.metaDescription);
+            const schemaElement = document.querySelector('script[type="application/ld+json"]');
+            if (schemaElement) {
+                const schema = JSON.parse(schemaElement.textContent);
+                schema.inLanguage = lang;
+                schema.description = copy.metaDescription;
+                schemaElement.textContent = JSON.stringify(schema, null, 2);
+            }
+        }
+    }
     const UI_TEXT_BINDINGS = {
         '.web-only-nav span':'backHome', '#btn-material-import-inline span':'importMaterial', '#btn-lang-confirm':'confirm',
-        '#btn-new-room span':'newRoom', '#btn-room-export-ops':'exportSelected', '#btn-export-all':'exportAll', '#btn-material-import':'importMaterial', '#btn-study-plan':'studyList', '#btn-vocab':'vocabulary', '#btn-import':'importConversation', '#btn-room-delete-ops':'deleteRooms', '#btn-config':'changeApiKey',
+        '#btn-new-room span':'newRoom', '#btn-room-export-ops':'exportSelected', '#btn-export-all':'exportAll', '#btn-study-plan':'studyList', '#btn-vocab':'vocabulary', '#btn-import':'importConversation', '#btn-room-delete-ops':'deleteRooms', '#btn-config':'changeApiKey',
         '#chat-rooms-title':'chatRooms', '#side-menu .menu-section:nth-of-type(2) .menu-title':'roomAdvanced', '#side-menu .menu-section:nth-of-type(3) .menu-title':'globalSettings', '#side-menu .amazon-menu-section p':'books', '#model-settings-title':'modelSettings', '#btn-refresh-models':'refreshModels', '#drawer-disclaimer':'disclaimer', '#side-menu .menu-section > a[href="https://gugopro.com"]':'website', '.kofi-button':'buyCoffee', '.drawer-contact-note':'feedback', '.drawer-contact-section > .drawer-contact-links:first-child a:first-child':'contact', '.drawer-contact-section > .drawer-contact-links:nth-child(2) a:first-child':'privacy', '.drawer-contact-section > .drawer-contact-links:nth-child(2) a:last-child':'terms',
         '#word-lookup-title':'wordLookup', '#btn-word-lookup':'lookup', '#btn-word-speak':'speakAgain', '#btn-word-add':'addWord', '#btn-word-close':'close',
         '#study-plan-title':'studyPlan', '#study-language-label':'teachingLanguage', '#study-level-label':'level', '#study-mode-label':'teachingMode', '#study-topic-label':'topics', '#study-format-label':'formats', '#study-assistant-label':'assistant', '#study-material-label':'materials', '#study-dictionary-label':'dictionaries', '#btn-study-save':'saveStudy', '#btn-study-close':'close',
@@ -9682,7 +9761,14 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         const setAttr = (selector, attr, key) => document.querySelectorAll(selector).forEach(el => el.setAttribute(attr, uiText(key)));
         setAttr('#btn-material-import-inline','title','importMaterial'); setAttr('#btn-material-import-inline','aria-label','importMaterial');
         setAttr('.web-only-nav','aria-label','backHome');
+        setAttr('#btn-material-clear','title','clearMaterial'); setAttr('#btn-material-clear','aria-label','clearMaterial');
+        setAttr('#my-lang','aria-label','myLanguage'); setAttr('#target-lang','aria-label','learningLanguage');
         setAttr('#btn-send','aria-label','send'); setAttr('#btn-new-room','title','newRoom'); setAttr('#btn-new-room','aria-label','newRoom');
+        const headerLanguageLabels = document.querySelectorAll('.lang-settings-grid .lang-label');
+        if (headerLanguageLabels[0]) headerLanguageLabels[0].textContent = uiText('myLanguage');
+        if (headerLanguageLabels[1]) headerLanguageLabels[1].textContent = uiText('learningLanguage');
+        const contactRegion = document.querySelector('.drawer-contact-section');
+        if (contactRegion) contactRegion.setAttribute('aria-label', uiText('contact'));
         const input = document.getElementById('user-text'); if (input) input.placeholder = uiText(getMode?.() === 'smart' ? 'smartMode' : 'tapMode');
         const guide = document.querySelector('.speech-composer-hint'); if (guide && guide.dataset.state === 'idle') guide.textContent = uiText(getMode?.() === 'smart' ? 'smartMode' : 'tapMode');
         const modeDesc = document.getElementById('speech-mode-description'); if (modeDesc) modeDesc.textContent = uiText(getMode?.() === 'smart' ? 'smartMode' : 'tapMode');
@@ -9708,7 +9794,6 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         const uiSection = document.getElementById('ui-language-section'); if (uiSection) { const title = uiSection.querySelector('.menu-title'); if (title) title.textContent = `🌐 ${uiText('uiLanguage')}`; const note = uiSection.querySelector('small'); if (note) note.textContent = uiText('chooseLanguage'); const select = uiSection.querySelector('#ui-language-select'); if (select && Array.from(select.options).some(option => option.value === lang)) select.value = lang; }
         const speechSection = document.getElementById('speech-mode-section'); if (speechSection) { const title = speechSection.querySelector('.menu-title'); if (title) title.textContent = `🎙️ ${uiText('speechVoice') || 'Voice input'}`; const silence = speechSection.querySelector('.speech-silence-setting'); if (silence) silence.childNodes[0].textContent = `${uiText('silenceSeconds')} `; const cue = speechSection.querySelector('.speech-start-cue-setting'); if (cue) cue.childNodes[1].textContent = uiText('startCue'); }
         document.querySelectorAll('.modal-overlay button, .btn-full').forEach(button => { if (button.textContent.trim() === '關閉') button.textContent = uiText('close'); if (button.textContent.trim() === '取消') button.textContent = uiText('cancel'); });
-        const welcomeKeys = ['welcomeDock','welcomeMaterial','welcomeVocab','welcomeDictionaries','welcomeTopics','welcomeLanguage','welcomeSpeech']; document.querySelectorAll('.welcome-card li').forEach((li, index) => { const textNode = Array.from(li.childNodes).find(node => node.nodeType === Node.TEXT_NODE); if (textNode && welcomeKeys[index]) textNode.nodeValue = ` ${uiText(welcomeKeys[index])}`; });
         const speechModeSelect = document.getElementById('speech-mode-select');
         if (speechModeSelect) Array.from(speechModeSelect.options).forEach(option => { if (option.value === 'tap') option.textContent = uiText('modeTap'); if (option.value === 'smart') option.textContent = uiText('modeSmart'); });
         const refreshModels = document.getElementById('btn-refresh-models'); if (refreshModels) { refreshModels.textContent = uiText('refreshModels'); refreshModels.setAttribute('aria-label', uiText('refreshModels')); refreshModels.setAttribute('title', uiText('refreshModels')); }
@@ -9717,6 +9802,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         if (typeof renderModelOptions === 'function') renderModelOptions();
         if (typeof renderCurrentModelStatus === 'function') renderCurrentModelStatus();
         if (typeof renderGlobalAIQuota === 'function') renderGlobalAIQuota();
+        applyLocalizedPageCopy(lang);
     }
     window.GugoUiText = uiText;
     window.GugoApplyUiTranslations = applyUiTranslations;
