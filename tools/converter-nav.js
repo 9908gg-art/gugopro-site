@@ -475,7 +475,10 @@
         if (closeButton) closeButton.addEventListener('click', closeMenu);
         if (overlay) overlay.addEventListener('click', closeMenu);
         document.addEventListener('keydown', function (event) { if (event.key === 'Escape') closeMenu(); });
-        applyFilter();
+        // The default all-category/no-query state is server-rendered. Avoid a
+        // redundant full-card visibility pass during startup; interactive
+        // search and category changes still call applyFilter().
+        if (input && input.value.trim()) applyFilter();
     }
 
     function initAll() { initDropdowns(); initHubSearch(); initDashboard(); initFullCardNavigation(); }
