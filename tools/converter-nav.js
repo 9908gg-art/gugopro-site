@@ -395,6 +395,39 @@
         var page = document.body;
         var activeFilter = 'all';
 
+        // AdSense-focused homepage showcase. To restore the full catalog, remove
+        // this reversible allowlist and the eligibility checks below; no tool files
+        // or source cards are deleted.
+        var showcaseCategories = new Set(['ai-tools', 'ai-media', 'english-learning']);
+        var showcasePaths = new Set([
+            '/tools/ai/english-speaking-tutor.html',
+            '/tools/ai/realtime-translator.html',
+            '/tools/pdf/pdf-suite.html',
+            '/tools/ai/tarot-master.html',
+            '/tools/ai/ziwei-astrology.html',
+            '/tools/health/tdee-macros-calculator.html',
+            '/tools/health/weight-loss-planner.html',
+            '/tools/ai/gemini-api-quota.html',
+            '/amazon',
+            '/tools/ai-media/ai-video-tracker.html',
+            '/tools/english/l-player-study.html'
+        ]);
+
+        function isShowcaseCard(card) {
+            var link = card.querySelector('a.converter-link-button[href], a[href]');
+            if (!link) return false;
+            try {
+                var pathname = new URL(link.getAttribute('href'), location.href).pathname.replace(/\/+$/, '') || '/';
+                return showcasePaths.has(pathname);
+            } catch (error) {
+                return false;
+            }
+        }
+
+        document.querySelectorAll('[data-dashboard-filter]').forEach(function (button) {
+            button.hidden = !showcaseCategories.has(button.getAttribute('data-dashboard-filter'));
+        });
+
         function closeMenu() {
             page.classList.remove('dashboard-menu-open');
             if (menu) menu.setAttribute('aria-expanded', 'false');
@@ -408,12 +441,12 @@
             var totals = { 'ai-tools': 0, 'ai-media': 0, 'english-learning': 0, 'finance-basic': 0, 'finance-pro': 0, images: 0, 'audio-tools': 0, 'video-tools': 0, 'document-process': 0, 'document-convert': 0, 'smart-text': 0, security: 0, 'data-charts': 0, 'office-tools': 0, 'unit-converter': 0 };
             var total = 0;
             cards.forEach(function (card) {
-                if (!matchesQuery(card, query)) return;
+                if (!isShowcaseCard(card) || !matchesQuery(card, query)) return;
                 var key = card.getAttribute('data-category');
                 if (Object.prototype.hasOwnProperty.call(totals, key)) totals[key] += 1;
                 total += 1;
             });
-            companions.forEach(function (card) { if (matchesQuery(card, query)) total += 1; });
+            companions.forEach(function (card) { if (isShowcaseCard(card) && matchesQuery(card, query)) total += 1; });
             document.querySelectorAll('[data-dashboard-count]').forEach(function (badge) {
                 var key = badge.getAttribute('data-dashboard-count');
                 badge.textContent = key === 'all' ? String(total) : String(totals[key] || 0);
@@ -429,20 +462,20 @@
             var query = input ? input.value.trim().toLowerCase() : '';
             var visible = 0;
             cards.forEach(function (card) {
-                var categoryMatch = activeFilter === 'all' || card.getAttribute('data-category') === activeFilter;
+                var categoryMatch = isShowcaseCard(card) && (activeFilter === 'all' || card.getAttribute('data-category') === activeFilter);
                 var queryMatch = matchesQuery(card, query);
                 card.hidden = !(categoryMatch && queryMatch);
                 if (!card.hidden) visible += 1;
             });
             companions.forEach(function (card) {
-                var categoryMatch = activeFilter === 'all' || activeFilter === 'smart-text';
+                var categoryMatch = isShowcaseCard(card) && (activeFilter === 'all' || activeFilter === 'smart-text');
                 var queryMatch = matchesQuery(card, query);
                 card.hidden = !(categoryMatch && queryMatch);
                 if (!card.hidden) visible += 1;
             });
             sections.forEach(function (section) {
                 var key = section.getAttribute('data-dashboard-category');
-                var sectionMatch = activeFilter === 'all' || key === activeFilter;
+                var sectionMatch = showcaseCategories.has(key) && (activeFilter === 'all' || key === activeFilter);
                 var hasVisibleCard = !!section.querySelector('.converter-tool-card:not([hidden]):not([data-count-exclude])');
                 var emptySelection = section.getAttribute('data-empty-category') === 'true' && key === activeFilter && !query;
                 section.hidden = !(sectionMatch && (hasVisibleCard || emptySelection));
@@ -456,8 +489,11 @@
 
         document.querySelectorAll('[data-dashboard-filter]').forEach(function (button) {
             button.addEventListener('click', function () {
-                activeFilter = button.getAttribute('data-dashboard-filter') || 'all';
-                document.querySelectorAll('[data-dashboard-filter]').forEach(function (item) { item.classList.toggle('is-active', item === button); });
+                var selectedFilter = button.getAttribute('data-dashboard-filter') || 'all';
+                activeFilter = activeFilter === selectedFilter ? 'all' : selectedFilter;
+                document.querySelectorAll('[data-dashboard-filter]').forEach(function (item) {
+                    item.classList.toggle('is-active', item.getAttribute('data-dashboard-filter') === activeFilter);
+                });
                 applyFilter();
                 closeMenu();
                 if (activeFilter !== 'all') {
@@ -475,10 +511,9 @@
         if (closeButton) closeButton.addEventListener('click', closeMenu);
         if (overlay) overlay.addEventListener('click', closeMenu);
         document.addEventListener('keydown', function (event) { if (event.key === 'Escape') closeMenu(); });
-        // The default all-category/no-query state is server-rendered. Avoid a
-        // redundant full-card visibility pass during startup; interactive
-        // search and category changes still call applyFilter().
-        if (input && input.value.trim()) applyFilter();
+        // Apply the reversible showcase scope on startup; subsequent search and
+        // category interactions use the same whitelist-aware filter.
+        applyFilter();
     }
 
     function initAll() { initDropdowns(); initHubSearch(); initDashboard(); initFullCardNavigation(); }
