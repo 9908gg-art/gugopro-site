@@ -5,6 +5,7 @@
   };
   const NON_AI_LOCALES=['zh-TW','en','ja'];
   const IS_AI=/\/tools\/ai(?:\/|-)|\/tools\/ai-media\/|\/tools\/health\/(?:tdee-macros-calculator|weight-loss-planner)(?:\.html)?/i.test(location.pathname);
+  const IS_LEGAL_PAGE=/^\/(?:contact|privacy|terms)\.html$/i.test(location.pathname);
   const SUPPORTED=IS_AI?Object.keys(LOCALES):NON_AI_LOCALES, SOURCE='zh-TW', STORAGE_KEY='gugopro_locale';
   let current=SOURCE, textMap=new Map(), fragments=[], fragmentIndex=new Map(), catalogRows=[], isChangingLanguage=false, replacementCache=new Map();
   const norm=v=>String(v??'').replace(/\u00a0/g,' ').replace(/\s+/g,' ').trim();
@@ -237,6 +238,22 @@
     mountSwitcher();
     installCanvasBridge();
     try{
+      if(IS_LEGAL_PAGE){
+        let translations={};
+        if(current!==SOURCE){
+          const legalResponse=await fetchResource(resource('legal-page-translations.json?v=20261003'),{cache:'force-cache'});
+          if(!legalResponse.ok)throw new Error('legal translations '+legalResponse.status);
+          const legal=await legalResponse.json();
+          translations=(legal.translations||{})[current]||{};
+          Object.entries(translations).forEach(([source,target])=>addPair(source,target));
+        }
+        await translateDom();
+        observeRuntime();
+        mountSwitcher();
+        document.documentElement.removeAttribute('data-gugo-i18n-pending');
+        window.GugoProI18n={locale:current,supported:SUPPORTED,status:'machine-draft',catalogKeys:Object.keys(translations).length,missingKeys:0,scoped:true};
+        return;
+      }
       const catalogResponse=await fetchResource(resource('catalog.json'),{cache:'no-store'});if(!catalogResponse.ok)throw new Error('catalog '+catalogResponse.status);
       const raw=await catalogResponse.json();catalogRows=raw.strings||raw.sourceStrings||[];
       const localeResponse=await fetchResource(resource(current+'.json'),{cache:'no-store'});if(!localeResponse.ok)throw new Error('locale '+localeResponse.status);
