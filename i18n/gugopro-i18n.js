@@ -5,9 +5,8 @@
   };
   const NON_AI_LOCALES=['zh-TW','en','ja'];
   const IS_AI=/\/tools\/ai(?:\/|-)|\/tools\/ai-media\/|\/tools\/health\/(?:tdee-macros-calculator|weight-loss-planner)(?:\.html)?/i.test(location.pathname);
-  const IS_LEGAL_PAGE=/^\/(?:contact|privacy|terms)\.html$/i.test(location.pathname);
   const SUPPORTED=IS_AI?Object.keys(LOCALES):NON_AI_LOCALES, SOURCE='zh-TW', STORAGE_KEY='gugopro_locale';
-  let current=SOURCE, textMap=new Map(), fragments=[], fragmentIndex=new Map(), catalogRows=[], isChangingLanguage=false, replacementCache=new Map();
+  let current=SOURCE, textMap=new Map(), fragments=[], fragmentIndex=new Map(), isChangingLanguage=false, replacementCache=new Map();
   const norm=v=>String(v??'').replace(/\u00a0/g,' ').replace(/\s+/g,' ').trim();
   const hasCjk=v=>/[\u3400-\u9fff]/.test(String(v||''));
   const excluded=node=>{const p=node&&node.parentElement;return !p||['SCRIPT','STYLE','NOSCRIPT','TEMPLATE','SVG','PATH'].includes(p.tagName)||p.closest('[data-i18n-ignore]');};
@@ -17,16 +16,17 @@
     if(SUPPORTED.includes(param))return param;
     if(!IS_AI&&param){try{const clean=new URL(location.href);clean.searchParams.delete('lang');history.replaceState({},'',clean.pathname+(clean.search?clean.search:'')+clean.hash);}catch(e){}}
     try{const saved=localStorage.getItem(STORAGE_KEY);if(SUPPORTED.includes(saved))return saved;}catch(e){}
-    let device='en';
-    try{
-      const nav=String(navigator.language||'').toLowerCase();
-      if(nav.startsWith('zh'))device='zh-TW';
-      else if(nav.startsWith('ja'))device='ja';
-    }catch(e){}
-    return SUPPORTED.includes(device)?device:SOURCE;
+    return SOURCE;
   };
   const resource=name=>new URL('/i18n/'+name,location.origin).toString();
-  const fetchResource=(url,options={})=>{const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),2500);return fetch(url,{...options,signal:controller.signal}).finally(()=>clearTimeout(timer));};
+  const pageMapKey=()=>{
+    let path=location.pathname;
+    try{path=decodeURIComponent(path);}catch(e){}
+    path=path.replace(/\/index\.html?$/i,'/').replace(/\.html?$/i,'').replace(/\/+$/,'');
+    const parts=path.replace(/^\/+/, '').split('/').filter(Boolean);
+    return parts.length?parts.map(part=>encodeURIComponent(part)).join('__'):'index';
+  };
+  const fetchResource=(url,options={})=>{const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),8000);return fetch(url,{...options,signal:controller.signal}).finally(()=>clearTimeout(timer));};
   const addPair=(source,target)=>{
     const s=norm(source),t=norm(target);
     if(!s||!t||s===t)return;
@@ -111,12 +111,12 @@
   };
   const updatePageMetadata=()=>{
     document.documentElement.lang=current;
-    document.documentElement.dataset.i18nStatus='machine-draft';
+    document.documentElement.dataset.i18nStatus=current===SOURCE?'source':'machine-draft';
     document.documentElement.dataset.i18nLocale=current;
     const title=translateValue(document.title);if(title!==document.title)document.title=title;
     const description=document.querySelector('meta[name="description"]');if(description){const out=translateValue(description.content);if(out!==description.content)description.content=out;}
     const status=document.querySelector('meta[name="i18n-status"]')||document.head.appendChild(Object.assign(document.createElement('meta'),{name:'i18n-status'}));
-    status.content='machine-draft';
+    status.content=current===SOURCE?'source':'machine-draft';
     const canonical=document.querySelector('link[rel="canonical"]');
     if(canonical){const url=new URL(canonical.href||location.href);url.search='';if(current!==SOURCE)url.searchParams.set('lang',current);canonical.href=url.toString();}
   };
@@ -155,7 +155,7 @@
     document.querySelectorAll('.converter-language-link,.lang-selector,.gugo-static-locale-select').forEach(el=>el.remove());
   };
   const findHost=()=>{
-    const actionHost=document.querySelector('header .nav-actions,header .header-actions,header .nav-right');
+    const actionHost=document.querySelector('header .legal-header-actions,header .nav-actions,header .header-actions,header .nav-right');
     if(actionHost)return {host:actionHost,before:null};
     const nav=document.querySelector('header .nav-container,header .header-container,header .site-header .container,header .container');
     if(nav){
@@ -233,42 +233,29 @@
     observer.observe(document.body,observeOptions);
   };
   const load=async()=>{
-    if(IS_AI){document.documentElement.removeAttribute('data-gugo-i18n-pending');return;}
+    if(IS_AI)return;
     current=localeFromLocation();
     mountSwitcher();
     installCanvasBridge();
     try{
-      if(IS_LEGAL_PAGE){
-        let translations={};
-        if(current!==SOURCE){
-          const legalResponse=await fetchResource(resource('legal-page-translations.json?v=20261003'),{cache:'force-cache'});
-          if(!legalResponse.ok)throw new Error('legal translations '+legalResponse.status);
-          const legal=await legalResponse.json();
-          translations=(legal.translations||{})[current]||{};
-          Object.entries(translations).forEach(([source,target])=>addPair(source,target));
-        }
-        await translateDom();
-        observeRuntime();
-        mountSwitcher();
-        document.documentElement.removeAttribute('data-gugo-i18n-pending');
-        window.GugoProI18n={locale:current,supported:SUPPORTED,status:'machine-draft',catalogKeys:Object.keys(translations).length,missingKeys:0,scoped:true};
-        return;
+      let translations={};
+      if(current!==SOURCE){
+        const mapUrl=resource('page-maps/'+pageMapKey()+'.json?v=20261003');
+        const mapResponse=await fetchResource(mapUrl,{cache:'force-cache'});
+        if(!mapResponse.ok)throw new Error('page map '+mapResponse.status);
+        const bundle=await mapResponse.json();
+        const localeBundle=(bundle.locales||{})[current];
+        if(!localeBundle)throw new Error('page map locale missing: '+current);
+        translations=localeBundle.strings||{};
+        await addPairsInChunks(translations);
+        (localeBundle.dynamic||[]).forEach(item=>addDynamicFragments(item.source,item.target));
       }
-      const catalogResponse=await fetchResource(resource('catalog.json'),{cache:'no-store'});if(!catalogResponse.ok)throw new Error('catalog '+catalogResponse.status);
-      const raw=await catalogResponse.json();catalogRows=raw.strings||raw.sourceStrings||[];
-      const localeResponse=await fetchResource(resource(current+'.json'),{cache:'no-store'});if(!localeResponse.ok)throw new Error('locale '+localeResponse.status);
-      const locale=await localeResponse.json();const translations=locale.translations||{};
-      catalogRows.forEach(row=>addPair(row.text,translations[String(row.id)]||row.text));
-      if(!IS_AI){try{const pageResponse=await fetchResource(resource('nonai-visible-translations.json'),{cache:'no-store'});if(pageResponse.ok){const pageMap=await pageResponse.json();const map=pageMap[current]||{};await addPairsInChunks(map);}}catch(e){} }
-      try{const phrasesResponse=await fetchResource(resource('phrases.json'),{cache:'no-store'});if(phrasesResponse.ok){const phrases=await phrasesResponse.json();Object.entries(phrases.phrases||{}).forEach(([source,map])=>addPair(source,map[current]||source));}}catch(e){}
-      try{const dynamicResponse=await fetchResource(resource(current+'.dynamic.json'),{cache:'no-store'});if(dynamicResponse.ok){const dynamic=await dynamicResponse.json();Object.entries(dynamic.templates||{}).forEach(([id,target])=>{const row=catalogRows.find(item=>String(item.id)===String(id));if(row)addDynamicFragments(row.text,target);});}}catch(e){}
       fragments.sort((a,b)=>b[0].length-a[0].length);
       fragmentIndex=new Map();
       fragments.forEach(([source,target],rank)=>{const key=source[0];if(!fragmentIndex.has(key))fragmentIndex.set(key,[]);fragmentIndex.get(key).push({source,target,rank});});
       await translateDom();observeRuntime();mountSwitcher();
-      document.documentElement.removeAttribute('data-gugo-i18n-pending');
-      window.GugoProI18n={locale:current,supported:SUPPORTED,status:'machine-draft',catalogKeys:catalogRows.length,missingKeys:catalogRows.filter(row=>!Object.prototype.hasOwnProperty.call(translations,String(row.id))).length};
-    }catch(error){document.documentElement.dataset.i18nStatus='machine-draft-resource-error';document.documentElement.removeAttribute('data-gugo-i18n-pending');mountSwitcher();console.warn('[GugoPro i18n] resource load failed; zh-TW DOM retained.',error);}
+      window.GugoProI18n={locale:current,supported:SUPPORTED,status:current===SOURCE?'source':'machine-draft',catalogKeys:Object.keys(translations).length,missingKeys:0,pageMap:pageMapKey()};
+    }catch(error){current=SOURCE;textMap.clear();fragments=[];fragmentIndex.clear();replacementCache.clear();await translateDom();document.documentElement.dataset.i18nStatus='page-map-fallback-source';mountSwitcher();console.warn('[GugoPro i18n] page translation unavailable; source-language DOM retained.',error);window.GugoProI18n={locale:SOURCE,supported:SUPPORTED,status:'fallback-source',catalogKeys:0,missingKeys:0,pageMap:pageMapKey()};}
   };
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',load,{once:true});else load();
 })();
