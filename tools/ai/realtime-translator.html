@@ -688,26 +688,26 @@
 <div class="modal-overlay" id="modal-api">
 <div class="modal-content">
 <div style="display:flex; justify-content:flex-end; margin-bottom:-10px;">
-<button onclick="closeApiKeyModal()" style="background:none; border:none; color:var(--text-dim); font-size:1.2rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+<button id="api-modal-close" aria-label="關閉設定" title="關閉設定" onclick="closeApiKeyModal()" style="background:none; border:none; color:var(--text-dim); font-size:1.2rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
 </div>
-<h3 class="modal-h3"><i class="fa-solid fa-key" style="color: var(--primary-neon);"></i> 🔑 API Key 管理（GugoPro 共用設定）</h3>
-<p class="modal-p">本頁即時翻譯目前使用瀏覽器語音辨識與公開翻譯服務，不會讀取此 Gemini API Key。金鑰會以可還原編碼形式保存在此瀏覽器的 localStorage，供其他支援此金鑰的 GugoPro 工具使用；這不是加密儲存，請勿在共用裝置保存。</p>
-<a class="btn-full btn-tool" href="https://gugopro.com/tools/tutorials/how-to-get-gemini-api-key.html" style="background:rgba(0, 242, 255, 0.1); border: 1px solid rgba(0, 242, 255, 0.3); color:#00f2ff; text-decoration:none; margin-bottom:14px; display:inline-flex; align-items:center; justify-content:center; gap:6px;" target="_blank">
+<h3 class="modal-h3"><i class="fa-solid fa-key" style="color: var(--primary-neon);"></i> 🔑 <span id="api-modal-title">API Key 管理（GugoPro 共用設定）</span></h3>
+<p class="modal-p" id="api-modal-description">本頁即時翻譯目前使用瀏覽器語音辨識與公開翻譯服務，不會讀取此 Gemini API Key。金鑰會以可還原編碼形式保存在此瀏覽器的 localStorage，供其他支援此金鑰的 GugoPro 工具使用；這不是加密儲存，請勿在共用裝置保存。</p>
+<a id="api-modal-help" class="btn-full btn-tool" href="https://gugopro.com/tools/tutorials/how-to-get-gemini-api-key.html" style="background:rgba(0, 242, 255, 0.1); border: 1px solid rgba(0, 242, 255, 0.3); color:#00f2ff; text-decoration:none; margin-bottom:14px; display:inline-flex; align-items:center; justify-content:center; gap:6px;" target="_blank">
                 💡 查看 Gemini API Key 取得說明（供支援的工具使用）
             </a>
 <div id="translator-key-status-box" style="display:none; background: rgba(0,0,0,0.35); border: 1px solid rgba(0,242,255,0.3); border-radius: 8px; padding: 12px; margin-bottom: 14px; text-align:left;">
-<div style="font-size: 0.82rem; color: var(--text-dim); margin-bottom: 4px;">目前已儲存的金鑰（遮罩顯示；本機儲存，非加密）：</div>
+<div id="saved-key-label" style="font-size: 0.82rem; color: var(--text-dim); margin-bottom: 4px;">目前已儲存的金鑰（遮罩顯示；本機儲存，非加密）：</div>
 <div id="translator-masked-key-display" style="font-family: monospace; font-size: 0.95rem; color: #38bdf8;">AIzaSy••••••••</div>
 </div>
 <div class="api-input-group">
-<input autocomplete="off" id="api-key-input" placeholder="貼上您的 Gemini API Key (以 AIzaSy 開頭)" type="password"/>
+<input autocomplete="off" id="api-key-input" aria-label="貼上您的 Gemini API Key（以 AIzaSy 開頭）" placeholder="貼上您的 Gemini API Key（以 AIzaSy 開頭）" type="password"/>
 </div>
 <div style="display:flex; gap:10px; margin-top:10px;">
 <button class="btn-full btn-send" id="btn-save-key" onclick="saveTranslatorApiKey()" style="flex:1; margin-top:0;">
-<i class="fa-solid fa-check"></i> 儲存 API Key
+<i class="fa-solid fa-check"></i> <span id="api-save-label">儲存 API Key</span>
                 </button>
 <button class="btn-back-home" id="btn-clear-translator-key" onclick="clearTranslatorApiKey()" style="display:none; padding:10px 16px; border-color:rgba(239,68,68,0.4); color:#f87171;">
-<i class="fa-solid fa-trash-can"></i> 清除金鑰
+<i class="fa-solid fa-trash-can"></i> <span id="api-clear-label">清除金鑰</span>
                 </button>
 </div>
 </div>
@@ -719,15 +719,15 @@
 <section class="translate-area area-partner" id="partner-area">
 <div class="area-header-bar">
 <div class="lang-select-wrapper">
-<select class="lang-selector" id="partner-lang" title="選擇對方語言">
+<select class="lang-selector" id="partner-lang" title="選擇對方語言" aria-label="選擇對方語言">
 <!-- Options populated by JS -->
 </select>
 </div>
 <div class="area-tools">
-<button class="tool-btn btn-copy" data-target="partner-display" title="複製翻譯結果">
+<button class="tool-btn btn-copy" data-target="partner-display" title="複製翻譯結果" aria-label="複製翻譯結果">
 <i class="fa-solid fa-copy"></i>
 </button>
-<button class="tool-btn btn-flip" id="toggle-flip" title="翻轉視角（面對面專用）">
+<button class="tool-btn btn-flip" id="toggle-flip" title="翻轉視角（面對面專用）" aria-label="翻轉視角（面對面專用）">
 <i class="fa-solid fa-arrows-rotate"></i>
 </button>
 </div>
@@ -747,12 +747,12 @@
 <section class="translate-area area-self" id="self-area">
 <div class="area-header-bar">
 <div class="lang-select-wrapper">
-<select class="lang-selector" id="self-lang" title="選擇我的語言">
+<select class="lang-selector" id="self-lang" title="選擇我的語言" aria-label="選擇我的語言">
 <!-- Options populated by JS -->
 </select>
 </div>
 <div class="area-tools">
-<button class="tool-btn btn-copy" data-target="self-display" title="複製翻譯結果">
+<button class="tool-btn btn-copy" data-target="self-display" title="複製翻譯結果" aria-label="複製翻譯結果">
 <i class="fa-solid fa-copy"></i>
 </button>
 </div>
@@ -835,14 +835,14 @@
 <footer class="footer-bottom site-footer">
 <div style="max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:12px;align-items:center;">
 <p id="footer-copyright">© 2026 GugoPro（gugopro.com）。本頁提供旅遊與日常溝通輔助，不保證翻譯正確。</p>
-<nav aria-label="網站合規資訊" class="legal-links">
+<nav id="footer-legal-nav" aria-label="網站合規資訊" class="legal-links">
 <a id="footer-about" href="/about.html">關於我們</a><span aria-hidden="true">·</span>
 <a id="footer-contact" href="/contact.html">聯絡我們</a><span aria-hidden="true">·</span>
 <a id="footer-privacy" href="/privacy.html">隱私權政策</a><span aria-hidden="true">·</span>
 <a id="footer-terms" href="/terms.html">服務條款</a><span aria-hidden="true">·</span>
 <a id="footer-disclaimer" href="/disclaimer.html">免責聲明</a>
 </nav>
-<p class="footer-support"><a href="mailto:contact@gugopro.com">contact@gugopro.com</a> · <a href="https://ko-fi.com/R1K123XRS9" rel="noopener noreferrer" target="_blank">贊助支持</a></p>
+<p class="footer-support"><a href="mailto:contact@gugopro.com">contact@gugopro.com</a> · <a href="https://ko-fi.com/R1K123XRS9" rel="noopener noreferrer" target="_blank"><span id="footer-support-label">贊助支持</span></a></p>
 <p class="disclaimer" id="ui-disclaimer">免責聲明：語音辨識依瀏覽器服務處理，辨識文字會送往第三方翻譯端點；翻譯僅供日常溝通參考，不適用於高風險決策。</p>
 </div>
 </footer>
@@ -926,7 +926,10 @@
             { code: 'tr-TR', name: 'Türkçe' }, { code: 'pl-PL', name: 'Polski' }
         ];
 
-        // Keep the UI language menu synchronized with every supported translation locale.
+        // Spoken-language selectors keep all 18 choices; the UI selector exposes the three fully localized interfaces.
+        const uiLanguages = languages.filter(lang => ['zh-TW', 'en-US', 'ja-JP'].includes(lang.code));
+
+        // Keep legacy locale strings available; the UI selector exposes only the three complete locales above.
         const uiLocaleText = {
             'zh-TW': { title: 'AI 面對面旅遊對話翻譯｜出國旅遊即時翻譯與雙向語音對話｜GugoPro', backHome: '🏠 返回首頁', statusRecording: '正在聆聽...', statusTranslating: '翻譯中...', partnerWaiting: '等待中...', partnerInit: '你好！點擊此區域開始說話', selfWaiting: '等待中...', selfInit: '你好！點擊此區域開始說話', partnerHint: '對方點擊發話', selfHint: '我方點擊發話', repeatSelf: '重複發話', repeatPartner: '重複發話', modeLabel: '對話模式：', modeTap: '點擊模式', modeWalkie: '對講機模式', disclaimer: '免責聲明：本工具使用瀏覽器語音引擎與公開翻譯服務，僅供參考。', copied: '已複製到剪貼簿', repeated: '已重複播放上一段翻譯' },
             'en-US': { title: 'AI Face-to-Face Travel Conversation Translator | Two-Way Voice Translation | GugoPro', backHome: '🏠 Back home', statusRecording: 'Listening...', statusTranslating: 'Translating...', partnerWaiting: 'Waiting...', partnerInit: 'Hello! Tap this area to speak', selfWaiting: 'Waiting...', selfInit: 'Hello! Tap this area to speak', partnerHint: 'Partner tap to speak', selfHint: 'Self tap to speak', repeatSelf: 'Repeat speech', repeatPartner: 'Repeat speech', modeLabel: 'Mode:', modeTap: 'Tap mode', modeWalkie: 'Walkie-talkie mode', disclaimer: 'Disclaimer: Browser speech and public translation services are for reference only.', copied: 'Copied to clipboard', repeated: 'Repeated the last translation' },
@@ -1003,18 +1006,17 @@
         };
 
         function updateRepeatLabels() {
-            const selfCode = document.getElementById('self-lang')?.value || 'zh-TW';
-            const partnerCode = document.getElementById('partner-lang')?.value || 'en-US';
+            const labels = uiLocaleText[currentLangKey] || uiLocaleText['en-US'];
             const selfLabel = document.getElementById('repeat-self-label');
             const partnerLabel = document.getElementById('repeat-partner-label');
             const selfButton = document.getElementById('repeat-self');
             const partnerButton = document.getElementById('repeat-partner');
-            const selfText = repeatLabels[selfCode]?.self || repeatLabels['en-US'].self;
-            const partnerText = repeatLabels[partnerCode]?.partner || repeatLabels['en-US'].partner;
+            const selfText = labels.repeatSelf || uiLocaleText['en-US'].repeatSelf;
+            const partnerText = labels.repeatPartner || uiLocaleText['en-US'].repeatPartner;
             if (selfLabel) selfLabel.textContent = selfText;
             if (partnerLabel) partnerLabel.textContent = partnerText;
-            if (selfButton) selfButton.title = selfText;
-            if (partnerButton) partnerButton.title = partnerText;
+            if (selfButton) { selfButton.title = selfText; selfButton.setAttribute('aria-label', selfText); }
+            if (partnerButton) { partnerButton.title = partnerText; partnerButton.setAttribute('aria-label', partnerText); }
         }
 
         const uiChromeLabels = {
@@ -1037,6 +1039,49 @@
             'tr-TR': { home:'Ana sayfaya dön', legal:['Hakkımızda','İletişim','Gizlilik Politikası','Hizmet Şartları','Sorumluluk Reddi'], apiSettings:'API anahtarı ayarları', apiSaved:'API anahtarı tarayıcıya kaydedildi' },
             'pl-PL': { home:'Wróć na stronę główną', legal:['O nas','Kontakt','Polityka prywatności','Warunki korzystania','Zastrzeżenie'], apiSettings:'Ustawienia klucza API', apiSaved:'Klucz API zapisany w przeglądarce' }
         };
+        const uiStrings = {
+            'zh-TW': {
+                uiLanguage:'介面語言', partnerLanguage:'選擇對方語言', selfLanguage:'選擇我方語言', copyTranslation:'複製翻譯結果', flipView:'翻轉視角（面對面閱讀）', legalNav:'網站合規資訊', modeSwitcherLabel:'對話模式',
+                footerCopyright:'© 2026 GugoPro（gugopro.com）。本頁提供旅遊與日常溝通輔助，翻譯結果不保證正確。', sponsor:'贊助支持',
+                modalClose:'關閉設定', modalTitle:'API Key 管理（GugoPro 共用設定）',
+                modalDescription:'本頁即時翻譯使用瀏覽器語音辨識與公開翻譯服務，不會讀取此 Gemini API Key。金鑰會以可還原編碼儲存在本瀏覽器 localStorage，供其他支援該金鑰的 GugoPro 工具使用。此方式不是加密，請勿在共用裝置儲存。',
+                modalHelp:'💡 查看 Gemini API Key 取得說明（供支援的工具使用）', savedKeyLabel:'目前已儲存的金鑰（遮罩顯示；儲存在本機，未加密）：',
+                apiKeyPlaceholder:'貼上您的 Gemini API Key（以 AIzaSy 開頭）', saveApiKey:'儲存 API Key', clearApiKey:'清除金鑰',
+                confirmClearKey:'確定要清除已儲存的 API Key 嗎？', keyCleared:'已成功清除 API Key。', invalidKey:'請輸入有效的 Gemini API Key。',
+                noCopyContent:'目前沒有可複製的翻譯內容。', copyFailed:'複製失敗，請手動選取文字複製。', noRepeatSelf:'目前沒有我方翻譯可重播。', noRepeatPartner:'目前沒有對方翻譯可重播。',
+                speechUnsupported:'此瀏覽器不支援語音辨識，請改用 Chrome 或 Safari。', microphonePermission:'請允許麥克風權限以使用語音輸入。',
+                translationBusy:'翻譯服務忙碌中，請稍後重試。', networkError:'網路連線異常，請檢查網路後重試。'
+            },
+            'en-US': {
+                uiLanguage:'Interface language', partnerLanguage:'Choose the other speaker’s language', selfLanguage:'Choose your language', copyTranslation:'Copy translated text', flipView:'Flip view for face-to-face reading', legalNav:'Site information', modeSwitcherLabel:'Conversation mode',
+                footerCopyright:'© 2026 GugoPro (gugopro.com). This tool assists with travel and everyday communication; translation accuracy is not guaranteed.', sponsor:'Support development',
+                modalClose:'Close API settings', modalTitle:'API key settings (shared GugoPro setting)',
+                modalDescription:'This page uses browser speech recognition and a public translation service; it does not use this Gemini API key. The key is stored in this browser’s localStorage using reversible encoding for other GugoPro tools that support it. This is not encryption—do not save the key on a shared device.',
+                modalHelp:'💡 Learn how to get a Gemini API key (for supported tools)', savedKeyLabel:'Saved key (masked; stored in this browser, not encrypted):',
+                apiKeyPlaceholder:'Paste your Gemini API key (starts with AIzaSy)', saveApiKey:'Save API key', clearApiKey:'Clear key',
+                confirmClearKey:'Clear the saved API key?', keyCleared:'The API key has been cleared.', invalidKey:'Enter a valid Gemini API key.',
+                noCopyContent:'There is no translated text to copy yet.', copyFailed:'Copy failed. Select and copy the text manually.', noRepeatSelf:'There is no translation from your side to replay yet.', noRepeatPartner:'There is no translation from the other side to replay yet.',
+                speechUnsupported:'Speech recognition is not supported by this browser. Try Chrome or Safari.', microphonePermission:'Allow microphone access to use voice input.',
+                translationBusy:'The translation service is busy. Please try again shortly.', networkError:'Network error. Check your connection and try again.'
+            },
+            'ja-JP': {
+                uiLanguage:'表示言語', partnerLanguage:'相手の言語を選択', selfLanguage:'自分の言語を選択', copyTranslation:'翻訳結果をコピー', flipView:'向かい合って読むために表示を反転', legalNav:'サイト情報', modeSwitcherLabel:'会話モード',
+                footerCopyright:'© 2026 GugoPro（gugopro.com）。旅行や日常会話を補助するツールであり、翻訳の正確性は保証されません。', sponsor:'開発を支援',
+                modalClose:'API設定を閉じる', modalTitle:'APIキー設定（GugoPro共通設定）',
+                modalDescription:'このページのリアルタイム翻訳ではブラウザーの音声認識と公開翻訳サービスを使用し、このGemini APIキーは使用しません。キーは対応する他のGugoProツールで使えるよう、このブラウザーのlocalStorageに復元可能な形式で保存されます。暗号化ではないため、共有端末には保存しないでください。',
+                modalHelp:'💡 Gemini APIキーの取得方法（対応ツール用）', savedKeyLabel:'保存済みのキー（マスク表示・このブラウザー内に保存。暗号化されていません）：',
+                apiKeyPlaceholder:'Gemini APIキーを貼り付けてください（AIzaSyで始まります）', saveApiKey:'APIキーを保存', clearApiKey:'キーを削除',
+                confirmClearKey:'保存済みのAPIキーを削除しますか？', keyCleared:'APIキーを削除しました。', invalidKey:'有効なGemini APIキーを入力してください。',
+                noCopyContent:'コピーできる翻訳結果はまだありません。', copyFailed:'コピーに失敗しました。テキストを選択して手動でコピーしてください。', noRepeatSelf:'再生できる自分側の翻訳はまだありません。', noRepeatPartner:'再生できる相手側の翻訳はまだありません。',
+                speechUnsupported:'このブラウザーは音声認識に対応していません。ChromeまたはSafariをご利用ください。', microphonePermission:'音声入力を使うには、マイクの使用を許可してください。',
+                translationBusy:'翻訳サービスが混み合っています。しばらくしてからもう一度お試しください。', networkError:'ネットワークエラーです。接続を確認してからもう一度お試しください。'
+            }
+        };
+        function uiText(key) {
+            const strings = uiStrings[currentLangKey] || uiStrings['en-US'];
+            return strings[key] || uiStrings['en-US'][key] || key;
+        }
+
         const pageTitles = {
             'zh-TW':'AI 面對面旅遊對話翻譯｜出國旅遊即時翻譯與雙向語音對話｜GugoPro',
             'zh-CN':'AI 面对面旅行对话翻译｜出国旅行实时翻译与双向语音对话｜GugoPro',
@@ -1081,16 +1126,47 @@
                 if (link) link.textContent = chrome.legal[index];
             });
         }
+        function applyLocalizedUi(langKey) {
+            const text = uiStrings[langKey] || uiStrings['en-US'];
+            const setText = (id, value) => { const element = document.getElementById(id); if (element) element.textContent = value; };
+            const setLabel = (element, value) => { if (element) { element.setAttribute('aria-label', value); element.title = value; } };
+            setText('footer-copyright', text.footerCopyright);
+            setText('footer-support-label', text.sponsor);
+            setText('api-modal-title', text.modalTitle);
+            setText('api-modal-description', text.modalDescription);
+            setText('api-modal-help', text.modalHelp);
+            setText('saved-key-label', text.savedKeyLabel);
+            setText('api-save-label', text.saveApiKey);
+            setText('api-clear-label', text.clearApiKey);
+            const input = document.getElementById('api-key-input');
+            if (input) { input.placeholder = text.apiKeyPlaceholder; input.setAttribute('aria-label', text.apiKeyPlaceholder); }
+            setLabel(document.getElementById('api-modal-close'), text.modalClose);
+            setLabel(document.getElementById('ui-lang-toggle'), text.uiLanguage);
+            setLabel(document.querySelector('.mode-switcher'), text.modeSwitcherLabel);
+            setLabel(document.getElementById('footer-legal-nav'), text.legalNav);
+            setLabel(document.getElementById('partner-lang'), text.partnerLanguage);
+            setLabel(document.getElementById('self-lang'), text.selfLanguage);
+            document.querySelectorAll('.btn-copy').forEach(button => setLabel(button, text.copyTranslation));
+            setLabel(document.getElementById('toggle-flip'), text.flipView);
+        }
+
         function updateUI(langKey) {
             currentLangKey = langKey;
             const t = i18n[langKey] || i18n['en-US'] || i18n['en'];
             const chrome = uiChromeLabels[langKey] || uiChromeLabels['en-US'];
             const pageTitle = pageTitles[langKey] || pageTitles['en-US'];
             const productName = productNames[langKey] || productNames['en-US'];
+            applyLocalizedUi(langKey);
             const titleEl = document.getElementById('page-title');
             if (titleEl) titleEl.textContent = pageTitle;
             const brandEl = document.getElementById('header-tool-name');
-            if (brandEl) brandEl.textContent = productName;
+            if (brandEl) { brandEl.textContent = productName; brandEl.title = productName; brandEl.setAttribute('aria-label', productName); }
+            ['partner-original', 'self-original'].forEach(id => {
+                const original = document.getElementById(id);
+                if (original && ['Waiting...', '等待中...', '待機中...'].includes(original.textContent.trim())) {
+                    original.textContent = t[id === 'partner-original' ? 'partnerWaiting' : 'selfWaiting'];
+                }
+            });
             const homeLink = document.getElementById('ui-back-home');
             const homeLabel = document.getElementById('back-home-label');
             if (homeLabel) homeLabel.textContent = chrome.home;
@@ -1134,10 +1210,10 @@
 
         function localeForBrowser(locale) {
             const value = String(locale || '').toLowerCase();
-            if (value.startsWith('zh-tw') || value.startsWith('zh-hk') || value.startsWith('zh-mo') || value === 'zh') return 'zh-TW';
-            if (value.startsWith('zh')) return 'zh-CN';
-            const match = languages.find(lang => lang.code.toLowerCase() === value) || languages.find(lang => lang.code.split('-')[0].toLowerCase() === value.split('-')[0]);
-            return match ? match.code : null;
+            if (value.startsWith('zh')) return 'zh-TW';
+            if (value.startsWith('en')) return 'en-US';
+            if (value.startsWith('ja')) return 'ja-JP';
+            return null;
         }
         function detectUiLocale() {
             try {
@@ -1154,7 +1230,7 @@
         function initUiLanguageSelector(selectedCode) {
             const selector = document.getElementById('ui-lang-toggle');
             selector.innerHTML = '';
-            languages.forEach(lang => {
+            uiLanguages.forEach(lang => {
                 const option = document.createElement('option');
                 option.value = lang.code;
                 option.textContent = `🌐 ${lang.name}`;
@@ -1201,14 +1277,15 @@
                 e.preventDefault();
                 const targetId = btn.getAttribute('data-target');
                 const text = document.getElementById(targetId).textContent;
-                if (!text || text.includes('Waiting') || text.includes('等待中') || text.includes('Tap to Speak')) {
-                    showToast('無有效內容可複製');
+                const initialPrompts = Object.values(initialPromptByLanguage);
+                if (!text || initialPrompts.includes(text.trim()) || ['Waiting...', '等待中...', '待機中...'].includes(text.trim())) {
+                    showToast(uiText('noCopyContent'));
                     return;
                 }
                 copyText(text).then(() => {
                     showToast(i18n[currentLangKey].copied);
                 }).catch(() => {
-                    showToast('複製失敗，請手動選取');
+                    showToast(uiText('copyFailed'));
                 });
             };
             btn.addEventListener('click', copyHandler);
@@ -1308,9 +1385,9 @@
                 if (data.responseData && data.responseData.translatedText) {
                     return data.responseData.translatedText;
                 }
-                return "翻譯服務忙碌中，請稍候重試";
+                return uiText('translationBusy');
             } catch (err) {
-                return "網路連線異常，請檢查網路";
+                return uiText('networkError');
             }
         }
 
@@ -1332,7 +1409,7 @@
         function repeatSpeech(speaker) {
             const previous = lastSpokenBySpeaker[speaker];
             if (!previous || !previous.text) {
-                showToast(speaker === 'self' ? '尚未有我方可重複播放的翻譯' : '尚未有對方可重複播放的翻譯');
+                showToast(uiText(speaker === 'self' ? 'noRepeatSelf' : 'noRepeatPartner'));
                 return;
             }
             speak(previous.text, previous.lang, speaker);
@@ -1341,7 +1418,7 @@
 
         function startRecording(mode) {
             if (!recognition) {
-                showToast("您的瀏覽器未支援語音辨識功能，請使用 Chrome 或 Safari");
+                showToast(uiText('speechUnsupported'));
                 return;
             }
             if (isRecording) {
@@ -1384,7 +1461,7 @@
                 statusBar.style.display = 'none';
                 document.querySelectorAll('.translate-area').forEach(el => el.classList.remove('recording'));
                 if (event.error === 'not-allowed') {
-                    showToast("請允許麥克風權限以進行語音輸入");
+                    showToast(uiText('microphonePermission'));
                 }
             };
 
@@ -1546,12 +1623,12 @@
         };
 
         window.clearTranslatorApiKey = function() {
-            if (confirm('確定要清除已儲存的 API Key 嗎？')) {
+            if (confirm(uiText('confirmClearKey'))) {
                 setGlobalApiKey('');
                 const input = document.getElementById('api-key-input');
                 if (input) input.value = '';
                 updateTranslatorKeyUI();
-                alert('已成功清除 API Key。');
+                alert(uiText('keyCleared'));
             }
         };
 
@@ -1564,7 +1641,7 @@
             } else if (getGlobalApiKey()) {
                 closeApiKeyModal();
             } else {
-                alert('請輸入有效的 Gemini API Key。');
+                alert(uiText('invalidKey'));
             }
         };
 
