@@ -521,6 +521,17 @@
             word-break: break-word;
         }
 
+        .message-tutor .msg-learning { font-size: 1rem; font-weight: 500; line-height: 1.8; }
+        .tarot-report { padding-right: 36px; font-size: .96rem; line-height: 1.85; overflow-wrap: anywhere; text-align: left; }
+        .tarot-markdown { min-width: 0; overflow-wrap: anywhere; word-break: normal; }
+        .tarot-markdown p { margin: 0 0 .85em; line-height: 1.85; }
+        .tarot-markdown h3, .tarot-markdown h4 { margin: 1.15em 0 .55em; color: #fcd34d; font-size: 1.04rem; line-height: 1.5; }
+        .tarot-markdown h3:first-child, .tarot-markdown h4:first-child { margin-top: 0; }
+        .tarot-markdown ol, .tarot-markdown ul { margin: .25em 0 1em; padding-left: 1.4em; }
+        .tarot-markdown li { margin: .4em 0; padding-left: .15em; line-height: 1.8; }
+        .tarot-markdown strong { color: #fff; font-weight: 800; }
+        .tarot-markdown code { padding: .08em .35em; border-radius: 4px; color: #e9d5ff; background: rgba(255,255,255,.08); }
+
 
 
         .msg-actions {
@@ -8608,18 +8619,82 @@ html, body { overflow-x: hidden; }
             }).join('');
         }
 
-        function renderTarotReport(text) {
-            const lines = String(text || '尚無解讀內容。').replace(/```[a-z]*|```/gi, '').split(/\r?\n/);
-            let html = '<div class="tarot-report tarot-speech-source">';
-            lines.forEach(line => {
-                const trimmed = line.trim();
-                if (!trimmed) { html += '<br>'; return; }
-                const heading = trimmed.match(/^(?:#{1,4}\s*)?(🌟|🔍|💡|一[、.]|二[、.]|三[、.]).*/);
-                if (heading) html += `<div class="tarot-report-section"><h4>${escapeHtml(trimmed.replace(/^#+\s*/, ''))}</h4>`;
-                else if (/^(?:#{1,4}\s*)?(🌟|🔍|💡|一[、.]|二[、.]|三[、.])/.test(trimmed)) html += '</div>';
-                else html += `<p>${escapeHtml(trimmed).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</p>`;
+        function renderTarotMarkdown(text) {
+            let source = String(text || '').replace(/\r\n?/g, '\n').replace(/```[a-z0-9_-]*[ \t]*\n?/gi, '').trim();
+            if (!source) return '<div class="tarot-markdown"></div>';
+            const compactInput = !source.includes('\n');
+            source = source
+                .replace(/[ \t]*(#{1,6}[ \t]+)/g, '\n\n$1')
+                .replace(/[ \t]+(?=\d{1,2}[.)][ \t]+\*\*)/g, '\n')
+                .replace(/([：:])(?=\d{1,2}[.)][ \t]+\*\*)/g, '$1\n')
+                .replace(/(?<!\d[.)])[ \t]+(?=\*\*[^*\n]{1,40}[：:]\*\*)/g, '\n\n')
+                .replace(/[ \t]+(?=[•-][ \t]+)/g, '\n')
+                .replace(/[ \t]*\n[ \t]*/g, '\n')
+                .replace(/\n{3,}/g, '\n\n')
+                .trim();
+            const html = [];
+            let paragraphLines = [];
+            let listTag = '';
+            const closeList = () => { if (listTag) { html.push(`</${listTag}>`); listTag = ''; } };
+            const renderInline = value => escapeHtml(value)
+                .replace(/`([^`\n]+)`/g, '<code>$1</code>')
+                .replace(/\*{3}([^*\n]+?)\*{2,3}/g, '<strong><em>$1</em></strong>')
+                .replace(/\*\*([^*\n]+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/g, '$1<em>$2</em>')
+                .replace(/\n/g, '<br>');
+            const splitDenseParagraph = value => {
+                if (!compactInput || value.length < 280) return [value];
+                const sentences = value.split(/(?<=[。！？!?])\s*/u).filter(Boolean);
+                if (sentences.length < 4) return [value];
+                const groups = [];
+                for (let index = 0; index < sentences.length; index += 2) groups.push(sentences.slice(index, index + 2).join(''));
+                return groups;
+            };
+            const flushParagraph = () => {
+                if (!paragraphLines.length) return;
+                const value = paragraphLines.join('\n');
+                splitDenseParagraph(value).forEach(part => html.push(`<p>${renderInline(part)}</p>`));
+                paragraphLines = [];
+            };
+            const addHeading = (value, level, splitCompact = false) => {
+                flushParagraph(); closeList();
+                let heading = value.trim(); let remainder = '';
+                if (compactInput && splitCompact) {
+                    const boundary = heading.search(/[，。！？：:；]/);
+                    if (boundary >= 8 && boundary <= 72) {
+                        remainder = heading.slice(boundary + 1).trim();
+                        heading = heading.slice(0, boundary).trim();
+                    }
+                }
+                const tag = level <= 1 ? 'h3' : 'h4';
+                html.push(`<${tag}>${renderInline(heading)}</${tag}>`);
+                if (remainder) { paragraphLines.push(remainder); flushParagraph(); }
+            };
+            source.split('\n').forEach(rawLine => {
+                const line = rawLine.trim();
+                if (!line) { flushParagraph(); closeList(); return; }
+                const markdownHeading = line.match(/^(#{1,6})\s+(.+)$/);
+                if (markdownHeading) { addHeading(markdownHeading[2], markdownHeading[1].length, true); return; }
+                const legacyHeading = line.match(/^(🌟|🔍|💡|🪄|🔵|🃏|🔮|一[、.]|二[、.]|三[、.])\s*(.+)$/);
+                if (legacyHeading) { addHeading(line, 2); return; }
+                const orderedItem = line.match(/^\d{1,2}[.)]\s+(.+)$/);
+                const bulletItem = line.match(/^[-•]\s+(.+)$/);
+                if (orderedItem || bulletItem) {
+                    flushParagraph();
+                    const nextListTag = orderedItem ? 'ol' : 'ul';
+                    if (listTag !== nextListTag) { closeList(); html.push(`<${nextListTag}>`); listTag = nextListTag; }
+                    html.push(`<li>${renderInline((orderedItem || bulletItem)[1])}</li>`);
+                    return;
+                }
+                closeList(); paragraphLines.push(line);
             });
-            return html + '</div>';
+            flushParagraph(); closeList();
+            return `<div class="tarot-markdown">${html.join('')}</div>`;
+        }
+
+        function renderTarotReport(text) {
+            const report = text || '尚無解讀內容。';
+            return `<div class="tarot-report tarot-speech-source">${renderTarotMarkdown(report)}</div>`;
         }
 
         function tarotActionHtml(reading) {
@@ -8811,7 +8886,7 @@ html, body { overflow-x: hidden; }
                 const stored = room.messages.find(message => message.id === loadingId);
                 if (stored) { stored.learning = responseText; stored.extraHtml = ''; }
                 const element = document.querySelector(`[data-id="${loadingId}"]`);
-                if (element) { const learning = element.querySelector('.msg-learning'); if (learning) learning.textContent = responseText; }
+                if (element) { const learning = element.querySelector('.msg-learning'); if (learning) learning.innerHTML = renderTarotMarkdown(responseText); }
                 saveRoomsToLocal();
                 scrollToLatestMessage(loadingId);
             } catch (error) {
@@ -8961,7 +9036,10 @@ html, body { overflow-x: hidden; }
             div.dataset.id = id;
             div.innerHTML = `<div class="msg-learning"></div><div class="msg-extra"></div><div class="msg-actions"><button class="btn-msg-action btn-msg-delete" onclick="deleteMessage('${id}')" title="刪除"><i class="fa-solid fa-trash-can"></i></button></div>`;
             const learningEl = div.querySelector('.msg-learning');
-            if (learningEl) learningEl.textContent = learning || '';
+            if (learningEl) {
+                if (role === 'tutor') learningEl.innerHTML = renderTarotMarkdown(learning || '');
+                else learningEl.textContent = learning || '';
+            }
             if (extraHtml) div.querySelector('.msg-extra').innerHTML = extraHtml;
             if (correction && correction !== 'null') {
                 const correctionEl = document.createElement('div');
