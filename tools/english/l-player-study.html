@@ -1556,7 +1556,7 @@ body[data-training-mode=listening] .control-row-top,body[data-training-mode=dict
   const apiSubtitleCache = new Map();
   const staticSubtitleCache = new Map();
   async function fetchStaticSubtitleData(id) { if(staticSubtitleCache.has(id))return staticSubtitleCache.get(id); const q=fetch("/data/subtitles/"+encodeURIComponent(id)+".json",{cache:"force-cache",credentials:"same-origin",headers:{Accept:"application/json"}}).then(r=>r.ok?r.json():null).catch(()=>null); staticSubtitleCache.set(id,q); return q; }
-  function staticCues(data,language) { if(!data)return []; const code=apiLanguageCode(language||"en"), values=data.languages?.[language]||data.languages?.[code]||data.tracks?.[language]||data.tracks?.[code]||(Array.isArray(data)?data:data.segments||data.cues||data.captions); return Array.isArray(values)?parseJsonCaptions(JSON.stringify(values)):[]; }
+  function staticCues(data,language) { if(!data)return []; const code=apiLanguageCode(language||"en"), explicit=data.languages?.[language]||data.languages?.[code]||data.tracks?.[language]||data.tracks?.[code], rootTrack=Array.isArray(data)?data:(data.segments||data.cues||data.captions), values=explicit||((code==="en"&&Array.isArray(rootTrack))?rootTrack:[]); return Array.isArray(values)?parseJsonCaptions(JSON.stringify(values)):[]; }
   async function loadStaticTracks(id,sourceLang,helperLang) { const data=await fetchStaticSubtitleData(id), primary=staticCues(data,sourceLang); if(!primary.length)return null; state.usedLocalCache=true; return pairByTimestamp(primary,helperLang!=="none"?staticCues(data,helperLang):[]); }
   const API_TIMEOUTS = [75000, 90000];
   const API_RETRY_DELAY_MS = 1500;
@@ -1983,7 +1983,40 @@ body[data-training-mode=listening] .control-row-top,body[data-training-mode=dict
     let nativeTargetError = null;
 
     const staticCaptions = await loadStaticTracks(id, sourceLang, helperLang);
-    if (staticCaptions?.length) { applyCaptionList(staticCaptions); return; }
+    if (staticCaptions?.length) {
+      applyCaptionList(staticCaptions);
+      const needsStaticTranslation =
+        helperLang !== "none" &&
+        apiLanguageCode(helperLang) !== sourceLang &&
+        staticCaptions.some((cue) => !cue.secondary);
+      if (needsStaticTranslation) {
+        $("status").textContent = t("statusTranslating", { n: staticCaptions.length });
+        $("playerState").textContent = $("status").textContent;
+        try {
+          await translateSentenceCues(
+            staticCaptions,
+            helperLang,
+            (done, total) => {
+              if (state.id === id && state.captionRequestId === requestId)
+                $("status").textContent = t("statusTranslatingProgress", { done, total });
+            },
+            () => state.id === id && state.captionRequestId === requestId,
+            sourceLang,
+          );
+          if (state.id !== id || state.captionRequestId !== requestId) return;
+          await persistStoredTranslations(id, sourceLang, helperLang, staticCaptions);
+          const message = loadedCaptionStatus(staticCaptions.length);
+          $("status").textContent = message;
+          $("playerState").textContent = message;
+          render();
+          saveProgress();
+        } catch (_) {
+          // Keep the original English captions visible if translation is unavailable.
+          render();
+        }
+      }
+      return;
+    }
     // Prefer a creator/native target-language track before using machine translation.
     if (helperLang !== "none" && apiLanguageCode(helperLang) !== sourceLang) {
       try {
