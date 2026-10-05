@@ -266,6 +266,13 @@ body.theme-jp .btn-facet-jump { background: linear-gradient(135deg, #FF3366, #C7
 .filter-option { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; color: var(--text-muted); transition: all 0.15s; }
 .filter-option:hover { background: rgba(255,255,255,0.05); color: #fff; }
 .filter-option input[type="checkbox"] { accent-color: var(--accent); width: 16px; height: 16px; }
+.filter-select-label { display:grid; gap:6px; color:var(--text-muted); font-size:.72rem; }
+.filter-select-label select, .price-filter-grid input { width:100%; min-width:0; padding:8px 9px; border:1px solid var(--border-card); border-radius:8px; background:rgba(0,0,0,.28); color:#fff; font:inherit; font-size:.74rem; outline:none; }
+.filter-select-label select:focus, .price-filter-grid input:focus { border-color:var(--accent); }
+.price-filter-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:9px; }
+.price-filter-grid label { display:grid; gap:5px; color:var(--text-muted); font-size:.68rem; }
+.filter-help-text { margin:8px 0 0; color:var(--text-muted); font-size:.64rem; line-height:1.45; }
+@media (max-width:600px) { .price-filter-grid { grid-template-columns:1fr; } }
 
 
 /* Unified model settings and room controls */
@@ -592,14 +599,21 @@ body { height: 100vh; min-height: 100vh; height: 100dvh; min-height: 100dvh; dis
 </div>
 <div class="research-actions"><button id="btn-copy-research-brief" type="button"><i class="fa-solid fa-copy"></i> 複製研究摘要</button><button id="btn-export-research-brief" type="button"><i class="fa-solid fa-download"></i> 下載 Markdown</button></div>
 </div>
-<div class="filter-group model-settings-section">
-<div class="filter-group-title"><span><i class="fa-solid fa-robot"></i> 模型設定 / Model Settings</span><button aria-label="重新整理免費模型清單" class="model-refresh-button" id="btn-refresh-models" title="重新整理免費模型清單" type="button"><i class="fa-solid fa-rotate"></i></button></div>
-<p aria-live="polite" class="model-settings-status" id="model-settings-status">正在載入站內免費模型清單...</p>
-<p aria-live="polite" class="model-current-status" id="model-current-status">目前使用模型：載入中…</p>
-<p aria-live="polite" class="global-ai-quota-status" id="global-ai-quota-status"></p>
-<p aria-live="polite" class="global-ai-quota-reset" id="global-ai-quota-reset">配額重置倒數：計算中…</p>
-<div aria-live="polite" class="global-ai-quota-pill" id="global-ai-quota-pill"><div class="global-ai-quota-item">📊 今日免費用量上限<strong id="global-ai-quota-limit">讀取中…</strong></div><div class="global-ai-quota-item">⚡ 今日已使用量<strong id="global-ai-quota-used">讀取中…</strong></div></div>
-<div aria-label="免費模型清單，使用開關控制" class="model-options" id="model-options" role="list"></div>
+<div class="filter-group amazon-search-options">
+<div class="filter-group-title"><i class="fa-solid fa-sliders"></i> 搜尋排序與價格</div>
+<label class="filter-select-label" for="amazon-sort-order">排序方式
+<select id="amazon-sort-order">
+<option value="featured-rank">熱門推薦</option>
+<option value="price-asc-rank">價格由低至高</option>
+<option value="price-desc-rank">價格由高至低</option>
+<option value="review-rank">評價與評論優先</option>
+</select>
+</label>
+<div class="price-filter-grid">
+<label for="amazon-min-price">最低價格<input id="amazon-min-price" inputmode="decimal" min="0" placeholder="可選" step="1" type="number"/></label>
+<label for="amazon-max-price">最高價格<input id="amazon-max-price" inputmode="decimal" min="0" placeholder="可選" step="1" type="number"/></label>
+</div>
+<p class="filter-help-text">價格使用目前 Amazon 市場的當地貨幣；US 為美元，JP 為日圓。條件會套用到下一個 Amazon 搜尋連結。</p>
 </div>
 <div class="filter-group">
 <div class="filter-group-title"><i class="fa-solid fa-truck-fast"></i> Prime 與配送</div>
@@ -619,6 +633,15 @@ body { height: 100vh; min-height: 100vh; height: 100dvh; min-height: 100dvh; dis
 <div class="filter-group-title"><i class="fa-solid fa-box"></i> 商品狀況</div>
 <label class="filter-option"><input id="f-new" type="checkbox" value="p_n_condition-type:New"/> 全新 (New)</label>
 <label class="filter-option"><input id="f-used" type="checkbox" value="p_n_condition-type:Used"/> 二手/整新品 (Used)</label>
+</div>
+<div class="filter-group model-settings-section">
+<div class="filter-group-title"><span><i class="fa-solid fa-robot"></i> 模型設定 / Model Settings</span><button aria-label="重新整理免費模型清單" class="model-refresh-button" id="btn-refresh-models" title="重新整理免費模型清單" type="button"><i class="fa-solid fa-rotate"></i></button></div>
+<p aria-live="polite" class="model-settings-status" id="model-settings-status">正在載入站內免費模型清單...</p>
+<p aria-live="polite" class="model-current-status" id="model-current-status">目前使用模型：載入中…</p>
+<p aria-live="polite" class="global-ai-quota-status" id="global-ai-quota-status"></p>
+<p aria-live="polite" class="global-ai-quota-reset" id="global-ai-quota-reset">配額重置倒數：計算中…</p>
+<div aria-live="polite" class="global-ai-quota-pill" id="global-ai-quota-pill"><div class="global-ai-quota-item">📊 今日免費用量上限<strong id="global-ai-quota-limit">讀取中…</strong></div><div class="global-ai-quota-item">⚡ 今日已使用量<strong id="global-ai-quota-used">讀取中…</strong></div></div>
+<div aria-label="免費模型清單，使用開關控制" class="model-options" id="model-options" role="list"></div>
 </div>
 </div>
 <!-- API Key Modal -->
@@ -804,6 +827,12 @@ function getSelectedFilters() {
   checks.forEach(function(c) { rh.push(c.value); });
   return rh;
 }
+function getAmazonSearchOptions() {
+  var sort = document.getElementById('amazon-sort-order')?.value || 'featured-rank';
+  var minPrice = (document.getElementById('amazon-min-price')?.value || '').trim();
+  var maxPrice = (document.getElementById('amazon-max-price')?.value || '').trim();
+  return { sort: sort, minPrice: minPrice, maxPrice: maxPrice };
+}
 
 
 function saveAmazonRooms() {
@@ -841,6 +870,7 @@ function formatResearchBriefMarkdown() {
   var lines = ['# Amazon AI 選品研究摘要', '', '- 研究室：' + (room?.name || '未命名'), '- 目標市場：Amazon ' + (currentMarket === 'jp' ? 'JP' : 'US'), '- 匯出時間：' + new Date().toISOString(), ''];
   [['預算上限','budget'],['主要使用情境','useCase'],['必備條件','mustHave'],['避雷條件','avoid']].forEach(function(pair) { lines.push('## ' + pair[0]); lines.push(brief[pair[1]] || '未設定'); lines.push(''); });
   var filters = getSelectedFilters(); lines.push('## 已選商城篩選'); lines.push(filters.length ? filters.map(function(item) { return '- `' + item + '`'; }).join('\\n') : '未選擇額外篩選');
+  var searchOptions = getAmazonSearchOptions(); lines.push('', '## 搜尋排序與價格', '- 排序：' + ({'featured-rank':'熱門推薦','price-asc-rank':'價格由低至高','price-desc-rank':'價格由高至低','review-rank':'評價與評論優先'}[searchOptions.sort] || '熱門推薦'), '- 最低價格：' + (searchOptions.minPrice || '未設定'), '- 最高價格：' + (searchOptions.maxPrice || '未設定'));
   return lines.join('\\n');
 }
 function copyAmazonText(text) {
@@ -909,6 +939,10 @@ function buildAmazonUrl(keyword, extraTags, targetMarketKey) {
   url.searchParams.set('tag', tag);
   var rh = getSelectedFilters();
   if (rh.length > 0) url.searchParams.set('rh', rh.join(','));
+  var searchOptions = getAmazonSearchOptions();
+  if (searchOptions.sort && searchOptions.sort !== 'featured-rank') url.searchParams.set('s', searchOptions.sort);
+  if (/^\d+(?:\.\d+)?$/.test(searchOptions.minPrice)) url.searchParams.set('low-price', searchOptions.minPrice);
+  if (/^\d+(?:\.\d+)?$/.test(searchOptions.maxPrice)) url.searchParams.set('high-price', searchOptions.maxPrice);
   return url.toString();
 }
 
