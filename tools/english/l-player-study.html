@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#08101c;--panel:#101b2c;--panel2:#0b1423;--line:rgba(148,163,184,.18);--text:#f8fafc;--muted:#91a4bd;--blue:#55a5ff;--cyan:#55dfd1;--amber:#f5c15d;--red:#ff7b8b;--top:48px}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 10% 0,rgba(44,111,213,.2),transparent 34rem),var(--bg);color:var(--text);font:13px/1.45 Inter,"Noto Sans TC","Noto Sans JP",system-ui,sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}.shell{width:min(96%,1680px);margin:auto}.topbar{height:var(--top);background:rgba(8,16,28,.95);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}.topbar-inner{height:100%;display:flex;align-items:center;gap:10px}.brand{color:var(--text);text-decoration:none;font-weight:800;white-space:nowrap;display:flex;align-items:center;gap:7px}.brand-mark{width:25px;height:25px;border-radius:7px;display:grid;place-items:center;background:linear-gradient(135deg,var(--blue),var(--cyan));color:#06101c;font-weight:900}.home-link{color:var(--muted);text-decoration:none;padding:5px 8px;border:1px solid var(--line);border-radius:7px;white-space:nowrap}.home-link:hover{color:var(--text);border-color:var(--blue)}.loader{display:flex;align-items:center;gap:6px;flex:1;min-width:200px;margin-left:12px}.loader input{min-width:80px;flex:1;height:30px;padding:4px 10px;color:var(--text);background:#0b1525;border:1px solid var(--line);border-radius:7px;outline:none}.paste-btn{display:none}.loader input:focus,.lang-select:focus,.caption-search:focus,.manual-text:focus{border-color:var(--blue)}
+:root{--bg:#08101c;--panel:#101b2c;--panel2:#0b1423;--line:rgba(148,163,184,.18);--text:#f8fafc;--muted:#91a4bd;--blue:#55a5ff;--cyan:#55dfd1;--amber:#f5c15d;--red:#ff7b8b;--top:48px}*{box-sizing:border-box}[hidden]{display:none!important}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 10% 0,rgba(44,111,213,.2),transparent 34rem),var(--bg);color:var(--text);font:13px/1.45 Inter,"Noto Sans TC","Noto Sans JP",system-ui,sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}.shell{width:min(96%,1680px);margin:auto}.topbar{height:var(--top);background:rgba(8,16,28,.95);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}.topbar-inner{height:100%;display:flex;align-items:center;gap:10px}.brand{color:var(--text);text-decoration:none;font-weight:800;white-space:nowrap;display:flex;align-items:center;gap:7px}.brand-mark{width:25px;height:25px;border-radius:7px;display:grid;place-items:center;background:linear-gradient(135deg,var(--blue),var(--cyan));color:#06101c;font-weight:900}.home-link{color:var(--muted);text-decoration:none;padding:5px 8px;border:1px solid var(--line);border-radius:7px;white-space:nowrap}.home-link:hover{color:var(--text);border-color:var(--blue)}.loader{display:flex;align-items:center;gap:6px;flex:1;min-width:200px;margin-left:12px}.loader input{min-width:80px;flex:1;height:30px;padding:4px 10px;color:var(--text);background:#0b1525;border:1px solid var(--line);border-radius:7px;outline:none}.paste-btn{display:none}.loader input:focus,.lang-select:focus,.caption-search:focus,.manual-text:focus{border-color:var(--blue)}
 .subtitle-hint{display:flex;align-items:center;gap:9px;min-height:0;padding:0;transition:padding .2s,opacity .2s;color:#ffe4a4;font-size:12px}
 .subtitle-hint:not([hidden]){padding:8px 2%;background:rgba(245,193,93,.08);border-bottom:1px solid rgba(245,193,93,.22)}
 .subtitle-hint strong{color:#fff}.subtitle-hint button{height:30px;border:1px solid rgba(245,193,93,.65);border-radius:7px;color:#ffe4a4;background:rgba(245,193,93,.12);font-weight:800;white-space:nowrap}.subtitle-hint button:hover{background:rgba(245,193,93,.22)}
@@ -1955,6 +1955,7 @@ body[data-training-mode=listening] .control-row-top,body[data-training-mode=dict
     }
   }
   function applyCaptionList(captions) {
+    setManualGuideVisible(!(state.usedLocalCache && state.id === "CcqO2yhK9N0"));
     state.captions = captions;
     state.active = state.pendingRestore ? -1 : captions.length ? 0 : -1;
     state.paused = false;
@@ -2370,6 +2371,7 @@ body[data-training-mode=listening] .control-row-top,body[data-training-mode=dict
     state.demo = Boolean(isDemo);
     state.manualCaptionSource = Boolean(restore?.source === "manual");
     state.videoTitle = id === "CcqO2yhK9N0" ? "Dad, Trust Me! I Didn't Fail the Test!" : (restore?.title || "YouTube · " + id);
+    setManualGuideVisible(id !== "CcqO2yhK9N0");
     state.offset = 0;
     state.captions = [];
     state.active = -1;
@@ -2563,7 +2565,16 @@ body[data-training-mode=listening] .control-row-top,body[data-training-mode=dict
     hint.hidden = false;
     button.classList.toggle("pulse-guide", Boolean(pulse));
   }
+  function setManualGuideVisible(visible) {
+    const button = $("manualTutorialButton");
+    if (button) button.hidden = !visible;
+    if (!visible) {
+      setSubtitleHint("");
+      button?.classList.remove("pulse-guide");
+    }
+  }
   function markManualGuideNeeded() {
+    setManualGuideVisible(true);
     setSubtitleHint(t("manualHint"), true);
     $("manualTutorialButton")?.classList.add("pulse-guide");
   }
