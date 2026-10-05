@@ -86,6 +86,8 @@ body.theme-jp .market-btn.active { background: linear-gradient(135deg, #FF3366, 
 .hero { text-align: center; padding: 28px 16px 10px; max-width: 700px; margin: 0 auto; }
 .hero h1 { font-size: clamp(1.3rem, 3.5vw, 2rem); font-weight: 800; font-family: 'Outfit', sans-serif; background: linear-gradient(135deg, #fff 30%, var(--accent) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 6px; }
 .hero p { color: var(--text-muted); font-size: 0.85rem; line-height: 1.5; }
+.hero { transition: opacity 160ms ease, transform 160ms ease, max-height 160ms ease, padding 160ms ease; }
+.hero.is-collapsed { display: none; }
 
 /* Chat Container */
 
@@ -396,7 +398,7 @@ body { height: 100vh; min-height: 100vh; height: 100dvh; min-height: 100dvh; dis
 
 /* Desktop information architecture: settings are a persistent right rail, not a collapsible overlay. */
 @media (min-width: 901px) {
-  .hero { max-width: none; margin-right: 340px; }
+  .hero { width: calc(100% - 340px); max-width: none; box-sizing: border-box; margin: 0; text-align: center; }
   .chat-wrapper { width: calc(100% - 340px); max-width: none; margin-left: 0; margin-right: 340px; }
   .filter-drawer { right: 0; width: 340px; max-width: 340px; box-shadow: -12px 0 32px rgba(0,0,0,.24); }
   .filter-drawer .drawer-close { display: none; }
@@ -838,6 +840,12 @@ function getAmazonSearchOptions() {
 function saveAmazonRooms() {
   localStorage.setItem(AMAZON_ROOM_STORAGE_KEY, JSON.stringify({ rooms: amazonRooms, activeRoomId: activeAmazonRoomId }));
 }
+function setHeroVisibility(show) {
+  var hero = document.querySelector('.hero');
+  if (!hero) return;
+  hero.classList.toggle('is-collapsed', !show);
+  hero.setAttribute('aria-hidden', show ? 'false' : 'true');
+}
 function activeAmazonRoom() { return amazonRooms.find(function(room) { return room.id === activeAmazonRoomId; }) || amazonRooms[0]; }
 function emptyResearchBrief() { return { budget:'', useCase:'', mustHave:'', avoid:'' }; }
 function normaliseResearchBrief(brief) { return Object.assign(emptyResearchBrief(), brief && typeof brief === 'object' ? brief : {}); }
@@ -918,10 +926,12 @@ function loadAmazonRooms() {
   if (!amazonRooms.length) { amazonRooms = [{ id: 'room_' + Date.now(), name: '一般選品研究', messages: [], createdAt: new Date().toISOString() }]; activeAmazonRoomId = amazonRooms[0].id; }
   if (!amazonRooms.some(function(room) { return room.id === activeAmazonRoomId; })) activeAmazonRoomId = amazonRooms[0].id;
     amazonRooms.forEach(function(room) { if (!Array.isArray(room.messages)) room.messages = []; room.research = normaliseResearchBrief(room.research); });
+  var initialRoom = activeAmazonRoom();
+  setHeroVisibility(!(initialRoom && initialRoom.messages && initialRoom.messages.length));
   saveAmazonRooms(); renderAmazonRooms(); renderAmazonRoomMessages(); renderResearchBrief();
 }
-function switchAmazonRoom(roomId) { if (!amazonRooms.some(function(room) { return room.id === roomId; })) return; activeAmazonRoomId = roomId; saveAmazonRooms(); renderAmazonRooms(); renderAmazonRoomMessages(); renderResearchBrief(); toggleDrawer(false); }
-function createAmazonRoom() { var name = prompt('請輸入新購物研究室名稱：', '新選品研究'); if (!name) return; var room = { id: 'room_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), name: name.trim(), research: emptyResearchBrief(), messages: [], createdAt: new Date().toISOString() }; amazonRooms.unshift(room); activeAmazonRoomId = room.id; saveAmazonRooms(); renderAmazonRooms(); renderAmazonRoomMessages(); renderResearchBrief(); toggleDrawer(false); }
+function switchAmazonRoom(roomId) { if (!amazonRooms.some(function(room) { return room.id === roomId; })) return; activeAmazonRoomId = roomId; var room=activeAmazonRoom(); setHeroVisibility(!(room && room.messages && room.messages.length)); saveAmazonRooms(); renderAmazonRooms(); renderAmazonRoomMessages(); renderResearchBrief(); toggleDrawer(false); }
+function createAmazonRoom() { var name = prompt('請輸入新購物研究室名稱：', '新選品研究'); if (!name) return; var room = { id: 'room_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), name: name.trim(), research: emptyResearchBrief(), messages: [], createdAt: new Date().toISOString() }; amazonRooms.unshift(room); activeAmazonRoomId = room.id; setHeroVisibility(true); saveAmazonRooms(); renderAmazonRooms(); renderAmazonRoomMessages(); renderResearchBrief(); toggleDrawer(false); }
 function persistAmazonMessage(role, html, photoSrc) { var room = activeAmazonRoom(); if (!room) return; room.messages.push({ role: role, html: html, photoSrc: photoSrc || null, createdAt: new Date().toISOString() }); room.updatedAt = new Date().toISOString(); saveAmazonRooms(); }
 function scrollAmazonMessages(target) { var container = document.getElementById('chat-messages'); if (!container) return; requestAnimationFrame(function() { var top = target ? Math.max(0, target.offsetTop - 20) : container.scrollHeight; container.scrollTo({ top: top, behavior: 'smooth' }); }); }
 
@@ -948,6 +958,7 @@ function buildAmazonUrl(keyword, extraTags, targetMarketKey) {
 
 /* ===== CHAT UI ===== */
 function addMessage(role, html, photoSrc, persist) {
+  setHeroVisibility(false);
   var welcome = document.getElementById('welcome-section'); if (welcome) welcome.style.display = 'none';
   var container = document.getElementById('chat-messages'); var div = document.createElement('div');
   div.className = 'msg ' + role;
