@@ -255,6 +255,9 @@ body{min-height:100dvh}
 </style><style id="history-thumbnail-styles">
 .history-drawer{width:340px!important;padding:9px!important}.history-entry{align-items:center;gap:8px;padding:8px 0}.history-load{display:block;flex:1;height:72px;padding:0;overflow:hidden;border:1px solid rgba(85,165,255,.35);border-radius:8px;background:#07101d;cursor:pointer}.history-load:hover,.history-load:focus-visible{border-color:var(--cyan);outline:none;box-shadow:0 0 0 2px rgba(85,223,209,.18)}.history-thumb{display:block;width:100%;height:100%;object-fit:cover;background:#172b48}.history-delete{flex:0 0 auto;width:30px;height:30px;padding:0}
 @media(max-width:600px){.history-drawer{width:min(340px,calc(100vw - 20px))!important}.history-load{height:64px}}
+</style><style id="final-history-grid-and-load-gate">
+.history-drawer{width:360px!important;max-height:min(72vh,620px);overflow:hidden}.history-list,#historyList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;max-height:min(60vh,520px);overflow-y:auto;padding:3px 2px 5px}.history-entry{position:relative;display:block!important;min-width:0;padding:0!important;border:0!important}.history-load{display:block;width:100%;height:auto!important;aspect-ratio:16/9;min-height:0;padding:0;overflow:hidden;border:1px solid rgba(85,165,255,.4);border-radius:8px;background:#07101d}.history-thumb{width:100%;height:100%;aspect-ratio:16/9;object-fit:cover}.history-delete{position:absolute;right:5px;bottom:5px;width:27px;height:27px;border:1px solid rgba(255,255,255,.65);border-radius:50%;color:#fff;background:rgba(7,16,29,.88);font-size:13px;line-height:1}.history-delete:hover,.history-delete:focus-visible{border-color:#ff8f9b;color:#fff;background:#8b1e2d;outline:none}
+@media(max-width:600px){.history-drawer{width:min(360px,calc(100vw - 20px))!important}.history-list,#historyList{gap:7px}.history-delete{right:4px;bottom:4px}}
 </style></head>
 <body>
 <header class="topbar"><div class="shell topbar-inner"><a class="brand" href="../../index.html"><span class="brand-mark">G</span><span class="brand-copy"><span class="brand-title" data-i18n="brand">YouTube 影音「聽・寫・說」多國語言學習器</span><small class="brand-tagline" data-training-copy="tagline">聽力盲聽・單句聽寫・口說對比 三合一沉浸式學習系統</small></span></a><a class="home-link" href="../../index.html" data-i18n="home">← 首頁</a><div class="loader"><input id="videoUrl" type="url" placeholder="貼上 YouTube 影片網址" data-i18n-placeholder="url"><button class="btn paste-btn" id="pasteVideoUrl" type="button" aria-label="貼上影片網址">📋 貼上</button><button class="btn cyan" id="loadVideo" data-i18n="load">載入影片</button><button class="history-toggle" id="historyToggle" type="button">🕘 歷史</button><div class="history-drawer" id="historyDrawer" hidden><div class="history-title">影片歷史紀錄</div><div id="historyList"></div><button class="history-clear" id="clearHistory" type="button">清除所有紀錄</button></div><div class="quick"><button data-video="CcqO2yhK9N0" data-static-demo="true" data-i18n="demo">🎬 載入精選示範影片</button></div></div><div class="top-langs"><label for="interfaceLang" data-i18n="ui">介面</label><select class="lang-select" id="interfaceLang"><option value="zh-TW">繁中</option><option value="en">EN</option><option value="ja">JA</option></select></div></div></header>
@@ -2502,7 +2505,7 @@ body{min-height:100dvh}
           const v = readHistory()[Number(b.dataset.historyIndex)];
           if (v) {
             $("historyDrawer").hidden = true;
-            load(v.id, v);
+            load(v.id, v, false, false, false);
           }
         }),
     );
@@ -2565,7 +2568,7 @@ body{min-height:100dvh}
       state.lastSavedAt = Date.now();
     }
   }
-  function load(id, restore, isDemo = false, manualOnly = false) {
+  function load(id, restore, isDemo = false, manualOnly = false, userInitiated = false) {
     if (!id) {
       toast(t("invalid"));
       return;
@@ -2573,7 +2576,7 @@ body{min-height:100dvh}
     state.pendingRestore = restore || null;
     applyRestoreSettings(restore);
     state.id = id;
-    state.hasInitiatedLoad = true;
+    state.hasInitiatedLoad = Boolean(userInitiated);
     clearManualGuideNeeded();
     state.revealedCaptions.clear();
     state.dictationCueIndex = -1;
@@ -2865,7 +2868,7 @@ body{min-height:100dvh}
   }
   $("tutorialImportButton").onclick = () => {
     const id = state.id || idOf($("videoUrl").value);
-    if (id && id !== state.id) load(id, null, false, true);
+    if (id && id !== state.id) load(id, null, false, true, false);
     else if (id && state.loadingVideo) {
       state.captionRequestId++;
       state.loadingVideo = false;
@@ -2928,7 +2931,7 @@ body{min-height:100dvh}
   $("videoUrl").addEventListener("input", () => {
     if (!$("subtitleTutorialModal").hidden) $("tutorialVideoUrl").value = tutorialVideoUrl();
   });
-  $("loadVideo").onclick = () => load(idOf($("videoUrl").value));
+  $("loadVideo").onclick = () => load(idOf($("videoUrl").value), null, false, false, true);
   $("downloadEnglishSrt").onclick = (event) => {
     if (!state.id) {
       event.preventDefault();
@@ -2998,7 +3001,7 @@ body{min-height:100dvh}
               const primary = parseJsonCaptions(JSON.stringify(languages.en || []));
               const secondary = parseJsonCaptions(JSON.stringify(languages["zh-Hant"] || languages["zh-TW"] || []));
               state.captionCache.set(id, { en: primary, "zh-Hant": secondary, "zh-TW": secondary });
-              load(id, null, true);
+              load(id, null, true, false, true);
               applyCachedLanguage();
             })
             .catch(() => toast(t("noCaptions")));
@@ -3018,7 +3021,7 @@ body{min-height:100dvh}
           secondary: "",
         }));
         state.captionCache.set(id, { en: primary, "zh-Hant": secondary });
-        load(id, null, true);
+        load(id, null, true, false, true);
         applyCachedLanguage();
       }),
   );
@@ -3260,7 +3263,7 @@ body{min-height:100dvh}
   updateTrainingPanel();
   updateContextActionBar();
   const lastHistory = readHistory()[0];
-  if (lastHistory) setTimeout(() => load(lastHistory.id, lastHistory), 0);
+  if (lastHistory) setTimeout(() => load(lastHistory.id, lastHistory, false, false, false), 0);
   applyLang();
   render();
 })();
