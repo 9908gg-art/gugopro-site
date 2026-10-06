@@ -142,7 +142,7 @@ body[data-training-mode=listening] .control-row-top,body[data-training-mode=dict
 </style>
 </head>
 <body>
-<header class="topbar"><div class="shell topbar-inner"><a class="brand" href="../../index.html"><span class="brand-mark">G</span><span class="brand-copy"><span class="brand-title" data-i18n="brand">YouTube 影音「聽・寫・說」多國語言學習器</span><small class="brand-tagline" data-training-copy="tagline">聽力盲聽・單句聽寫・口說對比 三合一沉浸式學習系統</small></span></a><a class="home-link" href="../../index.html" data-i18n="home">← 首頁</a><div class="loader"><input id="videoUrl" type="url" placeholder="貼上 YouTube 影片網址" data-i18n-placeholder="url"><button class="btn paste-btn" id="pasteVideoUrl" type="button" aria-label="貼上影片網址">📋 貼上</button><button class="btn cyan" id="loadVideo" data-i18n="load">載入影片</button><button class="history-toggle" id="historyToggle" type="button">🕘 歷史</button><div class="history-drawer" id="historyDrawer" hidden><div class="history-title">影片歷史紀錄</div><div id="historyList"></div><button class="history-clear" id="clearHistory" type="button">清除所有紀錄</button></div><div class="quick"><button data-video="Ks-_Mh1QhMc" data-sample="body" data-i18n="demo">🎬 載入精選示範影片</button></div></div><div class="top-langs"><label for="interfaceLang" data-i18n="ui">介面</label><select class="lang-select" id="interfaceLang"><option value="zh-TW">繁中</option><option value="en">EN</option><option value="ja">JA</option></select></div></div></header>
+<header class="topbar"><div class="shell topbar-inner"><a class="brand" href="../../index.html"><span class="brand-mark">G</span><span class="brand-copy"><span class="brand-title" data-i18n="brand">YouTube 影音「聽・寫・說」多國語言學習器</span><small class="brand-tagline" data-training-copy="tagline">聽力盲聽・單句聽寫・口說對比 三合一沉浸式學習系統</small></span></a><a class="home-link" href="../../index.html" data-i18n="home">← 首頁</a><div class="loader"><input id="videoUrl" type="url" placeholder="貼上 YouTube 影片網址" data-i18n-placeholder="url"><button class="btn paste-btn" id="pasteVideoUrl" type="button" aria-label="貼上影片網址">📋 貼上</button><button class="btn cyan" id="loadVideo" data-i18n="load">載入影片</button><button class="history-toggle" id="historyToggle" type="button">🕘 歷史</button><div class="history-drawer" id="historyDrawer" hidden><div class="history-title">影片歷史紀錄</div><div id="historyList"></div><button class="history-clear" id="clearHistory" type="button">清除所有紀錄</button></div><div class="quick"><button data-video="CcqO2yhK9N0" data-static-demo="true" data-i18n="demo">🎬 載入精選示範影片</button></div></div><div class="top-langs"><label for="interfaceLang" data-i18n="ui">介面</label><select class="lang-select" id="interfaceLang"><option value="zh-TW">繁中</option><option value="en">EN</option><option value="ja">JA</option></select></div></div></header>
 <main>
 <h1 id="mainPageTitle" class="visually-hidden" data-training-copy="pageTitle">YouTube 影音「聽・寫・說」多國語言學習器</h1>
 <section class="shell stage">
@@ -2712,6 +2712,20 @@ body[data-training-mode=listening] .control-row-top,body[data-training-mode=dict
     (b) =>
       (b.onclick = () => {
         const id = b.dataset.video;
+        if (b.dataset.staticDemo === "true") {
+          fetch(new URL("../../data/subtitles/CcqO2yhK9N0.json", location.href).href, { cache: "no-store" })
+            .then((response) => response.ok ? response.json() : Promise.reject(new Error("featured subtitles unavailable")))
+            .then((data) => {
+              const languages = data.languages || {};
+              const primary = parseJsonCaptions(JSON.stringify(languages.en || []));
+              const secondary = parseJsonCaptions(JSON.stringify(languages["zh-Hant"] || languages["zh-TW"] || []));
+              state.captionCache.set(id, { en: primary, "zh-Hant": secondary, "zh-TW": secondary });
+              load(id, null, true);
+              applyCachedLanguage();
+            })
+            .catch(() => toast(t("noCaptions")));
+          return;
+        }
         const s = samples[b.dataset.sample];
         const primary = s.map((x) => ({
           start: time(x[0]),
@@ -2777,7 +2791,7 @@ body[data-training-mode=listening] .control-row-top,body[data-training-mode=dict
   function openCalibration(index) { calibrationTarget = index; state.active = index; const cue = state.captions[index]; if (!cue) return; $("calibrationCueLabel").textContent = `目前句子 ${fmt(cue.start)}：選擇調整方式。`; $("calibrationDelta").value = "0.0"; $("calibrationModal").hidden = false; $("calibrationDelta").focus(); }
   function closeCalibration() { $("calibrationModal").hidden = true; calibrationTarget = -1; }
   function applyCalibration() { const index = calibrationTarget; if (index < 0) return; const delta = Math.round(Number($("calibrationDelta").value || 0) * 10) / 10; if (!Number.isFinite(delta) || !delta) { closeCalibration(); return; } const scope = document.querySelector('input[name="calibrationScope"]:checked')?.value || "single"; for (let i = index; i < state.captions.length; i++) { if (scope === "single" && i !== index) continue; const cue = state.captions[i]; cue.start = Math.max(0, Math.round((cue.start + delta) * 1000) / 1000); cue.end = Math.max(cue.start + 0.05, Math.round((cue.end + delta) * 1000) / 1000); cue.duration = cue.end - cue.start; } saveProgress(); render(); closeCalibration(); }
-  $("calibrationCancel").onclick = closeCalibration; $("calibrationApply").onclick = applyCalibration; $("calibrationModal").onclick = (event) => { if (event.target.id === "calibrationModal") closeCalibration(); }; document.querySelectorAll("[data-calibration-delta]").forEach((button) => button.onclick = () => { $("calibrationDelta").value = Number(button.dataset.calibrationDelta).toFixed(1); });
+  $("calibrationCancel").onclick = closeCalibration; $("calibrationApply").onclick = applyCalibration; $("calibrationModal").onclick = (event) => { if (event.target.id === "calibrationModal") closeCalibration(); }; document.querySelectorAll("[data-calibration-delta]").forEach((button) => button.onclick = () => { const current = Number($("calibrationDelta").value || 0); const step = Number(button.dataset.calibrationDelta); $("calibrationDelta").value = (Number.isFinite(current) ? current : 0) + step; });
   $("search").oninput = render;
   $("learnLang").onchange = () => {
     enforceLanguages("learn");
