@@ -186,6 +186,14 @@ body{min-height:100dvh}
 .custom-fullscreen{display:grid;place-items:center;width:32px;height:30px;border:1px solid #506a8b;border-radius:6px;color:#fff;background:#142842;font-size:18px;cursor:pointer}
 .custom-fullscreen:hover{border-color:#55dfd1;color:#55dfd1}
 @media(max-width:600px){#videoControlsOverlay.custom-video-control-bar{margin-top:8px;padding:7px 8px 9px!important}.custom-seek-row{grid-template-columns:auto minmax(80px,1fr) auto;gap:7px}.custom-time{min-width:76px;font-size:12px}.custom-fullscreen{width:30px}}
+
+/* User-positioned overlay for hardcoded subtitles inside source videos. */
+.video-text-mask{position:absolute;z-index:14;box-sizing:border-box;min-width:12%;min-height:8%;background:rgba(0,0,0,.86);border:2px solid rgba(255,255,255,.7);border-radius:5px;cursor:move;touch-action:none;user-select:none;box-shadow:0 0 0 1px rgba(0,0,0,.65),0 5px 18px rgba(0,0,0,.35)}
+.video-text-mask[hidden],.video-mask-hint[hidden]{display:none!important}.video-text-mask-label{position:absolute;inset:4px auto auto 6px;color:rgba(255,255,255,.72);font:700 10px/1 sans-serif;pointer-events:none}.video-text-mask-resizer{position:absolute;right:-2px;bottom:-2px;width:18px;height:18px;border-right:4px solid #fff;border-bottom:4px solid #fff;border-radius:0 0 4px 0;cursor:nwse-resize;touch-action:none}.video-mask-hint{position:absolute;top:18%;left:50%;z-index:20;max-width:80%;transform:translate(-50%,-8px);padding:10px 15px;border:1px solid rgba(255,255,255,.65);border-radius:9px;color:#fff;background:rgba(3,8,16,.94);box-shadow:0 8px 28px rgba(0,0,0,.48);font-size:13px;font-weight:800;line-height:1.4;text-align:center;pointer-events:none;opacity:0}.video-mask-hint.show{animation:video-mask-hint-in 4s ease forwards}@keyframes video-mask-hint-in{0%{opacity:0;transform:translate(-50%,-8px)}12%,84%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,-5px)}}
+#sidebarStudyControls .learning-view-options{grid-template-columns:repeat(5,minmax(0,1fr))!important}.video-mask-toggle{border-color:rgba(245,193,93,.5)!important;color:#f8d68a!important}.video-mask-toggle.active{border-color:#ffe08a!important;background:rgba(245,193,93,.24)!important;color:#fff!important;box-shadow:0 0 0 2px rgba(245,193,93,.22),0 0 16px rgba(245,193,93,.34)!important}
+.brand-copy{flex-direction:row;align-items:baseline;gap:12px;min-width:0}.brand-title{max-width:none;font-size:18px;font-weight:900;color:#fff;line-height:1.2}.brand-tagline{max-width:none;font-size:13px;line-height:1.2;white-space:nowrap}.loader{max-width:560px}.loader input{max-width:290px}
+@media(max-width:1000px){.brand-copy{gap:8px}.brand-title{font-size:16px}.brand-tagline{font-size:12px}.loader{max-width:100%}}
+@media(max-width:600px){.brand-copy{flex-direction:column;gap:2px;align-items:flex-start}.brand-title{font-size:14px}.brand-tagline{font-size:10px}.loader input{max-width:none}.video-mask-hint{max-width:90%;font-size:11px}}
 </style>
 <style>
 .caption-item{grid-template-columns:48px minmax(0,1fr);align-items:start}
@@ -226,7 +234,7 @@ body{min-height:100dvh}
 <main>
 <h1 id="mainPageTitle" class="visually-hidden" data-training-copy="pageTitle">YouTube 影音「聽・寫・說」多國語言學習器</h1>
 <section class="shell stage">
-<div class="card left-card"><div class="video"><div id="player"></div><div class="screen-titlebar" id="screenTitlebar" hidden><div class="screen-channel-avatar">G</div><div><strong id="screenVideoTitle">YouTube 影片</strong><small id="screenChannelName">GugoPro 英文學習</small></div></div><div class="screen-icon-mask" aria-hidden="true"></div><div class="video-caption-overlay" id="videoCaptionOverlay" hidden aria-hidden="true"></div><div class="video-click-capture" id="videoClickCapture"></div><div class="placeholder" id="placeholder"><div><div class="play-icon">▶</div><strong data-i18n="choose">選擇影片開始練習</strong><span data-i18n="chooseHint">貼上 YouTube 網址，或選擇上方範例。</span></div></div></div><div class="custom-video-control-bar" id="videoControlsOverlay" hidden aria-label="影片播放控制列"><div class="custom-seek-row"><span class="custom-time" id="videoTimeLabel">0:00 / 0:00</span><div class="custom-seekbar" id="videoProgress" role="slider" tabindex="0" aria-label="影片進度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="custom-seekbar-track"></div><div class="custom-seekbar-fill" id="videoProgressFill"><span class="custom-seekbar-thumb" id="videoProgressThumb"></span></div></div><button class="custom-fullscreen" type="button" id="videoFullscreen" aria-label="全螢幕">⛶</button></div></div></div>
+<div class="card left-card"><div class="video"><div id="player"></div><div class="screen-titlebar" id="screenTitlebar" hidden><div class="screen-channel-avatar">G</div><div><strong id="screenVideoTitle">YouTube 影片</strong><small id="screenChannelName">GugoPro 英文學習</small></div></div><div class="screen-icon-mask" aria-hidden="true"></div><div class="video-text-mask" id="videoTextMask" hidden role="region" aria-label="影片文字遮罩"><span class="video-text-mask-label">影片文字遮罩</span><span class="video-text-mask-resizer" id="videoTextMaskResizer" aria-hidden="true"></span></div><div class="video-mask-hint" id="videoMaskHint" role="status" aria-live="polite" hidden>💡 影片文字遮罩已開啟：可直接拖曳移動位置或拉動邊角調整大小</div><div class="video-caption-overlay" id="videoCaptionOverlay" hidden aria-hidden="true"></div><div class="video-click-capture" id="videoClickCapture"></div><div class="placeholder" id="placeholder"><div><div class="play-icon">▶</div><strong data-i18n="choose">選擇影片開始練習</strong><span data-i18n="chooseHint">貼上 YouTube 網址，或選擇上方範例。</span></div></div></div><div class="custom-video-control-bar" id="videoControlsOverlay" hidden aria-label="影片播放控制列"><div class="custom-seek-row"><span class="custom-time" id="videoTimeLabel">0:00 / 0:00</span><div class="custom-seekbar" id="videoProgress" role="slider" tabindex="0" aria-label="影片進度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="custom-seekbar-track"></div><div class="custom-seekbar-fill" id="videoProgressFill"><span class="custom-seekbar-thumb" id="videoProgressThumb"></span></div></div><button class="custom-fullscreen" type="button" id="videoFullscreen" aria-label="全螢幕">⛶</button></div></div></div>
 <aside class="card right-card"><div class="caption-head"><div class="caption-head-row"><h2 data-i18n="timeline">多語言字幕時間軸</h2><span class="status" id="status" data-i18n="statusReady">待載入</span><button class="mobile-settings-toggle" id="mobileSettingsToggle" type="button" aria-expanded="false">⚙️ 語言與設定 ▾</button></div><div class="queue-panel" id="queuePanel" hidden><div class="queue-panel-top"><span class="queue-message" id="queueMessage"></span><span class="queue-elapsed" id="queueElapsed"></span></div><div class="queue-progress" id="queueProgressBar" role="progressbar" aria-label="字幕處理進度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="queueProgress"></span></div><button class="queue-help" id="queueTutorialButton" type="button" data-i18n="queueHelp">不想等待？查看手動下載教學 / 立即匯入</button></div><div class="caption-settings-drawer" id="captionSettingsDrawer"><div class="language-grid"><label><span data-i18n="learnLang">學習語言（原文）</span><select id="learnLang"><option value="none">不顯示 (Hide)</option><option value="en">English</option><option value="ja">日本語</option><option value="ko">한국어</option><option value="fr">Français</option><option value="de">Deutsch</option><option value="es">Español</option><option value="zh-Hant">繁體中文</option><option value="zh-Hans">简体中文</option></select></label><label class="helper-language-label"><span data-i18n="helperLang">輔助對照（譯文）</span><select id="helperLang"><option value="none">不顯示 (Hide)</option><option value="zh-Hant">繁體中文</option><option value="en">English</option><option value="ja">日本語</option><option value="ko">한국어</option><option value="fr">Français</option><option value="de">Deutsch</option><option value="es">Español</option></select></label></div><div class="caption-actions"><input class="caption-search" id="search" type="search" placeholder="搜尋字幕…" data-i18n-placeholder="search"><div class="caption-action-group"><label class="file-label"><span data-i18n="import">📁 本機字幕匯入</span><input id="subtitleFile" type="file"></label><button class="file-label tutorial-trigger" id="manualTutorialButton" type="button" data-i18n="tutorialButton">📥 手動下載字幕</button></div><a class="file-label download-srt" data-i18n="downloadSrt" href="#" id="downloadEnglishSrt" target="_blank" rel="noopener" hidden>下載英文字幕 (.srt)</a></div></div></div><div class="sidebar-playback-controls" id="sidebarPlaybackControls"><div class="control-panel"><div class="control-row-top"><button class="btn secondary" id="playPause" data-i18n="play">▶ 播放</button><button class="btn secondary" id="repeatCurrent" data-i18n="repeatCurrent">🔁 重播本句</button><div class="speed-slider-wrap"><span data-i18n="speed">速度</span><button type="button" id="speedDown" aria-label="降低播放速度">−</button><output id="speedVal">1.0x</output><button type="button" id="speedUp" aria-label="提高播放速度">＋</button></div><div class="player-state" id="playerState" data-i18n="ready">就緒：載入影片後自動讀取字幕。</div></div><div class="control-row-bottom"><button class="toggle-btn" id="repeat" data-i18n="repeat">🔁 單句循環</button><button class="toggle-btn" id="autoPause" data-i18n="autoPause">⏸️ 句尾自動暫停</button></div><div class="context-action-bar" id="contextActionBar" hidden><div class="context-view-options" id="contextViewOptions" hidden></div><div class="context-actions" data-action-mode="listening" hidden><button type="button" id="listenReplay" data-training-copy="listenRepeat">🔁 重聽本句</button><button type="button" id="listenPeek" data-training-copy="listenPeek">👁️ 按住看答案</button><button type="button" id="listenNext" data-training-copy="listenNext">⏭️ 聽下一句</button></div><div class="context-actions" data-action-mode="dictation" hidden><span id="dictationBarStatus" data-training-copy="dictBar">✍️ 聽寫輸入位於目前字幕下方</span><button type="button" id="dictationFocus" data-training-copy="dictFocus">聚焦聽寫欄位</button></div><div class="context-actions speaking-actions" data-action-mode="speaking" hidden><button type="button" id="speakDemo" data-training-copy="speakDemo">🔊 聽示範</button><button type="button" id="holdToSpeak" class="hold-to-speak" aria-pressed="false" data-training-copy="speakHold">🎙️ 按住說話（放開比對）</button><button type="button" id="speakReset" data-training-copy="speakReset">🔄 重練此句</button><div class="speech-feedback" id="speakingFeedback" aria-live="polite"></div><small class="speech-privacy-inline" id="speechPrivacyInline" data-training-copy="speechPrivacy">Speech recognition may process audio through the browser provider.</small></div></div></div></div></div><div id="sidebarStudyControls"><div class="learning-mode-panel" id="learningModePanel" aria-label="學習功能面板"><div class="learning-mode-heading"><strong data-training-copy="modeTitle">學習訓練模式</strong><button id="closeLearningPanel" type="button" aria-label="關閉學習功能面板" hidden>×</button></div><div class="training-mode-choices" id="trainingModeChoices" role="radiogroup" aria-label="學習訓練模式"><button type="button" role="radio" aria-checked="false" tabindex="-1" data-training-mode="listening" data-training-copy="modeListening">🎧 聽力練習</button><button type="button" role="radio" aria-checked="false" tabindex="-1" data-training-mode="dictation" data-training-copy="modeDictation">✍️ 聽寫口說對比練習</button></div><strong class="learning-view-title" id="learningViewTitle" data-training-copy="modeViewTitle">模式顯示狀態</strong><div class="learning-view-options" id="learningViewOptions" role="group" aria-label="模式顯示狀態"></div><p class="speech-privacy-note" id="speechPrivacyNote" data-training-copy="speechPrivacy">瀏覽器語音辨識可能由瀏覽器供應商線上處理音訊；開始錄音前請先確認權限與隱私設定。</p></div></div><ol class="caption-list" id="captionList"></ol></aside>
 </section>
 <section class="seo"><div class="kicker" data-i18n="guideKicker">學習方法導讀</div><h2 data-i18n="guideTitle">用影子跟讀，把字幕變成語音迴路</h2><p class="seo-intro" data-i18n="guideCopy">逐句精聽會把連音、重音、語調與句尾收斂成可處理的聲音單位；先不看字幕聽一次，再用原文確認，再模仿原音。影子跟讀（Shadowing）要求學習者在原音之後快速複述，會同時調動顳葉的語音辨識、工作記憶與口腔動作，讓聲音與意義的連結更穩固。建議先用 0.75x 找出音節，再回到 1.0x，每句循環三至五次；遇到片頭偏移，就用時間軸校準按鈕修正。最後關閉字幕，以聲音檢查自己是否真正理解。</p><div class="methodology-grid" id="studyMethodology"><article class="methodology-card"><h3>破除盲點｜為什麼刷片很久仍難開口？</h3><p>雙語字幕會把注意力迅速拉到文字，讓耳朵少做聲音解碼練習；這不是聽覺神經「休眠」，而是視覺提示可能讓人跳過外語音素、連音與語意的主動辨識。先盲聽、再核對，能把注意力重新交回聲音。</p></article><article class="methodology-card"><h3>第一階段｜聽力盲聽（Auditory Calibration）</h3><p>先聽整句再偷看，練習辨認英語連音與弱讀、日語促音與長音、法語聯誦等真實語流。桌機可懸停揭示，手機可長按約 250ms 暫時查看；逐句眼睛按鈕可固定翻開或收回。</p></article><article class="methodology-card"><h3>第二階段｜單句聽寫（Deep Decoding）</h3><p>抓到大意不等於聽清每個詞。輸入或口述當前句子，系統忽略大小寫與標點，以詞語序列比對，標示相符、錯詞、多詞與漏詞，並在下方顯示標準文字，讓冠詞、介系詞、助動詞與詞尾有機會被聽見。</p></article><article class="methodology-card"><h3>第三階段｜口說對比（Muscle Memory）</h3><p>看譯文後反向口說，讓聽懂的內容轉成主動提取與發音動作。瀏覽器語音辨識可回傳轉寫文字供比對；它只是辨識結果與文字稿的相似度提示，不是發音評分，也不能保證母語人士一定聽懂。</p></article></div><div class="steps"><article class="step"><b>1</b><h3 data-i18n="step1">貼上網址</h3><p data-i18n="step1Copy">載入 YouTube 影片，播放器會嘗試讀取可用字幕軌道。</p></article><article class="step"><b>2</b><h3 data-i18n="step2">選擇語言</h3><p data-i18n="step2Copy">指定學習語言與輔助對照語言，自由組合多國字幕。</p></article><article class="step"><b>3</b><h3 data-i18n="step3">循環與微調</h3><p data-i18n="step3Copy">使用單句循環、句尾暫停與時間軸校準完成跟讀。</p></article></div><div class="faq"><div class="kicker" data-i18n="faqKicker">常見問題</div><h2 data-i18n="faqTitle">使用播放器時</h2><details><summary data-i18n="faq1q">點擊字幕跳轉時，如果台詞與聲音有延遲該如何調整？</summary><p data-i18n="faq1a">部分影片帶有片頭片尾，您可使用字幕面板頂部的 -0.5s、+0.5s 微調按鈕，即時平移校準時間軸。</p></details><details><summary data-i18n="faq2q">遇到完全沒有字幕的 YouTube 影片可以如何使用？</summary><p data-i18n="faq2a">本工具優先讀取 YouTube 官方與自動生成字幕；若影片沒有字幕，可點擊手動匯入，貼上或匯入外部語音辨識軟體產出的 SRT 或 VTT 文本。</p></details><details><summary data-i18n="faq3q">如何利用句尾自動暫停與單句循環訓練口說？</summary><p data-i18n="faq3a">開啟句尾自動暫停後，每句播放結束會自動停住留給您複述，按空白鍵即可播放下一句；遇到生疏語調可開啟單句循環反覆練習。</p></details></div></section>
@@ -253,6 +261,9 @@ body{min-height:100dvh}
     captionsHidden: false,
     trainingMode: "listening",
     trainingView: "both",
+    videoMaskEnabled: false,
+    videoMaskRect: { top: 68, left: 15, width: 70, height: 18 },
+    videoMaskDrag: null,
     revealedCaptions: new Set(),
     dictationCueIndex: -1,
     dictationDraft: "",
@@ -1120,8 +1131,10 @@ body{min-height:100dvh}
     $("learningViewTitle").textContent = trainT(views.length ? titleKey : "modeViewTitle");
     viewContainer.hidden = false;
     $("learningViewTitle").hidden = true;
-    viewContainer.innerHTML = views.map(([value, key]) => `<button type="button" class="learning-view-button" data-training-view="${esc(value)}" aria-pressed="${String(state.trainingView === value)}">${esc(trainT(key))}</button>`).join("");
+    viewContainer.innerHTML = views.map(([value, key]) => `<button type="button" class="learning-view-button" data-training-view="${esc(value)}" aria-pressed="${String(state.trainingView === value)}">${esc(trainT(key))}</button>`).join("") + `<button type="button" class="learning-view-button video-mask-toggle" data-video-mask="true" aria-pressed="${String(state.videoMaskEnabled)}">⬛ 影片文字遮罩</button>`;
     viewContainer.querySelectorAll("[data-training-view]").forEach((button) => button.addEventListener("click", () => setTrainingView(button.dataset.trainingView)));
+    const maskButton = viewContainer.querySelector("[data-video-mask]");
+    maskButton?.addEventListener("click", () => setVideoMaskEnabled(!state.videoMaskEnabled, true));
     $("speechPrivacyNote").hidden = state.trainingMode !== "speaking";
     $("learningModePanel").setAttribute("aria-label", trainT("modeTitle"));
     $("trainingModeChoices").setAttribute("aria-label", trainT("modeTitle"));
@@ -1157,8 +1170,75 @@ body{min-height:100dvh}
     const feedback = $("speakingFeedback");
     if (feedback) feedback.innerHTML = state.speakingResult ? comparisonMarkup(state.speakingResult, "speaking") : `<span class="practice-status">${esc(state.recognitionMessage || (state.trainingMode === "speaking" ? trainT("speakReady") : ""))}</span>`;
   }
+  const VIDEO_MASK_KEY = "l_player_video_text_masks";
+  function readVideoMasks() {
+    try { const value = JSON.parse(localStorage.getItem(VIDEO_MASK_KEY) || "{}"); return value && typeof value === "object" ? value : {}; } catch (_) { return {}; }
+  }
+  function saveVideoMask() {
+    if (!state.id) return;
+    const all = readVideoMasks();
+    all[state.id] = { enabled: Boolean(state.videoMaskEnabled), rect: { ...state.videoMaskRect } };
+    localStorage.setItem(VIDEO_MASK_KEY, JSON.stringify(all));
+  }
+  function applyVideoMaskStyle() {
+    const mask = $("videoTextMask");
+    if (!mask) return;
+    const r = state.videoMaskRect;
+    mask.style.top = `${r.top}%`; mask.style.left = `${r.left}%`;
+    mask.style.width = `${r.width}%`; mask.style.height = `${r.height}%`;
+    mask.hidden = !state.videoMaskEnabled;
+    mask.classList.toggle("is-enabled", state.videoMaskEnabled);
+    const button = document.querySelector("[data-video-mask]");
+    if (button) { button.setAttribute("aria-pressed", String(state.videoMaskEnabled)); button.classList.toggle("active", state.videoMaskEnabled); }
+  }
+  function showVideoMaskHint() {
+    const hint = $("videoMaskHint"); if (!hint) return;
+    hint.hidden = false; hint.classList.remove("show"); void hint.offsetWidth; hint.classList.add("show");
+    clearTimeout(state.videoMaskHintTimer); state.videoMaskHintTimer = setTimeout(() => { hint.classList.remove("show"); setTimeout(() => { hint.hidden = true; }, 260); }, 4000);
+  }
+  function setVideoMaskEnabled(enabled, persist = true) {
+    state.videoMaskEnabled = Boolean(enabled); applyVideoMaskStyle();
+    if (persist) saveVideoMask();
+    if (state.videoMaskEnabled) showVideoMaskHint();
+  }
+  function loadVideoMask(id) {
+    const saved = readVideoMasks()[id];
+    state.videoMaskRect = { top: 68, left: 15, width: 70, height: 18, ...(saved?.rect || {}) };
+    state.videoMaskEnabled = Boolean(saved?.enabled);
+    applyVideoMaskStyle();
+  }
+  function updateVideoMaskFromPointer(event) {
+    const video = $("player")?.closest(".video"), mask = $("videoTextMask");
+    if (!video || !mask || !state.videoMaskDrag) return;
+    const rect = video.getBoundingClientRect(), d = state.videoMaskDrag;
+    const dx = (event.clientX - d.x) / rect.width * 100, dy = (event.clientY - d.y) / rect.height * 100;
+    if (d.type === "move") {
+      state.videoMaskRect.left = Math.max(0, Math.min(100 - state.videoMaskRect.width, d.left + dx));
+      state.videoMaskRect.top = Math.max(0, Math.min(100 - state.videoMaskRect.height, d.top + dy));
+    } else {
+      state.videoMaskRect.width = Math.max(12, Math.min(96 - state.videoMaskRect.left, d.width + dx));
+      state.videoMaskRect.height = Math.max(8, Math.min(94 - state.videoMaskRect.top, d.height + dy));
+    }
+    applyVideoMaskStyle();
+  }
+  function bindVideoMask() {
+    const mask = $("videoTextMask"), resizer = $("videoTextMaskResizer"); if (!mask || !resizer) return;
+    mask.addEventListener("pointerdown", (event) => {
+      if (event.target === resizer) return;
+      const r = mask.getBoundingClientRect(); state.videoMaskDrag = { type: "move", x: event.clientX, y: event.clientY, left: state.videoMaskRect.left, top: state.videoMaskRect.top, width: state.videoMaskRect.width, height: state.videoMaskRect.height };
+      mask.setPointerCapture?.(event.pointerId); event.preventDefault(); event.stopPropagation();
+    });
+    resizer.addEventListener("pointerdown", (event) => {
+      state.videoMaskDrag = { type: "resize", x: event.clientX, y: event.clientY, left: state.videoMaskRect.left, top: state.videoMaskRect.top, width: state.videoMaskRect.width, height: state.videoMaskRect.height };
+      resizer.setPointerCapture?.(event.pointerId); event.preventDefault(); event.stopPropagation();
+    });
+    mask.addEventListener("pointermove", updateVideoMaskFromPointer); resizer.addEventListener("pointermove", updateVideoMaskFromPointer);
+    const finish = () => { if (state.videoMaskDrag) saveVideoMask(); state.videoMaskDrag = null; };
+    mask.addEventListener("pointerup", finish); resizer.addEventListener("pointerup", finish); mask.addEventListener("pointercancel", finish); resizer.addEventListener("pointercancel", finish);
+  }
   function setTrainingView(view) {
     state.trainingView = view;
+    if (view === "blind") setVideoMaskEnabled(true, true);
     state.dictationAnswerShown = false;
     updateTrainingPanel();
     render();
@@ -2447,6 +2527,7 @@ body{min-height:100dvh}
     state.speakingResult = null;
     state.demo = Boolean(isDemo);
     clearManualGuideNeeded();
+    loadVideoMask(id);
     state.offset = 0;
     state.captions = [];
     state.active = -1;
@@ -2796,6 +2877,7 @@ body{min-height:100dvh}
       toast(t("invalid"));
     }
   };
+  bindVideoMask();
   const videoProgress = $("videoProgress");
   if (videoProgress) {
     videoProgress.onpointerdown = (event) => { state.scrubbing = true; state.paused = false; state.ignorePauseUntil = Date.now() + 1200; videoProgress.setPointerCapture?.(event.pointerId); seekFromScreenProgress(event, false); };
