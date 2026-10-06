@@ -228,7 +228,13 @@ body{min-height:100dvh}
 @media(max-width:420px){.context-actions>button{padding:0 4px;font-size:9px}.speaking-actions{grid-template-columns:1fr 1.2fr 1fr}.learning-mode-heading strong{font-size:11px}.caption-item.has-visibility-toggle{grid-template-columns:40px minmax(0,1fr) 25px}.caption-visibility-toggle{width:24px}.dictation-workspace{padding:7px}.brand-title{max-width:55vw}}
 @media(prefers-reduced-motion:reduce){.hold-to-speak.recording{animation:none}}
 </style>
-</head>
+<style id="final-four-fixes">
+/* Final topbar layout: one large title line, controls pushed to the right. */
+@media(min-width:1001px){.topbar-inner{display:flex;align-items:center;flex-wrap:nowrap;gap:14px}.brand{flex:0 1 auto;min-width:0}.brand-copy{display:flex!important;flex-direction:row!important;align-items:baseline!important;gap:14px!important;white-space:nowrap!important}.brand-title{display:inline-block!important;max-width:none!important;overflow:visible!important;text-overflow:clip!important;white-space:nowrap!important;font-size:19px!important;font-weight:900!important;line-height:1.2!important;color:#fff!important}.brand-tagline{display:inline-block!important;max-width:none!important;white-space:nowrap!important;font-size:14px!important;line-height:1.2!important;color:#cbd5e1!important}.home-link{margin-left:auto!important;flex:0 0 auto}.loader{flex:0 1 auto!important;width:auto!important;max-width:none!important;margin-left:0!important}.loader input{width:230px!important;max-width:230px!important}.top-langs{flex:0 0 auto!important}}
+.video-text-mask{background:#000!important;opacity:1!important;border:1px solid #4b5563!important}.video-text-mask-label{color:#d1d5db!important}.video-text-mask-resizer{border-right-color:#9ca3af!important;border-bottom-color:#9ca3af!important}
+@media(max-width:1000px){.brand-copy{display:flex!important;flex-direction:row!important;align-items:baseline!important;gap:8px!important;white-space:nowrap!important}.brand-title{font-size:16px!important;max-width:none!important}.brand-tagline{font-size:12px!important;max-width:none!important;white-space:nowrap!important}.loader input{max-width:250px!important}}
+@media(max-width:600px){.brand-copy{flex-direction:column!important;align-items:flex-start!important;gap:2px!important;white-space:normal!important}.brand-title{font-size:14px!important}.brand-tagline{font-size:10px!important;white-space:normal!important}.loader input{max-width:none!important}}
+</style></head>
 <body>
 <header class="topbar"><div class="shell topbar-inner"><a class="brand" href="../../index.html"><span class="brand-mark">G</span><span class="brand-copy"><span class="brand-title" data-i18n="brand">YouTube 影音「聽・寫・說」多國語言學習器</span><small class="brand-tagline" data-training-copy="tagline">聽力盲聽・單句聽寫・口說對比 三合一沉浸式學習系統</small></span></a><a class="home-link" href="../../index.html" data-i18n="home">← 首頁</a><div class="loader"><input id="videoUrl" type="url" placeholder="貼上 YouTube 影片網址" data-i18n-placeholder="url"><button class="btn paste-btn" id="pasteVideoUrl" type="button" aria-label="貼上影片網址">📋 貼上</button><button class="btn cyan" id="loadVideo" data-i18n="load">載入影片</button><button class="history-toggle" id="historyToggle" type="button">🕘 歷史</button><div class="history-drawer" id="historyDrawer" hidden><div class="history-title">影片歷史紀錄</div><div id="historyList"></div><button class="history-clear" id="clearHistory" type="button">清除所有紀錄</button></div><div class="quick"><button data-video="CcqO2yhK9N0" data-static-demo="true" data-i18n="demo">🎬 載入精選示範影片</button></div></div><div class="top-langs"><label for="interfaceLang" data-i18n="ui">介面</label><select class="lang-select" id="interfaceLang"><option value="zh-TW">繁中</option><option value="en">EN</option><option value="ja">JA</option></select></div></div></header>
 <main>
@@ -255,6 +261,7 @@ body{min-height:100dvh}
     monitor: null,
     demo: false,
     loadingVideo: false,
+    hasInitiatedLoad: false,
     lang: localStorage.getItem("gugopro_locale") || "zh-TW",
     captionCache: new Map(),
     captionRequestId: 0,
@@ -2263,6 +2270,17 @@ body{min-height:100dvh}
       render();
     }
   }
+  function disableNativeCaptions() {
+    const player = state.player;
+    if (!player) return;
+    try {
+      if (player.unloadModule) player.unloadModule("captions");
+      if (player.setOption) {
+        player.setOption("captions", "track", {});
+        player.setOption("captions", "fontSize", 0);
+      }
+    } catch (_) {}
+  }
   function createPlayer(id) {
     if (!window.YT?.Player) return;
     state.player = new YT.Player("player", {
@@ -2273,15 +2291,13 @@ body{min-height:100dvh}
         modestbranding: 1,
         cc_load_policy: 0,
         iv_load_policy: 3,
+        cc_lang_pref: "none",
         controls: 0,
       },
       events: {
         onReady: () => {
           state.ready = true;
-          try {
-            state.player.unloadModule?.("captions");
-            state.player.setOption?.("captions", "track", {});
-          } catch (_) {}
+          disableNativeCaptions();
           state.player.setPlaybackRate(speedValue());
           if (state.loadingVideo) state.player.pauseVideo();
           if (state.pendingRestore) restoreAfterCaptions();
@@ -2296,6 +2312,7 @@ body{min-height:100dvh}
         },
         onStateChange: (e) => {
           if (e.data === YT.PlayerState.PLAYING) {
+            disableNativeCaptions();
             if (state.loadingVideo) {
               state.player.pauseVideo();
               return;
@@ -2518,6 +2535,8 @@ body{min-height:100dvh}
     state.pendingRestore = restore || null;
     applyRestoreSettings(restore);
     state.id = id;
+    state.hasInitiatedLoad = true;
+    clearManualGuideNeeded();
     state.revealedCaptions.clear();
     state.dictationCueIndex = -1;
     state.dictationDraft = "";
@@ -2712,6 +2731,7 @@ body{min-height:100dvh}
     return state.id ? "https://www.youtube.com/watch?v=" + state.id : "";
   }
   function markManualGuideNeeded() {
+    if (!state.hasInitiatedLoad) return;
     const button = $("manualTutorialButton");
     if (button) button.classList.add("needs-manual-caption");
   }
@@ -2923,6 +2943,7 @@ body{min-height:100dvh}
     saveProgress();
   };
   setSpeedValue(speedValue());
+  clearManualGuideNeeded();
   document.querySelectorAll(".quick button").forEach(
     (b) =>
       (b.onclick = () => {
