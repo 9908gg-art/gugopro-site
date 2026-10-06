@@ -146,6 +146,30 @@ body{min-height:100dvh}
 #copyTutorialUrl.copied{animation:manual-caption-pulse .8s ease-in-out infinite alternate}
 @keyframes manual-caption-pulse{from{box-shadow:0 0 0 0 rgba(245,193,93,.15),0 0 4px rgba(245,193,93,.25)}to{box-shadow:0 0 0 3px rgba(245,193,93,.3),0 0 22px rgba(245,193,93,.85);filter:brightness(1.18)}}
 @media(max-width:600px){#sidebarPlaybackControls .control-panel{gap:3px}#sidebarPlaybackControls #playPause,#sidebarPlaybackControls #repeatCurrent,#sidebarPlaybackControls #repeat,#sidebarPlaybackControls #autoPause{padding:0 4px;font-size:9px}.sidebar-playback-controls{overflow-x:auto}}
+
+/* Follow-up polish: keep the scrubber/time row inside the video safe area. */
+#videoControlsOverlay{left:12px;right:12px;bottom:16px!important;padding:0 5px 4px;z-index:20;pointer-events:auto;background:linear-gradient(180deg,transparent 0%,rgba(2,6,12,.42) 45%,rgba(2,6,12,.72) 100%)}
+#videoProgress{height:18px;padding:6px 0;min-height:18px}
+#videoProgress::before,#videoProgressFill{height:5px}
+#videoProgressFill{margin-top:-5px}
+#videoProgressThumb{top:-4px;width:13px;height:13px}
+#videoControlsOverlay .screen-controls-row{display:flex!important;min-height:28px;padding-top:3px;color:#fff;font-size:13px;font-weight:700;line-height:1.25}
+#videoTimeLabel{display:inline-block!important;visibility:visible!important;opacity:1!important;min-width:82px;color:#fff;text-shadow:0 1px 3px #000}
+#videoFullscreen{display:grid!important;place-items:center;visibility:visible!important;opacity:1!important}
+/* The selected study mode is vivid; the inactive mode is intentionally subdued. */
+#sidebarStudyControls .training-mode-choices button{color:#8290a5;background:rgba(18,31,48,.72);border-color:rgba(111,127,151,.34);box-shadow:none;filter:saturate(.35);font-weight:700}
+#sidebarStudyControls .training-mode-choices button.active{color:#fff;background:linear-gradient(135deg,#0f9f83,#22c98f);border-color:#71f2c5;box-shadow:0 0 0 2px rgba(113,242,197,.24),0 0 18px rgba(34,201,143,.42);filter:none;font-weight:900}
+/* Increase the small right-side controls to a readable 13px baseline. */
+#captionSettingsDrawer label>span,#captionSettingsDrawer select,#captionSettingsDrawer .caption-search,#captionSettingsDrawer .file-label,#captionSettingsDrawer .download-srt{font-size:13px!important;line-height:1.35}
+#captionSettingsDrawer select{min-height:34px}
+#captionSettingsDrawer .caption-search{min-height:34px}
+#captionSettingsDrawer .file-label{min-height:34px}
+#sidebarPlaybackControls #playPause,#sidebarPlaybackControls #repeatCurrent,#sidebarPlaybackControls #repeat,#sidebarPlaybackControls #autoPause{font-size:12px!important}
+#sidebarPlaybackControls .speed-slider-wrap{font-size:12px!important}
+#sidebarPlaybackControls .speed-slider-wrap output{font-size:13px!important}
+#sidebarStudyControls .training-mode-choices button,#sidebarStudyControls .learning-view-options button{font-size:13px!important;line-height:1.25}
+#sidebarStudyControls .learning-view-options button{min-height:32px!important}
+.tutorial-tool.recommended-pulse{animation:manual-caption-pulse 1.15s ease-in-out infinite alternate;border-color:#f5c15d!important;background:rgba(245,193,93,.15)!important}
 </style>
 <style>
 .caption-item{grid-template-columns:48px minmax(0,1fr);align-items:start}
@@ -1127,14 +1151,13 @@ body{min-height:100dvh}
     if (!["default", "listening", "dictation", "speaking"].includes(mode) || mode === state.trainingMode) return;
     const previous = state.trainingMode;
     if (state.recognition) stopSpeechRecognition();
-    if (previous === "dictation" && state.priorPlaybackMode) {
-      $("repeat").classList.toggle("active", state.priorPlaybackMode.repeat);
-      $("autoPause").classList.toggle("active", state.priorPlaybackMode.autoPause);
-      state.priorPlaybackMode = null;
-    }
-    if (mode === "dictation" && previous !== "dictation") {
-      state.priorPlaybackMode = { repeat: $("repeat").classList.contains("active"), autoPause: $("autoPause").classList.contains("active") };
-      $("repeat").classList.add("active");
+    if (mode === "dictation") {
+      $("repeat").classList.remove("active");
+      $("autoPause").classList.add("active");
+      state.paused = false;
+      setPauseActions(false);
+    } else if (mode === "listening") {
+      $("repeat").classList.remove("active");
       $("autoPause").classList.remove("active");
       state.paused = false;
       setPauseActions(false);
@@ -1958,6 +1981,7 @@ body{min-height:100dvh}
     else if (!isLoading) stopQueueProgress();
   }
   function applyPair(primary, secondary = []) {
+    clearManualGuideNeeded();
     state.captions = pairByTimestamp(primary, secondary);
     state.active = state.pendingRestore ? -1 : state.captions.length ? 0 : -1;
     state.paused = false;
@@ -1976,6 +2000,7 @@ body{min-height:100dvh}
     }
   }
   function applyCaptionList(captions) {
+    clearManualGuideNeeded();
     state.captions = captions;
     state.active = state.pendingRestore ? -1 : captions.length ? 0 : -1;
     state.paused = false;
@@ -2425,6 +2450,7 @@ body{min-height:100dvh}
     state.speakingDraft = "";
     state.speakingResult = null;
     state.demo = Boolean(isDemo);
+    clearManualGuideNeeded();
     state.offset = 0;
     state.captions = [];
     state.active = -1;
@@ -2622,6 +2648,7 @@ body{min-height:100dvh}
     $("subtitleTutorialModal").hidden = false;
     document.body.style.overflow = "hidden";
     setTimeout(() => $("tutorialDialog").focus(), 0);
+    scheduleTutorialGuidance();
     copyTutorialVideoUrl();
   }
   function closeSubtitleTutorial() {
@@ -2630,6 +2657,21 @@ body{min-height:100dvh}
     if (tutorialReturnFocus?.focus) tutorialReturnFocus.focus();
   }
   let tutorialCopyFeedbackTimer = null;
+  let tutorialToolPulseTimer = null;
+  function advanceTutorialGuidance() {
+    const button = $("copyTutorialUrl");
+    const recommended = document.querySelector(".tutorial-tool");
+    if (button) {
+      button.classList.remove("copied");
+      button.textContent = t("tutorialCopy");
+    }
+    if (recommended) recommended.classList.add("recommended-pulse");
+  }
+  function scheduleTutorialGuidance() {
+    clearTimeout(tutorialToolPulseTimer);
+    document.querySelectorAll(".tutorial-tool").forEach((tool) => tool.classList.remove("recommended-pulse"));
+    tutorialToolPulseTimer = setTimeout(advanceTutorialGuidance, 5000);
+  }
   async function copyTutorialVideoUrl() {
     const button = $("copyTutorialUrl");
     const url = tutorialVideoUrl();
@@ -2658,8 +2700,7 @@ body{min-height:100dvh}
       button.textContent = t("tutorialCopiedButton");
       button.classList.add("copied");
       tutorialCopyFeedbackTimer = setTimeout(() => {
-        button.classList.remove("copied");
-        button.textContent = t("tutorialCopy");
+        advanceTutorialGuidance();
       }, 5000);
     }
     toast(copied ? t("tutorialCopied") : t("tutorialCopyFail"));
