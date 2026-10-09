@@ -5,9 +5,9 @@
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4756902118634553" crossorigin="anonymous"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="YouTube 影音「聽・寫・口說」多國語言跟讀器：聽力盲聽、單句聽寫與口說對比三合一沉浸式學習系統。">
+<meta name="description" content="【AB English Podcast】Ep.1 自我介紹與日常社交對話：使用 L-Player 進行雙語字幕精聽、A-B 循環、盲聽、聽寫與口說驗證。">
 <link rel="canonical" href="https://gugopro.com/tools/english/l-player-study.html">
-<title>YouTube 影音「聽・寫・口說」多國語言跟讀器</title>
+<title>【AB English Podcast】Ep.1 自我介紹與日常社交對話 (Mia &amp; Alex)｜L-Player</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
@@ -1278,7 +1278,7 @@ body{min-height:100dvh}
     document.querySelectorAll("[data-training-copy]").forEach((element) => {
       element.textContent = trainT(element.dataset.trainingCopy);
     });
-    if ($("mainPageTitle")) document.title = trainT("pageTitle");
+    if ($("mainPageTitle")) document.title = state.id === DEFAULT_VIDEO_ID ? `${DEFAULT_COURSE_TITLE} | L-Player` : trainT("pageTitle");
     updateTrainingPanel();
   }
   function updateContextActionBar() {
@@ -1819,6 +1819,29 @@ body{min-height:100dvh}
   async function fetchStaticSubtitleData(id) { if(staticSubtitleCache.has(id))return staticSubtitleCache.get(id); const q=fetch("/data/subtitles/"+encodeURIComponent(id)+".json",{cache:"force-cache",credentials:"same-origin",headers:{Accept:"application/json"}}).then(r=>r.ok?r.json():null).catch(()=>null); staticSubtitleCache.set(id,q); return q; }
   function staticCues(data,language) { if(!data)return []; const code=apiLanguageCode(language||"en"), values=data.languages?.[language]||data.languages?.[code]||data.tracks?.[language]||data.tracks?.[code]||(Array.isArray(data)?data:data.segments||data.cues||data.captions); return Array.isArray(values)?parseJsonCaptions(JSON.stringify(values)):[]; }
   async function loadStaticTracks(id,sourceLang,helperLang) { const data=await fetchStaticSubtitleData(id), primary=staticCues(data,sourceLang); if(!primary.length)return null; state.usedLocalCache=true; return pairByTimestamp(primary,helperLang!=="none"?staticCues(data,helperLang):[]); }
+  const DEFAULT_VIDEO_ID = "UGHuqyPFb40";
+  const DEFAULT_COURSE_TITLE = "【AB English Podcast】Ep.1 自我介紹與日常社交對話 (Mia & Alex)";
+  const packagedSubtitleCache = new Map();
+  async function fetchPackagedSubtitleCues(id) {
+    if (!packagedSubtitleCache.has(id)) {
+      const url = new URL("subtitles/" + encodeURIComponent(id) + ".json", location.href);
+      const request = fetch(url.href, { cache: "force-cache", credentials: "same-origin", headers: { Accept: "application/json" } })
+        .then((response) => response.ok ? response.json() : null)
+        .catch(() => null);
+      packagedSubtitleCache.set(id, request);
+    }
+    const data = await packagedSubtitleCache.get(id);
+    const rows = Array.isArray(data) ? data : data?.segments || data?.cues || data?.captions || [];
+    if (!Array.isArray(rows)) return [];
+    const normalized = rows.map((row) => ({
+      start: row?.start ?? row?.startSeconds ?? row?.startTime,
+      end: row?.end ?? row?.endSeconds ?? row?.endTime,
+      duration: row?.duration,
+      primary: row?.en ?? row?.enText ?? row?.primary ?? row?.text ?? "",
+      secondary: row?.zh ?? row?.zhText ?? row?.secondary ?? row?.translation ?? "",
+    }));
+    return parseJsonCaptions(JSON.stringify(normalized));
+  }
   const API_TIMEOUTS = [75000, 90000];
   const API_RETRY_DELAY_MS = 1500;
   const SUBTITLE_DB_NAME = "GugoPlayerDB";
@@ -2390,6 +2413,13 @@ body{min-height:100dvh}
     const requestId = ++state.captionRequestId;
     try {
       if (state.demo && applyCachedLanguage()) return;
+      const packagedCues = await fetchPackagedSubtitleCues(id);
+      if (state.id !== id || state.captionRequestId !== requestId) return;
+      if (packagedCues.length) {
+        state.usedLocalCache = true;
+        applyCaptionList(packagedCues);
+        return;
+      }
       await loadTracks(id, requestId);
     } catch (error) {
       if (state.id !== id || state.captionRequestId !== requestId) return;
@@ -2527,7 +2557,12 @@ body{min-height:100dvh}
     }
   }
   function showScreenControls(id) {
-    $("screenTitlebar").hidden = true;
+    const isDefault = id === DEFAULT_VIDEO_ID;
+    const title = $("screenVideoTitle");
+    const channel = $("screenChannelName");
+    if (title) title.textContent = isDefault ? DEFAULT_COURSE_TITLE : "YouTube 影片";
+    if (channel) channel.textContent = isDefault ? "AB English Podcast · Mia & Alex" : "";
+    $("screenTitlebar").hidden = !isDefault;
     $("videoControlsOverlay").hidden = false;
   }
   function startMonitor() {
@@ -2683,6 +2718,9 @@ body{min-height:100dvh}
     state.pendingRestore = restore || null;
     applyRestoreSettings(restore);
     state.id = id;
+    document.title = id === DEFAULT_VIDEO_ID ? `${DEFAULT_COURSE_TITLE} | L-Player` : trainT("pageTitle");
+    const videoUrlInput = $("videoUrl");
+    if (videoUrlInput) videoUrlInput.value = `https://www.youtube.com/watch?v=${id}`;
     state.hasInitiatedLoad = Boolean(userInitiated);
     clearManualGuideNeeded();
     state.revealedCaptions.clear();
@@ -3373,8 +3411,10 @@ body{min-height:100dvh}
   initLanguages();
   updateTrainingPanel();
   updateContextActionBar();
-  const lastHistory = readHistory()[0];
-  if (lastHistory) setTimeout(() => load(lastHistory.id, lastHistory, false, false, false), 0);
+  const requestedVideoId = idOf(new URLSearchParams(window.location.search).get("v"));
+  const initialVideoId = requestedVideoId || DEFAULT_VIDEO_ID;
+  const initialHistory = readHistory().find((entry) => entry.id === initialVideoId) || null;
+  setTimeout(() => load(initialVideoId, initialHistory, false, false, false), 0);
   applyLang();
   render();
 })();
