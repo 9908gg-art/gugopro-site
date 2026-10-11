@@ -567,16 +567,6 @@
             word-break: break-word;
         }
 
-        .tts-active-sentence,
-        .tts-active-word {
-            color: #39FF14 !important;
-            -webkit-text-fill-color: #39FF14 !important;
-            opacity: 1 !important;
-            font-weight: 800 !important;
-            background: transparent !important;
-            text-decoration: none !important;
-            transition: color 0.2s ease-in-out;
-        }
 
         .msg-my {
             font-size: 0.9rem;
@@ -1195,11 +1185,6 @@
     box-shadow: inset 0 -2px 0 rgba(255, 213, 79, .98);
     outline: none;
 }
-.msg-learning .vocab-token.speaking-word.tts-active-word {
-    color: #fff;
-    background: rgba(255, 193, 7, .72);
-    box-shadow: inset 0 -2px 0 #ffe082;
-}
 .vocab-popover {
     position: fixed;
     z-index: 2147483000;
@@ -1471,8 +1456,8 @@
 /* GugoPro Gemini-style capsule composer */
 html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .bottom-controls {
-    /* Keep the composer in normal flow and reserve clear space below it for possible mobile anchor ads. */
-    padding: 5px 12px max(56px, calc(44px + env(safe-area-inset-bottom)));
+    /* Keep the composer flush with the viewport; reserve only the real system safe area. */
+    padding: 5px 12px max(8px, env(safe-area-inset-bottom));
     background: linear-gradient(180deg, rgba(10,11,16,.94), rgba(10,11,16,1)) !important;
     border-top: 1px solid rgba(255,255,255,.08);
 }
@@ -1631,6 +1616,10 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
 .room-study-action:active { transform: scale(.93); }
 .room-study-action i { pointer-events: none; }
     .capsule-speech-mode-description { display: block; margin-top: 7px; color: var(--text-dim); font-size: .72rem; line-height: 1.4; }
+@media (max-width: 1023px) {
+    #chat-container { padding-bottom: 16px !important; }
+    .bottom-controls { padding-bottom: max(8px, env(safe-area-inset-bottom)) !important; }
+}
     .speech-silence-setting { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; color: var(--text-dim); font-size: .72rem; }
     .speech-silence-setting input { width: 76px; min-height: 32px; padding: 4px 7px; color: var(--text-main); background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.18); border-radius: 8px; }
     .speech-start-cue-setting { display: flex; align-items: center; gap: 8px; margin-top: 8px; color: var(--text-dim); font-size: .72rem; }
@@ -4066,28 +4055,14 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             const source = String(text || '');
             const root = messageRoot || null;
             const locale = resolveSpeechLocale(langCode);
-            if (root) renderSpeechText(root, source, langCode);
-
             if (nativeTts) {
-                const sentenceMode = /^(?:ja|zh|ko)(?:-|$)/i.test(locale);
-                const renderedWords = root ? [...root.querySelectorAll('.speaking-word')] : [];
-                const renderedSentences = root ? [...root.querySelectorAll('.tts-sentence')] : [];
                 const session = {
                     id: sessionId, root, text: source, lastBoundaryIndex: -1, pendingBoundaryIndex: null,
                     activeElement: null, boundarySeen: false, lastBoundaryAt: null, fallbackStartedAt: performance.now(),
-                    fallbackDuration: 0, mode: sentenceMode ? 'sentence' : 'word', words: renderedWords, sentences: renderedSentences
+                    fallbackDuration: 0, mode: 'plain', words: [], sentences: []
                 };
                 activeSpeechSession = session;
                 setTtsButtonState(root, true);
-                if (root) {
-                    const firstElement = sentenceMode ? renderedSentences[0] : renderedWords[0];
-                    if (firstElement) {
-                        firstElement.classList.add(sentenceMode ? 'tts-active-sentence' : 'tts-active-word');
-                        session.activeElement = firstElement;
-                    }
-                    queueSpeechBoundary(session, 0);
-                    if (!sentenceMode) startSpeechWordFallback(session);
-                }
                 const nativeResult = await nativeTts.speak(source, locale, {
                     onStart: () => {
                         if (activeSpeechSession?.id === sessionId) {
@@ -4095,13 +4070,6 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                             session.boundarySeen = false;
                             session.lastBoundaryAt = null;
                         }
-                    },
-                    onBoundary: (start) => {
-                        if (!activeSpeechSession || activeSpeechSession.id !== sessionId) return;
-                        session.boundarySeen = true;
-                        session.lastBoundaryAt = performance.now();
-                        if (session.mode === 'sentence') applySpeechBoundary(session, start);
-                        else queueSpeechBoundary(session, start);
                     },
                     onEnd: () => finishSpeechSession(sessionId),
                     onError: (error) => {
@@ -4131,9 +4099,6 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             const voice = voiceState.voice;
             const utterance = new SpeechSynthesisUtterance(source);
             utterance.lang = locale;
-            const sentenceMode = /^(?:ja|zh|ko)(?:-|$)/i.test(locale);
-            const renderedWords = root ? [...root.querySelectorAll('.speaking-word')] : [];
-            const renderedSentences = root ? [...root.querySelectorAll('.tts-sentence')] : [];
             if (voice) utterance.voice = voice;
             const session = {
                 id: sessionId,
@@ -4146,39 +4111,12 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 lastBoundaryAt: null,
                 fallbackStartedAt: performance.now(),
                 fallbackDuration: 0,
-                mode: sentenceMode ? 'sentence' : 'word',
-                words: renderedWords,
-                sentences: renderedSentences
+                mode: 'plain',
+                words: [],
+                sentences: []
             };
             activeSpeechSession = session;
             setTtsButtonState(root, true);
-            if (root) {
-                const firstElement = sentenceMode ? renderedSentences[0] : renderedWords[0];
-                if (firstElement) {
-                    firstElement.classList.add(sentenceMode ? 'tts-active-sentence' : 'tts-active-word');
-                    session.activeElement = firstElement;
-                }
-                queueSpeechBoundary(session, 0);
-                if (sentenceMode) {
-                    // CJK boundary events are used as-is; without them, keep the first sentence stable instead of guessing.
-                    session.cjkBoundaryFallback = 'stable-first-sentence';
-                } else {
-                    startSpeechWordFallback(session);
-                }
-            }
-            utterance.onboundary = event => {
-                if (!activeSpeechSession || activeSpeechSession.id !== sessionId) return;
-                const boundaryIndex = Number(event?.charIndex);
-                if (!Number.isFinite(boundaryIndex)) return;
-                const boundaryAdvanced = boundaryIndex !== session.lastBoundaryIndex
-                    && boundaryIndex !== session.pendingBoundaryIndex;
-                if (boundaryAdvanced) {
-                    session.boundarySeen = true;
-                    session.lastBoundaryAt = performance.now();
-                }
-                if (session.mode === 'sentence') applySpeechBoundary(session, boundaryIndex);
-                else queueSpeechBoundary(session, boundaryIndex);
-            };
             utterance.onstart = () => {
                 if (activeSpeechSession?.id === sessionId) {
                     session.fallbackStartedAt = performance.now();
