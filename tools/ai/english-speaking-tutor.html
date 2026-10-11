@@ -1251,15 +1251,15 @@
 }
 </style>
 <style id="gugo-audio-input-style">
-    .audio-input-panel { display: none; align-items: center; gap: 7px; width: 100%; min-width: 0; }
+    .audio-input-panel { display: none; align-items: center; justify-content: space-around; gap: 10px; width: 100%; min-width: 0; }
     .audio-input-panel[data-state="recording"], .audio-input-panel[data-state="preview"] { display: flex; }
-    .capsule-dock.audio-mode-active { flex-wrap: wrap; }
-    .capsule-dock.audio-mode-active #user-text, .capsule-dock.audio-mode-active .capsule-actions { display: none !important; }
+    .capsule-dock.audio-mode-active { flex-wrap: wrap; align-items: center; }
+    .capsule-dock.audio-mode-active #user-text, .capsule-dock.audio-mode-active #speech-composer-status, .capsule-dock.audio-mode-active #speech-composer-hint, .capsule-dock.audio-mode-active .capsule-actions { display: none !important; }
     .capsule-dock.audio-mode-active .audio-input-panel { order: 10; flex: 1 1 100%; }
-    .audio-recording-status { flex: 1 1 auto; min-width: 0; color: #fca5a5; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .audio-recording-status { display: inline-flex; align-items: center; justify-content: center; min-width: 72px; color: #fde047; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
     .audio-recording-dot { display: inline-block; width: 9px; height: 9px; margin-right: 5px; border-radius: 50%; background: #ef4444; box-shadow: 0 0 0 4px rgba(239,68,68,.18); animation: audio-recording-pulse 1.1s ease-in-out infinite; }
     @keyframes audio-recording-pulse { 50% { opacity: .35; transform: scale(.78); } }
-    .audio-input-panel button { flex: 0 0 auto; min-height: 36px; padding: 6px 9px; border: 1px solid rgba(255,255,255,.18); border-radius: 10px; background: rgba(255,255,255,.09); color: #eef2f7; cursor: pointer; font-size: .75rem; }
+    .audio-input-panel button { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 40px; width: 40px; height: 40px; min-height: 40px; padding: 0; border: 1px solid rgba(255,255,255,.18); border-radius: 12px; background: rgba(255,255,255,.09); color: #eef2f7; cursor: pointer; font-size: 1.15rem; line-height: 1; }
     .audio-input-panel .audio-send-confirm { background: #dbeafe; color: #172033; border-color: #bfdbfe; font-weight: 800; }
     .voice-input-mode-setting { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; color: var(--text-dim); font-size: .72rem; }
     .audio-mode-description { display: block; margin-top: 7px; color: #a5f3fc; font-size: .72rem; line-height: 1.4; }
@@ -3492,7 +3492,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 role: message.role === 'user' ? 'user' : 'model',
                 parts: [{ text: String(message.learning || '') }]
             }));
-            chatHistory.push({ role: 'user', parts: audioInput?.base64 ? [{ inline_data: { mime_type: audioInput.mimeType || 'audio/webm', data: audioInput.base64 } }, { text: prompt }] : [{ text: prompt }] });
+            chatHistory.push({ role: 'user', parts: audioInput?.base64 ? [{ inlineData: { mimeType: audioInput.mimeType || 'audio/webm', data: audioInput.base64 } }, { text: prompt }] : [{ text: prompt }] });
 
             const payload = {
                 contents: chatHistory,
@@ -3504,7 +3504,9 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 }
             };
 
-            const candidateModels = getModelQueue().map(model => model.api_name).filter(Boolean);
+            const queuedModels = getModelQueue().map(model => model.api_name).filter(Boolean);
+            const audioModels = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+            const candidateModels = audioInput?.base64 ? [...new Set([...audioModels, ...queuedModels])] : queuedModels;
             if (candidateModels.length === 0) {
                 throw new Error(runtimeUiText('noAvailableModels'));
             }
@@ -3512,6 +3514,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             const attemptedModels = [];
             let lastError = null;
             let allModelsBusy = true;
+            const shouldRetryModel = status => status === 503 || status === 429 || status === 500 || status === 'TIMEOUT' || (audioInput?.base64 && status === 404);
             for (let modelIndex = 0; modelIndex < candidateModels.length; modelIndex++) {
                 const modelName = candidateModels[modelIndex];
                 attemptedModels.push(modelName);
@@ -3542,7 +3545,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                     lastError = createGeminiApiError(res.status, modelName, attemptedModels);
                     if (res.status === 503) setModelBusyStatus(modelName, 503);
                     if (res.status !== 503 && res.status !== 'TIMEOUT') allModelsBusy = false;
-                    if (res.status === 503 || res.status === 429 || res.status === 500) {
+                    if (shouldRetryModel(res.status)) {
                         if (modelIndex < candidateModels.length - 1) {
                             const nextModel = candidateModels[modelIndex + 1];
                             activateNextModel(nextModel, modelIndex + 1);
@@ -3553,7 +3556,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                     }
                     throw lastError;
                 } catch (error) {
-                    if (error.status === 503 || error.status === 429 || error.status === 500 || error.status === 'TIMEOUT') {
+                    if (shouldRetryModel(error.status)) {
                         lastError = error;
                         if (error.status === 503 || error.status === 'TIMEOUT') setModelBusyStatus(modelName, error.status);
                         if (error.status !== 503 && error.status !== 'TIMEOUT') allModelsBusy = false;
@@ -10420,7 +10423,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
     function ensureAudioPanel() {
         const dock = document.querySelector('.capsule-dock');
         if (!dock || dock.querySelector('#audio-input-panel')) return;
-        dock.insertAdjacentHTML('beforeend', `<div id="audio-input-panel" class="audio-input-panel" data-state="idle" aria-live="polite"><span class="audio-recording-status"></span><button type="button" class="audio-stop-button">${text('audioStop')}</button><button type="button" class="audio-preview-button">${text('audioPreview')}</button><button type="button" class="audio-rerecord-button">${text('audioRerecord')}</button><button type="button" class="audio-send-confirm">${text('audioSend')}</button></div>`);
+        dock.insertAdjacentHTML('beforeend', `<div id="audio-input-panel" class="audio-input-panel" data-state="idle" aria-live="polite"><span class="audio-recording-status"></span><button type="button" class="audio-stop-button" aria-label="Stop recording" title="Stop recording">⏹️</button><button type="button" class="audio-preview-button" aria-label="Play preview" title="Play preview">▶️</button><button type="button" class="audio-rerecord-button" aria-label="Discard and record again" title="Discard and record again">🗑️</button><button type="button" class="audio-send-confirm" aria-label="Send audio to AI" title="Send audio to AI">✈️</button></div>`);
         dock.querySelector('.audio-stop-button').addEventListener('click', stopAudioRecording);
         dock.querySelector('.audio-preview-button').addEventListener('click', toggleAudioPreview);
         dock.querySelector('.audio-rerecord-button').addEventListener('click', resetAudioInput);
@@ -10438,9 +10441,10 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         const preview = panel.querySelector('.audio-preview-button');
         const rerecord = panel.querySelector('.audio-rerecord-button');
         const send = panel.querySelector('.audio-send-confirm');
-        stop.textContent = text('audioStop'); preview.textContent = previewAudio && !previewAudio.paused ? text('audioReplay') : text('audioPreview'); rerecord.textContent = text('audioRerecord'); send.textContent = text('audioSend');
-        if (state === 'recording') { status.innerHTML = `<span class="audio-recording-dot"></span>${text('audioRecording')} ${formatDuration((Date.now() - audioStartedAt) / 1000)}`; stop.hidden = false; preview.hidden = true; rerecord.hidden = true; send.hidden = true; }
-        else if (state === 'preview') { status.textContent = `${text('audioMessage')} ${formatDuration(audioDuration)}`; stop.hidden = true; preview.hidden = false; rerecord.hidden = false; send.hidden = false; }
+        stop.textContent = '⏹️'; preview.textContent = previewAudio && !previewAudio.paused ? '⏸️' : '▶️'; rerecord.textContent = '🗑️'; send.textContent = '✈️';
+        stop.setAttribute('aria-label', text('audioStop')); stop.title = text('audioStop'); preview.setAttribute('aria-label', previewAudio && !previewAudio.paused ? text('audioReplay') : text('audioPreview')); preview.title = preview.getAttribute('aria-label'); rerecord.setAttribute('aria-label', text('audioRerecord')); rerecord.title = text('audioRerecord'); send.setAttribute('aria-label', text('audioSend')); send.title = text('audioSend');
+        if (state === 'recording') { status.innerHTML = `<span class="audio-recording-dot" aria-hidden="true"></span><span class="audio-recording-timer">${formatDuration((Date.now() - audioStartedAt) / 1000)}</span>`; stop.hidden = false; preview.hidden = true; rerecord.hidden = true; send.hidden = true; }
+        else if (state === 'preview') { status.textContent = `🎙️ ${formatDuration(audioDuration)}`; stop.hidden = true; preview.hidden = false; rerecord.hidden = false; send.hidden = false; }
         else { status.textContent = ''; stop.hidden = true; preview.hidden = true; rerecord.hidden = true; send.hidden = true; }
     }
     function formatDuration(seconds) { const total = Math.max(0, Math.round(Number(seconds) || 0)); return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`; }
