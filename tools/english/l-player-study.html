@@ -372,7 +372,17 @@ body{min-height:100dvh}
  #videoControlsOverlay.custom-video-control-bar .mobile-video-toggle:hover,#videoControlsOverlay.custom-video-control-bar .mobile-video-toggle:focus-visible{border-color:#55dfd1;color:#55dfd1;outline:none}
  .left-card>.video{transition:height .3s ease,min-height .3s ease,max-height .3s ease,flex-basis .3s ease,margin .3s ease,opacity .3s ease}
  body.mobile-video-collapsed .left-card>.video{height:0!important;min-height:0!important;max-height:0!important;flex:0 0 0px!important;aspect-ratio:auto!important;margin:0!important;border-width:0!important;overflow:hidden!important;opacity:0!important;pointer-events:none!important}
- body[data-training-mode="dictation"] #videoControlsOverlay,body[data-training-mode="dictation"] #abLoopDetails,body[data-training-mode="dictation"] #learningViewTitle,body[data-training-mode="dictation"] #learningViewOptions{display:none!important}
+ body[data-training-mode="dictation"] #videoControlsOverlay,body[data-training-mode="dictation"] #sidebarPlaybackControls,body[data-training-mode="dictation"] #abLoopDetails,body[data-training-mode="dictation"] #learningViewTitle,body[data-training-mode="dictation"] #mobileSettingsToggle{display:none!important}
+ body[data-training-mode="dictation"] #learningViewOptions{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:4px!important;max-height:none!important;overflow:visible!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important}
+ body[data-training-mode="dictation"] #learningViewOptions .learning-view-button{display:inline-flex!important;align-items:center;justify-content:center;min-width:0;min-height:34px!important;height:auto!important;margin:2px!important;padding:4px 8px!important;border-radius:999px!important;font-size:12px!important;font-weight:800;line-height:1.2;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere;}
+ body[data-training-mode="dictation"] #learningViewTitle{display:none!important}
+ body[data-training-mode="dictation"] #sidebarStudyControls{max-height:none!important;height:auto!important;min-height:0!important;overflow:visible!important}
+ body[data-training-mode="dictation"] #sidebarStudyControls .learning-mode-panel{max-height:none!important;overflow:visible!important;padding:4px 6px!important}
+ body[data-training-mode="dictation"] .dictation-entry-row.cta-input-pulse{animation:dictation-cta-pulse 1.5s ease-in-out infinite;}
+ body[data-training-mode="dictation"] .dictation-entry-row.cta-input-pulse input{border-color:rgba(46,204,113,.95)!important;}
+ body[data-training-mode="dictation"] .dictation-entry-row.cta-input-pulse input::placeholder{color:#dcffe7!important;opacity:1;font-weight:700;}
+ @keyframes dictation-cta-pulse{0%,100%{box-shadow:0 0 3px rgba(46,204,113,.28),0 0 0 1px rgba(46,204,113,.2)}50%{box-shadow:0 0 12px rgba(46,204,113,.8),0 0 0 3px rgba(46,204,113,.25)}}
+ @media(prefers-reduced-motion:reduce){body[data-training-mode="dictation"] .dictation-entry-row.cta-input-pulse{animation:none;box-shadow:0 0 12px rgba(46,204,113,.8),0 0 0 2px rgba(46,204,113,.25)}}
  .mobile-dictation-workspace{position:relative;margin:2px 4px 4px!important;padding:4px!important;gap:4px!important}
  .mobile-dictation-workspace>label{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
  .mobile-dictation-workspace .dictation-entry-row{display:grid;grid-template-columns:minmax(0,1fr) 36px;align-items:center;gap:5px}
@@ -435,6 +445,7 @@ body{min-height:100dvh}
     revealedCaptions: new Set(),
     dictationCueIndex: -1,
     dictationDraft: "",
+    dictationCtaDismissed: false,
     dictationResult: null,
     dictationAnswerShown: false,
     speakingDraft: "",
@@ -1582,7 +1593,8 @@ body{min-height:100dvh}
     const mobile = window.matchMedia?.("(max-width:768px)").matches;
     if (mobile) {
       const hasDraft = Boolean(cleanCaptionText(state.dictationDraft));
-      return `<section class="dictation-workspace mobile-dictation-workspace${hasDraft ? " has-draft" : ""}" aria-label="${esc(trainT("dictTitle"))}"><label class="visually-hidden" for="dictationInput">${esc(trainT("dictInputLabel"))}</label><div class="dictation-entry-row"><input id="dictationInput" type="text" autocomplete="off" aria-label="${esc(trainT("dictInputLabel"))}" value="${esc(state.dictationDraft)}" placeholder="${esc(trainT("dictPlaceholder"))}"><button type="button" class="dictation-mic" id="dictationSpeechInput" aria-label="${esc(trainT("dictVoice"))}" title="${esc(trainT("dictVoice"))}">🎙️</button></div><div class="dictation-buttons"><button type="button" id="checkDictation">${esc(trainT("checkAnswer"))}</button><button type="button" id="revealDictationAnswer">${esc(trainT("showAnswer"))}</button><button type="button" id="dictationReplay">${esc(trainT("dictRepeat"))}</button></div><div class="dictation-feedback" id="dictationFeedback" aria-live="polite">${result || `<span class="practice-status">${esc(state.recognitionMessage)}</span>`}</div></section>`;
+      const ctaActive = state.paused && !state.dictationCtaDismissed && !hasDraft;
+      return `<section class="dictation-workspace mobile-dictation-workspace${hasDraft ? " has-draft" : ""}" aria-label="${esc(trainT("dictTitle"))}"><label class="visually-hidden" for="dictationInput">${esc(trainT("dictInputLabel"))}</label><div class="dictation-entry-row${ctaActive ? " cta-input-pulse" : ""}"><input id="dictationInput" type="text" autocomplete="off" aria-label="${esc(trainT("dictInputLabel"))}" value="${esc(state.dictationDraft)}" placeholder="${ctaActive ? "👉 請在此輸入聽到的外語內容或點擊語音..." : esc(trainT("dictPlaceholder"))}"><button type="button" class="dictation-mic" id="dictationSpeechInput" aria-label="${esc(trainT("dictVoice"))}" title="${esc(trainT("dictVoice"))}">🎙️</button></div><div class="dictation-buttons"><button type="button" id="checkDictation">${esc(trainT("checkAnswer"))}</button><button type="button" id="revealDictationAnswer">${esc(trainT("showAnswer"))}</button><button type="button" id="dictationReplay">${esc(trainT("dictRepeat"))}</button></div><div class="dictation-feedback" id="dictationFeedback" aria-live="polite">${result || `<span class="practice-status">${esc(state.recognitionMessage)}</span>`}</div></section>`;
     }
     return `<section class="dictation-workspace" aria-label="${esc(trainT("dictTitle"))}"><label for="dictationInput">${esc(trainT("dictInputLabel"))}</label><input id="dictationInput" type="text" autocomplete="off" value="${esc(state.dictationDraft)}" placeholder="${esc(trainT("dictPlaceholder"))}"><div class="dictation-buttons"><button type="button" id="dictationSpeechInput">${esc(trainT("dictVoice"))}</button><button type="button" id="checkDictation">${esc(trainT("checkAnswer"))}</button><button type="button" id="revealDictationAnswer">${esc(trainT("showAnswer"))}</button><button type="button" id="dictationReplay">${esc(trainT("dictRepeat"))}</button></div><div class="dictation-feedback" id="dictationFeedback" aria-live="polite">${result || `<span class="practice-status">${esc(state.recognitionMessage)}</span>`}</div></section>`;
   }
@@ -1827,12 +1839,24 @@ body{min-height:100dvh}
         const input = section.querySelector("#dictationInput");
         input.oninput = () => {
           state.dictationDraft = input.value;
+          state.dictationCtaDismissed = true;
+          section.querySelector(".dictation-entry-row")?.classList.remove("cta-input-pulse");
           if (section.classList.contains("mobile-dictation-workspace")) section.classList.toggle("has-draft", Boolean(cleanCaptionText(input.value)));
         };
-        input.onfocus = () => document.body.classList.add("dictation-input-focused");
+        input.onfocus = () => {
+          state.dictationCtaDismissed = true;
+          section.querySelector(".dictation-entry-row")?.classList.remove("cta-input-pulse");
+          if (section.classList.contains("mobile-dictation-workspace")) input.placeholder = trainT("dictPlaceholder");
+          document.body.classList.add("dictation-input-focused");
+        };
         input.onblur = () => setTimeout(() => { if (document.activeElement?.id !== "dictationInput") document.body.classList.remove("dictation-input-focused"); }, 0);
         input.onkeydown = (event) => { if (event.key === "Enter") { event.preventDefault(); checkDictationAnswer(); } };
-        section.querySelector("#dictationSpeechInput").onclick = () => state.recognitionPurpose === "dictation" ? stopSpeechRecognition() : startSpeechRecognition("dictation");
+        section.querySelector("#dictationSpeechInput").onclick = () => {
+          state.dictationCtaDismissed = true;
+          section.querySelector(".dictation-entry-row")?.classList.remove("cta-input-pulse");
+          if (input && section.classList.contains("mobile-dictation-workspace")) input.placeholder = trainT("dictPlaceholder");
+          return state.recognitionPurpose === "dictation" ? stopSpeechRecognition() : startSpeechRecognition("dictation");
+        };
         section.querySelector("#checkDictation").onclick = checkDictationAnswer;
         section.querySelector("#dictationReplay").onclick = replayCurrent;
         section.querySelector("#revealDictationAnswer").onclick = showDictationAnswer;
@@ -2952,6 +2976,7 @@ body{min-height:100dvh}
       }
       if ($("autoPause").classList.contains("active") && !state.paused) {
         state.paused = true;
+        if (state.trainingMode === "dictation") state.dictationCtaDismissed = false;
         state.player.pauseVideo();
         state.player.seekTo(
           Math.max(0, effectiveCueEnd(state.active) + state.offset - 0.02),
