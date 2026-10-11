@@ -1261,6 +1261,9 @@
     @keyframes audio-recording-pulse { 50% { opacity: .35; transform: scale(.78); } }
     .audio-input-panel button { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 40px; width: 40px; height: 40px; min-height: 40px; padding: 0; border: 1px solid rgba(255,255,255,.18); border-radius: 12px; background: rgba(255,255,255,.09); color: #eef2f7; cursor: pointer; font-size: 1.15rem; line-height: 1; }
     .audio-input-panel .audio-send-confirm { background: #dbeafe; color: #172033; border-color: #bfdbfe; font-weight: 800; }
+    .capsule-voice-button.audio-send-morph { background: #22c55e !important; border-color: #86efac !important; color: #052e16 !important; box-shadow: 0 0 0 4px rgba(34,197,94,.18), 0 8px 20px rgba(34,197,94,.24); }
+    .capsule-voice-button.audio-send-morph .speech-button-language { font-size: 26px !important; }
+    .capsule-voice-button.audio-side-hidden { display: none !important; }
     .voice-input-mode-setting { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; color: var(--text-dim); font-size: .72rem; }
     .audio-mode-description { display: block; margin-top: 7px; color: #a5f3fc; font-size: .72rem; line-height: 1.4; }
     .audio-message-bubble { display: inline-flex; align-items: center; gap: 8px; margin: 5px 0 3px; padding: 8px 10px; border: 1px solid rgba(255,255,255,.18); border-radius: 16px; background: rgba(255,255,255,.08); color: #e8eef8; }
@@ -10368,6 +10371,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
     let audioTimer = null;
     let previewAudio = null;
     let activeRole = 'learning';
+    let activeRecordSide = 'left';
     let activeButton = null;
 
     const text = key => window.GugoUiText?.(key) || ({
@@ -10429,6 +10433,57 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         dock.querySelector('.audio-rerecord-button').addEventListener('click', resetAudioInput);
         dock.querySelector('.audio-send-confirm').addEventListener('click', sendPendingAudio);
         updateAudioPanel('idle');
+        setAudioSideState('idle');
+    }
+    function audioSideButtons() { return { left: document.getElementById('btn-mic'), right: document.getElementById('btn-mic-my') }; }
+    function setAudioSideState(state, role = activeRole) {
+        const { left, right } = audioSideButtons();
+        const buttons = [left, right].filter(Boolean);
+        if (!buttons.length) return;
+        buttons.forEach(button => {
+            if (!button.dataset.audioIdleHtml) {
+                button.dataset.audioIdleHtml = button.innerHTML;
+                button.dataset.audioIdleAria = button.getAttribute('aria-label') || '';
+                button.dataset.audioIdleTitle = button.getAttribute('title') || '';
+                button.__gugoAudioHandlers = { onclick: button.onclick, onpointerdown: button.onpointerdown, onpointerup: button.onpointerup, onpointercancel: button.onpointercancel, ontouchstart: button.ontouchstart, ontouchend: button.ontouchend, ontouchcancel: button.ontouchcancel, onlostpointercapture: button.onlostpointercapture };
+            }
+            button.classList.remove('audio-send-morph', 'audio-side-hidden');
+            button.disabled = false;
+            button.removeAttribute('disabled');
+            button.removeAttribute('aria-disabled');
+        });
+        if (state === 'idle') {
+            buttons.forEach(button => {
+                const saved = button.__gugoAudioHandlers || {};
+                button.innerHTML = button.dataset.audioIdleHtml;
+                button.setAttribute('aria-label', button.dataset.audioIdleAria);
+                button.title = button.dataset.audioIdleTitle;
+                Object.assign(button, saved);
+            });
+            return;
+        }
+        if (state === 'recording') {
+            buttons.forEach(button => { button.disabled = true; button.setAttribute('aria-disabled', 'true'); });
+            return;
+        }
+        const active = role === 'learning' ? left : right;
+        const inactive = role === 'learning' ? right : left;
+        if (!active) return;
+        active.classList.add('audio-send-morph');
+        active.innerHTML = '<span class="speech-button-language" aria-hidden="true">✈️</span>';
+        active.setAttribute('aria-label', text('audioSend'));
+        active.title = text('audioSend');
+        active.disabled = false;
+        inactive?.classList.add('audio-side-hidden');
+        const sendFromSide = event => { event.preventDefault?.(); event.stopImmediatePropagation?.(); sendPendingAudio(); return false; };
+        active.onclick = sendFromSide;
+        active.onpointerdown = event => { event.preventDefault?.(); event.stopPropagation?.(); };
+        active.onpointerup = null;
+        active.onpointercancel = null;
+        active.ontouchstart = event => { event.preventDefault?.(); event.stopPropagation?.(); };
+        active.ontouchend = null;
+        active.ontouchcancel = null;
+        active.onlostpointercapture = null;
     }
     function updateAudioPanel(state = 'idle') {
         const panel = document.getElementById('audio-input-panel');
@@ -10467,12 +10522,12 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             audioMimeType = pickMimeType() || 'audio/webm';
             recorder = new MediaRecorder(stream, audioMimeType ? { mimeType: audioMimeType } : undefined);
-            chunks = []; activeRole = role; activeButton = button; audioStartedAt = Date.now(); audioDuration = 0;
+            chunks = []; activeRole = role; activeRecordSide = role === 'learning' ? 'left' : 'right'; activeButton = button; audioStartedAt = Date.now(); audioDuration = 0;
             recorder.ondataavailable = event => { if (event.data?.size) chunks.push(event.data); };
             recorder.onstop = finishAudioRecording;
             recorder.start(250);
             window.GugoSpeechSessionActive = true; window.GugoSpeechActiveControl = button;
-            ensureAudioPanel(); updateAudioPanel('recording');
+            ensureAudioPanel(); setAudioSideState('recording', role); updateAudioPanel('recording');
             window.GugoSetSpeechComposerState?.('recording', role, `${text('audioRecording')} 0:00`);
             audioTimer = setInterval(() => { audioDuration = (Date.now() - audioStartedAt) / 1000; updateAudioPanel('recording'); }, 250);
             return true;
@@ -10493,10 +10548,10 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         window.GugoSpeechSessionActive = false;
         window.GugoClearSpeechControl?.();
         window.GugoSpeechActiveControl = null;
-        updateAudioPanel('preview'); window.GugoSetSpeechComposerState?.('idle');
+        setAudioSideState('preview', activeRole); updateAudioPanel('preview'); window.GugoSetSpeechComposerState?.('idle');
     }
     function toggleAudioPreview() { if (!previewAudio) return; if (previewAudio.paused) { previewAudio.currentTime = 0; previewAudio.play().catch(() => {}); } else previewAudio.pause(); }
-    function resetAudioInput(options = {}) { const keepUrl = options.keepUrl === true; if (previewAudio) { previewAudio.pause(); previewAudio = null; } if (!keepUrl && audioUrl) URL.revokeObjectURL(audioUrl); if (!keepUrl) audioUrl = ''; audioBlob = null; audioDuration = 0; updateAudioPanel('idle'); window.GugoResetComposer?.(document.getElementById('user-text')); window.GugoSetSpeechComposerState?.('idle'); }
+    function resetAudioInput(options = {}) { const keepUrl = options.keepUrl === true; if (previewAudio) { previewAudio.pause(); previewAudio = null; } if (!keepUrl && audioUrl) URL.revokeObjectURL(audioUrl); if (!keepUrl) audioUrl = ''; audioBlob = null; audioDuration = 0; setAudioSideState('idle'); updateAudioPanel('idle'); window.GugoResetComposer?.(document.getElementById('user-text')); window.GugoSetSpeechComposerState?.('idle'); }
     function blobToBase64(blob) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onloadend = () => resolve(String(reader.result || '').split(',')[1] || ''); reader.onerror = reject; reader.readAsDataURL(blob); }); }
     async function sendPendingAudio() {
         if (!audioBlob || typeof sendMessage !== 'function') return;
