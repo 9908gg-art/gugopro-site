@@ -1263,6 +1263,8 @@
     .audio-input-panel .audio-send-confirm { background: #dbeafe; color: #172033; border-color: #bfdbfe; font-weight: 800; }
     .capsule-voice-button.audio-send-morph { background: #22c55e !important; border-color: #86efac !important; color: #052e16 !important; box-shadow: 0 0 0 4px rgba(34,197,94,.18), 0 8px 20px rgba(34,197,94,.24); }
     .capsule-voice-button.audio-send-morph .speech-button-language { font-size: 26px !important; }
+    .capsule-voice-button.audio-stop-morph { background: #f59e0b !important; border-color: #fde68a !important; color: #451a03 !important; box-shadow: 0 0 0 4px rgba(245,158,11,.18), 0 8px 20px rgba(245,158,11,.24); }
+    .capsule-voice-button.audio-stop-morph .speech-button-language { font-size: 26px !important; }
     .capsule-voice-button.audio-side-hidden { display: none !important; }
     .voice-input-mode-setting { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; color: var(--text-dim); font-size: .72rem; }
     .audio-mode-description { display: block; margin-top: 7px; color: #a5f3fc; font-size: .72rem; line-height: 1.4; }
@@ -10447,7 +10449,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 button.dataset.audioIdleTitle = button.getAttribute('title') || '';
                 button.__gugoAudioHandlers = { onclick: button.onclick, onpointerdown: button.onpointerdown, onpointerup: button.onpointerup, onpointercancel: button.onpointercancel, ontouchstart: button.ontouchstart, ontouchend: button.ontouchend, ontouchcancel: button.ontouchcancel, onlostpointercapture: button.onlostpointercapture };
             }
-            button.classList.remove('audio-send-morph', 'audio-side-hidden');
+            button.classList.remove('audio-send-morph', 'audio-stop-morph', 'audio-side-hidden');
             button.disabled = false;
             button.removeAttribute('disabled');
             button.removeAttribute('aria-disabled');
@@ -10463,7 +10465,26 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             return;
         }
         if (state === 'recording') {
+            const active = role === 'learning' ? left : right;
             buttons.forEach(button => { button.disabled = true; button.setAttribute('aria-disabled', 'true'); });
+            if (active) {
+                active.disabled = false;
+                active.removeAttribute('disabled');
+                active.removeAttribute('aria-disabled');
+                active.classList.add('audio-stop-morph');
+                active.innerHTML = '<span class="speech-button-language" aria-hidden="true">⏹️</span>';
+                active.setAttribute('aria-label', text('audioStop'));
+                active.title = text('audioStop');
+                const stopFromSide = event => { event.preventDefault?.(); event.stopImmediatePropagation?.(); stopAudioRecording(); return false; };
+                active.onclick = stopFromSide;
+                active.onpointerdown = event => { event.preventDefault?.(); event.stopPropagation?.(); };
+                active.onpointerup = null;
+                active.onpointercancel = null;
+                active.ontouchstart = event => { event.preventDefault?.(); event.stopPropagation?.(); };
+                active.ontouchend = null;
+                active.ontouchcancel = null;
+                active.onlostpointercapture = null;
+            }
             return;
         }
         const active = role === 'learning' ? left : right;
@@ -10498,8 +10519,8 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         const send = panel.querySelector('.audio-send-confirm');
         stop.textContent = '⏹️'; preview.textContent = previewAudio && !previewAudio.paused ? '⏸️' : '▶️'; rerecord.textContent = '🗑️'; send.textContent = '✈️';
         stop.setAttribute('aria-label', text('audioStop')); stop.title = text('audioStop'); preview.setAttribute('aria-label', previewAudio && !previewAudio.paused ? text('audioReplay') : text('audioPreview')); preview.title = preview.getAttribute('aria-label'); rerecord.setAttribute('aria-label', text('audioRerecord')); rerecord.title = text('audioRerecord'); send.setAttribute('aria-label', text('audioSend')); send.title = text('audioSend');
-        if (state === 'recording') { status.innerHTML = `<span class="audio-recording-dot" aria-hidden="true"></span><span class="audio-recording-timer">${formatDuration((Date.now() - audioStartedAt) / 1000)}</span>`; stop.hidden = false; preview.hidden = true; rerecord.hidden = true; send.hidden = true; }
-        else if (state === 'preview') { status.textContent = `🎙️ ${formatDuration(audioDuration)}`; stop.hidden = true; preview.hidden = false; rerecord.hidden = false; send.hidden = false; }
+        if (state === 'recording') { status.innerHTML = `<span class="audio-recording-dot" aria-hidden="true"></span><span class="audio-recording-timer">${formatDuration((Date.now() - audioStartedAt) / 1000)}</span>`; stop.hidden = true; preview.hidden = true; rerecord.hidden = true; send.hidden = true; }
+        else if (state === 'preview') { status.textContent = `🎙️ ${formatDuration(audioDuration)}`; stop.hidden = true; preview.hidden = false; rerecord.hidden = false; send.hidden = true; }
         else { status.textContent = ''; stop.hidden = true; preview.hidden = true; rerecord.hidden = true; send.hidden = true; }
     }
     function formatDuration(seconds) { const total = Math.max(0, Math.round(Number(seconds) || 0)); return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`; }
