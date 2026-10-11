@@ -1250,8 +1250,23 @@
     .vocab-popover button { min-height: 32px; }
 }
 </style>
-
-
+<style id="gugo-audio-input-style">
+    .audio-input-panel { display: none; align-items: center; gap: 7px; width: 100%; min-width: 0; }
+    .audio-input-panel[data-state="recording"], .audio-input-panel[data-state="preview"] { display: flex; }
+    .capsule-dock.audio-mode-active { flex-wrap: wrap; }
+    .capsule-dock.audio-mode-active #user-text, .capsule-dock.audio-mode-active .capsule-actions { display: none !important; }
+    .capsule-dock.audio-mode-active .audio-input-panel { order: 10; flex: 1 1 100%; }
+    .audio-recording-status { flex: 1 1 auto; min-width: 0; color: #fca5a5; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .audio-recording-dot { display: inline-block; width: 9px; height: 9px; margin-right: 5px; border-radius: 50%; background: #ef4444; box-shadow: 0 0 0 4px rgba(239,68,68,.18); animation: audio-recording-pulse 1.1s ease-in-out infinite; }
+    @keyframes audio-recording-pulse { 50% { opacity: .35; transform: scale(.78); } }
+    .audio-input-panel button { flex: 0 0 auto; min-height: 36px; padding: 6px 9px; border: 1px solid rgba(255,255,255,.18); border-radius: 10px; background: rgba(255,255,255,.09); color: #eef2f7; cursor: pointer; font-size: .75rem; }
+    .audio-input-panel .audio-send-confirm { background: #dbeafe; color: #172033; border-color: #bfdbfe; font-weight: 800; }
+    .voice-input-mode-setting { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; color: var(--text-dim); font-size: .72rem; }
+    .audio-mode-description { display: block; margin-top: 7px; color: #a5f3fc; font-size: .72rem; line-height: 1.4; }
+    .audio-message-bubble { display: inline-flex; align-items: center; gap: 8px; margin: 5px 0 3px; padding: 8px 10px; border: 1px solid rgba(255,255,255,.18); border-radius: 16px; background: rgba(255,255,255,.08); color: #e8eef8; }
+    .audio-message-bubble button { width: 30px; height: 30px; border: 0; border-radius: 50%; background: #dbeafe; color: #172033; cursor: pointer; }
+    @media (max-width: 640px) { .audio-input-panel button { padding: 6px 7px; font-size: .68rem; } .audio-message-bubble { max-width: 100%; } }
+</style>
 <style id="gugo-dual-stt-pronunciation-style">
 /* GugoPro dual-language speech composer and pronunciation feedback */
 #chat-container .msg-learning,
@@ -3342,6 +3357,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             const textInput = document.getElementById('user-text');
             const content = String(retryRequest?.content || textInput.value || '').trim();
             const speechRequest = retryRequest?.source === 'speech';
+            const audioRequest = retryRequest?.source === 'audio' && retryRequest.audio ? retryRequest.audio : null;
             if (!content) return;
 
             const apiKey = getGeminiApiKey();
@@ -3368,7 +3384,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             if (existingUserEl) {
                 existingUserEl.querySelector('.msg-my').textContent = '正在處理...';
             } else {
-                addMessageToUI('user', content, '正在處理...', null, msgId, null, pronunciationForMessage);
+                addMessageToUI('user', content, '正在處理...', null, msgId, null, pronunciationForMessage, audioRequest);
             }
             pendingRetryRequest = null;
             isSendingMessage = true;
@@ -3379,7 +3395,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 const response = await callGemini(content, myLang, targetLang, inputLang, apiKey, (modelName) => {
                     const processingModelEl = document.querySelector(`[data-id="${msgId}"] .msg-my`);
                     if (processingModelEl) processingModelEl.textContent = `${getModelDisplayName(modelName)} 正在處理中...`;
-                });
+                }, audioRequest);
 
                 const userMsgEl = document.querySelector(`[data-id="${msgId}"]`);
                 if (userMsgEl) {
@@ -3392,7 +3408,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 }
 
                 const room = chatRooms.find(r => r.id === activeRoomId);
-                room.messages.push({ id: msgId, role: 'user', learning: content, my: response.user_my, rawInput: content, learningTranslation: response.user_learning, speechLang: targetLang, pronunciation: pronunciationForMessage || null });
+                room.messages.push({ id: msgId, role: 'user', learning: content, my: response.user_my, rawInput: content, learningTranslation: response.user_learning, speechLang: targetLang, pronunciation: pronunciationForMessage || null, audio: audioRequest ? { url: audioRequest.url || '', duration: audioRequest.duration || 0, mimeType: audioRequest.mimeType || '' } : null });
 
                 if (window.GugoProGlobalAIQuota) {
                     window.GugoProGlobalAIQuota.recordUsage(1, currentModel);
@@ -3439,7 +3455,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             }
         }
 
-        async function callGemini(userInput, myLangCode, targetLangCode, inputLangCode, apiKey, onModelAttempt = null) {
+        async function callGemini(userInput, myLangCode, targetLangCode, inputLangCode, apiKey, onModelAttempt = null, audioInput = null) {
             const myLang = LANG_NAMES[myLangCode];
             const targetLang = LANG_NAMES[targetLangCode];
             const inputLang = inputLangCode === 'auto' ? '自動辨識輸入語言' : (LANG_NAMES[inputLangCode] || inputLangCode);
@@ -3476,12 +3492,12 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 role: message.role === 'user' ? 'user' : 'model',
                 parts: [{ text: String(message.learning || '') }]
             }));
-            chatHistory.push({ role: 'user', parts: [{ text: prompt }] });
+            chatHistory.push({ role: 'user', parts: audioInput?.base64 ? [{ inline_data: { mime_type: audioInput.mimeType || 'audio/webm', data: audioInput.base64 } }, { text: prompt }] : [{ text: prompt }] });
 
             const payload = {
                 contents: chatHistory,
                 systemInstruction: {
-                    parts: [{ text: `你是一位專業親切的外語口說導師。${materialText ? '目前是專屬課文家教模式，請優先依教材內容協助學生。' : ''}` }]
+                    parts: [{ text: `你是一位專業親切的外語口說導師。${materialText ? '目前是專屬課文家教模式，請優先依教材內容協助學生。' : ''}${audioInput?.base64 ? '學生本次提供的是原始語音錄音，請直接聆聽其內容、發音、語調與連音；回覆最後加入【💡 發音與語調回饋】，指出可改善之處。' : ''}` }]
                 },
                 generationConfig: {
                     temperature: 0.7
@@ -3560,7 +3576,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             throw finalError;
         }
 
-        function addMessageToUI(role, learning, my, correction, id, speechLang = null, pronunciation = null) {
+        function addMessageToUI(role, learning, my, correction, id, speechLang = null, pronunciation = null, audioData = null) {
             const container = document.getElementById('chat-container');
             const div = document.createElement('div');
             div.className = `message message-${role}`;
@@ -3584,6 +3600,13 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 learningElement.innerHTML = renderTutorMarkdown(learning);
             }
             if (myElement) myElement.textContent = String(my || '');
+            if (audioData?.url && role === 'user') {
+                const audio = document.createElement('div');
+                audio.className = 'audio-message-bubble';
+                audio.innerHTML = `<button type="button" aria-label="${runtimeUiText('audioPreview')}" title="${runtimeUiText('audioPreview')}" onclick="GugoPlayAudioMessage(this)"><i class="fa-solid fa-play"></i></button><span>${runtimeUiText('audioMessage')} ${window.GugoFormatAudioDuration?.(audioData.duration) || '0:00'}</span>`;
+                audio.dataset.audioUrl = audioData.url;
+                div.insertBefore(audio, div.querySelector('.msg-actions'));
+            }
             if (pronunciation && role === 'user') {
                 const score = typeof pronunciation === 'object' ? pronunciation : null;
                 if (score && typeof window.GugoRenderPronunciationScore === 'function') {
@@ -6482,6 +6505,19 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
                 "chooseSpeechMode": "Choose voice operation mode",
                 "uiLanguage": "Interface language",
                 "speechVoice": "Voice input",
+                "voiceInputMode": "Voice input mode",
+                "voiceInputModeStt": "🔤 Speech to text",
+                "voiceInputModeAudio": "🎙️ Send original audio to AI",
+                "audioModeGuide": "LINE-style recording: preview or record again, then confirm before sending",
+                "audioRecording": "Recording",
+                "audioStop": "■ Stop recording",
+                "audioPreview": "▶ Preview",
+                "audioReplay": "▶ Replay",
+                "audioRerecord": "🗑️ Record again",
+                "audioSend": "✈️ Confirm send",
+                "audioMessage": "🎙️ Voice message",
+                "audioPermissionError": "Microphone permission is required for original-audio recording.",
+                "audioUnsupported": "This browser does not support original-audio recording.",
                 "apiHelp": "👉 Learn how to get a Gemini API key",
                 "welcomeTitle": "👋 Welcome to the AI Language Tutor!",
                 "welcomeDock": "The input dock stays fixed at the bottom, supports multiple lines; Enter sends and Shift+Enter adds a line break",
@@ -10110,6 +10146,14 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
     function startSpeechControl(button) {
         const state = button?.__gugoSpeechControlState;
         if (!button || !state || window.GugoSpeechSessionActive) return false;
+        if (window.GugoGetVoiceInputMode?.() === 'audio') {
+            state.beforeStart?.();
+            window.GugoSpeechActiveControl = button;
+            const started = window.GugoStartAudioRecording?.(button, state.role) === true;
+            if (started) setSpeechControlActive(button, true);
+            else window.GugoSpeechActiveControl = null;
+            return started;
+        }
         if (typeof window.GugoStartDualSpeech !== 'function') return false;
         state.beforeStart?.();
         window.GugoSpeechMode = speechMode();
@@ -10129,6 +10173,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         if (!state || !window.GugoSpeechSessionActive || window.GugoSpeechActiveControl !== button) return false;
         event?.preventDefault?.();
         event?.stopPropagation?.();
+        if (window.GugoGetVoiceInputMode?.() === 'audio') return window.GugoStopAudioRecording?.() === true;
         setSpeechComposerState('stopping', state.role);
         window.GugoStopDualSpeech?.();
         return true;
@@ -10302,6 +10347,167 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
     window.GugoBindTutorExperience = bind;
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind, { once: true });
     else bind();
+})();
+</script>
+<script id="gugo-audio-input-mode-js">
+(() => {
+    if (window.__gugoAudioInputModeV1) return;
+    window.__gugoAudioInputModeV1 = true;
+    const MODE_KEY = 'tutor_voice_input_mode';
+    let recorder = null;
+    let stream = null;
+    let chunks = [];
+    let audioUrl = '';
+    let audioBlob = null;
+    let audioMimeType = 'audio/webm';
+    let audioDuration = 0;
+    let audioStartedAt = 0;
+    let audioTimer = null;
+    let previewAudio = null;
+    let activeRole = 'learning';
+    let activeButton = null;
+
+    const text = key => window.GugoUiText?.(key) || ({
+        voiceInputMode: 'Voice input mode', voiceInputModeStt: '🔤 Speech to text',
+        voiceInputModeAudio: '🎙️ Send original audio to AI',
+        audioModeGuide: 'LINE-style recording: preview or record again, then confirm before sending',
+        audioRecording: 'Recording', audioStop: '■ Stop recording', audioPreview: '▶ Preview',
+        audioReplay: '▶ Replay', audioRerecord: '🗑️ Record again', audioSend: '✈️ Confirm send',
+        audioMessage: '🎙️ Voice message', audioPermissionError: 'Microphone permission is required for original-audio recording.',
+        audioUnsupported: 'This browser does not support original-audio recording.'
+    }[key] || key);
+    const getMode = () => localStorage.getItem(MODE_KEY) || 'stt';
+    const setMode = mode => { const value = mode === 'audio' ? 'audio' : 'stt'; localStorage.setItem(MODE_KEY, value); updateModePanel(value); return value; };
+    window.GugoGetVoiceInputMode = getMode;
+    window.GugoSetVoiceInputMode = setMode;
+
+    function ensureModePanel() {
+        const section = document.getElementById('speech-mode-section');
+        if (!section) return false;
+        if (!section.querySelector('#voice-input-mode-select')) {
+            const label = document.createElement('label');
+            label.className = 'voice-input-mode-setting';
+            label.innerHTML = `<span>${text('voiceInputMode')}</span><select id="voice-input-mode-select" class="lang-select" aria-label="${text('voiceInputMode')}"><option value="stt">${text('voiceInputModeStt')}</option><option value="audio">${text('voiceInputModeAudio')}</option></select>`;
+            section.insertBefore(label, section.querySelector('#speech-mode-select'));
+            const select = label.querySelector('select');
+            select.addEventListener('change', () => { setMode(select.value); });
+        }
+        const select = section.querySelector('#voice-input-mode-select');
+        if (select) select.value = getMode();
+        updateModePanel(getMode());
+        return true;
+    }
+    function updateModePanel(mode = getMode()) {
+        const section = document.getElementById('speech-mode-section');
+        const select = document.getElementById('voice-input-mode-select');
+        if (!section || !select) return;
+        select.value = mode;
+        const modeLabel = section.querySelector('.voice-input-mode-setting span'); if (modeLabel) modeLabel.textContent = text('voiceInputMode');
+        const sttOption = select.querySelector('option[value="stt"]'); if (sttOption) sttOption.textContent = text('voiceInputModeStt');
+        const audioOption = select.querySelector('option[value="audio"]'); if (audioOption) audioOption.textContent = text('voiceInputModeAudio');
+        const operation = section.querySelector('#speech-mode-select');
+        const silence = section.querySelector('.speech-silence-setting');
+        const cue = section.querySelector('.speech-start-cue-setting');
+        const description = section.querySelector('#speech-mode-description');
+        [operation, silence, cue, description].forEach(el => { if (el) el.hidden = mode === 'audio'; });
+        let guide = section.querySelector('#audio-mode-description');
+        if (!guide) { guide = document.createElement('small'); guide.id = 'audio-mode-description'; guide.className = 'audio-mode-description'; section.appendChild(guide); }
+        guide.textContent = text('audioModeGuide');
+        guide.hidden = mode !== 'audio';
+        if (mode === 'audio') ensureAudioPanel();
+    }
+
+    function ensureAudioPanel() {
+        const dock = document.querySelector('.capsule-dock');
+        if (!dock || dock.querySelector('#audio-input-panel')) return;
+        dock.insertAdjacentHTML('beforeend', `<div id="audio-input-panel" class="audio-input-panel" data-state="idle" aria-live="polite"><span class="audio-recording-status"></span><button type="button" class="audio-stop-button">${text('audioStop')}</button><button type="button" class="audio-preview-button">${text('audioPreview')}</button><button type="button" class="audio-rerecord-button">${text('audioRerecord')}</button><button type="button" class="audio-send-confirm">${text('audioSend')}</button></div>`);
+        dock.querySelector('.audio-stop-button').addEventListener('click', stopAudioRecording);
+        dock.querySelector('.audio-preview-button').addEventListener('click', toggleAudioPreview);
+        dock.querySelector('.audio-rerecord-button').addEventListener('click', resetAudioInput);
+        dock.querySelector('.audio-send-confirm').addEventListener('click', sendPendingAudio);
+        updateAudioPanel('idle');
+    }
+    function updateAudioPanel(state = 'idle') {
+        const panel = document.getElementById('audio-input-panel');
+        const dock = document.querySelector('.capsule-dock');
+        if (!panel || !dock) return;
+        panel.dataset.state = state;
+        dock.classList.toggle('audio-mode-active', state === 'recording' || state === 'preview');
+        const status = panel.querySelector('.audio-recording-status');
+        const stop = panel.querySelector('.audio-stop-button');
+        const preview = panel.querySelector('.audio-preview-button');
+        const rerecord = panel.querySelector('.audio-rerecord-button');
+        const send = panel.querySelector('.audio-send-confirm');
+        stop.textContent = text('audioStop'); preview.textContent = previewAudio && !previewAudio.paused ? text('audioReplay') : text('audioPreview'); rerecord.textContent = text('audioRerecord'); send.textContent = text('audioSend');
+        if (state === 'recording') { status.innerHTML = `<span class="audio-recording-dot"></span>${text('audioRecording')} ${formatDuration((Date.now() - audioStartedAt) / 1000)}`; stop.hidden = false; preview.hidden = true; rerecord.hidden = true; send.hidden = true; }
+        else if (state === 'preview') { status.textContent = `${text('audioMessage')} ${formatDuration(audioDuration)}`; stop.hidden = true; preview.hidden = false; rerecord.hidden = false; send.hidden = false; }
+        else { status.textContent = ''; stop.hidden = true; preview.hidden = true; rerecord.hidden = true; send.hidden = true; }
+    }
+    function formatDuration(seconds) { const total = Math.max(0, Math.round(Number(seconds) || 0)); return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`; }
+    window.GugoFormatAudioDuration = formatDuration;
+    let messageAudio = null;
+    window.GugoPlayAudioMessage = button => {
+        const url = button?.closest?.('.audio-message-bubble')?.dataset?.audioUrl;
+        if (!url) return false;
+        if (!messageAudio || messageAudio.src !== url) { messageAudio?.pause?.(); messageAudio = new Audio(url); }
+        if (messageAudio.paused) { messageAudio.play().catch(() => {}); button.innerHTML = '<i class="fa-solid fa-pause"></i>'; }
+        else { messageAudio.pause(); button.innerHTML = '<i class="fa-solid fa-play"></i>'; }
+        messageAudio.onended = () => { button.innerHTML = '<i class="fa-solid fa-play"></i>'; };
+        return false;
+    };
+    function pickMimeType() { return ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/wav'].find(type => window.MediaRecorder?.isTypeSupported?.(type)) || ''; }
+    async function startAudioRecording(button, role = 'learning') {
+        if (recorder || window.GugoSpeechSessionActive) return false;
+        if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) { window.GugoSetSpeechComposerState?.('error', role, text('audioUnsupported')); return false; }
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            audioMimeType = pickMimeType() || 'audio/webm';
+            recorder = new MediaRecorder(stream, audioMimeType ? { mimeType: audioMimeType } : undefined);
+            chunks = []; activeRole = role; activeButton = button; audioStartedAt = Date.now(); audioDuration = 0;
+            recorder.ondataavailable = event => { if (event.data?.size) chunks.push(event.data); };
+            recorder.onstop = finishAudioRecording;
+            recorder.start(250);
+            window.GugoSpeechSessionActive = true; window.GugoSpeechActiveControl = button;
+            ensureAudioPanel(); updateAudioPanel('recording');
+            window.GugoSetSpeechComposerState?.('recording', role, `${text('audioRecording')} 0:00`);
+            audioTimer = setInterval(() => { audioDuration = (Date.now() - audioStartedAt) / 1000; updateAudioPanel('recording'); }, 250);
+            return true;
+        } catch (error) {
+            stream?.getTracks?.().forEach(track => track.stop()); stream = null; recorder = null;
+            window.GugoSetSpeechComposerState?.('error', role, text('audioPermissionError'));
+            return false;
+        }
+    }
+    function stopAudioRecording() { if (!recorder) return false; recorder.stop(); return true; }
+    function finishAudioRecording() {
+        clearInterval(audioTimer); audioTimer = null; audioDuration = (Date.now() - audioStartedAt) / 1000;
+        audioBlob = new Blob(chunks, { type: audioMimeType });
+        if (audioUrl) URL.revokeObjectURL(audioUrl);
+        audioUrl = URL.createObjectURL(audioBlob);
+        previewAudio = new Audio(audioUrl);
+        stream?.getTracks?.().forEach(track => track.stop()); stream = null; recorder = null; chunks = [];
+        window.GugoSpeechSessionActive = false;
+        window.GugoClearSpeechControl?.();
+        window.GugoSpeechActiveControl = null;
+        updateAudioPanel('preview'); window.GugoSetSpeechComposerState?.('idle');
+    }
+    function toggleAudioPreview() { if (!previewAudio) return; if (previewAudio.paused) { previewAudio.currentTime = 0; previewAudio.play().catch(() => {}); } else previewAudio.pause(); }
+    function resetAudioInput(options = {}) { const keepUrl = options.keepUrl === true; if (previewAudio) { previewAudio.pause(); previewAudio = null; } if (!keepUrl && audioUrl) URL.revokeObjectURL(audioUrl); if (!keepUrl) audioUrl = ''; audioBlob = null; audioDuration = 0; updateAudioPanel('idle'); window.GugoResetComposer?.(document.getElementById('user-text')); window.GugoSetSpeechComposerState?.('idle'); }
+    function blobToBase64(blob) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onloadend = () => resolve(String(reader.result || '').split(',')[1] || ''); reader.onerror = reject; reader.readAsDataURL(blob); }); }
+    async function sendPendingAudio() {
+        if (!audioBlob || typeof sendMessage !== 'function') return;
+        const blob = audioBlob; const url = audioUrl; const duration = audioDuration; const mimeType = audioMimeType;
+        const base64 = await blobToBase64(blob);
+        resetAudioInput({ keepUrl: true });
+        await sendMessage({ source: 'audio', content: '🎙️ 語音訊息', audio: { base64, mimeType, duration, url } });
+    }
+    window.GugoStartAudioRecording = startAudioRecording;
+    window.GugoStopAudioRecording = stopAudioRecording;
+    window.GugoResetAudioInput = resetAudioInput;
+    window.GugoEnsureAudioInputPanel = ensureAudioPanel;
+    window.addEventListener('gugopro:ui-language-change', () => { ensureModePanel(); updateModePanel(); updateAudioPanel(document.getElementById('audio-input-panel')?.dataset.state || 'idle'); });
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => { ensureModePanel(); ensureAudioPanel(); }, { once: true });
+    else { ensureModePanel(); ensureAudioPanel(); }
 })();
 </script>
 </body>
