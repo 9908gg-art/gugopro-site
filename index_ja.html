@@ -179,9 +179,9 @@ header {
 
 /* 19編の実践コラムナレッジベース */
 .home-articles-container { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 18px; padding: 32px; }
-.home-articles-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; margin-top: 20px; }
-.home-article-card { display: flex; flex-direction: column; gap: 12px; padding: 22px; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 14px; text-decoration: none; transition: transform 0.2s ease, border-color 0.2s ease; }
+.home-article-card { display: flex; flex-direction: column; gap: 12px; padding: 22px; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 14px; text-decoration: none; transition: transform 0.2s ease, border-color 0.2s ease; cursor: pointer; }
 .home-article-card:hover { transform: translateY(-3px); border-color: var(--border-highlight); }
+.home-article-card:hover h3 { color: var(--accent-cyan); }
 .home-article-meta { display: flex; align-items: center; justify-content: space-between; font-size: 0.78rem; color: #64748b; }
 .home-article-badge { padding: 3px 9px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; }
 .home-article-card h3 { color: #ffffff; font-size: 1.06rem; line-height: 1.5; font-weight: 800; }
@@ -1169,6 +1169,23 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
+
+    // 実践コラム記事カード全体のクリックで記事へ遷移
+    document.querySelectorAll('.home-article-card').forEach(card => {
+        card.addEventListener('click', function (e) {
+            if (e.target.closest('.article-tool-tag')) {
+                return;
+            }
+            const articleLink = card.querySelector('.home-article-footer a');
+            if (articleLink && articleLink.href) {
+                if (e.ctrlKey || e.metaKey) {
+                    window.open(articleLink.href, '_blank');
+                } else {
+                    window.location.href = articleLink.href;
+                }
+            }
+        });
+    });
 });
 </script>
 
