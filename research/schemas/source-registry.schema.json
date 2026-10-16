@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gugopro.com/research/schemas/source-registry.schema.json",
+  "title": "GugoPro Research Source Registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["registry_version", "updated_at", "policy", "sources"],
+  "properties": {
+    "registry_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "updated_at": {"type": "string", "format": "date"},
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["default_status", "allow_browser_direct_requests", "secret_policy", "failure_policy"],
+      "properties": {
+        "default_status": {"type": "string", "enum": ["unavailable", "fresh", "partial", "stale", "invalid"]},
+        "allow_browser_direct_requests": {"type": "boolean"},
+        "secret_policy": {"type": "string", "minLength": 20},
+        "failure_policy": {"type": "string", "minLength": 20}
+      }
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source_id", "display_name", "official_url", "data_classes", "coverage", "frequencies", "adjustments", "timezone", "currency", "license_ref", "requires_api_key", "browser_direct_allowed", "typical_update_lag", "freshness_sla", "rate_limit_policy", "error_codes", "owner", "enabled", "notes"],
+        "properties": {
+          "source_id": {"type": "string", "minLength": 2, "pattern": "^[A-Za-z0-9_.:-]+$"},
+          "display_name": {"type": "string", "minLength": 2},
+          "official_url": {"type": "string", "format": "uri", "pattern": "^https://"},
+          "data_classes": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 2}},
+          "coverage": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 2}},
+          "frequencies": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 2}},
+          "adjustments": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 2}},
+          "timezone": {"type": "string", "minLength": 1},
+          "currency": {"type": "string", "minLength": 1},
+          "license_ref": {"type": "string", "minLength": 3},
+          "requires_api_key": {"type": "boolean"},
+          "browser_direct_allowed": {"type": "boolean"},
+          "typical_update_lag": {"type": "string", "minLength": 1},
+          "freshness_sla": {"type": "string", "minLength": 1},
+          "rate_limit_policy": {"type": "string", "minLength": 1},
+          "error_codes": {"type": "array", "minItems": 1, "items": {"type": "string", "pattern": "^[A-Z0-9_:-]+$"}},
+          "owner": {"type": "string", "minLength": 2},
+          "enabled": {"type": "boolean"},
+          "notes": {"type": "string", "minLength": 2}
+        }
+      }
+    }
+  }
+}

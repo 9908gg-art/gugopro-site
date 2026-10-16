@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+
+<html lang="zh-TW">
+<head>
+<!-- GugoPro AdSense publisher script -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4756902118634553" crossorigin="anonymous"></script>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="/favicon.svg" rel="icon" type="image/svg+xml"/>
+<title>Amazon AI 全品類智能選品導購 | GugoPro</title>
+<meta content="GugoPro Amazon AI 全品類智能選品導購：以 Gemini 分析藍海選品方向、競品差評痛點與 Listing 關鍵字，支援美國站與日本站。" name="description"/>
+<meta content="Amazon AI 選品, 藍海商品, 競品差評, Listing 關鍵字, Gemini, GugoPro, Amazon US, Amazon JP" name="keywords"/>
+<meta content="GugoPro AI Team" name="author"/>
+<meta content="index,follow,max-image-preview:large" name="robots"/>
+<meta content="Amazon AI 全品類智能選品導購｜GugoPro" property="og:title"/>
+<meta content="用文字、商品照片與語音整理 Amazon US／JP 選品條件、規格矩陣、競品差評與 Listing 關鍵字；價格與庫存以官方頁面為準。" property="og:description"/>
+<meta content="https://gugopro.com/amazon/" property="og:url"/>
+<meta content="website" property="og:type"/>
+<meta content="GugoPro" property="og:site_name"/>
+<meta content="summary" name="twitter:card"/>
+<!-- Google Analytics 4 (GA4) -->
+<script async="" src="https://www.googletagmanager.com/gtag/js?id=G-GF1DYLWMKX"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-GF1DYLWMKX');
+</script>
+<!-- Font Awesome 6 & Google Fonts -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=Noto+Sans+TC:wght@400;500;700&amp;family=Noto+Sans+JP:wght@400;500;700&amp;family=Outfit:wght@400;700;800&amp;display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --accent: #00A8E1;
+  --accent-glow: rgba(0, 168, 225, 0.35);
+  --accent2: #7000ff;
+  --bg-main: #0a0b10;
+  --bg-card: rgba(255, 255, 255, 0.05);
+  --border-card: rgba(255, 255, 255, 0.1);
+  --text-primary: #e8eaf0;
+  --text-muted: #9FB3C8;
+  --gold: #FFD700;
+  --success: #34c759;
+  --error: #ff3b30;
+  --user-bubble: rgba(0, 168, 225, 0.1);
+  --ai-bubble: rgba(112, 0, 255, 0.08);
+}
+body.theme-jp {
+  --accent: #FF3366;
+  --accent-glow: rgba(255, 51, 102, 0.35);
+  --user-bubble: rgba(255, 51, 102, 0.1);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', 'Noto Sans TC', 'Noto Sans JP', sans-serif;
+  min-height: 100vh;
+  background: radial-gradient(ellipse at 50% 0%, rgba(0,168,225,0.08) 0%, transparent 60%), var(--bg-main);
+  color: var(--text-primary);
+  transition: background 0.3s;
+}
+body.theme-jp {
+  background: radial-gradient(ellipse at 50% 0%, rgba(255,51,102,0.1) 0%, transparent 60%), var(--bg-main);
+}
+
+/* Top Nav */
+.top-nav {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;
+  background: rgba(10,11,16,0.92); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border-card); padding: 10px 16px; position: sticky; top: 0; z-index: 100;
+}
+.brand-group { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.brand-link { color: #fff; text-decoration: none; font-size: 1.05rem; font-weight: 800; display: flex; align-items: center; gap: 7px; font-family: 'Outfit', sans-serif; }
+.brand-link i { color: var(--accent); }
+.market-switcher { display: inline-flex; background: rgba(0,0,0,0.45); border: 1px solid var(--border-card); border-radius: 24px; padding: 2px; gap: 2px; }
+.market-btn { background: transparent; border: none; color: var(--text-muted); font-size: 0.78rem; font-weight: 700; padding: 5px 12px; border-radius: 20px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s; }
+.market-btn:hover { color: #fff; }
+.market-btn.active { background: linear-gradient(135deg, var(--accent), #0077A3); color: #fff; box-shadow: 0 2px 8px var(--accent-glow); }
+body.theme-jp .market-btn.active { background: linear-gradient(135deg, #FF3366, #C70039); }
+.nav-right { display: flex; align-items: center; gap: 6px; }
+.btn-nav { background: rgba(255,255,255,0.07); border: 1px solid var(--border-card); color: var(--text-primary); padding: 5px 12px; border-radius: 18px; font-size: 0.78rem; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s; }
+.btn-nav:hover { background: rgba(255,255,255,0.13); border-color: var(--accent); }
+.btn-nav.api-connected { border-color: var(--success); color: var(--success); }
+
+/* Hero */
+.hero { text-align: center; padding: 28px 16px 10px; max-width: 700px; margin: 0 auto; }
+.hero h1 { font-size: clamp(1.3rem, 3.5vw, 2rem); font-weight: 800; font-family: 'Outfit', sans-serif; background: linear-gradient(135deg, #fff 30%, var(--accent) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 6px; }
+.hero p { color: var(--text-muted); font-size: 0.85rem; line-height: 1.5; }
+.hero { transition: opacity 160ms ease, transform 160ms ease, max-height 160ms ease, padding 160ms ease; }
+.hero.is-collapsed { display: none; }
+
+/* Chat Container */
+
+.chat-messages { flex: 1; overflow-y: auto; padding: 10px 0; display: flex; flex-direction: column; gap: 14px; }
+
+/* Welcome Card */
+.welcome-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-top: 10px; }
+.welcome-card { background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 14px; padding: 14px; cursor: pointer; transition: all 0.2s; }
+.welcome-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+.welcome-card h4 { color: var(--accent); margin-bottom: 6px; font-size: 0.88rem; font-family: 'Outfit', sans-serif; }
+.welcome-card p { color: var(--text-muted); font-size: 0.78rem; line-height: 1.4; }
+
+/* Message Bubbles */
+.msg { display: flex; gap: 10px; max-width: 100%; }
+.msg.user { justify-content: flex-end; }
+.msg.user .bubble { background: var(--user-bubble); border: 1px solid rgba(0,168,225,0.2); border-radius: 16px 16px 4px 16px; }
+body.theme-jp .msg.user .bubble { border-color: rgba(255,51,102,0.2); }
+.msg.ai .bubble { background: var(--ai-bubble); border: 1px solid rgba(112,0,255,0.15); border-radius: 16px 16px 16px 4px; }
+.bubble { padding: 12px 16px; max-width: 85%; font-size: 0.9rem; line-height: 1.6; word-break: break-word; }
+.bubble img.user-photo { max-width: 200px; max-height: 200px; border-radius: 10px; margin-bottom: 6px; display: block; }
+.msg-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; flex-shrink: 0; margin-top: 2px; }
+.msg.user .msg-avatar { background: var(--accent); color: #fff; }
+.msg.ai .msg-avatar { background: var(--accent2); color: #fff; }
+
+/* Dynamic Facet Matrix Card (Strict No-Fluff) */
+.ai-facet-card { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+.facet-quick-guide { color: var(--text-primary); font-weight: 700; font-size: 0.88rem; line-height: 1.5; }
+.facet-groups-container { display: flex; flex-direction: column; gap: 8px; }
+.facet-group-box { background: rgba(0, 0, 0, 0.45); border: 1px solid var(--border-card); border-radius: 12px; padding: 10px 12px; }
+.facet-group-title { font-size: 0.78rem; font-weight: 800; color: var(--gold); margin-bottom: 6px; letter-spacing: 0.03em; }
+.facet-chips-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.facet-chip {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-card);
+  color: var(--text-primary);
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+.facet-chip:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: var(--accent);
+  color: #fff;
+  transform: translateY(-1px);
+}
+.facet-chip.selected {
+  background: var(--accent-glow);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 0 10px var(--accent-glow);
+}
+body.theme-jp .facet-chip.selected {
+  background: rgba(255, 51, 102, 0.35);
+  border-color: #FF3366;
+}
+
+.facet-preview-bar {
+  background: rgba(0, 0, 0, 0.65);
+  border: 1px solid rgba(255, 215, 0, 0.35);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+.btn-facet-jump-alt {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-card);
+  color: var(--text-primary);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.btn-facet-jump-alt:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: var(--gold);
+  color: #fff;
+  transform: translateY(-1px);
+}
+.facet-kw-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.8rem;
+}
+.facet-kw-info .kw-label { color: var(--text-muted); }
+.facet-kw-info .kw-value {
+  color: var(--gold);
+  font-family: 'Outfit', monospace;
+  font-weight: 800;
+  font-size: 0.88rem;
+  word-break: break-all;
+  text-align: right;
+}
+.btn-facet-jump {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, var(--accent), #0077A3);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px var(--accent-glow);
+}
+body.theme-jp .btn-facet-jump { background: linear-gradient(135deg, #FF3366, #C70039); }
+.btn-facet-jump:hover { transform: translateY(-2px); filter: brightness(1.1); }
+
+/* Typing Indicator */
+.typing-indicator { display: flex; align-items: center; gap: 4px; padding: 8px 14px; }
+.typing-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; animation: typingBounce 1.4s infinite ease-in-out; }
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typingBounce { 0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
+
+/* Input Bar */
+.input-bar-wrapper { position: sticky; bottom: 0; background: linear-gradient(transparent, var(--bg-main) 20%); padding: 10px 0 16px; }
+.input-bar { max-width: 800px; margin: 0 auto; display: flex; align-items: flex-end; gap: 6px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-card); border-radius: 16px; padding: 8px 10px; backdrop-filter: blur(10px); }
+.input-bar textarea { flex: 1; background: transparent; border: none; color: #fff; font-size: 0.92rem; resize: none; outline: none; max-height: 120px; min-height: 20px; line-height: 1.4; font-family: inherit; }
+.input-bar textarea::placeholder { color: var(--text-muted); }
+.input-btn { width: 36px; height: 36px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; transition: all 0.2s; flex-shrink: 0; }
+.btn-camera { background: rgba(255,255,255,0.08); color: var(--text-muted); }
+.btn-camera:hover { background: rgba(255,255,255,0.15); color: #fff; }
+.btn-mic { background: var(--accent); color: #fff; }
+.btn-mic.recording { background: var(--error); animation: pulse 1s infinite; }
+@keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(255,59,48,0.4); } 50% { box-shadow: 0 0 0 8px rgba(255,59,48,0); } }
+.btn-send { background: var(--accent); color: #fff; }
+.btn-send:hover { filter: brightness(1.15); }
+.btn-send:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Unified error panel: visible for 503/429/500/timeout and retry states */
+.error-panel { display:none; background:rgba(245,158,11,.12); color:#fcd34d; border:1px solid rgba(245,158,11,.45); box-shadow:0 8px 24px rgba(0,0,0,.18); padding:10px 12px; border-radius:10px; margin:0 auto 10px; max-width:800px; font-size:.82rem; font-weight:600; line-height:1.5; }
+.error-panel.busy { background:rgba(14,165,233,.12); color:#bae6fd; border-color:rgba(14,165,233,.45); }
+.error-panel button { border:1px solid rgba(255,255,255,.24); background:rgba(255,255,255,.12); color:#fff; padding:4px 12px; font-size:.8rem; border-radius:6px; margin-left:10px; font-weight:700; cursor:pointer; }
+.error-panel button:disabled { opacity:.55; cursor:wait; }
+
+/* Per-room practical product research brief */
+.research-brief-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.research-field { display:grid; gap:4px; color:var(--text-muted); font-size:.68rem; }
+.research-field.full { grid-column:1 / -1; }
+.research-field input { width:100%; min-width:0; padding:7px 8px; border:1px solid var(--border-card); border-radius:8px; background:rgba(0,0,0,.28); color:#fff; font:inherit; font-size:.74rem; outline:none; }
+.research-field input:focus { border-color:var(--accent); }
+.research-save-status { color:#86efac; font-size:.63rem; font-weight:600; text-transform:none; letter-spacing:0; }
+.research-actions { display:flex; gap:7px; margin-top:9px; }
+.research-actions button { flex:1; min-width:0; padding:7px 8px; border:1px solid rgba(0,168,225,.3); border-radius:8px; background:rgba(0,168,225,.08); color:#bae6fd; font:inherit; font-size:.68rem; font-weight:700; cursor:pointer; }
+.research-actions button:hover { border-color:var(--accent); background:rgba(0,168,225,.16); color:#fff; }
+@media (max-width:600px) { .research-brief-grid { grid-template-columns:1fr; } .research-field.full { grid-column:auto; } .research-actions { flex-direction:column; } }
+
+/* Filter Drawer */
+.drawer-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 200; display: none; }
+.drawer-overlay.open { display: block; }
+.filter-drawer { position: fixed; top: 0; right: -360px; width: 340px; max-width: 90vw; height: 100%; background: #12131a; border-left: 1px solid var(--border-card); z-index: 201; transition: right 0.3s ease; overflow-y: auto; padding: 20px; }
+.filter-drawer.open { right: 0; }
+.drawer-title { font-size: 1.05rem; font-weight: 800; color: #fff; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; font-family: 'Outfit', sans-serif; }
+.drawer-close { background: none; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; }
+.filter-group { margin-bottom: 16px; }
+.filter-group-title { font-size: 0.8rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+.filter-option { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; color: var(--text-muted); transition: all 0.15s; }
+.filter-option:hover { background: rgba(255,255,255,0.05); color: #fff; }
+.filter-option input[type="checkbox"] { accent-color: var(--accent); width: 16px; height: 16px; }
+.filter-select-label { display:grid; gap:6px; color:var(--text-muted); font-size:.72rem; }
+.filter-select-label select, .price-filter-grid input { width:100%; min-width:0; padding:8px 9px; border:1px solid var(--border-card); border-radius:8px; background:rgba(0,0,0,.28); color:#fff; font:inherit; font-size:.74rem; outline:none; }
+.filter-select-label select:focus, .price-filter-grid input:focus { border-color:var(--accent); }
+.price-filter-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:9px; }
+.price-filter-grid label { display:grid; gap:5px; color:var(--text-muted); font-size:.68rem; }
+.filter-help-text { margin:8px 0 0; color:var(--text-muted); font-size:.64rem; line-height:1.45; }
+@media (max-width:600px) { .price-filter-grid { grid-template-columns:1fr; } }
+
+
+/* Unified model settings and room controls */
+.model-settings-section { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border-card); }
+.model-settings-section .filter-group-title { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+.model-refresh-button { border:1px solid var(--border-card); background:rgba(255,255,255,.06); color:var(--text-muted); border-radius:8px; padding:4px 7px; cursor:pointer; }
+.model-settings-status, .model-current-status, .global-ai-quota-status, .global-ai-quota-reset { color:var(--text-muted); font-size:.72rem; line-height:1.45; margin:5px 0; }
+.model-settings-status.loading { color:#fbbf24; } .model-settings-status.error, .global-ai-quota-status.exhausted { color:#f87171; }
+.global-ai-quota-pill { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin:8px 0; }
+.global-ai-quota-item { padding:8px; border:1px solid rgba(0,168,225,.22); border-radius:9px; background:rgba(0,168,225,.06); color:var(--text-muted); font-size:.68rem; }
+.global-ai-quota-item strong { display:block; margin-top:3px; color:#fff; font-size:.78rem; }
+.model-options { display:flex; flex-direction:column; gap:7px; max-height:260px; overflow-y:auto; padding-right:2px; }
+.model-option { display:flex; align-items:center; justify-content:space-between; gap:9px; padding:9px; border:1px solid var(--border-card); border-radius:10px; background:rgba(255,255,255,.04); cursor:pointer; }
+.model-option:hover, .model-option.is-current { border-color:var(--accent); background:rgba(0,168,225,.08); }
+.model-option.is-disabled { opacity:.55; } .model-option-body { min-width:0; flex:1; }
+.model-option-heading { display:flex; justify-content:space-between; gap:6px; align-items:center; }
+.model-option-name { color:#fff; font-size:.76rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.model-score { color:var(--gold); font-size:.68rem; white-space:nowrap; }
+.model-option-quota { color:var(--text-muted); font-size:.64rem; margin-top:3px; }
+.model-busy-badge { display:inline-block; margin-top:4px; padding:2px 5px; border-radius:6px; color:#fdba74; background:rgba(249,115,22,.12); border:1px solid rgba(249,115,22,.32); font-size:.61rem; }
+.model-quota-exhausted { color:#fca5a5; background:rgba(239,68,68,.12); border-color:rgba(239,68,68,.3); }
+.model-option-control { display:flex; align-items:center; gap:5px; color:var(--text-muted); font-size:.62rem; white-space:nowrap; }
+.model-toggle { width:34px; height:18px; accent-color:var(--accent); cursor:pointer; }
+.model-empty { color:var(--text-muted); font-size:.72rem; line-height:1.5; }
+.amazon-room-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.amazon-room-count { display:inline-flex; min-width:1.3rem; height:1.3rem; align-items:center; justify-content:center; border-radius:999px; background:rgba(0,168,225,.12); border:1px solid rgba(0,168,225,.3); color:#7dd3fc; font-size:.65rem; }
+.amazon-room-list { display:flex; flex-direction:column; gap:6px; max-height:170px; overflow:auto; }
+.amazon-room { display:flex; align-items:center; gap:7px; padding:8px 9px; border:1px solid var(--border-card); border-radius:9px; color:var(--text-muted); background:rgba(255,255,255,.04); cursor:pointer; }
+.amazon-room.active { color:#fff; border-color:var(--accent); background:rgba(0,168,225,.08); }
+.amazon-room-name { min-width:0; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:.75rem; }
+.amazon-room-delete { flex:0 0 auto; border:0; background:none; color:var(--text-muted); cursor:pointer; }
+.amazon-room-delete:hover { color:#f87171; }
+@media (max-width:600px) { .global-ai-quota-pill { grid-template-columns:1fr; } .model-options { max-height:210px; } }
+
+
+.amazon-quick-prompts { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:8px; margin-top:12px; }
+.amazon-quick-prompt { min-height:40px; padding:8px 10px; border:1px solid rgba(0,168,225,.26); border-radius:10px; color:#dbeafe; background:rgba(0,168,225,.07); font:inherit; font-size:.74rem; font-weight:700; text-align:left; cursor:pointer; transition:all .18s ease; }
+.amazon-quick-prompt:hover { color:#fff; border-color:var(--accent); background:rgba(0,168,225,.16); transform:translateY(-1px); }
+.amazon-quick-prompt:active { transform:scale(.98); }
+@media (max-width:600px) { .amazon-quick-prompts { grid-template-columns:1fr; } }
+
+/* Modal */
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); display: none; justify-content: center; align-items: center; z-index: 3000; padding: 20px; }
+.modal-content { background: #15161c; border: 1px solid var(--border-card); border-radius: 24px; padding: 28px; max-width: 480px; width: 100%; max-height: 90vh; overflow-y: auto; }
+.modal-h3 { color: var(--accent); margin-bottom: 14px; font-family: 'Outfit', sans-serif; font-size: 1.05rem; }
+.modal-p { color: var(--text-muted); margin-bottom: 18px; line-height: 1.6; font-size: 0.9rem; }
+.api-input-group input { width: 100%; padding: 13px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-card); border-radius: 12px; color: #fff; font-size: 0.95rem; outline: none; }
+.api-input-group input:focus { border-color: var(--accent); }
+.btn-modal-action { width: 100%; padding: 13px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; font-size: 0.95rem; display: block; text-align: center; }
+.btn-modal-save { background: linear-gradient(135deg, var(--accent), #0077A3); color: #fff; }
+.btn-modal-save:hover { filter: brightness(1.1); }
+.btn-modal-link { background: rgba(0,168,225,0.1); border: 1px solid rgba(0,168,225,0.3); color: var(--accent); text-decoration: none; margin-bottom: 12px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 13px; border-radius: 12px; font-weight: 600; font-size: 0.9rem; }
+.btn-modal-link:hover { background: rgba(0,168,225,0.18); }
+
+/* Nav Coffee Sponsor */
+.btn-nav.btn-coffee { background: linear-gradient(135deg, #FFDD00, #FBBF24); color: #111; font-weight: 700; border: none; }
+.btn-nav.btn-coffee:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+/* Safe Bottom Padding for Input Bar (pb-28) */
+.chat-wrapper { max-width: 800px; margin: 12px auto 0; padding: 0 12px 100px; display: flex; flex-direction: column; min-height: calc(100vh - 220px); }
+
+/* Responsive */
+@media (max-width: 600px) {
+  .hero h1 { font-size: 1.2rem; }
+  .welcome-grid { grid-template-columns: 1fr; }
+  .bubble { max-width: 92%; }
+  .filter-drawer { width: 300px; }
+}
+
+/* Amazon Finder workspace overhaul: fixed viewport shell, scrollable center, always-visible composer. */
+html, body { height: 100%; min-height: 100%; overflow: hidden; }
+body { height: 100vh; min-height: 100vh; height: 100dvh; min-height: 100dvh; display: flex; flex-direction: column; overflow: hidden !important; }
+.top-nav { flex: 0 0 auto; flex-wrap: nowrap; min-height: 58px; }
+.brand-group { min-width: 0; flex-wrap: nowrap; }
+.brand-link { flex: 0 0 auto; white-space: nowrap; }
+.page-brand { color: #dbeafe; font-size: .86rem; font-weight: 800; letter-spacing: .01em; white-space: nowrap; }
+.market-switcher { flex: 0 0 auto; }
+.nav-right { flex: 0 0 auto; min-width: 0; justify-content: flex-end; }
+.btn-nav { white-space: nowrap; }
+.hero { flex: 0 0 auto; padding: 16px 16px 8px; }
+.chat-wrapper { flex: 1 1 auto; min-height: 0; height: auto; max-width: 1000px; width: 100%; margin: 0 auto; padding: 0 16px; display: flex; flex-direction: column; overflow: hidden; }
+.chat-messages { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; width: 100%; padding: 8px 0 24px; scroll-padding-bottom: 24px; }
+.input-bar-wrapper { flex: 0 0 auto; position: relative; bottom: auto; width: 100%; padding: 10px 0 max(14px, env(safe-area-inset-bottom)); background: linear-gradient(transparent, var(--bg-main) 18%); z-index: 5; }
+.input-bar { width: 100%; max-width: 1000px !important; min-height: 54px; }
+.btn-camera { width: auto; min-width: 44px; height: 46px; min-height: 46px; padding: 0 12px; border-radius: 12px; background: linear-gradient(135deg, #f97316, #ec4899); color: #fff; box-shadow: 0 4px 14px rgba(236,72,153,.28); gap: 7px; }
+.btn-camera:hover, .btn-camera:focus-visible { background: linear-gradient(135deg, #fb923c, #f472b6); color: #fff; transform: translateY(-1px); }
+.camera-label { font-size: .74rem; font-weight: 800; white-space: nowrap; }
+.input-btn:focus-visible, .btn-nav:focus-visible, .market-btn:focus-visible, .amazon-quick-prompt:focus-visible { outline: 3px solid rgba(125,211,252,.8); outline-offset: 2px; }
+.amazon-seo-guide { margin: 8px 0 22px; padding: 20px; border: 1px solid rgba(0,168,225,.25); border-radius: 18px; background: linear-gradient(145deg, rgba(0,168,225,.09), rgba(112,0,255,.06)); color: var(--text-muted); }
+.amazon-seo-guide h2 { color: #fff; font-size: 1.25rem; line-height: 1.45; margin: 6px 0 10px; }
+.amazon-seo-guide h3 { color: #bae6fd; font-size: .92rem; line-height: 1.45; margin-bottom: 5px; }
+.amazon-seo-guide p { font-size: .78rem; line-height: 1.75; }
+.guide-kicker { color: var(--accent); font-size: .72rem; font-weight: 800; letter-spacing: .08em; }
+.guide-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
+.guide-grid article { padding: 13px; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; background: rgba(0,0,0,.22); }
+.amazon-faq { margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.1); }
+.amazon-faq details { border-bottom: 1px solid rgba(255,255,255,.08); padding: 9px 0; }
+.amazon-faq summary { color: #e0f2fe; cursor: pointer; font-size: .8rem; font-weight: 700; }
+.amazon-faq details p { padding: 8px 0 2px; }
+.amazon-disclaimer { margin-top: 16px; padding: 11px 12px; border-left: 3px solid #f59e0b; background: rgba(245,158,11,.08); color: #fde68a !important; }
+.amazon-page-footer { flex: 0 0 auto; padding: 14px 4px 8px; color: #94a3b8; text-align: center; font-size: .7rem; }
+.amazon-page-footer nav { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px 14px; margin-bottom: 5px; }
+.amazon-page-footer a { color: #67e8f9; font-weight: 700; text-decoration: none; }
+.amazon-page-footer a:hover { color: #fff; text-decoration: underline; }
+
+/* Complete tool overview: readable, original, user-first documentation. */
+.amazon-tool-overview { margin: 0 0 16px; padding: 20px; border: 1px solid rgba(125,211,252,.24); border-radius: 18px; background: linear-gradient(145deg, rgba(14,116,144,.13), rgba(30,41,59,.38)); }
+.amazon-tool-overview h2 { color: #fff; font-size: 1.2rem; line-height: 1.5; margin: 6px 0 10px; }
+.amazon-tool-overview h3 { color: #bae6fd; font-size: .88rem; line-height: 1.45; margin: 0 0 5px; }
+.amazon-tool-overview p { color: var(--text-muted); font-size: .78rem; line-height: 1.75; }
+.overview-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; margin: 15px 0; }
+.overview-steps article { padding: 12px; border: 1px solid rgba(255,255,255,.09); border-radius: 12px; background: rgba(0,0,0,.2); }
+.overview-step-number { display: inline-flex; margin-bottom: 7px; color: var(--accent); font-family: 'Outfit', sans-serif; font-size: .74rem; font-weight: 800; letter-spacing: .08em; }
+.overview-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+.overview-columns > div, .overview-method { padding: 13px; border-radius: 12px; background: rgba(0,0,0,.2); border: 1px solid rgba(255,255,255,.08); }
+.overview-method { margin-top: 10px; }
+.overview-method a { color: #67e8f9; font-weight: 800; }
+.overview-affiliate { margin-top: 12px; padding: 11px 12px; border-left: 3px solid #f59e0b; background: rgba(245,158,11,.08); color: #fde68a !important; }
+@media (max-width: 760px) { .overview-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .amazon-tool-overview { padding: 15px; } .overview-steps, .overview-columns { grid-template-columns: 1fr; } }
+
+/* Desktop information architecture: settings are a persistent right rail, not a collapsible overlay. */
+@media (min-width: 901px) {
+  .hero { width: calc(100% - 340px); max-width: none; box-sizing: border-box; margin: 0; text-align: center; }
+  .chat-wrapper { width: calc(100% - 340px); max-width: none; margin-left: 0; margin-right: 340px; }
+  .filter-drawer { right: 0; width: 340px; max-width: 340px; box-shadow: -12px 0 32px rgba(0,0,0,.24); }
+  .filter-drawer .drawer-close { display: none; }
+  .drawer-overlay { display: none !important; }
+  .filter-drawer .drawer-title { padding-right: 2px; }
+}
+@media (max-width: 900px) {
+  .filter-drawer .drawer-close { display: inline-flex; }
+}
+
+@media (max-width: 760px) {
+  .top-nav { padding: 8px 10px; gap: 7px; }
+  .page-brand { font-size: .72rem; overflow: hidden; text-overflow: ellipsis; }
+  .nav-right { gap: 4px; }
+  .btn-nav { padding: 5px 8px; font-size: .7rem; }
+  .btn-nav .fa-mug-hot, .btn-nav .fa-circle-question, .btn-nav .fa-gear { margin: 0; }
+  .btn-coffee { font-size: 0; padding: 7px 9px; }
+  .btn-coffee i { font-size: .8rem; }
+  #btn-menu { font-size: 0; padding: 7px 9px; }
+  #btn-menu i { font-size: .8rem; }
+  #btn-api-config { font-size: 0; padding: 7px 9px; }
+  #btn-api-config i { font-size: .8rem; }
+  .guide-grid { grid-template-columns: 1fr; }
+  .amazon-seo-guide { padding: 15px; }
+  .amazon-seo-guide h2 { font-size: 1.05rem; }
+}
+@media (max-width: 520px) {
+  .brand-link span { display: inline; font-size: .68rem; }
+  .page-brand { max-width: 96px; overflow: hidden; text-overflow: ellipsis; }
+  .btn-coffee { display: none; }
+  .market-btn { padding: 5px 7px; font-size: 0; }
+  .market-btn span { font-size: 0; }
+  #btn-us span::before { content: '🇺🇸'; font-size: .9rem; }
+  #btn-jp span::before { content: '🇯🇵'; font-size: .9rem; }
+  .hero { padding-top: 10px; }
+  .hero p { font-size: .76rem; }
+  .chat-wrapper { padding: 0 10px; }
+  .input-bar-wrapper { padding-top: 8px; }
+  .input-bar { padding: 7px; gap: 5px; }
+  .camera-label { font-size: .67rem; }
+  .btn-camera { padding: 0 9px; }
+  .amazon-page-footer { padding-bottom: 7px; }
+}
+
+</style>
+<script src="../js/global-ai-quota.js"></script>
+<script src="../js/unified-ai-model-engine.js"></script>
+<link href="https://gugopro.com/amazon/" rel="canonical"/>
+
+<link rel="alternate" hreflang="zh-TW" href="./index.html">
+<link rel="alternate" hreflang="en" href="./index.html?lang=en">
+<link rel="alternate" hreflang="ja" href="./index.html?lang=ja">
+<link rel="alternate" hreflang="x-default" href="./index.html">
+<script src="/i18n/gugopro-i18n.js?v=page-maps-20261003.1" defer></script>
+
+
+
+
+</head>
+<body style="overflow-x:hidden;">
+<!-- Top Navigation -->
+<header class="top-nav">
+<div class="brand-group">
+<a class="brand-link" href="https://gugopro.com"><i class="fa-solid fa-house"></i><span>返回首頁</span></a><span class="page-brand">Amazon AI 全品類智能選品導購</span>
+<div class="market-switcher">
+<button class="market-btn active" id="btn-us" onclick="switchMarket('us')"><span>🇺🇸 美國站</span></button>
+<button class="market-btn" id="btn-jp" onclick="switchMarket('jp')"><span>🇯🇵 日本站</span></button>
+</div>
+</div>
+<div class="nav-right">
+<a class="btn-nav btn-coffee" href="https://ko-fi.com/R1K123XRS9" target="_blank" title="請開發者喝杯咖啡">
+<i class="fa-solid fa-mug-hot"></i> 贊助
+    </a>
+<button aria-label="開啟模型與歷史設定" class="btn-nav" id="btn-menu" onclick="toggleDrawer()"><i class="fa-solid fa-bars"></i> 模型／歷史設定</button>
+
+<button class="btn-nav" id="btn-api-config" onclick="openApiModal()"><i class="fa-solid fa-gear"></i> <span id="api-status-text">API 設定</span></button>
+</div>
+</header>
+<!-- Hero -->
+<section class="hero">
+<h1 id="hero-title">🛒 Amazon AI 智能購物導師</h1>
+<p id="hero-desc">告訴我你想買什麼，AI 會深度剖析商品優缺點，並幫你精準搜尋 Amazon 最佳選擇。支援文字、語音與相機識圖。</p>
+</section>
+<!-- Chat Area -->
+<div class="chat-wrapper">
+<div class="chat-messages" id="chat-messages">
+<!-- Humanized AI Shopping Guide Card -->
+<div id="welcome-section" style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:18px; padding:20px; margin-bottom:14px; backdrop-filter:blur(10px);">
+<div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+<div style="width:38px; height:38px; border-radius:10px; background:var(--user-bubble); display:flex; align-items:center; justify-content:center; color:var(--accent); font-size:1.2rem;">
+<i class="fa-solid fa-wand-magic-sparkles"></i>
+</div>
+<div>
+<h3 style="font-size:1.05rem; font-weight:800; color:#fff; font-family:'Outfit', sans-serif;">Amazon AI 智能選品導購指南</h3>
+<p style="font-size:0.78rem; color:var(--text-muted);">多模態視覺與文字剖析，助你挑選最划算、最高評價的 Amazon 好物</p>
+</div>
+</div>
+<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:10px;">
+<div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:12px 14px;">
+<div style="font-size:0.86rem; font-weight:700; color:var(--accent); display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+<i class="fa-solid fa-robot"></i> 🤖 全品類規格編譯
+          </div>
+<div style="font-size:0.78rem; color:var(--text-muted); line-height:1.5;">
+            輸入任何你想找的商品，AI 自動提煉 3~4 組官方級規格篩選維度與熱搜標籤。
+          </div>
+</div>
+<div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:12px 14px;">
+<div style="font-size:0.86rem; font-weight:700; color:var(--accent); display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+<i class="fa-solid fa-camera"></i> 📷 拍照識圖搜尋
+          </div>
+<div style="font-size:0.78rem; color:var(--text-muted); line-height:1.5;">
+            點選左下角相機上傳商品照片或截圖，AI 自動擷取型號與外觀特徵精準檢索。
+          </div>
+</div>
+<div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:12px 14px;">
+<div style="font-size:0.86rem; font-weight:700; color:var(--accent); display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+<i class="fa-solid fa-bolt"></i> ⚡ 即時組合直達
+          </div>
+<div style="font-size:0.78rem; color:var(--text-muted); line-height:1.5;">
+            點選多個規格標籤即時合成精準搜尋字串，一鍵在新分頁開啟 Amazon 官方商城。
+          </div>
+</div>
+</div>
+<div aria-label="Amazon AI 快捷研究提示" class="amazon-quick-prompts">
+<button class="amazon-quick-prompt" data-prompt="請挖掘目前適合 Amazon US/JP 的高毛利藍海選品方向，列出需求訊號、目標客群、差異化切入點與驗證步驟。" type="button">💎 高毛利藍海選品挖掘</button>
+<button class="amazon-quick-prompt" data-prompt="請根據這個商品類別整理競品常見的一星與二星差評痛點，並提出可以轉化為產品規格與服務優勢的機會。" type="button">🔎 競品差評痛點提煉</button>
+<button class="amazon-quick-prompt" data-prompt="請分析這個商品類別的 Amazon Listing 關鍵字策略，提供核心詞、長尾詞、意圖分組與標題／五點描述的埋詞建議，請用 Markdown 表格。" type="button">📈 Listing 關鍵字分析</button>
+</div>
+
+  <section class="amazon-tool-overview" id="amazon-tool-overview" aria-labelledby="amazon-tool-overview-title">
+    <div class="guide-kicker"><i class="fa-solid fa-circle-info"></i> 工具完整介紹｜給第一次使用者</div>
+    <h2 id="amazon-tool-overview-title">Amazon AI 選品導購是什麼？從需求到可驗證商品清單的研究工作台</h2>
+    <p>這不是 Amazon 官方商店，也不是自動替你下單的購物機器人。GugoPro Amazon AI 全品類智能選品導購是一個瀏覽器內的研究工作台：你可以輸入「想買什麼、給誰用、預算多少、哪些條件不能接受」，也可以拍攝或上傳商品照片，再使用 AI 協助把模糊需求整理成可搜尋、可比較、可回頭核對的商品研究條件。系統提供 Amazon US 與 Amazon JP 官方搜尋入口，讓你在離開本頁前看清楚關鍵字與篩選條件；商品價格、庫存、賣家、配送、關稅與退貨規則，永遠以你開啟的官方頁面及結帳畫面為準。</p>
+    <div class="overview-steps">
+      <article><span class="overview-step-number">01</span><h3>描述需求與限制</h3><p>輸入品類、使用場景、預算、尺寸、材質、相容性與必須避開的問題。也能在「進階研究條件」留下預算上限、主要使用情境、必備條件與避雷條件，形成可重複使用的研究 brief。</p></article>
+      <article><span class="overview-step-number">02</span><h3>選擇市場與輸入方式</h3><p>用美國站或日本站切換商品語境；文字適合精準條件，拍照適合辨識外觀、包裝與型號標籤，語音適合快速記錄需求。照片辨識是線索整理，不代表已驗證品牌或型號。</p></article>
+      <article><span class="overview-step-number">03</span><h3>檢查 AI 規格矩陣</h3><p>把模型提出的核心詞、長尾詞、規格標籤、競品比較與差評痛點當成研究草稿。逐項查看來源與不確定性，不要把 AI 推測當成官方規格、真實庫存或保證價格。</p></article>
+      <article><span class="overview-step-number">04</span><h3>回到官方頁面決策</h3><p>使用 Amazon US／JP 搜尋按鈕開啟官方頁，確認賣家評價、商品變體、配送到台灣的可行性、落地總價、關稅、退貨政策與保固，再自行決定是否購買。</p></article>
+    </div>
+    <div class="overview-columns">
+      <div><h3>適合哪些使用者？</h3><p>適合想做跨境選品、Amazon 美國代購、日本亞馬遜直送台灣研究、黑五比價、禮物採購、家電／3C／露營／美妝／寵物用品比較的人，也適合需要先整理市場關鍵字與競品差評、再進行人工驗證的內容創作者與小型賣家。</p></div>
+      <div><h3>它不會替你承諾什麼？</h3><p>不承諾最低價、正品、一定能直送、一定免稅、投資或獲利結果，也不代表 Amazon、賣家或任何品牌背書。AI 可能誤讀圖片、缺少最新頁面資訊或產生不完整答案；重要購買、安全、電氣、保健與法規問題請以官方與合格專業來源覆核。</p></div>
+    </div>
+    <div class="overview-method"><h3>AI 與資料處理方式</h3><p>本頁以瀏覽器前端保存研究室、條件與對話紀錄；當你啟用 AI 功能時，提示內容、選取的圖片或對話脈絡可能傳送至 Google Gemini 等模型服務。API Key 由使用者自行提供並保存在瀏覽器網站儲存空間，不是 GugoPro 的帳號密碼系統；請勿輸入信用卡、身分證、私鑰或不必要的機密資料。清除網站資料可移除本機紀錄，詳細資料流程請閱讀<a href="/privacy.html">隱私權政策</a>。</p></div>
+    <p class="overview-affiliate"><strong>聯盟關係揭露：</strong>部分 Amazon US／JP 外部搜尋連結可能含有合作追蹤標記。這不會改變你的商品價格；GugoPro 可能在符合合作計畫條件時取得推薦佣金。本頁內容與商品推薦不等於 Amazon 官方意見，購買前請以官方頁面為準。</p>
+  </section>
+<section class="amazon-seo-guide" id="amazon-seo-guide" aria-labelledby="amazon-seo-guide-title">
+  <div class="guide-kicker"><i class="fa-solid fa-compass"></i> 跨境選品實戰指南</div>
+  <h2 id="amazon-seo-guide-title">Amazon 美國代購、日本亞馬遜直送台灣：AI 選品與海淘避坑完整指南</h2>
+  <p>想做 Amazon 美國代購、尋找日本亞馬遜直送台灣的商品，真正的難點不只是找到便宜的連結，而是把需求、規格、評價、運費與售後風險放在同一張表中比較。本頁的跨境電商選品工具會先把自然語言需求拆成用途、尺寸、材質、相容性、預算與配送條件，再協助你建立可驗證的選品假設。推薦結果是研究起點，不是 Amazon 官方背書；下單前仍要回到官方商品頁確認賣家、庫存、總價與退貨規則。</p>
+  <div class="guide-grid">
+    <article><h3>1. AI 智能選品與規格矩陣</h3><p>AI 會將商品頁常見的行銷形容詞拆成可比較欄位，例如續航時間、功率、容量、保固、尺寸與相容平台，並把需求分成「必要條件、加分條件、不可接受風險」。使用者可提供預算、使用情境與避雷條件，讓模型生成規格矩陣，再逐項回看原始來源。對高毛利藍海選品而言，應同時檢查搜尋意圖、競品一星與二星差評、替代品數量、售後成本及是否容易被同質化，而不能只看星等或廣告排名。</p></article>
+    <article><h3>2. AI 拍圖找同款與多模態挖寶</h3><p>遇到實體商品、包裝、型號貼紙或網路截圖時，可使用拍照／上傳商品圖，請 AI 先辨識品類、外型特徵、可能品牌與關鍵規格，再補上文字線索，例如顏色、尺寸、用途、插頭規格或「不要某品牌」。若圖片辨識不夠精確，請分別上傳正面、標籤與接口近照，並提供你已知的英文或日文關鍵字；模型就能把模糊視覺線索轉成 Amazon 官方搜尋可用的詞組，再比較原廠、相容款與性價比競品。</p></article>
+    <article><h3>3. 黑五比價、直郵與集運</h3><p>黑五特價比價不應只比較商品標價：請把折扣後價格、AmazonGlobal 直郵運費、第三方集運倉儲費、關稅、營業稅、刷卡匯差與退貨成本放進同一個落地總價。直郵通常適合重量較輕、商品頁已清楚列出運費與進口費用預收的品項；集運則適合能合併多件包裹、但必須確認禁運品、材積重、保價與退貨地址的情況。寄回台灣時，依規定完成 EZ WAY 易利委實名認證，並先查詢當期海關免稅額度、品項限制與應納稅費；不要把免稅視為永久固定或適用所有商品。</p></article>
+    <article><h3>4. Listing 關鍵字與差評研究</h3><p>做跨境電商選品或 Listing 關鍵字分析時，可把核心詞、長尾詞、用途詞、材質詞與痛點詞分組，觀察標題、五點描述、Q&amp;A 與評論是否反覆出現同一個需求。競品差評不是單純負面評分，而是產品改良與客服流程的線索：例如漏水、噪音、尺寸誤差、說明書不清楚或耗材難買，都能轉化為規格驗證清單。實際採購前請以官方頁面及可信第三方資料交叉核對，不要自行推定 AI 未提供的價格、評價或庫存。</p></article>
+  </div>
+  <div class="amazon-faq" aria-label="Amazon AI 選品常見問題"><h3>常見問題 FAQ</h3>
+    <details open><summary>Q1：產生的推薦連結如何直達 Amazon 官方搜尋？</summary><p>AI 會產生可檢查的關鍵字與規格標籤，按下矩陣卡片中的 Amazon US 或 Amazon JP 按鈕後，頁面會以對應市場的官方搜尋網址開啟；聯盟標記只用於導購歸因，商品資料仍以 Amazon 官方頁為準。</p></details>
+    <details open><summary>Q2：以圖搜尋若辨識不夠精確，如何加強文字描述？</summary><p>補充「商品用途、品牌或型號、尺寸、顏色、接口、購買國家、預算與不要的特徵」，並分開上傳包裝標籤與商品主體。文字條件越具體，AI 越能縮小候選範圍；請把結果視為待核對的搜尋建議。</p></details>
+    <details open><summary>Q3：本工具會保存搜尋紀錄或個人 API 資訊嗎？</summary><p>本工具以瀏覽器前端儲存研究室、條件與對話紀錄，Gemini API Key 也由瀏覽器本機儲存機制管理；不要輸入信用卡、身分證或其他不必要的敏感資料。清除瀏覽器網站資料即可移除本機紀錄，並請同時閱讀本站隱私權政策。</p></details>
+  </div>
+  <p class="amazon-disclaimer"><strong>導購與聯盟行銷免責宣告：</strong>GugoPro 是獨立的 AI 技術導購與輔助選品工具，並非 Amazon 官方網站或商品保證方。商品售價、庫存、配送、關稅、售後與退貨服務均以 Amazon 官方頁面及實際結帳結果為準；外部連結可能包含聯盟識別標記，不會改變你的商品價格。</p>
+</section>
+</div>
+<footer class="amazon-page-footer" id="amazon-page-footer"><nav aria-label="頁尾導覽"><a href="/about.html">關於我們</a><a href="/contact.html">聯絡我們</a><a href="/privacy.html">隱私權政策</a><a href="/terms.html">服務條款</a><a href="/disclaimer.html">免責聲明</a></nav><span>© GugoPro Amazon AI 選品工具</span></footer>
+</div>
+</div>
+<!-- Input Bar -->
+<div class="input-bar-wrapper">
+<div aria-live="polite" class="error-panel" id="error-panel" role="status">
+<span id="error-msg"></span>
+<button id="btn-retry-model" type="button">🔄 手動重試</button>
+</div>
+<div class="input-bar" style="max-width:800px; margin:0 auto; padding-left:12px; padding-right:12px;">
+<input accept="image/*" capture="environment" id="camera-input" style="display:none;" type="file"/>
+<button aria-label="拍照或上傳商品圖" class="input-btn btn-camera" onclick="document.getElementById('camera-input').click()" title="拍照或上傳商品圖"><i class="fa-solid fa-camera"></i><span class="camera-label">拍照／上傳商品圖</span></button>
+<textarea id="user-input" oninput="autoResize(this)" placeholder="輸入你想尋找的任何商品 (如: 登山帳篷、機械鍵盤、全自動咖啡機、美白精華、寵物餵食器)..." rows="1"></textarea>
+<button class="input-btn btn-mic" id="btn-mic" onclick="toggleMic()" title="語音輸入"><i class="fa-solid fa-microphone"></i></button>
+<button class="input-btn btn-send" id="btn-send" onclick="sendMessage()" title="發送"><i class="fa-solid fa-paper-plane"></i></button>
+</div>
+</div>
+<!-- Filter Drawer -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="toggleDrawer()"></div>
+<div class="filter-drawer" id="filter-drawer">
+<div class="drawer-title">
+<span><i class="fa-solid fa-sliders"></i> 通用基礎篩選條件</span>
+<button class="drawer-close" onclick="toggleDrawer()"><i class="fa-solid fa-xmark"></i></button>
+</div>
+<div class="filter-group">
+<div class="filter-group-title amazon-room-heading"><span><i class="fa-solid fa-comments"></i> 購物研究室 <span aria-live="polite" class="amazon-room-count" id="room-count">0</span></span><button aria-label="建立新研究室" class="model-refresh-button" id="btn-new-room" title="建立新研究室" type="button"><i class="fa-solid fa-plus"></i></button></div>
+<div class="amazon-room-list" id="room-list"></div>
+</div>
+<div class="filter-group research-brief-section">
+<div class="filter-group-title"><span><i class="fa-solid fa-bullseye"></i> 進階研究條件</span><span class="research-save-status" id="research-save-status">本地儲存</span></div>
+<div class="research-brief-grid">
+<label class="research-field"><span>預算上限（可選）</span><input id="amazon-budget" inputmode="decimal" min="0" placeholder="例如 150" step="1" type="number"/></label>
+<label class="research-field"><span>主要使用情境</span><input id="amazon-use-case" maxlength="120" placeholder="例如 小套房／通勤／送禮" type="text"/></label>
+<label class="research-field full"><span>必備條件</span><input id="amazon-must-have" maxlength="180" placeholder="例如 USB-C、低噪音、可退貨" type="text"/></label>
+<label class="research-field full"><span>避雷條件</span><input id="amazon-avoid" maxlength="180" placeholder="例如 易漏水、無保固、耗材昂貴" type="text"/></label>
+</div>
+<div class="research-actions"><button id="btn-copy-research-brief" type="button"><i class="fa-solid fa-copy"></i> 複製研究摘要</button><button id="btn-export-research-brief" type="button"><i class="fa-solid fa-download"></i> 下載 Markdown</button></div>
+</div>
+<div class="filter-group amazon-search-options">
+<div class="filter-group-title"><i class="fa-solid fa-sliders"></i> 搜尋排序與價格</div>
+<label class="filter-select-label" for="amazon-sort-order">排序方式
+<select id="amazon-sort-order">
+<option value="featured-rank">熱門推薦</option>
+<option value="price-asc-rank">價格由低至高</option>
+<option value="price-desc-rank">價格由高至低</option>
+<option value="review-rank">評價與評論優先</option>
+</select>
+</label>
+<div class="price-filter-grid">
+<label for="amazon-min-price">最低價格<input id="amazon-min-price" inputmode="decimal" min="0" placeholder="可選" step="1" type="number"/></label>
+<label for="amazon-max-price">最高價格<input id="amazon-max-price" inputmode="decimal" min="0" placeholder="可選" step="1" type="number"/></label>
+</div>
+<p class="filter-help-text">價格使用目前 Amazon 市場的當地貨幣；US 為美元，JP 為日圓。條件會套用到下一個 Amazon 搜尋連結。</p>
+</div>
+<div class="filter-group">
+<div class="filter-group-title"><i class="fa-solid fa-truck-fast"></i> Prime 與配送</div>
+<label class="filter-option"><input id="f-global-ship" type="checkbox" value="p_76:419158011"/> AmazonGlobal 免運直送</label>
+<label class="filter-option"><input id="f-fba" type="checkbox" value="p_6:AN1VRQENFRJN5"/> Amazon 官方自營 (FBA)</label>
+</div>
+<div class="filter-group">
+<div class="filter-group-title"><i class="fa-solid fa-star" style="color:var(--gold);"></i> 買家評價</div>
+<label class="filter-option"><input id="f-4star" type="checkbox" value="p_72:1248879011"/> ⭐ 4 星以上好評</label>
+</div>
+<div class="filter-group">
+<div class="filter-group-title"><i class="fa-solid fa-tags"></i> 優惠與折扣</div>
+<label class="filter-option"><input id="f-deals" type="checkbox" value="p_n_deal_type:23566065011"/> 🔥 今日 Deals 特價</label>
+<label class="filter-option"><input id="f-50off" type="checkbox" value="p_8:2224371011"/> 💰 50% OFF 砍半專區</label>
+</div>
+<div class="filter-group">
+<div class="filter-group-title"><i class="fa-solid fa-box"></i> 商品狀況</div>
+<label class="filter-option"><input id="f-new" type="checkbox" value="p_n_condition-type:New"/> 全新 (New)</label>
+<label class="filter-option"><input id="f-used" type="checkbox" value="p_n_condition-type:Used"/> 二手/整新品 (Used)</label>
+</div>
+<div class="filter-group model-settings-section">
+<div class="filter-group-title"><span><i class="fa-solid fa-robot"></i> 模型設定 / Model Settings</span><button aria-label="重新整理免費模型清單" class="model-refresh-button" id="btn-refresh-models" title="重新整理免費模型清單" type="button"><i class="fa-solid fa-rotate"></i></button></div>
+<p aria-live="polite" class="model-settings-status" id="model-settings-status">正在載入站內免費模型清單...</p>
+<p aria-live="polite" class="model-current-status" id="model-current-status">目前使用模型：載入中…</p>
+<p aria-live="polite" class="global-ai-quota-status" id="global-ai-quota-status"></p>
+<p aria-live="polite" class="global-ai-quota-reset" id="global-ai-quota-reset">配額重置倒數：計算中…</p>
+<div aria-live="polite" class="global-ai-quota-pill" id="global-ai-quota-pill"><div class="global-ai-quota-item">📊 今日免費用量上限<strong id="global-ai-quota-limit">讀取中…</strong></div><div class="global-ai-quota-item">⚡ 今日已使用量<strong id="global-ai-quota-used">讀取中…</strong></div></div>
+<div aria-label="免費模型清單，使用開關控制" class="model-options" id="model-options" role="list"></div>
+</div>
+</div>
+<!-- API Key Modal -->
+<div class="modal-overlay" id="modal-api">
+<div class="modal-content">
+<div style="display:flex; justify-content:flex-end; margin-bottom:-8px;">
+<button onclick="document.getElementById('modal-api').style.display='none'" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+</div>
+<h3 class="modal-h3"><i class="fa-solid fa-key"></i> 🔑 啟動 AI 服務需要免費的 Gemini API Key</h3>
+<p class="modal-p">本工具由 Google Gemini 官方模型驅動，安全免費、無需信用卡、全站自動共享。</p>
+<a class="btn-modal-link" href="https://aistudio.google.com/app/apikey" target="_blank">
+<i class="fa-solid fa-arrow-up-right-from-square"></i> 前往 Google AI Studio 免費取得 API Key
+    </a>
+<div id="key-status-box" style="display:none; background:rgba(0,0,0,0.35); border:1px solid rgba(0,168,225,0.3); border-radius:8px; padding:12px; margin-bottom:14px;">
+<div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:4px;">當前已綁定金鑰 (已遮罩加密)：</div>
+<div id="masked-key-display" style="font-family:monospace; font-size:0.92rem; color:#38bdf8;">AIzaSy••••••••</div>
+</div>
+<div class="api-input-group" style="margin-bottom:14px;">
+<input autocomplete="off" id="api-key-input" placeholder="貼上您的 Gemini API Key (以 AIzaSy 開頭)" type="password"/>
+</div>
+<div style="display:flex; gap:10px;">
+<button class="btn-modal-action btn-modal-save" id="btn-save-key" onclick="saveApiKey()" style="flex:1;">
+<i class="fa-solid fa-check"></i> 儲存並開始使用
+      </button>
+<button class="btn-modal-action" id="btn-clear-key" onclick="clearApiKey()" style="display:none; flex:0 0 auto; padding:13px 16px; background:none; border:1px solid rgba(239,68,68,0.4); color:#f87171; border-radius:12px;">
+<i class="fa-solid fa-trash-can"></i>
+</button>
+</div>
+</div>
+</div>
+<script>
+(function() {
+'use strict';
+
+/* ===== AFFILIATE TAGS (Silent, never shown in UI) ===== */
+var US_TAG = '9908qq-20';
+var JP_TAG = 'gugopro-22';
+
+var MARKETS = {
+  us: { key:'us', baseUrl:'https://www.amazon.com/s', tag: US_TAG, themeClass:'',
+    labels: { title:'🛒 Amazon AI 全品類智能選品導購', desc:'輸入任何商品（3C、露營、家電、美妝、寵物、工具等），AI 即時編譯專屬規格標籤矩陣，一鍵直達 Amazon.com！', placeholder:'輸入你想找的任何商品 (如: camping tent, mechanical keyboard, air purifier)...' }},
+  jp: { key:'jp', baseUrl:'https://www.amazon.co.jp/s', tag: JP_TAG, themeClass:'theme-jp',
+    labels: { title:'🛒 Amazon JP 全品類 AI 智能選品導購', desc:'輸入任何商品（3C家電、露營戶外、日系美妝保養、寵物食品等），AI 自動生成日亞專屬篩選標籤！', placeholder:'輸入你想找的任何商品 (如: キャンプ テント, メカニカルキーボード, 炊飯器)...' }}
+};
+
+var currentMarket = 'us';
+var isProcessing = false;
+var recognition = null;
+var isRecording = false;
+var AMAZON_ROOM_STORAGE_KEY = 'gugopro_amazon_finder_rooms_v1';
+var amazonRooms = [];
+var activeAmazonRoomId = '';
+var amazonWelcomeHtml = '';
+var amazonFooterHtml = '';
+var amazonDrawerHistoryActive = false;
+var retryCountdownTimer = null;
+var pendingRetryRequest = null;
+var researchSaveTimer = null;
+
+/* ===== API KEY MANAGEMENT (100% Universal Persistent gugopro_gemini_api_key) ===== */
+function decodeApiKey(raw) {
+  if (!raw) return '';
+  if (raw.indexOf('obf_') === 0) {
+    try { return decodeURIComponent(atob(raw.slice(4))); } catch(e) { return raw.slice(4); }
+  }
+  return raw;
+}
+function maskApiKey(key) {
+  if (!key) return '';
+  if (key.length <= 10) return '••••••••';
+  return key.slice(0, 6) + '••••••••' + key.slice(-4);
+}
+function getGlobalApiKey() {
+  var raw = (localStorage.getItem('gugopro_gemini_api_key') || localStorage.getItem('gemini_api_key') || '').trim();
+  return decodeApiKey(raw);
+}
+function setGlobalApiKey(key) {
+  if (!key) {
+    localStorage.removeItem('gugopro_gemini_api_key');
+    localStorage.removeItem('gemini_api_key');
+  } else {
+    localStorage.setItem('gugopro_gemini_api_key', key.trim());
+    localStorage.setItem('gemini_api_key', key.trim());
+  }
+  updateKeyUI();
+}
+function updateKeyUI() {
+  var key = getGlobalApiKey();
+  var statusBox = document.getElementById('key-status-box');
+  var maskedDisplay = document.getElementById('masked-key-display');
+  var clearBtn = document.getElementById('btn-clear-key');
+  var apiBtn = document.getElementById('btn-api-config');
+  var apiText = document.getElementById('api-status-text');
+  if (key) {
+    if (statusBox) statusBox.style.display = '';
+    if (maskedDisplay) maskedDisplay.textContent = maskApiKey(key);
+    if (clearBtn) clearBtn.style.display = '';
+    if (apiBtn) apiBtn.classList.add('api-connected');
+    if (apiText) apiText.textContent = 'API 已連線';
+  } else {
+    if (statusBox) statusBox.style.display = 'none';
+    if (clearBtn) clearBtn.style.display = 'none';
+    if (apiBtn) apiBtn.classList.remove('api-connected');
+    if (apiText) apiText.textContent = 'API 設定';
+  }
+}
+window.openApiModal = function() {
+  updateKeyUI();
+  var input = document.getElementById('api-key-input');
+  if (input) input.value = '';
+  document.getElementById('modal-api').style.display = 'flex';
+};
+window.saveApiKey = function() {
+  var input = document.getElementById('api-key-input');
+  var key = (input ? input.value : '').trim();
+  if (key) {
+    setGlobalApiKey(key);
+    document.getElementById('modal-api').style.display = 'none';
+  } else if (getGlobalApiKey()) {
+    document.getElementById('modal-api').style.display = 'none';
+  } else {
+    alert('請輸入有效的 Gemini API Key。');
+  }
+};
+window.clearApiKey = function() {
+  if (confirm('確定要清除已儲存的 API Key 嗎？')) {
+    setGlobalApiKey('');
+    var input = document.getElementById('api-key-input');
+    if (input) input.value = '';
+    alert('已成功清除 API Key。');
+  }
+};
+function checkApiKey() {
+  var key = getGlobalApiKey();
+  if (!key) { openApiModal(); return false; }
+  return true;
+}
+
+/* ===== MARKET SWITCHING ===== */
+function detectMarket() {
+  var path = window.location.pathname;
+  if (path.indexOf('amazon-jp') !== -1) return 'jp';
+  if (path.indexOf('amazon-us') !== -1) return 'us';
+  var params = new URLSearchParams(window.location.search);
+  var m = params.get('market');
+  if (m === 'jp' || m === 'us') return m;
+  var lang = (navigator.language || '').toLowerCase();
+  if (lang.indexOf('ja') !== -1 || lang.indexOf('jp') !== -1) return 'jp';
+  return 'us';
+}
+window.switchMarket = function(mk) {
+  if (!MARKETS[mk]) return;
+  currentMarket = mk;
+  document.body.className = MARKETS[mk].themeClass || '';
+  document.getElementById('btn-us').classList.toggle('active', mk === 'us');
+  document.getElementById('btn-jp').classList.toggle('active', mk === 'jp');
+  var conf = MARKETS[mk];
+  document.getElementById('hero-title').textContent = conf.labels.title;
+  document.getElementById('hero-desc').textContent = conf.labels.desc;
+  document.getElementById('user-input').placeholder = conf.labels.placeholder;
+};
+
+/* ===== FILTER DRAWER ===== */
+window.toggleDrawer = function(force) {
+  var drawer = document.getElementById('filter-drawer'); var overlay = document.getElementById('drawer-overlay');
+  var desktopRail = window.innerWidth >= 901;
+  if (desktopRail) {
+    drawer.classList.add('open'); overlay.classList.remove('open');
+    amazonModelEngine.refresh({ silent: true });
+    return;
+  }
+  var shouldOpen = typeof force === 'boolean' ? force : !drawer.classList.contains('open');
+  drawer.classList.toggle('open', shouldOpen); overlay.classList.toggle('open', shouldOpen);
+  if (shouldOpen) {
+    amazonModelEngine.refresh({ silent: true });
+    if (window.innerWidth <= 600 && !amazonDrawerHistoryActive) { history.pushState(Object.assign({}, history.state || {}, { amazonDrawerOpen: true }), '', window.location.href); amazonDrawerHistoryActive = true; }
+  } else if (amazonDrawerHistoryActive) { amazonDrawerHistoryActive = false; history.back(); }
+};
+window.addEventListener('popstate', function() { if (amazonDrawerHistoryActive) { amazonDrawerHistoryActive = false; document.getElementById('filter-drawer').classList.remove('open'); document.getElementById('drawer-overlay').classList.remove('open'); } });
+function getSelectedFilters() {
+  var checks = document.querySelectorAll('.filter-drawer input[type="checkbox"]:checked');
+  var rh = [];
+  checks.forEach(function(c) { rh.push(c.value); });
+  return rh;
+}
+function getAmazonSearchOptions() {
+  var sort = document.getElementById('amazon-sort-order')?.value || 'featured-rank';
+  var minPrice = (document.getElementById('amazon-min-price')?.value || '').trim();
+  var maxPrice = (document.getElementById('amazon-max-price')?.value || '').trim();
+  return { sort: sort, minPrice: minPrice, maxPrice: maxPrice };
+}
+
+
+function saveAmazonRooms() {
+  localStorage.setItem(AMAZON_ROOM_STORAGE_KEY, JSON.stringify({ rooms: amazonRooms, activeRoomId: activeAmazonRoomId }));
+}
+function setHeroVisibility(show) {
+  var hero = document.querySelector('.hero');
+  if (!hero) return;
+  hero.classList.toggle('is-collapsed', !show);
+  hero.setAttribute('aria-hidden', show ? 'false' : 'true');
+}
+function bindHeroScrollBehavior() {
+  var container = document.getElementById('chat-messages');
+  if (!container || container.dataset.heroScrollBound === 'true') return;
+  container.dataset.heroScrollBound = 'true';
+  container.addEventListener('wheel', function(event) {
+    if (event.deltaY > 0) setHeroVisibility(false);
+  }, { passive: true });
+  container.addEventListener('scroll', function() {
+    var room = activeAmazonRoom();
+    if (container.scrollTop > 8 || (room && room.messages && room.messages.length)) {
+      setHeroVisibility(false);
+    } else {
+      setHeroVisibility(true);
+    }
+  }, { passive: true });
+}
+function activeAmazonRoom() { return amazonRooms.find(function(room) { return room.id === activeAmazonRoomId; }) || amazonRooms[0]; }
+function emptyResearchBrief() { return { budget:'', useCase:'', mustHave:'', avoid:'' }; }
+function normaliseResearchBrief(brief) { return Object.assign(emptyResearchBrief(), brief && typeof brief === 'object' ? brief : {}); }
+function getResearchBriefFromForm() {
+  return { budget:(document.getElementById('amazon-budget')?.value || '').trim(), useCase:(document.getElementById('amazon-use-case')?.value || '').trim(), mustHave:(document.getElementById('amazon-must-have')?.value || '').trim(), avoid:(document.getElementById('amazon-avoid')?.value || '').trim() };
+}
+function renderResearchBrief() {
+  var brief = normaliseResearchBrief(activeAmazonRoom()?.research);
+  [['amazon-budget',brief.budget],['amazon-use-case',brief.useCase],['amazon-must-have',brief.mustHave],['amazon-avoid',brief.avoid]].forEach(function(pair) { var input=document.getElementById(pair[0]); if(input) input.value=pair[1] || ''; });
+}
+function saveActiveResearchBrief(showStatus) {
+  var room = activeAmazonRoom(); if (!room) return;
+  room.research = getResearchBriefFromForm(); room.updatedAt = new Date().toISOString(); saveAmazonRooms();
+  var status = document.getElementById('research-save-status'); if (status && showStatus !== false) { status.textContent = '已儲存於本研究室'; clearTimeout(researchSaveTimer); researchSaveTimer = setTimeout(function() { status.textContent = '本地儲存'; }, 1800); }
+}
+function buildResearchContext() {
+  var room = activeAmazonRoom(); if (!room) return '';
+  var brief = normaliseResearchBrief(room.research);
+  var current = getResearchBriefFromForm();
+  if (Object.values(current).some(Boolean)) { brief = current; room.research = brief; saveAmazonRooms(); }
+  var lines = [];
+  if (brief.budget) lines.push('Budget ceiling: ' + brief.budget);
+  if (brief.useCase) lines.push('Primary use case: ' + brief.useCase);
+  if (brief.mustHave) lines.push('Must-have requirements: ' + brief.mustHave);
+  if (brief.avoid) lines.push('Avoid / red flags: ' + brief.avoid);
+  return lines.length ? lines.join('\\n') : '';
+}
+function formatResearchBriefMarkdown() {
+  var room = activeAmazonRoom(); var brief = normaliseResearchBrief(room?.research);
+  var lines = ['# Amazon AI 選品研究摘要', '', '- 研究室：' + (room?.name || '未命名'), '- 目標市場：Amazon ' + (currentMarket === 'jp' ? 'JP' : 'US'), '- 匯出時間：' + new Date().toISOString(), ''];
+  [['預算上限','budget'],['主要使用情境','useCase'],['必備條件','mustHave'],['避雷條件','avoid']].forEach(function(pair) { lines.push('## ' + pair[0]); lines.push(brief[pair[1]] || '未設定'); lines.push(''); });
+  var filters = getSelectedFilters(); lines.push('## 已選商城篩選'); lines.push(filters.length ? filters.map(function(item) { return '- `' + item + '`'; }).join('\\n') : '未選擇額外篩選');
+  var searchOptions = getAmazonSearchOptions(); lines.push('', '## 搜尋排序與價格', '- 排序：' + ({'featured-rank':'熱門推薦','price-asc-rank':'價格由低至高','price-desc-rank':'價格由高至低','review-rank':'評價與評論優先'}[searchOptions.sort] || '熱門推薦'), '- 最低價格：' + (searchOptions.minPrice || '未設定'), '- 最高價格：' + (searchOptions.maxPrice || '未設定'));
+  return lines.join('\\n');
+}
+function copyAmazonText(text) {
+  var status = document.getElementById('research-save-status');
+  var fallback = function() { var area=document.createElement('textarea'); area.value=text; area.style.position='fixed'; area.style.opacity='0'; document.body.appendChild(area); area.select(); try { document.execCommand('copy'); } catch (_) {} area.remove(); };
+  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).catch(fallback); else fallback();
+  if (status) { status.textContent='已複製研究摘要'; clearTimeout(researchSaveTimer); researchSaveTimer=setTimeout(function(){status.textContent='本地儲存';},1800); }
+}
+function downloadAmazonText(filename, text) { var blob=new Blob([text],{type:'text/markdown;charset=utf-8'}); var url=URL.createObjectURL(blob); var link=document.createElement('a'); link.href=url; link.download=filename; document.body.appendChild(link); link.click(); link.remove(); setTimeout(function(){URL.revokeObjectURL(url);},500); }
+function renderAmazonRooms() {
+  var list = document.getElementById('room-list');
+  var count = document.getElementById('room-count');
+  if (count) count.textContent = String(amazonRooms.length);
+  if (!list) return;
+  list.replaceChildren();
+  amazonRooms.forEach(function(room) {
+    var row = document.createElement('div'); row.className = 'amazon-room' + (room.id === activeAmazonRoomId ? ' active' : ''); row.dataset.roomId = room.id;
+    row.innerHTML = '<i class="fa-solid fa-message"></i><span class="amazon-room-name"></span><button class="amazon-room-delete" type="button" aria-label="刪除研究室"><i class="fa-solid fa-trash-can"></i></button>';
+    row.querySelector('.amazon-room-name').textContent = room.name;
+    row.addEventListener('click', function() { switchAmazonRoom(room.id); });
+    row.querySelector('.amazon-room-delete').addEventListener('click', function(event) { event.stopPropagation(); if (amazonRooms.length <= 1) { alert('至少需保留一個購物研究室。'); return; } if (!confirm('確定刪除此研究室與對話嗎？')) return; amazonRooms = amazonRooms.filter(function(item) { return item.id !== room.id; }); if (activeAmazonRoomId === room.id) activeAmazonRoomId = amazonRooms[0].id; saveAmazonRooms(); renderAmazonRooms(); renderAmazonRoomMessages(); });
+    list.appendChild(row);
+  });
+}
+function renderAmazonRoomMessages() {
+  var container = document.getElementById('chat-messages');
+  var room = activeAmazonRoom();
+  if (!container || !room) return;
+  container.innerHTML = room.messages.length ? '' : amazonWelcomeHtml;
+  var footer = container.querySelector('#amazon-page-footer');
+  if (footer) footer.remove();
+  room.messages.forEach(function(message) { addMessage(message.role, message.html, message.photoSrc || null, false); });
+  if (!footer && amazonFooterHtml) { var footerWrap = document.createElement('div'); footerWrap.innerHTML = amazonFooterHtml; footer = footerWrap.firstElementChild; }
+  if (footer) container.appendChild(footer);
+  scrollAmazonMessages();
+}
+function loadAmazonRooms() {
+  amazonWelcomeHtml = document.getElementById('welcome-section') ? document.getElementById('welcome-section').outerHTML : '';
+  amazonFooterHtml = document.getElementById('amazon-page-footer') ? document.getElementById('amazon-page-footer').outerHTML : '';
+  try {
+    var saved = JSON.parse(localStorage.getItem(AMAZON_ROOM_STORAGE_KEY) || 'null');
+    amazonRooms = Array.isArray(saved && saved.rooms) ? saved.rooms : [];
+    activeAmazonRoomId = saved && saved.activeRoomId || '';
+  } catch (_) { amazonRooms = []; activeAmazonRoomId = ''; }
+  if (!amazonRooms.length) { amazonRooms = [{ id: 'room_' + Date.now(), name: '一般選品研究', messages: [], createdAt: new Date().toISOString() }]; activeAmazonRoomId = amazonRooms[0].id; }
+  if (!amazonRooms.some(function(room) { return room.id === activeAmazonRoomId; })) activeAmazonRoomId = amazonRooms[0].id;
+    amazonRooms.forEach(function(room) { if (!Array.isArray(room.messages)) room.messages = []; room.research = normaliseResearchBrief(room.research); });
+  var initialRoom = activeAmazonRoom();
+  setHeroVisibility(!(initialRoom && initialRoom.messages && initialRoom.messages.length));
+  bindHeroScrollBehavior();
+  saveAmazonRooms(); renderAmazonRooms(); renderAmazonRoomMessages(); renderResearchBrief();
+}
+function switchAmazonRoom(roomId) { if (!amazonRooms.some(function(room) { return room.id === roomId; })) return; activeAmazonRoomId = roomId; var room=activeAmazonRoom(); setHeroVisibility(!(room && room.messages && room.messages.length)); saveAmazonRooms(); renderAmazonRooms(); renderAmazonRoomMessages(); renderResearchBrief(); toggleDrawer(false); }
+function createAmazonRoom() { var name = prompt('請輸入新購物研究室名稱：', '新選品研究'); if (!name) return; var room = { id: 'room_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), name: name.trim(), research: emptyResearchBrief(), messages: [], createdAt: new Date().toISOString() }; amazonRooms.unshift(room); activeAmazonRoomId = room.id; setHeroVisibility(true); saveAmazonRooms(); renderAmazonRooms(); renderAmazonRoomMessages(); renderResearchBrief(); toggleDrawer(false); }
+function persistAmazonMessage(role, html, photoSrc) { var room = activeAmazonRoom(); if (!room) return; room.messages.push({ role: role, html: html, photoSrc: photoSrc || null, createdAt: new Date().toISOString() }); room.updatedAt = new Date().toISOString(); saveAmazonRooms(); }
+function scrollAmazonMessages(target) { var container = document.getElementById('chat-messages'); if (!container) return; requestAnimationFrame(function() { var top = target ? Math.max(0, target.offsetTop - 20) : container.scrollHeight; container.scrollTo({ top: top, behavior: 'smooth' }); }); }
+
+/* ===== BUILD AMAZON URL ===== */
+function buildAmazonUrl(keyword, extraTags, targetMarketKey) {
+  var mk = targetMarketKey || currentMarket;
+  var conf = MARKETS[mk] || MARKETS.us;
+  var tag = mk === 'jp' ? JP_TAG : US_TAG;
+  var fullKeyword = keyword || '';
+  if (extraTags && extraTags.length > 0) {
+    fullKeyword = (fullKeyword + ' ' + extraTags.join(' ')).trim();
+  }
+  var url = new URL(conf.baseUrl);
+  url.searchParams.set('k', fullKeyword);
+  url.searchParams.set('tag', tag);
+  var rh = getSelectedFilters();
+  if (rh.length > 0) url.searchParams.set('rh', rh.join(','));
+  var searchOptions = getAmazonSearchOptions();
+  if (searchOptions.sort && searchOptions.sort !== 'featured-rank') url.searchParams.set('s', searchOptions.sort);
+  if (/^\d+(?:\.\d+)?$/.test(searchOptions.minPrice)) url.searchParams.set('low-price', searchOptions.minPrice);
+  if (/^\d+(?:\.\d+)?$/.test(searchOptions.maxPrice)) url.searchParams.set('high-price', searchOptions.maxPrice);
+  return url.toString();
+}
+
+/* ===== CHAT UI ===== */
+function addMessage(role, html, photoSrc, persist) {
+  setHeroVisibility(false);
+  var welcome = document.getElementById('welcome-section'); if (welcome) welcome.style.display = 'none';
+  var container = document.getElementById('chat-messages'); var div = document.createElement('div');
+  div.className = 'msg ' + role;
+  var avatarIcon = role === 'user' ? '<i class="fa-solid fa-user"></i>' : '<i class="fa-solid fa-robot"></i>';
+  var photoHtml = photoSrc ? '<img class="user-photo" src="' + photoSrc + '" alt="uploaded">' : '';
+  if (role === 'user') div.innerHTML = '<div class="bubble">' + photoHtml + html + '</div><div class="msg-avatar">' + avatarIcon + '</div>';
+  else div.innerHTML = '<div class="msg-avatar">' + avatarIcon + '</div><div class="bubble">' + html + '</div>';
+  container.appendChild(div);
+  if (persist !== false) persistAmazonMessage(role, html, photoSrc);
+  scrollAmazonMessages(div);
+  return div;
+}
+function showTyping() {
+  var container = document.getElementById('chat-messages');
+  var div = document.createElement('div');
+  div.className = 'msg ai';
+  div.id = 'typing-msg';
+  div.innerHTML = '<div class="msg-avatar"><i class="fa-solid fa-robot"></i></div><div class="bubble"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>';
+  container.appendChild(div);
+  scrollAmazonMessages();
+}
+function removeTyping() {
+  var el = document.getElementById('typing-msg');
+  if (el) el.remove();
+}
+function clearRetryCountdown() { if (retryCountdownTimer) { clearInterval(retryCountdownTimer); retryCountdownTimer = null; } }
+function showError(msg, options) {
+  options = options || {};
+  clearRetryCountdown();
+  var panel = document.getElementById('error-panel');
+  var message = document.getElementById('error-msg');
+  var retryButton = document.getElementById('btn-retry-model');
+  if (!panel || !message || !retryButton) return;
+  panel.classList.toggle('busy', Boolean(options.busy));
+  message.textContent = msg;
+  panel.style.display = 'block';
+  retryButton.style.display = options.showRetryButton === false ? 'none' : '';
+  retryButton.disabled = Boolean(options.disabled);
+  retryButton.textContent = options.buttonLabel || '🔄 手動重試';
+  var seconds = Number(options.countdownSeconds || 0);
+  if (seconds > 0) {
+    var remaining = Math.ceil(seconds);
+    var updateCountdown = function() {
+      if (remaining > 0) { message.textContent = msg + ' ' + remaining + ' 秒後可按下「手動重試」。'; retryButton.disabled = true; }
+      else { message.textContent = msg + ' 您可以按下「手動重試」。'; retryButton.disabled = false; }
+    };
+    updateCountdown();
+    retryCountdownTimer = setInterval(function() { remaining -= 1; if (remaining <= 0) { clearRetryCountdown(); remaining = 0; } updateCountdown(); }, 1000);
+  }
+}
+function hideError() { clearRetryCountdown(); var panel=document.getElementById('error-panel'); if (panel) { panel.classList.remove('busy'); panel.style.display='none'; } }
+function showModelSwitchNotice(busyModel, nextModel, status) {
+  var busyName = getModelDisplayNameForAmazon(busyModel); var nextName = getModelDisplayNameForAmazon(nextModel);
+  var label = status === 'TIMEOUT' ? '請求超過 10 秒未回應' : 'HTTP ' + status;
+  showError('⚠️ [' + busyName + '] 伺服器目前工作繁忙（' + label + '），系統已自動切換至 [' + nextName + '] 繼續分析…', { busy:true, showRetryButton:false, disabled:true });
+}
+function renderAiFacetCard(aiData, msgId, defaultKeyword) {
+  var baseKw = aiData.recommendedBaseKeyword || defaultKeyword || '';
+  var groupsHtml = (aiData.filterGroups || []).map(function(group) {
+    var optsHtml = (group.options || []).map(function(opt) {
+      return '<button onclick="toggleFacetTag(this, \'' + msgId + '\', \'' + escapeAttr(baseKw) + '\')" ' +
+             'data-tag="' + escapeAttr(opt) + '" class="facet-chip">' +
+             '+ ' + escapeHtml(opt) +
+             '</button>';
+    }).join('');
+
+    return '<div class="facet-group-box">' +
+             '<div class="facet-group-title">' + escapeHtml(group.groupTitle || '分類維度') + '</div>' +
+             '<div class="facet-chips-row">' + optsHtml + '</div>' +
+           '</div>';
+  }).join('');
+
+  var isJp = currentMarket === 'jp';
+  var primaryBtnLabel = isJp ? '🇯🇵 前往 Amazon JP (日本站)' : '🇺🇸 前往 Amazon US (美國站)';
+  var altMarket = isJp ? 'us' : 'jp';
+  var altBtnLabel = isJp ? '🇺🇸 同步比價美國站' : '🇯🇵 同步比價日本站';
+
+  var html =
+    '<div class="ai-facet-card" id="card-' + msgId + '">' +
+      '<p class="facet-quick-guide">' + escapeHtml(aiData.quickGuide || '已為您鎖定商品類別，請點選規格標籤進行組合：') + '</p>' +
+      '<div class="facet-groups-container">' + groupsHtml + '</div>' +
+      '<div class="facet-preview-bar">' +
+        '<div class="facet-kw-info">' +
+          '<span class="kw-label">目前組合檢索詞：</span>' +
+          '<span class="kw-value" id="kw-preview-' + msgId + '">' + escapeHtml(baseKw) + '</span>' +
+        '</div>' +
+        '<div style="display:flex; gap:8px; flex-wrap:wrap;">' +
+          '<button onclick="openAmazonTarget(\'' + msgId + '\', \'' + escapeAttr(baseKw) + '\', \'' + currentMarket + '\')" class="btn-facet-jump" style="flex:1; min-width:200px;">' +
+            '<span>' + primaryBtnLabel + ' 開啟結果</span> ' +
+            '<i class="fa-solid fa-arrow-up-right-from-square"></i>' +
+          '</button>' +
+          '<button onclick="openAmazonTarget(\'' + msgId + '\', \'' + escapeAttr(baseKw) + '\', \'' + altMarket + '\')" class="btn-facet-jump-alt" title="切換至另一市場同步搜尋比價">' +
+            '<i class="fa-solid fa-arrows-rotate"></i> ' +
+            '<span>' + altBtnLabel + '</span>' +
+          '</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+  return html;
+}
+
+window.toggleFacetTag = function(btn, msgId, baseKw) {
+  btn.classList.toggle('selected');
+  var rawTag = btn.getAttribute('data-tag');
+  if (btn.classList.contains('selected')) {
+    btn.textContent = '✓ ' + rawTag;
+  } else {
+    btn.textContent = '+ ' + rawTag;
+  }
+
+  var card = document.getElementById('card-' + msgId);
+  if (!card) return;
+
+  var selectedTags = [];
+  card.querySelectorAll('.facet-chip.selected').forEach(function(el) {
+    var tag = el.getAttribute('data-tag');
+    if (tag) selectedTags.push(tag);
+  });
+
+  var combinedKw = (baseKw + (selectedTags.length > 0 ? ' ' + selectedTags.join(' ') : '')).trim();
+  var kwPreview = document.getElementById('kw-preview-' + msgId);
+  if (kwPreview) kwPreview.textContent = combinedKw;
+};
+
+window.openAmazonTarget = function(msgId, baseKw, targetMarketKey) {
+  var mk = targetMarketKey || currentMarket;
+  var card = document.getElementById('card-' + msgId);
+  var selectedTags = [];
+  if (card) {
+    card.querySelectorAll('.facet-chip.selected').forEach(function(el) {
+      var tag = el.getAttribute('data-tag');
+      if (tag) selectedTags.push(tag);
+    });
+  }
+
+  var url = buildAmazonUrl(baseKw, selectedTags, mk);
+  window.open(url, '_blank', 'noopener,noreferrer');
+
+  if (typeof gtag === 'function') {
+    gtag('event', 'amazon_facet_search', {
+      event_category: 'ecommerce',
+      event_label: mk.toUpperCase() + ': ' + baseKw + ' [' + selectedTags.join(', ') + ']'
+    });
+  }
+};
+function escapeHtml(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function escapeAttr(s) { return (s || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+
+/* ===== GUGO PRO UNIFIED AI ENGINE: exact queue/quota contract shared with Tutor/Nutritionist ===== */
+var amazonModelEngine = window.GugoProUnifiedAI.create({
+  storagePrefix: 'gugopro_amazon_finder',
+  disabledKey: 'gugopro_amazon_finder_disabled_models_v1',
+  preferenceKey: 'gugopro_amazon_finder_model_preference_v1',
+  elements: {
+    modelOptions: 'model-options',
+    modelSettingsStatus: 'model-settings-status',
+    modelCurrentStatus: 'model-current-status',
+    quotaStatus: 'global-ai-quota-status',
+    quotaReset: 'global-ai-quota-reset',
+    quotaLimit: 'global-ai-quota-limit',
+    quotaUsed: 'global-ai-quota-used'
+  },
+  quotaSource: 'quota.gugopro.com enabled chat models'
+});
+
+function parseAmazonResponse(payload) {
+  var raw = payload && payload.candidates && payload.candidates[0] && payload.candidates[0].content && payload.candidates[0].content.parts && payload.candidates[0].content.parts[0] && payload.candidates[0].content.parts[0].text;
+  if (!raw) throw new Error('AI 回應內容為空');
+  var clean = String(raw).replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+  try {
+    var parsed = JSON.parse(clean);
+    return {
+      quickGuide: String(parsed.quickGuide || '已鎖定商品類別，請點選規格標籤組合搜尋。'),
+      recommendedBaseKeyword: String(parsed.recommendedBaseKeyword || parsed.recommendedKeyword || ''),
+      filterGroups: Array.isArray(parsed.filterGroups) ? parsed.filterGroups : []
+    };
+  } catch (_) {
+    return { quickGuide: clean, recommendedBaseKeyword: '', filterGroups: [] };
+  }
+}
+
+async function callGemini(userText, imageBase64, imageMime) {
+  var marketDomain = currentMarket === 'jp' ? 'Amazon Japan (amazon.co.jp)' : 'Amazon US (amazon.com)';
+  var languageRule = currentMarket === 'jp'
+    ? 'Use Japanese for the recommendedBaseKeyword and Japanese or Traditional Chinese labels.'
+    : 'Use English for the recommendedBaseKeyword and English or Traditional Chinese labels.';
+  var researchContext = buildResearchContext();
+  var researchRule = researchContext ? '\\n\\nApply these saved research constraints to the analysis:\\n' + researchContext : '';
+  var systemPrompt = 'You are GugoPro Amazon Finder, a practical all-category product research assistant. ' +
+    'Find high-margin blue-ocean product angles, infer competitor review pain points, and create listing keyword dimensions. ' +
+    'Return ONLY valid JSON with quickGuide, recommendedBaseKeyword, and filterGroups. ' +
+    'filterGroups must contain 3 to 5 objects, each with groupTitle and 4 to 8 concise options. ' +
+    'Do not invent live prices, ratings, inventory, or verified product facts. Target market: ' + marketDomain + '. ' + languageRule + researchRule;
+  var parts = [{ text: systemPrompt + '\n\nUser request: ' + String(userText || '') }];
+  if (imageBase64 && imageMime) parts.push({ inlineData: { mimeType: imageMime, data: imageBase64 } });
+  var payload = {
+    contents: [{ role: 'user', parts: parts }],
+    systemInstruction: { parts: [{ text: systemPrompt }] },
+    generationConfig: { temperature: 0.55, maxOutputTokens: 4096, responseMimeType: 'application/json' }
+  };
+  if (!amazonModelEngine.getModels().length) {
+    await amazonModelEngine.refresh({ silent: false });
+    if (!amazonModelEngine.getModels().length) {
+      var catalogError = new Error('站內免費模型清單暫時無法載入，請稍後重試。');
+      catalogError.status = 'CATALOG';
+      throw catalogError;
+    }
+  }
+  var response = await amazonModelEngine.request(payload, parseAmazonResponse, {
+    onAttempt: function(modelName) {
+      var typing = document.getElementById('typing-msg');
+      if (typing) typing.querySelector('.bubble').textContent = getModelDisplayNameForAmazon(modelName) + ' 正在分析中…';
+    },
+    onSwitch: function(busyModel, nextModel, status) {
+      console.info('[Amazon Finder] model fallback', busyModel, '->', nextModel, status);
+      showModelSwitchNotice(busyModel, nextModel, status);
+    }
+  });
+  return response.result;
+}
+
+function getModelDisplayNameForAmazon(modelName) {
+  var state = amazonModelEngine.getState();
+  var found = state.availableModels.find(function(model) { return model.api_name === modelName; });
+  return found ? found.display_name : modelName;
+}
+
+/* ===== SEND MESSAGE ===== */
+var pendingImage = null;
+var pendingImageMime = null;
+var pendingImagePreview = null;
+
+function containsJapanese(str) {
+  return /[\u3040-\u309F\u30A0-\u30FF]/.test(str);
+}
+
+window.sendMessage = async function(retryRequest) {
+  if (isProcessing) return;
+  var input = document.getElementById('user-input');
+  var request = retryRequest || { text: input.value.trim(), imageBase64: pendingImage, imageMime: pendingImageMime, imagePreview: pendingImagePreview };
+  var text = String(request.text || '').trim();
+  if (!text && !request.imageBase64) return;
+  if (!checkApiKey()) return;
+  if (text && containsJapanese(text) && currentMarket !== 'jp') switchMarket('jp');
+  isProcessing = true; document.getElementById('btn-send').disabled = true; hideError();
+  if (!retryRequest) {
+    var displayText = text || '(已上傳圖片，請 AI 分析)';
+    addMessage('user', escapeHtml(displayText), pendingImagePreview);
+    input.value = ''; autoResize(input);
+    pendingImage = null; pendingImageMime = null; pendingImagePreview = null;
+  }
+  showTyping();
+  try {
+    var result = await callGemini(text || '請分析這張圖片中的商品，提供高毛利藍海方向、競品差評痛點與 Listing 關鍵字維度。', request.imageBase64, request.imageMime);
+    removeTyping();
+    pendingRetryRequest = null;
+    var msgId = 'msg-' + Date.now();
+    addMessage('ai', renderAiFacetCard(result, msgId, text));
+    hideError();
+  } catch (err) {
+    removeTyping();
+    pendingRetryRequest = request;
+    var attempted = Array.isArray(err.attemptedModels) && err.attemptedModels.length ? '（本輪已嘗試 ' + err.attemptedModels.length + ' 個模型）' : '';
+    var status = err.status;
+    var message = '❌ AI 請求未完成，您可以稍後手動重試。';
+    if (status === 'NO_KEY') { pendingRetryRequest = null; message = '請先在模型／歷史設定中儲存 Gemini API Key。'; }
+    else if (err.circuitBreaker || status === 503) message = '⚠️ 免費 AI 模型目前忙碌（503），系統已完成自動輪替；請稍後重試。' + attempted;
+    else if (status === 429) message = '⚠️ 免費 AI 模型請求額度繁忙（429），系統已完成自動輪替；請稍後重試。' + attempted;
+    else if (status === 500) message = '⚠️ AI 模型暫時無法回應（500），系統已完成自動輪替；請稍後重試。' + attempted;
+    else if (status === 'TIMEOUT') message = '⚠️ AI 模型連線逾時（10 秒），系統已完成自動輪替；請稍後重試。' + attempted;
+    else if (status === 'CATALOG') message = '❌ 站內免費模型清單暫時無法載入，請稍後再試。';
+    showError(message, { busy: [503,429,500,'TIMEOUT'].includes(status), countdownSeconds: status === 'NO_KEY' || status === 'CATALOG' ? 0 : 5 });
+  }
+  isProcessing = false; document.getElementById('btn-send').disabled = false;
+};
+
+window.sendQuickPrompt = function(text) {
+  document.getElementById('user-input').value = text;
+  sendMessage();
+};
+
+/* ===== CAMERA / IMAGE UPLOAD ===== */
+document.getElementById('camera-input').addEventListener('change', function(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  if (!checkApiKey()) { e.target.value = ''; return; }
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    var dataUrl = ev.target.result;
+    pendingImagePreview = dataUrl;
+    pendingImage = dataUrl.split(',')[1];
+    pendingImageMime = file.type || 'image/jpeg';
+    var input = document.getElementById('user-input');
+    if (!input.value.trim()) input.value = '';
+    input.placeholder = '📷 圖片已載入，輸入補充說明或直接發送...';
+    input.focus();
+    // Auto-send if no text
+    setTimeout(function() { if (!document.getElementById('user-input').value.trim()) sendMessage(); }, 300);
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+});
+
+/* ===== VOICE INPUT ===== */
+window.toggleMic = function() {
+  if (!checkApiKey()) return;
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    alert('您的瀏覽器不支援語音辨識，建議使用 Chrome 瀏覽器。');
+    return;
+  }
+  if (isRecording) {
+    if (recognition) recognition.stop();
+    return;
+  }
+  var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SpeechRecognition();
+  recognition.lang = currentMarket === 'jp' ? 'ja-JP' : 'zh-TW';
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.onstart = function() {
+    isRecording = true;
+    document.getElementById('btn-mic').classList.add('recording');
+  };
+  recognition.onresult = function(event) {
+    var transcript = event.results[0][0].transcript;
+    document.getElementById('user-input').value = transcript;
+    autoResize(document.getElementById('user-input'));
+  };
+  recognition.onend = function() {
+    isRecording = false;
+    document.getElementById('btn-mic').classList.remove('recording');
+    recognition = null;
+    var input = document.getElementById('user-input');
+    if (input.value.trim()) sendMessage();
+  };
+  recognition.onerror = function(e) {
+    isRecording = false;
+    document.getElementById('btn-mic').classList.remove('recording');
+    recognition = null;
+    if (e.error !== 'no-speech' && e.error !== 'aborted') {
+      console.warn('Speech recognition error:', e.error);
+    }
+  };
+  recognition.start();
+};
+
+/* ===== TEXTAREA AUTO RESIZE ===== */
+window.autoResize = function(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+};
+
+/* ===== KEYBOARD HANDLER ===== */
+document.getElementById('user-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+async function handleAmazonManualRetry() {
+  if (isProcessing || retryCountdownTimer || !pendingRetryRequest) return;
+  var retryRequest = pendingRetryRequest;
+  pendingRetryRequest = null;
+  await amazonModelEngine.refresh({ silent: true });
+  await window.sendMessage(retryRequest);
+}
+
+/* ===== INIT ===== */
+loadAmazonRooms();
+currentMarket = detectMarket();
+switchMarket(currentMarket);
+updateKeyUI();
+/* API setup is requested when an AI action is used, not on page load. */
+amazonModelEngine.init();
+if (window.innerWidth >= 901) window.toggleDrawer(true);
+document.getElementById('btn-new-room').addEventListener('click', createAmazonRoom);
+document.getElementById('btn-refresh-models').addEventListener('click', function() { amazonModelEngine.refresh({ silent: false }); });
+document.getElementById('btn-retry-model').addEventListener('click', handleAmazonManualRetry);
+document.querySelectorAll('.amazon-quick-prompt').forEach(function(button) { button.addEventListener('click', function() { window.sendQuickPrompt(button.dataset.prompt); }); });
+['amazon-budget','amazon-use-case','amazon-must-have','amazon-avoid'].forEach(function(id) { var input=document.getElementById(id); if (input) input.addEventListener('input', function() { saveActiveResearchBrief(true); }); });
+document.getElementById('btn-copy-research-brief').addEventListener('click', function() { saveActiveResearchBrief(false); copyAmazonText(formatResearchBriefMarkdown()); });
+document.getElementById('btn-export-research-brief').addEventListener('click', function() { saveActiveResearchBrief(false); downloadAmazonText('amazon-research-brief-' + Date.now() + '.md', formatResearchBriefMarkdown()); });
+window.__amazonFinderTest = {
+  getRooms: function() { return amazonRooms; },
+  getActiveRoom: function() { return activeAmazonRoom(); },
+  getModelState: function() { return amazonModelEngine.getState(); },
+  setModels: function(models) { return amazonModelEngine.setModels(models); },
+  prompt: function(text) { return window.sendQuickPrompt(text); },
+  openDrawer: function() { return window.toggleDrawer(true); },
+  closeDrawer: function() { return window.toggleDrawer(false); },
+  showError: function(message, options) { return showError(message, options); },
+  hideError: function() { return hideError(); },
+  getResearchBrief: function() { return normaliseResearchBrief(activeAmazonRoom()?.research); },
+  setResearchBrief: function(brief) { var room=activeAmazonRoom(); if (!room) return null; room.research=normaliseResearchBrief(brief); saveAmazonRooms(); renderResearchBrief(); return room.research; },
+  formatResearchBrief: function() { return formatResearchBriefMarkdown(); }
+};
+
+})();
+</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"SoftwareApplication","name":"Amazon AI 智慧選品助手","applicationCategory":"WebApplication","operatingSystem":"Web Browser","url":"https://gugopro.com/amazon/","description":"以文字、圖片與語音輔助整理商品規格與選品方向；價格、庫存與商品頁內容應以 Amazon 當下頁面為準。","offers":{"@type":"Offer","price":"0","priceCurrency":"TWD"},"isAccessibleForFree":true,"author":{"@type":"Organization","name":"GugoPro","url":"https://gugopro.com/about.html"},"dateModified":"2026-10-05"},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"產生的推薦連結如何直達 Amazon 官方搜尋？","acceptedAnswer":{"@type":"Answer","text":"AI 會產生可檢查的關鍵字與規格標籤，按下矩陣卡片中的 Amazon US 或 Amazon JP 按鈕後，頁面會以對應市場的官方搜尋網址開啟；聯盟標記只用於導購歸因，商品資料仍以 Amazon 官方頁為準。"}},{"@type":"Question","name":"以圖搜尋若辨識不夠精確，如何加強文字描述？","acceptedAnswer":{"@type":"Answer","text":"補充商品用途、品牌或型號、尺寸、顏色、接口、購買國家、預算與不要的特徵，並分開上傳包裝標籤與商品主體。文字條件越具體，AI 越能縮小候選範圍；請把結果視為待核對的搜尋建議。"}},{"@type":"Question","name":"本工具會保存搜尋紀錄或個人 API 資訊嗎？","acceptedAnswer":{"@type":"Answer","text":"本工具以瀏覽器前端儲存研究室、條件與對話紀錄，Gemini API Key 也由瀏覽器本機儲存機制管理；不要輸入信用卡、身分證或其他不必要的敏感資料。清除瀏覽器網站資料即可移除本機紀錄，並請同時閱讀本站隱私權政策。"}}]}]}</script></body>
+</html>

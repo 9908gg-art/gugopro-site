@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gugopro.com/research/schemas/label.schema.json",
+  "title": "GugoPro Future Volatility Label",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["feature_as_of", "label_end", "horizon", "annualization", "future_realized_vol", "regime", "label_version", "quality_flags", "trainable"],
+  "properties": {
+    "feature_as_of": {"type": "string", "format": "date"},
+    "label_end": {"type": ["string", "null"], "format": "date"},
+    "horizon": {"type": "integer", "minimum": 2},
+    "annualization": {"type": "integer", "minimum": 1},
+    "future_realized_vol": {"type": ["number", "null"]},
+    "regime": {"type": ["string", "null"], "enum": ["low", "middle", "high", null]},
+    "label_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "quality_flags": {"type": "array", "items": {"type": "string", "enum": ["incomplete_future_window", "insufficient_future_returns"]}},
+    "trainable": {"type": "boolean"},
+    "cutoff_source": {"type": ["object", "null"]}
+  }
+}

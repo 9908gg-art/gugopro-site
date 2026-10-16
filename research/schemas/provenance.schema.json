@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gugopro.com/research/schemas/provenance.schema.json",
+  "title": "GugoPro Research Provenance",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["source_id", "official_url", "retrieved_at", "as_of", "timezone", "adjustment", "snapshot_id", "parser_version", "license_ref"],
+  "properties": {
+    "source_id": {"type": "string", "minLength": 2, "pattern": "^[a-z0-9_.:-]+$"},
+    "official_url": {"type": "string", "format": "uri", "pattern": "^https://"},
+    "retrieved_at": {"type": "string", "format": "date-time"},
+    "as_of": {"type": "string", "format": "date"},
+    "timezone": {"type": "string", "minLength": 1},
+    "currency": {"type": ["string", "null"]},
+    "frequency": {"type": ["string", "null"], "enum": ["intraday", "daily", "weekly", "monthly", "quarterly", "annual", "event_driven", "not_applicable", null]},
+    "adjustment": {"type": "string", "enum": ["adjusted", "unadjusted", "as_reported", "source_defined", "not_applicable"]},
+    "vintage": {"type": ["object", "null"], "additionalProperties": false, "properties": {"realtime_start": {"type": ["string", "null"], "format": "date"}, "realtime_end": {"type": ["string", "null"], "format": "date"}}},
+    "snapshot_id": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "raw_url": {"type": ["string", "null"], "format": "uri", "pattern": "^https://"},
+    "parser_version": {"type": "string", "minLength": 1},
+    "schema_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "license_ref": {"type": "string", "minLength": 3},
+    "quality_status": {"type": "string", "enum": ["fresh", "partial", "stale", "invalid", "unavailable"]},
+    "warnings": {"type": "array", "items": {"type": "string"}}
+  }
+}

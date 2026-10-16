@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gugopro.com/research/schemas/feature-manifest.schema.json",
+  "title": "GugoPro Feature Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["feature_set_id", "dataset_id", "source_id", "snapshot_id", "feature_content_hash", "feature_version", "schema_version", "feature_as_of_start", "feature_as_of_end", "features", "parameters", "lineage", "created_at"],
+  "properties": {
+    "feature_set_id": {"type": "string", "minLength": 3, "pattern": "^[A-Za-z0-9_.:-]+$"},
+    "dataset_id": {"type": "string", "minLength": 3, "pattern": "^[A-Za-z0-9_.:-]+$"},
+    "source_id": {"type": "string", "minLength": 2, "pattern": "^[A-Za-z0-9_.:-]+$"},
+    "snapshot_id": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "feature_content_hash": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "feature_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "schema_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "feature_as_of_start": {"type": "string", "format": "date"},
+    "feature_as_of_end": {"type": "string", "format": "date"},
+    "features": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 2}},
+    "parameters": {"type": "object", "additionalProperties": true},
+    "lineage": {"type": "string", "minLength": 20},
+    "created_at": {"type": "string", "format": "date-time"}
+  }
+}
