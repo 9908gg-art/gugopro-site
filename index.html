@@ -19,8 +19,8 @@
 <link href="https://gugopro.com/favicon.svg" rel="icon" type="image/svg+xml">
 <link href="https://gugopro.com/" rel="canonical">
 <link rel="alternate" hreflang="zh-TW" href="https://gugopro.com/">
-<link rel="alternate" hreflang="en" href="https://gugopro.com/?lang=en">
-<link rel="alternate" hreflang="ja" href="https://gugopro.com/?lang=ja">
+<link rel="alternate" hreflang="en" href="https://gugopro.com/index_en.html">
+<link rel="alternate" hreflang="ja" href="https://gugopro.com/index_ja.html">
 <link rel="alternate" hreflang="x-default" href="https://gugopro.com/">
 <meta content="website" property="og:type">
 <meta content="https://gugopro.com/" property="og:url">
@@ -214,7 +214,7 @@ footer.main-footer { margin-top: 60px; border-top: 1px solid var(--border-color)
 <header>
     <div class="nav-container">
         <!-- 品牌標誌：全頁唯一的首頁錨點，點擊刷新回頂部 -->
-        <a aria-label="GugoPro 首頁" class="logo" href="/">
+        <a aria-label="GugoPro 首頁" class="logo" href="https://gugopro.com/">
             <div class="logo-icon"><i class="fa-solid fa-rocket"></i></div>
             <span class="logo-text">GugoPro</span>
         </a>
@@ -1202,17 +1202,27 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // 語言切換選擇器事件綁定
+    // 品牌圖形點擊重新載入首頁回頂部
+    const logoLink = document.querySelector('.logo');
+    if (logoLink) {
+        logoLink.addEventListener('click', function (e) {
+            e.preventDefault();
+            window.location.href = 'https://gugopro.com/';
+            window.location.reload();
+        });
+    }
+
+    // 語言切換選擇器事件綁定（直接精準跳轉到各語系首頁）
     const localeSelect = document.getElementById('gugo-locale-select');
     if (localeSelect) {
         localeSelect.addEventListener('change', function (e) {
             const selectedLang = e.target.value;
             if (selectedLang === 'en') {
-                window.location.href = '/?lang=en';
+                window.location.href = 'https://gugopro.com/index_en.html';
             } else if (selectedLang === 'ja') {
-                window.location.href = '/?lang=ja';
+                window.location.href = 'https://gugopro.com/index_ja.html';
             } else {
-                window.location.href = '/';
+                window.location.href = 'https://gugopro.com/';
             }
         });
     }

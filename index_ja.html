@@ -16,12 +16,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Sans+JP:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@600;700;800&family=Space+Grotesk:wght@600;700;800&display=swap" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 <link href="https://gugopro.com/favicon.svg" rel="icon" type="image/svg+xml">
-<link href="https://gugopro.com/?lang=ja" rel="canonical">
+<link href="https://gugopro.com/index_ja.html" rel="canonical">
 <link rel="alternate" hreflang="zh-TW" href="https://gugopro.com/">
-<!-- 待部署完成後取消註解：
-<link rel="alternate" hreflang="en" href="https://gugopro.com/?lang=en">
-<link rel="alternate" hreflang="ja" href="https://gugopro.com/?lang=ja">
--->
+<link rel="alternate" hreflang="en" href="https://gugopro.com/index_en.html">
+<link rel="alternate" hreflang="ja" href="https://gugopro.com/index_ja.html">
 <link rel="alternate" hreflang="x-default" href="https://gugopro.com/">
 <meta content="website" property="og:type">
 <meta content="https://gugopro.com/?lang=ja" property="og:url">
@@ -209,7 +207,7 @@ footer.main-footer { margin-top: 60px; border-top: 1px solid var(--border-color)
 <header>
     <div class="nav-container">
         <!-- ブランドロゴ（唯一のホームアンカー・本機テストでも正しく跳躍するよう絶対URL指定） -->
-        <a aria-label="GugoPro ホーム" class="logo" href="https://gugopro.com/?lang=ja">
+        <a aria-label="GugoPro ホーム" class="logo" href="https://gugopro.com/index_ja.html">
             <div class="logo-icon"><i class="fa-solid fa-rocket"></i></div>
             <span class="logo-text">GugoPro</span>
         </a>
@@ -1147,16 +1145,27 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    // ブランドロゴクリックで日本語トップページを再読み込み
+    const logoLink = document.querySelector('.logo');
+    if (logoLink) {
+        logoLink.addEventListener('click', function (e) {
+            e.preventDefault();
+            window.location.href = 'https://gugopro.com/index_ja.html';
+            window.location.reload();
+        });
+    }
+
+    // 言語切り替えセレクター（各言語トップへ直接ルーティング）
     const localeSelect = document.getElementById('gugo-locale-select');
     if (localeSelect) {
         localeSelect.addEventListener('change', function (e) {
             const selectedLang = e.target.value;
             if (selectedLang === 'en') {
-                window.location.href = '/?lang=en';
+                window.location.href = 'https://gugopro.com/index_en.html';
             } else if (selectedLang === 'ja') {
-                window.location.href = '/?lang=ja';
+                window.location.href = 'https://gugopro.com/index_ja.html';
             } else {
-                window.location.href = '/';
+                window.location.href = 'https://gugopro.com/';
             }
         });
     }
