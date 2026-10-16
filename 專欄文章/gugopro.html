@@ -130,8 +130,9 @@ header {
 .dashboard-category-heading { font-size: 1.25rem; font-weight: 800; color: #ffffff; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
 .dashboard-category-heading i { color: var(--accent-cyan); }
 .converter-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 18px; }
-.converter-tool-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 22px; display: flex; flex-direction: column; gap: 10px; transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; }
+.converter-tool-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 22px; display: flex; flex-direction: column; gap: 10px; transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; cursor: pointer; }
 .converter-tool-card:hover { transform: translateY(-3px); border-color: var(--border-highlight); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35); }
+.converter-tool-card:hover h3 { color: var(--accent-cyan); }
 .converter-card-icon { width: 44px; height: 44px; border-radius: 10px; background: rgba(85, 223, 209, 0.09); border: 1px solid rgba(85, 223, 209, 0.25); display: grid; place-items: center; color: var(--accent-cyan); font-size: 1.25rem; }
 .converter-tool-card h3 { font-size: 1.12rem; font-weight: 800; color: #ffffff; }
 .converter-tool-card p { font-size: 0.88rem; color: var(--text-dim); line-height: 1.7; flex-grow: 1; }
@@ -1240,6 +1241,24 @@ document.addEventListener('DOMContentLoaded', function () {
                     window.open(articleLink.href, '_blank');
                 } else {
                     window.location.href = articleLink.href;
+                }
+            }
+        });
+    });
+
+    // 工具卡片全卡片點擊跳轉（點擊整張工具卡片任一部分均可直接跳轉到該工具網頁）
+    document.querySelectorAll('.converter-tool-card').forEach(card => {
+        card.addEventListener('click', function (e) {
+            const toolLink = card.querySelector('a.converter-link-button');
+            if (toolLink && toolLink.href) {
+                if (e.target.closest('a') === toolLink) {
+                    return;
+                }
+                const target = toolLink.getAttribute('target');
+                if (target === '_blank' || e.ctrlKey || e.metaKey) {
+                    window.open(toolLink.href, '_blank');
+                } else {
+                    window.location.href = toolLink.href;
                 }
             }
         });
