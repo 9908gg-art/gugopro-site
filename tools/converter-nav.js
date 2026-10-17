@@ -225,7 +225,6 @@
         ['converter-video-crop.html', labels.videoCrop],
         ['converter-audio-format.html', labels.audioFormat],
         ['converter-pdf-remove-pages.html', labels.pdfRemovePages],
-        ['pdf/pdf-suite.html', labels.pdfSuite],
         ['converter-office-password.html', labels.officePassword],
         ['converter-color.html', labels.color],
         ['converter-excel-pdf.html', labels.excelPdf],
