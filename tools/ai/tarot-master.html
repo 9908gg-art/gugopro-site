@@ -13,8 +13,8 @@
 <link href="https://gugopro.com/tools/ai/tarot-master.html" rel="canonical"/>
 <link href="https://gugopro.com/tools/ai/tarot-master.html" hreflang="zh-TW" rel="alternate"/>
 <link href="https://gugopro.com/zh-CN/tools/ai/tarot-master.html" hreflang="zh-CN" rel="alternate"/>
-<link href="https://gugopro.com/en/tools/ai/tarot-master.html" hreflang="en" rel="alternate"/>
-<link href="https://gugopro.com/ja/tools/ai/tarot-master.html" hreflang="ja" rel="alternate"/>
+<link href="https://gugopro.com/tools/ai/tarot-master.html?lang=en" hreflang="en" rel="alternate"/>
+<link href="https://gugopro.com/tools/ai/tarot-master.html?lang=ja" hreflang="ja" rel="alternate"/>
 <link href="https://gugopro.com/de/tools/ai/tarot-master.html" hreflang="de" rel="alternate"/>
 <link href="https://gugopro.com/fr/tools/ai/tarot-master.html" hreflang="fr" rel="alternate"/>
 <link href="https://gugopro.com/es/tools/ai/tarot-master.html" hreflang="es" rel="alternate"/>
@@ -8484,10 +8484,25 @@ html, body { overflow-x: hidden; }
         }
 
         function loadInterfaceLocale() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlLang = urlParams.get('lang') || urlParams.get('locale');
+            const explicit = localStorage.getItem('gugopro_tarot_user_explicit_locale') === '1';
+
+            if (!explicit && urlLang) {
+                const normalized = normalizeInterfaceLocale(urlLang);
+                if (normalized) return normalized;
+            }
+
             try {
                 const stored = localStorage.getItem(TAROT_INTERFACE_LOCALE_KEY) || localStorage.getItem(LEGACY_TAROT_INTERFACE_LOCALE_KEY);
                 if (stored) return normalizeInterfaceLocale(stored);
             } catch (_) {}
+
+            if (urlLang) {
+                const normalized = normalizeInterfaceLocale(urlLang);
+                if (normalized) return normalized;
+            }
+
             return normalizeInterfaceLocale(window.__TAROT_ROUTE_LOCALE__ || detectInterfaceLocale());
         }
 
@@ -8575,6 +8590,7 @@ html, body { overflow-x: hidden; }
                 if (nextLocale === interfaceLocale) return;
                 interfaceLocale = nextLocale;
                 localStorage.setItem(TAROT_INTERFACE_LOCALE_KEY, interfaceLocale);
+                localStorage.setItem('gugopro_tarot_user_explicit_locale', '1');
                 applyInterfaceLocale();
                 switchRoom(activeRoomId);
                 showToast(interfaceText('interfaceLanguage') + ': ' + getInterfaceLanguageName());

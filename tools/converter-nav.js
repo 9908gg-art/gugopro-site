@@ -283,14 +283,14 @@
         ['converter-unit-pressure.html', labels.unitPressure],
         [isRootHub ? 'index.html#dashboard-category-finance-basic' : '../index.html#dashboard-category-finance-basic', labels.financeBasic],
         [isRootHub ? 'index.html#dashboard-category-finance-pro' : '../index.html#dashboard-category-finance-pro', labels.financePro],
-        ['/tools/ai/english-speaking-tutor.html', labels.aiTutor],
-        ['/tools/ai/realtime-translator.html', labels.aiTranslator],
-        [en ? '/en/tools/ai/tarot-master.html' : '/tools/ai/tarot-master.html', labels.aiTarot],
+        [en ? '/tools/ai/english-speaking-tutor.html?lang=en' : '/tools/ai/english-speaking-tutor.html', labels.aiTutor],
+        [en ? '/tools/ai/realtime-translator.html?lang=en' : '/tools/ai/realtime-translator.html', labels.aiTranslator],
+        [en ? '/tools/ai/tarot-master.html?lang=en' : '/tools/ai/tarot-master.html', labels.aiTarot],
         ['https://quota.gugopro.com/', labels.aiQuota],
         ['/amazon/', labels.aiAmazon],
         [en ? '/en/tools/health/tdee-macros-calculator.html' : '/tools/health/tdee-macros-calculator.html', labels.aiNutrition],
         [en ? '/en/tools/health/weight-loss-planner.html' : '/tools/health/weight-loss-planner.html', labels.aiFitness],
-        [en ? '/en/tools/ai/ziwei-astrology.html' : '/tools/ai/ziwei-astrology.html', labels.aiZiwei],
+        [en ? '/tools/ai/ziwei-astrology.html?lang=en' : '/tools/ai/ziwei-astrology.html', labels.aiZiwei],
         ['../contact.html', labels.contact],
         [home, labels.overview]
     ];
@@ -400,8 +400,8 @@
         // or source cards are deleted.
         var showcaseCategories = new Set(['ai-tools', 'ai-media', 'english-learning']);
         var showcasePaths = new Set([
-            '/tools/ai/english-speaking-tutor.html',
-            '/tools/ai/realtime-translator.html',
+            en ? '/tools/ai/english-speaking-tutor.html?lang=en' : '/tools/ai/english-speaking-tutor.html',
+            en ? '/tools/ai/realtime-translator.html?lang=en' : '/tools/ai/realtime-translator.html',
             '/tools/pdf/pdf-suite.html',
             '/tools/ai/tarot-master.html',
             '/tools/ai/ziwei-astrology.html',

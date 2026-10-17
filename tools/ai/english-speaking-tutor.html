@@ -9,6 +9,7 @@
 <title id="page-title">AI多國語言對話導師</title>
 <link href="/favicon.svg" rel="icon" type="image/svg+xml"/>
 <!-- SEO Tags -->
+<link rel="canonical" href="https://gugopro.com/tools/ai/english-speaking-tutor.html"/>
 <meta content="AI多國語言對話導師（GugoPro）支援多語言情境對話、教材與生詞複習；語音分數反映辨識文字和目標句的相似度，並非專業口音鑑定。" name="description"/>
 <script type="application/ld+json">
     {
@@ -9623,7 +9624,52 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         'pl-PL':['Użyj konta Google bez karty, subskrypcji ani włączonego rozliczania. Narzędzie korzysta z bezpłatnych modeli Google; limit może przekraczać 1000 zapytań dziennie i zwykle wystarcza do nauki. Rzeczywisty limit pokazuje Google.','API Key jest przechowywany tylko lokalnie w przeglądarce lub aplikacji tego urządzenia. GugoPro go nie zapisuje ani nie przesyła. Nie udostępniaj go; po usunięciu danych lub zmianie urządzenia może być potrzebne ponowne wpisanie.'],
         'tr-TR':['Bağlı kartı, aboneliği veya etkin faturalandırması olmayan bir Google hesabı kullanın. Araç Google’ın resmi ücretsiz modellerini kullanır; kota genellikle günde 1.000 isteği aşabilir ve günlük öğrenim için yeterlidir. Gerçek kota Google’ın gösterdiğidir.','API Key yalnızca bu cihazdaki tarayıcı veya uygulamanın yerel depolamasında tutulur. GugoPro saklamaz veya yüklemez. Paylaşmayın; veri silme veya cihaz değişiminden sonra yeniden girmeniz gerekebilir.']
     };
-    function uiLang() { return window.GugoGetUiLanguage?.() || localStorage.getItem(UI_LANG_KEY) || 'zh-TW'; }
+    const normalizeTutorLang = (code) => {
+        if (!code) return null;
+        const c = String(code).toLowerCase().replace(/_/g, '-');
+        const map = {
+            'zh': 'zh-TW', 'zh-tw': 'zh-TW', 'zh-hant': 'zh-TW', 'zh-cn': 'zh-CN', 'zh-hans': 'zh-CN',
+            'en': 'en-US', 'en-us': 'en-US', 'en-gb': 'en-US',
+            'ja': 'ja-JP', 'ja-jp': 'ja-JP',
+            'fr': 'fr-FR', 'fr-fr': 'fr-FR',
+            'de': 'de-DE', 'de-de': 'de-DE',
+            'es': 'es-ES', 'es-es': 'es-ES',
+            'ko': 'ko-KR', 'ko-kr': 'ko-KR',
+            'th': 'th-TH', 'th-th': 'th-TH',
+            'vi': 'vi-VN', 'vi-vn': 'vi-VN',
+            'id': 'id-ID', 'id-id': 'id-ID',
+            'pt': 'pt-BR', 'pt-br': 'pt-BR',
+            'it': 'it-IT', 'it-it': 'it-IT',
+            'ru': 'ru-RU', 'ru-ru': 'ru-RU',
+            'ar': 'ar-SA', 'ar-sa': 'ar-SA',
+            'hi': 'hi-IN', 'hi-in': 'hi-IN',
+            'ms': 'ms-MY', 'ms-my': 'ms-MY',
+            'nl': 'nl-NL', 'nl-nl': 'nl-NL',
+            'pl': 'pl-PL', 'pl-pl': 'pl-PL',
+            'tr': 'tr-TR', 'tr-tr': 'tr-TR'
+        };
+        return map[c] || (UI_TRANSLATIONS[code] ? code : null);
+    };
+    function uiLang() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlLang = urlParams.get('lang') || urlParams.get('locale');
+        const explicit = localStorage.getItem('gugopro_tutor_user_explicit_lang') === '1';
+
+        if (!explicit && urlLang) {
+            const mapped = normalizeTutorLang(urlLang);
+            if (mapped) return mapped;
+        }
+
+        const stored = localStorage.getItem(UI_LANG_KEY);
+        if (stored && UI_TRANSLATIONS[stored]) return stored;
+
+        if (urlLang) {
+            const mapped = normalizeTutorLang(urlLang);
+            if (mapped) return mapped;
+        }
+
+        return 'zh-TW';
+    }
     function uiText(key) { const lang = uiLang(); if ((key === 'apiFreeNotice' || key === 'apiLocalNotice') && API_NOTICE_COPY[lang]) return API_NOTICE_COPY[lang][key === 'apiFreeNotice' ? 0 : 1]; return UI_TRANSLATIONS[lang]?.[key] || UI_TRANSLATIONS[UI_FALLBACK_LANG]?.[key] || UI_TRANSLATIONS['zh-TW']?.[key] || key; }
     const PAGE_COPY_UI_FALLBACK_KEYS = {
         backHome: 'backHome', importMaterial: 'importMaterial', welcomeTitle: 'welcomeTitle',
@@ -9752,12 +9798,13 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
     }
     window.GugoUiText = uiText;
     window.GugoApplyUiTranslations = applyUiTranslations;
-    window.GugoGetUiLanguage = () => localStorage.getItem(UI_LANG_KEY) || 'zh-TW';
+    window.GugoGetUiLanguage = () => uiLang();
     window.addEventListener('DOMContentLoaded', () => { window.GugoApplyUiTranslations?.(); }, { once: true });
     window.addEventListener('load', () => { window.GugoApplyUiTranslations?.(); }, { once: true });
     window.GugoSetUiLanguage = value => {
         const lang = String(value || 'zh-TW');
         localStorage.setItem(UI_LANG_KEY, lang);
+        localStorage.setItem('gugopro_tutor_user_explicit_lang', '1');
         document.documentElement.lang = lang;
         document.documentElement.dataset.uiLang = lang;
         window.dispatchEvent(new CustomEvent('gugopro:ui-language-change', { detail: { lang } }));

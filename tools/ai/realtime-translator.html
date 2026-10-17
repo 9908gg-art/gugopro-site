@@ -10,6 +10,7 @@
 <!-- SEO Tags -->
 <meta content="免安裝的手機雙向語音翻譯工具，適合出國旅遊點餐、問路與簡單面對面溝通。支援 18 種語言、對向 180° 翻轉閱讀；說明瀏覽器語音辨識、外部翻譯服務及資料處理限制。" name="description"/>
 <meta content="面對面旅遊對話翻譯, 出國旅遊即時翻譯, 雙向語音對話, 面對面溝通工具, 手機雙向翻譯, 旅遊點餐翻譯, 問路英文翻譯, 免安裝對話翻譯, real-time travel translator, face-to-face voice translation" name="keywords">
+<link rel="canonical" href="https://gugopro.com/tools/ai/realtime-translator.html"/>
 <!-- Open Graph / Facebook -->
 <meta content="website" property="og:type"/>
 <meta content="https://gugopro.com/tools/ai/realtime-translator.html" property="og:url"/>
@@ -1241,16 +1242,31 @@
             return match ? match.code : null;
         }
         function detectUiLocale() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlLang = urlParams.get('lang') || urlParams.get('locale');
+            const explicit = localStorage.getItem('gugopro_translator_user_explicit_lang') === '1';
+
+            if (!explicit && urlLang) {
+                const detected = localeForBrowser(urlLang);
+                if (detected) return detected;
+            }
+
             try {
                 const saved = localeForBrowser(localStorage.getItem('ui_lang'));
                 if (saved) return saved;
             } catch (e) {}
+
+            if (urlLang) {
+                const detected = localeForBrowser(urlLang);
+                if (detected) return detected;
+            }
+
             const candidates = (Array.isArray(navigator.languages) ? navigator.languages : []).concat(navigator.language || navigator.userLanguage || '');
             for (const candidate of candidates) {
                 const detected = localeForBrowser(candidate);
                 if (detected) return detected;
             }
-            return 'en-US';
+            return 'zh-TW';
         }
         function initUiLanguageSelector(selectedCode) {
             const selector = document.getElementById('ui-lang-toggle');
@@ -1269,7 +1285,10 @@
         updateUI(initialLang);
 
         document.getElementById('ui-lang-toggle').addEventListener('change', (e) => {
-            try { localStorage.setItem('ui_lang', e.target.value); } catch (error) {}
+            try {
+                localStorage.setItem('ui_lang', e.target.value);
+                localStorage.setItem('gugopro_translator_user_explicit_lang', '1');
+            } catch (error) {}
             updateUI(e.target.value);
         });
 
