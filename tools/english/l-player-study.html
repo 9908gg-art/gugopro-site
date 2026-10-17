@@ -536,7 +536,7 @@ body[data-training-mode="dictation"] #loopToggleControls,body[data-training-mode
     demo: false,
     loadingVideo: false,
     hasInitiatedLoad: false,
-    lang: localStorage.getItem("gugopro_locale") || "zh-TW",
+    lang: (function(){try{if(localStorage.getItem("gugopro_lplayer_user_explicit_lang")==="1"){const s=localStorage.getItem("gugopro_locale");if(s&&["zh-TW","en","ja"].includes(s))return s;}const p=new URLSearchParams(window.location.search);const l=String(p.get("lang")||p.get("locale")||"").toLowerCase().trim();if(l==="en")return "en";if(l==="ja")return "ja";if(l==="zh"||l==="zh-tw"||l==="zh-hant")return "zh-TW";const s=localStorage.getItem("gugopro_locale");if(s&&["zh-TW","en","ja"].includes(s))return s;}catch(e){}return "zh-TW";})(),
     captionCache: new Map(),
     captionRequestId: 0,
     captionsHidden: false,

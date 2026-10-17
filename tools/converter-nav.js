@@ -288,8 +288,8 @@
         [en ? '/tools/ai/tarot-master.html?lang=en' : '/tools/ai/tarot-master.html', labels.aiTarot],
         ['https://quota.gugopro.com/', labels.aiQuota],
         ['/amazon/', labels.aiAmazon],
-        [en ? '/en/tools/health/tdee-macros-calculator.html' : '/tools/health/tdee-macros-calculator.html', labels.aiNutrition],
-        [en ? '/en/tools/health/weight-loss-planner.html' : '/tools/health/weight-loss-planner.html', labels.aiFitness],
+        [en ? '/tools/health/tdee-macros-calculator.html?lang=en' : '/tools/health/tdee-macros-calculator.html', labels.aiNutrition],
+        [en ? '/tools/health/weight-loss-planner.html?lang=en' : '/tools/health/weight-loss-planner.html', labels.aiFitness],
         [en ? '/tools/ai/ziwei-astrology.html?lang=en' : '/tools/ai/ziwei-astrology.html', labels.aiZiwei],
         ['../contact.html', labels.contact],
         [home, labels.overview]
