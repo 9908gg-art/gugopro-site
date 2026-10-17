@@ -513,6 +513,24 @@
         .welcome-faq-question { margin: 0 0 4px !important; font-weight: 700; }
         .welcome-disclaimer { margin: 13px 0 0; padding: 11px 12px; border-left: 3px solid #fbbf24; border-radius: 8px; color: #fde68a; background: rgba(251,191,36,.07); font-size: .8rem; line-height: 1.65; }
 
+        .welcome-recommended-articles { margin-top: 18px; }
+        .welcome-articles-intro { margin: 0 0 12px; color: var(--text-dim); font-size: .84rem; line-height: 1.6; }
+        .welcome-articles-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+        .welcome-article-card { display: flex; flex-direction: column; justify-content: space-between; text-decoration: none; padding: 14px; border: 1px solid rgba(255,255,255,.09); border-radius: 14px; background: rgba(255,255,255,.025); transition: transform .2s ease, border-color .2s ease, background .2s ease, box-shadow .2s ease; }
+        .welcome-article-card:hover { transform: translateY(-2px); border-color: rgba(0, 242, 255, 0.4); background: rgba(0, 242, 255, 0.04); box-shadow: 0 4px 16px rgba(0, 242, 255, 0.1); }
+        .welcome-article-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+        .welcome-article-badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: .72rem; font-weight: 700; color: #67e8f9; background: rgba(6, 182, 212, 0.12); border: 1px solid rgba(6, 182, 212, 0.25); }
+        .welcome-article-header i { font-size: .75rem; color: #64748b; transition: color .2s ease; }
+        .welcome-article-card:hover .welcome-article-header i { color: #00f2ff; }
+        .welcome-article-title { margin: 0 0 6px !important; color: #e2e8f0; font-size: .88rem; font-weight: 600; line-height: 1.45; transition: color .2s ease; }
+        .welcome-article-card:hover .welcome-article-title { color: #00f2ff; }
+        .welcome-article-desc { margin: 0 0 10px !important; color: #94a3b8; font-size: .78rem; line-height: 1.55; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .welcome-article-read { display: inline-flex; align-items: center; gap: 5px; color: #38bdf8; font-size: .75rem; font-weight: 600; margin-top: auto; }
+
+        @media (max-width: 768px) {
+            .welcome-articles-grid { grid-template-columns: minmax(0, 1fr) !important; }
+        }
+
         @media (max-width: 640px) {
             .welcome-card { padding: 16px; font-size: .86rem; }
             .welcome-guide-grid, .welcome-faq-list { grid-template-columns: minmax(0, 1fr); }
@@ -1661,6 +1679,8 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
 <article aria-labelledby="welcome-guide-title" class="welcome-card" id="welcome-guide">
 <h4 data-page-copy="welcomeTitle" id="welcome-guide-title">👋 歡迎使用 AI多國語言對話導師！</h4>
 <ul>
+<li><i aria-hidden="true" class="fa-solid fa-key" style="color: #00f2ff;"></i><span><strong>官方免費額度支援</strong>：本工具不收取任何訂閱月費，支援 Google 官方提供的 Gemini Free Tier 免費額度，日常對話與口說練習完全足夠，無須綁定信用卡或付費帳單。</span></li>
+<li><i aria-hidden="true" class="fa-solid fa-shield-halved" style="color: #34c759;"></i><span><strong>本地端點隱私防護</strong>：您的 API Key、教材檔案與學習紀錄僅保存在您目前的瀏覽器本機儲存空間（localStorage），GugoPro 伺服器不會蒐集、備份或上傳您的金鑰與對話內容。</span></li>
 <li><i aria-hidden="true" class="fa-solid fa-keyboard"></i><span data-page-copy="quickDock">底部輸入列支援多行文字；Enter 發送、Shift＋Enter 換行</span></li>
 <li><i aria-hidden="true" class="fa-solid fa-paperclip"></i><span data-page-copy="quickMaterial">使用紙夾導入 TXT、Markdown 或 PDF 教材，並綁定目前教室</span></li>
 <li><i aria-hidden="true" class="fa-solid fa-book-open"></i><span data-page-copy="quickVocab">選取歷史對話中的單字，可查意思、重聽發音並加入生詞字典</span></li>
@@ -1708,6 +1728,57 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
 <article class="welcome-faq-item"><p class="welcome-faq-question" data-page-copy="faq2Question">如何匯入教材，教材會套用到哪裡？</p><p data-page-copy="faq2Answer">用頁首紙夾或右上選單匯入 TXT、Markdown、PDF，也可在教材視窗貼上文字。教材與教室學習清單是分開管理的；可在學習清單中選擇要使用的材料，再指定對話、複習或測驗模式。</p></article>
 <article class="welcome-faq-item"><p class="welcome-faq-question" data-page-copy="faq3Question">沒有麥克風或語音辨識權限，還能使用嗎？</p><p data-page-copy="faq3Answer">可以。允許瀏覽器使用麥克風後，可用語音輸入或跟讀；語音辨識也受裝置、瀏覽器、網路與語言支援影響。若無法啟動，改用文字輸入仍可進行對話練習，並可使用訊息朗讀功能。</p></article>
 <article class="welcome-faq-item"><p class="welcome-faq-question" data-page-copy="faq4Question">教材或個人資料可以直接貼給 AI 嗎？</p><p data-page-copy="faq4Answer">教材會保存在目前瀏覽器的本機儲存空間，AI 對話則會送往所選模型服務處理。請只提供完成練習所需內容，不要輸入密碼、身分資料、私人對話或他人可識別資訊；重要答案請自行查證。</p></article>
+</div>
+</section>
+<section aria-labelledby="welcome-recommended-articles-title" class="welcome-guide-block welcome-recommended-articles">
+<h6 id="welcome-recommended-articles-title">📚 本工具推薦實戰專欄與科學方法論</h6>
+<p class="welcome-articles-intro">結合二語習得（SLA）理論、認知神經科學與 AI 口說實踐，深入掌握科學自學方法：</p>
+<div class="welcome-articles-grid">
+<a href="/articles/youtube-english-listening-and-shadowing-guide.html" class="welcome-article-card" target="_blank" rel="noopener">
+<div class="welcome-article-header">
+<span class="welcome-article-badge">SLA · 雙流模型</span>
+<i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+</div>
+<h6 class="welcome-article-title">2026 YouTube 英文聽力與跟讀全指南：從雙流模型到回音法，打破「聽得懂卻說不出」的音動落差</h6>
+<p class="welcome-article-desc">結合神經語言學雙流模型，運用 YouTube 與 AI 導師重構聽覺與發音動作表徵，解決聽懂卻卡住的口語瓶頸。</p>
+<span class="welcome-article-read">閱讀完整專欄 <i class="fa-solid fa-chevron-right" aria-hidden="true"></i></span>
+</a>
+<a href="/articles/shadowing-with-ai-tutor.html" class="welcome-article-card" target="_blank" rel="noopener">
+<div class="welcome-article-header">
+<span class="welcome-article-badge">口說自學 · 回音迴路</span>
+<i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+</div>
+<h6 class="welcome-article-title">如何用 AI 打造個人的「跟讀與回音法」口說實驗室：從神經語音學到零成本刻意練習全指南</h6>
+<p class="welcome-article-desc">拆解 Echo Method 與 Shadowing 神經機制，利用 AI 打造高頻輸入與即時音訊回饋閉環，突破口說僵局。</p>
+<span class="welcome-article-read">閱讀完整專欄 <i class="fa-solid fa-chevron-right" aria-hidden="true"></i></span>
+</a>
+<a href="/articles/tblt-with-ai-tutor.html" class="welcome-article-card" target="_blank" rel="noopener">
+<div class="welcome-article-header">
+<span class="welcome-article-badge">任務型教學 · TBLT</span>
+<i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+</div>
+<h6 class="welcome-article-title">告別死背單字文法！任務型語言教學（TBLT）全指南：如何用 AI 打造「情境任務卡」進行沉浸式口說刻意練習</h6>
+<p class="welcome-article-desc">透過任務驅動取代機械背誦，設計目標明確的情境任務卡，與 AI 導師展開真實交際互動與焦點反思。</p>
+<span class="welcome-article-read">閱讀完整專欄 <i class="fa-solid fa-chevron-right" aria-hidden="true"></i></span>
+</a>
+<a href="/articles/affective-filter-with-ai-tutor.html" class="welcome-article-card" target="_blank" rel="noopener">
+<div class="welcome-article-header">
+<span class="welcome-article-badge">神經心理學 · 降濾脫敏</span>
+<i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+</div>
+<h6 class="welcome-article-title">克服開口恐懼的心理學解方：克拉申「情意濾網假說」、外語焦慮（FLA）與 AI 導師的零壓力口說閉環</h6>
+<p class="welcome-article-desc">剖析杏仁核焦慮機制與情意濾網，透過 AI 無評價人際壓力環境，實踐漸進式心理脫敏與高流暢度開口。</p>
+<span class="welcome-article-read">閱讀完整專欄 <i class="fa-solid fa-chevron-right" aria-hidden="true"></i></span>
+</a>
+<a href="/articles/youtube-listening-connected-speech-guide.html" class="welcome-article-card" target="_blank" rel="noopener">
+<div class="welcome-article-header">
+<span class="welcome-article-badge">音韻知覺 · 語流音變</span>
+<i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+</div>
+<h6 class="welcome-article-title">為什麼你聽不懂英語母語者？破解連音、弱讀、同化與省音的「語流音變」全指南</h6>
+<p class="welcome-article-desc">系統化剖析母語者語流規律（連音、同化、失爆與弱化），結合音系聲學特徵與 AI 慢速切片對比練習。</p>
+<span class="welcome-article-read">閱讀完整專欄 <i class="fa-solid fa-chevron-right" aria-hidden="true"></i></span>
+</a>
 </div>
 </section>
 <p class="welcome-disclaimer"><strong data-page-copy="disclaimerLabel">AI 使用提醒：</strong><span data-page-copy="disclaimerBody">本工具的生成內容僅供語言學習參考，可能不完整或有誤，不能取代教師指導、正式教材或專業意見。請核對重要資訊、遵守課程與考試規範，並避免輸入個人或敏感資料。</span></p>
@@ -2062,7 +2133,7 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         document.addEventListener('DOMContentLoaded', () => {
             initChatSystem();
             initMaterialEngine();
-            checkApiKey();
+            // checkApiKey(); // Action-triggered only to avoid blocking modal on initial page load
             initLangPanel();
             renderModelOptions();
             renderGlobalAIQuota();
@@ -2648,9 +2719,13 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             return modelCatalogPromise;
         }
 
-        function checkApiKey() {
-            if (!getGeminiApiKey() && !window.__gugoApiModalDismissedByBack) {
-                document.getElementById('modal-api').style.display = 'flex';
+        function checkApiKey(force = false) {
+            if (!getGeminiApiKey() && (force || !window.__gugoApiModalDismissedByBack)) {
+                window.__gugoApiModalDismissedByBack = false;
+                const modal = document.getElementById('modal-api');
+                if (modal) modal.style.display = 'flex';
+                const input = document.getElementById('api-key-input');
+                if (input) setTimeout(() => input.focus(), 50);
             }
         }
 
@@ -3217,14 +3292,15 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             if (isSendingMessage) return;
             renderGlobalAIQuota();
 
+            const apiKey = getGeminiApiKey();
+            if (!apiKey) { checkApiKey(true); return; }
+
             const textInput = document.getElementById('user-text');
             const content = String(retryRequest?.content || textInput.value || '').trim();
             const speechRequest = retryRequest?.source === 'speech';
             const audioRequest = retryRequest?.source === 'audio' && retryRequest.audio ? retryRequest.audio : null;
             if (!content) return;
 
-            const apiKey = getGeminiApiKey();
-            if (!apiKey) { checkApiKey(); return; }
             if (availableModels.length === 0) {
                 await fetchLatestModel({ silent: false });
                 if (availableModels.length === 0) return;
@@ -5810,6 +5886,10 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
         catch (error) { restartRecognition(session); }
     }
     function startSession(role, challengeMessageId = null, challengeTarget = '', challengeButton = null) {
+        if (!getGeminiApiKey()) {
+            checkApiKey(true);
+            return false;
+        }
         try { window.stopMessageSpeech?.(); } catch (_) {}
         if (activeSession) {
             if (activeSession.state === 'waiting') finalizeSession(activeSession);
@@ -9933,6 +10013,10 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
     function startSpeechControl(button) {
         const state = button?.__gugoSpeechControlState;
         if (!button || !state || window.GugoSpeechSessionActive) return false;
+        if (!getGeminiApiKey()) {
+            checkApiKey(true);
+            return false;
+        }
         if (voiceInputMode() === 'audio') {
             state.beforeStart?.();
             window.GugoSpeechActiveControl = button;
