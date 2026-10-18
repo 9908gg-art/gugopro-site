@@ -2,37 +2,21 @@
 
 - 掃描範圍：`/home/ubuntu/gugopro-site` 下所有 HTML（排除 `.git`、備份目錄與 `node_modules`）
 - 掃描時間：本次執行
-- HTML 總數：95
-- 分類統計：首頁 3；工具 28；專欄 57；法規 5；其他 2
+- HTML 總數：79
+- 分類統計：首頁 3；工具 12；專欄 57；法規 5；其他 2
 
 > 「疑似隱藏」依 HTML inline style、class/id 名稱及簡單內嵌 CSS 規則判斷；不會完整解析外部 CSS、媒體查詢或執行 JavaScript。錨點與工具頁關聯亦為路徑規則啟發式檢查，需人工確認語意對應。
 
 ## 重大異常摘要
 
-- 缺少 H1：21 頁
+- 缺少 H1：5 頁
 - H1 疑似隱藏：1 頁
 - 專欄沒有偵測到指向工具目錄的站內連結：57 / 57 篇
 - 命中指定弱錨點詞：0 處
 - Title 與 H1 文字未互相包含：20 頁
 
 ### 缺少 H1
-- `en/tools/ai/english-speaking-tutor.html`
-- `en/tools/ai/realtime-translator.html`
-- `en/tools/ai/tarot-master.html`
-- `en/tools/ai/ziwei-astrology.html`
-- `en/tools/ai-media/ai-video-tracker.html`
-- `en/tools/english/l-player-study.html`
-- `en/tools/health/tdee-macros-calculator.html`
-- `en/tools/health/weight-loss-planner.html`
 - `googled0dfad57039c64f6.html`
-- `ja/tools/ai/english-speaking-tutor.html`
-- `ja/tools/ai/realtime-translator.html`
-- `ja/tools/ai/tarot-master.html`
-- `ja/tools/ai/ziwei-astrology.html`
-- `ja/tools/ai-media/ai-video-tracker.html`
-- `ja/tools/english/l-player-study.html`
-- `ja/tools/health/tdee-macros-calculator.html`
-- `ja/tools/health/weight-loss-planner.html`
 - `tools/ai/english-speaking-tutor.html`
 - `tools/ai/tarot-master.html`
 - `tools/health/tdee-macros-calculator.html`
@@ -171,14 +155,6 @@
 | 專欄 | `en/articles/youtube-english-listening-and-shadowing-guide.html` | en | Decoding YouTube Bilingual Listening & Shadowing: L-Player Mastery & Auditory Neural Shaping Guide \| GugoPro Language Science | Decoding YouTube Bilingual Listening & Shadowing: L-Player Mastery & Auditory Neural Shaping Guide（可見（靜態檢查）） | Theoretical Foundations: SLA and Cognitive Neuroscience Frameworks \| Chapter 1: Architecture & Interface: L-Player's 3-in-1 Workbench \| Chapter 2: Core Learning Modes & Algorithmic Execution | 474 | 0 |
 | 專欄 | `en/articles/youtube-listening-connected-speech-guide.html` | en | Why Watching YouTube Fails for English Learning: Speech Perception, Levenshtein Dictation Diff, and Shadowing Guide \| GugoPro Language Science | Why Watching YouTube Fails for English Learning: Building Native Auditory Circuits via Speech Perception, Levenshtein Dictation Diff, and Shadowing（可見（靜態檢查）） | Chapter 1: Cognitive Neuroscience: The Subtitle Immersion Trap \| Chapter 2: Phonology Decoded: Connected Speech and Perceptual Failures \| Chapter 3: Computational Linguistics: Levenshtein Dictation Diff Engine | 413 | 0 |
 | 專欄 | `en/articles/youtube-sequel-tracker-guide.html` | en | 2026 YouTube Video Algorithm & Series Retrieval Master Guide: Overcoming Recommendation Gaps via NLP Regex Denoising & Incremental Diff Tracking \| GugoPro Streaming Media Lab | 2026 YouTube Video Algorithm & Series Retrieval Master Guide: Overcoming Recommendation Gaps via NLP Regex Denoising & Incremental Diff Tracking（可見（靜態檢查）） | Chapter 1: The YouTube Recommendation Architecture & Structural Causes of Missing Sequels \| Chapter 2: Information Retrieval (IR) & NLP Title Denoising Pipelines \| Chapter 3: Serverless Architecture: Client-Side "Local Diff Engine" & Privacy Engineering | 492 | 0 |
-| 工具 | `en/tools/ai/english-speaking-tutor.html` | en | Redirecting - AI Multilingual Speaking Tutor \| GugoPro | （缺失） | Redirecting to AI Multilingual Speaking Tutor... | 0 | 0 |
-| 工具 | `en/tools/ai/realtime-translator.html` | en | Redirecting - Face-to-Face Travel Voice Translator \| GugoPro | （缺失） | Redirecting to Face-to-Face Travel Voice Translator... | 0 | 0 |
-| 工具 | `en/tools/ai/tarot-master.html` | en | Redirecting - AI Tarot Master \| GugoPro | （缺失） | Redirecting to AI Tarot Master... | 0 | 0 |
-| 工具 | `en/tools/ai/ziwei-astrology.html` | en | Redirecting - GugoPro AI Ziwei Astrology Master \| GugoPro | （缺失） | Redirecting to GugoPro AI Ziwei Astrology Master... | 0 | 0 |
-| 工具 | `en/tools/ai-media/ai-video-tracker.html` | en | Redirecting - YouTube Sequel Tracker \| GugoPro | （缺失） |  | 0 | 0 |
-| 工具 | `en/tools/english/l-player-study.html` | en | Redirecting - YouTube Study Player \| GugoPro | （缺失） |  | 0 | 0 |
-| 工具 | `en/tools/health/tdee-macros-calculator.html` | en | Redirecting - AI Nutritionist \| GugoPro | （缺失） |  | 0 | 0 |
-| 工具 | `en/tools/health/weight-loss-planner.html` | en | Redirecting - AI Weight Loss Coach \| GugoPro | （缺失） |  | 0 | 0 |
 | 其他 | `googled0dfad57039c64f6.html` |  |  | （缺失） |  | 0 | 0 |
 | 首頁 | `index.html` | zh-TW | GugoPro 工具箱｜YouTube 雙語字幕學習、AI 翻譯塔羅、TDEE 減脂計算與 Gemini API 配額監控等 9 款免費工具 | GugoPro 工具箱（可見（靜態檢查）） | 工具分類 \| 核心功能與深度應用手冊 \| 端點安全承諾：先在你的裝置處理 | 194 | 0 |
 | 首頁 | `index_en.html` | en | GugoPro Hub \| 9 Free Browser Tools for YouTube Study, AI Translation, Tarot, TDEE & Gemini Quota | GugoPro Hub（可見（靜態檢查）） | Tool Categories \| Core Features & In-Depth Application Manual \| Endpoint Security Commitment: Processed Locally First | 360 | 0 |
@@ -202,14 +178,6 @@
 | 專欄 | `ja/articles/youtube-english-listening-and-shadowing-guide.html` | ja | YouTube英語学習が挫折する真の理由とは？音韻知覚理論、レーベンシュタイン聴解、シャドーイングで母語レベルの聴覚神経回路を構築する完全ガイド｜GugoPro 言語科学コラム | YouTube英語学習が挫折する真の理由とは？音韻知覚理論、 レーベンシュタイン聴解、シャドーイング で母語レベルの聴覚神経回路を構築する完全ガイド（可見（靜態檢查）） | 第一章：認知神経科学の分析：字幕付き動画視聴が非効率な神経学的根拠 \| 第二章：英語音声学と音韻論の解剖：自然な音変化（Connected Speech）の物理特性 \| 第三章：計算言語学とアルゴリズム：レーベンシュタイン・ディクテーション差分エンジン | 161 | 0 |
 | 專欄 | `ja/articles/youtube-listening-connected-speech-guide.html` | ja | YouTube英語学習が挫折する真の理由とは？音韻知覚理論、レーベンシュタイン聴解、シャドーイング完全ガイド｜GugoPro 言語科学コラム | YouTube英語学習が挫折する真の理由とは？音韻知覚理論、 レーベンシュタイン聴解、シャドーイング で母語レベルの聴覚神経回路を構築する完全ガイド（可見（靜態檢查）） | 第一章：認知神経科学の分析：字幕付き動画視聴が非効率な神経学的根拠 \| 第二章：英語音声学と音韻論の解剖：自然な音変化（Connected Speech）の物理特性 \| 第三章：計算言語学とアルゴリズム：レーベンシュタイン・ディクテーション差分エンジン | 170 | 0 |
 | 專欄 | `ja/articles/youtube-sequel-tracker-guide.html` | ja | 2026年YouTube動画推薦アルゴリズムとシリーズ検索完全ガイド：推薦漏れを解消しNLP正規表現ノイズ除去と差分照合で跨チャンネル追跡を実現する｜GugoPro ストリーミング研究コラム | 2026年YouTube動画推薦アルゴリズムとシリーズ検索完全ガイド：推薦漏れを解消し NLP正規表現ノイズ除去と差分照合 で跨チャンネル追跡を実現する（可見（靜態檢查）） | 第一章：YouTube推薦アルゴリズムの深層構造と「連載推薦漏れ」の構造的原因 \| 第二章：情報検索（IR）と自然言語処理（NLP）によるタイトルノイズ除去工学 \| 第三章：サーバーレス環境における「ローカル差分メモリ」とプライバシー保護 | 224 | 0 |
-| 工具 | `ja/tools/ai/english-speaking-tutor.html` | ja | リダイレクト中 - AI多言語スピーキングチューター \| GugoPro | （缺失） | AI多言語スピーキングチューター へ移動しています... | 0 | 0 |
-| 工具 | `ja/tools/ai/realtime-translator.html` | ja | リダイレクト中 - 対面型リアルタイム音声翻訳 \| GugoPro | （缺失） | 対面型リアルタイム音声翻訳 へ移動しています... | 0 | 0 |
-| 工具 | `ja/tools/ai/tarot-master.html` | ja | リダイレクト中 - AIタロットマスター \| GugoPro | （缺失） | AIタロットマスター へ移動しています... | 0 | 0 |
-| 工具 | `ja/tools/ai/ziwei-astrology.html` | ja | リダイレクト中 - AI紫微斗数マスター \| GugoPro | （缺失） | AI紫微斗数マスター へ移動しています... | 0 | 0 |
-| 工具 | `ja/tools/ai-media/ai-video-tracker.html` | ja | リダイレクト中 - YouTube続編追跡 \| GugoPro | （缺失） |  | 0 | 0 |
-| 工具 | `ja/tools/english/l-player-study.html` | ja | リダイレクト中 - YouTube学習プレイヤー \| GugoPro | （缺失） |  | 0 | 0 |
-| 工具 | `ja/tools/health/tdee-macros-calculator.html` | ja | リダイレクト中 - AI栄養士 \| GugoPro | （缺失） |  | 0 | 0 |
-| 工具 | `ja/tools/health/weight-loss-planner.html` | ja | リダイレクト中 - AI減量コーチ \| GugoPro | （缺失） |  | 0 | 0 |
 | 法規 | `privacy.html` | zh-TW | 隱私權政策｜GugoPro | 隱私權政策（可見（靜態檢查）） | 1. 瀏覽器中的設定與內容 \| 2. 依功能而異的第三方服務 \| 3. 網站交付、分析與廣告 | 60 | 7 |
 | 法規 | `terms.html` | zh-TW | 服務條款｜GugoPro | 服務條款（可見（靜態檢查）） | 1. 條款接受與更新 \| 2. 工具輸出與專業限制 \| 3. AI 與第三方服務 | 49 | 9 |
 | 工具 | `tools/ai/english-speaking-tutor.html` | zh-TW | AI多國語言對話導師 | （缺失） | 使用說明與常見問題 | 65 | 11 |
