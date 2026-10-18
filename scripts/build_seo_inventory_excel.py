@@ -62,7 +62,8 @@ def scan(p):
     d=soup.find('meta',attrs={'name':re.compile('^description$',re.I)})
     description=d.get('content','').strip() if d else ''
     ads=('pagead2.googlesyndication.com' in raw.lower() or 'ca-pub-' in raw.lower())
-    return [category(p),rel,BASE+quote(rel, safe='/'),soup.html.get('lang','') if soup.html else '',text(soup.title),text(h1) if h1 else '❌ 缺失',h1_status(soup,h1),'✅ 已配置' if ads else '❌ 缺失',len(description),count_tool_links(soup,rel)]
+    ads_status='❌ 未配置（合規）' if rel == '404.html' and not ads else ('✅ 已配置' if ads else '❌ 缺失')
+    return [category(p),rel,BASE+quote(rel, safe='/'),soup.html.get('lang','') if soup.html else '',text(soup.title),text(h1) if h1 else '❌ 缺失',h1_status(soup,h1),ads_status,len(description),count_tool_links(soup,rel)]
 
 def main():
     files=sorted(p for p in ROOT.rglob('*.html') if p.is_file() and not any(x.lower() in EXCLUDE for x in p.relative_to(ROOT).parts[:-1]))

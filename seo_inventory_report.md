@@ -2,8 +2,8 @@
 
 - 掃描範圍：`/home/ubuntu/gugopro-site` 下所有 HTML（排除 `.git`、備份目錄與 `node_modules`）
 - 掃描時間：本次執行
-- HTML 總數：167
-- 分類統計：首頁 9；工具 41；專欄 96；法規 16；其他 5
+- HTML 總數：153
+- 分類統計：首頁 9；工具 41；專欄 96；法規 5；其他 2
 
 > 「疑似隱藏」依 HTML inline style、class/id 名稱及簡單內嵌 CSS 規則判斷；不會完整解析外部 CSS、媒體查詢或執行 JavaScript。錨點與工具頁關聯亦為路徑規則啟發式檢查，需人工確認語意對應。
 
@@ -13,7 +13,7 @@
 - H1 疑似隱藏：1 頁
 - 專欄沒有偵測到指向工具目錄的站內連結：94 / 96 篇
 - 命中指定弱錨點詞：0 處
-- Title 與 H1 文字未互相包含：58 頁
+- Title 與 H1 文字未互相包含：55 頁
 
 ### 缺少 H1
 - `en/tools/ai/english-speaking-tutor.html`
@@ -166,7 +166,6 @@
 - `en/articles/investment/index.html`：Title=`Investment Education Academy | GugoPro Academy`；H1=`Systematized Investment education and practical matrix`
 - `en/articles/youtube-listening-connected-speech-guide.html`：Title=`Why Watching YouTube Fails for English Learning: Speech Perception, Levenshtein Dictation Diff, and Shadowing Guide | GugoPro Language Science`；H1=`Why Watching YouTube Fails for English Learning: Building Native Auditory Circuits via Speech Perception, Levenshtein Dictation Diff, and Shadowing`
 - `en/index.html`：Title=`GugoPro Official Homepage | AI and Utility Tools`；H1=`Web AI, data and utility tools for everyday work.`
-- `guides/risk-reward-ratio.html`：Title=`交易風險報酬比（R:R）｜GugoPro 財經學院`；H1=`交易風險報酬比（R:R）：先理解，再計算，最後管理風險。`
 - `ja/articles/english-intro-break-the-ice.html`：Title=`YouTube英語学習が挫折する真の理由とは？音韻知覚理論、レーベンシュタイン聴解、シャドーイング完全ガイド｜GugoPro 言語科学コラム`；H1=`YouTube英語学習が挫折する真の理由とは？音韻知覚理論、 レーベンシュタイン聴解、シャドーイング で母語レベルの聴覚神経回路を構築する完全ガイド`
 - `ja/articles/how-to-master-tarot-guide.html`：Title=`タロットマスターへの道：78枚の丸暗記を脱し「直観的フロー・リーディング」へ——古典記号論、ナラティブ心理学、AI協同による限界的練習完全ガイド｜GugoPro 意思決定科学コラム`；H1=`如何にしてタロットマスターとなるか？ 78枚の意味の丸暗記から「直観的フロー・リーディング」へ：古典記号論・ナラティブ心理学・AI協同による限界的練習完全手引`
 - `ja/articles/investment/03-asset-allocation-rebalancing.html`：Title=`資産配分と動的リバランス：目標ウェイトから取引摩擦まで｜GugoPro Academy`；H1=`資産配分と動的リバランス： 目標ウェイトを実行可能な意思決定ルールにする。`
@@ -182,8 +181,6 @@
 - `ja/articles/youtube-english-listening-and-shadowing-guide.html`：Title=`YouTube英語学習が挫折する真の理由とは？音韻知覚理論、レーベンシュタイン聴解、シャドーイングで母語レベルの聴覚神経回路を構築する完全ガイド｜GugoPro 言語科学コラム`；H1=`YouTube英語学習が挫折する真の理由とは？音韻知覚理論、 レーベンシュタイン聴解、シャドーイング で母語レベルの聴覚神経回路を構築する完全ガイド`
 - `ja/articles/youtube-listening-connected-speech-guide.html`：Title=`YouTube英語学習が挫折する真の理由とは？音韻知覚理論、レーベンシュタイン聴解、シャドーイング完全ガイド｜GugoPro 言語科学コラム`；H1=`YouTube英語学習が挫折する真の理由とは？音韻知覚理論、 レーベンシュタイン聴解、シャドーイング で母語レベルの聴覚神経回路を構築する完全ガイド`
 - `ja/articles/youtube-sequel-tracker-guide.html`：Title=`2026年YouTube動画推薦アルゴリズムとシリーズ検索完全ガイド：推薦漏れを解消しNLP正規表現ノイズ除去と差分照合で跨チャンネル追跡を実現する｜GugoPro ストリーミング研究コラム`；H1=`2026年YouTube動画推薦アルゴリズムとシリーズ検索完全ガイド：推薦漏れを解消し NLP正規表現ノイズ除去と差分照合 で跨チャンネル追跡を実現する`
-- `quant/pine-script-basics.html`：Title=`Unit 4.2: TradingView Pine Script 程式交易入門 | GugoPro 財經教學學院`；H1=`TradingView Pine Script 程式交易入門與指標開發`
-- `support.html`：Title=`GugoPro｜贊助支持`；H1=`支持 GugoPro`
 - `tools/ai/realtime-translator.html`：Title=`面對面旅遊對話翻譯｜出國旅遊即時翻譯與雙向語音對話｜GugoPro`；H1=`面對面旅遊對話翻譯：出國旅遊即時翻譯與雙向語音對話`
 - `tools/ai/ziwei-astrology.html`：Title=`AI 紫微斗數大師｜紫微斗數線上排盤資料整理與十二宮位指南 - GugoPro`；H1=`把命盤問題，整理成可行動的洞察`
 - `tools/compound-interest.html`：Title=`Compound Interest 線上工具｜免安裝瀏覽器本機處理、零檔案外洩隱私 - GugoPro`；H1=`進階複利與退休目標規劃計算機`
@@ -272,13 +269,7 @@
 | 專欄 | `en/articles/youtube-english-listening-and-shadowing-guide.html` | en | Decoding YouTube Bilingual Listening & Shadowing: L-Player Mastery & Auditory Neural Shaping Guide \| GugoPro Language Science | Decoding YouTube Bilingual Listening & Shadowing: L-Player Mastery & Auditory Neural Shaping Guide（可見（靜態檢查）） | Theoretical Foundations: SLA and Cognitive Neuroscience Frameworks \| Chapter 1: Architecture & Interface: L-Player's 3-in-1 Workbench \| Chapter 2: Core Learning Modes & Algorithmic Execution | 474 | 0 |
 | 專欄 | `en/articles/youtube-listening-connected-speech-guide.html` | en | Why Watching YouTube Fails for English Learning: Speech Perception, Levenshtein Dictation Diff, and Shadowing Guide \| GugoPro Language Science | Why Watching YouTube Fails for English Learning: Building Native Auditory Circuits via Speech Perception, Levenshtein Dictation Diff, and Shadowing（可見（靜態檢查）） | Chapter 1: Cognitive Neuroscience: The Subtitle Immersion Trap \| Chapter 2: Phonology Decoded: Connected Speech and Perceptual Failures \| Chapter 3: Computational Linguistics: Levenshtein Dictation Diff Engine | 413 | 0 |
 | 專欄 | `en/articles/youtube-sequel-tracker-guide.html` | en | 2026 YouTube Video Algorithm & Series Retrieval Master Guide: Overcoming Recommendation Gaps via NLP Regex Denoising & Incremental Diff Tracking \| GugoPro Streaming Media Lab | 2026 YouTube Video Algorithm & Series Retrieval Master Guide: Overcoming Recommendation Gaps via NLP Regex Denoising & Incremental Diff Tracking（可見（靜態檢查）） | Chapter 1: The YouTube Recommendation Architecture & Structural Causes of Missing Sequels \| Chapter 2: Information Retrieval (IR) & NLP Title Denoising Pipelines \| Chapter 3: Serverless Architecture: Client-Side "Local Diff Engine" & Privacy Engineering | 492 | 0 |
-| 法規 | `en/contact.html` | en | Contact Us \| GugoPro Official | Contact Us（可見（靜態檢查）） | Official contact email \| Bug reports and feature suggestions \| Send an email quickly | 156 | 5 |
 | 首頁 | `en/index.html` | en | GugoPro Official Homepage \| AI and Utility Tools | Web AI, data and utility tools for everyday work.（可見（靜態檢查）） | AI services and practical tools \| Creator & researcher picks \| Support free tools and learning resources. | 108 | 9 |
-| 法規 | `en/legal/about.html` | en | About GugoPro \| GugoPro | About GugoPro（可見（靜態檢查）） | What GugoPro provides \| Our quality approach | 118 | 5 |
-| 法規 | `en/legal/contact.html` | en | Contact Us \| GugoPro | Contact Us（可見（靜態檢查）） | Official contact \| Privacy and correction requests | 120 | 5 |
-| 法規 | `en/legal/disclaimer.html` | en | Disclaimer \| GugoPro | Disclaimer（可見（靜態檢查）） | General information \| Finance, health and other sensitive topics \| External services | 142 | 5 |
-| 法規 | `en/legal/privacy.html` | en | Privacy Policy \| GugoPro | Privacy Policy（可見（靜態檢查）） | 1. Information and purpose \| 2. Cookies, Analytics and advertising \| 3. Local processing and external services | 136 | 5 |
-| 法規 | `en/legal/terms.html` | en | Terms of Service \| GugoPro | Terms of Service（可見（靜態檢查）） | 1. Acceptance and permitted use \| 2. Educational and general information \| 3. Availability and limitations | 129 | 5 |
 | 工具 | `en/tools/ai/english-speaking-tutor.html` | en | Redirecting - AI Multilingual Speaking Tutor \| GugoPro | （缺失） | Redirecting to AI Multilingual Speaking Tutor... | 0 | 0 |
 | 工具 | `en/tools/ai/realtime-translator.html` | en | Redirecting - Face-to-Face Travel Voice Translator \| GugoPro | （缺失） | Redirecting to Face-to-Face Travel Voice Translator... | 0 | 0 |
 | 工具 | `en/tools/ai/tarot-master.html` | en | Redirecting - AI Tarot Master \| GugoPro | （缺失） | Redirecting to AI Tarot Master... | 0 | 0 |
@@ -289,7 +280,6 @@
 | 工具 | `en/tools/health/weight-loss-planner.html` | en | Redirecting - AI Weight Loss Coach \| GugoPro | （缺失） |  | 0 | 0 |
 | 工具 | `en/tools/pdf/pdf-suite.html` | en | Redirecting - PDF Suite \| GugoPro | （缺失） |  | 0 | 0 |
 | 其他 | `googled0dfad57039c64f6.html` |  |  | （缺失） |  | 0 | 0 |
-| 其他 | `guides/risk-reward-ratio.html` | zh-Hant | 交易風險報酬比（R:R）｜GugoPro 財經學院 | 交易風險報酬比（R:R）：先理解，再計算，最後管理風險。（可見（靜態檢查）） | R:R 的第一原則：先定義錯在哪裡，再定義能賺多少 \| 期望值：高勝率、高 R 與尾部風險如何同時成立 \| 部位大小與停損：用帳戶風險而不是信心調整曝險 | 52 | 39 |
 | 首頁 | `index.html` | zh-TW | GugoPro 工具箱｜YouTube 雙語字幕學習、AI 翻譯塔羅、TDEE 減脂計算與跨境選品等 10 款免費免安裝工具 | GugoPro 工具箱（可見（靜態檢查）） | 工具分類 \| 核心功能與深度應用手冊 \| 端點安全承諾：先在你的裝置處理 | 214 | 0 |
 | 首頁 | `index_en.html` | en | GugoPro Hub \| 10 Free Browser Tools for YouTube Study, AI Translation & Tarot, TDEE, and Product Research | GugoPro Hub（可見（靜態檢查）） | Tool Categories \| Core Features & In-Depth Application Manual \| Endpoint Security Commitment: Processed Locally First | 396 | 0 |
 | 首頁 | `index_ja.html` | ja | GugoPro ツールボックス｜YouTube 2言語字幕学習、AI 翻訳タロット、TDEE 減脂計算、越境EC商品選定など無料ブラウザツール10選 | GugoPro ツールボックス（可見（靜態檢查）） | ツール分類 \| コア機能と詳細応用マニュアル \| エンドポイントセキュリティ：あなたの端末内で最優先処理 | 213 | 0 |
@@ -332,11 +322,6 @@
 | 專欄 | `ja/articles/youtube-english-listening-and-shadowing-guide.html` | ja | YouTube英語学習が挫折する真の理由とは？音韻知覚理論、レーベンシュタイン聴解、シャドーイングで母語レベルの聴覚神経回路を構築する完全ガイド｜GugoPro 言語科学コラム | YouTube英語学習が挫折する真の理由とは？音韻知覚理論、 レーベンシュタイン聴解、シャドーイング で母語レベルの聴覚神経回路を構築する完全ガイド（可見（靜態檢查）） | 第一章：認知神経科学の分析：字幕付き動画視聴が非効率な神経学的根拠 \| 第二章：英語音声学と音韻論の解剖：自然な音変化（Connected Speech）の物理特性 \| 第三章：計算言語学とアルゴリズム：レーベンシュタイン・ディクテーション差分エンジン | 161 | 0 |
 | 專欄 | `ja/articles/youtube-listening-connected-speech-guide.html` | ja | YouTube英語学習が挫折する真の理由とは？音韻知覚理論、レーベンシュタイン聴解、シャドーイング完全ガイド｜GugoPro 言語科学コラム | YouTube英語学習が挫折する真の理由とは？音韻知覚理論、 レーベンシュタイン聴解、シャドーイング で母語レベルの聴覚神経回路を構築する完全ガイド（可見（靜態檢查）） | 第一章：認知神経科学の分析：字幕付き動画視聴が非効率な神経学的根拠 \| 第二章：英語音声学と音韻論の解剖：自然な音変化（Connected Speech）の物理特性 \| 第三章：計算言語学とアルゴリズム：レーベンシュタイン・ディクテーション差分エンジン | 170 | 0 |
 | 專欄 | `ja/articles/youtube-sequel-tracker-guide.html` | ja | 2026年YouTube動画推薦アルゴリズムとシリーズ検索完全ガイド：推薦漏れを解消しNLP正規表現ノイズ除去と差分照合で跨チャンネル追跡を実現する｜GugoPro ストリーミング研究コラム | 2026年YouTube動画推薦アルゴリズムとシリーズ検索完全ガイド：推薦漏れを解消し NLP正規表現ノイズ除去と差分照合 で跨チャンネル追跡を実現する（可見（靜態檢查）） | 第一章：YouTube推薦アルゴリズムの深層構造と「連載推薦漏れ」の構造的原因 \| 第二章：情報検索（IR）と自然言語処理（NLP）によるタイトルノイズ除去工学 \| 第三章：サーバーレス環境における「ローカル差分メモリ」とプライバシー保護 | 224 | 0 |
-| 法規 | `ja/legal/about.html` | ja | GugoProについて \| GugoPro | GugoProについて（可見（靜態檢查）） | What GugoPro provides \| Our quality approach | 118 | 5 |
-| 法規 | `ja/legal/contact.html` | ja | お問い合わせ \| GugoPro | お問い合わせ（可見（靜態檢查）） | Official contact \| Privacy and correction requests | 120 | 5 |
-| 法規 | `ja/legal/disclaimer.html` | ja | 免責事項 \| GugoPro | 免責事項（可見（靜態檢查）） | General information \| Finance, health and other sensitive topics \| External services | 142 | 5 |
-| 法規 | `ja/legal/privacy.html` | ja | プライバシーポリシー \| GugoPro | プライバシーポリシー（可見（靜態檢查）） | 1. Information and purpose \| 2. Cookies, Analytics and advertising \| 3. Local processing and external services | 136 | 5 |
-| 法規 | `ja/legal/terms.html` | ja | 利用規約 \| GugoPro | 利用規約（可見（靜態檢查）） | 1. Acceptance and permitted use \| 2. Educational and general information \| 3. Availability and limitations | 129 | 5 |
 | 工具 | `ja/tools/ai/english-speaking-tutor.html` | ja | リダイレクト中 - AI多言語スピーキングチューター \| GugoPro | （缺失） | AI多言語スピーキングチューター へ移動しています... | 0 | 0 |
 | 工具 | `ja/tools/ai/realtime-translator.html` | ja | リダイレクト中 - 対面型リアルタイム音声翻訳 \| GugoPro | （缺失） | 対面型リアルタイム音声翻訳 へ移動しています... | 0 | 0 |
 | 工具 | `ja/tools/ai/tarot-master.html` | ja | リダイレクト中 - AIタロットマスター \| GugoPro | （缺失） | AIタロットマスター へ移動しています... | 0 | 0 |
@@ -346,8 +331,6 @@
 | 工具 | `ja/tools/health/tdee-macros-calculator.html` | ja | リダイレクト中 - AI栄養士 \| GugoPro | （缺失） |  | 0 | 0 |
 | 工具 | `ja/tools/health/weight-loss-planner.html` | ja | リダイレクト中 - AI減量コーチ \| GugoPro | （缺失） |  | 0 | 0 |
 | 法規 | `privacy.html` | zh-TW | 隱私權政策｜GugoPro | 隱私權政策（可見（靜態檢查）） | 1. 瀏覽器中的設定與內容 \| 2. 依功能而異的第三方服務 \| 3. 網站交付、分析與廣告 | 60 | 7 |
-| 其他 | `quant/pine-script-basics.html` | zh-TW | Unit 4.2: TradingView Pine Script 程式交易入門 \| GugoPro 財經教學學院 | TradingView Pine Script 程式交易入門與指標開發（可見（靜態檢查）） | 1. 什麼是 Pine Script？ \| 2. Pine Script 的兩大運行模式 \| 3. 實戰：編寫您的第一個 Pine 均線策略 | 32 | 18 |
-| 其他 | `support.html` | zh-TW | GugoPro｜贊助支持 | 支持 GugoPro（可見（靜態檢查）） |  | 22 | 8 |
 | 法規 | `terms.html` | zh-TW | 服務條款｜GugoPro | 服務條款（可見（靜態檢查）） | 1. 條款接受與更新 \| 2. 工具輸出與專業限制 \| 3. AI 與第三方服務 | 49 | 9 |
 | 工具 | `tools/ai/english-speaking-tutor.html` | zh-TW | AI多國語言對話導師 | （缺失） | 使用說明與常見問題 | 65 | 11 |
 | 工具 | `tools/ai/gemini-api-quota.html` | zh-TW | Gemini API 配額服務導覽｜GugoPro | Gemini API 配額服務導覽（可見（靜態檢查）） | 查看配額時可核對的項目 \| 使用前注意 \| 常見問題 | 61 | 0 |
