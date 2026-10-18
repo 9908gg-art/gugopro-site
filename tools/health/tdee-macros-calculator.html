@@ -1036,24 +1036,25 @@
 
 @keyframes pulseApiKey {
     0% {
-        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
-        border-color: rgba(239, 68, 68, 0.85);
-        background: rgba(239, 68, 68, 0.18);
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.75);
+        border-color: rgba(239, 68, 68, 0.95);
+        background-color: rgba(239, 68, 68, 0.25);
     }
     70% {
         box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
-        border-color: rgba(239, 68, 68, 0.35);
-        background: rgba(239, 68, 68, 0.05);
+        border-color: rgba(239, 68, 68, 0.25);
+        background-color: rgba(239, 68, 68, 0.04);
     }
     100% {
         box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
-        border-color: rgba(239, 68, 68, 0.85);
-        background: rgba(239, 68, 68, 0.18);
+        border-color: rgba(239, 68, 68, 0.95);
+        background-color: rgba(239, 68, 68, 0.25);
     }
 }
 .api-key-unconfigured {
     animation: pulseApiKey 1.8s infinite ease-in-out !important;
-    border: 1px solid #ef4444 !important;
+    border-style: solid !important;
+    border-width: 1.5px !important;
     color: #f87171 !important;
     font-weight: 700 !important;
 }
@@ -1190,7 +1191,7 @@
 </div>
 <div class="menu-section">
 <div class="menu-title">全域設定</div>
-<button class="menu-item" id="btn-config"><i class="fa-solid fa-key"></i> 變更 Gemini API Key</button>
+<button class="menu-item api-key-unconfigured" id="btn-config"><i class="fa-solid fa-key"></i> <span>請輸入 GEMINI API KEY</span></button>
 </div>
 <div class="menu-section model-settings-section">
 <div class="menu-title">
@@ -2060,6 +2061,7 @@
                 history.pushState({ ...(history.state || {}), drawerOpen: true, gugoproDrawerOpen: true }, '', window.location.href);
                 drawerHistoryEntryActive = true;
             }
+            updateApiKeyButtonState();
             fetchLatestModel({ silent: true });
         }
 
@@ -3013,7 +3015,7 @@
             const titles=document.querySelectorAll('#side-menu .menu-title');
             if(titles[0]){const label=titles[0].querySelector('.menu-title-label');if(label){const count=label.querySelector('#room-count');label.textContent=`${copy.rooms} `;if(count)label.appendChild(count);}}
             if(titles[1])titles[1].textContent=copy.roomActions; if(titles[2])titles[2].textContent=copy.globalSettings; if(titles[3]){const span=titles[3].querySelector('span');if(span)span.textContent=copy.modelSettings;}
-            setAttr('#side-menu','aria-label',copy.drawerLabel); setButtonText('#btn-new-room',copy.newRoom); setAttr('#btn-new-room','title',copy.newRoom); setAttr('#btn-new-room','aria-label',copy.newRoom); setButtonText('#btn-room-export-ops',copy.exportSelected); setButtonText('#btn-export-all',copy.exportAll); setButtonText('#btn-import',copy.importRoom); setButtonText('#btn-room-delete-ops',copy.deleteRooms); setButtonText('#btn-config',copy.apiConfig); setAttr('#btn-refresh-models','title',copy.refreshModels); setAttr('#btn-refresh-models','aria-label',copy.refreshModels);
+            setAttr('#side-menu','aria-label',copy.drawerLabel); setButtonText('#btn-new-room',copy.newRoom); setAttr('#btn-new-room','title',copy.newRoom); setAttr('#btn-new-room','aria-label',copy.newRoom); setButtonText('#btn-room-export-ops',copy.exportSelected); setButtonText('#btn-export-all',copy.exportAll); setButtonText('#btn-import',copy.importRoom); setButtonText('#btn-room-delete-ops',copy.deleteRooms); updateApiKeyButtonState(); setAttr('#btn-refresh-models','title',copy.refreshModels); setAttr('#btn-refresh-models','aria-label',copy.refreshModels);
             setText('.amazon-menu-section p',copy.recommendations); setButtonText('.amazon-menu-section .amazon-link:nth-of-type(1)',copy.amazonUS); setButtonText('.amazon-menu-section .amazon-link:nth-of-type(2)',copy.amazonJP); setButtonText('.kofi-button',copy.buyCoffee); setLabelWithStrong('#global-ai-quota-pill .global-ai-quota-item:nth-child(1)',copy.quotaLimitLabel); setLabelWithStrong('#global-ai-quota-pill .global-ai-quota-item:nth-child(2)',copy.quotaUsedLabel);
             setText('#side-menu > div[style*="margin-top: auto"] p',copy.disclaimer); const contact=document.querySelector('.drawer-contact-section'); if(contact)contact.setAttribute('aria-label',copy.contact); const contactLinks=contact?.querySelectorAll('.drawer-contact-links a')||[]; if(contactLinks[0])contactLinks[0].textContent=copy.contact;if(contactLinks[1])contactLinks[1].textContent=copy.support;if(contactLinks[2])contactLinks[2].textContent=copy.privacy;if(contactLinks[3])contactLinks[3].textContent=copy.terms; setText('.drawer-contact-note',copy.footerNote); setText('.drawer-contact-copyright',copy.copyright);
             setText('#nutrition-dashboard-title',copy.dashboard||copy.dashboardTitle); setAttr('#nutrition-dashboard [data-close-nutrition]','aria-label',copy.closeDashboard); const statLabels=document.querySelectorAll('.nutrition-dashboard-stat span'); [copy.calories,copy.protein,copy.fat,copy.carbs].forEach((value,index)=>{if(statLabels[index])statLabels[index].textContent=value;}); const profileTitle=document.querySelector('#nutrition-dashboard .menu-title'); if(profileTitle)profileTitle.textContent=copy.profileTitle; const fieldLabels=document.querySelectorAll('#nutrition-dashboard label.field'); ['gender','age','height','weight','activity','goal'].forEach((key,index)=>{const span=fieldLabels[index]?.querySelector('span');if(span)span.textContent=copy[key];}); updateSelectOptions(document.getElementById('nutrition-gender'),[{value:'male',label:copy.male},{value:'female',label:copy.female}]); updateSelectOptions(document.getElementById('nutrition-activity'),[{value:'1.2',label:copy.sedentary},{value:'1.375',label:copy.light},{value:'1.55',label:copy.moderate},{value:'1.725',label:copy.high}]); updateSelectOptions(document.getElementById('nutrition-goal'),[{value:'loss',label:copy.loss},{value:'mild-loss',label:copy.mildLoss},{value:'maintain',label:copy.maintain},{value:'gain',label:copy.gain}]); setText('.nutrition-profile-hint',copy.profileHint); setButtonText('#nutrition-export-report',copy.exportReport);
