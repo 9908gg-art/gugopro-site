@@ -9,6 +9,8 @@ TODAY = date.today().isoformat()
 EXCLUDED_PAGES = {
     '404.html',
     'googled0dfad57039c64f6.html',  # Keep the GSC verification asset on the site, but never list it.
+    'tools/pdf/pdf-suite.html',
+    'tools/tw-market/taiwan-pair-trading.html',
 }
 # Keep public HTML pages, excluding internal reports, test artifacts and locale
 # directories that no longer exist after the non-AI three-locale consolidation.
