@@ -38,9 +38,9 @@
 - `i18n/gugopro-i18n.js:116` — `ue(document.title);if(title!==document.title)document.title=title;`
 - `tools/ai/tarot-master.html:8689` — `document.title = localizedMeta?.title || \`${interfaceText('appName')} | GugoPro\`;`
 - `tools/ai/ziwei-astrology.html:295` — `}){document.documentElement.lang=COPY.locale;document.title=COPY.seoTitle||(COPY.title+' | GugoPro');const select=document.getElementById('locale-select');if(select){select.replaceChildren();SUPPORTED_LOCALES.forEach(locale=>{const item=I18N[locale];`
-- `tools/ai-media/ai-video-tracker.html:262` — `ntElement.lang=lang;$('language').value=lang;document.title=lang==='zh-TW'?"YouTube 續集與新季追蹤器｜跨頻道自動找下一集、新季數與短劇連載 - GugoPro":lang==='ja'?"YouTube 続編・新シーズン追跡｜次のエピソード・新シーズン自動検索 - GugoPro":"YouTube Sequel & Season Tracker | Find Next Episodes & Seasons -`
+- `tools/ai-media/ai-video-tracker.html:263` — `ntElement.lang=lang;$('language').value=lang;document.title=lang==='zh-TW'?"YouTube 續集與新季追蹤器｜跨頻道自動找下一集、新季數與短劇連載 - GugoPro":lang==='ja'?"YouTube 続編・新シーズン追跡｜次のエピソード・新シーズン自動検索 - GugoPro":"YouTube Sequel & Season Tracker | Find Next Episodes & Seasons -`
 - `tools/converter-en.js:57` — `document.title = translate(document.title);`
-- `tools/english/l-player-study.html:1508` — `if ($("mainPageTitle")) document.title = trainT("pageTitle");`
+- `tools/english/l-player-study.html:1508` — `if ($("pageMainHeading")) document.title = trainT("pageTitle");`
 - `tools/english/l-player-study.html:3068` — `document.title = trainT("pageTitle");`
 - `tools/health/tdee-macros-calculator.html:1358` — `document.title = copy.seoTitle || \`${copy.appName} | GugoPro\`;`
 - `tools/health/tdee-macros-calculator.html:3008` — `document.title = copy.seoTitle || \`${copy.appName} | GugoPro\`;`
