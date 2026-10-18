@@ -14,12 +14,14 @@ BASE = 'https://gugopro.com/'
 EXCLUDE = {'.git','node_modules','backup','backups','archive','archives'}
 LEGAL = {'privacy','terms','about','contact','disclaimer','privacy-policy','terms-of-service','cookies'}
 CORE_SLUGS = {'ai-video-tracker.html','l-player-study.html','english-speaking-tutor.html','realtime-translator.html','tarot-master.html','ziwei-astrology.html','tdee-macros-calculator.html','weight-loss-planner.html','gemini-api-quota.html'}
-CORE_AMAZON_PATHS = {'amazon/index.html','amazon-jp/index.html','amazon-us/index.html'}
+PRACTICAL_TUTORIAL = 'tools/tutorials/how-to-get-gemini-api-key.html'
+NO_AD_COMPLIANCE = {'404.html','tools/pdf/pdf-suite.html','tools/tw-market/taiwan-pair-trading.html'}
 
 def category(p):
     rel=p.relative_to(ROOT).as_posix()
     parts=[x.lower() for x in p.parts]
     stem=p.stem.lower()
+    if rel == PRACTICAL_TUTORIAL: return '實用教學'
     if stem.startswith('index') and (len(parts)==1 or stem in {'index','index_en','index_ja'}): return '首頁'
     if any(x in LEGAL for x in (stem,)): return '法律條款'
     if any(x in {'articles','article','blog','blogs','research'} for x in parts[:-1]): return '專欄文章'
@@ -62,7 +64,7 @@ def scan(p):
     d=soup.find('meta',attrs={'name':re.compile('^description$',re.I)})
     description=d.get('content','').strip() if d else ''
     ads=('pagead2.googlesyndication.com' in raw.lower() or 'ca-pub-' in raw.lower())
-    ads_status='❌ 未配置（合規）' if rel == '404.html' and not ads else ('✅ 已配置' if ads else '❌ 缺失')
+    ads_status='❌ 未配置（合規）' if rel in NO_AD_COMPLIANCE and not ads else ('✅ 已配置' if ads else '❌ 缺失')
     return [category(p),rel,BASE+quote(rel, safe='/'),soup.html.get('lang','') if soup.html else '',text(soup.title),text(h1) if h1 else '❌ 缺失',h1_status(soup,h1),ads_status,len(description),count_tool_links(soup,rel)]
 
 def main():
@@ -89,7 +91,7 @@ def main():
     counts={}
     for r in range(2,ws.max_row+1): counts[ws.cell(r,2).value]=counts.get(ws.cell(r,2).value,0)+1
     summary.append(['HTML 總數',len(files)])
-    for key in ['首頁','核心工具','歷史工具','專欄文章','法律條款','其他']: summary.append([key,counts.get(key,0)])
+    for key in ['首頁','核心工具','歷史工具','實用教學','專欄文章','法律條款','其他']: summary.append([key,counts.get(key,0)])
     missing=sum(1 for r in range(2,ws.max_row+1) if ws.cell(r,9).value=='❌ 缺失')
     summary.append(['缺少 AdSense 頁面',missing])
     summary.append(['H1 缺失頁面',sum(1 for r in range(2,ws.max_row+1) if ws.cell(r,7).value=='❌ 缺失')])

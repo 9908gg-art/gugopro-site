@@ -2,18 +2,18 @@
 
 - 掃描範圍：`/home/ubuntu/gugopro-site` 下所有 HTML（排除 `.git`、備份目錄與 `node_modules`）
 - 掃描時間：本次執行
-- HTML 總數：153
-- 分類統計：首頁 9；工具 41；專欄 96；法規 5；其他 2
+- HTML 總數：136
+- 分類統計：首頁 5；工具 28；專欄 96；法規 5；其他 2
 
 > 「疑似隱藏」依 HTML inline style、class/id 名稱及簡單內嵌 CSS 規則判斷；不會完整解析外部 CSS、媒體查詢或執行 JavaScript。錨點與工具頁關聯亦為路徑規則啟發式檢查，需人工確認語意對應。
 
 ## 重大異常摘要
 
-- 缺少 H1：23 頁
+- 缺少 H1：21 頁
 - H1 疑似隱藏：1 頁
 - 專欄沒有偵測到指向工具目錄的站內連結：94 / 96 篇
 - 命中指定弱錨點詞：0 處
-- Title 與 H1 文字未互相包含：55 頁
+- Title 與 H1 文字未互相包含：40 頁
 
 ### 缺少 H1
 - `en/tools/ai/english-speaking-tutor.html`
@@ -24,7 +24,6 @@
 - `en/tools/english/l-player-study.html`
 - `en/tools/health/tdee-macros-calculator.html`
 - `en/tools/health/weight-loss-planner.html`
-- `en/tools/pdf/pdf-suite.html`
 - `googled0dfad57039c64f6.html`
 - `ja/tools/ai/english-speaking-tutor.html`
 - `ja/tools/ai/realtime-translator.html`
@@ -35,7 +34,6 @@
 - `ja/tools/health/tdee-macros-calculator.html`
 - `ja/tools/health/weight-loss-planner.html`
 - `tools/ai/english-speaking-tutor.html`
-- `tools/ai/nutritionist.html`
 - `tools/ai/tarot-master.html`
 - `tools/health/tdee-macros-calculator.html`
 - `tools/health/weight-loss-planner.html`
@@ -144,9 +142,6 @@
 
 ### Title / H1 可能不一致
 - `404.html`：Title=`頁面不存在｜GugoPro`；H1=`頁面不存在或已搬移`
-- `amazon/index.html`：Title=`Amazon AI 全品類智能選品導購 | GugoPro`；H1=`🛒 Amazon AI 智能購物導師`
-- `amazon-jp/index.html`：Title=`Amazon AI 智能購物導師 | GugoPro 多模態尋寶助手`；H1=`🛒 Amazon AI 智能購物導師`
-- `amazon-us/index.html`：Title=`Amazon AI 全品類智能選品導購 | GugoPro`；H1=`🛒 Amazon AI 智能購物導師`
 - `articles/english-intro-break-the-ice.html`：Title=`看 YouTube 學英文為何總是無效？結合音韻知覺理論、Levenshtein 聽寫差量比對與影子跟讀（Shadowing）打造母語聽覺神經迴路全指南｜GugoPro 語言科學專欄`；H1=`看 YouTube 學英文為何總是無效？結合音韻知覺理論、 Levenshtein 聽寫差量比對與影子跟讀（Shadowing） 打造母語聽覺神經迴路全指南`
 - `articles/youtube-english-listening-and-shadowing-guide.html`：Title=`解鎖 YouTube 雙語精聽與影子跟讀：L-Player 零摩擦學習系統操作全書與神經聽覺重塑指南｜GugoPro 語言科學專欄`；H1=`解鎖 YouTube 雙語精聽與影子跟讀： L-Player 零摩擦學習系統操作全書與神經聽覺重塑指南`
 - `articles/youtube-listening-connected-speech-guide.html`：Title=`看 YouTube 學英文為何總是無效？結合音韻知覺理論、Levenshtein 聽寫差量比對與影子跟讀（Shadowing）打造母語聽覺神經迴路全指南｜GugoPro 語言科學專欄`；H1=`看 YouTube 學英文為何總是無效？結合音韻知覺理論、 Levenshtein 聽寫差量比對與影子跟讀（Shadowing） 打造母語聽覺神經迴路全指南`
@@ -165,7 +160,6 @@
 - `en/articles/investment/18-trend-following-breakout-playbook.html`：Title=`Trend following and breakout strategy Playbook: rules, sizing, false breakouts and backtest validation｜GugoPro Academy`；H1=`Trend following and breakout strategy: Write your view as verifiable rules.`
 - `en/articles/investment/index.html`：Title=`Investment Education Academy | GugoPro Academy`；H1=`Systematized Investment education and practical matrix`
 - `en/articles/youtube-listening-connected-speech-guide.html`：Title=`Why Watching YouTube Fails for English Learning: Speech Perception, Levenshtein Dictation Diff, and Shadowing Guide | GugoPro Language Science`；H1=`Why Watching YouTube Fails for English Learning: Building Native Auditory Circuits via Speech Perception, Levenshtein Dictation Diff, and Shadowing`
-- `en/index.html`：Title=`GugoPro Official Homepage | AI and Utility Tools`；H1=`Web AI, data and utility tools for everyday work.`
 - `ja/articles/english-intro-break-the-ice.html`：Title=`YouTube英語学習が挫折する真の理由とは？音韻知覚理論、レーベンシュタイン聴解、シャドーイング完全ガイド｜GugoPro 言語科学コラム`；H1=`YouTube英語学習が挫折する真の理由とは？音韻知覚理論、 レーベンシュタイン聴解、シャドーイング で母語レベルの聴覚神経回路を構築する完全ガイド`
 - `ja/articles/how-to-master-tarot-guide.html`：Title=`タロットマスターへの道：78枚の丸暗記を脱し「直観的フロー・リーディング」へ——古典記号論、ナラティブ心理学、AI協同による限界的練習完全ガイド｜GugoPro 意思決定科学コラム`；H1=`如何にしてタロットマスターとなるか？ 78枚の意味の丸暗記から「直観的フロー・リーディング」へ：古典記号論・ナラティブ心理学・AI協同による限界的練習完全手引`
 - `ja/articles/investment/03-asset-allocation-rebalancing.html`：Title=`資産配分と動的リバランス：目標ウェイトから取引摩擦まで｜GugoPro Academy`；H1=`資産配分と動的リバランス： 目標ウェイトを実行可能な意思決定ルールにする。`
@@ -183,19 +177,8 @@
 - `ja/articles/youtube-sequel-tracker-guide.html`：Title=`2026年YouTube動画推薦アルゴリズムとシリーズ検索完全ガイド：推薦漏れを解消しNLP正規表現ノイズ除去と差分照合で跨チャンネル追跡を実現する｜GugoPro ストリーミング研究コラム`；H1=`2026年YouTube動画推薦アルゴリズムとシリーズ検索完全ガイド：推薦漏れを解消し NLP正規表現ノイズ除去と差分照合 で跨チャンネル追跡を実現する`
 - `tools/ai/realtime-translator.html`：Title=`面對面旅遊對話翻譯｜出國旅遊即時翻譯與雙向語音對話｜GugoPro`；H1=`面對面旅遊對話翻譯：出國旅遊即時翻譯與雙向語音對話`
 - `tools/ai/ziwei-astrology.html`：Title=`AI 紫微斗數大師｜紫微斗數線上排盤資料整理與十二宮位指南 - GugoPro`；H1=`把命盤問題，整理成可行動的洞察`
-- `tools/compound-interest.html`：Title=`Compound Interest 線上工具｜免安裝瀏覽器本機處理、零檔案外洩隱私 - GugoPro`；H1=`進階複利與退休目標規劃計算機`
 - `tools/english/l-player-study.html`：Title=`【AB English Podcast】Ep.1 自我介紹與日常社交對話 (Mia & Alex)｜L-Player`；H1=`YouTube 影音「聽・寫・口說」多國語言跟讀器`
-- `tools/etf-dividend-calculator.html`：Title=`Etf Dividend Calculator 線上工具｜免安裝瀏覽器本機處理、零檔案外洩隱私 - GugoPro`；H1=`把配息拆成一條， 看得懂的現金流曲線。`
-- `tools/finance/kelly-criterion-calculator.html`：Title=`Kelly Criterion Calculator 線上工具｜免安裝瀏覽器本機處理、零檔案外洩隱私 - GugoPro`；H1=`凱利公式與資金控管模擬器`
-- `tools/finance/sports-hedging-calculator.html`：Title=`Sports Hedging Calculator 線上工具｜免安裝瀏覽器本機處理、零檔案外洩隱私 - GugoPro`；H1=`運動彩券賠率換算與套利對沖計算器`
-- `tools/games/mahjong-waits-calculator.html`：Title=`Mahjong Waits Calculator 線上工具｜免安裝瀏覽器本機處理、零檔案外洩隱私 - GugoPro`；H1=`麻將聽牌張數與進張勝率計算器`
-- `tools/games/poker-odds-calculator.html`：Title=`Poker Odds Calculator 線上工具｜免安裝瀏覽器本機處理、零檔案外洩隱私 - GugoPro`；H1=`德州撲克即時勝率計算器 Texas Hold'em Odds Calculator`
-- `tools/gaming/gacha-odds-calculator.html`：Title=`Gacha Odds Calculator 線上工具｜免安裝瀏覽器本機處理、零檔案外洩隱私 - GugoPro`；H1=`Gacha Odds & Pity Simulator v5`
 - `tools/pdf/pdf-suite.html`：Title=`PDF 全能工作站｜免安裝線上閱讀、合併、分割與標註、零檔案外洩 - GugoPro`；H1=`先選擇要處理的文件`
-- `tools/poker/poker-odds-calculator.html`：Title=`Poker Odds Calculator 線上工具｜免安裝瀏覽器本機處理、零檔案外洩隱私 - GugoPro`；H1=`德州撲克即時勝率計算器 Texas Hold'em Odds Calculator`
-- `tools/realestate-amortization.html`：Title=`Realestate Amortization 線上工具｜免安裝瀏覽器本機處理、零檔案外洩隱私 - GugoPro`；H1=`房貸本息攤還、利息與提前還款工具`
-- `tools/risk-reward-calculator.html`：Title=`Risk Reward Calculator 線上工具｜免安裝瀏覽器本機處理、零檔案外洩隱私 - GugoPro`；H1=`先看即時價格，再決定風險。`
-- `tools/tradingview-guide.html`：Title=`Tradingview Guide 線上工具｜免安裝瀏覽器本機處理、零檔案外洩隱私 - GugoPro`；H1=`全球最強圖表工具 TradingView`
 - `tools/tutorials/how-to-get-gemini-api-key.html`：Title=`Gemini API Key 申請教學｜Google Gemini API Key 取得與安全設定教學、免安裝與隱私說明 - GugoPro`；H1=`Google Gemini API Key 1 分鐘快速申請步驟`
 - `tools/tw-market/taiwan-pair-trading.html`：Title=`Taiwan Pair Trading 線上工具｜免安裝瀏覽器本機處理、零檔案外洩隱私 - GugoPro`；H1=`台灣股票與期貨 配對交易掃描工作站`
 
@@ -205,9 +188,6 @@
 |---|---|---|---|---|---|---:|---:|
 | 其他 | `404.html` | zh-TW | 頁面不存在｜GugoPro | 頁面不存在或已搬移（可見（靜態檢查）） |  | 0 | 1 |
 | 法規 | `about.html` | zh-TW | 關於 GugoPro｜AI、影音學習與瀏覽器工具 | 關於 GugoPro（可見（靜態檢查）） | 多國語言對話與口說練習 \| YouTube 追蹤與影音學習 \| 文件處理與 AI 輔助 | 58 | 7 |
-| 首頁 | `amazon/index.html` | zh-TW | Amazon AI 全品類智能選品導購 \| GugoPro | 🛒 Amazon AI 智能購物導師（可見（靜態檢查）） | Amazon AI 選品導購是什麼？從需求到可驗證商品清單的研究工作台 \| Amazon 美國代購、日本亞馬遜直送台灣：AI 選品與海淘避坑完整指南 | 76 | 6 |
-| 首頁 | `amazon-jp/index.html` | zh-TW | Amazon AI 智能購物導師 \| GugoPro 多模態尋寶助手 | 🛒 Amazon AI 智能購物導師（可見（靜態檢查）） |  | 89 | 1 |
-| 首頁 | `amazon-us/index.html` | zh-TW | Amazon AI 全品類智能選品導購 \| GugoPro | 🛒 Amazon AI 智能購物導師（可見（靜態檢查）） |  | 76 | 1 |
 | 專欄 | `articles/affective-filter-with-ai-tutor.html` | zh-TW | 克服開口恐懼的心理學解方：克拉申「情意濾網假說」、外語焦慮（FLA）與 AI 導師的零壓力口說閉環｜GugoPro 語言學習專欄 | 克服開口恐懼的心理學解方：克拉申「情意濾網假說」、外語焦慮（FLA）與 AI 導師的零壓力口說閉環（可見（靜態檢查）） | 第一章：情意濾網假說與外語焦慮（FLA）的學術起源與心理機制 \| 第二章：神經科學與人機互動（HCI）視角：為什麼面對「真人」會大腦空白，而 AI 能實現「零濾網」？ \| 第三章：情意降濾與心理支架如何與 GugoPro 實體代碼深度映射 | 177 | 0 |
 | 專欄 | `articles/amazon-ai-product-research-guide.html` | zh-TW | 2026 跨境電商與高階海淘全指南：如何利用 AI 語意反向工程打造 Amazon 爆款選品、競品差評痛點挖掘與 Listing 關鍵字佈局矩陣｜GugoPro 電商戰略專欄 | 2026 跨境電商與高階海淘全指南：如何利用 AI 語意反向工程打造 Amazon 爆款選品、競品差評痛點挖掘與 Listing 關鍵字佈局矩陣（可見（靜態檢查）） | 第一章：電商搜尋演算法演進與 AI 語意反向工程 \| 第二章：VOC（客戶聲音）數據挖掘與競品差評逆向研發 \| 第三章：Listing 標題與後台關鍵字（Search Terms）的高轉化佈局矩陣 | 210 | 0 |
 | 專欄 | `articles/carb-cycling-and-home-workout-guide.html` | zh-TW | 碳水循環法（Carb Cycling）怎麼吃最減脂？高低碳日生化機制、居家無器材燃脂課表與防止掉肌肉全攻略｜GugoPro 減脂運動生理學專欄 | 碳水循環法（Carb Cycling）怎麼吃最減脂？高低碳日生化機制、居家無器材燃脂課表與防止掉肌肉全攻略（可見（靜態檢查）） | 第一章：碳水循環法（Carb Cycling）的運動生理學與內分泌調控機制 \| 第二章：運動生理學：居家無器材訓練如何達到「增肌減脂／防掉肌肉」？ \| 第三章：GugoPro 居家燃脂課表與碳水循環的「週期化完美咬合」 | 207 | 0 |
@@ -269,7 +249,6 @@
 | 專欄 | `en/articles/youtube-english-listening-and-shadowing-guide.html` | en | Decoding YouTube Bilingual Listening & Shadowing: L-Player Mastery & Auditory Neural Shaping Guide \| GugoPro Language Science | Decoding YouTube Bilingual Listening & Shadowing: L-Player Mastery & Auditory Neural Shaping Guide（可見（靜態檢查）） | Theoretical Foundations: SLA and Cognitive Neuroscience Frameworks \| Chapter 1: Architecture & Interface: L-Player's 3-in-1 Workbench \| Chapter 2: Core Learning Modes & Algorithmic Execution | 474 | 0 |
 | 專欄 | `en/articles/youtube-listening-connected-speech-guide.html` | en | Why Watching YouTube Fails for English Learning: Speech Perception, Levenshtein Dictation Diff, and Shadowing Guide \| GugoPro Language Science | Why Watching YouTube Fails for English Learning: Building Native Auditory Circuits via Speech Perception, Levenshtein Dictation Diff, and Shadowing（可見（靜態檢查）） | Chapter 1: Cognitive Neuroscience: The Subtitle Immersion Trap \| Chapter 2: Phonology Decoded: Connected Speech and Perceptual Failures \| Chapter 3: Computational Linguistics: Levenshtein Dictation Diff Engine | 413 | 0 |
 | 專欄 | `en/articles/youtube-sequel-tracker-guide.html` | en | 2026 YouTube Video Algorithm & Series Retrieval Master Guide: Overcoming Recommendation Gaps via NLP Regex Denoising & Incremental Diff Tracking \| GugoPro Streaming Media Lab | 2026 YouTube Video Algorithm & Series Retrieval Master Guide: Overcoming Recommendation Gaps via NLP Regex Denoising & Incremental Diff Tracking（可見（靜態檢查）） | Chapter 1: The YouTube Recommendation Architecture & Structural Causes of Missing Sequels \| Chapter 2: Information Retrieval (IR) & NLP Title Denoising Pipelines \| Chapter 3: Serverless Architecture: Client-Side "Local Diff Engine" & Privacy Engineering | 492 | 0 |
-| 首頁 | `en/index.html` | en | GugoPro Official Homepage \| AI and Utility Tools | Web AI, data and utility tools for everyday work.（可見（靜態檢查）） | AI services and practical tools \| Creator & researcher picks \| Support free tools and learning resources. | 108 | 9 |
 | 工具 | `en/tools/ai/english-speaking-tutor.html` | en | Redirecting - AI Multilingual Speaking Tutor \| GugoPro | （缺失） | Redirecting to AI Multilingual Speaking Tutor... | 0 | 0 |
 | 工具 | `en/tools/ai/realtime-translator.html` | en | Redirecting - Face-to-Face Travel Voice Translator \| GugoPro | （缺失） | Redirecting to Face-to-Face Travel Voice Translator... | 0 | 0 |
 | 工具 | `en/tools/ai/tarot-master.html` | en | Redirecting - AI Tarot Master \| GugoPro | （缺失） | Redirecting to AI Tarot Master... | 0 | 0 |
@@ -278,11 +257,10 @@
 | 工具 | `en/tools/english/l-player-study.html` | en | Redirecting - YouTube Study Player \| GugoPro | （缺失） |  | 0 | 0 |
 | 工具 | `en/tools/health/tdee-macros-calculator.html` | en | Redirecting - AI Nutritionist \| GugoPro | （缺失） |  | 0 | 0 |
 | 工具 | `en/tools/health/weight-loss-planner.html` | en | Redirecting - AI Weight Loss Coach \| GugoPro | （缺失） |  | 0 | 0 |
-| 工具 | `en/tools/pdf/pdf-suite.html` | en | Redirecting - PDF Suite \| GugoPro | （缺失） |  | 0 | 0 |
 | 其他 | `googled0dfad57039c64f6.html` |  |  | （缺失） |  | 0 | 0 |
-| 首頁 | `index.html` | zh-TW | GugoPro 工具箱｜YouTube 雙語字幕學習、AI 翻譯塔羅、TDEE 減脂計算與跨境選品等 10 款免費免安裝工具 | GugoPro 工具箱（可見（靜態檢查）） | 工具分類 \| 核心功能與深度應用手冊 \| 端點安全承諾：先在你的裝置處理 | 214 | 0 |
-| 首頁 | `index_en.html` | en | GugoPro Hub \| 10 Free Browser Tools for YouTube Study, AI Translation & Tarot, TDEE, and Product Research | GugoPro Hub（可見（靜態檢查）） | Tool Categories \| Core Features & In-Depth Application Manual \| Endpoint Security Commitment: Processed Locally First | 396 | 0 |
-| 首頁 | `index_ja.html` | ja | GugoPro ツールボックス｜YouTube 2言語字幕学習、AI 翻訳タロット、TDEE 減脂計算、越境EC商品選定など無料ブラウザツール10選 | GugoPro ツールボックス（可見（靜態檢查）） | ツール分類 \| コア機能と詳細応用マニュアル \| エンドポイントセキュリティ：あなたの端末内で最優先処理 | 213 | 0 |
+| 首頁 | `index.html` | zh-TW | GugoPro 工具箱｜YouTube 雙語字幕學習、AI 翻譯塔羅、TDEE 減脂計算與 Gemini API 配額監控等 9 款免費工具 | GugoPro 工具箱（可見（靜態檢查）） | 工具分類 \| 核心功能與深度應用手冊 \| 端點安全承諾：先在你的裝置處理 | 194 | 0 |
+| 首頁 | `index_en.html` | en | GugoPro Hub \| 9 Free Browser Tools for YouTube Study, AI Translation, Tarot, TDEE & Gemini Quota | GugoPro Hub（可見（靜態檢查）） | Tool Categories \| Core Features & In-Depth Application Manual \| Endpoint Security Commitment: Processed Locally First | 360 | 0 |
+| 首頁 | `index_ja.html` | ja | GugoPro ツールボックス｜YouTube 2言語字幕学習、AI 翻訳タロット、TDEE 減脂計算、Gemini API 配額監視など無料ブラウザツール9選 | GugoPro ツールボックス（可見（靜態檢查）） | ツール分類 \| コア機能と詳細応用マニュアル \| エンドポイントセキュリティ：あなたの端末内で最優先処理 | 194 | 0 |
 | 專欄 | `ja/articles/affective-filter-with-ai-tutor.html` | ja | 話す恐怖を克服する心理学：クラッシェンの「情意フィルター仮説」、外国語不安（FLA）と AI チューターのゼロ圧力スピーキング完全ガイド｜GugoPro 言語学習コラム | 話す恐怖を克服する心理学：クラッシェンの「情意フィルター仮説」、外国語不安（FLA）と AI チューターのゼロ圧力スピーキング完全ガイド（可見（靜態檢查）） | 第一章：情意フィルター仮説と外国語不安（FLA）の学術的起源と心理メカニズム \| 第二章：神経科学とHCI（ヒューマンコンピュータインタラクション）：なぜ「生身の人間」の前で頭が真っ白になり、AIなら「ゼロフィルター」を実現できるのか？ \| 第三章：情意降下と認知的足場かけが GugoPro の実装コードとどう結びついているか | 221 | 0 |
 | 專欄 | `ja/articles/amazon-ai-product-research-guide.html` | ja | 2026 越境EC・高精度リサーチ完全攻略：AIセマンティック・リバースエンジニアリングによるAmazonヒット商品開発、競合低評価（VOC）痛点分析とListingキーワード配置マトリクス｜GugoPro EC戦略コラム | 2026 越境EC・高精度リサーチ完全攻略：AIセマンティック・リバースエンジニアリングによるAmazonヒット商品開発、競合低評価（VOC）痛点分析とListingキーワード配置マトリクス（可見（靜態檢查）） | 第1章：EC検索アルゴリズムの進化とAIセマンティック・リバースエンジニアリング \| 第2章：VOC（顧客の声）データマイニングと競合低評価リバースエンジニアリング \| 第3章：ゴールデンListing設計と検索キーワード（Search Terms）249バイト最適化 | 227 | 0 |
 | 專欄 | `ja/articles/carb-cycling-and-home-workout-guide.html` | ja | 炭水化物循環法（カーボサイクル）完全減脂ガイド：高・低炭水化物日の生化学機序、器具不要の自宅燃焼ルーティン、筋分解防止の極意｜GugoPro 運動生理学コラム | 炭水化物循環法（カーボサイクル）完全減脂ガイド：高・低炭水化物日の生化学機序、器具不要の自宅燃焼ルーティン、筋分解防止の極意（可見（靜態檢查）） | 第1章：炭水化物循環法（Carb Cycling）の運動生理学と内分泌調控機序 \| 第2章：運動生理学：自宅自重トレーニングで「筋肉を守りながら脂肪を燃やす」力学 \| 第3章：自宅燃焼課表と炭水化物循環の「期分け同期化」 | 204 | 0 |
@@ -334,26 +312,14 @@
 | 法規 | `terms.html` | zh-TW | 服務條款｜GugoPro | 服務條款（可見（靜態檢查）） | 1. 條款接受與更新 \| 2. 工具輸出與專業限制 \| 3. AI 與第三方服務 | 49 | 9 |
 | 工具 | `tools/ai/english-speaking-tutor.html` | zh-TW | AI多國語言對話導師 | （缺失） | 使用說明與常見問題 | 65 | 11 |
 | 工具 | `tools/ai/gemini-api-quota.html` | zh-TW | Gemini API 配額服務導覽｜GugoPro | Gemini API 配額服務導覽（可見（靜態檢查）） | 查看配額時可核對的項目 \| 使用前注意 \| 常見問題 | 61 | 0 |
-| 工具 | `tools/ai/nutritionist.html` | zh-TW | AI 專屬營養師｜AI 營養諮詢、TDEE 與飲食紀錄工具、免安裝與隱私說明 - GugoPro | （缺失） | AI 專屬營養師：運作機制與隱私解析 \| AI 專屬營養師: mechanism and privacy \| AI 專屬營養師：仕組みとプライバシー | 50 | 4 |
 | 工具 | `tools/ai/realtime-translator.html` | zh-TW | 面對面旅遊對話翻譯｜出國旅遊即時翻譯與雙向語音對話｜GugoPro | 面對面旅遊對話翻譯：出國旅遊即時翻譯與雙向語音對話（可見（靜態檢查）） | 一、手機雙向翻譯如何運作？ \| 二、四個為旅途中實際對話設計的優點 \| 三、出國旅遊即時翻譯：五步驟操作指南 | 82 | 7 |
 | 工具 | `tools/ai/tarot-master.html` | zh-TW | AI 塔羅大師｜五種塔羅牌陣、提問指南與自我反思 - GugoPro | （缺失） | AI 塔羅大師：牌陣選擇、提問心法與實戰指南 \| AI Tarot Master: A Practical Guide to Spreads, Questions, and Reflection \| AI タロットマスター：スプレッドの選び方・質問のコツ・実践ガイド | 63 | 11 |
 | 工具 | `tools/ai/ziwei-astrology.html` | zh-TW | AI 紫微斗數大師｜紫微斗數線上排盤資料整理與十二宮位指南 - GugoPro | 把命盤問題，整理成可行動的洞察（可見（靜態檢查）） | 排盤輸入輔助 \| 未來三年流年合盤軌跡 \| 年度流年四化與化忌提醒 | 70 | 9 |
 | 工具 | `tools/ai-media/ai-video-tracker.html` | zh-TW | YouTube 續集與新季追蹤器 - GugoPro | YouTube 續集與新季追蹤器（可見（靜態檢查）） | YouTube 續集與新季 追蹤器 \| 📺 已追蹤影集 0 \| 不再漏看分散在不同頻道的下一季 | 112 | 0 |
-| 工具 | `tools/compound-interest.html` | zh-TW | Compound Interest 線上工具｜免安裝瀏覽器本機處理、零檔案外洩隱私 - GugoPro | 進階複利與退休目標規劃計算機（可見（靜態檢查）） | 高殖利率複利與退休規劃計算機：公式、假設與使用教學 \| Compound Interest 線上工具：運作機制與隱私解析 \| Compound Interest 線上工具: how it works and privacy | 62 | 16 |
 | 工具 | `tools/english/l-player-study.html` | zh-TW | 【AB English Podcast】Ep.1 自我介紹與日常社交對話 (Mia & Alex)｜L-Player | YouTube 影音「聽・寫・口說」多國語言跟讀器（疑似隱藏） | 多語言字幕時間軸 \| 把真實影音變成可重複的聽說訓練閉環 \| 使用播放器時的深度 FAQ | 74 | 7 |
-| 工具 | `tools/etf-dividend-calculator.html` | zh-Hant | Etf Dividend Calculator 線上工具｜免安裝瀏覽器本機處理、零檔案外洩隱私 - GugoPro | 把配息拆成一條， 看得懂的現金流曲線。（可見（靜態檢查）） | 建立你的投入假設 \| 現金流與資產比較 \| 再投入 vs. 領出現金 | 68 | 13 |
-| 工具 | `tools/finance/kelly-criterion-calculator.html` | zh-TW | Kelly Criterion Calculator 線上工具｜免安裝瀏覽器本機處理、零檔案外洩隱私 - GugoPro | 凱利公式與資金控管模擬器（可見（靜態檢查）） | 為什麼專業交易員都選擇半凱利 (Half Kelly)？ \| 如何在股票交易中利用停損停利%計算凱利部位 \| 蒙特卡羅模擬如何幫你預測最大回撤 | 71 | 1 |
-| 工具 | `tools/finance/sports-hedging-calculator.html` | zh-TW | Sports Hedging Calculator 線上工具｜免安裝瀏覽器本機處理、零檔案外洩隱私 - GugoPro | 運動彩券賠率換算與套利對沖計算器（可見（靜態檢查）） | 模組一：賠率與隱含勝率雙向換算器 \| 模組二：對沖與套利計算器 \| 操作教學與知識指南 | 70 | 1 |
-| 工具 | `tools/games/mahjong-waits-calculator.html` | zh-Hant | Mahjong Waits Calculator 線上工具｜免安裝瀏覽器本機處理、零檔案外洩隱私 - GugoPro | 麻將聽牌張數與進張勝率計算器（可見（靜態檢查）） | 目前手牌 \| 牌面選擇器（點選加入手牌） \| 死牌 / 河牌標記（已出現的牌） | 69 | 1 |
-| 工具 | `tools/games/poker-odds-calculator.html` | zh-TW | Poker Odds Calculator 線上工具｜免安裝瀏覽器本機處理、零檔案外洩隱私 - GugoPro | 德州撲克即時勝率計算器 Texas Hold'em Odds Calculator（可見（靜態檢查）） | 如何使用德州撲克勝率計算器？ \| Poker Odds Calculator 線上工具：運作機制與隱私解析 \| Poker Odds Calculator 線上工具: how it works and privacy | 66 | 1 |
-| 工具 | `tools/gaming/gacha-odds-calculator.html` | zh-Hant | Gacha Odds Calculator 線上工具｜免安裝瀏覽器本機處理、零檔案外洩隱私 - GugoPro | Gacha Odds & Pity Simulator v5（可見（靜態檢查）） | Gacha Odds Calculator 線上工具：運作機制與隱私解析 \| Gacha Odds Calculator 線上工具: how it works and privacy \| Gacha Odds Calculator 線上工具：仕組みとプライバシー | 66 | 1 |
 | 工具 | `tools/health/tdee-macros-calculator.html` | zh-TW | AI 專屬營養師 \| GugoPro | （缺失） | TDEE、BMR 與三大營養素：從拍餐到每日飲食規劃 | 58 | 10 |
 | 工具 | `tools/health/weight-loss-planner.html` | zh-TW | AI減肥瘦身教練｜科學減脂與熱量赤字規劃 \| GugoPro | （缺失） | AI減肥瘦身教練：科學減脂、熱量赤字與體態追蹤指南 | 52 | 10 |
 | 工具 | `tools/pdf/pdf-suite.html` | zh-TW | PDF 全能工作站｜免安裝線上閱讀、合併、分割與標註、零檔案外洩 - GugoPro | 先選擇要處理的文件（可見（靜態檢查）） | 拖入文件，立即開始 \| PDF 全能工作站：運作機制與隱私解析 \| PDF 全能工作站: how it works and privacy | 38 | 10 |
-| 工具 | `tools/poker/poker-odds-calculator.html` | zh-TW | Poker Odds Calculator 線上工具｜免安裝瀏覽器本機處理、零檔案外洩隱私 - GugoPro | 德州撲克即時勝率計算器 Texas Hold'em Odds Calculator（可見（靜態檢查）） | 如何使用德州撲克勝率計算器？ \| Poker Odds Calculator 線上工具：運作機制與隱私解析 \| Poker Odds Calculator 線上工具: how it works and privacy | 66 | 1 |
-| 工具 | `tools/realestate-amortization.html` | zh-Hant | Realestate Amortization 線上工具｜免安裝瀏覽器本機處理、零檔案外洩隱私 - GugoPro | 房貸本息攤還、利息與提前還款工具（可見（靜態檢查）） | 輸入與查證條件 \| 結果視覺化與可驗證路徑 \| 怎麼使用與限制 | 68 | 15 |
-| 工具 | `tools/risk-reward-calculator.html` | zh-Hant | Risk Reward Calculator 線上工具｜免安裝瀏覽器本機處理、零檔案外洩隱私 - GugoPro | 先看即時價格，再決定風險。（可見（靜態檢查）） | K 線與風報比原生價格線圖表 \| 全市場風報比智慧掃描器 \| 最近支撐與壓力 | 67 | 14 |
-| 工具 | `tools/tradingview-guide.html` | zh-TW | Tradingview Guide 線上工具｜免安裝瀏覽器本機處理、零檔案外洩隱私 - GugoPro | 全球最強圖表工具 TradingView（可見（靜態檢查）） | 🌟 為什麼全球交易員都用 TradingView？ \| 📝 簡單 4 步：註冊與優惠領取教學 \| TradingView 註冊與實戰教學指南：公式、假設與使用教學 | 62 | 12 |
 | 工具 | `tools/tutorials/how-to-get-gemini-api-key.html` | zh-TW | Gemini API Key 申請教學｜Google Gemini API Key 取得與安全設定教學、免安裝與隱私說明 - GugoPro | Google Gemini API Key 1 分鐘快速申請步驟（可見（靜態檢查）） | 更多關於 Gemini API Key 的資訊 \| Gemini API Key 申請教學：運作機制與隱私解析 \| Gemini API Key 申請教學: mechanism and privacy | 61 | 1 |
 | 工具 | `tools/tw-market/taiwan-pair-trading.html` | zh-Hant-TW | Taiwan Pair Trading 線上工具｜免安裝瀏覽器本機處理、零檔案外洩隱私 - GugoPro | 台灣股票與期貨 配對交易掃描工作站（可見（靜態檢查）） | 今日精選配對套利雷達榜 \| 配對交易與均值回歸：從統計關係到風險控制 \| Taiwan Pair Trading 線上工具：運作機制與隱私解析 | 64 | 4 |
 
