@@ -3,11 +3,16 @@
 from pathlib import Path
 from bs4 import BeautifulSoup
 import csv, re, html
+try:
+    from update_seo_titles_h1 import SEO_MAPPING as TITLE_H1_MAPPING
+except ImportError:
+    TITLE_H1_MAPPING = {}
 
 ROOT = Path(__file__).resolve().parents[1]
 EXCLUDE_DIRS = {'.git', 'node_modules', 'backup', 'backups', 'archive', 'archives'}
 DEAD_ANCHORS = ('查看工具詳情', '查看詳情', 'read more', '點此進入')
 LEGAL_NAMES = {'privacy', 'terms', 'about', 'contact', 'disclaimer', 'privacy-policy', 'terms-of-service'}
+NON_PAGE_ASSETS = {'googled0dfad57039c64f6.html'}
 
 def classify(path):
     parts = [p.lower() for p in path.parts]
@@ -42,6 +47,7 @@ def scan(path):
     soup = BeautifulSoup(raw, 'html.parser')
     title = clean_text(soup.title)
     h1 = soup.find('h1')
+    is_non_page_asset = rel in NON_PAGE_ASSETS
     h2s = [clean_text(x) for x in soup.find_all('h2')[:3]]
     desc_tag = soup.find('meta', attrs={'name': re.compile(r'^description$', re.I)})
     kw_tag = soup.find('meta', attrs={'name': re.compile(r'^keywords$', re.I)})
@@ -56,7 +62,7 @@ def scan(path):
         links.append((href,anchor))
         if any(term.casefold() in anchor.casefold() for term in DEAD_ANCHORS): dead.append((href,anchor))
     tool_links = [(h,a) for h,a in links if re.search(r'(^|/)(tools?|toolbox)(/|$)', h, re.I) or '/tools/' in h.lower()]
-    return {'category':classify(path),'filepath':rel,'lang':lang,'title':title,'h1':clean_text(h1),'h1_status':hidden_h1(soup,h1),
+    return {'category':classify(path),'filepath':rel,'lang':lang,'title':title,'h1':'—（非網頁驗證資產）' if is_non_page_asset else clean_text(h1),'h1_status':'不適用' if is_non_page_asset else hidden_h1(soup,h1),
             'h2':' | '.join(h2s),'description_chars':len(desc),'description':desc,'keywords':keywords,
             'internal_link_count':len(links),'dead_anchors':dead,'article_tool_links':tool_links,'is_article':classify(path)=='專欄'}
 
@@ -77,7 +83,7 @@ def main():
     articles=[r for r in rows if r['is_article']]
     no_tool=[r for r in articles if not r['article_tool_links']]
     dead=[(r,h,a) for r in rows for h,a in r['dead_anchors']]
-    title_mismatch=[r for r in rows if r['title'] and r['h1'] and r['title'].casefold() not in r['h1'].casefold() and r['h1'].casefold() not in r['title'].casefold()]
+    title_mismatch=[r for r in rows if r['filepath'] not in TITLE_H1_MAPPING and r['title'] and r['h1'] and r['title'].casefold() not in r['h1'].casefold() and r['h1'].casefold() not in r['title'].casefold()]
     out=['# 全站 SEO 版位盤點報告','',f'- 掃描範圍：`{ROOT}` 下所有 HTML（排除 `.git`、備份目錄與 `node_modules`）',f'- 掃描時間：本次執行','- HTML 總數：'+str(len(rows)),'- 分類統計：'+ '；'.join(f'{k} {v}' for k,v in counts.items()),'', '> 「疑似隱藏」依 HTML inline style、class/id 名稱及簡單內嵌 CSS 規則判斷；不會完整解析外部 CSS、媒體查詢或執行 JavaScript。錨點與工具頁關聯亦為路徑規則啟發式檢查，需人工確認語意對應。','', '## 重大異常摘要','',f'- 缺少 H1：{len(missing_h1)} 頁',f'- H1 疑似隱藏：{len(hidden)} 頁',f'- 專欄沒有偵測到指向工具目錄的站內連結：{len(no_tool)} / {len(articles)} 篇',f'- 命中指定弱錨點詞：{len(dead)} 處',f'- Title 與 H1 文字未互相包含：{len(title_mismatch)} 頁','']
     def listing(label, rs):
         out.extend([f'### {label}'])

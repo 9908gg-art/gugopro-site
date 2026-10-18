@@ -16,6 +16,7 @@ LEGAL = {'privacy','terms','about','contact','disclaimer','privacy-policy','term
 CORE_SLUGS = {'ai-video-tracker.html','l-player-study.html','english-speaking-tutor.html','realtime-translator.html','tarot-master.html','ziwei-astrology.html','tdee-macros-calculator.html','weight-loss-planner.html','gemini-api-quota.html','amazon-product-research.html'}
 PRACTICAL_TUTORIAL = 'tools/tutorials/how-to-get-gemini-api-key.html'
 NO_AD_COMPLIANCE = {'404.html','tools/pdf/pdf-suite.html','tools/tw-market/taiwan-pair-trading.html'}
+NON_PAGE_ASSETS = {'googled0dfad57039c64f6.html'}
 
 def category(p):
     rel=p.relative_to(ROOT).as_posix()
@@ -61,11 +62,14 @@ def scan(p):
     raw=p.read_text(encoding='utf-8',errors='replace')
     soup=BeautifulSoup(raw,'html.parser')
     h1=soup.find('h1')
+    is_non_page_asset=rel in NON_PAGE_ASSETS
+    h1_text='—（非網頁驗證資產）' if is_non_page_asset else (text(h1) if h1 else '❌ 缺失')
+    h1_display='不適用' if is_non_page_asset else h1_status(soup,h1)
     d=soup.find('meta',attrs={'name':re.compile('^description$',re.I)})
     description=d.get('content','').strip() if d else ''
     ads=('pagead2.googlesyndication.com' in raw.lower() or 'ca-pub-' in raw.lower())
     ads_status='❌ 未配置（合規）' if rel in NO_AD_COMPLIANCE and not ads else ('✅ 已配置' if ads else '❌ 缺失')
-    return [category(p),rel,BASE+quote(rel, safe='/'),soup.html.get('lang','') if soup.html else '',text(soup.title),text(h1) if h1 else '❌ 缺失',h1_status(soup,h1),ads_status,len(description),count_tool_links(soup,rel)]
+    return [category(p),rel,BASE+quote(rel, safe='/'),soup.html.get('lang','') if soup.html else '',text(soup.title),h1_text,h1_display,ads_status,len(description),count_tool_links(soup,rel)]
 
 def main():
     files=sorted(p for p in ROOT.rglob('*.html') if p.is_file() and not any(x.lower() in EXCLUDE for x in p.relative_to(ROOT).parts[:-1]))
