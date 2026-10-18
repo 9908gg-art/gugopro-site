@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 BASE = 'https://gugopro.com/'
 EXCLUDE = {'.git','node_modules','backup','backups','archive','archives'}
 LEGAL = {'privacy','terms','about','contact','disclaimer','privacy-policy','terms-of-service','cookies'}
-CORE_SLUGS = {'ai-video-tracker.html','l-player-study.html','english-speaking-tutor.html','realtime-translator.html','tarot-master.html','ziwei-astrology.html','tdee-macros-calculator.html','weight-loss-planner.html','gemini-api-quota.html'}
+CORE_SLUGS = {'ai-video-tracker.html','l-player-study.html','english-speaking-tutor.html','realtime-translator.html','tarot-master.html','ziwei-astrology.html','tdee-macros-calculator.html','weight-loss-planner.html','gemini-api-quota.html','amazon-product-research.html'}
 PRACTICAL_TUTORIAL = 'tools/tutorials/how-to-get-gemini-api-key.html'
 NO_AD_COMPLIANCE = {'404.html','tools/pdf/pdf-suite.html','tools/tw-market/taiwan-pair-trading.html'}
 

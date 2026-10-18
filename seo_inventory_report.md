@@ -13,7 +13,7 @@
 - H1 疑似隱藏：1 頁
 - 專欄沒有偵測到指向工具目錄的站內連結：57 / 57 篇
 - 命中指定弱錨點詞：0 處
-- Title 與 H1 文字未互相包含：20 頁
+- Title 與 H1 文字未互相包含：21 頁
 
 ### 缺少 H1
 - `googled0dfad57039c64f6.html`
@@ -102,6 +102,7 @@
 - `ja/articles/youtube-english-listening-and-shadowing-guide.html`：Title=`YouTube英語学習が挫折する真の理由とは？音韻知覚理論、レーベンシュタイン聴解、シャドーイングで母語レベルの聴覚神経回路を構築する完全ガイド｜GugoPro 言語科学コラム`；H1=`YouTube英語学習が挫折する真の理由とは？音韻知覚理論、 レーベンシュタイン聴解、シャドーイング で母語レベルの聴覚神経回路を構築する完全ガイド`
 - `ja/articles/youtube-listening-connected-speech-guide.html`：Title=`YouTube英語学習が挫折する真の理由とは？音韻知覚理論、レーベンシュタイン聴解、シャドーイング完全ガイド｜GugoPro 言語科学コラム`；H1=`YouTube英語学習が挫折する真の理由とは？音韻知覚理論、 レーベンシュタイン聴解、シャドーイング で母語レベルの聴覚神経回路を構築する完全ガイド`
 - `ja/articles/youtube-sequel-tracker-guide.html`：Title=`2026年YouTube動画推薦アルゴリズムとシリーズ検索完全ガイド：推薦漏れを解消しNLP正規表現ノイズ除去と差分照合で跨チャンネル追跡を実現する｜GugoPro ストリーミング研究コラム`；H1=`2026年YouTube動画推薦アルゴリズムとシリーズ検索完全ガイド：推薦漏れを解消し NLP正規表現ノイズ除去と差分照合 で跨チャンネル追跡を実現する`
+- `tools/ai/amazon-product-research.html`：Title=`Amazon AI 全品類智能選品導購 | GugoPro`；H1=`🛒 Amazon AI 智能購物導師`
 - `tools/ai/realtime-translator.html`：Title=`面對面旅遊對話翻譯｜出國旅遊即時翻譯與雙向語音對話｜GugoPro`；H1=`面對面旅遊對話翻譯：出國旅遊即時翻譯與雙向語音對話`
 - `tools/ai/ziwei-astrology.html`：Title=`AI 紫微斗數大師｜紫微斗數線上排盤資料整理與十二宮位指南 - GugoPro`；H1=`把命盤問題，整理成可行動的洞察`
 - `tools/english/l-player-study.html`：Title=`【AB English Podcast】Ep.1 自我介紹與日常社交對話 (Mia & Alex)｜L-Player`；H1=`YouTube 影音「聽・寫・口說」多國語言跟讀器`
@@ -180,8 +181,8 @@
 | 專欄 | `ja/articles/youtube-sequel-tracker-guide.html` | ja | 2026年YouTube動画推薦アルゴリズムとシリーズ検索完全ガイド：推薦漏れを解消しNLP正規表現ノイズ除去と差分照合で跨チャンネル追跡を実現する｜GugoPro ストリーミング研究コラム | 2026年YouTube動画推薦アルゴリズムとシリーズ検索完全ガイド：推薦漏れを解消し NLP正規表現ノイズ除去と差分照合 で跨チャンネル追跡を実現する（可見（靜態檢查）） | 第一章：YouTube推薦アルゴリズムの深層構造と「連載推薦漏れ」の構造的原因 \| 第二章：情報検索（IR）と自然言語処理（NLP）によるタイトルノイズ除去工学 \| 第三章：サーバーレス環境における「ローカル差分メモリ」とプライバシー保護 | 224 | 0 |
 | 法規 | `privacy.html` | zh-TW | 隱私權政策｜GugoPro | 隱私權政策（可見（靜態檢查）） | 1. 瀏覽器中的設定與內容 \| 2. 依功能而異的第三方服務 \| 3. 網站交付、分析與廣告 | 60 | 7 |
 | 法規 | `terms.html` | zh-TW | 服務條款｜GugoPro | 服務條款（可見（靜態檢查）） | 1. 條款接受與更新 \| 2. 工具輸出與專業限制 \| 3. AI 與第三方服務 | 49 | 9 |
+| 工具 | `tools/ai/amazon-product-research.html` | zh-TW | Amazon AI 全品類智能選品導購 \| GugoPro | 🛒 Amazon AI 智能購物導師（可見（靜態檢查）） | Amazon AI 選品導購是什麼？從需求到可驗證商品清單的研究工作台 \| Amazon 美國代購、日本亞馬遜直送台灣：AI 選品與海淘避坑完整指南 | 76 | 6 |
 | 工具 | `tools/ai/english-speaking-tutor.html` | zh-TW | AI多國語言對話導師 | （缺失） | 使用說明與常見問題 | 65 | 11 |
-| 工具 | `tools/ai/gemini-api-quota.html` | zh-TW | Gemini API 配額服務導覽｜GugoPro | Gemini API 配額服務導覽（可見（靜態檢查）） | 查看配額時可核對的項目 \| 使用前注意 \| 常見問題 | 61 | 0 |
 | 工具 | `tools/ai/realtime-translator.html` | zh-TW | 面對面旅遊對話翻譯｜出國旅遊即時翻譯與雙向語音對話｜GugoPro | 面對面旅遊對話翻譯：出國旅遊即時翻譯與雙向語音對話（可見（靜態檢查）） | 一、手機雙向翻譯如何運作？ \| 二、四個為旅途中實際對話設計的優點 \| 三、出國旅遊即時翻譯：五步驟操作指南 | 82 | 7 |
 | 工具 | `tools/ai/tarot-master.html` | zh-TW | AI 塔羅大師｜五種塔羅牌陣、提問指南與自我反思 - GugoPro | （缺失） | AI 塔羅大師：牌陣選擇、提問心法與實戰指南 \| AI Tarot Master: A Practical Guide to Spreads, Questions, and Reflection \| AI タロットマスター：スプレッドの選び方・質問のコツ・実践ガイド | 63 | 11 |
 | 工具 | `tools/ai/ziwei-astrology.html` | zh-TW | AI 紫微斗數大師｜紫微斗數線上排盤資料整理與十二宮位指南 - GugoPro | 把命盤問題，整理成可行動的洞察（可見（靜態檢查）） | 排盤輸入輔助 \| 未來三年流年合盤軌跡 \| 年度流年四化與化忌提醒 | 70 | 9 |
