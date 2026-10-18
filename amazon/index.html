@@ -81,6 +81,17 @@ body.theme-jp .market-btn.active { background: linear-gradient(135deg, #FF3366, 
 .btn-nav { background: rgba(255,255,255,0.07); border: 1px solid var(--border-card); color: var(--text-primary); padding: 5px 12px; border-radius: 18px; font-size: 0.78rem; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s; }
 .btn-nav:hover { background: rgba(255,255,255,0.13); border-color: var(--accent); }
 .btn-nav.api-connected { border-color: var(--success); color: var(--success); }
+@keyframes pulseApiKey {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); border-color: rgba(239, 68, 68, 0.85); background: rgba(239, 68, 68, 0.15); }
+  70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); border-color: rgba(239, 68, 68, 0.35); background: rgba(239, 68, 68, 0.05); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); border-color: rgba(239, 68, 68, 0.85); background: rgba(239, 68, 68, 0.15); }
+}
+.api-key-unconfigured {
+  animation: pulseApiKey 2s infinite !important;
+  color: #f87171 !important;
+  border: 1px solid #ef4444 !important;
+  font-weight: 700 !important;
+}
 
 /* Hero */
 .hero { text-align: center; padding: 28px 16px 10px; max-width: 700px; margin: 0 auto; }
@@ -443,6 +454,33 @@ body { height: 100vh; min-height: 100vh; height: 100dvh; min-height: 100dvh; dis
   .amazon-page-footer { padding-bottom: 7px; }
 }
 
+
+.api-security-notice {
+    color: #dbeafe;
+    background: rgba(14, 116, 144, 0.16);
+    border: 1px solid rgba(34, 211, 238, 0.28);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin: 8px 0;
+    line-height: 1.55;
+    font-size: 0.82rem;
+    text-align: left;
+}
+@keyframes key-glow {
+    0%, 100% {
+        box-shadow: 0 0 4px rgba(239, 68, 68, 0.4), inset 0 0 4px rgba(239, 68, 68, 0.2);
+        border-color: rgba(239, 68, 68, 0.6);
+    }
+    50% {
+        box-shadow: 0 0 16px rgba(239, 68, 68, 0.9), 0 0 24px rgba(239, 68, 68, 0.6), inset 0 0 8px rgba(239, 68, 68, 0.4);
+        border-color: rgba(239, 68, 68, 1);
+    }
+}
+.api-key-unconfigured {
+    animation: key-glow 1.8s infinite ease-in-out !important;
+    border: 1px solid rgba(239, 68, 68, 0.8) !important;
+    color: #fca5a5 !important;
+}
 </style>
 <script src="../js/global-ai-quota.js"></script>
 <script src="../js/unified-ai-model-engine.js"></script>
@@ -648,30 +686,21 @@ body { height: 100vh; min-height: 100vh; height: 100dvh; min-height: 100dvh; dis
 </div>
 <!-- API Key Modal -->
 <div class="modal-overlay" id="modal-api">
-<div class="modal-content">
-<div style="display:flex; justify-content:flex-end; margin-bottom:-8px;">
-<button onclick="document.getElementById('modal-api').style.display='none'" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+<div class="modal-content modal">
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+    <h3 class="modal-h3" id="api-title" style="margin-bottom:0; color:var(--primary-neon,#00f2ff); font-family:'Outfit',sans-serif;">設定您的 API Key</h3>
+    <button aria-label="關閉" class="btn-tool btn-modal-close" onclick="const m=document.getElementById('modal-api'); if(m){ m.style.display='none'; m.classList.remove('open'); }" style="background:none; border:none; color:var(--text-dim,#a0a0a0); font-size:1.4rem; cursor:pointer;" type="button"><i class="fa-solid fa-xmark"></i></button>
 </div>
-<h3 class="modal-h3"><i class="fa-solid fa-key"></i> 🔑 啟動 AI 服務需要免費的 Gemini API Key</h3>
-<p class="modal-p">本工具由 Google Gemini 官方模型驅動，安全免費、無需信用卡、全站自動共享。</p>
-<a class="btn-modal-link" href="https://aistudio.google.com/app/apikey" target="_blank">
-<i class="fa-solid fa-arrow-up-right-from-square"></i> 前往 Google AI Studio 免費取得 API Key
-    </a>
-<div id="key-status-box" style="display:none; background:rgba(0,0,0,0.35); border:1px solid rgba(0,168,225,0.3); border-radius:8px; padding:12px; margin-bottom:14px;">
-<div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:4px;">當前已綁定金鑰 (已遮罩加密)：</div>
-<div id="masked-key-display" style="font-family:monospace; font-size:0.92rem; color:#38bdf8;">AIzaSy••••••••</div>
-</div>
+<p class="modal-p" id="api-copy" style="color:var(--text-dim,#a0a0a0); margin-bottom:14px; line-height:1.6; font-size:0.95rem;">本工具使用 Google Gemini AI。請輸入您的 API Key 以開始對話。</p>
+<p class="api-security-notice" id="api-free-notice">建議使用沒有綁定信用卡、訂閱或計費的 Google 帳號。本工具使用 Google 官方免費模型；目前常見免費配額每日可達 1,000 次以上，一般一天學習通常足夠。實際配額以 Google 官方顯示為準。</p>
+<p class="api-security-notice" id="api-local-notice">API Key 只儲存在這台設備的瀏覽器／App 本機儲存空間，不會由 GugoPro 保存或上傳。請勿分享；清除資料或更換設備後可能需要重新輸入。</p>
+<a class="btn-full btn-tool btn-modal-link" href="https://gugopro.com/tools/tutorials/how-to-get-gemini-api-key.html" id="api-help-link" style="background:rgba(255,255,255,0.1); color:#fff; text-decoration:none; margin:10px 0 14px; display:block; padding:12px; border-radius:12px; text-align:center; font-weight:700;" target="_blank">
+    👉 還沒有 API Key？點此觀看教學
+</a>
 <div class="api-input-group" style="margin-bottom:14px;">
-<input autocomplete="off" id="api-key-input" placeholder="貼上您的 Gemini API Key (以 AIzaSy 開頭)" type="password"/>
+<input aria-label="Gemini API Key" id="api-key-input" placeholder="貼上您的 Gemini API Key" type="password" style="width:100%; padding:14px; background:rgba(0,0,0,0.3); border:1px solid var(--glass-border,rgba(255,255,255,0.1)); border-radius:12px; color:#fff; font-size:1rem; box-sizing:border-box;"/>
 </div>
-<div style="display:flex; gap:10px;">
-<button class="btn-modal-action btn-modal-save" id="btn-save-key" onclick="saveApiKey()" style="flex:1;">
-<i class="fa-solid fa-check"></i> 儲存並開始使用
-      </button>
-<button class="btn-modal-action" id="btn-clear-key" onclick="clearApiKey()" style="display:none; flex:0 0 auto; padding:13px 16px; background:none; border:1px solid rgba(239,68,68,0.4); color:#f87171; border-radius:12px;">
-<i class="fa-solid fa-trash-can"></i>
-</button>
-</div>
+<button class="btn-full btn-send btn-modal-action btn-modal-save" id="btn-save-key" style="width:100%; padding:14px; border-radius:12px; border:none; font-weight:700; cursor:pointer; font-size:1rem; background:var(--secondary-neon,#00A8E1); color:#fff;">儲存並開始</button>
 </div>
 </div>
 <script>
@@ -731,6 +760,11 @@ function setGlobalApiKey(key) {
   updateKeyUI();
 }
 function updateKeyUI() {
+  const saveBtn = document.getElementById('btn-save-key');
+  if (saveBtn && !saveBtn.__bound) {
+    saveBtn.onclick = () => window.saveApiKey();
+    saveBtn.__bound = true;
+  }
   var key = getGlobalApiKey();
   var statusBox = document.getElementById('key-status-box');
   var maskedDisplay = document.getElementById('masked-key-display');
@@ -741,19 +775,25 @@ function updateKeyUI() {
     if (statusBox) statusBox.style.display = '';
     if (maskedDisplay) maskedDisplay.textContent = maskApiKey(key);
     if (clearBtn) clearBtn.style.display = '';
-    if (apiBtn) apiBtn.classList.add('api-connected');
-    if (apiText) apiText.textContent = 'API 已連線';
+    if (apiBtn) {
+      apiBtn.classList.add('api-connected');
+      apiBtn.classList.remove('api-key-unconfigured');
+    }
+    if (apiText) apiText.textContent = '變更 GEMINI API KEY';
   } else {
     if (statusBox) statusBox.style.display = 'none';
     if (clearBtn) clearBtn.style.display = 'none';
-    if (apiBtn) apiBtn.classList.remove('api-connected');
-    if (apiText) apiText.textContent = 'API 設定';
+    if (apiBtn) {
+      apiBtn.classList.remove('api-connected');
+      apiBtn.classList.add('api-key-unconfigured');
+    }
+    if (apiText) apiText.textContent = '請輸入 GEMINI API KEY';
   }
 }
 window.openApiModal = function() {
   updateKeyUI();
   var input = document.getElementById('api-key-input');
-  if (input) input.value = '';
+  if (input) input.value = getGlobalApiKey() || '';
   document.getElementById('modal-api').style.display = 'flex';
 };
 window.saveApiKey = function() {
@@ -761,12 +801,11 @@ window.saveApiKey = function() {
   var key = (input ? input.value : '').trim();
   if (key) {
     setGlobalApiKey(key);
-    document.getElementById('modal-api').style.display = 'none';
-  } else if (getGlobalApiKey()) {
-    document.getElementById('modal-api').style.display = 'none';
   } else {
-    alert('請輸入有效的 Gemini API Key。');
+    setGlobalApiKey('');
   }
+  document.getElementById('modal-api').style.display = 'none';
+  updateKeyUI();
 };
 window.clearApiKey = function() {
   if (confirm('確定要清除已儲存的 API Key 嗎？')) {

@@ -935,7 +935,46 @@
         .journal-entry strong { display: block; color: #fff; font-size: .86rem; }
         .journal-entry-cards { margin-top: 6px; color: #fde68a; font-size: .76rem; }
         .journal-empty { color: #94a3b8; text-align: center; }
-        @media (max-width: 600px) { .tarot-card { width: 66px; height: 112px; } .cf-emoji { font-size: 1.1rem; } .cf-name { font-size: .6rem; } .tarot-welcome-card { padding: 16px; } } </style>
+        @media (max-width: 600px) { .tarot-card { width: 66px; height: 112px; } .cf-emoji { font-size: 1.1rem; } .cf-name { font-size: .6rem; } .tarot-welcome-card { padding: 16px; } }
+        @keyframes pulseApiKey {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); border-color: rgba(239, 68, 68, 0.85); background: rgba(239, 68, 68, 0.15); }
+            70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); border-color: rgba(239, 68, 68, 0.35); background: rgba(239, 68, 68, 0.05); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); border-color: rgba(239, 68, 68, 0.85); background: rgba(239, 68, 68, 0.15); }
+        }
+        .api-key-unconfigured {
+            animation: pulseApiKey 2s infinite !important;
+            color: #f87171 !important;
+            border: 1px solid #ef4444 !important;
+            font-weight: 700 !important;
+        }
+        
+.api-security-notice {
+    color: #dbeafe;
+    background: rgba(14, 116, 144, 0.16);
+    border: 1px solid rgba(34, 211, 238, 0.28);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin: 8px 0;
+    line-height: 1.55;
+    font-size: 0.82rem;
+    text-align: left;
+}
+@keyframes key-glow {
+    0%, 100% {
+        box-shadow: 0 0 4px rgba(239, 68, 68, 0.4), inset 0 0 4px rgba(239, 68, 68, 0.2);
+        border-color: rgba(239, 68, 68, 0.6);
+    }
+    50% {
+        box-shadow: 0 0 16px rgba(239, 68, 68, 0.9), 0 0 24px rgba(239, 68, 68, 0.6), inset 0 0 8px rgba(239, 68, 68, 0.4);
+        border-color: rgba(239, 68, 68, 1);
+    }
+}
+.api-key-unconfigured {
+    animation: key-glow 1.8s infinite ease-in-out !important;
+    border: 1px solid rgba(239, 68, 68, 0.8) !important;
+    color: #fca5a5 !important;
+}
+</style>
 <link href="/tools/seo-content.css" rel="stylesheet"/>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4756902118634553" crossorigin="anonymous"></script>
 <style id="tarot-master-ux-overrides">
@@ -1296,14 +1335,21 @@ html, body { overflow-x: hidden; }
 <!-- Modals -->
 <div class="modal-overlay" id="modal-journal"><div class="modal-content"><div class="modal-header"><h3 class="modal-h3" data-i18n="journalTitle">占卜日誌</h3><button class="btn-modal-close" onclick="closeJournalModal()" type="button"><i class="fa-solid fa-xmark"></i></button></div><p class="modal-p" data-i18n="journalDescription">已完成的塔羅解讀會保存在此瀏覽器。</p><div id="journal-items-container"></div></div></div>
 <div class="modal-overlay" id="modal-api">
-<div class="modal-content">
-<h3 class="modal-h3" data-i18n="apiTitle">設定您的 API Key</h3>
-<p class="modal-p" data-i18n="apiDescription">本工具使用 Google Gemini AI。請輸入您的 API Key 以開始占卜。</p>
-<a class="btn-full btn-tool" href="https://gugopro.com/tools/tutorials/how-to-get-gemini-api-key.html" style="background:rgba(255,255,255,0.1); color:#fff; text-decoration:none;" target="_blank"><span data-i18n="apiTutorial">👉 還沒有 API Key？點此觀看教學</span></a>
-<div class="api-input-group">
-<input data-i18n-placeholder="apiPlaceholder" id="api-key-input" placeholder="貼上您的 Gemini API Key" type="password"/>
+<div class="modal-content modal">
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+    <h3 class="modal-h3" id="api-title" style="margin-bottom:0; color:var(--primary-neon,#00f2ff); font-family:'Outfit',sans-serif;">設定您的 API Key</h3>
+    <button aria-label="關閉" class="btn-tool btn-modal-close" onclick="const m=document.getElementById('modal-api'); if(m){ m.style.display='none'; m.classList.remove('open'); }" style="background:none; border:none; color:var(--text-dim,#a0a0a0); font-size:1.4rem; cursor:pointer;" type="button"><i class="fa-solid fa-xmark"></i></button>
 </div>
-<button class="btn-full btn-send" data-i18n="apiSave" id="btn-save-key">儲存並開始</button>
+<p class="modal-p" id="api-copy" style="color:var(--text-dim,#a0a0a0); margin-bottom:14px; line-height:1.6; font-size:0.95rem;">本工具使用 Google Gemini AI。請輸入您的 API Key 以開始對話。</p>
+<p class="api-security-notice" id="api-free-notice">建議使用沒有綁定信用卡、訂閱或計費的 Google 帳號。本工具使用 Google 官方免費模型；目前常見免費配額每日可達 1,000 次以上，一般一天學習通常足夠。實際配額以 Google 官方顯示為準。</p>
+<p class="api-security-notice" id="api-local-notice">API Key 只儲存在這台設備的瀏覽器／App 本機儲存空間，不會由 GugoPro 保存或上傳。請勿分享；清除資料或更換設備後可能需要重新輸入。</p>
+<a class="btn-full btn-tool btn-modal-link" href="https://gugopro.com/tools/tutorials/how-to-get-gemini-api-key.html" id="api-help-link" style="background:rgba(255,255,255,0.1); color:#fff; text-decoration:none; margin:10px 0 14px; display:block; padding:12px; border-radius:12px; text-align:center; font-weight:700;" target="_blank">
+    👉 還沒有 API Key？點此觀看教學
+</a>
+<div class="api-input-group" style="margin-bottom:14px;">
+<input aria-label="Gemini API Key" id="api-key-input" placeholder="貼上您的 Gemini API Key" type="password" style="width:100%; padding:14px; background:rgba(0,0,0,0.3); border:1px solid var(--glass-border,rgba(255,255,255,0.1)); border-radius:12px; color:#fff; font-size:1rem; box-sizing:border-box;"/>
+</div>
+<button class="btn-full btn-send btn-modal-action btn-modal-save" id="btn-save-key" style="width:100%; padding:14px; border-radius:12px; border:none; font-weight:700; cursor:pointer; font-size:1rem; background:var(--secondary-neon,#00A8E1); color:#fff;">儲存並開始</button>
 </div>
 </div>
 <div class="modal-overlay" id="modal-stt-guide">
@@ -7626,7 +7672,7 @@ html, body { overflow-x: hidden; }
         // --- Init ---
         document.addEventListener('DOMContentLoaded', () => {
             initChatSystem();
-            checkApiKey();
+            if (typeof updateApiKeyButtonState === 'function') updateApiKeyButtonState();
             initSpeechRecognition();
             initInterfaceLocalePanel();
             renderModelOptions();
@@ -8121,7 +8167,63 @@ html, body { overflow-x: hidden; }
 
         function checkApiKey() {
             if (!getGeminiApiKey()) {
-                document.getElementById('modal-api').style.display = 'flex';
+                const modal = document.getElementById('modal-api');
+                if (modal) modal.style.display = 'flex';
+                const input = document.getElementById('api-key-input');
+                if (input) setTimeout(() => input.focus(), 50);
+                return false;
+            }
+            return true;
+        }
+
+        function openApiKeyModal() {
+            document.getElementById('api-key-input').value = getGeminiApiKey();
+            document.getElementById('modal-api').style.display = 'flex';
+            const input = document.getElementById('api-key-input');
+            if (input) setTimeout(() => input.focus(), 50);
+        }
+
+        function updateApiKeyButtonState() {
+            const btn = document.getElementById('btn-config');
+            if (!btn) return;
+            const span = btn.querySelector('span');
+            const hasKey = !!getGeminiApiKey();
+            const enterKeyMap = {
+                'zh-TW': '請輸入 GEMINI API KEY',
+                'en': 'Please enter GEMINI API KEY',
+                'ja': 'GEMINI API KEY を入力してください',
+                'fr': 'Veuillez saisir la clé GEMINI API KEY',
+                'de': 'Bitte GEMINI API KEY eingeben',
+                'es': 'Ingrese su GEMINI API KEY',
+                'zh-CN': '请输入 GEMINI API KEY',
+                'ko': 'GEMINI API KEY를 입력하세요',
+                'ru': 'Пожалуйста, введите GEMINI API KEY',
+                'vi': 'Vui lòng nhập GEMINI API KEY',
+                'id': 'Silakan masukkan GEMINI API KEY',
+                'pt': 'Insira a sua GEMINI API KEY',
+                'it': 'Inserisci la GEMINI API KEY',
+                'ar': 'يرجى إدخال GEMINI API KEY',
+                'hi': 'कृपया GEMINI API KEY दर्ज करें',
+                'th': 'กรุณากรอก GEMINI API KEY',
+                'ms': 'Sila masukkan GEMINI API KEY',
+                'nl': 'Voer uw GEMINI API KEY in',
+                'pl': 'Wprowadź klucz GEMINI API KEY',
+                'tr': 'Lütfen GEMINI API KEY girin'
+            };
+            const currentLang = interfaceLocale || (typeof loadInterfaceLocale === 'function' ? loadInterfaceLocale() : '') || 'zh-TW';
+            if (hasKey) {
+                btn.classList.remove('api-key-unconfigured');
+                if (span) {
+                    span.dataset.i18n = 'changeKey';
+                    span.textContent = (typeof interfaceText === 'function' ? interfaceText('changeKey') : '') || '變更 Gemini API Key';
+                }
+            } else {
+                btn.classList.add('api-key-unconfigured');
+                const enterText = enterKeyMap[currentLang] || enterKeyMap['zh-TW'];
+                if (span) {
+                    delete span.dataset.i18n;
+                    span.textContent = enterText;
+                }
             }
         }
 
@@ -8307,8 +8409,14 @@ html, body { overflow-x: hidden; }
             if (key) {
                 localStorage.setItem('gugopro_gemini_api_key', key);
                 localStorage.setItem('gemini_api_key', key);
-                document.getElementById('modal-api').style.display = 'none';
-                hideError();
+            } else {
+                localStorage.removeItem('gugopro_gemini_api_key');
+                localStorage.removeItem('gemini_api_key');
+            }
+            document.getElementById('modal-api').style.display = 'none';
+            hideError();
+            updateApiKeyButtonState();
+            if (key) {
                 fetchLatestModel({ silent: true });
             }
         };
@@ -8577,6 +8685,7 @@ html, body { overflow-x: hidden; }
             if (typeof renderCurrentModelStatus === 'function') renderCurrentModelStatus();
             if (typeof renderGlobalAIQuota === 'function') renderGlobalAIQuota();
             refreshLocalizedModelSettingsStatus();
+            if (typeof updateApiKeyButtonState === 'function') updateApiKeyButtonState();
             document.title = localizedMeta?.title || `${interfaceText('appName')} | GugoPro`;
         }
 
@@ -9118,6 +9227,7 @@ html, body { overflow-x: hidden; }
         }
 
         document.getElementById('btn-mic').onclick = () => {
+            if (!getGeminiApiKey()) { checkApiKey(); return; }
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (!SpeechRecognition) {
                 document.getElementById('modal-stt-guide').style.display = 'flex';

@@ -1589,6 +1589,17 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
 .settings-help-section { margin: 12px 16px 0; padding: 10px 0; border-top: 1px solid rgba(255,255,255,.08); color: var(--text-dim); }
 .settings-help-section > summary { cursor: pointer; color: #67e8f9; font-weight: 700; }
 .settings-help-section .tool-seo-content { margin: 12px 0 0; }
+@keyframes pulseApiKey {
+    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); border-color: rgba(239, 68, 68, 0.85); background: rgba(239, 68, 68, 0.15); }
+    70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); border-color: rgba(239, 68, 68, 0.35); background: rgba(239, 68, 68, 0.05); }
+    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); border-color: rgba(239, 68, 68, 0.85); background: rgba(239, 68, 68, 0.15); }
+}
+.api-key-unconfigured {
+    animation: pulseApiKey 2s infinite !important;
+    color: #f87171 !important;
+    border: 1px solid #ef4444 !important;
+    font-weight: 700 !important;
+}
 </style>
 <link href="https://gugopro.com/tools/ai/english-speaking-tutor.html" hreflang="zh-TW" rel="alternate"/><link href="https://gugopro.com/en/tools/ai/english-speaking-tutor.html" hreflang="en" rel="alternate"/><link href="https://gugopro.com/ja/tools/ai/english-speaking-tutor.html" hreflang="ja" rel="alternate"/><link href="https://gugopro.com/tools/ai/english-speaking-tutor.html" hreflang="x-default" rel="alternate"/></head>
 <body>
@@ -1989,18 +2000,21 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
 </div>
 </div>
 <div class="modal-overlay" id="modal-api">
-<div class="modal-content">
-<h3 class="modal-h3" id="api-title">設定您的 API Key</h3>
-<p class="modal-p" id="api-copy">本工具使用 Google Gemini AI。請輸入您的 API Key 以開始對話。</p>
-<p class="api-security-notice" id="api-free-notice"></p>
-<p class="api-security-notice" id="api-local-notice"></p>
-<a class="btn-full btn-tool" href="https://gugopro.com/tools/tutorials/how-to-get-gemini-api-key.html" id="api-help-link" style="background:rgba(255,255,255,0.1); color:#fff; text-decoration:none;" target="_blank">
-                👉 還沒有 API Key？點此觀看教學
-            </a>
-<div class="api-input-group">
-<input aria-label="Gemini API Key" id="api-key-input" placeholder="貼上您的 Gemini API Key" type="password"/>
+<div class="modal-content modal">
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+    <h3 class="modal-h3" id="api-title" style="margin-bottom:0; color:var(--primary-neon,#00f2ff); font-family:'Outfit',sans-serif;">設定您的 API Key</h3>
+    <button aria-label="關閉" class="btn-tool btn-modal-close" onclick="const m=document.getElementById('modal-api'); if(m){ m.style.display='none'; m.classList.remove('open'); }" style="background:none; border:none; color:var(--text-dim,#a0a0a0); font-size:1.4rem; cursor:pointer;" type="button"><i class="fa-solid fa-xmark"></i></button>
 </div>
-<button class="btn-full btn-send" id="btn-save-key">儲存並開始</button>
+<p class="modal-p" id="api-copy" style="color:var(--text-dim,#a0a0a0); margin-bottom:14px; line-height:1.6; font-size:0.95rem;">本工具使用 Google Gemini AI。請輸入您的 API Key 以開始對話。</p>
+<p class="api-security-notice" id="api-free-notice">建議使用沒有綁定信用卡、訂閱或計費的 Google 帳號。本工具使用 Google 官方免費模型；目前常見免費配額每日可達 1,000 次以上，一般一天學習通常足夠。實際配額以 Google 官方顯示為準。</p>
+<p class="api-security-notice" id="api-local-notice">API Key 只儲存在這台設備的瀏覽器／App 本機儲存空間，不會由 GugoPro 保存或上傳。請勿分享；清除資料或更換設備後可能需要重新輸入。</p>
+<a class="btn-full btn-tool btn-modal-link" href="https://gugopro.com/tools/tutorials/how-to-get-gemini-api-key.html" id="api-help-link" style="background:rgba(255,255,255,0.1); color:#fff; text-decoration:none; margin:10px 0 14px; display:block; padding:12px; border-radius:12px; text-align:center; font-weight:700;" target="_blank">
+    👉 還沒有 API Key？點此觀看教學
+</a>
+<div class="api-input-group" style="margin-bottom:14px;">
+<input aria-label="Gemini API Key" id="api-key-input" placeholder="貼上您的 Gemini API Key" type="password" style="width:100%; padding:14px; background:rgba(0,0,0,0.3); border:1px solid var(--glass-border,rgba(255,255,255,0.1)); border-radius:12px; color:#fff; font-size:1rem; box-sizing:border-box;"/>
+</div>
+<button class="btn-full btn-send btn-modal-action btn-modal-save" id="btn-save-key" style="width:100%; padding:14px; border-radius:12px; border:none; font-weight:700; cursor:pointer; font-size:1rem; background:var(--secondary-neon,#00A8E1); color:#fff;">儲存並開始</button>
 </div>
 </div>
 <div class="modal-overlay" id="modal-stt-guide">
@@ -3150,8 +3164,14 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
             if (key) {
                 localStorage.setItem('gugopro_gemini_api_key', key);
                 localStorage.setItem('gemini_api_key', key);
-                document.getElementById('modal-api').style.display = 'none';
-                hideError();
+            } else {
+                localStorage.removeItem('gugopro_gemini_api_key');
+                localStorage.removeItem('gemini_api_key');
+            }
+            document.getElementById('modal-api').style.display = 'none';
+            if (typeof hideError === 'function') hideError();
+            if (typeof updateApiKeyButtonState === 'function') updateApiKeyButtonState();
+            if (key) {
                 fetchLatestModel({ silent: true });
             }
         };
@@ -9738,18 +9758,55 @@ html, body { background: #0A0B10 !important; -webkit-text-size-adjust: 100%; tex
     }
     const UI_TEXT_BINDINGS = {
         '.web-only-nav span':'backHome', '#btn-material-import-inline span':'importMaterial', '#btn-lang-confirm':'confirm',
-        '#btn-new-room span':'newRoom', '#btn-room-export-ops':'exportSelected', '#btn-export-all':'exportAll', '#btn-study-plan':'studyList', '#btn-vocab':'vocabulary', '#btn-import':'importConversation', '#btn-room-delete-ops':'deleteRooms', '#btn-config':'changeApiKey',
+        '#btn-new-room span':'newRoom', '#btn-room-export-ops':'exportSelected', '#btn-export-all':'exportAll', '#btn-study-plan':'studyList', '#btn-vocab':'vocabulary', '#btn-import':'importConversation', '#btn-room-delete-ops':'deleteRooms',
         '#chat-rooms-title':'chatRooms', '#side-menu .menu-section:nth-of-type(2) .menu-title':'roomAdvanced', '#side-menu .menu-section:nth-of-type(3) .menu-title':'globalSettings', '#side-menu .amazon-menu-section p':'books', '#model-settings-title':'modelSettings', '#btn-refresh-models':'refreshModels', '#drawer-disclaimer':'disclaimer', '#side-menu .menu-section > a[href="https://gugopro.com"]':'website', '.kofi-button':'buyCoffee', '.drawer-contact-note':'feedback', '.drawer-legal-about':'legalAbout', '.drawer-legal-contact':'legalContact', '.drawer-legal-privacy':'legalPrivacy', '.drawer-legal-terms':'legalTerms', '.drawer-legal-disclaimer':'legalDisclaimer',
         '#word-lookup-title':'wordLookup', '#btn-word-lookup':'lookup', '#btn-word-speak':'speakAgain', '#btn-word-add':'addWord', '#btn-word-close':'close',
         '#study-plan-title':'studyPlan', '#study-language-label':'teachingLanguage', '#study-level-label':'level', '#study-mode-label':'teachingMode', '#study-topic-label':'topics', '#study-format-label':'formats', '#study-assistant-label':'assistant', '#study-material-label':'materials', '#study-dictionary-label':'dictionaries', '#btn-study-save':'saveStudy', '#btn-study-close':'close',
         '#vocab-title':'vocabularyBook', '#btn-vocab-create':'newDictionary', '#btn-vocab-rename':'rename', '#btn-vocab-delete':'deleteDictionary', '#btn-vocab-close':'close', '#quota-free-limit-label':'freeLimit', '#quota-used-label':'usedToday', '#api-title':'apiTitle', '#api-copy':'apiCopy', '#api-free-notice':'apiFreeNotice', '#api-local-notice':'apiLocalNotice', '#api-help-link':'apiHelp', '#btn-save-key':'saveAndStart', '#btn-stt-ok':'understood', '.welcome-card h4':'welcomeTitle'
     };
+    function updateApiKeyButtonState() {
+        const btn = document.getElementById('btn-config');
+        if (!btn) return;
+        const hasKey = !!getGeminiApiKey();
+        const enterKeyMap = {
+            'zh-TW': '請輸入 GEMINI API KEY',
+            'en': 'Please enter GEMINI API KEY',
+            'ja': 'GEMINI API KEY を入力してください',
+            'fr': 'Veuillez saisir la clé GEMINI API KEY',
+            'de': 'Bitte GEMINI API KEY eingeben',
+            'es': 'Ingrese su GEMINI API KEY',
+            'zh-CN': '请输入 GEMINI API KEY',
+            'ko': 'GEMINI API KEY를 입력하세요',
+            'ru': 'Пожалуйста, введите GEMINI API KEY',
+            'vi': 'Vui lòng nhập GEMINI API KEY',
+            'id': 'Silakan masukkan GEMINI API KEY',
+            'pt': 'Insira a sua GEMINI API KEY',
+            'it': 'Inserisci la GEMINI API KEY',
+            'ar': 'يرجى إدخال GEMINI API KEY',
+            'hi': 'कृपया GEMINI API KEY दर्ज करें',
+            'th': 'กรุณากรอก GEMINI API KEY',
+            'ms': 'Sila masukkan GEMINI API KEY',
+            'nl': 'Voer uw GEMINI API KEY in',
+            'pl': 'Wprowadź klucz GEMINI API KEY',
+            'tr': 'Lütfen GEMINI API KEY girin'
+        };
+        const lang = (typeof uiLang === 'function' ? uiLang() : '') || 'zh-TW';
+        if (hasKey) {
+            btn.classList.remove('api-key-unconfigured');
+            btn.innerHTML = `<i class="fa-solid fa-key"></i> <span>${(typeof uiText === 'function' ? uiText('changeApiKey') : '') || '變更 Gemini API Key'}</span>`;
+        } else {
+            btn.classList.add('api-key-unconfigured');
+            const enterTxt = enterKeyMap[lang] || enterKeyMap['zh-TW'];
+            btn.innerHTML = `<i class="fa-solid fa-key"></i> <span>${enterTxt}</span>`;
+        }
+    }
     function applyUiTranslations() {
         const lang = uiLang();
         document.documentElement.lang = lang;
         const apiInput = document.getElementById('api-key-input'); if (apiInput) { apiInput.placeholder = uiText('apiPlaceholder'); apiInput.setAttribute('aria-label', uiText('apiPlaceholder')); }
         document.documentElement.dataset.uiLang = lang;
         Object.entries(UI_TEXT_BINDINGS).forEach(([selector, key]) => { document.querySelectorAll(selector).forEach(el => { if (el.matches('input,textarea,select')) el.value = el.value; else el.textContent = uiText(key); }); });
+        updateApiKeyButtonState();
         const setAttr = (selector, attr, key) => document.querySelectorAll(selector).forEach(el => el.setAttribute(attr, uiText(key)));
         setAttr('#btn-material-import-inline','title','importMaterial'); setAttr('#btn-material-import-inline','aria-label','importMaterial');
         setAttr('.web-only-nav','aria-label','backHome');

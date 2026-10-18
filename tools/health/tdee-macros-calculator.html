@@ -1018,9 +1018,45 @@
         @media (max-width: 1023px) {
             .side-menu { right: 0; transform: none; clip-path: inset(0 0 0 100%); visibility: hidden; pointer-events: none; transition: clip-path 0.3s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 0.3s; }
             .side-menu.active { right: 0; clip-path: inset(0); visibility: visible; pointer-events: auto; transition: clip-path 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        @keyframes pulseApiKey {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); border-color: rgba(239, 68, 68, 0.85); background: rgba(239, 68, 68, 0.15); }
+            70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); border-color: rgba(239, 68, 68, 0.35); background: rgba(239, 68, 68, 0.05); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); border-color: rgba(239, 68, 68, 0.85); background: rgba(239, 68, 68, 0.15); }
         }
-
-    </style>
+        .api-key-unconfigured {
+            animation: pulseApiKey 2s infinite !important;
+            color: #f87171 !important;
+            border: 1px solid #ef4444 !important;
+            font-weight: 700 !important;
+        }
+    
+.api-security-notice {
+    color: #dbeafe;
+    background: rgba(14, 116, 144, 0.16);
+    border: 1px solid rgba(34, 211, 238, 0.28);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin: 8px 0;
+    line-height: 1.55;
+    font-size: 0.82rem;
+    text-align: left;
+}
+@keyframes key-glow {
+    0%, 100% {
+        box-shadow: 0 0 4px rgba(239, 68, 68, 0.4), inset 0 0 4px rgba(239, 68, 68, 0.2);
+        border-color: rgba(239, 68, 68, 0.6);
+    }
+    50% {
+        box-shadow: 0 0 16px rgba(239, 68, 68, 0.9), 0 0 24px rgba(239, 68, 68, 0.6), inset 0 0 8px rgba(239, 68, 68, 0.4);
+        border-color: rgba(239, 68, 68, 1);
+    }
+}
+.api-key-unconfigured {
+    animation: key-glow 1.8s infinite ease-in-out !important;
+    border: 1px solid rgba(239, 68, 68, 0.8) !important;
+    color: #fca5a5 !important;
+}
+</style>
 <link href="/tools/seo-content.css" rel="stylesheet"/><title>AI 專屬營養師｜TDEE、BMR 與三大營養素計算指南 | GugoPro</title>
 <link rel="alternate" hreflang="zh-TW" href="./tdee-macros-calculator.html">
 <link rel="alternate" hreflang="en" href="./tdee-macros-calculator.html?lang=en">
@@ -1203,16 +1239,21 @@
 </div>
 </div>
 <div class="modal-overlay" id="modal-api">
-<div class="modal-content">
-<h3 class="modal-h3">設定您的 API Key</h3>
-<p class="modal-p">本工具使用 Google Gemini AI。請輸入您的 API Key 以開始對話。</p>
-<a class="btn-full btn-tool" href="https://gugopro.com/tools/tutorials/how-to-get-gemini-api-key.html" style="background:rgba(255,255,255,0.1); color:#fff; text-decoration:none;" target="_blank">
-                👉 還沒有 API Key？點此觀看教學
-            </a>
-<div class="api-input-group">
-<input id="api-key-input" placeholder="貼上您的 Gemini API Key" type="password"/>
+<div class="modal-content modal">
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+    <h3 class="modal-h3" id="api-title" style="margin-bottom:0; color:var(--primary-neon,#00f2ff); font-family:'Outfit',sans-serif;">設定您的 API Key</h3>
+    <button aria-label="關閉" class="btn-tool btn-modal-close" onclick="const m=document.getElementById('modal-api'); if(m){ m.style.display='none'; m.classList.remove('open'); }" style="background:none; border:none; color:var(--text-dim,#a0a0a0); font-size:1.4rem; cursor:pointer;" type="button"><i class="fa-solid fa-xmark"></i></button>
 </div>
-<button class="btn-full btn-send" id="btn-save-key">儲存並開始</button>
+<p class="modal-p" id="api-copy" style="color:var(--text-dim,#a0a0a0); margin-bottom:14px; line-height:1.6; font-size:0.95rem;">本工具使用 Google Gemini AI。請輸入您的 API Key 以開始對話。</p>
+<p class="api-security-notice" id="api-free-notice">建議使用沒有綁定信用卡、訂閱或計費的 Google 帳號。本工具使用 Google 官方免費模型；目前常見免費配額每日可達 1,000 次以上，一般一天學習通常足夠。實際配額以 Google 官方顯示為準。</p>
+<p class="api-security-notice" id="api-local-notice">API Key 只儲存在這台設備的瀏覽器／App 本機儲存空間，不會由 GugoPro 保存或上傳。請勿分享；清除資料或更換設備後可能需要重新輸入。</p>
+<a class="btn-full btn-tool btn-modal-link" href="https://gugopro.com/tools/tutorials/how-to-get-gemini-api-key.html" id="api-help-link" style="background:rgba(255,255,255,0.1); color:#fff; text-decoration:none; margin:10px 0 14px; display:block; padding:12px; border-radius:12px; text-align:center; font-weight:700;" target="_blank">
+    👉 還沒有 API Key？點此觀看教學
+</a>
+<div class="api-input-group" style="margin-bottom:14px;">
+<input aria-label="Gemini API Key" id="api-key-input" placeholder="貼上您的 Gemini API Key" type="password" style="width:100%; padding:14px; background:rgba(0,0,0,0.3); border:1px solid var(--glass-border,rgba(255,255,255,0.1)); border-radius:12px; color:#fff; font-size:1rem; box-sizing:border-box;"/>
+</div>
+<button class="btn-full btn-send btn-modal-action btn-modal-save" id="btn-save-key" style="width:100%; padding:14px; border-radius:12px; border:none; font-weight:700; cursor:pointer; font-size:1rem; background:var(--secondary-neon,#00A8E1); color:#fff;">儲存並開始</button>
 </div>
 </div>
 <div class="modal-overlay" id="modal-stt-guide">
@@ -1501,7 +1542,7 @@
         function initNutritionDashboardEvents() { document.querySelectorAll('[data-close-nutrition]').forEach(button=>button.addEventListener('click',closeNutritionDashboard)); document.getElementById('nutrition-dashboard')?.addEventListener('click',event=>{if(event.target.id==='nutrition-dashboard')closeNutritionDashboard()}); ['gender','age','height','weight','activity','goal'].forEach(key=>document.getElementById('nutrition-'+key)?.addEventListener('change',handleNutritionProfileChange)); }
         function initNutritionImage() { const input=document.getElementById('nutrition-image-input'); const button=document.getElementById('btn-camera'); const remove=document.getElementById('remove-nutrition-image'); button?.addEventListener('click',()=>input?.click()); input?.addEventListener('change',event=>{const file=event.target.files?.[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{const result=String(reader.result), parts=result.split(',');pendingNutritionImage={data:parts[1],mime:file.type||'image/jpeg'};document.getElementById('nutrition-preview-image').src=result;document.getElementById('nutrition-image-preview').classList.add('active');};reader.readAsDataURL(file)}); remove?.addEventListener('click',()=>{pendingNutritionImage=null;if(input)input.value='';document.getElementById('nutrition-image-preview')?.classList.remove('active');}); }
         function nutritionExportReport() { const room=getActiveNutritionRoom(); const calc=calculateNutritionProfile(room.nutrition.profile); const totals=mealTotals(room); const text=[`${nutritionCopy().appName} - ${nutritionCopy().dashboard}`,`${nutritionCopy().calories}: ${Math.round(totals.calories)} / ${calc.targetCal} kcal`,`${nutritionCopy().protein}: ${Math.round(totals.protein)} / ${calc.protein} g`,`${nutritionCopy().fat}: ${Math.round(totals.fat)} / ${calc.fat} g`,`${nutritionCopy().carbs}: ${Math.round(totals.carbs)} / ${calc.carbs} g`].concat(room.nutrition.meals.map((meal,i)=>`${i+1}. ${meal.name} - ${meal.calories} kcal (P ${meal.protein}g / F ${meal.fat}g / C ${meal.carbs}g)`)).join('\n'); if(navigator.clipboard)navigator.clipboard.writeText(text).then(()=>window.alert(nutritionCopy().reportCopied)).catch(()=>window.prompt(nutritionCopy().reportCopyFailed,text)); else window.prompt(nutritionCopy().reportCopyFailed,text); }
-        function initNutrition() { initNutritionSystem(); initNutritionLocale(); initNutritionDashboardEvents(); initNutritionImage(); checkApiKey(); initSpeechRecognition(); renderModelOptions(); renderGlobalAIQuota(); renderQuotaResetCountdown(); if(quotaResetTimer===null)quotaResetTimer=window.setInterval(renderQuotaResetCountdown,60000); fetchLatestModel({silent:true}); window.addEventListener('storage',event=>{if(event.key==='gugopro_global_ai_quota_v1')renderGlobalAIQuota();if(event.key===MODEL_PREFERENCE_KEY){reconcileCurrentModel();renderModelOptions();renderCurrentModelStatus();}}); window.addEventListener('gugopro:quota-updated',event=>{renderGlobalAIQuotaDisplay(event.detail||null);renderModelOptions();}); }
+        function initNutrition() { initNutritionSystem(); initNutritionLocale(); initNutritionDashboardEvents(); initNutritionImage(); if (typeof updateApiKeyButtonState === 'function') updateApiKeyButtonState(); initSpeechRecognition(); renderModelOptions(); renderGlobalAIQuota(); renderQuotaResetCountdown(); if(quotaResetTimer===null)quotaResetTimer=window.setInterval(renderQuotaResetCountdown,60000); fetchLatestModel({silent:true}); window.addEventListener('storage',event=>{if(event.key==='gugopro_global_ai_quota_v1')renderGlobalAIQuota();if(event.key===MODEL_PREFERENCE_KEY){reconcileCurrentModel();renderModelOptions();renderCurrentModelStatus();}}); window.addEventListener('gugopro:quota-updated',event=>{renderGlobalAIQuotaDisplay(event.detail||null);renderModelOptions();}); }
         window.__nutritionTest = { getRooms:()=>chatRooms, getActiveRoom:getActiveNutritionRoom, setModels:models=>{availableModels=models||[];currentModel=getModelQueue()[0]?.api_name||null;currentModelIndex=0;renderModelOptions();renderCurrentModelStatus();renderGlobalAIQuota();}, getLocale:()=>nutritionInterfaceLocale, setLocale:locale=>{nutritionInterfaceLocale=locale;localStorage.setItem(NUTRITION_LOCALE_KEY,locale);applyNutritionLocale();}, prompt:(text)=>nutritionPromptText(text,getActiveNutritionRoom(),null), send:sendMessage, calculate:calculateNutritionProfile, renderMarkdown:nutritionMarkdown, renderRoom:renderActiveRoom, addAssistant:(text,structured)=>{const id=addNutritionAssistantMessage(text,structured);renderActiveRoom();return id} };
 
         // --- Nutrition init ---
@@ -1942,7 +1983,38 @@
 
         function checkApiKey() {
             if (!getGeminiApiKey()) {
-                document.getElementById('modal-api').style.display = 'flex';
+                const modal = document.getElementById('modal-api');
+                if (modal) modal.style.display = 'flex';
+                const input = document.getElementById('api-key-input');
+                if (input) setTimeout(() => input.focus(), 50);
+                return false;
+            }
+            return true;
+        }
+
+        function updateApiKeyButtonState() {
+            const btn = document.getElementById('btn-config');
+            if (!btn) return;
+            const hasKey = !!getGeminiApiKey();
+            const enterKeyMap = {
+                'zh-TW': '請輸入 GEMINI API KEY',
+                'en': 'Please enter GEMINI API KEY',
+                'ja': 'GEMINI API KEY を入力してください',
+                'de': 'Bitte GEMINI API KEY eingeben',
+                'fr': 'Veuillez saisir la clé GEMINI API KEY',
+                'es': 'Ingrese su GEMINI API KEY',
+                'pt': 'Insira a sua GEMINI API KEY',
+                'zh-CN': '请输入 GEMINI API KEY'
+            };
+            const currentLang = (typeof nutritionInterfaceLocale !== 'undefined' ? nutritionInterfaceLocale : '') || 'zh-TW';
+            if (hasKey) {
+                btn.classList.remove('api-key-unconfigured');
+                const label = (typeof nutritionCopy === 'function' ? nutritionCopy()?.apiConfig : '') || '變更 GEMINI API KEY';
+                btn.innerHTML = `<i class="fa-solid fa-key"></i> <span>${label}</span>`;
+            } else {
+                btn.classList.add('api-key-unconfigured');
+                const enterText = enterKeyMap[currentLang] || enterKeyMap['zh-TW'];
+                btn.innerHTML = `<i class="fa-solid fa-key"></i> <span>${enterText}</span>`;
             }
         }
 
@@ -2026,10 +2098,16 @@
             if (key) {
                 localStorage.setItem('gugopro_gemini_api_key', key);
                 localStorage.setItem('gemini_api_key', key);
-                document.getElementById('modal-api').style.display = 'none';
-                hideError();
+            } else {
+                localStorage.removeItem('gugopro_gemini_api_key');
+                localStorage.removeItem('gemini_api_key');
+            }
+            document.getElementById('modal-api').style.display = 'none';
+            hideError();
+            if (key) {
                 fetchLatestModel({ silent: true });
             }
+            if (typeof updateApiKeyButtonState === 'function') updateApiKeyButtonState();
         };
 
         // --- Room Advanced Operations ---
@@ -2244,6 +2322,10 @@
         }
 
         document.getElementById('btn-mic').onclick = () => {
+            if (!getGeminiApiKey()) {
+                checkApiKey();
+                return;
+            }
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (!SpeechRecognition) {
                 document.getElementById('modal-stt-guide').style.display = 'flex';
@@ -2938,7 +3020,7 @@
           }
           function localizeLegacyModelOptions(){const copy=pack();document.querySelectorAll('#model-options .model-option').forEach(option=>{const modelName=option.dataset.model||'';const model=Array.isArray(availableModels)?availableModels.find(item=>item.api_name===modelName):null;const used=typeof getModelUsageCount==='function'?getModelUsageCount(modelName):0;const quota=Number(model?.dailyQuota||0);const quotaEl=option.querySelector('.model-option-quota');if(quotaEl)quotaEl.textContent=text('modelQuota',{quota,used});const exhausted=option.querySelector('.model-quota-exhausted');if(exhausted)exhausted.textContent=copy.quotaExhaustedModel;const toggle=option.querySelector('.model-toggle');const enabled=Boolean(toggle?.checked);const toggleLabel=option.querySelector('.model-toggle-label');if(toggleLabel)toggleLabel.textContent=enabled?copy.on:copy.off;if(toggle){toggle.setAttribute('aria-label',text(enabled?'enableModel':'disableModel',{name:model?.display_name||modelName}));toggle.title=text(enabled?'disableModel':'enableModel',{name:model?.display_name||modelName});}option.title=text(enabled?'disableModel':'enableModel',{name:model?.display_name||modelName});});}
           function syncLegacyDynamicStatus(){const total=Array.isArray(availableModels)?availableModels.length:0;const enabled=typeof getEnabledModels==='function'?getEnabledModels().length:0;const status=document.getElementById('model-settings-status');if(status&&total>0)status.textContent=currentModel?text('modelsLoadedStatus',{count:total,enabled,time:(typeof lastModelCatalogUpdatedAt?.toLocaleTimeString==='function'?lastModelCatalogUpdatedAt.toLocaleTimeString(healthLocale||undefined,{hour:'2-digit',minute:'2-digit'}):'')}):text('modelsLoadedNoEnabled',{count:total});localizeLegacyModelOptions();}
-          function applyHealthLocale(){healthLocale=normalizeLocale(healthLocale||routeLocale);try{localStorage.setItem(storageKey,healthLocale);}catch(_){}try{nutritionInterfaceLocale=healthLocale;}catch(_){}applyStaticHealthUI();patchRoomRenderer();if(typeof renderRooms==='function')renderRooms();if(typeof renderActiveRoom==='function')renderActiveRoom();if(typeof renderNutritionDashboard==='function')renderNutritionDashboard();if(typeof renderModelOptions==='function')renderModelOptions();if(typeof renderCurrentModelStatus==='function')renderCurrentModelStatus();if(typeof renderGlobalAIQuota==='function')renderGlobalAIQuota();if(tool==='weightLoss'&&typeof renderWeightPlan==='function')renderWeightPlan();syncLegacyDynamicStatus();}
+          function applyHealthLocale(){healthLocale=normalizeLocale(healthLocale||routeLocale);try{localStorage.setItem(storageKey,healthLocale);}catch(_){}try{nutritionInterfaceLocale=healthLocale;}catch(_){}applyStaticHealthUI();patchRoomRenderer();if(typeof renderRooms==='function')renderRooms();if(typeof renderActiveRoom==='function')renderActiveRoom();if(typeof renderNutritionDashboard==='function')renderNutritionDashboard();if(typeof renderModelOptions==='function')renderModelOptions();if(typeof renderCurrentModelStatus==='function')renderCurrentModelStatus();if(typeof renderGlobalAIQuota==='function')renderGlobalAIQuota();if(tool==='weightLoss'&&typeof renderWeightPlan==='function')renderWeightPlan();syncLegacyDynamicStatus();if(typeof updateApiKeyButtonState==='function')updateApiKeyButtonState();}
           function initHealthLocale(){healthLocale=detectHealthLocale();const oldSelect=document.getElementById('interface-lang');if(oldSelect){const select=oldSelect.cloneNode(true);oldSelect.replaceWith(select);select.addEventListener('change',()=>{healthLocale=normalizeLocale(select.value);try{localStorage.setItem(explicitKey,'1');localStorage.setItem(storageKey,healthLocale);}catch(_){}applyHealthLocale();});}applyHealthLocale();if(typeof setModelSettingsStatus==='function'&&!setModelSettingsStatus.__healthWrapped){const original=setModelSettingsStatus;const wrapped=function(value,state){const result=original.apply(this,arguments);window.setTimeout(syncLegacyDynamicStatus,0);return result;};wrapped.__healthWrapped=true;setModelSettingsStatus=wrapped;}}
           function healthPromptText(userText,room,image){const copy=pack();const calc=typeof calculateNutritionProfile==='function'?calculateNutritionProfile(room?.nutrition?.profile||{}):{};const totals=typeof mealTotals==='function'?mealTotals(room):{};const plan=tool==='weightLoss'?(room?.nutrition?.weightPlan||{}):{};const role=tool==='weightLoss'?'weight-loss coach':'nutritionist';const profile=room?.nutrition?.profile||{};const history=(room?.messages||[]).filter(item=>item&&item.text&&!item.pending).slice(-8).map(item=>`${item.role==='user'?'User':role}: ${item.text}`).join('\n');return `${copy.modelLanguage}\n${copy.systemInstruction}\n\nYou are GugoPro's careful, practical AI ${role}.\nWeight-loss plan: target=${plan.targetWeight||'not set'} kg, weekly rate=${plan.weeklyRate||'not set'} kg/week.\nProfile: gender=${profile.gender}, age=${profile.age}, height=${profile.height} cm, weight=${profile.weight} kg, activity=${profile.activity}, goal=${profile.goal}.\nCalculated BMR=${calc.bmr||0} kcal, TDEE=${calc.tdee||0} kcal, suggested daily target=${calc.targetCal||0} kcal, protein=${calc.protein||0}g, fat=${calc.fat||0}g, carbs=${calc.carbs||0}g.\nToday's tracked totals: calories=${Math.round(totals.calories||0)} kcal, protein=${Math.round(totals.protein||0)}g, fat=${Math.round(totals.fat||0)}g, carbs=${Math.round(totals.carbs||0)}g.\n\nSafety: provide general education, state assumptions, avoid unsafe rapid-loss targets, and encourage a qualified clinician for medical conditions, pregnancy, eating disorders, or medication interactions. Do not diagnose or prescribe.\n\n${history?`Recent conversation:\n${history}\n\n`:''}User message: "${String(userText||'').replace(/"/g,'\\"')}"${image?'\nA meal image is attached; estimate visible food conservatively and state uncertainty.':''}\n\nReturn ONLY valid JSON with this shape: {"replyText":"clear answer with headings and markdown tables when useful","foodScanResult":null or {"mealName":"...","calories":0,"protein":0,"fat":0,"carbs":0,"trafficLight":"green|yellow|red","advice":"brief adjustment"},"suggestedTdee":null or {"targetCal":0,"protein":0,"fat":0,"carbs":0}}. Keep the answer practical and in the requested language.`;}
           try{nutritionCopy=function healthNutritionCopy(){return pack();};nutritionLocaleName=function healthNutritionLocaleName(){return languageMap[healthLocale]?.nativeName||healthLocale;};detectNutritionLocale=detectHealthLocale;applyNutritionLocale=applyHealthLocale;initNutritionLocale=initHealthLocale;nutritionPromptText=healthPromptText;}catch(_){}
