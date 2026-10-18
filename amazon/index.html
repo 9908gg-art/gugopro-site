@@ -81,17 +81,7 @@ body.theme-jp .market-btn.active { background: linear-gradient(135deg, #FF3366, 
 .btn-nav { background: rgba(255,255,255,0.07); border: 1px solid var(--border-card); color: var(--text-primary); padding: 5px 12px; border-radius: 18px; font-size: 0.78rem; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s; }
 .btn-nav:hover { background: rgba(255,255,255,0.13); border-color: var(--accent); }
 .btn-nav.api-connected { border-color: var(--success); color: var(--success); }
-@keyframes pulseApiKey {
-  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); border-color: rgba(239, 68, 68, 0.85); background: rgba(239, 68, 68, 0.15); }
-  70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); border-color: rgba(239, 68, 68, 0.35); background: rgba(239, 68, 68, 0.05); }
-  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); border-color: rgba(239, 68, 68, 0.85); background: rgba(239, 68, 68, 0.15); }
-}
-.api-key-unconfigured {
-  animation: pulseApiKey 2s infinite !important;
-  color: #f87171 !important;
-  border: 1px solid #ef4444 !important;
-  font-weight: 700 !important;
-}
+
 
 /* Hero */
 .hero { text-align: center; padding: 28px 16px 10px; max-width: 700px; margin: 0 auto; }
@@ -466,21 +456,36 @@ body { height: 100vh; min-height: 100vh; height: 100dvh; min-height: 100dvh; dis
     font-size: 0.82rem;
     text-align: left;
 }
-@keyframes key-glow {
-    0%, 100% {
-        box-shadow: 0 0 4px rgba(239, 68, 68, 0.4), inset 0 0 4px rgba(239, 68, 68, 0.2);
-        border-color: rgba(239, 68, 68, 0.6);
+
+
+
+@keyframes pulseApiKey {
+    0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+        border-color: rgba(239, 68, 68, 0.85);
+        background: rgba(239, 68, 68, 0.18);
     }
-    50% {
-        box-shadow: 0 0 16px rgba(239, 68, 68, 0.9), 0 0 24px rgba(239, 68, 68, 0.6), inset 0 0 8px rgba(239, 68, 68, 0.4);
-        border-color: rgba(239, 68, 68, 1);
+    70% {
+        box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+        border-color: rgba(239, 68, 68, 0.35);
+        background: rgba(239, 68, 68, 0.05);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+        border-color: rgba(239, 68, 68, 0.85);
+        background: rgba(239, 68, 68, 0.18);
     }
 }
 .api-key-unconfigured {
-    animation: key-glow 1.8s infinite ease-in-out !important;
-    border: 1px solid rgba(239, 68, 68, 0.8) !important;
-    color: #fca5a5 !important;
+    animation: pulseApiKey 1.8s infinite ease-in-out !important;
+    border: 1px solid #ef4444 !important;
+    color: #f87171 !important;
+    font-weight: 700 !important;
 }
+.api-key-unconfigured *, .api-key-unconfigured span, .api-key-unconfigured i {
+    color: #f87171 !important;
+}
+
 </style>
 <script src="../js/global-ai-quota.js"></script>
 <script src="../js/unified-ai-model-engine.js"></script>
@@ -512,7 +517,7 @@ body { height: 100vh; min-height: 100vh; height: 100dvh; min-height: 100dvh; dis
     </a>
 <button aria-label="開啟模型與歷史設定" class="btn-nav" id="btn-menu" onclick="toggleDrawer()"><i class="fa-solid fa-bars"></i> 模型／歷史設定</button>
 
-<button class="btn-nav" id="btn-api-config" onclick="openApiModal()"><i class="fa-solid fa-gear"></i> <span id="api-status-text">API 設定</span></button>
+<button class="btn-nav" id="btn-api-config" onclick="openApiModal()"><i class="fa-solid fa-key"></i> <span id="api-status-text">API 設定</span></button>
 </div>
 </header>
 <!-- Hero -->
@@ -625,6 +630,14 @@ body { height: 100vh; min-height: 100vh; height: 100dvh; min-height: 100dvh; dis
 <span><i class="fa-solid fa-sliders"></i> 通用基礎篩選條件</span>
 <button class="drawer-close" onclick="toggleDrawer()"><i class="fa-solid fa-xmark"></i></button>
 </div>
+
+  <div class="filter-group" id="filter-group-api-key">
+    <div class="filter-group-title"><i class="fa-solid fa-key"></i> 全域設定 / API Key</div>
+    <button class="drawer-btn btn-full menu-item" id="btn-drawer-api-config" onclick="openApiModal()" style="width:100%; padding:12px 14px; border-radius:12px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); color:#fff; font-size:0.92rem; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:10px; margin-top:6px;">
+      <i class="fa-solid fa-key"></i> <span id="drawer-api-status-text">請輸入 GEMINI API KEY</span>
+    </button>
+  </div>
+
 <div class="filter-group">
 <div class="filter-group-title amazon-room-heading"><span><i class="fa-solid fa-comments"></i> 購物研究室 <span aria-live="polite" class="amazon-room-count" id="room-count">0</span></span><button aria-label="建立新研究室" class="model-refresh-button" id="btn-new-room" title="建立新研究室" type="button"><i class="fa-solid fa-plus"></i></button></div>
 <div class="amazon-room-list" id="room-list"></div>
@@ -674,13 +687,8 @@ body { height: 100vh; min-height: 100vh; height: 100dvh; min-height: 100dvh; dis
 <label class="filter-option"><input id="f-new" type="checkbox" value="p_n_condition-type:New"/> 全新 (New)</label>
 <label class="filter-option"><input id="f-used" type="checkbox" value="p_n_condition-type:Used"/> 二手/整新品 (Used)</label>
 </div>
-<div class="filter-group model-settings-section">
-<div class="filter-group-title"><span><i class="fa-solid fa-robot"></i> 模型設定 / Model Settings</span><button aria-label="重新整理免費模型清單" class="model-refresh-button" id="btn-refresh-models" title="重新整理免費模型清單" type="button"><i class="fa-solid fa-rotate"></i></button></div>
-<p aria-live="polite" class="model-settings-status" id="model-settings-status">正在載入站內免費模型清單...</p>
-<p aria-live="polite" class="model-current-status" id="model-current-status">目前使用模型：載入中…</p>
-<p aria-live="polite" class="global-ai-quota-status" id="global-ai-quota-status"></p>
-<p aria-live="polite" class="global-ai-quota-reset" id="global-ai-quota-reset">配額重置倒數：計算中…</p>
-<div aria-live="polite" class="global-ai-quota-pill" id="global-ai-quota-pill"><div class="global-ai-quota-item">📊 今日免費用量上限<strong id="global-ai-quota-limit">讀取中…</strong></div><div class="global-ai-quota-item">⚡ 今日已使用量<strong id="global-ai-quota-used">讀取中…</strong></div></div>
+
+
 <div aria-label="免費模型清單，使用開關控制" class="model-options" id="model-options" role="list"></div>
 </div>
 </div>
@@ -766,11 +774,14 @@ function updateKeyUI() {
     saveBtn.__bound = true;
   }
   var key = getGlobalApiKey();
+  var apiBtn = document.getElementById('btn-api-config');
+  var apiText = document.getElementById('api-status-text');
+  var drawerBtn = document.getElementById('btn-drawer-api-config');
+  var drawerText = document.getElementById('drawer-api-status-text');
   var statusBox = document.getElementById('key-status-box');
   var maskedDisplay = document.getElementById('masked-key-display');
   var clearBtn = document.getElementById('btn-clear-key');
-  var apiBtn = document.getElementById('btn-api-config');
-  var apiText = document.getElementById('api-status-text');
+
   if (key) {
     if (statusBox) statusBox.style.display = '';
     if (maskedDisplay) maskedDisplay.textContent = maskApiKey(key);
@@ -780,6 +791,10 @@ function updateKeyUI() {
       apiBtn.classList.remove('api-key-unconfigured');
     }
     if (apiText) apiText.textContent = '變更 GEMINI API KEY';
+    if (drawerBtn) {
+      drawerBtn.classList.remove('api-key-unconfigured');
+    }
+    if (drawerText) drawerText.textContent = '變更 GEMINI API KEY';
   } else {
     if (statusBox) statusBox.style.display = 'none';
     if (clearBtn) clearBtn.style.display = 'none';
@@ -788,6 +803,10 @@ function updateKeyUI() {
       apiBtn.classList.add('api-key-unconfigured');
     }
     if (apiText) apiText.textContent = '請輸入 GEMINI API KEY';
+    if (drawerBtn) {
+      drawerBtn.classList.add('api-key-unconfigured');
+    }
+    if (drawerText) drawerText.textContent = '請輸入 GEMINI API KEY';
   }
 }
 window.openApiModal = function() {
@@ -847,6 +866,7 @@ window.switchMarket = function(mk) {
 
 /* ===== FILTER DRAWER ===== */
 window.toggleDrawer = function(force) {
+  updateKeyUI();
   var drawer = document.getElementById('filter-drawer'); var overlay = document.getElementById('drawer-overlay');
   var desktopRail = window.innerWidth >= 901;
   if (desktopRail) {
@@ -1415,5 +1435,7 @@ window.__amazonFinderTest = {
 
 })();
 </script>
-<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"SoftwareApplication","name":"Amazon AI 智慧選品助手","applicationCategory":"WebApplication","operatingSystem":"Web Browser","url":"https://gugopro.com/amazon/","description":"以文字、圖片與語音輔助整理商品規格與選品方向；價格、庫存與商品頁內容應以 Amazon 當下頁面為準。","offers":{"@type":"Offer","price":"0","priceCurrency":"TWD"},"isAccessibleForFree":true,"author":{"@type":"Organization","name":"GugoPro","url":"https://gugopro.com/about.html"},"dateModified":"2026-10-05"},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"產生的推薦連結如何直達 Amazon 官方搜尋？","acceptedAnswer":{"@type":"Answer","text":"AI 會產生可檢查的關鍵字與規格標籤，按下矩陣卡片中的 Amazon US 或 Amazon JP 按鈕後，頁面會以對應市場的官方搜尋網址開啟；聯盟標記只用於導購歸因，商品資料仍以 Amazon 官方頁為準。"}},{"@type":"Question","name":"以圖搜尋若辨識不夠精確，如何加強文字描述？","acceptedAnswer":{"@type":"Answer","text":"補充商品用途、品牌或型號、尺寸、顏色、接口、購買國家、預算與不要的特徵，並分開上傳包裝標籤與商品主體。文字條件越具體，AI 越能縮小候選範圍；請把結果視為待核對的搜尋建議。"}},{"@type":"Question","name":"本工具會保存搜尋紀錄或個人 API 資訊嗎？","acceptedAnswer":{"@type":"Answer","text":"本工具以瀏覽器前端儲存研究室、條件與對話紀錄，Gemini API Key 也由瀏覽器本機儲存機制管理；不要輸入信用卡、身分證或其他不必要的敏感資料。清除瀏覽器網站資料即可移除本機紀錄，並請同時閱讀本站隱私權政策。"}}]}]}</script></body>
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"SoftwareApplication","name":"Amazon AI 智慧選品助手","applicationCategory":"WebApplication","operatingSystem":"Web Browser","url":"https://gugopro.com/amazon/","description":"以文字、圖片與語音輔助整理商品規格與選品方向；價格、庫存與商品頁內容應以 Amazon 當下頁面為準。","offers":{"@type":"Offer","price":"0","priceCurrency":"TWD"},"isAccessibleForFree":true,"author":{"@type":"Organization","name":"GugoPro","url":"https://gugopro.com/about.html"},"dateModified":"2026-10-05"},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"產生的推薦連結如何直達 Amazon 官方搜尋？","acceptedAnswer":{"@type":"Answer","text":"AI 會產生可檢查的關鍵字與規格標籤，按下矩陣卡片中的 Amazon US 或 Amazon JP 按鈕後，頁面會以對應市場的官方搜尋網址開啟；聯盟標記只用於導購歸因，商品資料仍以 Amazon 官方頁為準。"}},{"@type":"Question","name":"以圖搜尋若辨識不夠精確，如何加強文字描述？","acceptedAnswer":{"@type":"Answer","text":"補充商品用途、品牌或型號、尺寸、顏色、接口、購買國家、預算與不要的特徵，並分開上傳包裝標籤與商品主體。文字條件越具體，AI 越能縮小候選範圍；請把結果視為待核對的搜尋建議。"}},{"@type":"Question","name":"本工具會保存搜尋紀錄或個人 API 資訊嗎？","acceptedAnswer":{"@type":"Answer","text":"本工具以瀏覽器前端儲存研究室、條件與對話紀錄，Gemini API Key 也由瀏覽器本機儲存機制管理；不要輸入信用卡、身分證或其他不必要的敏感資料。清除瀏覽器網站資料即可移除本機紀錄，並請同時閱讀本站隱私權政策。"}}]}]}updateKeyUI();
+</script>
+</body>
 </html>

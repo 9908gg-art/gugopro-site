@@ -76,17 +76,7 @@ body.theme-jp .market-btn.active { background: linear-gradient(135deg, #FF3366, 
 .btn-nav { background: rgba(255,255,255,0.07); border: 1px solid var(--border-card); color: var(--text-primary); padding: 5px 12px; border-radius: 18px; font-size: 0.78rem; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s; }
 .btn-nav:hover { background: rgba(255,255,255,0.13); border-color: var(--accent); }
 .btn-nav.api-connected { border-color: var(--success); color: var(--success); }
-@keyframes pulseApiKey {
-  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); border-color: rgba(239, 68, 68, 0.85); background: rgba(239, 68, 68, 0.15); }
-  70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); border-color: rgba(239, 68, 68, 0.35); background: rgba(239, 68, 68, 0.05); }
-  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); border-color: rgba(239, 68, 68, 0.85); background: rgba(239, 68, 68, 0.15); }
-}
-.api-key-unconfigured {
-  animation: pulseApiKey 2s infinite !important;
-  color: #f87171 !important;
-  border: 1px solid #ef4444 !important;
-  font-weight: 700 !important;
-}
+
 
 /* Hero */
 .hero { text-align: center; padding: 28px 16px 10px; max-width: 700px; margin: 0 auto; }
@@ -352,21 +342,36 @@ body.theme-jp .btn-facet-jump { background: linear-gradient(135deg, #FF3366, #C7
     font-size: 0.82rem;
     text-align: left;
 }
-@keyframes key-glow {
-    0%, 100% {
-        box-shadow: 0 0 4px rgba(239, 68, 68, 0.4), inset 0 0 4px rgba(239, 68, 68, 0.2);
-        border-color: rgba(239, 68, 68, 0.6);
+
+
+
+@keyframes pulseApiKey {
+    0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+        border-color: rgba(239, 68, 68, 0.85);
+        background: rgba(239, 68, 68, 0.18);
     }
-    50% {
-        box-shadow: 0 0 16px rgba(239, 68, 68, 0.9), 0 0 24px rgba(239, 68, 68, 0.6), inset 0 0 8px rgba(239, 68, 68, 0.4);
-        border-color: rgba(239, 68, 68, 1);
+    70% {
+        box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+        border-color: rgba(239, 68, 68, 0.35);
+        background: rgba(239, 68, 68, 0.05);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+        border-color: rgba(239, 68, 68, 0.85);
+        background: rgba(239, 68, 68, 0.18);
     }
 }
 .api-key-unconfigured {
-    animation: key-glow 1.8s infinite ease-in-out !important;
-    border: 1px solid rgba(239, 68, 68, 0.8) !important;
-    color: #fca5a5 !important;
+    animation: pulseApiKey 1.8s infinite ease-in-out !important;
+    border: 1px solid #ef4444 !important;
+    color: #f87171 !important;
+    font-weight: 700 !important;
 }
+.api-key-unconfigured *, .api-key-unconfigured span, .api-key-unconfigured i {
+    color: #f87171 !important;
+}
+
 </style>
   <script src="../js/global-ai-quota.js"></script>
   <script src="../js/unified-ai-model-engine.js"></script>
@@ -397,7 +402,7 @@ body.theme-jp .btn-facet-jump { background: linear-gradient(135deg, #FF3366, #C7
       <i class="fa-solid fa-mug-hot"></i> 贊助
     </a>
     <button class="btn-nav" id="btn-menu" onclick="toggleDrawer()" aria-label="開啟模型與歷史設定"><i class="fa-solid fa-bars"></i> 模型／歷史設定</button>
-    <button class="btn-nav" id="btn-api-config" onclick="openApiModal()"><i class="fa-solid fa-gear"></i> <span id="api-status-text">API 設定</span></button>
+    <button class="btn-nav" id="btn-api-config" onclick="openApiModal()"><i class="fa-solid fa-key"></i> <span id="api-status-text">API 設定</span></button>
     <a href="https://gugopro.com" class="btn-nav"><i class="fa-solid fa-house"></i> 首頁</a>
   </div>
 </header>
@@ -478,17 +483,20 @@ body.theme-jp .btn-facet-jump { background: linear-gradient(135deg, #FF3366, #C7
     <span><i class="fa-solid fa-sliders"></i> 通用基礎篩選條件</span>
     <button class="drawer-close" onclick="toggleDrawer()"><i class="fa-solid fa-xmark"></i></button>
   </div>
+
+  <div class="filter-group" id="filter-group-api-key">
+    <div class="filter-group-title"><i class="fa-solid fa-key"></i> 全域設定 / API Key</div>
+    <button class="drawer-btn btn-full menu-item" id="btn-drawer-api-config" onclick="openApiModal()" style="width:100%; padding:12px 14px; border-radius:12px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); color:#fff; font-size:0.92rem; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:10px; margin-top:6px;">
+      <i class="fa-solid fa-key"></i> <span id="drawer-api-status-text">請輸入 GEMINI API KEY</span>
+    </button>
+  </div>
+
   <div class="filter-group">
     <div class="filter-group-title amazon-room-heading"><span><i class="fa-solid fa-comments"></i> 購物研究室 <span id="room-count" class="amazon-room-count" aria-live="polite">0</span></span><button id="btn-new-room" class="model-refresh-button" type="button" title="建立新研究室" aria-label="建立新研究室"><i class="fa-solid fa-plus"></i></button></div>
     <div id="room-list" class="amazon-room-list"></div>
   </div>
-  <div class="filter-group model-settings-section">
-    <div class="filter-group-title"><span><i class="fa-solid fa-robot"></i> 模型設定 / Model Settings</span><button id="btn-refresh-models" class="model-refresh-button" type="button" title="重新整理免費模型清單" aria-label="重新整理免費模型清單"><i class="fa-solid fa-rotate"></i></button></div>
-    <p id="model-settings-status" class="model-settings-status" aria-live="polite">正在載入站內免費模型清單...</p>
-    <p id="model-current-status" class="model-current-status" aria-live="polite">目前使用模型：載入中…</p>
-    <p id="global-ai-quota-status" class="global-ai-quota-status" aria-live="polite"></p>
-    <p id="global-ai-quota-reset" class="global-ai-quota-reset" aria-live="polite">配額重置倒數：計算中…</p>
-    <div id="global-ai-quota-pill" class="global-ai-quota-pill" aria-live="polite"><div class="global-ai-quota-item">📊 今日免費用量上限<strong id="global-ai-quota-limit">讀取中…</strong></div><div class="global-ai-quota-item">⚡ 今日已使用量<strong id="global-ai-quota-used">讀取中…</strong></div></div>
+  
+
     <div id="model-options" class="model-options" role="list" aria-label="免費模型清單，使用開關控制"></div>
   </div>
   <div class="filter-group research-brief-section">
@@ -606,11 +614,14 @@ function updateKeyUI() {
     saveBtn.__bound = true;
   }
   var key = getGlobalApiKey();
+  var apiBtn = document.getElementById('btn-api-config');
+  var apiText = document.getElementById('api-status-text');
+  var drawerBtn = document.getElementById('btn-drawer-api-config');
+  var drawerText = document.getElementById('drawer-api-status-text');
   var statusBox = document.getElementById('key-status-box');
   var maskedDisplay = document.getElementById('masked-key-display');
   var clearBtn = document.getElementById('btn-clear-key');
-  var apiBtn = document.getElementById('btn-api-config');
-  var apiText = document.getElementById('api-status-text');
+
   if (key) {
     if (statusBox) statusBox.style.display = '';
     if (maskedDisplay) maskedDisplay.textContent = maskApiKey(key);
@@ -620,6 +631,10 @@ function updateKeyUI() {
       apiBtn.classList.remove('api-key-unconfigured');
     }
     if (apiText) apiText.textContent = '變更 GEMINI API KEY';
+    if (drawerBtn) {
+      drawerBtn.classList.remove('api-key-unconfigured');
+    }
+    if (drawerText) drawerText.textContent = '變更 GEMINI API KEY';
   } else {
     if (statusBox) statusBox.style.display = 'none';
     if (clearBtn) clearBtn.style.display = 'none';
@@ -628,6 +643,10 @@ function updateKeyUI() {
       apiBtn.classList.add('api-key-unconfigured');
     }
     if (apiText) apiText.textContent = '請輸入 GEMINI API KEY';
+    if (drawerBtn) {
+      drawerBtn.classList.add('api-key-unconfigured');
+    }
+    if (drawerText) drawerText.textContent = '請輸入 GEMINI API KEY';
   }
 }
 window.openApiModal = function() {
@@ -687,6 +706,7 @@ window.switchMarket = function(mk) {
 
 /* ===== FILTER DRAWER ===== */
 window.toggleDrawer = function(force) {
+  updateKeyUI();
   var drawer = document.getElementById('filter-drawer'); var overlay = document.getElementById('drawer-overlay');
   var shouldOpen = typeof force === 'boolean' ? force : !drawer.classList.contains('open');
   drawer.classList.toggle('open', shouldOpen); overlay.classList.toggle('open', shouldOpen);

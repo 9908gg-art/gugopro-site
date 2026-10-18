@@ -666,17 +666,7 @@
             100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); }
         }
 
-        @keyframes pulseApiKey {
-            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); border-color: rgba(239, 68, 68, 0.85); background: rgba(239, 68, 68, 0.15); }
-            70% { box-shadow: 0 0 0 8px rgba(255, 59, 48, 0); border-color: rgba(239, 68, 68, 0.35); background: rgba(239, 68, 68, 0.05); }
-            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); border-color: rgba(239, 68, 68, 0.85); background: rgba(239, 68, 68, 0.15); }
-        }
-        .api-key-unconfigured {
-            animation: pulseApiKey 2s infinite !important;
-            color: #f87171 !important;
-            border: 1px solid #ef4444 !important;
-            font-weight: 700 !important;
-        }
+        
 
         /* Modals */
         .modal-overlay {
@@ -970,21 +960,36 @@
     font-size: 0.82rem;
     text-align: left;
 }
-@keyframes key-glow {
-    0%, 100% {
-        box-shadow: 0 0 4px rgba(239, 68, 68, 0.4), inset 0 0 4px rgba(239, 68, 68, 0.2);
-        border-color: rgba(239, 68, 68, 0.6);
+
+
+
+@keyframes pulseApiKey {
+    0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+        border-color: rgba(239, 68, 68, 0.85);
+        background: rgba(239, 68, 68, 0.18);
     }
-    50% {
-        box-shadow: 0 0 16px rgba(239, 68, 68, 0.9), 0 0 24px rgba(239, 68, 68, 0.6), inset 0 0 8px rgba(239, 68, 68, 0.4);
-        border-color: rgba(239, 68, 68, 1);
+    70% {
+        box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+        border-color: rgba(239, 68, 68, 0.35);
+        background: rgba(239, 68, 68, 0.05);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+        border-color: rgba(239, 68, 68, 0.85);
+        background: rgba(239, 68, 68, 0.18);
     }
 }
 .api-key-unconfigured {
-    animation: key-glow 1.8s infinite ease-in-out !important;
-    border: 1px solid rgba(239, 68, 68, 0.8) !important;
-    color: #fca5a5 !important;
+    animation: pulseApiKey 1.8s infinite ease-in-out !important;
+    border: 1px solid #ef4444 !important;
+    color: #f87171 !important;
+    font-weight: 700 !important;
 }
+.api-key-unconfigured *, .api-key-unconfigured span, .api-key-unconfigured i {
+    color: #f87171 !important;
+}
+
 </style>
 
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4756902118634553" crossorigin="anonymous"></script>
@@ -1263,6 +1268,7 @@
             if (input) input.placeholder = copy.inputPlaceholder;
             const camera = document.getElementById('btn-camera');
             if (camera) camera.title = copy.camera;
+            if (typeof updateApiKeyButtonState === 'function') updateApiKeyButtonState();
             if (typeof renderRooms === 'function') renderRooms();
             if (typeof renderActiveRoom === 'function') renderActiveRoom();
             if (typeof renderNutritionDashboard === 'function') renderNutritionDashboard();
@@ -1955,7 +1961,7 @@
 
         function openDrawer() {
             const desktop = window.innerWidth >= 1024;
-            setDrawerOpen(true);
+            updateApiKeyButtonState();setDrawerOpen(true);
             if (desktop) {
                 menu.scrollTop = 0;
             } else if (!drawerHistoryEntryActive) {
@@ -2821,6 +2827,7 @@
         document.getElementById('btn-retry-model').onclick = handleManualRetry;
         document.getElementById('btn-send').onclick = sendMessage;
         document.getElementById('user-text').onkeypress = (e) => { if(e.key === 'Enter') sendMessage(); };
+    if (typeof updateApiKeyButtonState === 'function') updateApiKeyButtonState();
     </script>
 </body>
 </html>
