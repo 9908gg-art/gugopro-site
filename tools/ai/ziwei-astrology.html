@@ -48,24 +48,21 @@
 
 
 @keyframes pulseApiKey {
-    0% {
-        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
-        border-color: rgba(239, 68, 68, 0.85);
-        background: rgba(239, 68, 68, 0.18);
+    0%, 100% {
+        opacity: 1;
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.8), 0 0 16px rgba(239, 68, 68, 0.65);
+        border-color: #ef4444;
+        background: rgba(239, 68, 68, 0.28);
     }
-    70% {
-        box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
-        border-color: rgba(239, 68, 68, 0.35);
+    50% {
+        opacity: 0.35;
+        box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+        border-color: rgba(239, 68, 68, 0.3);
         background: rgba(239, 68, 68, 0.05);
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
-        border-color: rgba(239, 68, 68, 0.85);
-        background: rgba(239, 68, 68, 0.18);
     }
 }
 .api-key-unconfigured {
-    animation: pulseApiKey 1.8s infinite ease-in-out !important;
+    animation: pulseApiKey 1.5s infinite ease-in-out !important;
     border: 1px solid #ef4444 !important;
     color: #f87171 !important;
     font-weight: 700 !important;
@@ -399,7 +396,7 @@ function bind(){document.getElementById('locale-select').addEventListener('chang
     closeApiModal();
     updateApiKeyButtonState();
 });document.getElementById('btn-retry-model').addEventListener('click',()=>{if(!isSending&&retryCountdownTimer===null&&pendingRetryRequest)sendMessage(pendingRetryRequest)});document.getElementById('btn-send').addEventListener('click',()=>sendMessage());document.getElementById('user-input').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});document.getElementById('mode-single').addEventListener('click',()=>setMode('single'));document.getElementById('mode-relation').addEventListener('click',()=>setMode('relation'));document.getElementById('btn-build-chart').addEventListener('click',()=>{persistChart();renderChartSummary(true);renderAnnualTrajectory()});document.getElementById('annual-metric').addEventListener('change',()=>{renderAnnualTrajectory();persistChart()});['birth-calendar','birth-date','birth-time','birth-gender','birth-location','known-bazi','focus-topic','relation-calendar','relation-date','relation-time','relation-gender','relation-location','relation-bazi','relation-focus','relationship-type'].forEach(id=>document.getElementById(id).addEventListener('change',persistChart));document.getElementById('primary-profile-select').addEventListener('change',e=>applyProfile(e.target.value,'primary'));document.getElementById('related-profile-select').addEventListener('change',e=>applyProfile(e.target.value,'related'));document.getElementById('btn-save-profile').addEventListener('click',saveProfile);document.getElementById('btn-delete-profile').addEventListener('click',deleteProfile);document.getElementById('btn-add-participant').addEventListener('click',addParticipant);document.querySelectorAll('.quick-btn').forEach(btn=>btn.addEventListener('click',()=>{if(btn.dataset.relationType){setMode('relation');document.getElementById('relationship-type').value=btn.dataset.relationType;persistChart()}const prompt=btn.dataset.prompt;document.getElementById('user-input').value=prompt;document.getElementById('user-input').focus();toast(prompt)}));}
-function init(){loadProfiles();populateSelects();loadRooms();bind();engine.updateApiKeyButtonState();init();fillInputs();applyI18n({scrollRoom:false});updateApiKeyButtonState();window.__ziweiAstrologyTest={getRooms:()=>rooms,getProfiles:()=>profiles,getActiveRoom:activeRoom,getChart:()=>({...roomChart(),...roomChart().primary}),getRelation:()=>({mode:roomChart().mode,relationshipType:roomChart().relationshipType,related:roomChart().related,additional:roomChart().additional||[]}),setChart:chart=>{activeRoom().chart=normalizeChart(chart);saveRooms();fillInputs()},setMode,addParticipant,saveProfile,applyProfile,getModelState:()=>engine.getState(),setModels:models=>engine.setModels(models),openDrawer,closeDrawer,send:sendMessage,showError,hideError,formatChartContext:buildChartContext,formatPrompt:buildUserPrompt,formatSystemPrompt:buildSystemPrompt,buildPdfReport,exportPdfReport,getLanguage:()=>COPY.locale,switchLanguage,getI18n:()=>I18N,getSihua:()=>({primary:annualSihuaRows(roomChart().primary,roomChart().relationshipType),related:annualSihuaRows(roomChart().related,roomChart().relationshipType),context:buildSihuaContext()})};}
+function init(){loadProfiles();populateSelects();loadRooms();bind();engine.init();fillInputs();applyI18n({scrollRoom:false});updateApiKeyButtonState();window.__ziweiAstrologyTest={getRooms:()=>rooms,getProfiles:()=>profiles,getActiveRoom:activeRoom,getChart:()=>({...roomChart(),...roomChart().primary}),getRelation:()=>({mode:roomChart().mode,relationshipType:roomChart().relationshipType,related:roomChart().related,additional:roomChart().additional||[]}),setChart:chart=>{activeRoom().chart=normalizeChart(chart);saveRooms();fillInputs()},setMode,addParticipant,saveProfile,applyProfile,getModelState:()=>engine.getState(),setModels:models=>engine.setModels(models),openDrawer,closeDrawer,send:sendMessage,showError,hideError,formatChartContext:buildChartContext,formatPrompt:buildUserPrompt,formatSystemPrompt:buildSystemPrompt,buildPdfReport,exportPdfReport,getLanguage:()=>COPY.locale,switchLanguage,getI18n:()=>I18N,getSihua:()=>({primary:annualSihuaRows(roomChart().primary,roomChart().relationshipType),related:annualSihuaRows(roomChart().related,roomChart().relationshipType),context:buildSihuaContext()})};}
 init();
 </script>
 </body></html>
