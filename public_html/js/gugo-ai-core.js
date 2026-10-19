@@ -2,10 +2,11 @@
  * GugoPro Unified AI Core Module (gugo-ai-core.js)
  * 適用於 GugoPro 旗下所有 AI 工具
  *
- * 核心原則：
- *  1. 100% 動態模型架構：完全不寫死任何特定模型名稱。所有模型皆動態從 quota.gugopro.com 拉取與解析。
+ * 核心功能：
+ *  1. 100% 動態模型架構：完全不寫死任何模型名稱，動態從 quota.gugopro.com 拉取最新免費模型。
  *  2. 故障自動轉移與即時通知：遇到 429、500、503、504 時，自動向前端廣播換模型通知並無縫切換。
  *  3. 全域配額聯動：每次呼叫即時扣減，並精確計算剩餘次數，杜絕 null。
+ *  4. 雙軌語音轉錄（STT）：支援 MediaRecorder + Gemini 多模態音訊轉文字，解決電腦端瀏覽器未支援語音辨識的困境。
  */
 
 (function(window) {
@@ -19,7 +20,7 @@
         MODEL_PREFERENCE_KEY: 'gugopro_ai_tutor_model_preference_v1',
         MODEL_DISABLED_KEY: 'gugopro_ai_tutor_disabled_models_v1',
         DYNAMIC_MODELS_CACHE_KEY: 'gugopro_dynamic_models_catalog_cache_v2',
-        REQUEST_TIMEOUT_MS: 15000 // 15秒保護
+        REQUEST_TIMEOUT_MS: 15000 // 15秒超時保護
     };
 
     const MODEL_TEXT_CAPABILITIES = new Set(['text_generation', 'chat_dialog']);
@@ -452,6 +453,45 @@
         }
     }
 
+    // 專用多模態語音轉文字（STT）介面：解決電腦端瀏覽器未支援語音辨識的困境
+    async function transcribeAudio(audioBlob, options = {}) {
+        const base64Data = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const b64 = (reader.result || '').split(',')[1];
+                if (b64) resolve(b64);
+                else reject(new Error('EMPTY_AUDIO_BLOB'));
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(audioBlob);
+        });
+
+        const targetLang = options.language || 'zh-TW';
+        const instruction = targetLang === 'en-US'
+            ? "Transcribe the spoken audio into text in English accurately."
+            : (targetLang === 'ja-JP'
+                ? "音声を日本語テキストに正確に書き起こしてください。"
+                : "請將這段語音中的內容準確轉錄為繁體中文文字。");
+
+        const payloadContents = [
+            {
+                role: 'user',
+                parts: [
+                    {
+                        inlineData: {
+                            mimeType: (audioBlob.type || 'audio/webm').split(';')[0],
+                            data: base64Data
+                        }
+                    },
+                    { text: `${instruction} 務必直接輸出轉錄出的文字即可，不要輸出任何多餘的解釋、標籤或問候語。` }
+                ]
+            }
+        ];
+
+        const result = await generateText(payloadContents, { temperature: 0.1 });
+        return (result?.text || '').trim();
+    }
+
     window.GugoAICore = {
         getApiKey,
         setApiKey,
@@ -466,7 +506,8 @@
         setModelEnabled,
         isModelEnabled,
         generateText,
-        generateJSON
+        generateJSON,
+        transcribeAudio
     };
 
     document.addEventListener('DOMContentLoaded', () => {
