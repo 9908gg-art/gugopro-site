@@ -32,6 +32,8 @@
 <script src="https://gugopro.com/js/global-ai-quota.js"></script>
 <script src="https://gugopro.com/js/gugo-ai-core.js"></script>
 <script defer="defer" src="https://gugopro.com/tools/ai/js/english-speaking-tutor-locales.js"></script>
+<!-- PDF.js for Reading Textbooks -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <!-- Fonts & Icons -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
@@ -145,8 +147,6 @@
             z-index: 1000;
             backdrop-filter: blur(12px);
             flex-shrink: 0;
-            position: relative;
-            top: auto;
             min-height: 48px;
         }
 
@@ -622,7 +622,7 @@
             font-weight: 600;
             color: #fff;
             margin-bottom: 6px;
-            padding-right: 96px;
+            padding-right: 120px;
             word-break: break-word;
             user-select: text;
             -webkit-user-select: text;
@@ -644,7 +644,7 @@
             display: flex;
             align-items: center;
             gap: 6px;
-            opacity: 0.6;
+            opacity: 0.7;
             transition: opacity 0.2s;
         }
 
@@ -663,6 +663,27 @@
 
         .btn-msg-action:hover { color: #fff; }
         .btn-msg-delete:hover { color: var(--error-red); }
+
+        /* 跟讀練習小按鈕 (置於導師氣泡右上角) */
+        .btn-msg-shadow-trigger {
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            color: #fde68a;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s;
+        }
+        .btn-msg-shadow-trigger:hover {
+            background: rgba(245, 158, 11, 0.28);
+            border-color: #f59e0b;
+            color: #fff;
+        }
 
         /* TTS 專用停止按鈕樣式與跳動動畫 */
         .btn-msg-stop { color: #fda4af; }
@@ -687,14 +708,104 @@
         .pronunciation-score-good .pronunciation-score-badge { color: #d9ffe4; background: rgba(33, 160, 82, .28); border: 1px solid rgba(89, 220, 127, .5); }
         .pronunciation-score-ok .pronunciation-score-badge { color: #fff2b6; background: rgba(255, 193, 7, .22); border: 1px solid rgba(255, 213, 79, .52); }
         .pronunciation-score-low .pronunciation-score-badge { color: #ffd8d8; background: rgba(203, 65, 65, .25); border: 1px solid rgba(255, 112, 112, .5); }
-        .pronunciation-retry { border: 1px solid rgba(255,255,255,.22); background: rgba(255,255,255,.12); color: #fff; border-radius: 999px; padding: 4px 10px; cursor: pointer; font-size: .74rem; font-weight: 700; transition: all 0.2s; }
+        
+        /* 重新挑戰按鈕：具備錄音中狀態 */
+        .pronunciation-retry {
+            border: 1px solid rgba(255,255,255,.22);
+            background: rgba(255,255,255,.12);
+            color: #fff;
+            border-radius: 999px;
+            padding: 4px 12px;
+            cursor: pointer;
+            font-size: .74rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s;
+        }
         .pronunciation-retry:hover { background: rgba(255,255,255,.22); border-color: #ffd54f; color: #ffd54f; }
-        .pronunciation-recognized { margin: 0 0 8px; padding: 8px 10px; border-radius: 10px; color: #e5f7ff; background: rgba(0,122,255,.14); border: 1px solid rgba(103,232,249,.28); font-size: .86rem; line-height: 1.45; overflow-wrap: anywhere; }
+        .pronunciation-retry.recording {
+            background: #ef4444 !important;
+            border-color: #f87171 !important;
+            color: #fff !important;
+            animation: pulseMicWave 1.4s infinite !important;
+        }
+
+        .pronunciation-recognized { margin: 0 0 8px; padding: 8px 10px; border-radius: 10px; color: #e5f7ff; background: rgba(0,122,255,.14); border: 1px solid rgba(103,232,249,.28); font-size: .86rem; line-height: 1.45; overflow-wrap: anywhere; width: 100%; }
         .pronunciation-recognized strong { color: #fff; font-weight: 800; }
+        .pronunciation-diff-tags { margin: 4px 0 0; font-size: 0.8rem; line-height: 1.5; }
+        .diff-match { color: #86efac; }
+        .diff-miss { color: #f87171; text-decoration: line-through; margin-right: 4px; }
+        .diff-expected { color: #ffd54f; font-weight: 700; text-decoration: underline; }
 
         /* 錄音模式下的氣泡音訊播放器 */
         .audio-message-bubble { display: inline-flex; align-items: center; gap: 8px; margin: 8px 0 4px; padding: 8px 12px; border: 1px solid rgba(255,255,255,.18); border-radius: 16px; background: rgba(255,255,255,.08); color: #e8eef8; }
         .audio-message-bubble button { width: 32px; height: 32px; border: 0; border-radius: 50%; background: #dbeafe; color: #172033; cursor: pointer; display: grid; place-items: center; }
+
+        /* 滑鼠懸停英文單字浮動翻譯 Tooltip */
+        .hover-word {
+            display: inline-block;
+            border-radius: 4px;
+            transition: background 0.15s, color 0.15s;
+            cursor: pointer;
+        }
+        .hover-word:hover {
+            background: rgba(0, 242, 255, 0.2);
+            color: #67e8f9;
+        }
+
+        #word-hover-tooltip {
+            position: fixed;
+            z-index: 2500;
+            background: rgba(18, 22, 34, 0.96);
+            border: 1px solid rgba(0, 242, 255, 0.45);
+            border-radius: 8px;
+            padding: 6px 10px;
+            color: #fff;
+            font-size: 0.78rem;
+            line-height: 1.4;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px);
+            pointer-events: none;
+            opacity: 0;
+            transform: translateY(4px);
+            transition: opacity 0.2s, transform 0.2s;
+            max-width: 240px;
+            display: none;
+        }
+        #word-hover-tooltip.visible {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* 選取文字浮動「查單字 / 加入生詞」膠囊按鈕 */
+        #selection-lookup-bar {
+            position: fixed;
+            z-index: 2400;
+            background: rgba(18, 22, 34, 0.96);
+            border: 1px solid rgba(245, 158, 11, 0.5);
+            border-radius: 20px;
+            padding: 4px 10px;
+            display: none;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+            backdrop-filter: blur(8px);
+        }
+        #selection-lookup-bar button {
+            background: none;
+            border: none;
+            color: #fde68a;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        #selection-lookup-bar button:hover { color: #fff; }
 
         .chat-floating-nav {
             position: fixed;
@@ -1148,7 +1259,7 @@
             </a>
             <div class="header-room-indicator" id="header-room-indicator">
                 <i class="fa-solid fa-chalkboard-user" style="color:var(--primary-neon);"></i>
-                <span id="header-active-room-name">新教室</span>
+                <span id="header-active-room-name">一般對話</span>
             </div>
         </div>
 
@@ -1213,10 +1324,10 @@
                 <li><i aria-hidden="true" class="fa-solid fa-circle-play" style="color: #38bdf8;"></i><span><strong data-page-copy="quickStartTitle">如何開始使用</strong>：<span data-page-copy="quickStartBody">點擊左側邊欄「設定 API Key」輸入金鑰即可開始練習。若您尚未取得，設定彈窗內附有 1 分鐘免費申請圖文教學，支援 Google 官方完全免費額度，免綁信用卡。</span></span></li>
                 <li><i aria-hidden="true" class="fa-solid fa-key" style="color: #00f2ff;"></i><span><strong data-page-copy="quickFreeTitle">官方免費額度支援</strong>：<span data-page-copy="quickFreeBody">本工具不收取任何訂閱月費，支援 Google 官方提供的 Gemini Free Tier 免費額度，日常對話與口說練習完全足夠，無須綁定信用卡或付費帳單。</span></span></li>
                 <li><i aria-hidden="true" class="fa-solid fa-shield-halved" style="color: #34c759;"></i><span><strong data-page-copy="quickPrivacyTitle">本地端點隱私防護</strong>：<span data-page-copy="quickPrivacyBody">您的 API Key、教材檔案與學習紀錄僅保存在您目前的瀏覽器本機儲存空間（localStorage），GugoPro 伺服器不會蒐集、備份或上傳您的金鑰與對話內容。</span></span></li>
-                <li><i aria-hidden="true" class="fa-solid fa-microphone-lines"></i><span data-page-copy="quickSpeech"><strong>雙語言即時語音發話、發音評分與隨時停止朗讀</strong>：左側按鈕鎖定「學習語言」發話與跟讀評分、右側按鈕鎖定「母語」提問。AI 回覆右上角提供【喇叭朗讀】與【⏹ 暫停停止按鈕】；使用者的發話氣泡會自動計算發音分數，並支援「🔄 重新挑戰發音」！</span></li>
+                <li><i aria-hidden="true" class="fa-solid fa-microphone-lines"></i><span data-page-copy="quickSpeech"><strong>雙語言即時語音發話、發音評分與隨時停止朗讀</strong>：左側按鈕鎖定「學習語言」發話與跟讀評分、右側按鈕鎖定「母語」提問。AI 回覆右上角提供【喇叭朗讀】與【⏹ 暫停停止按鈕】；使用者的發話氣泡會自動計算發音分數，並支援點擊「🔄 重新挑戰發音」直接錄音評分！</span></li>
+                <li><i aria-hidden="true" class="fa-solid fa-hand-pointer"></i><span><strong>滑鼠懸停翻譯與生詞本</strong>：滑鼠停留在英文單字上 600ms 自動浮現翻譯；選取任何單字即可查字典並一鍵加入專屬生詞本。</span></li>
                 <li><i aria-hidden="true" class="fa-solid fa-keyboard"></i><span data-page-copy="quickDock">底部輸入列固定在畫面最下方，支援多行文字；Enter 發送、Shift＋Enter 換行</span></li>
                 <li><i aria-hidden="true" class="fa-solid fa-paperclip"></i><span data-page-copy="quickMaterial">點擊頂部紙夾可導入 TXT、Markdown、PDF 教材，並綁定目前教室</span></li>
-                <li><i aria-hidden="true" class="fa-solid fa-book-open"></i><span data-page-copy="quickVocab">選取歷史對話中的單字，可查意思、重聽發音並加入生詞字典</span></li>
             </ul>
 
             <section aria-labelledby="welcome-learning-title" class="welcome-guide">
@@ -1330,6 +1441,16 @@
     </div>
 </div>
 
+<!-- 懸停單字翻譯小浮層 (Tooltip) -->
+<div id="word-hover-tooltip"></div>
+
+<!-- 選取文字浮動「查單字 / 加入生詞」膠囊按鈕 -->
+<div id="selection-lookup-bar">
+    <button type="button" id="btn-quick-lookup"><i class="fa-solid fa-magnifying-glass"></i> 查單字</button>
+    <span style="color:rgba(255,255,255,0.2);">|</span>
+    <button type="button" id="btn-quick-add-vocab"><i class="fa-solid fa-plus"></i> 生詞本</button>
+</div>
+
 <!-- Modals -->
 <div class="modal-overlay" id="modal-api">
     <div class="modal-content modal">
@@ -1352,66 +1473,53 @@
     <div class="modal-content word-lookup-card">
         <h3 class="modal-h3" id="word-lookup-title">單字查詢</h3>
         <div class="word-lookup-term" id="word-lookup-term" style="font-size:1.3rem; font-weight:800; color:#67e8f9; margin-bottom:8px;"></div>
-        <div class="word-lookup-controls" style="margin-bottom:10px;">
-            <select aria-label="選擇解釋語言" id="word-lookup-lang" class="lang-select"></select>
-        </div>
-        <div class="word-lookup-meaning" id="word-lookup-meaning" style="min-height:70px; padding:10px; background:rgba(255,255,255,0.05); border-radius:8px; line-height:1.6; margin-bottom:12px;"></div>
+        <div class="word-lookup-meaning" id="word-lookup-meaning" style="min-height:70px; padding:10px; background:rgba(255,255,255,0.05); border-radius:8px; line-height:1.6; margin-bottom:12px; color:#e2e8f0; font-size:0.9rem;"></div>
         <div class="word-lookup-buttons" style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-            <button class="btn-full btn-send" id="btn-word-lookup" type="button">查詢意思</button>
-            <button class="btn-full btn-material" id="btn-word-speak" type="button">🔊 重聽發音</button>
-            <button class="btn-full" id="btn-word-add" style="background:#34d399;color:#062116;" type="button">＋加入生詞本</button>
-            <button class="btn-full" id="btn-word-close" style="background:rgba(255,255,255,0.1);color:#fff;" type="button">關閉</button>
+            <button class="btn-full btn-material" id="btn-word-speak" style="margin:0; background:rgba(0,242,255,0.15); color:#67e8f9; border:1px solid rgba(0,242,255,0.3);" type="button">🔊 朗讀發音</button>
+            <button class="btn-full" id="btn-word-add" style="margin:0; background:#34d399; color:#062116;" type="button">＋加入生詞本</button>
         </div>
+        <button class="btn-full" onclick="document.getElementById('modal-word-lookup').style.display='none'" style="margin-top:10px; background:rgba(255,255,255,0.1); color:#fff;" type="button">關閉</button>
     </div>
 </div>
 
 <div class="modal-overlay" id="modal-vocab">
     <div class="modal-content">
-        <h3 class="modal-h3" id="vocab-title">生詞字典</h3>
-        <p class="modal-p">選取歷史對話中的單字，可隨時查詢意思、重聽發音並歸納複習。</p>
-        <div class="vocab-toolbar" style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;">
-            <select aria-label="選擇生詞字典" id="vocab-dictionary-select" class="lang-select"></select>
-            <input id="vocab-dictionary-name" placeholder="輸入新字典名稱" style="padding:9px; background:rgba(0,0,0,0.3); border:1px solid var(--glass-border); border-radius:8px; color:#fff;">
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-                <button class="btn-full btn-send" id="btn-vocab-create" style="margin:0;" type="button">新增字典</button>
-                <button class="btn-full btn-material" id="btn-vocab-rename" style="margin:0;" type="button">重新命名</button>
-            </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <h3 class="modal-h3" id="vocab-title" style="margin:0;">生詞字典</h3>
+            <button class="btn-msg-action" onclick="document.getElementById('modal-vocab').style.display='none'"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <div class="vocab-word-list" id="vocab-word-list" style="max-height:280px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; margin-bottom:12px;"></div>
-        <button class="btn-full" id="btn-vocab-delete" style="background:rgba(255,59,48,0.16);color:#fecaca;" type="button">刪除目前字典</button>
-        <button class="btn-full" id="btn-vocab-close" style="background:rgba(255,255,255,0.1);color:#fff;" type="button">關閉</button>
+        <p class="modal-p">在對話中選取文字或點擊單字即可查詢、朗讀並保存於此。</p>
+        <div class="vocab-word-list" id="vocab-word-list" style="max-height:300px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; margin-bottom:14px;"></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <button class="btn-full" id="btn-vocab-clear-all" style="background:rgba(255,59,48,0.16); color:#fecaca; margin:0;" type="button">清空生詞本</button>
+            <button class="btn-full" onclick="document.getElementById('modal-vocab').style.display='none'" style="background:rgba(255,255,255,0.1); color:#fff; margin:0;" type="button">關閉</button>
+        </div>
     </div>
 </div>
 
-<div aria-hidden="true" aria-modal="true" class="modal-overlay" id="modal-study-plan" role="dialog">
+<div class="modal-overlay" id="modal-study-plan">
     <div class="modal-content">
         <h3 class="modal-h3" id="study-plan-title">教室學習清單</h3>
-        <p class="modal-p" id="study-plan-room">目前教室設定</p>
-        <div class="study-toolbar" style="display:grid; gap:8px; margin-bottom:12px;">
-            <label style="color:#bae6fd; font-weight:700; font-size:0.8rem;" for="study-language">教學語言</label>
-            <select aria-label="選擇教學語言" id="study-language" class="lang-select"></select>
-            <label style="color:#bae6fd; font-weight:700; font-size:0.8rem;" for="study-level">程度</label>
-            <select aria-label="選擇學習程度" id="study-level" class="lang-select">
-                <option value="A1" selected="selected">A1 初級入門</option>
-                <option value="A2">A2 初級進階</option>
-                <option value="B1">B1 中級</option>
-                <option value="B2">B2 中高級</option>
-                <option value="C1">C1 高級</option>
-                <option value="C2">C2 精通</option>
+        <p class="modal-p" id="study-plan-room">當前教室設定與目標</p>
+        <div style="display:grid; gap:10px; margin-bottom:14px;">
+            <label style="color:#bae6fd; font-weight:700; font-size:0.8rem;">學習者目標程度 (CEFR)</label>
+            <select id="study-level-select" class="lang-select">
+                <option value="A1">A1 初級入門 (基礎單詞短句)</option>
+                <option value="A2">A2 初級進階 (日常簡短對話)</option>
+                <option value="B1" selected="selected">B1 中級 (工作與生活交流)</option>
+                <option value="B2">B2 中高級 (流利討論抽象主題)</option>
+                <option value="C1">C1 高級 (專業商務與學術)</option>
             </select>
-            <label style="color:#bae6fd; font-weight:700; font-size:0.8rem;" for="study-mode">教學模式</label>
-            <select aria-label="選擇學習模式" id="study-mode" class="lang-select">
-                <option value="conversation" selected="selected">教材／生詞對話練習</option>
-                <option value="review">單字複習與測驗</option>
-                <option value="exam">混合測驗模式</option>
+
+            <label style="color:#bae6fd; font-weight:700; font-size:0.8rem;">對話互動模式</label>
+            <select id="study-tutor-mode-select" class="lang-select">
+                <option value="casual" selected="selected">自由友善聊天 (溫柔鼓勵、適度糾錯)</option>
+                <option value="strict">嚴格文法糾錯 (每次指出發音或文法盲點)</option>
+                <option value="scenario">情境模擬面試 (高頻提問、挑戰回答)</option>
             </select>
         </div>
-        <strong style="color:#bae6fd; font-size:0.85rem; display:block; margin:10px 0 6px;">選擇教材檔案</strong>
-        <div class="study-checklist" id="study-material-list" style="max-height:140px; overflow-y:auto; display:grid; gap:6px; margin-bottom:12px;"></div>
-        <strong style="color:#bae6fd; font-size:0.85rem; display:block; margin:10px 0 6px;">選擇生詞字典</strong>
-        <div class="study-checklist" id="study-dictionary-list" style="max-height:140px; overflow-y:auto; display:grid; gap:6px; margin-bottom:14px;"></div>
-        <button class="btn-full btn-send" id="btn-study-save" type="button">儲存設定</button>
-        <button class="btn-full" id="btn-study-close" style="background:rgba(255,255,255,0.1);color:#fff;" type="button">關閉</button>
+        <button class="btn-full btn-send" id="btn-save-study-plan" type="button">儲存學習設定</button>
+        <button class="btn-full" onclick="document.getElementById('modal-study-plan').style.display='none'" style="background:rgba(255,255,255,0.1); color:#fff;" type="button">關閉</button>
     </div>
 </div>
 
@@ -1423,9 +1531,9 @@
         <p class="material-file-note">支援 .txt、.md、.pdf，或直接貼上課文。教材僅綁定目前教室並保存於本機。</p>
         <textarea class="material-paste" id="material-paste" placeholder="直接貼上自訂文章或課文"></textarea>
         <button class="btn-full btn-send" id="btn-material-save-paste" style="margin-top:10px;" type="button">儲存貼上的教材</button>
-        <button class="btn-full btn-material" id="btn-material-replace" type="button">📎 更換教材檔案</button>
+        <button class="btn-full" id="btn-material-replace" style="background:rgba(0,242,255,0.15); color:#67e8f9; border:1px solid rgba(0,242,255,0.3);" type="button">📎 上傳教材檔案 (.txt/.md/.pdf)</button>
         <button class="btn-full" id="btn-material-clear-modal" style="background:rgba(255,255,255,0.1); color:#fff;" type="button">清除本房間教材</button>
-        <button class="btn-full" id="btn-material-close" style="background:rgba(255,255,255,0.1); color:#fff;" type="button">關閉</button>
+        <button class="btn-full" onclick="document.getElementById('modal-material').style.display='none'" style="background:rgba(255,255,255,0.1); color:#fff;" type="button">關閉</button>
     </div>
 </div>
 
@@ -1441,17 +1549,7 @@
     </div>
 </div>
 
-<div class="modal-overlay" id="modal-room-ops">
-    <div class="modal-content">
-        <h3 class="modal-h3" id="room-ops-title">教室操作</h3>
-        <p class="modal-p" id="room-ops-desc">請選擇要操作的教室：</p>
-        <div class="room-ops-list" id="room-ops-list" style="max-height:260px; overflow-y:auto; margin-bottom:16px;"></div>
-        <button class="btn-full btn-send" id="btn-room-ops-confirm" type="button">確認執行</button>
-        <button class="btn-full" onclick="document.getElementById('modal-room-ops').style.display='none'" style="background:rgba(255,255,255,0.1); color:#fff;" type="button">取消</button>
-    </div>
-</div>
-
-<input accept=".txt,.pdf,.md,text/plain,text/markdown,application/pdf" class="hidden" id="file-material-import" multiple="" type="file">
+<input accept=".txt,.pdf,.md,text/plain,text/markdown,application/pdf" class="hidden" id="file-material-import" type="file">
 <input accept=".json" class="hidden" id="file-import" type="file">
 
 <script>
@@ -1461,10 +1559,16 @@
     let currentModel = 'gemini-2.5-flash-lite';
     let isSendingMessage = false;
 
-    // 原裝 TTS 與發音狀態管理變數
+    // 原裝 TTS 與語音狀態管理
     let activeSpeechSession = null;
     let speechSessionId = 0;
     let cachedVoices = [];
+
+    // 生詞本資料快取
+    let vocabularyList = [];
+
+    // 重新挑戰專用錄音識別狀態
+    let activeChallengeSession = null; // { messageId, targetText, buttonEl, recognition, mediaRecorder, stream, chunks }
 
     const LANG_NAMES = {
         'zh-TW': '繁體中文', 'zh-CN': '简体中文', 'en-US': 'English',
@@ -1520,7 +1624,7 @@
         return cachedVoices.find(v => v.lang.toLowerCase().startsWith(shortLang)) || null;
     }
 
-    // --- 完整還原原裝 TTS 播放、高亮與暫停/停止控制 ---
+    // --- 原裝 TTS 播放控制 ---
     function setTtsButtonState(root, active) {
         if (!root) return;
         root.classList.toggle('tts-playing', Boolean(active));
@@ -1589,7 +1693,7 @@
         speak(text, speechLang, msgDiv);
     };
 
-    // --- 完整複製舊版原裝發音評分計算核心 (Levenshtein + LCS + Confidence) ---
+    // --- 發音評分核心演算法 (Levenshtein + LCS + 錯字標記) ---
     function normalizeTokens(text) {
         return String(text || '').replace(/\s+/g, ' ').trim().toLowerCase().match(/[\p{L}\p{N}']+/gu) || [];
     }
@@ -1621,9 +1725,20 @@
         return prev[right.length];
     }
 
+    function generateWordComparisonHtml(targetTokens, spokenTokens) {
+        const spokenSet = new Set(spokenTokens);
+        return targetTokens.map(word => {
+            if (spokenSet.has(word)) {
+                return `<span class="diff-match">${escapeTutorHtml(word)}</span>`;
+            } else {
+                return `<span class="diff-miss">${escapeTutorHtml(word)}</span>`;
+            }
+        }).join(' ');
+    }
+
     function calculatePronunciationScore(target, spoken, confidence = null) {
         const spokenText = String(spoken || '').replace(/\s+/g, ' ').trim();
-        if (!spokenText) return { score: 0, band: 'low', label: '需要再試一次', recognizedText: '' };
+        if (!spokenText) return { score: 0, band: 'low', label: '需要再試一次', recognizedText: '', diffHtml: '' };
         
         const targetTokens = normalizeTokens(target);
         const spokenTokens = normalizeTokens(spokenText);
@@ -1648,291 +1763,392 @@
         }
         finalScore = Math.max(0, Math.min(100, finalScore));
 
+        const diffHtml = generateWordComparisonHtml(targetTokens, spokenTokens);
+
         return {
             recognizedText: spokenText,
             score: finalScore,
             band: finalScore >= 85 ? 'good' : finalScore >= 70 ? 'ok' : 'low',
-            label: finalScore >= 85 ? '優秀' : finalScore >= 70 ? '良好' : '需要練習'
+            label: finalScore >= 85 ? '優秀' : finalScore >= 70 ? '良好' : '需要練習',
+            diffHtml
         };
     }
 
-    // --- 原裝氣泡內評分卡片渲染 (完全對齊舊版結構) ---
+    // --- 氣泡內評分卡片渲染 ---
     function renderPronunciationScoreHtml(score, messageId) {
         if (!score) return '';
         const recText = escapeTutorHtml(score.recognizedText || '');
-        const recHtml = recText ? `<div class="pronunciation-recognized">🎙️ 辨識結果：<strong>${recText}</strong></div>` : '';
+        const recHtml = recText ? `<div class="pronunciation-recognized">🎙️ 辨識結果：<strong>${recText}</strong>${score.diffHtml ? `<div class="pronunciation-diff-tags">單字比對：${score.diffHtml}</div>` : ''}</div>` : '';
         return `
             <div class="pronunciation-score pronunciation-score-${score.band}">
                 ${recHtml}
                 <span class="pronunciation-score-badge">🎯 發音練習: ${score.score} 分 · ${score.label}</span>
-                <button type="button" class="pronunciation-retry" onclick="retryPronunciationChallenge('${messageId}')">🔄 重新挑戰發音</button>
+                <button type="button" class="pronunciation-retry" onclick="toggleChallengeRecord('${messageId}', this)"><i class="fa-solid fa-rotate-right"></i> <span>重新挑戰發音</span></button>
             </div>
         `;
     }
 
-    // 重新跟讀發音挑戰
-    window.retryPronunciationChallenge = function(messageId) {
-        const root = document.querySelector(`[data-id="${messageId}"]`);
-        if (!root) return;
-        const pureTarget = root.dataset.pureLearning || root.querySelector('.msg-learning')?.textContent || '';
-        showFloatingToast(`🎯 請點擊左側 🎙️ 按鈕朗讀：「${pureTarget.slice(0, 30)}...」`);
-        window.__gugoActiveChallenge = { messageId, targetText: pureTarget };
-    };
-
-    // --- 音訊錄製雙模態 (支援音訊即時預覽、發送與回放) ---
-    let mediaRecorderInstance = null;
-    let mediaAudioStream = null;
-    let mediaAudioChunks = [];
-    let isRecordingSpeech = false;
-    let recognitionInstance = null;
-    let speechSilenceTimer = null;
-
-    function showFloatingToast(msg) {
-        const panel = document.getElementById('error-panel');
-        const txt = document.getElementById('error-msg');
-        if (panel && txt) {
-            panel.classList.remove('busy');
-            txt.textContent = msg;
-            panel.style.display = 'block';
-            clearTimeout(showFloatingToast.timer);
-            showFloatingToast.timer = setTimeout(() => { panel.style.display = 'none'; }, 3800);
+    // --- 核心修正 1：點擊「重新挑戰發音」直接錄音／再次點擊停止並評分 ---
+    window.toggleChallengeRecord = async function(messageId, btn) {
+        // 如果當前已經在此按鈕錄音中，點擊即「停止錄音並計算評分」
+        if (activeChallengeSession && activeChallengeSession.messageId === messageId) {
+            stopChallengeRecording();
+            return;
         }
-    }
 
-    function setSpeechStatus(state, msg = '') {
-        const el = document.getElementById('speech-composer-status');
-        if (!el) return;
-        el.dataset.state = state;
-        el.textContent = msg;
-    }
+        // 如果在其他地方錄音中，先強制停止
+        if (activeChallengeSession) {
+            stopChallengeRecording(true);
+        }
+        if (isRecordingSpeech) {
+            stopSpeechWorkflow();
+        }
 
-    function updateMicButtonsState(activeType) {
-        document.getElementById('btn-mic')?.classList.toggle('recording', activeType === 'learning');
-        document.getElementById('btn-mic-my')?.classList.toggle('recording', activeType === 'native');
-    }
-
-    // --- 語音啟動主分流 ---
-    async function startSpeechWorkflow(type) {
         if (!GugoAICore.hasApiKey()) {
             document.getElementById('modal-api').style.display = 'flex';
             return;
         }
 
-        stopSpeech(); // 停止正在播的朗讀
-        const isLearning = type === 'learning';
-        const targetLang = document.getElementById('target-lang').value;
-        const myLang = document.getElementById('my-lang').value;
-        const currentLocale = isLearning ? (STT_LOCALES[targetLang] || targetLang) : (STT_LOCALES[myLang] || myLang);
-        const inputMode = document.getElementById('voice-input-mode-select')?.value || 'stt';
+        stopSpeech();
+        const root = document.querySelector(`[data-id="${messageId}"]`);
+        if (!root) return;
+        const targetText = root.dataset.pureLearning || root.querySelector('.msg-learning')?.textContent || '';
+        const speechLang = root.dataset.speechLang || document.getElementById('target-lang')?.value || 'en-US';
+        const currentLocale = STT_LOCALES[speechLang] || speechLang;
 
-        isRecordingSpeech = true;
-        updateMicButtonsState(type);
+        // 切換按鈕樣式為「錄音中...點擊停止」
+        btn.classList.add('recording');
+        btn.innerHTML = `<i class="fa-solid fa-circle-stop"></i> <span>⏹ 點擊停止評分</span>`;
 
-        // 模式 1: 真實錄音直傳模式 (直接傳送音訊 Blob 給 AI)
-        if (inputMode === 'audio' && !window.__gugoActiveChallenge) {
-            startDirectAudioRecording(type, targetLang, myLang);
-            return;
-        }
-
-        // 模式 2: 語音辨識為文字 (STT) ＋ 自動計算發音評分
-        setSpeechStatus('recording', `🎙️ 正在聆聽 ${LANG_FLAGS[isLearning ? targetLang : myLang]} ${isLearning ? '學習語言' : '母語'}...`);
+        activeChallengeSession = {
+            messageId,
+            targetText,
+            buttonEl: btn,
+            speechLang,
+            currentLocale,
+            transcript: '',
+            confidence: null
+        };
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (SpeechRecognition) {
             try {
-                if (recognitionInstance) recognitionInstance.abort();
-                recognitionInstance = new SpeechRecognition();
-                recognitionInstance.continuous = true;
-                recognitionInstance.interimResults = true;
-                recognitionInstance.lang = currentLocale;
+                const rec = new SpeechRecognition();
+                rec.continuous = true;
+                rec.interimResults = true;
+                rec.lang = currentLocale;
 
-                let fullTranscript = '';
-                let lastConfidence = null;
-
-                recognitionInstance.onresult = (e) => {
-                    let interim = '';
-                    for (let i = e.resultIndex; i < e.results.length; i++) {
-                        const item = e.results[i][0];
-                        if (e.results[i].isFinal) {
-                            fullTranscript += item.transcript;
-                            if (item.confidence) lastConfidence = item.confidence;
-                        } else {
-                            interim += item.transcript;
-                        }
+                rec.onresult = (e) => {
+                    let full = '';
+                    for (let i = 0; i < e.results.length; i++) {
+                        full += e.results[i][0].transcript;
+                        if (e.results[i][0].confidence) activeChallengeSession.confidence = e.results[i][0].confidence;
                     }
-                    const text = (fullTranscript + interim).trim();
-                    const input = document.getElementById('user-text');
-                    if (input && text) {
-                        input.value = text;
-                        input.style.height = 'auto';
-                        input.style.height = Math.min(110, input.scrollHeight) + 'px';
-                    }
+                    if (activeChallengeSession) activeChallengeSession.transcript = full.trim();
+                };
 
-                    const triggerMode = document.getElementById('speech-mode-select')?.value || 'smart';
-                    const waitSec = parseFloat(document.getElementById('speech-silence-seconds')?.value) || 4.5;
-                    if (triggerMode === 'smart' && text) {
-                        clearTimeout(speechSilenceTimer);
-                        speechSilenceTimer = setTimeout(() => {
-                            if (isRecordingSpeech) {
-                                stopSpeechWorkflow();
-                                handleSpeechComplete(text, type, lastConfidence);
-                            }
-                        }, waitSec * 1000);
+                rec.onerror = (e) => {
+                    console.warn('[Challenge STT Error]', e);
+                    stopChallengeRecording();
+                };
+
+                rec.onend = () => {
+                    if (activeChallengeSession) {
+                        finishChallengeEvaluation();
                     }
                 };
 
-                recognitionInstance.onerror = (err) => {
-                    console.warn('[STT Error]', err);
-                    stopSpeechWorkflow();
-                };
-
-                recognitionInstance.onend = () => {
-                    if (isRecordingSpeech) {
-                        const text = document.getElementById('user-text')?.value.trim();
-                        stopSpeechWorkflow();
-                        if (text) handleSpeechComplete(text, type, lastConfidence);
-                    }
-                };
-
-                recognitionInstance.start();
+                activeChallengeSession.recognition = rec;
+                rec.start();
+                showFloatingToast(`🎙️ 正在錄音...朗讀完畢後請再次點擊按鈕停止！`);
                 return;
             } catch (err) {
-                console.warn('[Native STT failed, fallback to MediaRecorder]', err);
+                console.warn('[Native challenge rec failed, fallback to media]', err);
             }
         }
 
-        // 兜底：使用 MediaRecorder 錄音 ＋ GugoAICore 轉文字
-        startFallbackAudioStt(type, currentLocale);
-    }
+        // 兜底：使用 MediaRecorder
+        if (navigator.mediaDevices?.getUserMedia) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                activeChallengeSession.stream = stream;
+                activeChallengeSession.chunks = [];
+                const mr = new MediaRecorder(stream);
+                activeChallengeSession.mediaRecorder = mr;
 
-    async function startFallbackAudioStt(type, localeCode) {
-        if (!navigator.mediaDevices?.getUserMedia) {
-            showFloatingToast('⚠️ 瀏覽器未支援麥克風錄音');
-            stopSpeechWorkflow();
-            return;
-        }
-        try {
-            mediaAudioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaAudioChunks = [];
-            mediaRecorderInstance = new MediaRecorder(mediaAudioStream);
-            mediaRecorderInstance.ondataavailable = e => { if (e.data.size > 0) mediaAudioChunks.push(e.data); };
-            mediaRecorderInstance.onstop = async () => {
-                setSpeechStatus('processing', '⏳ 正在透過 AI 轉譯語音中...');
-                if (mediaAudioStream) { mediaAudioStream.getTracks().forEach(t => t.stop()); mediaAudioStream = null; }
-                if (!mediaAudioChunks.length) { setSpeechStatus('idle', ''); return; }
-                const audioBlob = new Blob(mediaAudioChunks, { type: mediaAudioChunks[0]?.type || 'audio/webm' });
-                try {
-                    const text = await GugoAICore.transcribeAudio(audioBlob, { language: localeCode });
-                    if (text) {
-                        const input = document.getElementById('user-text');
-                        if (input) input.value = text;
-                        handleSpeechComplete(text, type, 0.9);
+                mr.ondataavailable = e => { if (e.data.size > 0) activeChallengeSession.chunks.push(e.data); };
+                mr.onstop = async () => {
+                    stream.getTracks().forEach(t => t.stop());
+                    if (!activeChallengeSession || !activeChallengeSession.chunks.length) {
+                        resetChallengeButton(btn);
+                        activeChallengeSession = null;
+                        return;
                     }
-                } catch (_) {
-                    showFloatingToast('⚠️ 語音辨識連線逾時');
-                }
-                setSpeechStatus('idle', '');
-            };
-            mediaRecorderInstance.start();
-        } catch (_) {
-            showFloatingToast('⚠️ 麥克風已被封鎖或無可用設備');
-            stopSpeechWorkflow();
+                    showFloatingToast('⏳ 正在分析語音評分中...');
+                    const audioBlob = new Blob(activeChallengeSession.chunks, { type: activeChallengeSession.chunks[0]?.type || 'audio/webm' });
+                    try {
+                        const recognized = await GugoAICore.transcribeAudio(audioBlob, { language: currentLocale });
+                        if (activeChallengeSession) {
+                            activeChallengeSession.transcript = recognized;
+                            activeChallengeSession.confidence = 0.9;
+                            finishChallengeEvaluation();
+                        }
+                    } catch (_) {
+                        showFloatingToast('⚠️ 語音辨識連線逾時');
+                        resetChallengeButton(btn);
+                        activeChallengeSession = null;
+                    }
+                };
+                mr.start();
+                showFloatingToast(`🎙️ 正在錄音...朗讀完畢後請再次點擊按鈕停止！`);
+            } catch (_) {
+                showFloatingToast('⚠️ 麥克風已被封鎖或無可用設備');
+                resetChallengeButton(btn);
+                activeChallengeSession = null;
+            }
         }
+    };
+
+    function resetChallengeButton(btn) {
+        if (!btn) return;
+        btn.classList.remove('recording');
+        btn.innerHTML = `<i class="fa-solid fa-rotate-right"></i> <span>重新挑戰發音</span>`;
     }
 
-    async function startDirectAudioRecording(type, targetLang, myLang) {
-        if (!navigator.mediaDevices?.getUserMedia) {
-            showFloatingToast('⚠️ 瀏覽器未支援麥克風錄音');
-            stopSpeechWorkflow();
-            return;
-        }
-        try {
-            mediaAudioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaAudioChunks = [];
-            mediaRecorderInstance = new MediaRecorder(mediaAudioStream);
-            mediaRecorderInstance.ondataavailable = e => { if (e.data.size > 0) mediaAudioChunks.push(e.data); };
-            mediaRecorderInstance.onstart = () => {
-                setSpeechStatus('recording', `🎙️ 正在錄製真實語音...再次點擊按鈕停止並發送給 AI`);
-            };
-            mediaRecorderInstance.onstop = async () => {
-                setSpeechStatus('processing', '⏳ 正在將原始錄音發送給 AI 導師...');
-                if (mediaAudioStream) { mediaAudioStream.getTracks().forEach(t => t.stop()); mediaAudioStream = null; }
-                if (!mediaAudioChunks.length) { setSpeechStatus('idle', ''); return; }
-                const mimeType = mediaAudioChunks[0]?.type || 'audio/webm';
-                const blob = new Blob(mediaAudioChunks, { type: mimeType });
-                sendDirectAudioMessage(blob, mimeType, type);
-            };
-            mediaRecorderInstance.start();
-        } catch (_) {
-            showFloatingToast('⚠️ 麥克風已被封鎖或無可用設備');
-            stopSpeechWorkflow();
-        }
-    }
-
-    function stopSpeechWorkflow() {
-        clearTimeout(speechSilenceTimer);
-        isRecordingSpeech = false;
-        updateMicButtonsState(null);
-        setSpeechStatus('idle', '');
-
-        if (recognitionInstance) {
-            try { recognitionInstance.stop(); } catch (_) {}
-            recognitionInstance = null;
-        }
-        if (mediaRecorderInstance && mediaRecorderInstance.state === 'recording') {
-            try { mediaRecorderInstance.stop(); } catch (_) {}
-        }
-    }
-
-    // 處理語音辨識完成後分流 (計算評分或直接發送)
-    function handleSpeechComplete(text, type, confidence) {
-        const clean = String(text || '').trim();
-        if (!clean) return;
-
-        // 若為特定題目的跟讀重新挑戰
-        if (window.__gugoActiveChallenge && type === 'learning') {
-            const challenge = window.__gugoActiveChallenge;
-            window.__gugoActiveChallenge = null;
-            const scoreObj = calculatePronunciationScore(challenge.targetText, clean, confidence);
-            updateMessageScore(challenge.messageId, scoreObj);
-            showFloatingToast(`🎯 重新挑戰評分完成：${scoreObj.score}分 (${scoreObj.label})`);
-            const input = document.getElementById('user-text');
-            if (input) { input.value = ''; input.style.height = 'auto'; }
+    function stopChallengeRecording(cancelOnly = false) {
+        if (!activeChallengeSession) return;
+        const session = activeChallengeSession;
+        if (cancelOnly) {
+            resetChallengeButton(session.buttonEl);
+            if (session.recognition) { try { session.recognition.abort(); } catch(_) {} }
+            if (session.mediaRecorder && session.mediaRecorder.state === 'recording') { try { session.mediaRecorder.stop(); } catch(_) {} }
+            activeChallengeSession = null;
             return;
         }
 
-        // 一般學習語言發話：計算評分並掛載到待發送隊列
-        if (type === 'learning') {
-            const lastTutorMsg = [...document.querySelectorAll('.message-tutor')].pop();
-            const targetRef = lastTutorMsg?.dataset?.pureLearning || '';
-            const scoreObj = calculatePronunciationScore(targetRef || clean, clean, confidence);
-            window.__pendingPronunciationScore = scoreObj;
-        } else {
-            window.__pendingPronunciationScore = null;
+        if (session.recognition) {
+            try { session.recognition.stop(); } catch(_) {}
+        } else if (session.mediaRecorder && session.mediaRecorder.state === 'recording') {
+            try { session.mediaRecorder.stop(); } catch(_) {}
         }
-
-        sendMessage();
     }
 
-    function updateMessageScore(msgId, scoreObj) {
-        const root = document.querySelector(`[data-id="${msgId}"]`);
+    function finishChallengeEvaluation() {
+        if (!activeChallengeSession) return;
+        const session = activeChallengeSession;
+        activeChallengeSession = null;
+        resetChallengeButton(session.buttonEl);
+
+        const cleanTranscript = (session.transcript || '').trim();
+        if (!cleanTranscript) {
+            showFloatingToast('⚠️ 未辨識到清晰聲音，請再試一次');
+            return;
+        }
+
+        const scoreObj = calculatePronunciationScore(session.targetText, cleanTranscript, session.confidence);
+        updateMessageScore(session.messageId, scoreObj);
+        showFloatingToast(`🎯 重新挑戰評分完成：${scoreObj.score} 分 (${scoreObj.label})`);
+    }
+
+    // --- 導師氣泡右上角「跟讀練習」鎖定橫幅 ---
+    window.startShadowingFromTutor = function(tutorMsgId) {
+        const root = document.querySelector(`[data-id="${tutorMsgId}"]`);
         if (!root) return;
-        let scoreEl = root.querySelector('.pronunciation-score');
-        const newHtml = renderPronunciationScoreHtml(scoreObj, msgId);
-        if (scoreEl) {
-            scoreEl.outerHTML = newHtml;
-        } else {
-            root.insertAdjacentHTML('beforeend', newHtml);
+        const text = root.dataset.pureLearning || root.querySelector('.msg-learning')?.textContent || '';
+        if (!text) return;
+
+        const input = document.getElementById('user-text');
+        if (input) {
+            input.value = text;
+            input.focus();
         }
-        const room = chatRooms.find(r => r.id === activeRoomId);
-        const msg = room?.messages?.find(m => m.id === msgId);
-        if (msg) {
-            msg.pronunciation = scoreObj;
-            saveRoomsToLocal();
+        showFloatingToast(`🎯 已將目標句填入輸入框，點擊左側 🎙️ 按鈕開始跟讀評分！`);
+    };
+
+    // --- 核心修正 4：滑鼠懸停英文單字停留自動翻譯 (Tooltip) ---
+    let hoverWordTimer = null;
+    const tooltipEl = document.getElementById('word-hover-tooltip');
+
+    document.addEventListener('mouseover', (e) => {
+        const target = e.target;
+        if (target.classList?.contains('hover-word')) {
+            clearTimeout(hoverWordTimer);
+            hoverWordTimer = setTimeout(() => {
+                showHoverWordTooltip(target);
+            }, 600); // 停留 600ms 觸發
+        }
+    });
+
+    document.addEventListener('mouseout', (e) => {
+        if (e.target.classList?.contains('hover-word')) {
+            clearTimeout(hoverWordTimer);
+            hideHoverWordTooltip();
+        }
+    });
+
+    async function showHoverWordTooltip(wordSpan) {
+        const word = (wordSpan.dataset.word || wordSpan.textContent || '').trim().replace(/^[^\w]+|[^\w]+$/g, '');
+        if (!word || word.length < 2) return;
+
+        const rect = wordSpan.getBoundingClientRect();
+        tooltipEl.style.left = `${rect.left}px`;
+        tooltipEl.style.top = `${rect.bottom + 6}px`;
+        tooltipEl.innerHTML = `<span>🔍 查詢中...</span>`;
+        tooltipEl.classList.add('visible');
+
+        try {
+            // 本地快取或快速字典查找
+            let meaning = window.__hoverDictCache?.[word.toLowerCase()];
+            if (!meaning) {
+                if (!window.__hoverDictCache) window.__hoverDictCache = {};
+                const myLang = document.getElementById('my-lang')?.value || 'zh-TW';
+                const prompt = `Translate the English word "${word}" to ${LANG_NAMES[myLang]}. Output strictly in this JSON format: {"meaning":"[part of speech and short translation]"}`;
+                const res = await GugoAICore.generateJSON(prompt, { temperature: 0.1 });
+                meaning = res.data?.meaning || '無翻譯';
+                window.__hoverDictCache[word.toLowerCase()] = meaning;
+            }
+            tooltipEl.innerHTML = `<strong>${escapeTutorHtml(word)}</strong>: ${escapeTutorHtml(meaning)}`;
+        } catch (_) {
+            tooltipEl.innerHTML = `<strong>${escapeTutorHtml(word)}</strong>: (查詢失敗)`;
         }
     }
 
-    // --- 真實錄音直傳給 AI (音訊播放器渲染) ---
+    function hideHoverWordTooltip() {
+        tooltipEl.classList.remove('visible');
+    }
+
+    // --- 核心修正 5：選取文字浮出「查單字 / 加入生詞本」---
+    const selectionBar = document.getElementById('selection-lookup-bar');
+    let selectedLookupTerm = '';
+
+    document.addEventListener('selectionchange', () => {
+        const selection = window.getSelection();
+        const text = selection.toString().trim();
+        if (!text || text.length > 50) {
+            selectionBar.style.display = 'none';
+            return;
+        }
+
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) {
+            selectionBar.style.display = 'none';
+            return;
+        }
+
+        selectedLookupTerm = text;
+        selectionBar.style.left = `${Math.max(10, rect.left + (rect.width / 2) - 60)}px`;
+        selectionBar.style.top = `${Math.max(10, rect.top - 38)}px`;
+        selectionBar.style.display = 'inline-flex';
+    });
+
+    document.getElementById('btn-quick-lookup').onclick = (e) => {
+        e.stopPropagation();
+        selectionBar.style.display = 'none';
+        if (selectedLookupTerm) openWordLookupModal(selectedLookupTerm);
+    };
+
+    document.getElementById('btn-quick-add-vocab').onclick = (e) => {
+        e.stopPropagation();
+        selectionBar.style.display = 'none';
+        if (selectedLookupTerm) addWordToVocabulary(selectedLookupTerm);
+    };
+
+    async function openWordLookupModal(word) {
+        const modal = document.getElementById('modal-word-lookup');
+        const termEl = document.getElementById('word-lookup-term');
+        const meaningEl = document.getElementById('word-lookup-meaning');
+        termEl.textContent = word;
+        meaningEl.textContent = '正在深入解析單字意思與例句...';
+        modal.style.display = 'flex';
+
+        document.getElementById('btn-word-speak').onclick = () => speak(word, document.getElementById('target-lang').value);
+        document.getElementById('btn-word-add').onclick = () => addWordToVocabulary(word, meaningEl.textContent);
+
+        try {
+            const myLang = document.getElementById('my-lang')?.value || 'zh-TW';
+            const targetLang = document.getElementById('target-lang')?.value || 'en-US';
+            const prompt = `Act as a dictionary. Explain the word or phrase "${word}" in ${LANG_NAMES[myLang]} for a learner of ${LANG_NAMES[targetLang]}. Include phonetic/pronunciation, definition, and a practical example sentence.`;
+            const res = await GugoAICore.generateText(prompt, { temperature: 0.3 });
+            meaningEl.innerHTML = renderTutorMarkdown(res.text);
+        } catch (_) {
+            meaningEl.textContent = '⚠️ 查詢連線逾時，請確認 API Key 與網路。';
+        }
+    }
+
+    function addWordToVocabulary(word, meaning = '') {
+        const clean = String(word || '').trim();
+        if (!clean) return;
+        const exists = vocabularyList.some(v => v.word.toLowerCase() === clean.toLowerCase());
+        if (!exists) {
+            vocabularyList.unshift({
+                id: 'voc_' + Date.now(),
+                word: clean,
+                meaning: meaning || '自訂生詞',
+                addedAt: new Date().toLocaleDateString()
+            });
+            saveVocabularyToLocal();
+            showFloatingToast(`✓ 已將「${clean}」加入生詞字典！`);
+        } else {
+            showFloatingToast(`ℹ️ 「${clean}」已在生詞字典中。`);
+        }
+    }
+
+    function renderVocabularyList() {
+        const container = document.getElementById('vocab-word-list');
+        if (!container) return;
+        if (!vocabularyList.length) {
+            container.innerHTML = `<p style="color:var(--text-dim); text-align:center; padding:20px;">生詞本目前是空的。<br>在對話中選取文字即可加入。</p>`;
+            return;
+        }
+        container.innerHTML = vocabularyList.map(v => `
+            <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <strong style="color:#67e8f9; font-size:1.05rem;">${escapeTutorHtml(v.word)}</strong>
+                    <div style="color:#cbd5e1; font-size:0.8rem; margin-top:2px;">${escapeTutorHtml(v.meaning)}</div>
+                </div>
+                <div style="display:flex; gap:6px;">
+                    <button class="btn-msg-action" onclick="speak('${escapeTutorHtml(v.word)}', document.getElementById('target-lang').value)" title="朗讀"><i class="fa-solid fa-volume-high"></i></button>
+                    <button class="btn-msg-action" onclick="deleteVocabularyItem('${v.id}')" title="刪除" style="color:#fda4af;"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    window.deleteVocabularyItem = function(id) {
+        vocabularyList = vocabularyList.filter(v => v.id !== id);
+        saveVocabularyToLocal();
+        renderVocabularyList();
+    };
+
+    document.getElementById('btn-vocab-clear-all').onclick = () => {
+        if (!vocabularyList.length) return;
+        openConfirmModal("確定要清空所有生詞本紀錄嗎？", () => {
+            vocabularyList = [];
+            saveVocabularyToLocal();
+            renderVocabularyList();
+            showFloatingToast("已清空生詞本。");
+        });
+    };
+
+    function saveVocabularyToLocal() {
+        localStorage.setItem('gugopro_ai_tutor_vocab_v2', JSON.stringify(vocabularyList));
+    }
+
+    function loadVocabularyFromLocal() {
+        try {
+            const data = JSON.parse(localStorage.getItem('gugopro_ai_tutor_vocab_v2') || '[]');
+            vocabularyList = Array.isArray(data) ? data : [];
+        } catch(_) { vocabularyList = []; }
+    }
+
+    document.getElementById('btn-vocab').onclick = () => {
+        renderVocabularyList();
+        document.getElementById('modal-vocab').style.display = 'flex';
+        closeMenu();
+    };
+
+    // --- 核心修正 2：真實錄音模式下的語音發音與音調診斷 ---
     async function sendDirectAudioMessage(blob, mimeType, type) {
         if (isSendingMessage) return;
         const msgId = 'msg-' + Date.now();
@@ -1957,20 +2173,33 @@
             const material = normalizeMaterial(room?.material);
             const materialText = material?.text ? material.text.slice(0, 18000) : '';
             const historyContext = room.messages.slice(-6).map(h => `${h.role === 'user' ? 'Student' : 'Tutor'}: ${h.learning}`).join('\n');
+            const studyLevel = room?.studyLevel || 'B1';
+            const tutorMode = room?.tutorMode || 'casual';
 
-            const systemInstruction = `You are an empathetic, encouraging language tutor. The student's native language is ${myLangName} and they are learning ${targetLangName}.
-Listen directly to the student's spoken audio provided.
-Recent Context:
+            const systemInstruction = `You are an expert, empathetic language tutor listening directly to the student's spoken audio.
+Student Native Language: ${myLangName}
+Target Learning Language: ${targetLangName}
+Target Proficiency Level: ${studyLevel}
+Tutor Mode: ${tutorMode}
+
+Recent Conversation:
 ${historyContext}
-${materialText ? `Material: ${materialText}` : ''}
+${materialText ? `Study Material Context: ${materialText}` : ''}
+
+CRITICAL TASK:
+1. Listen carefully to the student's audio recording. Transcribe exactly what they spoke into "user_learning".
+2. Translate what they spoke into their native language "${myLangName}" in "user_my".
+3. Provide targeted pronunciation, stress, or intonation feedback in "correction". For example, point out specific mispronounced sounds, awkward pauses, or intonation errors in ${myLangName}. If pronunciation and grammar were good, give a brief encouraging note.
+4. Reply naturally and engagingly in ${targetLangName} in "tutor_learning", keeping questions open-ended.
+5. Translate your reply into ${myLangName} in "tutor_my".
 
 Output strictly in JSON:
 {
-  "user_learning": "Accurate transcription of student's spoken audio in ${targetLangName}",
-  "user_my": "Translation of what student said in ${myLangName}",
-  "correction": "Pronunciation, intonation, or grammar feedback, or null",
-  "tutor_learning": "Your natural reply in ${targetLangName}",
-  "tutor_my": "Your reply translated to ${myLangName}"
+  "user_learning": "Exact transcription of student's spoken audio in ${targetLangName}",
+  "user_my": "Native translation of student's spoken audio in ${myLangName}",
+  "correction": "Targeted feedback on student's pronunciation, intonation, or grammar in ${myLangName}",
+  "tutor_learning": "Your natural spoken reply in ${targetLangName}",
+  "tutor_my": "Your reply translated into ${myLangName}"
 }`;
 
             const payloadContents = [
@@ -1978,7 +2207,7 @@ Output strictly in JSON:
                     role: 'user',
                     parts: [
                         { inlineData: { mimeType: mimeType.split(';')[0] || 'audio/webm', data: base64Data } },
-                        { text: "Please listen to my spoken audio, transcribe it, give pronunciation/grammar advice, and reply according to the JSON format." }
+                        { text: `Please listen directly to my audio, evaluate my pronunciation and intonation in ${myLangName}, and reply according to the JSON format.` }
                     ]
                 }
             ];
@@ -2019,7 +2248,7 @@ Output strictly in JSON:
         }
     }
 
-    // --- 發送文字對話 ---
+    // --- 發送純文字對話 ---
     async function sendMessage() {
         if (isSendingMessage) return;
 
@@ -2052,20 +2281,27 @@ Output strictly in JSON:
             const material = normalizeMaterial(room?.material);
             const materialText = material?.text ? material.text.slice(0, 18000) : '';
             const historyContext = room.messages.slice(-8).map(h => `${h.role === 'user' ? 'Student' : 'Tutor'}: ${h.learning}`).join('\n');
+            const studyLevel = room?.studyLevel || 'B1';
+            const tutorMode = room?.tutorMode || 'casual';
 
-            const systemInstruction = `You are an empathetic, encouraging language tutor. The student's native language is ${myLangName} and they are learning ${targetLangName}.
+            const systemInstruction = `You are an empathetic, encouraging language tutor.
+Student Native Language: ${myLangName}
+Target Learning Language: ${targetLangName}
+Target Proficiency Level: ${studyLevel}
+Tutor Mode: ${tutorMode}
+
 Recent Context:
 ${historyContext}
 Student Input: "${content}"
-${materialText ? `Material Context: ${materialText}` : ''}
+${materialText ? `Study Material Context: ${materialText}` : ''}
 
 Output strictly in JSON:
 {
-  "user_learning": "${targetLangName} translation of student input",
+  "user_learning": "${targetLangName} natural translation or polish of student input",
   "user_my": "${myLangName} translation of student input",
-  "correction": "Gentle grammar correction or null",
-  "tutor_learning": "Your natural reply in ${targetLangName}",
-  "tutor_my": "Your reply translated to ${myLangName}"
+  "correction": "Gentle correction on grammar or natural word choice in ${myLangName}, or null if completely natural",
+  "tutor_learning": "Your spoken conversational reply in ${targetLangName}",
+  "tutor_my": "Your reply translated into ${myLangName}"
 }`;
 
             const res = await GugoAICore.generateJSON(content, { systemInstruction, temperature: 0.7 });
@@ -2099,7 +2335,17 @@ Output strictly in JSON:
         }
     }
 
-    // --- 訊息氣泡渲染 (100% 複製原裝：包含 TTS 暫停停止按鈕、音訊播放器與發音評分) ---
+    // --- 訊息氣泡渲染 (英文單字自動封裝為 .hover-word 以支援滑鼠懸停翻譯) ---
+    function wrapWordsForHover(text) {
+        if (!text) return '';
+        return String(text).split(/(\s+|[.,!?;:"'()\[\]{}—–\-])/).map(token => {
+            if (/^[\p{L}\p{N}']+$/gu.test(token)) {
+                return `<span class="hover-word" data-word="${escapeTutorHtml(token)}">${escapeTutorHtml(token)}</span>`;
+            }
+            return escapeTutorHtml(token);
+        }).join('');
+    }
+
     function addMessageToUI(role, learning, my, correction, id, speechLang = 'en-US', pronunciation = null, audioDataUrl = null) {
         const container = document.getElementById('chat-container');
         const div = document.createElement('div');
@@ -2108,11 +2354,11 @@ Output strictly in JSON:
         div.dataset.speechLang = speechLang;
         div.dataset.pureLearning = learning;
 
-        // 若為導師回覆，原裝配備：喇叭播放按鈕 ＋ 暫停/停止按鈕
         let actionsHtml = '';
         if (role === 'tutor') {
             actionsHtml = `
                 <div class="msg-actions">
+                    <button class="btn-msg-shadow-trigger" onclick="startShadowingFromTutor('${id}')" title="跟讀此句"><i class="fa-solid fa-microphone"></i> 跟讀</button>
                     <button class="btn-msg-action" onclick="speakMessage(this)" aria-label="朗讀 AI 訊息" title="朗讀 AI 訊息"><i class="fa-solid fa-volume-high"></i></button>
                     <button class="btn-msg-action btn-msg-stop" onclick="return stopMessageSpeech(this)" aria-label="停止語音朗讀" title="停止語音朗讀" disabled><i class="fa-solid fa-circle-stop"></i></button>
                     <button class="btn-msg-action btn-msg-delete" onclick="deleteMessage('${id}')" aria-label="刪除訊息" title="刪除訊息"><i class="fa-solid fa-trash-can"></i></button>
@@ -2152,13 +2398,14 @@ Output strictly in JSON:
 
         const lEl = div.querySelector('.msg-learning');
         const mEl = div.querySelector('.msg-my');
-        if (lEl) lEl.innerHTML = renderTutorMarkdown(learning);
+        if (lEl) lEl.innerHTML = wrapWordsForHover(learning);
         if (mEl) mEl.textContent = my;
 
         if (correction && correction !== "null" && correction.trim() !== "") {
             const cDiv = document.createElement('div');
             cDiv.className = 'correction-box';
-            cDiv.innerHTML = `<span class="correction-natural">${correction}</span>`;
+            cDiv.style.cssText = "margin-top:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.1); font-size:0.85rem; color:#86efac;";
+            cDiv.innerHTML = `<span>💡 ${escapeTutorHtml(correction)}</span>`;
             div.appendChild(cDiv);
         }
         container.appendChild(div);
@@ -2208,6 +2455,375 @@ Output strictly in JSON:
             return `<p class="markdown-line">${escapeTutorHtml(line).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')}</p>`;
         }).join('');
     }
+
+    // --- 底部麥克風一般發話錄音分流 ---
+    let mediaRecorderInstance = null;
+    let mediaAudioStream = null;
+    let mediaAudioChunks = [];
+    let isRecordingSpeech = false;
+    let recognitionInstance = null;
+    let speechSilenceTimer = null;
+
+    function showFloatingToast(msg) {
+        const panel = document.getElementById('error-panel');
+        const txt = document.getElementById('error-msg');
+        if (panel && txt) {
+            panel.classList.remove('busy');
+            txt.textContent = msg;
+            panel.style.display = 'block';
+            clearTimeout(showFloatingToast.timer);
+            showFloatingToast.timer = setTimeout(() => { panel.style.display = 'none'; }, 3800);
+        }
+    }
+
+    function setSpeechStatus(state, msg = '') {
+        const el = document.getElementById('speech-composer-status');
+        if (!el) return;
+        el.dataset.state = state;
+        el.textContent = msg;
+    }
+
+    function updateMicButtonsState(activeType) {
+        document.getElementById('btn-mic')?.classList.toggle('recording', activeType === 'learning');
+        document.getElementById('btn-mic-my')?.classList.toggle('recording', activeType === 'native');
+    }
+
+    async function startSpeechWorkflow(type) {
+        if (!GugoAICore.hasApiKey()) {
+            document.getElementById('modal-api').style.display = 'flex';
+            return;
+        }
+
+        stopSpeech();
+        if (activeChallengeSession) stopChallengeRecording(true);
+
+        const isLearning = type === 'learning';
+        const targetLang = document.getElementById('target-lang').value;
+        const myLang = document.getElementById('my-lang').value;
+        const currentLocale = isLearning ? (STT_LOCALES[targetLang] || targetLang) : (STT_LOCALES[myLang] || myLang);
+        const inputMode = document.getElementById('voice-input-mode-select')?.value || 'stt';
+
+        isRecordingSpeech = true;
+        updateMicButtonsState(type);
+
+        // 模式 1: 真實錄音直傳
+        if (inputMode === 'audio') {
+            startDirectAudioRecording(type, targetLang, myLang);
+            return;
+        }
+
+        // 模式 2: STT 文字發送
+        setSpeechStatus('recording', `🎙️ 正在聆聽 ${LANG_FLAGS[isLearning ? targetLang : myLang]} ${isLearning ? '學習語言' : '母語'}...`);
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            try {
+                if (recognitionInstance) recognitionInstance.abort();
+                recognitionInstance = new SpeechRecognition();
+                recognitionInstance.continuous = true;
+                recognitionInstance.interimResults = true;
+                recognitionInstance.lang = currentLocale;
+
+                let fullTranscript = '';
+                let lastConfidence = null;
+
+                recognitionInstance.onresult = (e) => {
+                    let interim = '';
+                    for (let i = e.resultIndex; i < e.results.length; i++) {
+                        const item = e.results[i][0];
+                        if (e.results[i].isFinal) {
+                            fullTranscript += item.transcript;
+                            if (item.confidence) lastConfidence = item.confidence;
+                        } else {
+                            interim += item.transcript;
+                        }
+                    }
+                    const text = (fullTranscript + interim).trim();
+                    const input = document.getElementById('user-text');
+                    if (input && text) {
+                        input.value = text;
+                        input.style.height = 'auto';
+                        input.style.height = Math.min(110, input.scrollHeight) + 'px';
+                    }
+
+                    const triggerMode = document.getElementById('speech-mode-select')?.value || 'smart';
+                    const waitSec = parseFloat(document.getElementById('speech-silence-seconds')?.value) || 4.5;
+                    if (triggerMode === 'smart' && text) {
+                        clearTimeout(speechSilenceTimer);
+                        speechSilenceTimer = setTimeout(() => {
+                            if (isRecordingSpeech) {
+                                stopSpeechWorkflow();
+                                handleSpeechComplete(text, type, lastConfidence);
+                            }
+                        }, waitSec * 1000);
+                    }
+                };
+
+                recognitionInstance.onerror = () => stopSpeechWorkflow();
+                recognitionInstance.onend = () => {
+                    if (isRecordingSpeech) {
+                        const text = document.getElementById('user-text')?.value.trim();
+                        stopSpeechWorkflow();
+                        if (text) handleSpeechComplete(text, type, lastConfidence);
+                    }
+                };
+
+                recognitionInstance.start();
+                return;
+            } catch (_) {}
+        }
+
+        startFallbackAudioStt(type, currentLocale);
+    }
+
+    async function startFallbackAudioStt(type, localeCode) {
+        if (!navigator.mediaDevices?.getUserMedia) {
+            showFloatingToast('⚠️ 瀏覽器未支援麥克風錄音');
+            stopSpeechWorkflow();
+            return;
+        }
+        try {
+            mediaAudioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaAudioChunks = [];
+            mediaRecorderInstance = new MediaRecorder(mediaAudioStream);
+            mediaRecorderInstance.ondataavailable = e => { if (e.data.size > 0) mediaAudioChunks.push(e.data); };
+            mediaRecorderInstance.onstop = async () => {
+                setSpeechStatus('processing', '⏳ 正在轉譯語音中...');
+                if (mediaAudioStream) { mediaAudioStream.getTracks().forEach(t => t.stop()); mediaAudioStream = null; }
+                if (!mediaAudioChunks.length) { setSpeechStatus('idle', ''); return; }
+                const audioBlob = new Blob(mediaAudioChunks, { type: mediaAudioChunks[0]?.type || 'audio/webm' });
+                try {
+                    const text = await GugoAICore.transcribeAudio(audioBlob, { language: localeCode });
+                    if (text) {
+                        const input = document.getElementById('user-text');
+                        if (input) input.value = text;
+                        handleSpeechComplete(text, type, 0.9);
+                    }
+                } catch (_) {
+                    showFloatingToast('⚠️ 語音辨識連線逾時');
+                }
+                setSpeechStatus('idle', '');
+            };
+            mediaRecorderInstance.start();
+        } catch (_) {
+            showFloatingToast('⚠️ 麥克風已被封鎖或無可用設備');
+            stopSpeechWorkflow();
+        }
+    }
+
+    async function startDirectAudioRecording(type, targetLang, myLang) {
+        if (!navigator.mediaDevices?.getUserMedia) {
+            showFloatingToast('⚠️ 瀏覽器未支援麥克風錄音');
+            stopSpeechWorkflow();
+            return;
+        }
+        try {
+            mediaAudioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaAudioChunks = [];
+            mediaRecorderInstance = new MediaRecorder(mediaAudioStream);
+            mediaRecorderInstance.ondataavailable = e => { if (e.data.size > 0) mediaAudioChunks.push(e.data); };
+            mediaRecorderInstance.onstart = () => {
+                setSpeechStatus('recording', `🎙️ 正在錄製真實語音...再次點擊按鈕停止發送`);
+            };
+            mediaRecorderInstance.onstop = async () => {
+                setSpeechStatus('processing', '⏳ 正在將原始錄音發送給 AI 導師...');
+                if (mediaAudioStream) { mediaAudioStream.getTracks().forEach(t => t.stop()); mediaAudioStream = null; }
+                if (!mediaAudioChunks.length) { setSpeechStatus('idle', ''); return; }
+                const mimeType = mediaAudioChunks[0]?.type || 'audio/webm';
+                const blob = new Blob(mediaAudioChunks, { type: mimeType });
+                sendDirectAudioMessage(blob, mimeType, type);
+            };
+            mediaRecorderInstance.start();
+        } catch (_) {
+            showFloatingToast('⚠️ 麥克風已被封鎖或無可用設備');
+            stopSpeechWorkflow();
+        }
+    }
+
+    function stopSpeechWorkflow() {
+        clearTimeout(speechSilenceTimer);
+        isRecordingSpeech = false;
+        updateMicButtonsState(null);
+        setSpeechStatus('idle', '');
+
+        if (recognitionInstance) {
+            try { recognitionInstance.stop(); } catch (_) {}
+            recognitionInstance = null;
+        }
+        if (mediaRecorderInstance && mediaRecorderInstance.state === 'recording') {
+            try { mediaRecorderInstance.stop(); } catch (_) {}
+        }
+    }
+
+    function handleSpeechComplete(text, type, confidence) {
+        const clean = String(text || '').trim();
+        if (!clean) return;
+
+        if (type === 'learning') {
+            const lastTutorMsg = [...document.querySelectorAll('.message-tutor')].pop();
+            const targetRef = lastTutorMsg?.dataset?.pureLearning || '';
+            const scoreObj = calculatePronunciationScore(targetRef || clean, clean, confidence);
+            window.__pendingPronunciationScore = scoreObj;
+        } else {
+            window.__pendingPronunciationScore = null;
+        }
+
+        sendMessage();
+    }
+
+    // --- 教室學習清單與模式設定 ---
+    document.getElementById('btn-study-plan').onclick = () => {
+        const room = chatRooms.find(r => r.id === activeRoomId);
+        if (!room) return;
+        document.getElementById('study-plan-room').textContent = `當前教室：${room.name}`;
+        document.getElementById('study-level-select').value = room.studyLevel || 'B1';
+        document.getElementById('study-tutor-mode-select').value = room.tutorMode || 'casual';
+        document.getElementById('modal-study-plan').style.display = 'flex';
+        closeMenu();
+    };
+
+    document.getElementById('btn-save-study-plan').onclick = () => {
+        const room = chatRooms.find(r => r.id === activeRoomId);
+        if (room) {
+            room.studyLevel = document.getElementById('study-level-select').value;
+            room.tutorMode = document.getElementById('study-tutor-mode-select').value;
+            saveRoomsToLocal();
+            showFloatingToast("已成功更新教室學習目標！");
+        }
+        document.getElementById('modal-study-plan').style.display = 'none';
+    };
+
+    // --- 教材真實上傳解析 (.txt / .md / .pdf) ---
+    async function handleMaterialFileUpload(file) {
+        if (!file) return;
+        const name = file.name;
+        showFloatingToast(`⏳ 正在解析教材檔案「${name}」...`);
+
+        try {
+            let extractedText = '';
+            if (name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf') {
+                const pdfjsLib = window['pdfjs-dist/build/pdf'];
+                if (!pdfjsLib) throw new Error("PDF 模組尚未就緒");
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const tc = await page.getTextContent();
+                    extractedText += tc.items.map(s => s.str).join(' ') + '\n';
+                }
+            } else {
+                extractedText = await file.text();
+            }
+
+            extractedText = extractedText.trim();
+            if (!extractedText) throw new Error("檔案內容為空");
+
+            bindMaterialToCurrentRoom(name, extractedText);
+            showFloatingToast(`✓ 教材「${name}」導入成功！`);
+        } catch (err) {
+            showFloatingToast(`⚠️ 教材解析失敗: ${err.message}`);
+        }
+    }
+
+    function bindMaterialToCurrentRoom(fileName, text) {
+        const room = chatRooms.find(r => r.id === activeRoomId);
+        if (!room) return;
+        room.material = { fileName, text: text.slice(0, 50000), charCount: text.length };
+        saveRoomsToLocal();
+        updateMaterialBanner();
+    }
+
+    function updateMaterialBanner() {
+        const banner = document.getElementById('material-banner');
+        const trigger = document.getElementById('btn-material-banner');
+        const room = chatRooms.find(r => r.id === activeRoomId);
+        if (!room?.material?.text) {
+            banner.hidden = true;
+            return;
+        }
+        trigger.textContent = `📘 教材綁定中：${room.material.fileName} (${room.material.charCount} 字)`;
+        banner.hidden = false;
+    }
+
+    document.getElementById('btn-material-import-inline').onclick = () => document.getElementById('file-material-import').click();
+    document.getElementById('btn-material-import').onclick = () => { document.getElementById('file-material-import').click(); closeMenu(); };
+    document.getElementById('btn-material-replace').onclick = () => document.getElementById('file-material-import').click();
+    document.getElementById('file-material-import').onchange = (e) => {
+        const file = e.target.files?.[0];
+        if (file) handleMaterialFileUpload(file);
+    };
+
+    document.getElementById('btn-material-banner').onclick = () => {
+        const room = chatRooms.find(r => r.id === activeRoomId);
+        if (!room?.material) return;
+        document.getElementById('material-meta').textContent = `${room.material.fileName} · ${room.material.charCount} 字`;
+        document.getElementById('material-preview').value = room.material.text;
+        document.getElementById('modal-material').style.display = 'flex';
+    };
+
+    document.getElementById('btn-material-clear').onclick = () => {
+        const room = chatRooms.find(r => r.id === activeRoomId);
+        if (room) {
+            room.material = null;
+            saveRoomsToLocal();
+            updateMaterialBanner();
+            showFloatingToast("已清除本教室教材。");
+        }
+    };
+    document.getElementById('btn-material-clear-modal').onclick = () => {
+        document.getElementById('btn-material-clear').click();
+        document.getElementById('modal-material').style.display = 'none';
+    };
+
+    document.getElementById('btn-material-save-paste').onclick = () => {
+        const paste = document.getElementById('material-paste').value.trim();
+        if (!paste) return;
+        bindMaterialToCurrentRoom("自訂貼上文章", paste);
+        document.getElementById('modal-material').style.display = 'none';
+        showFloatingToast("✓ 已成功儲存貼上的教材！");
+    };
+
+    // --- 教室資料匯出 / 匯入 ---
+    document.getElementById('btn-room-export-ops').onclick = () => {
+        const data = chatRooms.map(r => ({ name: r.name, messages: r.messages, language: r.language, material: r.material }));
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+        a.download = `gugopro-tutor-export-${Date.now()}.json`; a.click();
+        closeMenu();
+    };
+
+    document.getElementById('btn-import').onclick = () => document.getElementById('file-import').click();
+    document.getElementById('file-import').onchange = (e) => {
+        const file = e.target.files?.[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            try {
+                const data = JSON.parse(ev.target.result);
+                const room = chatRooms.find(r => r.id === activeRoomId);
+                if (room && Array.isArray(data)) {
+                    room.messages = data[0]?.messages || [];
+                    saveRoomsToLocal();
+                    switchRoom(activeRoomId);
+                    showFloatingToast("紀錄已成功導入當前教室！");
+                }
+            } catch(_) { showFloatingToast("⚠️ 檔案格式不符合規範"); }
+        };
+        reader.readAsText(file);
+        closeMenu();
+    };
+
+    document.getElementById('btn-room-delete-ops').onclick = () => {
+        openConfirmModal("確定要清除當前教室的所有對話紀錄嗎？此操作無法復原。", () => {
+            const room = chatRooms.find(r => r.id === activeRoomId);
+            if (room) {
+                room.messages = [];
+                saveRoomsToLocal();
+                switchRoom(activeRoomId);
+                showFloatingToast("已清空當前教室對話。");
+            }
+            closeMenu();
+        });
+    };
 
     // --- 模型配額與管理 ---
     function renderGlobalAIQuota() {
@@ -2299,7 +2915,6 @@ Output strictly in JSON:
         btnBottom.addEventListener('click', () => chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' }));
     }
 
-    // --- 教室與教材管理 ---
     function normalizeMaterial(mat) {
         if (!mat || typeof mat !== 'object') return null;
         const text = String(mat.text || '').replace(/\r\n?/g, '\n').trim();
@@ -2347,6 +2962,7 @@ Output strictly in JSON:
 
         room.messages.forEach(m => addMessageToUI(m.role, m.learning, m.my, m.correction, m.id, m.speechLang || room.language.learning, m.pronunciation || null, m.audioDataUrl || null));
 
+        updateMaterialBanner();
         renderRoomList();
         saveRoomsToLocal();
         scrollToLatestMessage();
@@ -2363,6 +2979,8 @@ Output strictly in JSON:
                 id: 'room_' + Date.now(),
                 name: '一般對話',
                 language: { my: 'zh-TW', learning: 'en-US' },
+                studyLevel: 'B1',
+                tutorMode: 'casual',
                 messages: [],
                 material: null
             };
@@ -2487,7 +3105,7 @@ Output strictly in JSON:
         }
     };
 
-        function openConfirmModal(message, onConfirm) {
+    function openConfirmModal(message, onConfirm) {
         const modal = document.getElementById('modal-confirm');
         const msgEl = document.getElementById('modal-confirm-msg');
         const btnOk = document.getElementById('modal-confirm-ok');
@@ -2540,6 +3158,7 @@ Output strictly in JSON:
         initChatSystem();
         initLangPanel();
         initFloatingNav();
+        loadVocabularyFromLocal();
         updateApiKeyButtonState();
         updateLangDisplay();
         initModelSystem();
