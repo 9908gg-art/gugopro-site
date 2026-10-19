@@ -1310,14 +1310,10 @@
             <button aria-label="占卜日誌" class="btn-lang-toggle" id="btn-journal-header" type="button">
                 <i class="fa-solid fa-book-bookmark"></i><span>日誌</span>
             </button>
-            <select class="lang-select-header" id="interface-lang" aria-label="選擇介面語言">
+            <select class="lang-select-header" id="interface-lang" aria-label="選擇語言 / Language / 言語">
                 <option value="zh-TW" selected>繁體中文</option>
-                <option value="zh-CN">简体中文</option>
                 <option value="en-US">English</option>
                 <option value="ja-JP">日本語</option>
-                <option value="de-DE">Deutsch</option>
-                <option value="fr-FR">Français</option>
-                <option value="es-ES">Español</option>
             </select>
         </div>
     </header>
@@ -1529,111 +1525,242 @@
 <div id="toast-msg"></div>
 
 <script>
-    // --- 78 Rider-Waite Cards ---
+    // --- 78 Rider-Waite Cards (Trilingual Names & Archetypes) ---
     const DECK = [
-        {n:0,name:'愚者',en:'The Fool',emoji:'🃏',u:'自由、新起點、冒險心、無限潛能',r:'魯莽、漫無目的、逃避承諾'},
-        {n:1,name:'魔術師',en:'The Magician',emoji:'🎩',u:'創造力、資源整合、顯化能力、清晰意志',r:'操縱欺騙、才華壓抑、缺乏準備'},
-        {n:2,name:'女祭司',en:'The High Priestess',emoji:'🌙',u:'直覺敏銳、深層潛意識、內省沉靜、神秘洞察',r:'忽略直覺、猜疑不安、表面文章'},
-        {n:3,name:'皇后',en:'The Empress',emoji:'👑',u:'豐盛滋養、創造繁衍、感官享受、母性包容',r:'過度依賴、缺乏安全感、創造阻滯'},
-        {n:4,name:'皇帝',en:'The Emperor',emoji:'⚔️',u:'組織架構、穩固秩序、領導權威、責任擔當',r:'專制僵化、失控恐懼、微觀管理'},
-        {n:5,name:'教皇',en:'The Hierophant',emoji:'📿',u:'精神指引、體制認同、良師益友、道德信仰',r:'打破陳規、教條教訓、獨立探索'},
-        {n:6,name:'戀人',en:'The Lovers',emoji:'💕',u:'價值觀契合、重大抉擇、親密連結、靈魂同盟',r:'價值衝突、溝通斷裂、錯誤選擇'},
-        {n:7,name:'戰車',en:'The Chariot',emoji:'🏇',u:'堅定意志、克服障礙、掌控方向、迅速突破',r:'情緒失控、方向迷失、盲目對抗'},
-        {n:8,name:'力量',en:'Strength',emoji:'🦁',u:'以柔克剛、內在韌性、耐性包容、調伏本能',r:'自我懷疑、能量耗竭、壓抑爆發'},
-        {n:9,name:'隱士',en:'The Hermit',emoji:'🏔️',u:'獨處深思、追求真理、心靈沉澱、經驗智慧',r:'過度孤立、固步自封、拒絕外界'},
-        {n:10,name:'命運之輪',en:'Wheel of Fortune',emoji:'🎡',u:'生命週期、順勢而為、機遇降臨、因果轉變',r:'抗拒無常、壞運迷思、局勢失衡'},
-        {n:11,name:'正義',en:'Justice',emoji:'⚖️',u:'客觀公正、因果報應、條理清晰、權衡取捨',r:'不公偏頗、逃避責任、認知失真'},
-        {n:12,name:'倒吊人',en:'The Hanged Man',emoji:'🙃',u:'換位思考、順服等待、自願犧牲、智慧昇華',r:'無謂受苦、拖延猶豫、執著不放'},
-        {n:13,name:'死神',en:'Death',emoji:'💀',u:'舊篇章終結、徹底蛻變、放下執念、重生契機',r:'恐懼告別、僵死拖延、抗拒新生'},
-        {n:14,name:'節制',en:'Temperance',emoji:'🕊️',u:'中庸調和、煉金轉化、情緒流動、身心平衡',r:'失衡極端、焦躁缺乏耐性、內耗'},
-        {n:15,name:'惡魔',en:'The Devil',emoji:'😈',u:'物質執念、慾望束縛、陰影顯現、成癮依賴',r:'覺醒解脫、打破枷鎖、重獲主權'},
-        {n:16,name:'塔',en:'The Tower',emoji:'⚡',u:'震盪瓦解、幻象粉碎、突然啟迪、重建契機',r:'延遲崩潰、心存僥倖、隱匿創傷'},
-        {n:17,name:'星星',en:'The Star',emoji:'⭐',u:'澄澈希望、心靈療癒、靈感激盪、堅定信仰',r:'希望渺茫、迷失信心、孤獨疏離'},
-        {n:18,name:'月亮',en:'The Moon',emoji:'🌕',u:'深層恐懼、潛意識迷霧、幻覺疑慮、情緒波動',r:'迷霧漸散、真相浮出、看清陰影'},
-        {n:19,name:'太陽',en:'The Sun',emoji:'☀️',u:'生命活力、自信成功、澄澈光明、純真喜悅',r:'暫時陰霾、過度樂觀、虛假狂歡'},
-        {n:20,name:'審判',en:'Judgement',emoji:'📯',u:'靈魂召喚、覺醒重生、重大反省、寬恕解脫',r:'自我批判、逃避召喚、沉溺悔恨'},
-        {n:21,name:'世界',en:'The World',emoji:'🌍',u:'圓滿完成、整合昇華、宏觀成就、閉環歸一',r:'未竟之志、延遲完成、缺乏收尾'},
+        {n:0,name:'愚者',en:'The Fool',ja:'愚者',emoji:'🃏',u:'自由、新起點、冒險心、無限潛能',r:'魯莽、漫無目的、逃避承諾'},
+        {n:1,name:'魔術師',en:'The Magician',ja:'魔術師',emoji:'🎩',u:'創造力、資源整合、顯化能力、清晰意志',r:'操縱欺騙、才華壓抑、缺乏準備'},
+        {n:2,name:'女祭司',en:'The High Priestess',ja:'女教皇',emoji:'🌙',u:'直覺敏銳、深層潛意識、內省沉靜、神秘洞察',r:'忽略直覺、猜疑不安、表面文章'},
+        {n:3,name:'皇后',en:'The Empress',ja:'女帝',emoji:'👑',u:'豐盛滋養、創造繁衍、感官享受、母性包容',r:'過度依賴、缺乏安全感、創造阻滯'},
+        {n:4,name:'皇帝',en:'The Emperor',ja:'皇帝',emoji:'⚔️',u:'組織架構、穩固秩序、領導權威、責任擔當',r:'專制僵化、失控恐懼、微觀管理'},
+        {n:5,name:'教皇',en:'The Hierophant',ja:'教皇',emoji:'📿',u:'精神指引、體制認同、良師益友、道德信仰',r:'打破陳規、教條教訓、獨立探索'},
+        {n:6,name:'戀人',en:'The Lovers',ja:'恋人',emoji:'💕',u:'價值觀契合、重大抉擇、親密連結、靈魂同盟',r:'價值衝突、溝通斷裂、錯誤選擇'},
+        {n:7,name:'戰車',en:'The Chariot',ja:'戦車',emoji:'🏇',u:'堅定意志、克服障礙、掌控方向、迅速突破',r:'情緒失控、方向迷失、盲目對抗'},
+        {n:8,name:'力量',en:'Strength',ja:'力',emoji:'🦁',u:'以柔克剛、內在韌性、耐性包容、調伏本能',r:'自我懷疑、能量耗竭、壓抑爆發'},
+        {n:9,name:'隱士',en:'The Hermit',ja:'隠者',emoji:'🏔️',u:'獨處深思、追求真理、心靈沉澱、經驗智慧',r:'過度孤立、固步自封、拒絕外界'},
+        {n:10,name:'命運之輪',en:'Wheel of Fortune',ja:'運命の輪',emoji:'🎡',u:'生命週期、順勢而為、機遇降臨、因果轉變',r:'抗拒無常、壞運迷思、局勢失衡'},
+        {n:11,name:'正義',en:'Justice',ja:'正義',emoji:'⚖️',u:'客觀公正、因果報應、條理清晰、權衡取捨',r:'不公偏頗、逃避責任、認知失真'},
+        {n:12,name:'倒吊人',en:'The Hanged Man',ja:'吊るされた男',emoji:'🙃',u:'換位思考、順服等待、自願犧牲、智慧昇華',r:'無謂受苦、拖延猶豫、執著不放'},
+        {n:13,name:'死神',en:'Death',ja:'死神',emoji:'💀',u:'舊篇章終結、徹底蛻變、放下執念、重生契機',r:'恐懼告別、僵死拖延、抗拒新生'},
+        {n:14,name:'節制',en:'Temperance',ja:'節制',emoji:'🕊️',u:'中庸調和、煉金轉化、情緒流動、身心平衡',r:'失衡極端、焦躁缺乏耐性、內耗'},
+        {n:15,name:'惡魔',en:'The Devil',ja:'悪魔',emoji:'😈',u:'物質執念、慾望束縛、陰影顯現、成癮依賴',r:'覺醒解脫、打破枷鎖、重獲主權'},
+        {n:16,name:'塔',en:'The Tower',ja:'塔',emoji:'⚡',u:'震盪瓦解、幻象粉碎、突然啟迪、重建契機',r:'延遲崩潰、心存僥倖、隱匿創傷'},
+        {n:17,name:'星星',en:'The Star',ja:'星',emoji:'⭐',u:'澄澈希望、心靈療癒、靈感激盪、堅定信仰',r:'希望渺茫、迷失信心、孤獨疏離'},
+        {n:18,name:'月亮',en:'The Moon',ja:'月',emoji:'🌕',u:'深層恐懼、潛意識迷霧、幻覺疑慮、情緒波動',r:'迷霧漸散、真相浮出、看清陰影'},
+        {n:19,name:'太陽',en:'The Sun',ja:'太陽',emoji:'☀️',u:'生命活力、自信成功、澄澈光明、純真喜悅',r:'暫時陰霾、過度樂觀、虛假狂歡'},
+        {n:20,name:'審判',en:'Judgement',ja:'審判',emoji:'📯',u:'靈魂召喚、覺醒重生、重大反省、寬恕解脫',r:'自我批判、逃避召喚、沉溺悔恨'},
+        {n:21,name:'世界',en:'The World',ja:'世界',emoji:'🌍',u:'圓滿完成、整合昇華、宏觀成就、閉環歸一',r:'未竟之志、延遲完成、缺乏收尾'},
         // 14 Wands
-        {n:22,name:'權杖王牌',en:'Ace of Wands',emoji:'🔥',u:'靈感火花、全新起點、熱情動力',r:'動力不足、方向延遲'},
-        {n:23,name:'權杖二',en:'Two of Wands',emoji:'🔱',u:'長遠擘劃、立足現狀、跨出邊界',r:'猶豫不決、恐懼出海'},
-        {n:24,name:'權杖三',en:'Three of Wands',emoji:'🚢',u:'遠見拓展、航行收穫、商務合作',r:'海外受阻、進度延宕'},
-        {n:25,name:'權杖四',en:'Four of Wands',emoji:'🏠',u:'和諧安穩、慶祝豐收、堅實社群',r:'根基不穩、慶典延期'},
-        {n:26,name:'權杖五',en:'Five of Wands',emoji:'🥊',u:'良性競爭、意見交鋒、混亂摩擦',r:'避免衝突、無謂內耗'},
-        {n:27,name:'權杖六',en:'Six of Wands',emoji:'🏆',u:'凱旋歸來、公眾讚揚、建立自信',r:'短暫得意、缺乏認同'},
-        {n:28,name:'權杖七',en:'Seven of Wands',emoji:'🛡️',u:'捍衛立場、以一擋百、克服逆境',r:'疲態畢露、放棄防線'},
-        {n:29,name:'權杖八',en:'Eight of Wands',emoji:'💨',u:'急速推進、訊息抵達、目標直達',r:'衝動混亂、訊息阻滯'},
-        {n:30,name:'權杖九',en:'Nine of Wands',emoji:'🏰',u:'最後防線、堅定戒備、經驗韌性',r:'偏執焦慮、過度防備'},
-        {n:31,name:'權杖十',en:'Ten of Wands',emoji:'📦',u:'責任過載、負重前行、壓力極限',r:'卸下重擔、合理分權'},
-        {n:32,name:'權杖侍者',en:'Page of Wands',emoji:'🌱',u:'好奇熱忱、新興契機、探索熱情',r:'三分鐘熱度、浮躁'},
-        {n:33,name:'權杖騎士',en:'Knight of Wands',emoji:'🐎',u:'勇往直前、冒險進取、迅速出擊',r:'魯莽急躁、半途而廢'},
-        {n:34,name:'權杖皇后',en:'Queen of Wands',emoji:'👸',u:'自信魅力、熱情溫暖、獨立統御',r:'情緒支配、嫉妒猜疑'},
-        {n:35,name:'權杖國王',en:'King of Wands',emoji:'🤴',u:'先驅領袖、遠見卓識、鼓舞人心',r:'專制獨裁、急功近利'},
+        {n:22,name:'權杖王牌',en:'Ace of Wands',ja:'ワンドのエース',emoji:'🔥',u:'靈感火花、全新起點、熱情動力',r:'動力不足、方向延遲'},
+        {n:23,name:'權杖二',en:'Two of Wands',ja:'ワンドの2',emoji:'🔱',u:'長遠擘劃、立足現狀、跨出邊界',r:'猶豫不決、恐懼出海'},
+        {n:24,name:'權杖三',en:'Three of Wands',ja:'ワンドの3',emoji:'🚢',u:'遠見拓展、航行收穫、商務合作',r:'海外受阻、進度延宕'},
+        {n:25,name:'權杖四',en:'Four of Wands',ja:'ワンドの4',emoji:'🏠',u:'和諧安穩、慶祝豐收、堅實社群',r:'根基不穩、慶典延期'},
+        {n:26,name:'權杖五',en:'Five of Wands',ja:'ワンドの5',emoji:'🥊',u:'良性競爭、意見交鋒、混亂摩擦',r:'避免衝突、無謂內耗'},
+        {n:27,name:'權杖六',en:'Six of Wands',ja:'ワンドの6',emoji:'🏆',u:'凱旋歸來、公眾讚揚、建立自信',r:'短暫得意、缺乏認同'},
+        {n:28,name:'權杖七',en:'Seven of Wands',ja:'ワンドの7',emoji:'🛡️',u:'捍衛立場、以一擋百、克服逆境',r:'疲態畢露、放棄防線'},
+        {n:29,name:'權杖八',en:'Eight of Wands',ja:'ワンドの8',emoji:'💨',u:'急速推進、訊息抵達、目標直達',r:'衝動混亂、訊息阻滯'},
+        {n:30,name:'權杖九',en:'Nine of Wands',ja:'ワンドの9',emoji:'🏰',u:'最後防線、堅定戒備、經驗韌性',r:'偏執焦慮、過度防備'},
+        {n:31,name:'權杖十',en:'Ten of Wands',ja:'ワンドの10',emoji:'📦',u:'責任過載、負重前行、壓力極限',r:'卸下重擔、合理分權'},
+        {n:32,name:'權杖侍者',en:'Page of Wands',ja:'ワンドのペイジ',emoji:'🌱',u:'好奇熱忱、新興契機、探索熱情',r:'三分鐘熱度、浮躁'},
+        {n:33,name:'權杖騎士',en:'Knight of Wands',ja:'ワンドのナイト',emoji:'🐎',u:'勇往直前、冒險進取、迅速出擊',r:'魯莽急躁、半途而廢'},
+        {n:34,name:'權杖皇后',en:'Queen of Wands',ja:'ワンドのクイーン',emoji:'👸',u:'自信魅力、熱情溫暖、獨立統御',r:'情緒支配、嫉妒猜疑'},
+        {n:35,name:'權杖國王',en:'King of Wands',ja:'ワンドのキング',emoji:'🤴',u:'先驅領袖、遠見卓識、鼓舞人心',r:'專制獨裁、急功近利'},
         // 14 Cups
-        {n:36,name:'聖杯王牌',en:'Ace of Cups',emoji:'💧',u:'情感湧現、純淨之愛、直覺豐沛',r:'情感枯竭、封閉心扉'},
-        {n:37,name:'聖杯二',en:'Two of Cups',emoji:'🥂',u:'靈魂共鳴、平等合約、深層連結',r:'溝通斷裂、關係失衡'},
-        {n:38,name:'聖杯三',en:'Three of Cups',emoji:'🎉',u:'友誼同盟、社群歡聚、慶賀分享',r:'小圈子排他、過度放縱'},
-        {n:39,name:'聖杯四',en:'Four of Cups',emoji:'😐',u:'倦怠冷漠、思緒退縮、錯失好意',r:'重燃動力、打開心門'},
-        {n:40,name:'聖杯五',en:'Five of Cups',emoji:'😢',u:'沉溺失落、聚焦缺憾、悲傷悼念',r:'走出陰霾、看見剩餘價值'},
-        {n:41,name:'聖杯六',en:'Six of Cups',emoji:'🧸',u:'童年純真、懷舊溫情、善意傳遞',r:'沉溺過去、難以成熟'},
-        {n:42,name:'聖杯七',en:'Seven of Cups',emoji:'💭',u:'幻象選擇、白日夢想、缺乏落地',r:'看清真相、務實取捨'},
-        {n:43,name:'聖杯八',en:'Eight of Cups',emoji:'🚶',u:'毅然轉身、追求更高意義、放下執念',r:'畏懼未知、裹足不前'},
-        {n:44,name:'聖杯九',en:'Nine of Cups',emoji:'🌟',u:'心滿意足、願望達成、豐盛自足',r:'自滿傲慢、物質浮誇'},
-        {n:45,name:'聖杯十',en:'Ten of Cups',emoji:'🌈',u:'家庭圓滿、深層平安、和諧歸屬',r:'關係裂痕、價值觀不合'},
-        {n:46,name:'聖杯侍者',en:'Page of Cups',emoji:'🐟',u:'溫柔訊息、直覺萌芽、文藝感知',r:'情緒幼稚、玻璃心碎'},
-        {n:47,name:'聖杯騎士',en:'Knight of Cups',emoji:'🕊️',u:'浪漫邀請、理想追求、心靈使者',r:'不切實際、甜言蜜語'},
-        {n:48,name:'聖杯皇后',en:'Queen of Cups',emoji:'🧜‍♀️',u:'無私同理、慈愛滋養、心靈感應',r:'情緒勒索、過度敏感'},
-        {n:49,name:'聖杯國王',en:'King of Cups',emoji:'👑',u:'情緒成熟、大將之風、仁厚智慧',r:'情緒冷暴力、偏執冷酷'},
+        {n:36,name:'聖杯王牌',en:'Ace of Cups',ja:'カップのエース',emoji:'💧',u:'情感湧現、純淨之愛、直覺豐沛',r:'情感枯竭、封閉心扉'},
+        {n:37,name:'聖杯二',en:'Two of Cups',ja:'カップの2',emoji:'🥂',u:'靈魂共鳴、平等合約、深層連結',r:'溝通斷裂、關係失衡'},
+        {n:38,name:'聖杯三',en:'Three of Cups',ja:'カップの3',emoji:'🎉',u:'友誼同盟、社群歡聚、慶賀分享',r:'小圈子排他、過度放縱'},
+        {n:39,name:'聖杯四',en:'Four of Cups',ja:'カップの4',emoji:'😐',u:'倦怠冷漠、思緒退縮、錯失好意',r:'重燃動力、打開心門'},
+        {n:40,name:'聖杯五',en:'Five of Cups',ja:'カップの5',emoji:'😢',u:'沉溺失落、聚焦缺憾、悲傷悼念',r:'走出陰霾、看見剩餘價值'},
+        {n:41,name:'聖杯六',en:'Six of Cups',ja:'カップの6',emoji:'🧸',u:'童年純真、懷舊溫情、善意傳遞',r:'沉溺過去、難以成熟'},
+        {n:42,name:'聖杯七',en:'Seven of Cups',ja:'カップの7',emoji:'💭',u:'幻象選擇、白日夢想、缺乏落地',r:'看清真相、務實取捨'},
+        {n:43,name:'聖杯八',en:'Eight of Cups',ja:'カップの8',emoji:'🚶',u:'毅然轉身、追求更高意義、放下執念',r:'畏懼未知、裹足不前'},
+        {n:44,name:'聖杯九',en:'Nine of Cups',ja:'カップの9',emoji:'🌟',u:'心滿意足、願望達成、豐盛自足',r:'自滿傲慢、物質浮誇'},
+        {n:45,name:'聖杯十',en:'Ten of Cups',ja:'カップの10',emoji:'🌈',u:'家庭圓滿、深層平安、和諧歸屬',r:'關係裂痕、價值觀不合'},
+        {n:46,name:'聖杯侍者',en:'Page of Cups',ja:'カップのペイジ',emoji:'🐟',u:'溫柔訊息、直覺萌芽、文藝感知',r:'情緒幼稚、玻璃心碎'},
+        {n:47,name:'聖杯騎士',en:'Knight of Cups',ja:'カップのナイト',emoji:'🕊️',u:'浪漫邀請、理想追求、心靈使者',r:'不切實際、甜言蜜語'},
+        {n:48,name:'聖杯皇后',en:'Queen of Cups',ja:'カップのクイーン',emoji:'🧜‍♀️',u:'無私同理、慈愛滋養、心靈感應',r:'情緒勒索、過度敏感'},
+        {n:49,name:'聖杯國王',en:'King of Cups',ja:'カップのキング',emoji:'👑',u:'情緒成熟、大將之風、仁厚智慧',r:'情緒冷暴力、偏執冷酷'},
         // 14 Swords
-        {n:50,name:'寶劍王牌',en:'Ace of Swords',emoji:'🗡️',u:'清晰理性、真相洞悉、破局突破',r:'殘酷批判、認知混亂'},
-        {n:51,name:'寶劍二',en:'Two of Swords',emoji:'🙈',u:'拒絕抉擇、僵局防禦、理性盲目',r:'打破僵局、直視真相'},
-        {n:52,name:'寶劍三',en:'Three of Swords',emoji:'💔',u:'言語刺痛、未竟悲痛、幻滅受創',r:'走出創傷、自我和解'},
-        {n:53,name:'寶劍四',en:'Four of Swords',emoji:'🛌',u:'閉門休整、冥想沉澱、暫停沉積',r:'精疲力竭、被迫停擺'},
-        {n:54,name:'寶劍五',en:'Five of Swords',emoji:'⚔️',u:'慘勝代價、尊嚴衝突、自私算計',r:'放下執念、終止內耗'},
-        {n:55,name:'寶劍六',en:'Six of Swords',emoji:'🛶',u:'平穩過渡、遠離風暴、漸入安境',r:'旅途顛簸、受困過去'},
-        {n:56,name:'寶劍七',en:'Seven of Swords',emoji:'🦊',u:'智取策略、隱秘行動、規避正面',r:'東窗事發、良心不安'},
-        {n:57,name:'寶劍八',en:'Eight of Swords',emoji:'⛓️',u:'自我設限、受害思維、心理囚籠',r:'看破盲點、掙脫枷鎖'},
-        {n:58,name:'寶劍九',en:'Nine of Swords',emoji:'😱',u:'焦慮失眠、噩夢反芻、自責恐慌',r:'看清虛妄、重燃希望'},
-        {n:59,name:'寶劍十',en:'Ten of Swords',emoji:'🌅',u:'跌落谷底、痛苦終結、黎明將至',r:'重生甦醒、抗拒終點'},
-        {n:60,name:'寶劍侍者',en:'Page of Swords',emoji:'🦅',u:'敏銳求知、探詢真相、戒備警惕',r:'輕率多嘴、猜忌刺探'},
-        {n:61,name:'寶劍騎士',en:'Knight of Swords',emoji:'⚡',u:'雷厲風行、直言不諱、銳不可當',r:'衝動傷人、魯莽偏執'},
-        {n:62,name:'寶劍皇后',en:'Queen of Swords',emoji:'❄️',u:'洞燭先機、冷靜公正、獨立界線',r:'尖酸刻薄、封閉情感'},
-        {n:63,name:'寶劍國王',en:'King of Swords',emoji:'⚖️',u:'專業權威、邏輯審判、客觀公正',r:'殘酷冷酷、專橫教條'},
+        {n:50,name:'寶劍王牌',en:'Ace of Swords',ja:'ソードのエース',emoji:'🗡️',u:'清晰理性、真相洞悉、破局突破',r:'殘酷批判、認知混亂'},
+        {n:51,name:'寶劍二',en:'Two of Swords',ja:'ソードの2',emoji:'🙈',u:'拒絕抉擇、僵局防禦、理性盲目',r:'打破僵局、直視真相'},
+        {n:52,name:'寶劍三',en:'Three of Swords',ja:'ソードの3',emoji:'💔',u:'言語刺痛、未竟悲痛、幻滅受創',r:'走出創傷、自我和解'},
+        {n:53,name:'寶劍四',en:'Four of Swords',ja:'ソードの4',emoji:'🛌',u:'閉門休整、冥想沉澱、暫停沉積',r:'精疲力竭、被迫停擺'},
+        {n:54,name:'寶劍五',en:'Five of Swords',ja:'ソードの5',emoji:'⚔️',u:'慘勝代價、尊嚴衝突、自私算計',r:'放下執念、終止內耗'},
+        {n:55,name:'寶劍六',en:'Six of Swords',ja:'ソードの6',emoji:'🛶',u:'平穩過渡、遠離風暴、漸入安境',r:'旅途顛簸、受困過去'},
+        {n:56,name:'寶劍七',en:'Seven of Swords',ja:'ソードの7',emoji:'🦊',u:'智取策略、隱秘行動、規避正面',r:'東窗事發、良心不安'},
+        {n:57,name:'寶劍八',en:'Eight of Swords',ja:'ソードの8',emoji:'⛓️',u:'自我設限、受害思維、心理囚籠',r:'看破盲點、掙脫枷鎖'},
+        {n:58,name:'寶劍九',en:'Nine of Swords',ja:'ソードの9',emoji:'😱',u:'焦慮失眠、噩夢反芻、自責恐慌',r:'看清虛妄、重燃希望'},
+        {n:59,name:'寶劍十',en:'Ten of Swords',ja:'ソードの10',emoji:'🌅',u:'跌落谷底、痛苦終結、黎明將至',r:'重生甦醒、抗拒終點'},
+        {n:60,name:'寶劍侍者',en:'Page of Swords',ja:'ソードのペイジ',emoji:'🦅',u:'敏銳求知、探詢真相、戒備警惕',r:'輕率多嘴、猜忌刺探'},
+        {n:61,name:'寶劍騎士',en:'Knight of Swords',ja:'ソードのナイト',emoji:'⚡',u:'雷厲風行、直言不諱、銳不可當',r:'衝動傷人、魯莽偏執'},
+        {n:62,name:'寶劍皇后',en:'Queen of Swords',ja:'ソードのクイーン',emoji:'❄️',u:'洞燭先機、冷靜公正、獨立界線',r:'尖酸刻薄、封閉情感'},
+        {n:63,name:'寶劍國王',en:'King of Swords',ja:'ソードのキング',emoji:'⚖️',u:'專業權威、邏輯審判、客觀公正',r:'殘酷冷酷、專橫教條'},
         // 14 Pentacles
-        {n:64,name:'錢幣王牌',en:'Ace of Pentacles',emoji:'🪙',u:'物質契機、穩健種子、現實繁榮',r:'錯失良機、財務投機'},
-        {n:65,name:'錢幣二',en:'Two of Pentacles',emoji:'🤹',u:'多元平衡、靈活週轉、應變協調',r:'財務失控、手忙腳亂'},
-        {n:66,name:'錢幣三',en:'Three of Pentacles',emoji:'🏛️',u:'專業協同、技術認可、精工雕琢',r:'合作摩擦、粗製濫造'},
-        {n:67,name:'錢幣四',en:'Four of Pentacles',emoji:'🔒',u:'穩健守成、資產保全、邊界掌控',r:'過度吝嗇、恐懼失去'},
-        {n:68,name:'錢幣五',en:'Five of Pentacles',emoji:'🏚️',u:'資源匱乏、艱難考驗、孤立無援',r:'走出低谷、重見曙光'},
-        {n:69,name:'錢幣六',en:'Six of Pentacles',emoji:'🤝',u:'資源平衡、施與受互惠、慈善支持',r:'權力不均、附帶條件'},
-        {n:70,name:'錢幣七',en:'Seven of Pentacles',emoji:'🌾',u:'耐心回顧、評估成果、長期投資',r:'焦慮回報、勞而無功'},
-        {n:71,name:'錢幣八',en:'Eight of Pentacles',emoji:'🔨',u:'工匠精神、精進技藝、專注細節',r:'機械敷衍、缺乏熱忱'},
-        {n:72,name:'錢幣九',en:'Nine of Pentacles',emoji:'🍇',u:'優雅自足、經濟獨立、豐收成果',r:'物質依賴、虛榮空虛'},
-        {n:73,name:'錢幣十',en:'Ten of Pentacles',emoji:'🏰',u:'家族基業、長遠傳承、資產豐厚',r:'家庭紛爭、遺產摩擦'},
-        {n:74,name:'錢幣侍者',en:'Page of Pentacles',emoji:'📖',u:'求實好學、穩健起步、實踐探索',r:'眼高手低、缺乏執行'},
-        {n:75,name:'錢幣騎士',en:'Knight of Pentacles',emoji:'🐂',u:'堅忍踏實、嚴謹負責、循序漸進',r:'死板保守、缺乏彈性'},
-        {n:76,name:'錢幣皇后',en:'Queen of Pentacles',emoji:'🌻',u:'豐沛滋養、務實管理、溫暖包容',r:'物質焦慮、疏於照料自己'},
-        {n:77,name:'錢幣國王',en:'King of Pentacles',emoji:'🤴',u:'商業帝國、資本巨擘、雄厚信譽',r:'唯利是圖、固步自封'}
+        {n:64,name:'錢幣王牌',en:'Ace of Pentacles',ja:'ペンタクルのエース',emoji:'🪙',u:'物質契機、穩健種子、現實繁榮',r:'錯失良機、財務投機'},
+        {n:65,name:'錢幣二',en:'Two of Pentacles',ja:'ペンタクルの2',emoji:'🤹',u:'多元平衡、靈活週轉、應變協調',r:'財務失控、手忙腳亂'},
+        {n:66,name:'錢幣三',en:'Three of Pentacles',ja:'ペンタクルの3',emoji:'🏛️',u:'專業協同、技術認可、精工雕琢',r:'合作摩擦、粗製濫造'},
+        {n:67,name:'錢幣四',en:'Four of Pentacles',ja:'ペンタクルの4',emoji:'🔒',u:'穩健守成、資產保全、邊界掌控',r:'過度吝嗇、恐懼失去'},
+        {n:68,name:'錢幣五',en:'Five of Pentacles',ja:'ペンタクルの5',emoji:'🏚️',u:'資源匱乏、艱難考驗、孤立無援',r:'走出低谷、重見曙光'},
+        {n:69,name:'錢幣六',en:'Six of Pentacles',ja:'ペンタクルの6',emoji:'🤝',u:'資源平衡、施與受互惠、慈善支持',r:'權力不均、附帶條件'},
+        {n:70,name:'錢幣七',en:'Seven of Pentacles',ja:'ペンタクルの7',emoji:'🍇',u:'耐心耕耘、階段評估、靜候回報',r:'焦慮成果、半途放棄'},
+        {n:71,name:'錢幣八',en:'Eight of Pentacles',ja:'ペンタクルの8',emoji:'🔨',u:'工匠精神、精進技藝、專注細節',r:'機械枯燥、缺乏熱情'},
+        {n:72,name:'錢幣九',en:'Nine of Pentacles',ja:'ペンタクルの9',emoji:'🦚',u:'獨立自主、優雅富足、自食其力',r:'過度物質、內心空虛'},
+        {n:73,name:'錢幣十',en:'Ten of Pentacles',ja:'ペンタクルの10',emoji:'🏰',u:'家族傳承、長久基業、物質圓滿',r:'家族紛爭、傳統束縛'},
+        {n:74,name:'錢幣侍者',en:'Page of Pentacles',ja:'ペンタクルのペイジ',emoji:'📖',u:'求知若渴、務實起步、學習契機',r:'眼高手低、缺乏行動'},
+        {n:75,name:'錢幣騎士',en:'Knight of Pentacles',ja:'ペンタクルのナイト',emoji:'🐂',u:'腳踏實地、堅忍不拔、責任可靠',r:'墨守成規、進展遲緩'},
+        {n:76,name:'錢幣皇后',en:'Queen of Pentacles',ja:'ペンタクルのクイーン',emoji:'🌾',u:'持家智慧、現實溫暖、資源豐饒',r:'物質擔憂、忽視自我'},
+        {n:77,name:'錢幣國王',en:'King of Pentacles',ja:'ペンタクルのキング',emoji:'🤴',u:'商業帝國、資本巨擘、雄厚信譽',r:'唯利是圖、固步自封'}
     ];
 
     const SPREADS = {
-        timeline: { name: '時間流三牌陣', count: 3, positions: ['過去 / 因由', '現在 / 狀態', '未來 / 趨勢'] },
-        daily: { name: '單張每日指引', count: 1, positions: ['今日核心能量 / 是非直斷'] },
-        choice: { name: '工作二選一抉擇牌陣', count: 3, positions: ['當前困境與現況', '選擇 A 的發展後果', '選擇 B 的發展後果'] },
-        love: { name: '感情關係深度牌陣', count: 4, positions: ['我的真實心態', '對方的真實心態', '兩人當前阻礙', '未來關係走向'] },
-        celtic: { name: '凱爾特十字深度牌陣', count: 10, positions: ['現況 / 核心主題', '挑戰 / 阻礙', '潛意識動機', '過去基礎', '最佳結果', '近期未來', '自身態度', '外在環境', '希望與恐懼', '最終結論'] }
+        timeline: {
+            name: { 'zh-TW': '時間流三牌陣', 'en-US': 'Timeline 3-Card', 'ja-JP': 'タイムライン3枚引き' },
+            count: 3,
+            positions: ['過去 / 因由', '現在 / 狀態', '未來 / 趨勢']
+        },
+        daily: {
+            name: { 'zh-TW': '單張每日指引', 'en-US': 'Daily Oracle 1-Card', 'ja-JP': 'ワンオラクル1枚引き' },
+            count: 1,
+            positions: ['今日核心能量 / 是非直斷']
+        },
+        choice: {
+            name: { 'zh-TW': '工作二選一抉擇牌陣', 'en-US': 'Two Choices 3-Card', 'ja-JP': '二者択一スプレッド' },
+            count: 3,
+            positions: ['當前困境與現況', '選擇 A 的發展後果', '選擇 B 的發展後果']
+        },
+        love: {
+            name: { 'zh-TW': '感情關係深度牌陣', 'en-US': 'Deep Relationship 4-Card', 'ja-JP': '深層恋愛関係4枚引き' },
+            count: 4,
+            positions: ['我的真實心態', '對方的真實心態', '兩人當前阻礙', '未來關係走向']
+        },
+        celtic: {
+            name: { 'zh-TW': '凱爾特十字深度牌陣', 'en-US': 'Celtic Cross 10-Card', 'ja-JP': 'ケルト十字10枚引き' },
+            count: 10,
+            positions: ['現況 / 核心主題', '挑戰 / 阻礙', '潛意識動機', '過去基礎', '最佳結果', '近期未來', '自身態度', '外在環境', '希望與恐懼', '最終結論']
+        }
     };
 
-    const DEFAULT_AVAILABLE_MODELS = [
-        { api_name: 'gemini-3.7-flash', display_name: 'Gemini 3.7 Flash', score: 9.8, dailyQuota: 20 },
-        { api_name: 'gemini-3.8-flash', display_name: 'Gemini 3.8 Flash', score: 9.8, dailyQuota: 20 },
-        { api_name: 'gemini-3.5-flash', display_name: 'Gemini 3.5 Flash Lite', score: 9.7, dailyQuota: 500 },
-        { api_name: 'gemini-3.6-flash', display_name: 'Gemini 3.6 Flash', score: 9.7, dailyQuota: 20 },
-        { api_name: 'gemini-3.1-flash-lite', display_name: 'Gemini 3.1 Flash Lite', score: 9.5, dailyQuota: 500 },
-        { api_name: 'gemini-3.0-flash', display_name: 'Gemini 3.0 Flash', score: 9.4, dailyQuota: 20 },
-        { api_name: 'gemini-2.5-flash', display_name: 'Gemini 2.5 Flash', score: 9.2, dailyQuota: 20 },
-        { api_name: 'gemini-2.5-flash-lite', display_name: 'Gemini 2.5 Flash Lite', score: 9.2, dailyQuota: 20 }
-    ];
+    // --- Trilingual UI Localization Dictionaries ---
+    let currentUiLang = 'zh-TW';
 
+    const I18N = {
+        'zh-TW': {
+            pageTitle: 'AI 塔羅大師｜免費線上抽牌、五大牌陣解讀與每日感情工作指引 - GugoPro',
+            pageH1: 'AI 塔羅大師：結構化牌陣抽牌與生活決策反思',
+            pageDesc: 'AI 塔羅大師提供 78 張牌與五種塔羅牌陣，適合每日塔羅指引、感情溝通與工作二選一反思；解讀僅供娛樂與自我探索，非未來預測。',
+            homeBtn: '首頁',
+            journalBtn: '日誌',
+            newClassroomBtn: '建立新占卜',
+            classroomTitle: '占卜教室',
+            journalSidebarBtn: '查看占卜日誌 (Journal)',
+            exportBtn: '匯出對話紀錄',
+            importBtn: '導入紀錄到當前教室',
+            clearBtn: '清除或刪除教室',
+            apiConfigBtn: '變更 Gemini API Key',
+            apiUnconfiguredBtn: '請輸入 GEMINI API KEY',
+            modelSectionTitle: 'AI 對話模型',
+            modelLoadedStatus: '已載入免費對話模型',
+            quotaLimitLabel: '📊 今日免費用量上限',
+            quotaUsedLabel: '⚡ 今日已使用量',
+            usageCountUnit: '使用次數',
+            usedUnit: '已使用',
+            remainingUnit: '剩餘',
+            labelActiveSpreadPrefix: '🔮 當前牌陣：',
+            quickLove: '❤️ 感情發展',
+            quickFortune: '🌟 未來運勢',
+            quickMoney: '💰 近期財運',
+            quickCustomAdd: '＋ 自訂',
+            inputPlaceholder: '輸入你想探索的問題、追問或心境...',
+            copyReadingBtn: '複製解牌',
+            saveJournalBtn: '儲存日誌',
+            followUpBtn: '繼續追問',
+            micListeningToast: '🎙️ 正在聆聽中，請說出想問的問題...',
+            micBlockedToast: '⚠️ 麥克風已被封鎖，請點擊網址列左側鎖頭開啟麥克風權限',
+            micNoDeviceToast: '⚠️ 找不到錄音設備，請確認麥克風已正確連接',
+            micDoneToast: '語音輸入已完成 ✓',
+            copyDoneToast: '解牌內容已成功複製！',
+            journalSaveDone: '占卜紀錄已保存於本機日誌中 ✓'
+        },
+        'en-US': {
+            pageTitle: 'AI Tarot Master | Free Online Tarot Reading & Decision Insights - GugoPro',
+            pageH1: 'AI Tarot Master: Structured Spreads & Decision Reflection',
+            pageDesc: 'AI Tarot Master provides 78 Rider-Waite cards across 5 structured spreads for daily guidance, relationship insight, and career choices.',
+            homeBtn: 'Home',
+            journalBtn: 'Journal',
+            newClassroomBtn: 'New Reading Room',
+            classroomTitle: 'Reading Rooms',
+            journalSidebarBtn: 'View Tarot Journal',
+            exportBtn: 'Export Chat History',
+            importBtn: 'Import to Room',
+            clearBtn: 'Clear / Delete Room',
+            apiConfigBtn: 'Change Gemini API Key',
+            apiUnconfiguredBtn: 'Enter GEMINI API KEY',
+            modelSectionTitle: 'AI Dialogue Models',
+            modelLoadedStatus: 'Free dialogue models loaded',
+            quotaLimitLabel: '📊 Daily Free Quota',
+            quotaUsedLabel: '⚡ Used Today',
+            usageCountUnit: 'calls',
+            usedUnit: 'used',
+            remainingUnit: 'remaining',
+            labelActiveSpreadPrefix: '🔮 Active Spread: ',
+            quickLove: '❤️ Relationships',
+            quickFortune: '🌟 Future Path',
+            quickMoney: '💰 Wealth & Career',
+            quickCustomAdd: '＋ Custom',
+            inputPlaceholder: 'Type your inquiry, follow-up, or inner question...',
+            copyReadingBtn: 'Copy Reading',
+            saveJournalBtn: 'Save Journal',
+            followUpBtn: 'Follow Up',
+            micListeningToast: '🎙️ Listening... please speak your question clearly',
+            micBlockedToast: '⚠️ Microphone blocked. Please allow mic permission in browser settings.',
+            micNoDeviceToast: '⚠️ No audio input device found. Please connect a microphone.',
+            micDoneToast: 'Voice input completed ✓',
+            copyDoneToast: 'Reading copied to clipboard!',
+            journalSaveDone: 'Reading saved to local journal ✓'
+        },
+        'ja-JP': {
+            pageTitle: 'AI タロットマスター｜無料オンラインタロット占いと意思決定ガイド - GugoPro',
+            pageH1: 'AI タロットマスター：構造化スプレッドと人生の意思決定リフレクション',
+            pageDesc: 'AIタロットマスターはウェイト版78枚と5大スプレッドに対応し、日々の指引、恋愛、キャリアの二者択一を温かくサポートします。',
+            homeBtn: 'ホーム',
+            journalBtn: '日誌',
+            newClassroomBtn: '新規占術ルーム',
+            classroomTitle: '占術ルーム',
+            journalSidebarBtn: '占術日誌を見る (Journal)',
+            exportBtn: '対話履歴を出力',
+            importBtn: '対話履歴を取り込み',
+            clearBtn: 'ルームを初期化・削除',
+            apiConfigBtn: 'Gemini API Key を変更',
+            apiUnconfiguredBtn: 'GEMINI API KEY を入力',
+            modelSectionTitle: 'AI 対話モデル',
+            modelLoadedStatus: '無料モデル読み込み完了',
+            quotaLimitLabel: '📊 本日の無料上限',
+            quotaUsedLabel: '⚡ 本日の使用量',
+            usageCountUnit: '回',
+            usedUnit: '使用済',
+            remainingUnit: '残り',
+            labelActiveSpreadPrefix: '🔮 選択スプレッド：',
+            quickLove: '❤️ 恋愛・関係',
+            quickFortune: '🌟 未来の運勢',
+            quickMoney: '💰 金運・仕事',
+            quickCustomAdd: '＋ カスタム',
+            inputPlaceholder: '探求したい問いや心境、追加の質問を入力...',
+            copyReadingBtn: '解読をコピー',
+            saveJournalBtn: '日誌に保存',
+            followUpBtn: '続けて質問',
+            micListeningToast: '🎙️ 音声を聴き取っています... ご質問をお話しください',
+            micBlockedToast: '⚠️ マイクが拒否されています。ブラウザ設定で許可してください。',
+            micNoDeviceToast: '⚠️ マイクが見つかりません。接続を確認してください。',
+            micDoneToast: '音声入力を完了しました ✓',
+            copyDoneToast: '解読結果をコピーしました！',
+            journalSaveDone: '占術日誌に記録を保存しました ✓'
+        }
+    };
+
+    function t(key) {
+        return I18N[currentUiLang]?.[key] || I18N['zh-TW']?.[key] || key;
+    }
+
+    // --- State Management ---
     let chatRooms = [];
     let activeRoomId = null;
     let tarotSelectedSpread = 'timeline';
@@ -1641,7 +1768,7 @@
     let recognition = null;
     let isRecording = false;
     let drawerExpanded = true;
-    let availableModels = [...DEFAULT_AVAILABLE_MODELS];
+    let availableModels = []; // 100% 動態獲取
     let disabledModels = new Set();
     let currentModel = 'gemini-2.5-flash-lite';
     let quotaResetTimer = null;
@@ -1652,7 +1779,9 @@
     const MODEL_DISABLED_KEY = 'gugopro_ai_tutor_disabled_models_v1';
     const MODEL_PREFERENCE_KEY = 'gugopro_ai_tutor_model_preference_v1';
 
+    // --- App Initialization ---
     document.addEventListener('DOMContentLoaded', () => {
+        initLanguage();
         initChatSystem();
         initSpeechRecognition();
         initFloatingNav();
@@ -1663,12 +1792,92 @@
         listenToModelFallbackEvents();
     });
 
+    function initLanguage() {
+        const select = document.getElementById('interface-lang');
+        const saved = localStorage.getItem('gugopro_tarot_lang_v1');
+        if (saved && ['zh-TW', 'en-US', 'ja-JP'].includes(saved)) {
+            currentUiLang = saved;
+            if (select) select.value = saved;
+        } else {
+            const browser = navigator.language || '';
+            if (browser.startsWith('ja')) currentUiLang = 'ja-JP';
+            else if (browser.startsWith('en')) currentUiLang = 'en-US';
+            else currentUiLang = 'zh-TW';
+            if (select) select.value = currentUiLang;
+        }
+        applyLanguageStrings();
+
+        if (select) {
+            select.onchange = (e) => {
+                currentUiLang = e.target.value;
+                localStorage.setItem('gugopro_tarot_lang_v1', currentUiLang);
+                applyLanguageStrings();
+                updateActiveSpreadUI();
+                renderRoomList();
+            };
+        }
+    }
+
+    function applyLanguageStrings() {
+        document.documentElement.lang = currentUiLang;
+        document.documentElement.setAttribute('data-ui-lang', currentUiLang);
+
+        const pageTitle = document.getElementById('page-title');
+        if (pageTitle) pageTitle.textContent = t('pageTitle');
+        const h1 = document.querySelector('h1.seo-page-title');
+        if (h1) h1.textContent = t('pageH1');
+        const desc = document.getElementById('page-description');
+        if (desc) desc.setAttribute('content', t('pageDesc'));
+
+        const btnHome = document.querySelector('.btn-back-home span');
+        if (btnHome) btnHome.textContent = t('homeBtn');
+        const btnJourHeader = document.querySelector('#btn-journal-header span');
+        if (btnJourHeader) btnJourHeader.textContent = t('journalBtn');
+        const btnNew = document.querySelector('#btn-new-room span');
+        if (btnNew) btnNew.textContent = t('newClassroomBtn');
+        const btnJourSide = document.querySelector('#btn-journal-sidebar span');
+        if (btnJourSide) btnJourSide.textContent = t('journalSidebarBtn');
+        const btnExport = document.querySelector('#btn-room-export-ops span');
+        if (btnExport) btnExport.textContent = t('exportBtn');
+        const btnImport = document.querySelector('#btn-import span');
+        if (btnImport) btnImport.textContent = t('importBtn');
+        const btnClear = document.querySelector('#btn-room-delete-ops span');
+        if (btnClear) btnClear.textContent = t('clearBtn');
+
+        const modelTitle = document.getElementById('model-settings-title');
+        if (modelTitle) modelTitle.textContent = t('modelSectionTitle');
+        const quotaLimit = document.getElementById('quota-free-limit-label');
+        if (quotaLimit) quotaLimit.textContent = t('quotaLimitLabel');
+        const quotaUsed = document.getElementById('quota-used-label');
+        if (quotaUsed) quotaUsed.textContent = t('quotaUsedLabel');
+
+        const userInput = document.getElementById('user-text');
+        if (userInput) userInput.setAttribute('placeholder', t('inputPlaceholder'));
+
+        updateApiKeyButtonState();
+        renderQuickChipsStatic();
+    }
+
+    function renderQuickChipsStatic() {
+        const chips = document.querySelectorAll('.tarot-compact-quick-chips .btn-compact-chip:not(.custom-add)');
+        if (chips.length >= 3) {
+            chips[0].textContent = t('quickLove');
+            chips[1].textContent = t('quickFortune');
+            chips[2].textContent = t('quickMoney');
+        }
+    }
+
     // 監聽 503/429 忙碌切換事件，即時在 UI 顯示提醒橫幅
     function listenToModelFallbackEvents() {
         window.addEventListener('gugopro:model-fallback', (e) => {
             const d = e.detail;
             if (!d) return;
-            showModelBusyBanner(`⚠️ 模型 ${d.failedDisplayName || d.failedModel} ${d.reason}，正在為您無縫切換至 ${d.nextDisplayName || d.nextModel}...`);
+            const msg = currentUiLang === 'en-US'
+                ? `⚠️ Model ${d.failedDisplayName || d.failedModel} ${d.reason}, auto-switching to ${d.nextDisplayName || d.nextModel}...`
+                : (currentUiLang === 'ja-JP'
+                    ? `⚠️ モデル ${d.failedDisplayName || d.failedModel} が高負荷のため、自動的に ${d.nextDisplayName || d.nextModel} に切り替えています...`
+                    : `⚠️ 模型 ${d.failedDisplayName || d.failedModel} ${d.reason}，正在為您無縫切換至 ${d.nextDisplayName || d.nextModel}...`);
+            showModelBusyBanner(msg);
             currentModel = d.nextModel || currentModel;
             renderCurrentModelStatus();
             renderModelOptions();
@@ -1701,7 +1910,7 @@
         if (!chatRooms.length) {
             const defaultRoom = {
                 id: 'room_' + Date.now(),
-                name: '一般占卜',
+                name: currentUiLang === 'en-US' ? 'General Reading' : (currentUiLang === 'ja-JP' ? '総合占術' : '一般占卜'),
                 messages: [],
                 selectedSpread: 'timeline',
                 activeReading: null,
@@ -1725,6 +1934,7 @@
 
     function renderRoomList() {
         const list = document.getElementById('room-list');
+        if (!list) return;
         list.innerHTML = '';
         chatRooms.forEach(room => {
             const item = document.createElement('div');
@@ -1765,16 +1975,27 @@
         scrollToLatestMessage();
     }
 
-    // --- AI Model Management ---
+    // --- AI Model Engine Integration (100% Dynamic Model Loading) ---
     function initModelSystem() {
         loadDisabledModelPreferences();
+        syncModelsFromCore();
         reconcileCurrentModel();
         renderModelOptions();
         renderCurrentModelStatus();
         renderGlobalAIQuota();
         renderQuotaResetCountdown();
+
         if (quotaResetTimer === null) quotaResetTimer = window.setInterval(renderQuotaResetCountdown, 60000);
-        fetchLatestModel({ silent: true });
+
+        // 動態監聽 GugoAICore 模型清單更新
+        window.addEventListener('gugopro:models-updated', () => {
+            syncModelsFromCore();
+            reconcileCurrentModel();
+            renderModelOptions();
+            renderCurrentModelStatus();
+            renderGlobalAIQuota();
+        });
+
         window.addEventListener('storage', (event) => {
             if (event.key === 'gugopro_global_ai_quota_v1') renderGlobalAIQuota();
             if (event.key === MODEL_PREFERENCE_KEY) {
@@ -1783,6 +2004,15 @@
                 renderCurrentModelStatus();
             }
         });
+    }
+
+    function syncModelsFromCore() {
+        if (window.GugoAICore && typeof GugoAICore.getAvailableModels === 'function') {
+            const list = GugoAICore.getAvailableModels();
+            if (Array.isArray(list) && list.length > 0) {
+                availableModels = list;
+            }
+        }
     }
 
     function loadDisabledModelPreferences() {
@@ -1813,10 +2043,13 @@
         const model = availableModels.find(m => m.api_name === apiName);
         if (!model || !isModelEnabled(apiName)) return;
         persistModelPreference(apiName);
+        if (window.GugoAICore && typeof GugoAICore.setPreferredModel === 'function') {
+            GugoAICore.setPreferredModel(apiName);
+        }
         reconcileCurrentModel();
         renderModelOptions();
         renderCurrentModelStatus();
-        showToast(`已切換模型為：${model.display_name}`);
+        showToast(currentUiLang === 'en-US' ? `Switched to: ${model.display_name}` : (currentUiLang === 'ja-JP' ? `モデルを切り替えました：${model.display_name}` : `已切換模型為：${model.display_name}`));
     }
 
     function getEnabledModels() {
@@ -1867,14 +2100,24 @@
         const hours = Math.floor(totalMinutes / 60);
         const minutes = totalMinutes % 60;
         const statusEl = document.getElementById('model-settings-status');
-        if (statusEl) statusEl.textContent = `已載入免費對話模型 · 倒數 ${hours}時${minutes}分重置`;
+        if (statusEl) {
+            statusEl.textContent = currentUiLang === 'en-US'
+                ? `${t('modelLoadedStatus')} · Resets in ${hours}h ${minutes}m`
+                : (currentUiLang === 'ja-JP'
+                    ? `${t('modelLoadedStatus')} · リセットまであと ${hours}時間${minutes}分`
+                    : `${t('modelLoadedStatus')} · 倒數 ${hours}時${minutes}分重置`);
+        }
     }
 
     function renderCurrentModelStatus() {
         const status = document.getElementById('model-current-status');
         if (!status) return;
         const model = availableModels.find(m => m.api_name === currentModel);
-        status.textContent = `目前模型：${model?.display_name || GugoAICore.getModelDisplayName(currentModel)}`;
+        status.textContent = currentUiLang === 'en-US'
+            ? `Active: ${model?.display_name || 'Gemini 2.5 Flash Lite'}`
+            : (currentUiLang === 'ja-JP'
+                ? `現在のモデル：${model?.display_name || 'Gemini 2.5 Flash Lite'}`
+                : `目前模型：${model?.display_name || 'Gemini 2.5 Flash Lite'}`);
     }
 
     function renderGlobalAIQuota() {
@@ -1894,8 +2137,8 @@
 
         const limitEl = document.getElementById('global-ai-quota-limit');
         const usedEl = document.getElementById('global-ai-quota-used');
-        if (limitEl) limitEl.textContent = `${limit} 使用次數`;
-        if (usedEl) usedEl.textContent = `${used} 已使用 / ${remaining} 剩餘`;
+        if (limitEl) limitEl.textContent = `${limit} ${t('usageCountUnit')}`;
+        if (usedEl) usedEl.textContent = `${used} ${t('usedUnit')} / ${remaining} ${t('remainingUnit')}`;
         renderQuotaResetCountdown();
     }
 
@@ -1909,99 +2152,63 @@
         const isCurrent = currentModel === model.api_name;
         const option = document.createElement('div');
         option.className = `model-option ${enabled ? '' : 'is-disabled'} ${isCurrent ? 'is-current' : ''}`.trim();
-        option.onclick = () => { if (enabled) setPreferredModel(model.api_name); };
+        option.setAttribute('role', 'listitem');
 
-        const body = document.createElement('div');
-        body.className = 'model-option-body';
-        const heading = document.createElement('div');
-        heading.className = 'model-option-heading';
-        const strong = document.createElement('strong');
-        strong.className = 'model-option-name';
-        strong.textContent = model.display_name;
-        const spanScore = document.createElement('span');
-        spanScore.className = 'model-score';
-        spanScore.textContent = `⭐ ${Number(model.score || 0).toFixed(1)}`;
-        heading.append(strong, spanScore);
-        body.appendChild(heading);
+        const cardBtn = document.createElement('button');
+        cardBtn.type = 'button';
+        cardBtn.className = 'model-card-btn';
+        cardBtn.disabled = !enabled;
+        cardBtn.innerHTML = `
+            <div class="model-info">
+                <span class="model-name">${escapeHtml(model.display_name)}</span>
+                <span class="model-meta">⭐ ${model.score} · 上限 ${model.dailyQuota}/日</span>
+            </div>
+            <div class="model-stats">
+                <span class="model-usage">今日已用：${getModelUsageCount(model.api_name)} 次</span>
+            </div>
+        `;
+        cardBtn.onclick = () => setPreferredModel(model.api_name);
 
-        const modelUsed = getModelUsageCount(model.api_name);
-        const modelQuota = Number(model.dailyQuota || 0);
-        const quotaDiv = document.createElement('div');
-        quotaDiv.className = 'model-option-quota';
-        quotaDiv.textContent = `每日上限：${modelQuota} 次 · 今日已用：${modelUsed} 次`;
-        body.appendChild(quotaDiv);
-        option.appendChild(body);
-
-        const control = document.createElement('div');
-        control.className = 'model-option-control';
+        const actions = document.createElement('div');
+        actions.className = 'model-actions';
         const toggle = document.createElement('input');
         toggle.type = 'checkbox';
         toggle.className = 'model-toggle';
         toggle.checked = enabled;
-        toggle.onclick = (e) => e.stopPropagation();
+        toggle.setAttribute('aria-label', `切換 ${model.display_name}`);
         toggle.onchange = (e) => {
-            e.stopPropagation();
-            setModelEnabled(model.api_name, toggle.checked);
-        };
-        control.appendChild(toggle);
-        option.appendChild(control);
-        return option;
-    }
-
-    function renderModelOptions() {
-        const container = document.getElementById('model-options');
-        if (!container) return;
-        container.replaceChildren();
-        availableModels.forEach(m => container.appendChild(createModelOption(m)));
-    }
-
-    function setModelEnabled(apiName, enabled) {
-        if (!apiName) return;
-        if (enabled) disabledModels.delete(apiName);
-        else disabledModels.add(apiName);
-        persistDisabledModelPreferences();
-        reconcileCurrentModel();
-        renderModelOptions();
-        renderCurrentModelStatus();
-        renderGlobalAIQuota();
-    }
-
-    async function fetchLatestModel({ silent = false } = {}) {
-        try {
-            const res = await fetch('https://quota.gugopro.com/gemini_rate_limits.json', { cache: 'no-store' });
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const data = await res.json();
-            const raw = Array.isArray(data) ? data : (data.models || []);
-            const fetched = raw.filter(m => m.is_free_tier === true && m.requires_billing_account === false && m.is_rest_compatible !== false && (Number(m.free_quota) || Number(m.daily_limit) || 0) > 0)
-                .map(m => ({
-                    api_name: String(m.api_name || m.name).replace(/^models\//, '').trim(),
-                    display_name: String(m.display_name || m.api_name),
-                    score: Number(m.model_score) || 0,
-                    dailyQuota: Number(m.free_quota || m.daily_limit || 20)
-                }))
-                .filter(m => /flash|gemma/i.test(m.api_name) && !/embedding|tts|audio|image|vision/i.test(m.api_name))
-                .sort((a, b) => b.score - a.score);
-
-            if (fetched.length > 0) {
-                availableModels = fetched;
-                reconcileCurrentModel();
-                renderModelOptions();
-                renderCurrentModelStatus();
-                renderGlobalAIQuota();
+            const isChecked = e.target.checked;
+            if (isChecked) disabledModels.delete(model.api_name);
+            else disabledModels.add(model.api_name);
+            persistDisabledModelPreferences();
+            if (window.GugoAICore && typeof GugoAICore.setModelEnabled === 'function') {
+                GugoAICore.setModelEnabled(model.api_name, isChecked);
             }
-        } catch (err) {
-            console.warn("Model fetch fallback to default models:", err);
-            availableModels = [...DEFAULT_AVAILABLE_MODELS];
             reconcileCurrentModel();
             renderModelOptions();
             renderCurrentModelStatus();
             renderGlobalAIQuota();
-        }
+        };
+
+        actions.appendChild(toggle);
+        option.appendChild(cardBtn);
+        option.appendChild(actions);
+        return option;
     }
 
-    // --- Type A Smart Drawer & Custom Chips ---
+    function renderModelOptions() {
+        const list = document.getElementById('model-options');
+        if (!list) return;
+        list.innerHTML = '';
+        availableModels.forEach(model => {
+            list.appendChild(createModelOption(model));
+        });
+    }
+
+    // --- Type A Smart Drawer & Custom Quick Chips ---
     function initTypeADrawer() {
         const btnToggle = document.getElementById('btn-drawer-toggle');
+        if (!btnToggle) return;
         btnToggle.onclick = () => {
             drawerExpanded = !drawerExpanded;
             syncDrawerState();
@@ -2012,6 +2219,7 @@
     function syncDrawerState() {
         const drawer = document.getElementById('tarot-feature-drawer');
         const btnToggle = document.getElementById('btn-drawer-toggle');
+        if (!drawer || !btnToggle) return;
         if (drawerExpanded) {
             drawer.classList.remove('collapsed');
             btnToggle.classList.add('open');
@@ -2030,6 +2238,30 @@
         }
     }
 
+    function selectTarotSpread(spreadKey) {
+        if (!SPREADS[spreadKey]) return;
+        tarotSelectedSpread = spreadKey;
+        const room = getActiveRoom();
+        if (room) {
+            room.selectedSpread = spreadKey;
+            saveRoomsToLocal();
+        }
+        updateActiveSpreadUI();
+    }
+
+    function updateActiveSpreadUI() {
+        const spread = SPREADS[tarotSelectedSpread] || SPREADS.timeline;
+        const spreadName = spread.name[currentUiLang] || spread.name['zh-TW'];
+        const labelEl = document.getElementById('label-active-spread');
+        if (labelEl) {
+            labelEl.textContent = `${t('labelActiveSpreadPrefix')}${spreadName} (${spread.count}${currentUiLang === 'en-US' ? ' cards' : (currentUiLang === 'ja-JP' ? '枚' : '張')})`;
+        }
+
+        document.querySelectorAll('.tarot-spread-chip').forEach(chip => {
+            chip.classList.toggle('active', chip.dataset.spread === tarotSelectedSpread);
+        });
+    }
+
     function initCustomQuickChips() {
         const container = document.getElementById('tarot-quick-chips-container');
         const addBtn = document.getElementById('btn-add-custom-quick');
@@ -2040,22 +2272,27 @@
         customChips.forEach(chip => renderCustomChipElement(chip));
 
         addBtn.onclick = () => {
-            const label = prompt("請輸入自訂快捷按鈕名稱（例如：考運分析、求職指引）：");
+            const promptTitle = currentUiLang === 'en-US' ? "Enter custom button name (e.g., Exam, Career Shift):" : (currentUiLang === 'ja-JP' ? "カスタムボタン名を入力（例：試験運、転職）：" : "請輸入自訂快捷按鈕名稱（例如：人際關係、考運分析）：");
+            const label = prompt(promptTitle);
             if (!label || !label.trim()) return;
-            const promptContent = prompt("請輸入點擊時傳送給大師的問題：", `我想占卜探索關於「${label.trim()}」的指引與建議。`);
+
+            const promptQuestion = currentUiLang === 'en-US' ? "Enter full question to send:" : (currentUiLang === 'ja-JP' ? "送信する質問全文を入力：" : "請輸入點擊時傳送給大師的問題：");
+            const defaultPrompt = currentUiLang === 'en-US' ? `I would like insight and guidance regarding "${label.trim()}".` : (currentUiLang === 'ja-JP' ? `「${label.trim()}」についての指針とアドバイスをお願いします。` : `我想探索關於「${label.trim()}」的指引與建議。`);
+            const promptContent = prompt(promptQuestion, defaultPrompt);
             if (!promptContent || !promptContent.trim()) return;
 
             const newChip = { id: 'chip_' + Date.now(), label: label.trim(), prompt: promptContent.trim() };
             customChips.push(newChip);
             localStorage.setItem(TAROT_CUSTOM_QUICK_KEY, JSON.stringify(customChips));
             renderCustomChipElement(newChip);
-            showToast("已成功建立自訂按鈕！");
+            showToast(currentUiLang === 'en-US' ? "Custom button added!" : (currentUiLang === 'ja-JP' ? "カスタムボタンを追加しました！" : "已成功建立自訂按鈕！"));
         };
     }
 
     function renderCustomChipElement(chip) {
         const container = document.getElementById('tarot-quick-chips-container');
         const addBtn = document.getElementById('btn-add-custom-quick');
+        if (!container || !addBtn) return;
         const wrap = document.createElement('div');
         wrap.className = 'custom-chip-badge';
         wrap.id = chip.id;
@@ -2072,30 +2309,8 @@
         customChips = customChips.filter(c => c.id !== chipId);
         localStorage.setItem(TAROT_CUSTOM_QUICK_KEY, JSON.stringify(customChips));
         document.getElementById(chipId)?.remove();
-        showToast("已刪除自訂按鈕");
+        showToast(currentUiLang === 'en-US' ? "Custom button removed" : (currentUiLang === 'ja-JP' ? "カスタムボタンを削除しました" : "已刪除自訂按鈕"));
     };
-
-    function selectTarotSpread(spreadKey) {
-        if (!SPREADS[spreadKey]) return;
-        tarotSelectedSpread = spreadKey;
-        const room = getActiveRoom();
-        if (room) {
-            room.selectedSpread = spreadKey;
-            saveRoomsToLocal();
-        }
-        updateActiveSpreadUI();
-        showToast(`已切換為：${SPREADS[spreadKey].name} (${SPREADS[spreadKey].count}張)`);
-    }
-
-    function updateActiveSpreadUI() {
-        const label = document.getElementById('label-active-spread');
-        const spread = SPREADS[tarotSelectedSpread] || SPREADS.timeline;
-        if (label) label.textContent = `🔮 當前牌陣：${spread.name} (${spread.count}張)`;
-
-        document.querySelectorAll('.tarot-spread-chip').forEach(chip => {
-            chip.classList.toggle('active', chip.dataset.spread === tarotSelectedSpread);
-        });
-    }
 
     window.handleQuickTopic = function(topicText) {
         const input = document.getElementById('user-text');
@@ -2125,31 +2340,34 @@
     }
 
     function createShuffleHtml(instanceId, spreadName, count) {
+        const loadingTitle = currentUiLang === 'en-US'
+            ? '🌌 Attuning to cosmic momentum & shuffling...'
+            : (currentUiLang === 'ja-JP' ? '🌌 意識を研ぎ澄まし、カードをシャッフル中...' : '🌌 正在感應心靈磁場・進行洗牌與空間切牌...');
         return `
             <div class="inchat-spread-box" id="${instanceId}_box">
                 <div class="inchat-spread-header">
-                    <i class="fa-solid fa-sparkles"></i> <span>${escapeHtml(spreadName)} (${count}張) · 儀式洗牌中 ✨</span>
+                    <i class="fa-solid fa-sparkles"></i> <span>🔮 【${escapeHtml(spreadName)}】 (${count}${currentUiLang === 'en-US' ? ' cards' : (currentUiLang === 'ja-JP' ? '枚' : '張')})</span>
                 </div>
-                <div class="tarot-shuffle-stage shuffle-active" id="${instanceId}_stage">
-                    <div class="shuffle-glow"></div>
-                    <div class="shuffle-deck">
-                        <div class="shuffle-card-ghost ghost-left">✦</div>
-                        <div class="shuffle-card-ghost ghost-mid">✦</div>
-                        <div class="shuffle-card-ghost ghost-right">✦</div>
-                    </div>
+                <div class="inchat-shuffle-stage" id="${instanceId}_shuffle">
+                    <div class="shuffle-stack stack-left"></div>
+                    <div class="shuffle-stack stack-right"></div>
                 </div>
                 <div class="tarot-loading" id="${instanceId}_loading_text">
-                    <strong>🌌 正在感應心靈磁場・進行洗牌與空間切牌...</strong>
+                    <strong>${loadingTitle}</strong>
                     <div class="tarot-progress"><span id="${instanceId}_bar" style="width:40%;"></span></div>
                 </div>
             </div>
         `;
     }
 
+    // Render Large, Prominent Cards at the TOP of the reading
     function renderFinalDealtCardsHtml(instanceId, drawnCards, spreadKey) {
         const cardsHtml = drawnCards.map((draw, idx) => {
             const position = escapeHtml(draw.position.split(' / ')[0]);
-            const tag = draw.reversed ? '逆位' : '正位';
+            const cardName = currentUiLang === 'en-US' ? draw.card.en : (currentUiLang === 'ja-JP' ? draw.card.ja : draw.card.name);
+            const tag = draw.reversed
+                ? (currentUiLang === 'en-US' ? 'Reversed' : (currentUiLang === 'ja-JP' ? '逆位置' : '逆位'))
+                : (currentUiLang === 'en-US' ? 'Upright' : (currentUiLang === 'ja-JP' ? '正位置' : '正位'));
             const frontStyle = draw.reversed ? ' style="transform: rotateY(180deg) rotate(180deg);"' : '';
             return `
                 <div class="tarot-card" id="${instanceId}_card_${idx}">
@@ -2157,33 +2375,47 @@
                     <div class="card-front-inner"${frontStyle}>
                         <div class="cf-position">【${position}】</div>
                         <div class="cf-emoji">${draw.card.emoji}</div>
-                        <div class="cf-name">${escapeHtml(draw.card.name)}</div>
+                        <div class="cf-name">${escapeHtml(cardName)}</div>
                         <span class="cf-tag ${draw.reversed ? 'reversed' : 'upright'}">${tag}</span>
                     </div>
                 </div>
             `;
         }).join('');
 
+        const spreadDisplayName = SPREADS[spreadKey]?.name[currentUiLang] || SPREADS[spreadKey]?.name['zh-TW'];
+        const bannerTitle = currentUiLang === 'en-US'
+            ? `🔮 【${escapeHtml(spreadDisplayName)}】 Revealed ✨`
+            : (currentUiLang === 'ja-JP'
+                ? `🔮 【${escapeHtml(spreadDisplayName)}】 展開完了 ✨`
+                : `🔮 【${escapeHtml(spreadDisplayName)}】心靈牌陣已顯現 ✨`);
+
         return `
             <div class="inchat-spread-box" id="${instanceId}_box">
                 <div class="inchat-spread-header">
-                    <i class="fa-solid fa-sparkles"></i> <span>🔮 【${escapeHtml(SPREADS[spreadKey].name)}】心靈牌陣已顯現 ✨</span>
+                    <i class="fa-solid fa-sparkles"></i> <span>${bannerTitle}</span>
                 </div>
                 <div class="inchat-card-row">${cardsHtml}</div>
                 <div class="tarot-action-bar">
-                    <button class="tarot-action-btn" type="button" onclick="copyTarotReading('${instanceId}')"><i class="fa-solid fa-copy"></i> 複製解牌</button>
-                    <button class="tarot-action-btn" type="button" onclick="saveToTarotJournal('${instanceId}')"><i class="fa-solid fa-book-bookmark"></i> 儲存日誌</button>
-                    <button class="tarot-action-btn" type="button" onclick="document.getElementById('user-text').focus()"><i class="fa-solid fa-comment-dots"></i> 繼續追問</button>
+                    <button class="tarot-action-btn" type="button" onclick="copyTarotReading('${instanceId}')"><i class="fa-solid fa-copy"></i> ${t('copyReadingBtn')}</button>
+                    <button class="tarot-action-btn" type="button" onclick="saveToTarotJournal('${instanceId}')"><i class="fa-solid fa-book-bookmark"></i> ${t('saveJournalBtn')}</button>
+                    <button class="tarot-action-btn" type="button" onclick="document.getElementById('user-text').focus()"><i class="fa-solid fa-comment-dots"></i> ${t('followUpBtn')}</button>
                 </div>
             </div>
         `;
     }
 
-    // --- 核心意圖分析器：判斷是否為「新占卜主題」 ---
+    // --- 核心意圖分析器：判斷是否為「新占卜主題」（精準排除解釋與追問） ---
     function isExplicitNewReadingIntent(userPrompt, activeReading) {
         const text = userPrompt.trim();
+
+        // 0. 強烈排除追問、解釋、總結、前次結果評估等指向既有牌面的語句！
+        // 「剛才的占卜結果可以簡單跟我解釋嗎？」必然是 false，絕不重新抽牌！
+        if (/剛才|剛剛|這組牌|這些牌|抽出的牌|抽到的牌|上述|牌面|前次|剛才的|解釋|說明|總結|意思|什麼意思|meaning|explain|summary|このカード|さっき|先ほど|解説|教えて/i.test(text)) {
+            return false;
+        }
+
         // 1. 強烈重新抽牌動詞
-        if (/重新(抽牌|洗牌|開牌|占卜)|再抽一次|重抽|重新開局/i.test(text)) return true;
+        if (/重新(抽牌|洗牌|開牌|占卜)|再抽一次|重抽|重新開局|重算|reshuffle|draw again|もう一度引く|シャッフルし直す/i.test(text)) return true;
         
         // 2. 明確主動提出「占卜」或「想算」
         if (/(想|要|請|幫我)?(占卜|算一下|抽牌|抽一張|開牌|排盤|測一下)/i.test(text)) return true;
@@ -2191,13 +2423,13 @@
         // 3. 領域主題切換判斷（如果原本在問財運，現在問愛情/女友/結婚，必然是全新占卜！）
         if (activeReading) {
             const oldTopic = (activeReading.question || '').toLowerCase();
-            const isOldLove = /愛情|感情|女友|男友|復合|結婚|伴侶/i.test(oldTopic);
-            const isOldMoney = /財運|金錢|投資|錢運|發財/i.test(oldTopic);
-            const isOldCareer = /工作|事業|跳槽|職場|面試|創業/i.test(oldTopic);
+            const isOldLove = /愛情|感情|女友|男友|復合|結婚|伴侶|love|romance|恋愛|結婚/i.test(oldTopic);
+            const isOldMoney = /財運|金錢|投資|錢運|發財|money|wealth|finance|金運/i.test(oldTopic);
+            const isOldCareer = /工作|事業|跳槽|職場|面試|創業|career|job|仕事|就職/i.test(oldTopic);
 
-            const isNewLove = /愛情|感情|女友|男友|復合|結婚|伴侶|另一半/i.test(text);
-            const isNewMoney = /財運|金錢|投資|錢運|發財|收入/i.test(text);
-            const isNewCareer = /工作|事業|跳槽|職場|面試|創業/i.test(text);
+            const isNewLove = /愛情|感情|女友|男友|復合|結婚|伴侶|另一半|love|romance|恋愛|結婚/i.test(text);
+            const isNewMoney = /財運|金錢|投資|錢運|發財|收入|money|wealth|finance|金運/i.test(text);
+            const isNewCareer = /工作|事業|跳槽|職場|面試|創業|career|job|仕事|就職/i.test(text);
 
             if ((isNewLove && !isOldLove) || (isNewMoney && !isOldMoney) || (isNewCareer && !isOldCareer)) {
                 return true;
@@ -2260,52 +2492,98 @@
 
     function shouldAskClarification(text) {
         const clean = text.trim();
-        if (/直接抽牌|直接占卜|請抽牌|已準備好|開始抽牌|現在開牌/i.test(clean)) {
+        if (/直接抽牌|直接占卜|請抽牌|已準備好|開始抽牌|現在開牌|draw directly|今すぐ引く/i.test(clean)) {
             return { needed: false };
         }
 
-        if (/感情|戀愛|復合|桃花|伴侶|另一半/i.test(clean) && clean.length < 15 && !/結婚|能走到/i.test(clean)) {
-            return {
-                needed: true,
-                topic: 'love',
-                question: "很高興陪伴你探索感情課題 ❤️。在為你洗牌感應之前，大師想先了解你目前的關係狀態，這樣牌面的指引會更加精準哦：",
-                options: [
-                    "🌸 目前單身中，想探索近期桃花與正緣",
-                    "💫 處於曖昧階段，想看透對方真實心意",
-                    "🌿 穩定交往中，想了解未來相處走向",
-                    "💔 面臨瓶頸或剛分開，尋找修復指引",
-                    "✨ 能量已就緒，請直接為我抽牌！"
-                ]
-            };
+        let questionText = '';
+        let opts = null;
+
+        if (/感情|戀愛|復合|桃花|伴侶|另一半|love|relationship|romance|恋愛|パートナー/i.test(clean) && clean.length < 15 && !/結婚|能走到/i.test(clean)) {
+            questionText = currentUiLang === 'en-US'
+                ? "Happy to explore love & relationships with you ❤️. Before shuffling, where would you like to anchor our focus?"
+                : (currentUiLang === 'ja-JP'
+                    ? "恋愛の探求をサポートできて光栄です ❤️。シャッフルする前に、どの側面に焦点を当てたいですか？"
+                    : "很高興陪伴你探索感情課題 ❤️。在為你洗牌感應之前，大師想先了解你目前的關係狀態，這樣牌面的指引會更加精準哦：");
+
+            opts = currentUiLang === 'en-US' ? [
+                "🌸 Single, looking for upcoming romance & connections",
+                "💫 Ambiguous / flirting, seeking their genuine feelings",
+                "🌿 In a relationship, exploring future trajectory",
+                "💔 Facing challenges or separated, seeking healing guidance",
+                "✨ Ready now, please draw cards directly!"
+            ] : (currentUiLang === 'ja-JP' ? [
+                "🌸 現在シングル、近々の出会いや縁を見たい",
+                "💫 曖昧な関係・相手の本心を知りたい",
+                "🌿 交際中、今後の関係の行方を探りたい",
+                "💔 困難に直面・別れたばかりで指針が欲しい",
+                "✨ 準備完了、直接カードを引いてください！"
+            ] : [
+                "🌸 目前單身中，想探索近期桃花與正緣",
+                "💫 處於曖昧階段，想看透對方真實心意",
+                "🌿 穩定交往中，想了解未來相處走向",
+                "💔 面臨瓶頸或剛分開，尋找修復指引",
+                "✨ 能量已就緒，請直接為我抽牌！"
+            ]);
+
+            return { needed: true, question: questionText, options: opts };
         }
 
-        if (/未來運勢|運勢|近期運勢|整體運勢/i.test(clean) && clean.length < 15) {
-            return {
-                needed: true,
-                topic: 'fortune',
-                question: "探索未來的命運之流，能為我們點亮前行的方向 🌟。在為你展開牌組前，請問你想把焦點放在哪裡呢？",
-                options: [
-                    "💼 事業工作與個人成就突破推進",
-                    "💖 人際關係與重要情感連結",
-                    "🧘 身心平衡與生活節奏調適",
-                    "🌌 包含身心靈的近期綜合運勢",
-                    "✨ 能量已就緒，請直接抽牌！"
-                ]
-            };
+        if (/未來運勢|運勢|近期運勢|整體運勢|future|trajectory|fortune|運勢/i.test(clean) && clean.length < 15) {
+            questionText = currentUiLang === 'en-US'
+                ? "Gazing into the flow of future momentum illuminates our path 🌟. Where would you like to direct the light?"
+                : (currentUiLang === 'ja-JP'
+                    ? "未来のエネルギーの流れを見つめることで、前進への道が照らされます 🌟。どこに光を当てますか？"
+                    : "探索未來的命運之流，能為我們點亮前行的方向 🌟。在為你展開牌組前，請問你想把焦點放在哪裡呢？");
+
+            opts = currentUiLang === 'en-US' ? [
+                "💼 Career, projects & personal achievements",
+                "💖 Interpersonal bonds & meaningful connections",
+                "🧘 Wellbeing, inner balance & lifestyle rhythm",
+                "🌌 Overall holistic energy overview",
+                "✨ Energy aligned, draw cards directly!"
+            ] : (currentUiLang === 'ja-JP' ? [
+                "💼 キャリア・仕事・自己実現の推進",
+                "💖 人間関係・大切な人との絆",
+                "🧘 心身の調和・ライフスタイルの調整",
+                "🌌 心身霊を含めた総合的な運気",
+                "✨ 準備完了、直接カードを引く！"
+            ] : [
+                "💼 事業工作與個人成就突破推進",
+                "💖 人際關係與重要情感連結",
+                "🧘 身心平衡與生活節奏調適",
+                "🌌 包含身心靈的近期綜合運勢",
+                "✨ 能量已就緒，請直接抽牌！"
+            ]);
+
+            return { needed: true, question: questionText, options: opts };
         }
 
-        if (/財運|財務|投資|求財|金錢/i.test(clean) && clean.length < 15) {
-            return {
-                needed: true,
-                topic: 'money',
-                question: "財富是能量的流動，映照著我們內在的安全感與價值 💰。洗牌之前，請問你想探詢哪方面的指引？",
-                options: [
-                    "📈 近期正財與工作回報的機會",
-                    "⚖️ 正在面臨一項關鍵的投資或消費抉擇",
-                    "🔍 檢視財務規劃中的潛在盲點與風險",
-                    "✨ 能量已就緒，請直接為我抽牌！"
-                ]
-            };
+        if (/財運|金錢|投資|錢運|發財|money|wealth|finance|金運/i.test(clean) && clean.length < 15) {
+            questionText = currentUiLang === 'en-US'
+                ? "Wealth is a flow of energy reflecting internal grounding and value 💰. Where shall we direct our lens?"
+                : (currentUiLang === 'ja-JP'
+                    ? "富は内面の自尊心とエネルギー循環を映す鏡です 💰。どの側面に焦点を合わせますか？"
+                    : "財富是能量的流動，映照著我們內在的安全感與價值 💰。洗牌之前，請問你想探詢哪方面的指引？");
+
+            opts = currentUiLang === 'en-US' ? [
+                "📈 Near-term career returns & opportunities",
+                "⚖️ Facing a critical investment decision",
+                "🔍 Uncovering financial blind spots & risk",
+                "✨ Ready now, draw cards directly!"
+            ] : (currentUiLang === 'ja-JP' ? [
+                "📈 近期の仕事による正財・昇給の機会",
+                "⚖️ 重要な投資や支出の決断に直面中",
+                "🔍 財務計画における潜在的リスクと盲点",
+                "✨ 準備完了、直接カードを引く！"
+            ] : [
+                "📈 近期正財與工作回報的機會",
+                "⚖️ 正在面臨一項關鍵的投資或消費抉擇",
+                "🔍 檢視財務規劃中的潛在盲點與風險",
+                "✨ 能量已就緒，請直接為我抽牌！"
+            ]);
+
+            return { needed: true, question: questionText, options: opts };
         }
 
         return { needed: false };
@@ -2324,32 +2602,48 @@
         scrollToLatestMessage();
     }
 
-    // --- 針對當前牌陣的深度追問（不重抽） ---
+    // --- Scenario A: Follow-up Conversation (Zero new cards, Human-like mentorship) ---
     async function handleFollowUpInquiry(question, tutorMsgId) {
         isSendingMessage = true;
         const room = getActiveRoom();
         const activeReading = room.activeReading;
-        addMessageToUI('tutor', '正在感應你提出的問題，並結合剛才牌面的能量脈絡為你解答... 🕊️', tutorMsgId);
+        const initialThinkingText = currentUiLang === 'en-US'
+            ? "Connecting with your inquiry within the momentum of your existing spread... 🕊️"
+            : (currentUiLang === 'ja-JP'
+                ? "展開されたカードの文脈に意識を同調させ、続けて解読しています... 🕊️"
+                : "正在感應你提出的問題，並結合剛才牌面的能量脈絡為你解答... 🕊️");
+
+        addMessageToUI('tutor', initialThinkingText, tutorMsgId);
         scrollToLatestMessage();
 
         try {
-            const cardContext = activeReading.drawnCards.map((d, i) =>
-                `第${i+1}張牌【${d.position}】：${d.card.name}（${d.card.en}，${d.reversed ? '逆位' : '正位'}，核心象徵：${d.reversed ? d.card.r : d.card.u}）`
-            ).join('；');
+            const cardContext = activeReading.drawnCards.map((d, i) => {
+                const cardName = currentUiLang === 'en-US' ? d.card.en : (currentUiLang === 'ja-JP' ? d.card.ja : d.card.name);
+                const tag = d.reversed
+                    ? (currentUiLang === 'en-US' ? 'Reversed' : (currentUiLang === 'ja-JP' ? '逆位置' : '逆位'))
+                    : (currentUiLang === 'en-US' ? 'Upright' : (currentUiLang === 'ja-JP' ? '正位置' : '正位'));
+                const essence = d.reversed ? d.card.r : d.card.u;
+                return `Position ${i+1} [${d.position}]: ${cardName} (${tag}, Essence: ${essence})`;
+            }).join('; ');
 
-            const systemInstruction = `你是一位資深、溫暖、有智慧且通曉榮格心理學的塔羅心靈導師。
-目前這場占卜已經抽出了牌陣，求問者正在針對剛才的解盤結果進行「深入追問」。
-【重要約束】：
-1. 嚴禁重新抽牌！你必須完全圍繞剛才已抽出的牌面進行深入延續探討。
-2. 語氣務必像真實的知心好友般溫暖、親切、有溫度，適度使用溫暖圖形（❤️、💰、🌟、🔮、✨、🌿、💡），拒絕生硬公文格式！
-3. 用自然的對話段落，解釋牌面如何映照他的追問，給予溫柔具體的指引，並在最後留下一句關懷提問。`;
+            let langInstruction = "請以繁體中文回答。";
+            if (currentUiLang === 'en-US') langInstruction = "Please reply strictly in natural, empathetic English.";
+            if (currentUiLang === 'ja-JP') langInstruction = "必ず自然で温かみのある日本語（丁寧語）で回答してください。";
 
-            const userPrompt = `【剛才已抽出的牌陣】：${activeReading.spreadName}
-【牌面內容】：${cardContext}
-【求問者原始主題】：${activeReading.question}
-【求問者當前追問】：${question}
+            const systemInstruction = `You are an empathetic, insightful Tarot mentor well-versed in Jungian analytical psychology.
+${langInstruction}
+The seeker is asking a follow-up inquiry based on the spread ALREADY revealed.
+STRICT MANDATES:
+1. DO NOT DRAW NEW CARDS. Deepen the reflection exclusively around the existing cards.
+2. Tone must be warm, authentic, and compassionate like a wise friend sitting across the table. Use evocative symbols (❤️, 💰, 🌟, 🔮, ✨, 🌿, 💡). Avoid cold bureaucratic report titles.
+3. Address the specific question, explain how the current cards mirror their inner dilemma, and end with a gentle question inviting continued dialogue.`;
 
-請以充滿溫度、像聊天一樣的口吻，結合生動圖形（❤️、💰、🌟等）為我解答這個追問。`;
+            const userPrompt = `[Revealed Spread]: ${activeReading.spreadName}
+[Card Context]: ${cardContext}
+[Original Query]: ${activeReading.question}
+[Seeker Follow-up]: ${question}
+
+Please answer this follow-up inquiry with warmth, insight, and appropriate symbols.`;
 
             const result = await GugoAICore.generateText(userPrompt, {
                 systemInstruction,
@@ -2357,9 +2651,6 @@
                 onModelAttempt: (modelName) => {
                     currentModel = modelName;
                     renderCurrentModelStatus();
-                },
-                onModelFallback: (fallbackInfo) => {
-                    showModelBusyBanner(`⚠️ 模型 ${fallbackInfo.failedDisplayName} 伺服器忙碌中 (${fallbackInfo.status})，正在自動切換至 ${fallbackInfo.nextDisplayName}...`);
                 },
                 onSuccess: () => {
                     hideModelBusyBanner();
@@ -2387,14 +2678,16 @@
             const tutorEl = document.querySelector(`[data-id="${tutorMsgId}"]`);
             if (tutorEl) {
                 const learningEl = tutorEl.querySelector('.msg-learning');
-                if (learningEl) learningEl.innerHTML = `<span style="color:#f87171;">⚠️ 解讀連線發生異常：${err.message || '請確認 API Key 後重試'}。</span>`;
+                if (learningEl) {
+                    learningEl.innerHTML = `<span style="color:#f87171;">⚠️ ${err.message || 'Error occurred, please check API Key'}</span>`;
+                }
             }
         } finally {
             isSendingMessage = false;
         }
     }
 
-    // --- 執行全新占卜抽牌（大牌面置頂 ＋ 1.5秒洗牌 ＋ 溫暖對話） ---
+    // --- Scenario C: Divination Reading (Large Top Cards + Warm Progressive Storytelling) ---
     async function executeDivinationReading(question, tutorMsgId) {
         isSendingMessage = true;
         const room = getActiveRoom();
@@ -2404,8 +2697,14 @@
         const spread = SPREADS[spreadKey] || SPREADS.timeline;
         const drawnCards = drawRandomCards(spreadKey);
 
-        const initialShuffleHtml = createShuffleHtml(instanceId, spread.name, spread.count);
-        addMessageToUI('tutor', `我已收到你的心念，正在為「${escapeHtml(question)}」淨化心靈磁場並展開牌組... ✨`, tutorMsgId, initialShuffleHtml);
+        const initialShuffleHtml = createShuffleHtml(instanceId, spread.name[currentUiLang] || spread.name['zh-TW'], spread.count);
+        const initialText = currentUiLang === 'en-US'
+            ? `Attuning to your energy for "${escapeHtml(question)}", cutting the deck and unfolding the cards... ✨`
+            : (currentUiLang === 'ja-JP'
+                ? `「${escapeHtml(question)}」への意識を研ぎ澄まし、カードをシャッフルして展開しています... ✨`
+                : `我已收到你的心念，正在為「${escapeHtml(question)}」淨化心靈磁場並展開牌組... ✨`);
+
+        addMessageToUI('tutor', initialText, tutorMsgId, initialShuffleHtml);
         scrollToLatestMessage();
 
         setTimeout(() => {
@@ -2414,27 +2713,38 @@
         }, 800);
 
         try {
-            const cardDescriptions = drawnCards.map((d, i) =>
-                `第${i+1}張牌【${d.position}】：${d.card.name}（${d.card.en}），狀態：${d.reversed ? '逆位' : '正位'}。核心意涵：${d.reversed ? d.card.r : d.card.u}`
-            ).join('\n');
+            const cardDescriptions = drawnCards.map((d, i) => {
+                const cardName = currentUiLang === 'en-US' ? d.card.en : (currentUiLang === 'ja-JP' ? d.card.ja : d.card.name);
+                const tag = d.reversed
+                    ? (currentUiLang === 'en-US' ? 'Reversed' : (currentUiLang === 'ja-JP' ? '逆位置' : '逆位'))
+                    : (currentUiLang === 'en-US' ? 'Upright' : (currentUiLang === 'ja-JP' ? '正位置' : '正位'));
+                const essence = d.reversed ? d.card.r : d.card.u;
+                return `Card ${i+1} [${d.position}]: ${cardName}, State: ${tag}. Core Archetype: ${essence}`;
+            }).join('\n');
 
-            const systemInstruction = `你是一位擁有20年經驗、溫暖睿智、精通榮格心理學與象徵符號的資深塔羅心靈導師。
-你的任務是根據求問者探索的問題與抽出的牌面，給予一段自然流暢、充滿溫度、有層次且絕不迷信的溫柔解讀。
-【語氣與排版核心要求 - 嚴格遵守】：
-1. 絕對不要使用冷冰冰的官方公文大標題（嚴禁出現「一、整體概述 二、各位置深度剖析 三、行動建議」等生硬格式）！
-2. 像一位知心、懂你的朋友當面坐在面前聊天一樣，適度融入豐富溫暖的圖形表情符號（例如：❤️、💰、🌟、🔮、✨、🌿、💡、🕊️、🪙、⚖️、🦋）。
-3. 按照層次依序帶領求問者探索每張牌：
-   - 開頭先用一段親切溫暖的話問候，描述這組牌第一眼給你的整體心靈氛圍 ✨。
-   - 接著，有條理、有呼吸感地逐一為他解牌：「首先，第一張落在【位置】的是『牌名』... 這代表著你...」、「接著看到第二張牌...」、「最後一張牌則揭示了...」。
-   - 溫和指出他當前可能存在的盲點 💡，並給予 1~2 項近期可以輕鬆落實的暖心小建議。
-   - 結尾溫柔地邀請他聊聊，例如：『對於剛才這張牌，你有什麼共鳴或想法嗎？隨時跟我聊聊，我都在這裡聽你說 ❤️。』`;
+            let langInstruction = "請以繁體中文回答。";
+            if (currentUiLang === 'en-US') langInstruction = "Please reply strictly in natural, empathetic English.";
+            if (currentUiLang === 'ja-JP') langInstruction = "必ず自然で温かみのある日本語（丁寧語）で回答してください。";
 
-            const userPrompt = `【求問主題】：${question}
-【所選牌陣】：${spread.name} (${spread.count}張)
-【抽出的牌面】：
+            const systemInstruction = `You are an empathetic, insightful Tarot mentor with 20 years of experience, well-versed in Jungian analytical psychology.
+${langInstruction}
+Based on the querent's question and revealed cards, provide a warm, progressive, and deeply personal interpretation.
+STRICT GUIDELINES:
+1. Do NOT use cold, bureaucratic section titles like "Part 1 / Part 2 / Part 3".
+2. Speak like a close, caring friend sitting across the table. Weave in warm emojis (❤️, 💰, 🌟, 🔮, ✨, 🌿, 💡, 🕊️, 🪙, ⚖️).
+3. Unfold the reading progressively:
+   - Greet warmly and describe the overall emotional tone of this spread ✨.
+   - Walk through the cards chronologically: "First, at [Position] lies [Card]... this mirrors...", "Moving to the second card...", "Finally, the trajectory arrives at...".
+   - Gently reveal blind spots 💡 and offer 1-2 small, actionable practices.
+   - End with a heartfelt question inviting them to share their impressions ❤️.`;
+
+            const spreadDisplayName = spread.name[currentUiLang] || spread.name['zh-TW'];
+            const userPrompt = `[Querent Topic]: ${question}
+[Spread]: ${spreadDisplayName} (${spread.count} cards)
+[Revealed Cards]:
 ${cardDescriptions}
 
-請以充滿同理心、溫暖且富有生動圖形（❤️、💰、🌟等）的對話口吻，依序為我溫柔解讀這組牌。`;
+Please provide a warm, progressive reading with appropriate emojis and deep psychological insight.`;
 
             const resultPromise = GugoAICore.generateText(userPrompt, {
                 systemInstruction,
@@ -2442,9 +2752,6 @@ ${cardDescriptions}
                 onModelAttempt: (modelName) => {
                     currentModel = modelName;
                     renderCurrentModelStatus();
-                },
-                onModelFallback: (fallbackInfo) => {
-                    showModelBusyBanner(`⚠️ 模型 ${fallbackInfo.failedDisplayName} 伺服器忙碌中 (${fallbackInfo.status})，正在自動切換至 ${fallbackInfo.nextDisplayName}...`);
                 },
                 onSuccess: () => {
                     hideModelBusyBanner();
@@ -2478,7 +2785,7 @@ ${cardDescriptions}
                     instanceId,
                     question,
                     spreadKey,
-                    spreadName: spread.name,
+                    spreadName: spreadDisplayName,
                     drawnCards,
                     reportText: result.text
                 };
@@ -2503,7 +2810,9 @@ ${cardDescriptions}
             const tutorEl = document.querySelector(`[data-id="${tutorMsgId}"]`);
             if (tutorEl) {
                 const learningEl = tutorEl.querySelector('.msg-learning');
-                if (learningEl) learningEl.innerHTML = `<span style="color:#f87171;">⚠️ 解讀連線發生異常：${err.message || '請確認 API Key 與網路設定後重試'}。</span>`;
+                if (learningEl) {
+                    learningEl.innerHTML = `<span style="color:#f87171;">⚠️ ${err.message || 'Connection error, please check API Key'}</span>`;
+                }
                 const extraEl = tutorEl.querySelector('.msg-extra');
                 if (extraEl) extraEl.innerHTML = '';
             }
@@ -2524,6 +2833,7 @@ ${cardDescriptions}
             .replace(/\n/g, '<br>');
     }
 
+    // CARDS AT TOP (msg-extra first), then text (msg-learning)
     function addMessageToUI(role, text, id, extraHtml = '', options = null) {
         const container = document.getElementById('chat-container');
         const div = document.createElement('div');
@@ -2561,7 +2871,7 @@ ${cardDescriptions}
     };
 
     function escapeHtml(str) {
-        return String(str || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        return String(str || '').replace(/[&<>"']/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[m]);
     }
 
     function scrollToLatestMessage() {
@@ -2580,7 +2890,7 @@ ${cardDescriptions}
         journal = journal.filter(e => e.instanceId !== reading.instanceId);
         journal.unshift({
             instanceId: reading.instanceId,
-            date: new Date().toLocaleString('zh-TW'),
+            date: new Date().toLocaleString(currentUiLang),
             question: reading.question,
             spreadName: reading.spreadName || reading.spreadKey,
             cards: reading.drawnCards.map(d => `${d.card.name}(${d.reversed ? '逆' : '正'})`).join('、'),
@@ -2595,11 +2905,11 @@ ${cardDescriptions}
         if (!msg || !msg.readingData) return;
         const d = msg.readingData;
         const text = `🔮 【${d.spreadName}】\n主題：${d.question}\n牌面：${d.drawnCards.map(c => `${c.position}: ${c.card.name}(${c.reversed ? '逆位' : '正位'})`).join(' | ')}\n\n${d.reportText}`;
-        navigator.clipboard?.writeText(text).then(() => showToast('解牌內容已成功複製！'));
+        navigator.clipboard?.writeText(text).then(() => showToast(t('copyDoneToast')));
     };
 
     window.saveToTarotJournal = function(instanceId) {
-        showToast('占卜紀錄已保存於本機日誌中 ✓');
+        showToast(t('journalSaveDone'));
     };
 
     function openJournalModal() {
@@ -2607,7 +2917,7 @@ ${cardDescriptions}
         try { journal = JSON.parse(localStorage.getItem(TAROT_JOURNAL_KEY) || '[]'); } catch (_) { journal = []; }
         const list = document.getElementById('journal-items-container');
         if (!journal.length) {
-            list.innerHTML = `<p style="color:var(--text-dim); text-align:center; padding:20px;">目前尚無占卜日誌，完成抽牌解讀後會自動保存於此。</p>`;
+            list.innerHTML = `<p style="color:var(--text-dim); text-align:center; padding:20px;">${currentUiLang === 'en-US' ? 'No journal records yet.' : (currentUiLang === 'ja-JP' ? 'まだ占術日誌の記録がありません。' : '目前尚無占卜日誌，完成抽牌解讀後會自動保存於此。')}</p>`;
         } else {
             list.innerHTML = journal.map(item => `
                 <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-left:3px solid var(--accent-gold); border-radius:8px; padding:12px;">
@@ -2623,18 +2933,14 @@ ${cardDescriptions}
     document.getElementById('btn-journal-header').onclick = openJournalModal;
     document.getElementById('btn-journal-sidebar').onclick = () => { openJournalModal(); closeMenu(); };
 
-    // --- Web Speech API (徹底解決「瀏覽器未支援」錯誤) ---
+    // --- Web Speech API (Native Permission Prompt with getUserMedia) ---
     function initSpeechRecognition() {
-        // 全面相容各瀏覽器前綴
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition;
-        if (!SpeechRecognition) {
-            console.warn("SpeechRecognition API 不存在於此瀏覽器環境。");
-            return;
-        }
+        if (!SpeechRecognition) return;
 
         try {
             recognition = new SpeechRecognition();
-            recognition.continuous = false; // 修正為短句辨識，相容性與精準度最高
+            recognition.continuous = false;
             recognition.interimResults = true;
 
             recognition.onstart = () => {
@@ -2642,9 +2948,9 @@ ${cardDescriptions}
                 const micBtn = document.getElementById('btn-mic');
                 if (micBtn) {
                     micBtn.classList.add('recording');
-                    micBtn.setAttribute('title', '錄音中... 再次點擊結束');
+                    micBtn.setAttribute('title', 'Recording... Click again to stop');
                 }
-                showToast("🎙️ 正在聆聽中，請說出想問的問題...");
+                showToast(t('micListeningToast'));
             };
 
             recognition.onresult = (event) => {
@@ -2662,11 +2968,11 @@ ${cardDescriptions}
                 console.warn("Speech recognition error:", event.error);
                 stopRecording();
                 if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-                    showToast("⚠️ 麥克風已被封鎖，請點擊網址列左側鎖頭開啟麥克風權限");
+                    showToast(t('micBlockedToast'));
                 } else if (event.error === 'no-speech') {
-                    showToast("未偵測到聲音，請靠近麥克風說話");
+                    showToast(currentUiLang === 'en-US' ? "No speech detected." : (currentUiLang === 'ja-JP' ? "音声が検出されませんでした。" : "未偵測到聲音，請靠近麥克風重試"));
                 } else if (event.error === 'audio-capture') {
-                    showToast("⚠️ 找不到錄音設備，請確認麥克風已正確連接");
+                    showToast(t('micNoDeviceToast'));
                 }
             };
 
@@ -2682,66 +2988,64 @@ ${cardDescriptions}
         const micBtn = document.getElementById('btn-mic');
         if (micBtn) {
             micBtn.classList.remove('recording');
-            micBtn.setAttribute('title', '點擊開始語音輸入');
+            micBtn.setAttribute('title', 'Voice Input');
         }
         if (recognition) {
             try { recognition.stop(); } catch (_) {}
         }
     }
 
-    document.getElementById('btn-mic').onclick = () => {
+    document.getElementById('btn-mic').onclick = async () => {
         if (!GugoAICore.hasApiKey()) {
             document.getElementById('modal-api').style.display = 'flex';
             document.getElementById('api-key-input')?.focus();
             return;
         }
 
-        // 診斷環境協定：file:/// 或非 HTTPS 會被 Chrome 封鎖
-        if (location.protocol === 'file:' || (location.protocol === 'http:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1')) {
-            showToast("⚠️ 瀏覽器安全規範：語音功能僅支援在 HTTPS 網站或 localhost 執行。若直接雙擊開啟本機檔案 (file://) 瀏覽器會自動封鎖麥克風，請至線上網站 (https://) 使用。");
-            return;
+        // 主動透過 getUserMedia 喚起瀏覽器原生麥克風授權視窗
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                stream.getTracks().forEach(track => track.stop());
+            } catch (err) {
+                console.warn("Microphone permission denied:", err);
+                showToast(t('micBlockedToast'));
+                return;
+            }
         }
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition;
         if (!SpeechRecognition) {
-            showToast("⚠️ 您的瀏覽器核心未支援語音辨識，請使用 Chrome、Edge 或 Safari 瀏覽器。");
+            showToast(currentUiLang === 'en-US' ? "⚠️ Speech recognition is not supported in this browser." : (currentUiLang === 'ja-JP' ? "⚠️ お使いのブラウザは音声認識に対応していません。" : "⚠️ 您的瀏覽器未支援語音辨識，請使用 Chrome、Edge 或 Safari 瀏覽器。"));
             return;
         }
 
         if (isRecording) {
             stopRecording();
-            showToast("語音輸入已完成 ✓");
+            showToast(t('micDoneToast'));
         } else {
             if (!recognition) initSpeechRecognition();
             if (!recognition) {
-                showToast("⚠️ 語音模組暫時無法啟動，請手動輸入文字");
+                showToast(currentUiLang === 'en-US' ? "Voice engine busy, please type." : (currentUiLang === 'ja-JP' ? "音声エンジン起動不能、入力してください。" : "語音模組暫時無法啟動，請手動輸入文字"));
                 return;
             }
+
             const localeMap = {
                 'zh-TW': 'cmn-Hant-TW',
-                'zh-CN': 'cmn-Hans-CN',
                 'en-US': 'en-US',
-                'ja-JP': 'ja-JP',
-                'de-DE': 'de-DE',
-                'fr-FR': 'fr-FR',
-                'es-ES': 'es-ES'
+                'ja-JP': 'ja-JP'
             };
-            const currentLang = document.getElementById('interface-lang')?.value || 'zh-TW';
-            recognition.lang = localeMap[currentLang] || 'cmn-Hant-TW';
+            recognition.lang = localeMap[currentUiLang] || 'cmn-Hant-TW';
+
             try {
                 recognition.start();
             } catch (e) {
                 console.warn("Recognition start conflict:", e);
-                stopRecording();
             }
         }
     };
 
-    document.getElementById('btn-send').onclick = () => dispatchMessageFlow();
-    document.getElementById('user-text').onkeydown = (e) => {
-        if (e.key === 'Enter') dispatchMessageFlow();
-    };
-
+    // --- Floating Navigation ---
     function initFloatingNav() {
         const chatContainer = document.getElementById('chat-container');
         const btnTop = document.getElementById('btn-scroll-top');
@@ -2777,88 +3081,107 @@ ${cardDescriptions}
         const hasKey = GugoAICore.hasApiKey();
         if (hasKey) {
             btn.classList.remove('api-key-unconfigured');
-            btn.innerHTML = `<i class="fa-solid fa-key"></i> <span>變更 Gemini API Key</span>`;
+            btn.innerHTML = `<i class="fa-solid fa-key"></i> <span>${t('apiConfigBtn')}</span>`;
         } else {
             btn.classList.add('api-key-unconfigured');
-            btn.innerHTML = `<i class="fa-solid fa-key"></i> <span>請輸入 GEMINI API KEY</span>`;
+            btn.innerHTML = `<i class="fa-solid fa-key"></i> <span>${t('apiUnconfiguredBtn')}</span>`;
         }
     }
 
-    // --- Sidebar Menu ---
-    const menu = document.getElementById('side-menu');
-    const overlay = document.getElementById('side-menu-overlay');
-
     function isDrawerOpen() {
-        return window.innerWidth >= 1024 ? !menu.classList.contains('collapsed') : menu.classList.contains('active');
+        const sideMenu = document.getElementById('side-menu');
+        return sideMenu && sideMenu.classList.contains('open');
     }
+
     function setDrawerOpen(open) {
-        if (window.innerWidth >= 1024) menu.classList.toggle('collapsed', !open);
-        else { menu.classList.toggle('active', open); overlay.classList.toggle('active', open); }
+        const sideMenu = document.getElementById('side-menu');
+        const overlay = document.getElementById('side-menu-overlay');
+        if (sideMenu) sideMenu.classList.toggle('open', open);
+        if (overlay) overlay.classList.toggle('open', open);
     }
+
     function closeMenu() { setDrawerOpen(false); }
 
     document.getElementById('btn-sidebar-toggle').onclick = () => setDrawerOpen(!isDrawerOpen());
-    document.getElementById('btn-menu-close').onclick = closeMenu;
-    overlay.onclick = closeMenu;
+    document.getElementById('btn-menu-close').onclick = () => closeMenu();
+    document.getElementById('side-menu-overlay').onclick = () => closeMenu();
 
-    document.getElementById('btn-refresh-models').onclick = () => fetchLatestModel({ silent: false });
+    document.getElementById('btn-refresh-models').onclick = () => {
+        if (window.GugoAICore && typeof GugoAICore.fetchModels === 'function') {
+            GugoAICore.fetchModels({ force: true }).then(() => {
+                syncModelsFromCore();
+                reconcileCurrentModel();
+                renderModelOptions();
+                renderCurrentModelStatus();
+                renderGlobalAIQuota();
+                showToast("已更新最新免費模型清單 ✓");
+            });
+        }
+    };
 
     document.getElementById('btn-config').onclick = () => {
         document.getElementById('api-key-input').value = GugoAICore.getApiKey();
         document.getElementById('modal-api').style.display = 'flex';
         closeMenu();
     };
+
     document.getElementById('btn-save-key').onclick = () => {
         const key = document.getElementById('api-key-input').value.trim();
         GugoAICore.setApiKey(key);
         document.getElementById('modal-api').style.display = 'none';
         updateApiKeyButtonState();
-        showToast("Gemini API Key 已儲存成功！");
-        fetchLatestModel({ silent: true });
+        showToast(currentUiLang === 'en-US' ? "API Key saved successfully!" : (currentUiLang === 'ja-JP' ? "API Key が正常に保存されました！" : "Gemini API Key 已儲存成功！"));
     };
 
     document.getElementById('btn-new-room').onclick = () => {
-        const name = prompt("請輸入新占卜名稱：", "新占卜");
-        if (!name) return;
-        const newRoom = { id: 'room_' + Date.now(), name, messages: [], selectedSpread: tarotSelectedSpread, activeReading: null, createdAt: new Date().toISOString() };
+        const defaultName = currentUiLang === 'en-US' ? 'New Reading' : (currentUiLang === 'ja-JP' ? '新規占術' : '新占卜');
+        const promptText = currentUiLang === 'en-US' ? 'Enter room name:' : (currentUiLang === 'ja-JP' ? '部屋名を入力：' : '請輸入新占卜名稱：');
+        const name = prompt(promptText, defaultName);
+        if (!name || !name.trim()) return;
+        const newRoom = {
+            id: 'room_' + Date.now(),
+            name: name.trim(),
+            messages: [],
+            selectedSpread: tarotSelectedSpread,
+            activeReading: null,
+            createdAt: new Date().toISOString()
+        };
         chatRooms.push(newRoom);
-        activeRoomId = newRoom.id;
         saveRoomsToLocal();
-        renderRoomList();
         switchRoom(newRoom.id);
         closeMenu();
     };
 
-    window.editRoomName = (id) => {
-        const room = chatRooms.find(r => r.id === id);
+    window.editRoomName = function(roomId) {
+        const room = chatRooms.find(r => r.id === roomId);
         if (!room) return;
-        const n = prompt("重新命名教室：", room.name);
-        if (n && n.trim()) {
-            room.name = n.trim();
-            saveRoomsToLocal();
-            renderRoomList();
-            if (activeRoomId === id) {
-                const indicator = document.getElementById('header-active-room-name');
-                if (indicator) indicator.textContent = room.name;
-            }
+        const promptText = currentUiLang === 'en-US' ? 'Rename room:' : (currentUiLang === 'ja-JP' ? '部屋名を変更：' : '重新命名教室：');
+        const n = prompt(promptText, room.name);
+        if (!n || !n.trim()) return;
+        room.name = n.trim();
+        saveRoomsToLocal();
+        renderRoomList();
+        if (roomId === activeRoomId) {
+            const indicator = document.getElementById('header-active-room-name');
+            if (indicator) indicator.textContent = room.name;
         }
     };
 
-    window.deleteRoom = (id) => {
+    window.deleteRoom = function(roomId) {
         if (chatRooms.length <= 1) {
-            showToast("⚠️ 至少需保留一個占卜教室");
+            showToast(currentUiLang === 'en-US' ? "At least one room must be kept." : (currentUiLang === 'ja-JP' ? "少なくとも1つの部屋が必要です。" : "⚠️ 至少需保留一個占卜教室"));
             return;
         }
-        const room = chatRooms.find(r => r.id === id);
-        const name = room ? room.name : "此教室";
-        const confirmed = window.confirm(`確定要刪除「${name}」嗎？所有對話與抽牌紀錄將清除。`);
-        if (confirmed) {
-            chatRooms = chatRooms.filter(r => r.id !== id);
-            if (activeRoomId === id) activeRoomId = chatRooms[0].id;
+        const room = chatRooms.find(r => r.id === roomId);
+        const name = room ? room.name : '';
+        const confirmText = currentUiLang === 'en-US' ? `Delete "${name}"? All readings will be lost.` : (currentUiLang === 'ja-JP' ? `「${name}」を削除しますか？` : `確定要刪除「${name}」嗎？所有對話與抽牌紀錄將清除。`);
+        if (confirm(confirmText)) {
+            chatRooms = chatRooms.filter(r => r.id !== roomId);
+            if (activeRoomId === roomId) activeRoomId = chatRooms[0].id;
             saveRoomsToLocal();
             renderRoomList();
             switchRoom(activeRoomId);
-            showToast("已成功刪除教室");
+            showToast(currentUiLang === 'en-US' ? "Room deleted." : (currentUiLang === 'ja-JP' ? "部屋を削除しました。" : "已成功刪除教室"));
         }
     };
 
@@ -2882,10 +3205,10 @@ ${cardDescriptions}
                     room.messages = data[0]?.messages || [];
                     saveRoomsToLocal();
                     switchRoom(activeRoomId);
-                    showToast("紀錄已成功導入當前教室！");
+                    showToast(currentUiLang === 'en-US' ? "Imported successfully!" : (currentUiLang === 'ja-JP' ? "インポート完了！" : "紀錄已成功導入當前教室！"));
                 }
             } catch(err) {
-                showToast("⚠️ 無效的 JSON 檔案格式");
+                showToast("⚠️ Invalid JSON format");
             }
         };
         reader.readAsText(file);
@@ -2893,7 +3216,8 @@ ${cardDescriptions}
     };
 
     document.getElementById('btn-room-delete-ops').onclick = () => {
-        const confirmed = window.confirm("確定要清除當前教室的所有對話與牌面嗎？此操作無法復原。");
+        const confirmText = currentUiLang === 'en-US' ? "Clear all conversations in current room?" : (currentUiLang === 'ja-JP' ? "現在の部屋の対話を全て消去しますか？" : "確定要清除當前教室的所有對話與牌面嗎？此操作無法復原。");
+        const confirmed = window.confirm(confirmText);
         if (confirmed) {
             const room = getActiveRoom();
             if (room) {
@@ -2901,9 +3225,17 @@ ${cardDescriptions}
                 room.activeReading = null;
                 saveRoomsToLocal();
                 switchRoom(activeRoomId);
-                showToast("已清空當前教室對話");
+                showToast(currentUiLang === 'en-US' ? "Cleared." : (currentUiLang === 'ja-JP' ? "消去完了。" : "已清空當前教室對話"));
             }
             closeMenu();
+        }
+    };
+
+    document.getElementById('btn-send').onclick = () => dispatchMessageFlow();
+    document.getElementById('user-text').onkeydown = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            dispatchMessageFlow();
         }
     };
 </script>

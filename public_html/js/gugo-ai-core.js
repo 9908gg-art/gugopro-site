@@ -1,11 +1,11 @@
 /**
  * GugoPro Unified AI Core Module (gugo-ai-core.js)
- * 適用於 GugoPro 旗下所有 AI 工具（語言導師、紫微斗數、塔羅占卜、減肥教練、專屬營養師、選品助手）
+ * 適用於 GugoPro 旗下所有 AI 工具
  *
- * 核心升級：
- *  1. 當遇到 429 / 500 / 503 / 逾時切換模型時，主動觸發 onModelFallback 回呼與全域事件，
- *     即時通知前端 UI 顯示「模型忙碌中，正在切換...」的警示，不再讓使用者無端盲目等待。
- *  2. 集中管理模型動態拉取、評分排序、金鑰安全隔離與配額扣減。
+ * 核心原則：
+ *  1. 100% 動態模型架構：完全不寫死任何特定模型名稱。所有模型皆動態從 quota.gugopro.com 拉取與解析。
+ *  2. 故障自動轉移與即時通知：遇到 429、500、503、504 時，自動向前端廣播換模型通知並無縫切換。
+ *  3. 全域配額聯動：每次呼叫即時扣減，並精確計算剩餘次數，杜絕 null。
  */
 
 (function(window) {
@@ -16,23 +16,17 @@
     const CONFIG = {
         QUOTA_MODELS_URL: 'https://quota.gugopro.com/gemini_rate_limits.json',
         API_KEY_STORAGE_KEYS: ['gugopro_gemini_api_key', 'gemini_api_key'],
-        MODEL_PREFERENCE_KEY: 'gugopro_ai_model_preference_v1',
-        MODEL_DISABLED_KEY: 'gugopro_ai_disabled_models_v1',
-        REQUEST_TIMEOUT_MS: 15000, // 15秒超時保護
-        DEFAULT_FALLBACK_MODELS: [
-            { api_name: 'gemini-3.7-flash', display_name: 'Gemini 3.7 Flash', score: 9.8, dailyQuota: 20 },
-            { api_name: 'gemini-3.5-flash', display_name: 'Gemini 3.5 Flash Lite', score: 9.7, dailyQuota: 500 },
-            { api_name: 'gemini-3.1-flash-lite', display_name: 'Gemini 3.1 Flash Lite', score: 9.5, dailyQuota: 500 },
-            { api_name: 'gemini-2.5-flash', display_name: 'Gemini 2.5 Flash', score: 9.2, dailyQuota: 20 },
-            { api_name: 'gemini-2.5-flash-lite', display_name: 'Gemini 2.5 Flash Lite', score: 9.2, dailyQuota: 20 }
-        ]
+        MODEL_PREFERENCE_KEY: 'gugopro_ai_tutor_model_preference_v1',
+        MODEL_DISABLED_KEY: 'gugopro_ai_tutor_disabled_models_v1',
+        DYNAMIC_MODELS_CACHE_KEY: 'gugopro_dynamic_models_catalog_cache_v2',
+        REQUEST_TIMEOUT_MS: 15000 // 15秒保護
     };
 
     const MODEL_TEXT_CAPABILITIES = new Set(['text_generation', 'chat_dialog']);
     const MODEL_EXCLUDED_TOKENS = /embedding|aqa|tts|speech|audio|live|ocr|image[_-]?gen|robotics|computer[-_]?use|deep[-_]?research|veo|lyria/i;
 
     const state = {
-        availableModels: [],
+        availableModels: [], // 完全動態取得，絕不預設任何模型
         disabledModels: new Set(),
         modelBusyStates: new Map(),
         currentModel: null,
@@ -132,7 +126,7 @@
 
     function reconcileCurrentModel() {
         const queue = getModelQueue();
-        state.currentModel = queue[0]?.api_name || 'gemini-2.5-flash-lite';
+        state.currentModel = queue[0]?.api_name || state.availableModels[0]?.api_name || null;
         state.currentModelIndex = Math.max(0, queue.findIndex(m => m.api_name === state.currentModel));
         return state.currentModel;
     }
@@ -192,17 +186,30 @@
                     if (!exist || m.score > exist.score) uniqueMap.set(m.api_name, m);
                 });
 
-                state.availableModels = Array.from(uniqueMap.values()).sort((a, b) => b.score - a.score || a.display_name.localeCompare(b.display_name));
-                reconcileCurrentModel();
-                syncGlobalQuotaLimit();
-                window.dispatchEvent(new CustomEvent('gugopro:models-updated'));
+                if (uniqueMap.size > 0) {
+                    state.availableModels = Array.from(uniqueMap.values()).sort((a, b) => b.score - a.score || a.display_name.localeCompare(b.display_name));
+                    try {
+                        localStorage.setItem(CONFIG.DYNAMIC_MODELS_CACHE_KEY, JSON.stringify(state.availableModels));
+                    } catch (_) {}
+
+                    reconcileCurrentModel();
+                    syncGlobalQuotaLimit();
+                    window.dispatchEvent(new CustomEvent('gugopro:models-updated'));
+                }
                 return state.availableModels;
 
             } catch (err) {
-                console.warn('[GugoAICore] 模型清單載入失敗，使用預設清單:', err);
+                console.warn('[GugoAICore] 模型動態拉取失敗，讀取本機快取:', err);
                 if (state.availableModels.length === 0) {
-                    state.availableModels = [...CONFIG.DEFAULT_FALLBACK_MODELS];
-                    reconcileCurrentModel();
+                    try {
+                        const cached = JSON.parse(localStorage.getItem(CONFIG.DYNAMIC_MODELS_CACHE_KEY) || '[]');
+                        if (Array.isArray(cached) && cached.length > 0) {
+                            state.availableModels = cached;
+                            reconcileCurrentModel();
+                            syncGlobalQuotaLimit();
+                            window.dispatchEvent(new CustomEvent('gugopro:models-updated'));
+                        }
+                    } catch (_) {}
                 }
                 return state.availableModels;
             } finally {
@@ -218,16 +225,18 @@
         if (tracker && typeof tracker.setDailyLimit === 'function') {
             tracker.resetIfNewPacificDay();
             const total = getEnabledModels().reduce((acc, m) => acc + (Number(m.dailyQuota) || 0), 0);
-            tracker.setDailyLimit(total, 'GugoAICore enabled models');
+            if (total > 0) {
+                tracker.setDailyLimit(total, 'GugoAICore dynamically fetched models');
+            }
         }
     }
 
     function getModelDisplayName(apiName) {
+        if (!apiName) return '';
         const model = state.availableModels.find(m => m.api_name === apiName);
         return model ? model.display_name : apiName;
     }
 
-    // 核心 API 請求與主動切換通知
     async function executeGeminiRequest(payload, options = {}) {
         const apiKey = getApiKey();
         if (!apiKey) {
@@ -274,7 +283,6 @@
                 });
                 clearTimeout(timeoutId);
 
-                // 200 成功
                 if (response.ok) {
                     const data = await response.json();
                     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -285,7 +293,6 @@
                     }
                     state.modelBusyStates.delete(model.api_name);
 
-                    // 通知外部調用成功，可清除 busy 提示
                     if (typeof options.onSuccess === 'function') {
                         options.onSuccess(model.api_name);
                     }
@@ -297,7 +304,6 @@
                     };
                 }
 
-                // 400, 401, 403, 404：致命錯誤，立即中止，不盲目換模型
                 if ([400, 401, 403, 404].includes(response.status)) {
                     const errorBody = await response.text();
                     const fatalError = new Error(`HTTP_${response.status}`);
@@ -308,38 +314,28 @@
                     throw fatalError;
                 }
 
-                // 429, 500, 503：配額上限或伺服器忙碌，執行主動切換通知與降級
                 if ([429, 500, 503].includes(response.status)) {
                     const nextModel = queue[i + 1];
                     const failedName = getModelDisplayName(model.api_name);
                     const nextName = nextModel ? getModelDisplayName(nextModel.api_name) : '備用模型';
-                    
-                    const reasonText = response.status === 429 ? '免費用量暫時達到上限' : '伺服器負載忙碌中 (503)';
+                    const reasonText = response.status === 429 ? '免費用量暫時達到上限 (429)' : `伺服器負載忙碌中 (${response.status})`;
+
                     console.warn(`[GugoAICore] ${failedName} ${reasonText}，即將切換至 ${nextName}...`);
 
-                    // 1. 觸發回呼函數
+                    const fallbackDetail = {
+                        failedModel: model.api_name,
+                        failedDisplayName: failedName,
+                        nextModel: nextModel?.api_name,
+                        nextDisplayName: nextName,
+                        status: response.status,
+                        reason: reasonText
+                    };
+
                     if (typeof options.onModelFallback === 'function') {
-                        options.onModelFallback({
-                            failedModel: model.api_name,
-                            failedDisplayName: failedName,
-                            nextModel: nextModel?.api_name,
-                            nextDisplayName: nextName,
-                            status: response.status,
-                            reason: reasonText
-                        });
+                        options.onModelFallback(fallbackDetail);
                     }
 
-                    // 2. 觸發全域廣播事件，任何 UI 都能監聽展示
-                    window.dispatchEvent(new CustomEvent('gugopro:model-fallback', {
-                        detail: {
-                            failedModel: model.api_name,
-                            failedDisplayName: failedName,
-                            nextModel: nextModel?.api_name,
-                            nextDisplayName: nextName,
-                            status: response.status,
-                            reason: reasonText
-                        }
-                    }));
+                    window.dispatchEvent(new CustomEvent('gugopro:model-fallback', { detail: fallbackDetail }));
 
                     state.modelBusyStates.set(model.api_name, { status: response.status, time: Date.now() });
                     lastError = new Error(`HTTP_${response.status}`);
@@ -351,33 +347,25 @@
                 lastError.status = response.status;
 
             } catch (err) {
-                // 15 秒超時
                 if (err.name === 'AbortError') {
                     const nextModel = queue[i + 1];
                     const failedName = getModelDisplayName(model.api_name);
                     const nextName = nextModel ? getModelDisplayName(nextModel.api_name) : '備用模型';
 
+                    const timeoutDetail = {
+                        failedModel: model.api_name,
+                        failedDisplayName: failedName,
+                        nextModel: nextModel?.api_name,
+                        nextDisplayName: nextName,
+                        status: 504,
+                        reason: '連線逾時 (504)'
+                    };
+
                     if (typeof options.onModelFallback === 'function') {
-                        options.onModelFallback({
-                            failedModel: model.api_name,
-                            failedDisplayName: failedName,
-                            nextModel: nextModel?.api_name,
-                            nextDisplayName: nextName,
-                            status: 504,
-                            reason: '連線逾時'
-                        });
+                        options.onModelFallback(timeoutDetail);
                     }
 
-                    window.dispatchEvent(new CustomEvent('gugopro:model-fallback', {
-                        detail: {
-                            failedModel: model.api_name,
-                            failedDisplayName: failedName,
-                            nextModel: nextModel?.api_name,
-                            nextDisplayName: nextName,
-                            status: 504,
-                            reason: '連線逾時'
-                        }
-                    }));
+                    window.dispatchEvent(new CustomEvent('gugopro:model-fallback', { detail: timeoutDetail }));
 
                     state.modelBusyStates.set(model.api_name, { status: 'TIMEOUT', time: Date.now() });
                     lastError = new Error('TIMEOUT');
@@ -482,6 +470,15 @@
     };
 
     document.addEventListener('DOMContentLoaded', () => {
+        loadDisabledModels();
+        try {
+            const cached = JSON.parse(localStorage.getItem(CONFIG.DYNAMIC_MODELS_CACHE_KEY) || '[]');
+            if (Array.isArray(cached) && cached.length > 0) {
+                state.availableModels = cached;
+                reconcileCurrentModel();
+                syncGlobalQuotaLimit();
+            }
+        } catch (_) {}
         fetchModels({ force: false });
     });
 
