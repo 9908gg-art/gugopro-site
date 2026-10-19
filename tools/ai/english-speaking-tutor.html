@@ -637,6 +637,23 @@
             word-break: break-word;
         }
 
+        /* 錄音音訊播放區塊 (真實錄音模式核心) */
+        .msg-audio-player-wrap {
+            margin: 8px 0 4px;
+            padding: 8px 10px;
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .msg-audio-player-wrap audio {
+            width: 100%;
+            height: 32px;
+            outline: none;
+        }
+
         .msg-actions {
             position: absolute;
             top: 10px;
@@ -735,9 +752,9 @@
             background: rgba(0, 0, 0, 0.35);
             border-radius: 8px;
         }
-        .word-match { color: #86efac; }
-        .word-miss { color: #f87171; text-decoration: line-through; margin-right: 4px; }
-        .word-expected { color: #fde68a; text-decoration: underline; }
+        .word-match { color: #86efac; font-weight: 700; margin-right: 4px; }
+        .word-miss { color: #f87171; text-decoration: line-through; margin-right: 4px; font-weight: 700; }
+        .word-expected { color: #fde68a; text-decoration: underline; margin-right: 6px; }
 
         .btn-pronunciation-retry {
             display: inline-flex;
@@ -1202,14 +1219,14 @@
         </select>
     </div>
 
-    <!-- 雙層語音輸入設定選單 (完全對齊需求截圖) -->
+    <!-- 雙層語音輸入設定選單 (純中文無多餘英文標籤) -->
     <div id="speech-mode-section" class="menu-section capsule-speech-mode-section">
         <div class="menu-title">🎙️ 語音操作設定</div>
         
-        <label style="font-size:0.72rem; color:var(--text-dim); margin-bottom:4px; display:block;">語音輸入向 AI 傳送模式</label>
-        <select id="speech-input-mode-select" class="lang-select" aria-label="語音輸入模式">
-            <option value="stt" selected="selected">🔤 Speech to text (轉為文字發送)</option>
-            <option value="audio">🎙️ Send original audio to AI (真實錄音直接傳給 AI)</option>
+        <label style="font-size:0.72rem; color:var(--text-dim); margin-bottom:4px; display:block;">語音輸入傳送模式</label>
+        <select id="speech-input-mode-select" class="lang-select" aria-label="語音輸入傳送模式">
+            <option value="stt" selected="selected">語音辨識為文字發送</option>
+            <option value="audio">直接傳送真實錄音給 AI</option>
         </select>
 
         <label style="font-size:0.72rem; color:var(--text-dim); margin-top:8px; margin-bottom:4px; display:block;">語音觸發操作方式</label>
@@ -1326,7 +1343,7 @@
                 <li><i aria-hidden="true" class="fa-solid fa-circle-play" style="color: #38bdf8;"></i><span><strong data-page-copy="quickStartTitle">如何開始使用</strong>：<span data-page-copy="quickStartBody">點擊左側邊欄「設定 API Key」輸入金鑰即可開始練習。若您尚未取得，設定彈窗內附有 1 分鐘免費申請圖文教學，支援 Google 官方完全免費額度，免綁信用卡。</span></span></li>
                 <li><i aria-hidden="true" class="fa-solid fa-key" style="color: #00f2ff;"></i><span><strong data-page-copy="quickFreeTitle">官方免費額度支援</strong>：<span data-page-copy="quickFreeBody">本工具不收取任何訂閱月費，支援 Google 官方提供的 Gemini Free Tier 免費額度，日常對話與口說練習完全足夠，無須綁定信用卡或付費帳單。</span></span></li>
                 <li><i aria-hidden="true" class="fa-solid fa-shield-halved" style="color: #34c759;"></i><span><strong data-page-copy="quickPrivacyTitle">本地端點隱私防護</strong>：<span data-page-copy="quickPrivacyBody">您的 API Key、教材檔案與學習紀錄僅保存在您目前的瀏覽器本機儲存空間（localStorage），GugoPro 伺服器不會蒐集、備份或上傳您的金鑰與對話內容。</span></span></li>
-                <li><i aria-hidden="true" class="fa-solid fa-microphone-lines"></i><span data-page-copy="quickSpeech"><strong>雙語言即時語音輸入與跟讀評分</strong>：左側按鈕鎖定「學習語言」發話與跟讀、右側按鈕鎖定「母語」提問。在左側選單中可切換「轉文字」或「錄音直傳給 AI 聽」。點擊 AI 回覆旁的「🎤 跟讀練習」可針對目標句進行發音比對與星級評分！</span></li>
+                <li><i aria-hidden="true" class="fa-solid fa-microphone-lines"></i><span data-page-copy="quickSpeech"><strong>雙語言即時語音輸入、跟讀評分與真實錄音重聽</strong>：左側按鈕鎖定「學習語言」發話與跟讀、右側按鈕鎖定「母語」提問。在「真實錄音模式」下發送後會直接顯示音訊播放器，可親耳回放確認自己的發音。點擊 AI 回覆旁的「🎤 跟讀練習」可針對目標句進行單句發音比對、錯字標註與評分！</span></li>
                 <li><i aria-hidden="true" class="fa-solid fa-keyboard"></i><span data-page-copy="quickDock">底部輸入列固定在畫面最下方，支援多行文字；Enter 發送、Shift＋Enter 換行</span></li>
                 <li><i aria-hidden="true" class="fa-solid fa-paperclip"></i><span data-page-copy="quickMaterial">點擊頂部紙夾可導入 TXT、Markdown、PDF 教材，並綁定目前教室</span></li>
                 <li><i aria-hidden="true" class="fa-solid fa-book-open"></i><span data-page-copy="quickVocab">選取歷史對話中的單字，可查意思、重聽發音並加入生詞字典</span></li>
@@ -1731,6 +1748,74 @@
         };
     }
 
+    // --- 高品質、自然人聲（Natural / Neural）語音挑選引擎 ---
+    let cachedVoices = [];
+    function loadVoices() {
+        if (!window.speechSynthesis) return;
+        cachedVoices = window.speechSynthesis.getVoices();
+    }
+    if (window.speechSynthesis) {
+        window.speechSynthesis.onvoiceschanged = loadVoices;
+        loadVoices();
+    }
+
+    function getBestVoiceForLocale(langCode) {
+        if (!cachedVoices.length) loadVoices();
+        const shortLang = (langCode || 'en-US').split('-')[0].toLowerCase();
+        const targetLocale = (langCode || 'en-US').toLowerCase();
+
+        // 優先度 1: 具備 Natural / Neural / Online / Premium / Google 關鍵字且完全符合 Locale
+        let match = cachedVoices.find(v => 
+            v.lang.toLowerCase().replace('_', '-') === targetLocale && 
+            /natural|neural|online|premium|cloud/i.test(v.name)
+        );
+        if (match) return match;
+
+        // 優先度 2: 包含 Google / Siri / Apple / Microsoft 且完全符合 Locale
+        match = cachedVoices.find(v => 
+            v.lang.toLowerCase().replace('_', '-') === targetLocale && 
+            /google|siri|apple|microsoft/i.test(v.name)
+        );
+        if (match) return match;
+
+        // 優先度 3: 只要語系完全相符
+        match = cachedVoices.find(v => v.lang.toLowerCase().replace('_', '-') === targetLocale);
+        if (match) return match;
+
+        // 優先度 4: 語言前綴相符 (如 en, zh, ja)
+        match = cachedVoices.find(v => v.lang.toLowerCase().startsWith(shortLang));
+        return match || null;
+    }
+
+    function speak(text, langCode) {
+        if (!window.speechSynthesis) return;
+        window.speechSynthesis.cancel();
+        
+        const cleanText = String(text || '').replace(/[#*_`~\[\]\(\)]/g, ' ').trim();
+        if (!cleanText) return;
+
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        utterance.lang = langCode || 'en-US';
+
+        const bestVoice = getBestVoiceForLocale(langCode);
+        if (bestVoice) {
+            utterance.voice = bestVoice;
+        }
+
+        // 調校為更有溫度、自然的人性化語速與語調
+        utterance.rate = 0.94;
+        utterance.pitch = 1.02;
+
+        window.speechSynthesis.speak(utterance);
+    }
+
+    window.speakMessage = (btn) => {
+        const msgDiv = btn.closest('.message');
+        const text = msgDiv.dataset.pureLearning || msgDiv.querySelector('.msg-learning')?.textContent || '';
+        const speechLang = msgDiv.dataset.speechLang || document.getElementById('target-lang')?.value || 'en-US';
+        speak(text, speechLang);
+    };
+
     // --- 跟讀與目標句鎖定管理 ---
     window.startShadowingTarget = function(msgId) {
         const msgEl = document.querySelector(`[data-id="${msgId}"]`);
@@ -1749,7 +1834,7 @@
         }
 
         msgEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        showFloatingToast(`🎯 已鎖定跟讀目標句！請點擊左側 ${LANG_FLAGS[lang] || '🎙️'} 按鈕開始朗讀`);
+        showFloatingToast(`🎯 已鎖定跟讀目標句！請點擊左側 ${LANG_FLAGS[lang] || '🎙️'} 按鈕開始朗讀測試`);
     };
 
     function clearShadowingTarget() {
@@ -1816,7 +1901,7 @@
         const diffHtml = ops.map(op => {
             if (op.type === 'match') return `<span class="word-match">${escapeTutorHtml(op.word)}</span>`;
             if (op.type === 'insert') return `<span class="word-miss">${escapeTutorHtml(op.word)}</span>`;
-            if (op.type === 'delete') return `<span class="word-expected">[遺漏: ${escapeTutorHtml(op.word)}]</span>`;
+            if (op.type === 'delete') return `<span class="word-expected">[漏讀: ${escapeTutorHtml(op.word)}]</span>`;
             if (op.type === 'sub') return `<span class="word-miss">${escapeTutorHtml(op.to)}</span><span class="word-expected">(${escapeTutorHtml(op.from)})</span>`;
             return '';
         }).join(' ');
@@ -1854,7 +1939,7 @@
             <div class="pronunciation-target-display">
                 目標句：<strong>${escapeTutorHtml(targetText)}</strong>
             </div>
-            <div style="font-size:0.75rem; color:#94a3b8;">辨識比對結果：</div>
+            <div style="font-size:0.75rem; color:#94a3b8;">發音比對結果（綠色吻合，紅色差異）：</div>
             <div class="pronunciation-diff-output">
                 ${evalResult.diffHtml}
             </div>
@@ -1863,7 +1948,7 @@
         box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
-    // --- 語音輸入主控制流程（支援文字轉錄 與 真實音訊直傳雙模式） ---
+    // --- 語音輸入主控制流程（支援文字轉錄 與 真實錄音直傳雙模式） ---
     async function startSpeechInput(type) {
         const cfg = getSpeechLangConfig(type);
         currentSpeechTarget = type;
@@ -1878,17 +1963,17 @@
         
         const isShadowingActive = activeShadowTarget && type === 'learning';
         const bannerNotice = isShadowingActive ? ' [🎤 跟讀評分中]' : '';
-        const modeDesc = inputMode === 'audio' ? ' [🎙️ 原始錄音直傳模式]' : '';
+        const modeDesc = inputMode === 'audio' ? ' [🎙️ 真實錄音直傳模式]' : '';
 
         setSpeechStatus('recording', `🎙️ 正在聆聽 ${cfg.flag} ${cfg.name}...${triggerDesc}${bannerNotice}${modeDesc}`);
 
-        // 如果選擇「Send original audio to AI」或者正在跟讀，優先使用 MediaRecorder 捕捉純淨音訊
+        // 真實錄音模式（非跟讀時）：直接啟動 MediaRecorder 錄下使用者的真實音訊
         if (inputMode === 'audio' && !isShadowingActive) {
             startMediaRecorderDirectAudio(cfg, type);
             return;
         }
 
-        // STT 模式：優先嘗試原生 Web Speech API；失敗自動降級為 MediaRecorder + Gemini 多模態
+        // 文字模式（STT）或跟讀練習：優先嘗試原生 Web Speech API；失敗自動降級為 MediaRecorder + Gemini 多模態轉文字
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
         if (SpeechRecognition) {
@@ -2022,7 +2107,7 @@
         }
     }
 
-    // 引擎 B2：真實原始語音模式（直接傳送音訊 Blob 給 Gemini 多模態 API）
+    // 引擎 B2：真實原始語音模式（錄音音訊 Blob 直傳給 Gemini 多模態 API，並於前端保留播放器）
     async function startMediaRecorderDirectAudio(cfg, type) {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
             showFloatingToast('⚠️ 您的瀏覽器不支援麥克風錄音。');
@@ -2044,7 +2129,7 @@
             };
 
             speechMediaRecorder.onstop = async () => {
-                setSpeechStatus('processing', `⏳ 正在將原始錄音傳送給 Gemini AI 導師...`);
+                setSpeechStatus('processing', `⏳ 正在將原始錄音發送給 AI 導師...`);
                 if (speechMediaStream) {
                     speechMediaStream.getTracks().forEach(t => t.stop());
                     speechMediaStream = null;
@@ -2054,8 +2139,9 @@
                     return;
                 }
 
-                const audioBlob = new Blob(speechAudioChunks, { type: speechAudioChunks[0]?.type || 'audio/webm' });
-                sendDirectAudioMessage(audioBlob, type);
+                const mimeType = speechAudioChunks[0]?.type || 'audio/webm';
+                const audioBlob = new Blob(speechAudioChunks, { type: mimeType });
+                sendDirectAudioMessage(audioBlob, mimeType, type);
             };
 
             speechMediaRecorder.start();
@@ -2139,22 +2225,26 @@
         startSpeechInput(type);
     }
 
-    // 真實錄音音訊直傳發送流程
-    async function sendDirectAudioMessage(audioBlob, type) {
+    // --- 真實錄音音訊直傳發送流程 (保留 HTML5 Audio 播放器於氣泡中) ---
+    async function sendDirectAudioMessage(audioBlob, mimeType, type) {
         if (isSendingMessage) return;
 
         const myLang = document.getElementById('my-lang').value;
         const targetLang = document.getElementById('target-lang').value;
         const msgId = 'msg-' + Date.now();
 
-        // 轉為 Base64
+        // 產生本機音訊 URL 供使用者親耳重聽確認
+        const audioUrl = URL.createObjectURL(audioBlob);
+
+        // 轉為 Base64 供傳送至 Gemini 多模態 API
         const base64Data = await new Promise((resolve) => {
             const reader = new FileReader();
             reader.onloadend = () => resolve((reader.result || '').split(',')[1]);
             reader.readAsDataURL(audioBlob);
         });
 
-        addMessageToUI('user', '🎙️ [發送了真實語音錄音]', '正在分析發音與對話中...', null, msgId);
+        // 在畫面上立即渲染帶有播放按鈕的使用者氣泡
+        addMessageToUI('user', '🎙️ [我的真實語音錄音]', '正在親耳分析發音、語調與對話中...', null, msgId, targetLang, audioUrl);
         isSendingMessage = true;
         scrollToLatestMessage();
 
@@ -2175,9 +2265,9 @@ ${materialContext}
 
 Output strictly in JSON:
 {
-  "user_learning": "Transcription of student's spoken audio in ${targetLangName}",
+  "user_learning": "Accurate transcription of student's spoken audio in ${targetLangName}",
   "user_my": "Translation of what student said in ${myLangName}",
-  "correction": "Pronunciation, accent or grammar feedback based on listening, or null",
+  "correction": "Pronunciation, intonation, fluency or grammar feedback based on listening to their voice, or null",
   "tutor_learning": "Your natural reply in ${targetLangName}",
   "tutor_my": "Your reply translated to ${myLangName}"
 }`;
@@ -2186,8 +2276,8 @@ Output strictly in JSON:
                 {
                     role: 'user',
                     parts: [
-                        { inlineData: { mimeType: audioBlob.type || 'audio/webm', data: base64Data } },
-                        { text: "Please listen to this audio and respond according to the JSON format." }
+                        { inlineData: { mimeType: mimeType.split(';')[0] || 'audio/webm', data: base64Data } },
+                        { text: "Please listen to my spoken audio, transcribe it, give pronunciation/grammar advice, and reply according to the JSON format." }
                     ]
                 }
             ];
@@ -2211,11 +2301,25 @@ Output strictly in JSON:
                 userMsgEl.querySelector('.msg-my').textContent = response.user_my;
             }
 
-            room.messages.push({ id: msgId, role: 'user', learning: response.user_learning, my: response.user_my, speechLang: targetLang });
+            room.messages.push({
+                id: msgId,
+                role: 'user',
+                learning: response.user_learning,
+                my: response.user_my,
+                speechLang: targetLang,
+                audioDataUrl: audioUrl // 保存音訊 URL
+            });
 
             const tutorId = 'tutor-' + Date.now();
             addMessageToUI('tutor', response.tutor_learning, response.tutor_my, response.correction, tutorId, targetLang);
-            room.messages.push({ id: tutorId, role: 'tutor', learning: response.tutor_learning, my: response.tutor_my, correction: response.correction, speechLang: targetLang });
+            room.messages.push({
+                id: tutorId,
+                role: 'tutor',
+                learning: response.tutor_learning,
+                my: response.tutor_my,
+                correction: response.correction,
+                speechLang: targetLang
+            });
 
             speak(response.tutor_learning, targetLang);
             saveRoomsToLocal();
@@ -2417,6 +2521,7 @@ Output strictly in JSON:
         }
     }
 
+    // --- 發送文字對話流程 ---
     async function sendMessage(retryRequest = null) {
         if (isSendingMessage) return;
 
@@ -2436,7 +2541,7 @@ Output strictly in JSON:
         const targetLang = document.getElementById('target-lang').value;
         const msgId = 'msg-' + Date.now();
 
-        addMessageToUI('user', content, '正在思考中...', null, msgId);
+        addMessageToUI('user', content, '正在思考中...', null, msgId, targetLang);
         isSendingMessage = true;
         scrollToLatestMessage();
 
@@ -2507,7 +2612,8 @@ Output strictly in JSON:
         return res.data;
     }
 
-    function addMessageToUI(role, learning, my, correction, id, speechLang = 'en-US') {
+    // --- 在 UI 中新增訊息氣泡 (完整支援音訊播放器) ---
+    function addMessageToUI(role, learning, my, correction, id, speechLang = 'en-US', audioDataUrl = null) {
         const container = document.getElementById('chat-container');
         const div = document.createElement('div');
         div.className = `message message-${role}`;
@@ -2515,6 +2621,7 @@ Output strictly in JSON:
         div.dataset.speechLang = speechLang;
         div.dataset.pureLearning = learning;
 
+        // 若為導師回覆，追加「🎤 跟讀練習」按鈕
         let shadowBtnHtml = '';
         if (role === 'tutor') {
             shadowBtnHtml = `
@@ -2524,8 +2631,19 @@ Output strictly in JSON:
             `;
         }
 
+        // 若使用者發送真實錄音，在氣泡中渲染音訊播放控制項，可隨時確認自己的聲音
+        let audioPlayerHtml = '';
+        if (audioDataUrl) {
+            audioPlayerHtml = `
+                <div class="msg-audio-player-wrap">
+                    <audio controls src="${audioDataUrl}"></audio>
+                </div>
+            `;
+        }
+
         div.innerHTML = `
             <div class="msg-learning"></div>
+            ${audioPlayerHtml}
             <div class="msg-my"></div>
             <div class="msg-actions">
                 ${shadowBtnHtml}
@@ -2584,21 +2702,6 @@ Output strictly in JSON:
         btnBottom.addEventListener('click', () => chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' }));
         updateButtons();
     }
-
-    function speak(text, langCode) {
-        if (!window.speechSynthesis) return;
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = langCode || 'en-US';
-        window.speechSynthesis.speak(utterance);
-    }
-
-    window.speakMessage = (btn) => {
-        const msgDiv = btn.closest('.message');
-        const text = msgDiv.dataset.pureLearning || msgDiv.querySelector('.msg-learning')?.textContent || '';
-        const speechLang = msgDiv.dataset.speechLang || 'en-US';
-        speak(text, speechLang);
-    };
 
     function normalizeMaterial(material) {
         if (!material || typeof material !== 'object') return null;
@@ -2802,7 +2905,7 @@ Output strictly in JSON:
         if (materialBanner) container.appendChild(materialBanner);
         if (welcomeCard) container.appendChild(welcomeCard);
 
-        room.messages.forEach(m => addMessageToUI(m.role, m.learning, m.my, m.correction, m.id, m.speechLang || room.language.learning));
+        room.messages.forEach(m => addMessageToUI(m.role, m.learning, m.my, m.correction, m.id, m.speechLang || room.language.learning, m.audioDataUrl || null));
 
         clearShadowingTarget();
         renderMaterialBanner();
