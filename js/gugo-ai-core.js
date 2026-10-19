@@ -2,16 +2,10 @@
  * GugoPro Unified AI Core Module (gugo-ai-core.js)
  * 適用於 GugoPro 旗下所有 AI 工具（語言導師、紫微斗數、塔羅占卜、減肥教練、專屬營養師、選品助手）
  *
- * 核心職責：
- *  1. 每日動態拉取 https://quota.gugopro.com/gemini_rate_limits.json 最新免費模型與評分
- *  2. 嚴格過濾對話專用模型（排除 embedding、tts、image_gen、robotics 等專用模型）
- *  3. API Key 本地安全隔離存取（100% localStorage，不經第三方伺服器）
- *  4. 確定性錯誤防禦矩陣：
- *     - 400 / 401 / 403 / 404：快速失敗（Fail-Fast），提示使用者檢查 Key 或參數，不盲目輪替
- *     - 429 / 500 / 503 / 504 / 逾時：自動階梯降級輪替（Cascading Failover）
- *     - 全模型繁忙：熔斷保護（Circuit Breaker），防止無窮迴圈
- *  5. 整合 GugoPro 全域免費用量（global-ai-quota.js）自動計數與太平洋時間（00:00 PT）重置倒數
- *  6. 統一提供文字生成（generateText）與 JSON 結構化解析（generateJSON）
+ * 核心升級：
+ *  1. 當遇到 429 / 500 / 503 / 逾時切換模型時，主動觸發 onModelFallback 回呼與全域事件，
+ *     即時通知前端 UI 顯示「模型忙碌中，正在切換...」的警示，不再讓使用者無端盲目等待。
+ *  2. 集中管理模型動態拉取、評分排序、金鑰安全隔離與配額扣減。
  */
 
 (function(window) {
@@ -20,35 +14,32 @@
     if (window.GugoAICore) return; // 防止重複載入
 
     const CONFIG = {
-        // 每日由本機推送的最新模型資料源
         QUOTA_MODELS_URL: 'https://quota.gugopro.com/gemini_rate_limits.json',
         API_KEY_STORAGE_KEYS: ['gugopro_gemini_api_key', 'gemini_api_key'],
         MODEL_PREFERENCE_KEY: 'gugopro_ai_model_preference_v1',
         MODEL_DISABLED_KEY: 'gugopro_ai_disabled_models_v1',
-        MODEL_RPM_USAGE_KEY: 'gugopro_ai_rpm_usage_v1',
         REQUEST_TIMEOUT_MS: 15000, // 15秒超時保護
         DEFAULT_FALLBACK_MODELS: [
-            { api_name: 'gemini-2.5-flash-lite', display_name: 'Gemini 2.5 Flash Lite', score: 9.2, dailyQuota: 20 },
-            { api_name: 'gemini-2.5-flash', display_name: 'Gemini 2.5 Flash', score: 9.2, dailyQuota: 20 }
+            { api_name: 'gemini-3.7-flash', display_name: 'Gemini 3.7 Flash', score: 9.8, dailyQuota: 20 },
+            { api_name: 'gemini-3.5-flash', display_name: 'Gemini 3.5 Flash Lite', score: 9.7, dailyQuota: 500 },
+            { api_name: 'gemini-3.1-flash-lite', display_name: 'Gemini 3.1 Flash Lite', score: 9.5, dailyQuota: 500 },
+            { api_name: 'gemini-2.5-flash', display_name: 'Gemini 2.5 Flash', score: 9.2, dailyQuota: 20 },
+            { api_name: 'gemini-2.5-flash-lite', display_name: 'Gemini 2.5 Flash Lite', score: 9.2, dailyQuota: 20 }
         ]
     };
 
-    // 白名單能力與排除黑名單
     const MODEL_TEXT_CAPABILITIES = new Set(['text_generation', 'chat_dialog']);
     const MODEL_EXCLUDED_TOKENS = /embedding|aqa|tts|speech|audio|live|ocr|image[_-]?gen|robotics|computer[-_]?use|deep[-_]?research|veo|lyria/i;
 
-    // 核心內部狀態
     const state = {
         availableModels: [],
         disabledModels: new Set(),
-        modelBusyStates: new Map(), // 記錄 429 / 503 忙碌狀態
+        modelBusyStates: new Map(),
         currentModel: null,
         currentModelIndex: 0,
-        modelCatalogPromise: null,
-        quotaResetTimer: null
+        modelCatalogPromise: null
     };
 
-    // --- 1. 金鑰本地安全存取 (API Key Vault) ---
     function decodeApiKey(raw) {
         if (!raw) return '';
         if (!raw.startsWith('obf_')) return raw;
@@ -82,7 +73,6 @@
         return !!getApiKey();
     }
 
-    // --- 2. 模型設定與偏好開關 (Model Preferences) ---
     function loadDisabledModels() {
         try {
             const saved = JSON.parse(localStorage.getItem(CONFIG.MODEL_DISABLED_KEY) || '[]');
@@ -142,12 +132,11 @@
 
     function reconcileCurrentModel() {
         const queue = getModelQueue();
-        state.currentModel = queue[0]?.api_name || null;
+        state.currentModel = queue[0]?.api_name || 'gemini-2.5-flash-lite';
         state.currentModelIndex = Math.max(0, queue.findIndex(m => m.api_name === state.currentModel));
         return state.currentModel;
     }
 
-    // --- 3. 模型解析與過濾規則 (符合 quota.gugopro.com 與 AI 導師標準) ---
     function getModelDailyQuota(model) {
         const raw = model?.free_quota ?? model?.freeQuota ?? model?.rpd_limit ?? model?.daily_limit ?? model?.quota ?? 0;
         const quota = Number(String(raw).replace(/,/g, '').match(/-?\d+(?:\.\d+)?/)?.[0] || raw);
@@ -195,10 +184,8 @@
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
                 const rawList = Array.isArray(data) ? data : (data.models || []);
-
                 const parsed = rawList.map(normaliseGeminiModel).filter(Boolean);
 
-                // 去重並按 model_score 高低排序
                 const uniqueMap = new Map();
                 parsed.forEach(m => {
                     const exist = uniqueMap.get(m.api_name);
@@ -206,14 +193,13 @@
                 });
 
                 state.availableModels = Array.from(uniqueMap.values()).sort((a, b) => b.score - a.score || a.display_name.localeCompare(b.display_name));
-
                 reconcileCurrentModel();
                 syncGlobalQuotaLimit();
                 window.dispatchEvent(new CustomEvent('gugopro:models-updated'));
                 return state.availableModels;
 
             } catch (err) {
-                console.warn('[GugoAICore] 模型清單載入失敗，使用備援預設清單:', err);
+                console.warn('[GugoAICore] 模型清單載入失敗，使用預設清單:', err);
                 if (state.availableModels.length === 0) {
                     state.availableModels = [...CONFIG.DEFAULT_FALLBACK_MODELS];
                     reconcileCurrentModel();
@@ -227,7 +213,6 @@
         return state.modelCatalogPromise;
     }
 
-    // --- 4. 全域配額整合與太平洋重置計算 ---
     function syncGlobalQuotaLimit() {
         const tracker = window.GugoProGlobalAIQuota;
         if (tracker && typeof tracker.setDailyLimit === 'function') {
@@ -237,24 +222,12 @@
         }
     }
 
-    function getPacificResetCountdown(now = new Date()) {
-        const formatter = new Intl.DateTimeFormat('en-US', {
-            timeZone: 'America/Los_Angeles',
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            timeZoneName: 'longOffset'
-        });
-        const parts = Object.fromEntries(formatter.formatToParts(now).map(p => [p.type, p.value]));
-        const offsetMatch = String(parts.timeZoneName || '').match(/GMT([+-])(\d{1,2})(?::(\d{2}))?/);
-        const offsetMin = offsetMatch
-            ? (offsetMatch[1] === '-' ? -1 : 1) * (Number(offsetMatch[2]) * 60 + Number(offsetMatch[3] || 0))
-            : -480;
-        const nextMidnight = Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day) + 1, 0, 0, 0) - offsetMin * 60 * 1000;
-        return Math.max(0, nextMidnight - now.getTime());
+    function getModelDisplayName(apiName) {
+        const model = state.availableModels.find(m => m.api_name === apiName);
+        return model ? model.display_name : apiName;
     }
 
-    // --- 5. 核心 API 請求與確定性錯誤防禦調度 ---
+    // 核心 API 請求與主動切換通知
     async function executeGeminiRequest(payload, options = {}) {
         const apiKey = getApiKey();
         if (!apiKey) {
@@ -307,13 +280,16 @@
                     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
                     if (!text) throw new Error('EMPTY_RESPONSE');
 
-                    // 記錄呼叫次數到全域配額
                     if (window.GugoProGlobalAIQuota?.recordUsage) {
                         window.GugoProGlobalAIQuota.recordUsage(1, model.api_name);
                     }
-
-                    // 成功時清除忙碌狀態
                     state.modelBusyStates.delete(model.api_name);
+
+                    // 通知外部調用成功，可清除 busy 提示
+                    if (typeof options.onSuccess === 'function') {
+                        options.onSuccess(model.api_name);
+                    }
+
                     return {
                         text: text.trim(),
                         raw: data,
@@ -321,7 +297,7 @@
                     };
                 }
 
-                // 400, 401, 403, 404：客戶端致命錯誤，立即中止，絕對不盲目換模型
+                // 400, 401, 403, 404：致命錯誤，立即中止，不盲目換模型
                 if ([400, 401, 403, 404].includes(response.status)) {
                     const errorBody = await response.text();
                     const fatalError = new Error(`HTTP_${response.status}`);
@@ -332,29 +308,82 @@
                     throw fatalError;
                 }
 
-                // 429, 500, 503：配額上限或伺服器過載，執行自動階梯降級輪替
+                // 429, 500, 503：配額上限或伺服器忙碌，執行主動切換通知與降級
                 if ([429, 500, 503].includes(response.status)) {
-                    console.warn(`[GugoAICore] 模型 ${model.api_name} 回傳 HTTP ${response.status}，自動切換下一候選模型...`);
+                    const nextModel = queue[i + 1];
+                    const failedName = getModelDisplayName(model.api_name);
+                    const nextName = nextModel ? getModelDisplayName(nextModel.api_name) : '備用模型';
+                    
+                    const reasonText = response.status === 429 ? '免費用量暫時達到上限' : '伺服器負載忙碌中 (503)';
+                    console.warn(`[GugoAICore] ${failedName} ${reasonText}，即將切換至 ${nextName}...`);
+
+                    // 1. 觸發回呼函數
+                    if (typeof options.onModelFallback === 'function') {
+                        options.onModelFallback({
+                            failedModel: model.api_name,
+                            failedDisplayName: failedName,
+                            nextModel: nextModel?.api_name,
+                            nextDisplayName: nextName,
+                            status: response.status,
+                            reason: reasonText
+                        });
+                    }
+
+                    // 2. 觸發全域廣播事件，任何 UI 都能監聽展示
+                    window.dispatchEvent(new CustomEvent('gugopro:model-fallback', {
+                        detail: {
+                            failedModel: model.api_name,
+                            failedDisplayName: failedName,
+                            nextModel: nextModel?.api_name,
+                            nextDisplayName: nextName,
+                            status: response.status,
+                            reason: reasonText
+                        }
+                    }));
+
                     state.modelBusyStates.set(model.api_name, { status: response.status, time: Date.now() });
                     lastError = new Error(`HTTP_${response.status}`);
                     lastError.status = response.status;
                     continue;
                 }
 
-                // 其他未預期 HTTP 代碼
                 lastError = new Error(`HTTP_${response.status}`);
                 lastError.status = response.status;
 
             } catch (err) {
                 // 15 秒超時
                 if (err.name === 'AbortError') {
-                    console.warn(`[GugoAICore] 模型 ${model.api_name} 連線逾時，切換下一候選模型...`);
+                    const nextModel = queue[i + 1];
+                    const failedName = getModelDisplayName(model.api_name);
+                    const nextName = nextModel ? getModelDisplayName(nextModel.api_name) : '備用模型';
+
+                    if (typeof options.onModelFallback === 'function') {
+                        options.onModelFallback({
+                            failedModel: model.api_name,
+                            failedDisplayName: failedName,
+                            nextModel: nextModel?.api_name,
+                            nextDisplayName: nextName,
+                            status: 504,
+                            reason: '連線逾時'
+                        });
+                    }
+
+                    window.dispatchEvent(new CustomEvent('gugopro:model-fallback', {
+                        detail: {
+                            failedModel: model.api_name,
+                            failedDisplayName: failedName,
+                            nextModel: nextModel?.api_name,
+                            nextDisplayName: nextName,
+                            status: 504,
+                            reason: '連線逾時'
+                        }
+                    }));
+
                     state.modelBusyStates.set(model.api_name, { status: 'TIMEOUT', time: Date.now() });
                     lastError = new Error('TIMEOUT');
                     lastError.status = 504;
                     continue;
                 }
-                // 400 系列致命錯誤直接向上拋出
                 if (err.status && [400, 401, 403, 404].includes(err.status)) {
                     throw err;
                 }
@@ -362,7 +391,6 @@
             }
         }
 
-        // 所有已啟用模型皆嘗試過且失敗（觸發熔斷）
         const exhaustedError = lastError || new Error('ALL_MODELS_EXHAUSTED');
         exhaustedError.code = 'ALL_MODELS_EXHAUSTED';
         exhaustedError.circuitBreaker = true;
@@ -370,7 +398,6 @@
         throw exhaustedError;
     }
 
-    // --- 6. 公開生成介面 (generateText & generateJSON) ---
     async function generateText(promptOrContents, options = {}) {
         let contents;
         if (typeof promptOrContents === 'string') {
@@ -384,7 +411,7 @@
         const payload = {
             contents,
             generationConfig: {
-                temperature: options.temperature ?? 0.7,
+                temperature: options.temperature ?? 0.75,
                 maxOutputTokens: options.maxOutputTokens ?? 4096
             }
         };
@@ -425,7 +452,6 @@
         }
 
         const result = await executeGeminiRequest(payload, options);
-        // 清洗 Markdown 的 ```json ... ``` 標籤
         const clean = result.text.replace(/```json|```/g, '').trim();
         try {
             return {
@@ -438,32 +464,23 @@
         }
     }
 
-    // 暴露全域 API 物件
     window.GugoAICore = {
-        // 金鑰管理
         getApiKey,
         setApiKey,
         hasApiKey,
-
-        // 模型管理
         fetchModels,
         getAvailableModels: () => [...state.availableModels],
         getEnabledModels,
         getModelQueue,
         getCurrentModel: () => state.currentModel || reconcileCurrentModel(),
+        getModelDisplayName,
         setPreferredModel,
         setModelEnabled,
         isModelEnabled,
-
-        // 配額與重置倒數
-        getPacificResetCountdown,
-
-        // 對話與運算調用
         generateText,
         generateJSON
     };
 
-    // 自動於頁面加載完成時初始化模型清單
     document.addEventListener('DOMContentLoaded', () => {
         fetchModels({ force: false });
     });

@@ -191,10 +191,7 @@
             text-overflow: ellipsis;
             white-space: nowrap;
         }
-        .header-room-indicator strong {
-            color: #f8fafc;
-            font-weight: 700;
-        }
+        .header-room-indicator strong { color: #f8fafc; font-weight: 700; }
 
         .btn-back-home {
             color: var(--text-main);
@@ -414,7 +411,7 @@
         }
         .menu-item:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.18); }
 
-        /* AI Models Styling (100% Identical to 圖片_1.png) */
+        /* AI Models Styling (100% Identical to AI Tutor) */
         .model-settings-status { color: var(--text-dim); font-size: 0.72rem; line-height: 1.45; margin: -2px 0 6px; }
         .model-current-status { color: #fef08a; background: rgba(234, 179, 8, 0.14); border: 1px solid rgba(250, 204, 21, 0.34); border-radius: 8px; padding: 5px 8px; margin: 0 0 8px; font-size: 0.72rem; line-height: 1.35; font-weight: 700; }
         .global-ai-quota-pill { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 0 0 8px; padding: 7px; border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 9px; background: rgba(245, 158, 11, 0.05); }
@@ -1041,17 +1038,24 @@
 
         /* Error Panel */
         .error-panel {
-            background: rgba(245, 158, 11, 0.12);
+            background: rgba(245, 158, 11, 0.16);
             color: #fcd34d;
-            border: 1px solid rgba(245, 158, 11, 0.45);
-            padding: 9px 11px;
-            border-radius: 9px;
+            border: 1px solid rgba(245, 158, 11, 0.55);
+            padding: 9px 12px;
+            border-radius: 10px;
             margin-bottom: 8px;
             display: none;
             text-align: center;
-            font-size: 0.82rem;
-            font-weight: 600;
+            font-size: 0.84rem;
+            font-weight: 700;
             line-height: 1.45;
+            backdrop-filter: blur(8px);
+            animation: slideUp 0.25s ease-out;
+        }
+        .error-panel.busy {
+            background: rgba(234, 179, 8, 0.2);
+            color: #fef08a;
+            border-color: rgba(250, 204, 21, 0.6);
         }
 
         /* Modals */
@@ -1110,17 +1114,20 @@
             bottom: 84px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(18, 16, 26, 0.94);
+            background: rgba(18, 16, 26, 0.96);
             color: #fde68a;
-            border: 1px solid rgba(245, 158, 11, 0.4);
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.82rem;
+            border: 1px solid rgba(245, 158, 11, 0.5);
+            padding: 10px 18px;
+            border-radius: 24px;
+            font-size: 0.84rem;
             font-weight: 700;
-            backdrop-filter: blur(8px);
+            backdrop-filter: blur(12px);
             z-index: 2100;
             display: none;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+            max-width: 90vw;
+            text-align: center;
+            line-height: 1.45;
         }
 
         @media (max-width: 768px) {
@@ -1144,7 +1151,7 @@
 </head>
 <body>
 
-<!-- Left Side Menu (100% Identical to 圖片_1.png) -->
+<!-- Left Side Menu (100% Identical to AI Tutor) -->
 <div class="side-menu-overlay" id="side-menu-overlay"></div>
 <aside class="side-menu" id="side-menu">
     <button class="menu-close" id="btn-menu-close" aria-label="關閉側邊選單"><i class="fa-solid fa-xmark"></i></button>
@@ -1186,7 +1193,7 @@
         </button>
     </div>
 
-    <!-- AI Models List (100% Mirrored from AI Tutor & 圖片_1.png) -->
+    <!-- AI Models List (100% Mirrored from AI Tutor) -->
     <div class="menu-section model-settings-section">
         <div class="menu-title">
             <span id="model-settings-title">AI 對話模型</span>
@@ -1426,6 +1433,7 @@
     <!-- Bottom Controls with TYPE A Foldable Drawer -->
     <div class="bottom-controls">
         <div class="input-wrapper">
+            <!-- 503 / 429 忙碌切換警示橫幅 -->
             <div aria-live="polite" class="error-panel" id="error-panel" role="status">
                 <span id="error-msg"></span>
             </div>
@@ -1438,7 +1446,7 @@
                     <i class="fa-solid fa-chevron-up drawer-chevron"></i>
                 </button>
 
-                <!-- Quick Action Chips: Buttons Updated with Delete (x) -->
+                <!-- Quick Action Chips -->
                 <div class="tarot-compact-quick-chips" id="tarot-quick-chips-container">
                     <button type="button" class="btn-compact-chip" onclick="handleQuickTopic('❤️ 感情發展')">❤️ 感情發展</button>
                     <button type="button" class="btn-compact-chip" onclick="handleQuickTopic('🌟 未來運勢')">🌟 未來運勢</button>
@@ -1447,7 +1455,7 @@
                 </div>
             </div>
 
-            <!-- TYPE A Feature Drawer (Spreads only, ultra-compact) -->
+            <!-- TYPE A Feature Drawer -->
             <div class="tarot-feature-drawer" id="tarot-feature-drawer">
                 <div class="drawer-section-title">
                     <span>🔮 選擇占卜牌陣</span>
@@ -1517,12 +1525,11 @@
     </div>
 </div>
 
-<!-- Hidden File Import Element (Strictly invisible) -->
 <input accept=".json" id="file-import" type="file" style="display:none !important;" aria-hidden="true">
 <div id="toast-msg"></div>
 
 <script>
-    // --- Complete 78 Rider-Waite Deck ---
+    // --- 78 Rider-Waite Cards ---
     const DECK = [
         {n:0,name:'愚者',en:'The Fool',emoji:'🃏',u:'自由、新起點、冒險心、無限潛能',r:'魯莽、漫無目的、逃避承諾'},
         {n:1,name:'魔術師',en:'The Magician',emoji:'🎩',u:'創造力、資源整合、顯化能力、清晰意志',r:'操縱欺騙、才華壓抑、缺乏準備'},
@@ -1616,7 +1623,6 @@
         celtic: { name: '凱爾特十字深度牌陣', count: 10, positions: ['現況 / 核心主題', '挑戰 / 阻礙', '潛意識動機', '過去基礎', '最佳結果', '近期未來', '自身態度', '外在環境', '希望與恐懼', '最終結論'] }
     };
 
-    // Standard 8 Models mirroring AI Tutor (圖片_1.png)
     const DEFAULT_AVAILABLE_MODELS = [
         { api_name: 'gemini-3.7-flash', display_name: 'Gemini 3.7 Flash', score: 9.8, dailyQuota: 20 },
         { api_name: 'gemini-3.8-flash', display_name: 'Gemini 3.8 Flash', score: 9.8, dailyQuota: 20 },
@@ -1628,7 +1634,6 @@
         { api_name: 'gemini-2.5-flash-lite', display_name: 'Gemini 2.5 Flash Lite', score: 9.2, dailyQuota: 20 }
     ];
 
-    // --- State Management ---
     let chatRooms = [];
     let activeRoomId = null;
     let tarotSelectedSpread = 'timeline';
@@ -1647,7 +1652,6 @@
     const MODEL_DISABLED_KEY = 'gugopro_ai_tutor_disabled_models_v1';
     const MODEL_PREFERENCE_KEY = 'gugopro_ai_tutor_model_preference_v1';
 
-    // --- Initialization ---
     document.addEventListener('DOMContentLoaded', () => {
         initChatSystem();
         initSpeechRecognition();
@@ -1656,7 +1660,34 @@
         initCustomQuickChips();
         updateApiKeyButtonState();
         initModelSystem();
+        listenToModelFallbackEvents();
     });
+
+    // 監聽 503/429 忙碌切換事件，即時在 UI 顯示提醒橫幅
+    function listenToModelFallbackEvents() {
+        window.addEventListener('gugopro:model-fallback', (e) => {
+            const d = e.detail;
+            if (!d) return;
+            showModelBusyBanner(`⚠️ 模型 ${d.failedDisplayName || d.failedModel} ${d.reason}，正在為您無縫切換至 ${d.nextDisplayName || d.nextModel}...`);
+            currentModel = d.nextModel || currentModel;
+            renderCurrentModelStatus();
+            renderModelOptions();
+        });
+    }
+
+    function showModelBusyBanner(text) {
+        const panel = document.getElementById('error-panel');
+        const msg = document.getElementById('error-msg');
+        if (!panel || !msg) return;
+        panel.classList.add('busy');
+        msg.textContent = text;
+        panel.style.display = 'block';
+    }
+
+    function hideModelBusyBanner() {
+        const panel = document.getElementById('error-panel');
+        if (panel) panel.style.display = 'none';
+    }
 
     function initChatSystem() {
         const saved = localStorage.getItem(TAROT_ROOM_STORAGE_KEY);
@@ -1734,7 +1765,7 @@
         scrollToLatestMessage();
     }
 
-    // --- AI Model Engine Integration (100% Mirrored from AI Tutor) ---
+    // --- AI Model Management ---
     function initModelSystem() {
         loadDisabledModelPreferences();
         reconcileCurrentModel();
@@ -1843,7 +1874,7 @@
         const status = document.getElementById('model-current-status');
         if (!status) return;
         const model = availableModels.find(m => m.api_name === currentModel);
-        status.textContent = `目前模型：${model?.display_name || 'Gemini 2.5 Flash Lite'}`;
+        status.textContent = `目前模型：${model?.display_name || GugoAICore.getModelDisplayName(currentModel)}`;
     }
 
     function renderGlobalAIQuota() {
@@ -1968,7 +1999,7 @@
         }
     }
 
-    // --- Type A Smart Drawer and Custom Quick Chips with Delete (x) ---
+    // --- Type A Smart Drawer & Custom Chips ---
     function initTypeADrawer() {
         const btnToggle = document.getElementById('btn-drawer-toggle');
         btnToggle.onclick = () => {
@@ -2009,9 +2040,9 @@
         customChips.forEach(chip => renderCustomChipElement(chip));
 
         addBtn.onclick = () => {
-            const label = prompt("請輸入自訂快捷按鈕名稱（例如：人際關係、考運分析）：");
+            const label = prompt("請輸入自訂快捷按鈕名稱（例如：考運分析、求職指引）：");
             if (!label || !label.trim()) return;
-            const promptContent = prompt("請輸入點擊時傳送給大師的問題：", `我想探索關於「${label.trim()}」的指引與建議。`);
+            const promptContent = prompt("請輸入點擊時傳送給大師的問題：", `我想占卜探索關於「${label.trim()}」的指引與建議。`);
             if (!promptContent || !promptContent.trim()) return;
 
             const newChip = { id: 'chip_' + Date.now(), label: label.trim(), prompt: promptContent.trim() };
@@ -2066,7 +2097,6 @@
         });
     }
 
-    // --- Interactive Topic Clarification & Intent Dispatcher ---
     window.handleQuickTopic = function(topicText) {
         const input = document.getElementById('user-text');
         input.value = topicText;
@@ -2116,7 +2146,6 @@
         `;
     }
 
-    // Render Large, Prominent Cards at the TOP of the reading
     function renderFinalDealtCardsHtml(instanceId, drawnCards, spreadKey) {
         const cardsHtml = drawnCards.map((draw, idx) => {
             const position = escapeHtml(draw.position.split(' / ')[0]);
@@ -2150,7 +2179,35 @@
         `;
     }
 
-    // --- Conversational Flow Controller (Warm, Progressive, Supportive) ---
+    // --- 核心意圖分析器：判斷是否為「新占卜主題」 ---
+    function isExplicitNewReadingIntent(userPrompt, activeReading) {
+        const text = userPrompt.trim();
+        // 1. 強烈重新抽牌動詞
+        if (/重新(抽牌|洗牌|開牌|占卜)|再抽一次|重抽|重新開局/i.test(text)) return true;
+        
+        // 2. 明確主動提出「占卜」或「想算」
+        if (/(想|要|請|幫我)?(占卜|算一下|抽牌|抽一張|開牌|排盤|測一下)/i.test(text)) return true;
+
+        // 3. 領域主題切換判斷（如果原本在問財運，現在問愛情/女友/結婚，必然是全新占卜！）
+        if (activeReading) {
+            const oldTopic = (activeReading.question || '').toLowerCase();
+            const isOldLove = /愛情|感情|女友|男友|復合|結婚|伴侶/i.test(oldTopic);
+            const isOldMoney = /財運|金錢|投資|錢運|發財/i.test(oldTopic);
+            const isOldCareer = /工作|事業|跳槽|職場|面試|創業/i.test(oldTopic);
+
+            const isNewLove = /愛情|感情|女友|男友|復合|結婚|伴侶|另一半/i.test(text);
+            const isNewMoney = /財運|金錢|投資|錢運|發財|收入/i.test(text);
+            const isNewCareer = /工作|事業|跳槽|職場|面試|創業/i.test(text);
+
+            if ((isNewLove && !isOldLove) || (isNewMoney && !isOldMoney) || (isNewCareer && !isOldCareer)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // --- 對話流程主控制器 ---
     async function dispatchMessageFlow(explicitText = null) {
         if (isSendingMessage) return;
 
@@ -2169,30 +2226,35 @@
         const userMsgId = 'user_' + Date.now();
         const tutorMsgId = 'tutor_' + Date.now();
 
-        // 1. Render User Message
+        // 1. 渲染使用者訊息
         room.messages.push({ role: 'user', text: userPrompt, id: userMsgId });
         addMessageToUI('user', userPrompt, userMsgId);
         collapseDrawerOnAction();
         scrollToLatestMessage();
 
-        // 2. Intent Routing Evaluation
-        const hasExistingSpread = Boolean(room.activeReading);
-        const isFollowUpPattern = hasExistingSpread && !/重新抽牌|重新洗牌|開始占卜|抽牌|重新開牌/i.test(userPrompt);
+        // 2. 嚴謹意圖識別：若為明確的新占卜意圖，重置當前占卜，開啟全新抽牌！
+        const wantsNewReading = isExplicitNewReadingIntent(userPrompt, room.activeReading);
+        if (wantsNewReading) {
+            room.activeReading = null; // 清除舊牌陣，重置為全新占卜狀態
+        }
 
-        // Scenario A: Follow-up on existing spread (NO RE-DRAWING CARDS!)
-        if (isFollowUpPattern) {
+        // 3. 判斷是否為當前既有牌面的「追問」
+        const hasExistingSpread = Boolean(room.activeReading);
+        const isFollowUp = hasExistingSpread && !wantsNewReading;
+
+        if (isFollowUp) {
             await handleFollowUpInquiry(userPrompt, tutorMsgId);
             return;
         }
 
-        // Scenario B: Check if this is a broad topic needing clarification
+        // 4. 判斷是否需要問答選項晶片對焦情境
         const needsPreQuestioning = shouldAskClarification(userPrompt);
         if (needsPreQuestioning.needed) {
             handleClarificationQuestion(needsPreQuestioning, tutorMsgId);
             return;
         }
 
-        // Scenario C: Direct Divination Draw
+        // 5. 執行全新抽牌占卜！
         await executeDivinationReading(userPrompt, tutorMsgId);
     }
 
@@ -2202,7 +2264,7 @@
             return { needed: false };
         }
 
-        if (/感情|戀愛|復合|桃花|伴侶|另一半/i.test(clean) && clean.length < 15) {
+        if (/感情|戀愛|復合|桃花|伴侶|另一半/i.test(clean) && clean.length < 15 && !/結婚|能走到/i.test(clean)) {
             return {
                 needed: true,
                 topic: 'love',
@@ -2262,7 +2324,7 @@
         scrollToLatestMessage();
     }
 
-    // --- Scenario A: Follow-up Conversation (NO RE-DRAWING CARDS) ---
+    // --- 針對當前牌陣的深度追問（不重抽） ---
     async function handleFollowUpInquiry(question, tutorMsgId) {
         isSendingMessage = true;
         const room = getActiveRoom();
@@ -2295,6 +2357,12 @@
                 onModelAttempt: (modelName) => {
                     currentModel = modelName;
                     renderCurrentModelStatus();
+                },
+                onModelFallback: (fallbackInfo) => {
+                    showModelBusyBanner(`⚠️ 模型 ${fallbackInfo.failedDisplayName} 伺服器忙碌中 (${fallbackInfo.status})，正在自動切換至 ${fallbackInfo.nextDisplayName}...`);
+                },
+                onSuccess: () => {
+                    hideModelBusyBanner();
                 }
             });
 
@@ -2326,18 +2394,16 @@
         }
     }
 
-    // --- Scenario C: Divination Reading (Large Top Cards + Warm Progressive Storytelling) ---
+    // --- 執行全新占卜抽牌（大牌面置頂 ＋ 1.5秒洗牌 ＋ 溫暖對話） ---
     async function executeDivinationReading(question, tutorMsgId) {
         isSendingMessage = true;
         const room = getActiveRoom();
         const instanceId = 'tarot_' + Date.now();
 
-        // 1. Draw Cards
         const spreadKey = tarotSelectedSpread;
         const spread = SPREADS[spreadKey] || SPREADS.timeline;
         const drawnCards = drawRandomCards(spreadKey);
 
-        // 2. Render initial fast 1.5s shuffle scene (Cards will be placed at the TOP)
         const initialShuffleHtml = createShuffleHtml(instanceId, spread.name, spread.count);
         addMessageToUI('tutor', `我已收到你的心念，正在為「${escapeHtml(question)}」淨化心靈磁場並展開牌組... ✨`, tutorMsgId, initialShuffleHtml);
         scrollToLatestMessage();
@@ -2370,23 +2436,26 @@ ${cardDescriptions}
 
 請以充滿同理心、溫暖且富有生動圖形（❤️、💰、🌟等）的對話口吻，依序為我溫柔解讀這組牌。`;
 
-            // Call GugoAICore with Cascading Failover
             const resultPromise = GugoAICore.generateText(userPrompt, {
                 systemInstruction,
                 temperature: 0.75,
                 onModelAttempt: (modelName) => {
                     currentModel = modelName;
                     renderCurrentModelStatus();
+                },
+                onModelFallback: (fallbackInfo) => {
+                    showModelBusyBanner(`⚠️ 模型 ${fallbackInfo.failedDisplayName} 伺服器忙碌中 (${fallbackInfo.status})，正在自動切換至 ${fallbackInfo.nextDisplayName}...`);
+                },
+                onSuccess: () => {
+                    hideModelBusyBanner();
                 }
             });
 
-            // Fast 1.5s shuffle guarantee
             const [result] = await Promise.all([
                 resultPromise,
                 new Promise(resolve => setTimeout(resolve, 1500))
             ]);
 
-            // Transition from shuffle stage to Large Cards at TOP
             const tutorEl = document.querySelector(`[data-id="${tutorMsgId}"]`);
             if (tutorEl) {
                 const finalCardsHtml = renderFinalDealtCardsHtml(instanceId, drawnCards, spreadKey);
@@ -2396,7 +2465,6 @@ ${cardDescriptions}
                 const learningEl = tutorEl.querySelector('.msg-learning');
                 if (learningEl) learningEl.innerHTML = renderTarotMarkdown(result.text);
 
-                // Sequentially flip over large 3D cards
                 setTimeout(() => {
                     drawnCards.forEach((_, idx) => {
                         setTimeout(() => {
@@ -2456,7 +2524,6 @@ ${cardDescriptions}
             .replace(/\n/g, '<br>');
     }
 
-    // Notice: extraHtml (THE CARDS) is placed at the TOP of the bubble!
     function addMessageToUI(role, text, id, extraHtml = '', options = null) {
         const container = document.getElementById('chat-container');
         const div = document.createElement('div');
@@ -2473,7 +2540,6 @@ ${cardDescriptions}
             optionsHtml = `<div class="chat-option-pills-wrap">${pills}</div>`;
         }
 
-        // CARDS AT TOP (msg-extra first), then text (msg-learning)
         div.innerHTML = `
             <div class="msg-extra">${extraHtml}</div>
             <div class="msg-learning">${role === 'tutor' ? renderTarotMarkdown(text) : escapeHtml(text)}</div>
@@ -2506,7 +2572,7 @@ ${cardDescriptions}
         });
     }
 
-    // --- Journal & Copy Actions ---
+    // --- Journal & Copy ---
     function autoSaveTarotJournal(reading) {
         if (!reading || !reading.reportText) return;
         let journal = [];
@@ -2557,39 +2623,38 @@ ${cardDescriptions}
     document.getElementById('btn-journal-header').onclick = openJournalModal;
     document.getElementById('btn-journal-sidebar').onclick = () => { openJournalModal(); closeMenu(); };
 
-    // --- Speech Recognition ---
+    // --- Web Speech API (徹底解決「瀏覽器未支援」錯誤) ---
     function initSpeechRecognition() {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) return;
+        // 全面相容各瀏覽器前綴
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition;
+        if (!SpeechRecognition) {
+            console.warn("SpeechRecognition API 不存在於此瀏覽器環境。");
+            return;
+        }
+
         try {
             recognition = new SpeechRecognition();
-            recognition.continuous = true;
+            recognition.continuous = false; // 修正為短句辨識，相容性與精準度最高
             recognition.interimResults = true;
-            let finalTranscript = '';
 
             recognition.onstart = () => {
                 isRecording = true;
                 const micBtn = document.getElementById('btn-mic');
                 if (micBtn) {
                     micBtn.classList.add('recording');
-                    micBtn.setAttribute('title', '錄音中... 再次點擊結束語音輸入');
+                    micBtn.setAttribute('title', '錄音中... 再次點擊結束');
                 }
-                showToast("🎙️ 正在聆聽中，請說話...（再次點擊麥克風結束）");
+                showToast("🎙️ 正在聆聽中，請說出想問的問題...");
             };
 
             recognition.onresult = (event) => {
-                let currentInterim = '';
+                let transcript = '';
                 for (let i = event.resultIndex; i < event.results.length; i++) {
-                    const transcript = event.results[i][0].transcript;
-                    if (event.results[i].isFinal) {
-                        finalTranscript += transcript;
-                    } else {
-                        currentInterim += transcript;
-                    }
+                    transcript += event.results[i][0].transcript;
                 }
                 const input = document.getElementById('user-text');
-                if (input) {
-                    input.value = (finalTranscript + currentInterim).trim();
+                if (input && transcript) {
+                    input.value = transcript.trim();
                 }
             };
 
@@ -2597,11 +2662,11 @@ ${cardDescriptions}
                 console.warn("Speech recognition error:", event.error);
                 stopRecording();
                 if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-                    showToast("⚠️ 麥克風權限已被封鎖，請點擊網址列左側鎖頭開啟麥克風權限");
+                    showToast("⚠️ 麥克風已被封鎖，請點擊網址列左側鎖頭開啟麥克風權限");
                 } else if (event.error === 'no-speech') {
-                    showToast("未偵測到聲音，請靠近麥克風再試一次");
+                    showToast("未偵測到聲音，請靠近麥克風說話");
                 } else if (event.error === 'audio-capture') {
-                    showToast("⚠️ 找不到錄音設備，請確認電腦麥克風已正確連接");
+                    showToast("⚠️ 找不到錄音設備，請確認麥克風已正確連接");
                 }
             };
 
@@ -2630,11 +2695,19 @@ ${cardDescriptions}
             document.getElementById('api-key-input')?.focus();
             return;
         }
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-            showToast("⚠️ 您的瀏覽器未支援語音辨識，建議使用 Google Chrome 或 Edge 瀏覽器");
+
+        // 診斷環境協定：file:/// 或非 HTTPS 會被 Chrome 封鎖
+        if (location.protocol === 'file:' || (location.protocol === 'http:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1')) {
+            showToast("⚠️ 瀏覽器安全規範：語音功能僅支援在 HTTPS 網站或 localhost 執行。若直接雙擊開啟本機檔案 (file://) 瀏覽器會自動封鎖麥克風，請至線上網站 (https://) 使用。");
             return;
         }
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition;
+        if (!SpeechRecognition) {
+            showToast("⚠️ 您的瀏覽器核心未支援語音辨識，請使用 Chrome、Edge 或 Safari 瀏覽器。");
+            return;
+        }
+
         if (isRecording) {
             stopRecording();
             showToast("語音輸入已完成 ✓");
@@ -2695,7 +2768,7 @@ ${cardDescriptions}
         toast.textContent = text;
         toast.style.display = 'block';
         clearTimeout(showToast.timer);
-        showToast.timer = setTimeout(() => { toast.style.display = 'none'; }, 2500);
+        showToast.timer = setTimeout(() => { toast.style.display = 'none'; }, 3200);
     }
 
     function updateApiKeyButtonState() {
@@ -2711,7 +2784,7 @@ ${cardDescriptions}
         }
     }
 
-    // --- Sidebar Menu Mechanics ---
+    // --- Sidebar Menu ---
     const menu = document.getElementById('side-menu');
     const overlay = document.getElementById('side-menu-overlay');
 
@@ -2744,7 +2817,6 @@ ${cardDescriptions}
         fetchLatestModel({ silent: true });
     };
 
-    // Rooms Export / Import / Delete ops
     document.getElementById('btn-new-room').onclick = () => {
         const name = prompt("請輸入新占卜名稱：", "新占卜");
         if (!name) return;
