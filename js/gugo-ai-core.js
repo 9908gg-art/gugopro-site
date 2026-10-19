@@ -1,18 +1,18 @@
 /**
  * GugoPro Unified AI Core Module (gugo-ai-core.js)
- * 適用於 GugoPro 旗下所有 AI 工具
+ * 適用於 GugoPro 旗下全站 AI 工具（語言導師、AI 塔羅大師、紫微斗數等）
  *
- * 核心功能：
- *  1. 100% 動態模型架構：完全不寫死任何模型名稱，動態從 quota.gugopro.com 拉取最新免費模型。
- *  2. 故障自動轉移與即時通知：遇到 429、500、503、504 時，自動向前端廣播換模型通知並無縫切換。
- *  3. 全域配額聯動：每次呼叫即時扣減，並精確計算剩餘次數，杜絕 null。
- *  4. 雙軌語音轉錄（STT）：支援 MediaRecorder + Gemini 多模態音訊轉文字，解決電腦端瀏覽器未支援語音辨識的困境。
+ * 核心特性：
+ *  1. 100% 動態模型架構：完全不寫死任何模型名稱，動態從 quota.gugopro.com/gemini_rate_limits.json 即時解析。
+ *  2. 即時換模型通知廣播：遇 429、500、503、504 自動向前端廣播換模型事件（金色提示橫幅）並無縫轉移。
+ *  3. 全域配額精確扣減：徹底修正 null 剩餘問題，與 GugoProGlobalAIQuota 精確聯動。
+ *  4. 多模態語音轉錄（STT）：為無法使用原生 Web Speech API 的瀏覽器（如 Firefox、部分電腦端環境）提供 MediaRecorder + Gemini 雙軌語音轉文字支援。
  */
 
 (function(window) {
     'use strict';
 
-    if (window.GugoAICore) return; // 防止重複載入
+    if (window.GugoAICore) return; // 防止重複初始化
 
     const CONFIG = {
         QUOTA_MODELS_URL: 'https://quota.gugopro.com/gemini_rate_limits.json',
@@ -20,14 +20,14 @@
         MODEL_PREFERENCE_KEY: 'gugopro_ai_tutor_model_preference_v1',
         MODEL_DISABLED_KEY: 'gugopro_ai_tutor_disabled_models_v1',
         DYNAMIC_MODELS_CACHE_KEY: 'gugopro_dynamic_models_catalog_cache_v2',
-        REQUEST_TIMEOUT_MS: 15000 // 15秒超時保護
+        REQUEST_TIMEOUT_MS: 16000 // 16 秒超時保護
     };
 
     const MODEL_TEXT_CAPABILITIES = new Set(['text_generation', 'chat_dialog']);
     const MODEL_EXCLUDED_TOKENS = /embedding|aqa|tts|speech|audio|live|ocr|image[_-]?gen|robotics|computer[-_]?use|deep[-_]?research|veo|lyria/i;
 
     const state = {
-        availableModels: [], // 完全動態取得，絕不預設任何模型
+        availableModels: [], // 100% 動態拉取，完全不寫死任何模型
         disabledModels: new Set(),
         modelBusyStates: new Map(),
         currentModel: null,
@@ -453,7 +453,7 @@
         }
     }
 
-    // 專用多模態語音轉文字（STT）介面：解決電腦端瀏覽器未支援語音辨識的困境
+    // 專用多模態語音轉文字（STT）介面：解決電腦端或 Firefox 未支援原生語音辨識的困境
     async function transcribeAudio(audioBlob, options = {}) {
         const base64Data = await new Promise((resolve, reject) => {
             const reader = new FileReader();
