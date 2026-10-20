@@ -36,7 +36,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <!-- Fonts & Icons -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 
 <style>
         :root {
@@ -69,7 +69,7 @@
         }
 
         body {
-            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            font-family: 'Inter', 'Noto Sans TC', 'Noto Sans JP', sans-serif;
             background-color: var(--bg-dark);
             color: var(--text-main);
             height: 100dvh;
@@ -1252,6 +1252,118 @@
         'pl-PL': 'pl-PL', 'tr-TR': 'tr-TR'
     };
 
+    // 發音練習與評分 多國語系文字字典（完全對齊「我的語言」）
+    const I18N_SCORE = {
+        'zh-TW': {
+            evaluating: '⏳ 正在分析發音與語調評分中，請稍候...',
+            spoken: '🎙️ 您的發音：',
+            match: '單字比對：',
+            score: '🎯 發音練習評分:',
+            pts: '分',
+            good: '優秀',
+            ok: '良好',
+            low: '需要練習',
+            complete: '🎯 發音評分完成：',
+            timeout: '⚠️ 語音評分連線逾時，請確認 API Key 與網路',
+            no_voice: '⚠️ 未辨識到清晰聲音，請靠近麥克風再試一次'
+        },
+        'zh-CN': {
+            evaluating: '⏳ 正在分析发音与语调评分中，请稍候...',
+            spoken: '🎙️ 您的发音：',
+            match: '单词比对：',
+            score: '🎯 发音练习评分:',
+            pts: '分',
+            good: '优秀',
+            ok: '良好',
+            low: '需要练习',
+            complete: '🎯 发音评分完成：',
+            timeout: '⚠️ 语音评分连接超时，请确认 API Key 与网络',
+            no_voice: '⚠️ 未识别到清晰声音，请靠近麦克风重试'
+        },
+        'ja-JP': {
+            evaluating: '⏳ 発音とイントネーションを採点中、少々お待ちください...',
+            spoken: '🎙️ あなたの発音：',
+            match: '単語対比：',
+            score: '🎯 発音練習スコア:',
+            pts: '点',
+            good: '素晴らしい',
+            ok: '良好',
+            low: '要練習',
+            complete: '🎯 発音採点完了：',
+            timeout: '⚠️ 音声採点がタイムアウトしました。API Keyと接続を確認してください',
+            no_voice: '⚠️ 明瞭な音声が認識されませんでした。もう一度お試しください'
+        },
+        'en-US': {
+            evaluating: '⏳ Evaluating pronunciation & intonation, please wait...',
+            spoken: '🎙️ Your Spoken:',
+            match: 'Word Match:',
+            score: '🎯 Pronunciation Score:',
+            pts: 'pts',
+            good: 'Excellent',
+            ok: 'Good',
+            low: 'Needs Practice',
+            complete: '🎯 Pronunciation evaluation complete: ',
+            timeout: '⚠️ Pronunciation evaluation timed out. Please check API Key and network',
+            no_voice: '⚠️ No clear voice detected. Please speak closer to the mic'
+        },
+        'ko-KR': {
+            evaluating: '⏳ 발음과 억양을 평가하는 중입니다. 잠시만 기다려 주세요...',
+            spoken: '🎙️ 녹음된 발음:',
+            match: '단어 대조:',
+            score: '🎯 발음 연습 점수:',
+            pts: '점',
+            good: '우수',
+            ok: '양호',
+            low: '연습 필요',
+            complete: '🎯 발음 채점 완료: ',
+            timeout: '⚠️ 발음 평가 연결 시간 초과. API Key와 네트워크를 확인하세요',
+            no_voice: '⚠️ 선명한 음성이 감지되지 않았습니다. 다시 시도해 주세요'
+        },
+        'fr-FR': {
+            evaluating: '⏳ Évaluation de la prononciation en cours, veuillez patienter...',
+            spoken: '🎙️ Votre prononciation :',
+            match: 'Comparaison des mots :',
+            score: '🎯 Score de prononciation :',
+            pts: 'pts',
+            good: 'Excellent',
+            ok: 'Bien',
+            low: 'À perfectionner',
+            complete: '🎯 Évaluation terminée : ',
+            timeout: '⚠️ Délai dépassé pour l’évaluation. Vérifiez votre clé API',
+            no_voice: '⚠️ Aucune voix claire détectée. Veuillez réessayer'
+        },
+        'de-DE': {
+            evaluating: '⏳ Aussprache wird bewertet, bitte warten...',
+            spoken: '🎙️ Ihre Aussprache:',
+            match: 'Wortvergleich:',
+            score: '🎯 Aussprache-Score:',
+            pts: 'Pkt',
+            good: 'Ausgezeichnet',
+            ok: 'Gut',
+            low: 'Übung erforderlich',
+            complete: '🎯 Aussprachebewertung abgeschlossen: ',
+            timeout: '⚠️ Zeitüberschreitung bei der Bewertung. Prüfen Sie Ihren API-Key',
+            no_voice: '⚠️ Keine klare Stimme erkannt. Bitte wiederholen'
+        },
+        'es-ES': {
+            evaluating: '⏳ Evaluando pronunciación y entonación, espere por favor...',
+            spoken: '🎙️ Tu pronunciación:',
+            match: 'Comparación de palabras:',
+            score: '🎯 Puntuación de pronunciación:',
+            pts: 'pts',
+            good: 'Excelente',
+            ok: 'Bueno',
+            low: 'Necesita práctica',
+            complete: '🎯 Evaluación de pronunciación completada: ',
+            timeout: '⚠️ Tiempo de espera agotado. Verifique su API Key',
+            no_voice: '⚠️ No se detectó voz clara. Intente nuevamente'
+        }
+    };
+
+    function getI18nScoreStrings(myLangCode) {
+        return I18N_SCORE[myLangCode] || I18N_SCORE['zh-TW'];
+    }
+
     function loadVoices() {
         if (!window.speechSynthesis) return;
         cachedVoices = window.speechSynthesis.getVoices();
@@ -1385,9 +1497,10 @@
         }).join(' ');
     }
 
-    function calculatePronunciationScore(target, spoken, confidence = null) {
+    function calculatePronunciationScore(target, spoken, confidence = null, myLangCode = 'zh-TW') {
         const spokenText = String(spoken || '').replace(/\s+/g, ' ').trim();
-        if (!spokenText) return { score: 0, band: 'low', label: '需要再試一次', recognizedText: '', diffHtml: '' };
+        const i18n = getI18nScoreStrings(myLangCode);
+        if (!spokenText) return { score: 0, band: 'low', label: i18n.low, recognizedText: '', diffHtml: '', myLangCode };
         
         const targetTokens = normalizeTokens(target);
         const spokenTokens = normalizeTokens(spokenText);
@@ -1418,19 +1531,22 @@
             recognizedText: spokenText,
             score: finalScore,
             band: finalScore >= 85 ? 'good' : finalScore >= 70 ? 'ok' : 'low',
-            label: finalScore >= 85 ? '優秀' : finalScore >= 70 ? '良好' : '需要練習',
-            diffHtml
+            label: finalScore >= 85 ? i18n.good : finalScore >= 70 ? i18n.ok : i18n.low,
+            diffHtml,
+            myLangCode
         };
     }
 
     function renderPronunciationScoreHtml(score) {
         if (!score) return '';
+        const myLang = score.myLangCode || document.getElementById('my-lang')?.value || 'zh-TW';
+        const i18n = getI18nScoreStrings(myLang);
         const recText = escapeTutorHtml(score.recognizedText || '');
-        const recHtml = recText ? `<div class="pronunciation-recognized">🎙️ 您的發音：<strong>${recText}</strong>${score.diffHtml ? `<div class="pronunciation-diff-tags">單字比對：${score.diffHtml}</div>` : ''}</div>` : '';
+        const recHtml = recText ? `<div class="pronunciation-recognized">${i18n.spoken}<strong>${recText}</strong>${score.diffHtml ? `<div class="pronunciation-diff-tags">${i18n.match}${score.diffHtml}</div>` : ''}</div>` : '';
         return `
             <div class="pronunciation-score pronunciation-score-${score.band}">
                 ${recHtml}
-                <span class="pronunciation-score-badge">🎯 發音練習評分: ${score.score} 分 · ${score.label}</span>
+                <span class="pronunciation-score-badge">${i18n.score} ${score.score} ${i18n.pts} · ${score.label}</span>
             </div>
         `;
     }
@@ -1487,7 +1603,7 @@
         }
     }
 
-    // 氣泡內挑戰發音練習評分
+    // 氣泡內挑戰發音練習評分（支援進度常駐不提前關閉，並依照「我的語言」回傳）
     window.triggerBubbleVoiceEvaluation = async function(messageId, btn) {
         if (activeChallengeSession && activeChallengeSession.messageId === messageId) {
             stopChallengeRecording();
@@ -1511,7 +1627,9 @@
         if (!root) return;
         const targetText = root.dataset.pureLearning || root.querySelector('.msg-learning')?.textContent || '';
         const speechLang = root.dataset.speechLang || document.getElementById('target-lang')?.value || 'en-US';
+        const myLang = document.getElementById('my-lang')?.value || 'zh-TW';
         const currentLocale = STT_LOCALES[speechLang] || speechLang;
+        const i18n = getI18nScoreStrings(myLang);
 
         btn.classList.add('recording');
         btn.setAttribute('data-tooltip', '⏹ 點擊停止評分');
@@ -1521,6 +1639,7 @@
             targetText,
             buttonEl: btn,
             speechLang,
+            myLang,
             currentLocale,
             finalText: '',
             confidence: null,
@@ -1541,9 +1660,13 @@
                     if (!activeChallengeSession || !activeChallengeSession.chunks.length) {
                         resetChallengeButton(btn);
                         activeChallengeSession = null;
+                        hideFloatingToast();
                         return;
                     }
-                    showFloatingToast('⏳ 正在分析發音與語調評分中...');
+                    
+                    // 核心調整 1：分析評分中常駐顯示，絕不提前自動關閉，直到結果出爐！
+                    showFloatingToast(i18n.evaluating, { persistent: true, busy: true });
+                    
                     const audioBlob = new Blob(activeChallengeSession.chunks, { type: activeChallengeSession.chunks[0]?.type || 'audio/webm' });
                     try {
                         const recognized = await GugoAICore.transcribeAudio(audioBlob, { language: currentLocale });
@@ -1553,15 +1676,15 @@
                             finishChallengeEvaluation();
                         }
                     } catch (_) {
-                        showFloatingToast('⚠️ 語音辨識連線逾時');
+                        showFloatingToast(i18n.timeout, { duration: 4000 });
                         resetChallengeButton(btn);
                         activeChallengeSession = null;
                     }
                 };
                 mr.start(250);
-                showFloatingToast(`🎙️ 正在錄音...朗讀完畢後請再次點擊按鈕停止！`);
+                showFloatingToast(`🎙️ 正在錄音...朗讀完畢後請再次點擊按鈕停止！`, { duration: 3000 });
             } catch (_) {
-                showFloatingToast('⚠️ 麥克風已被封鎖或無可用設備');
+                showFloatingToast('⚠️ 麥克風已被封鎖或無可用設備', { duration: 4000 });
                 resetChallengeButton(btn);
                 activeChallengeSession = null;
             }
@@ -1581,6 +1704,7 @@
             resetChallengeButton(session.buttonEl);
             if (session.mediaRecorder && session.mediaRecorder.state === 'recording') { try { session.mediaRecorder.stop(); } catch(_) {} }
             activeChallengeSession = null;
+            hideFloatingToast();
             return;
         }
 
@@ -1592,18 +1716,23 @@
     function finishChallengeEvaluation() {
         if (!activeChallengeSession) return;
         const session = activeChallengeSession;
+        const myLang = session.myLang || document.getElementById('my-lang')?.value || 'zh-TW';
+        const i18n = getI18nScoreStrings(myLang);
         activeChallengeSession = null;
         resetChallengeButton(session.buttonEl);
 
         const text = (session.finalText || '').trim();
         if (!text) {
-            showFloatingToast('⚠️ 未辨識到清晰聲音，請再試一次');
+            showFloatingToast(i18n.no_voice, { duration: 4000 });
             return;
         }
 
-        const scoreObj = calculatePronunciationScore(session.targetText, text, session.confidence);
+        // 核心調整 2：評分結果完全對齊「我的語言」
+        const scoreObj = calculatePronunciationScore(session.targetText, text, session.confidence, myLang);
         updateUserMessageScore(session.messageId, scoreObj);
-        showFloatingToast(`🎯 發音評分完成：${scoreObj.score} 分 (${scoreObj.label})`);
+        
+        // 評分真正完成後，原有的常駐等待橫幅才替換為完成通知，並於 4.5 秒後消失
+        showFloatingToast(`${i18n.complete}${scoreObj.score} ${i18n.pts} (${scoreObj.label})`, { duration: 4500 });
     }
 
     function updateUserMessageScore(messageId, scoreObj) {
@@ -1784,9 +1913,9 @@
                 addedAt: new Date().toLocaleDateString()
             });
             saveVocabularyToLocal();
-            showFloatingToast(`✓ 已將「${clean}」加入生詞字典！`);
+            showFloatingToast(`✓ 已將「${clean}」加入生詞字典！`, { duration: 3000 });
         } else {
-            showFloatingToast(`ℹ️ 「${clean}」已在生詞字典中。`);
+            showFloatingToast(`ℹ️ 「${clean}」已在生詞字典中。`, { duration: 3000 });
         }
     }
 
@@ -1876,8 +2005,8 @@
         scrollToLatestMessage();
 
         try {
-            const myLangName = LANG_NAMES[myLang];
-            const targetLangName = LANG_NAMES[targetLang];
+            const myLangName = LANG_NAMES[myLang] || myLang;
+            const targetLangName = LANG_NAMES[targetLang] || targetLang;
             const room = chatRooms.find(r => r.id === activeRoomId);
             const material = normalizeMaterial(room?.material);
             const materialText = material?.text ? material.text.slice(0, 18000) : '';
@@ -1888,37 +2017,36 @@
             let response = null;
 
             if (audioPayload && audioPayload.base64Data) {
-                const systemInstruction = `You are an empathetic, expert language tutor listening directly to the student's voice recording.
-Student Native Language: ${myLangName}
-Target Learning Language: ${targetLangName}
-Target Proficiency Level: ${studyLevel}
-Tutor Mode: ${tutorMode}
-
-STRICT ARCHITECTURE MANDATES:
-1. "user_voice_diagnosis": Deep pronunciation and intonation diagnosis based on what you HEAR in their audio (in ${myLangName}). Identify phonetic accuracy, stress, connected speech, and rhythm!
-2. "tutor_reply": ONLY 1-2 natural, spoken conversational sentences in ${targetLangName}. Keep it brief, friendly, and clean like in real conversation! DO NOT put grammar tips here!
-3. "tutor_reply_my": The exact translation of "tutor_reply" into ${myLangName}.
-4. "tutor_analysis": Comprehensive teaching notes, grammar tips, and alternative native phrasing for their sentence in ${myLangName}.
+                // 核心調整 2：強化 Prompt 語言約束，強制要求 AI 診斷與中文/日文翻譯 100% 以「我的語言」回覆
+                const systemInstruction = `You are an expert, empathetic language tutor listening to the student's voice recording.
+CRITICAL LANGUAGE ENFORCEMENT:
+- The student's native language is "${myLangName}" (${myLang}).
+- The language they are learning is "${targetLangName}" (${targetLang}).
+- You MUST write "user_voice_diagnosis", "tutor_reply_my", and "tutor_analysis" STRICTLY and EXCLUSIVELY in the student's native language (${myLangName})!
+- UNDER NO CIRCUMSTANCES should you write "user_voice_diagnosis" or "tutor_analysis" in English, unless the student's native language is English.
+- If the student's native language is 日本語, write diagnosis and analysis in natural Japanese (日本語).
+- If the student's native language is 繁體中文, write diagnosis and analysis in Traditional Chinese (繁體中文).
+- "tutor_reply": ONLY 1-2 brief spoken sentences in ${targetLangName}. Keep it conversational.
 
 Recent Context:
 ${historyContext}
 ${materialText ? `Study Material Context: ${materialText}` : ''}
 
-Output strictly in JSON:
+Output strictly in JSON format:
 {
   "user_transcription": "${targetLangName} exact transcription of the student speech",
-  "user_my": "${myLangName} translation of what student said",
-  "user_voice_diagnosis": "Pronunciation, intonation, and phonetics feedback for the student in ${myLangName}",
+  "user_my": "Exact translation of what the student said into ${myLangName}",
+  "user_voice_diagnosis": "Deep pronunciation, intonation, and phonetic feedback written ENTIRELY in ${myLangName}",
   "tutor_reply": "Brief 1-2 conversational sentences in ${targetLangName}",
   "tutor_reply_my": "Translation of tutor_reply into ${myLangName}",
-  "tutor_analysis": "Grammar correction and phrase breakdown in ${myLangName}"
+  "tutor_analysis": "Grammar feedback, alternative native phrasing, and vocabulary breakdown written ENTIRELY in ${myLangName}"
 }`;
                 const payloadContents = [
                     {
                         role: 'user',
                         parts: [
                             { inlineData: { mimeType: audioPayload.mimeType, data: audioPayload.base64Data } },
-                            { text: `Please listen to this audio and respond strictly in the required JSON format.` }
+                            { text: `Please listen to this audio and respond strictly in the required JSON format, ensuring all feedback is in ${myLangName}.` }
                         ]
                     }
                 ];
@@ -1927,7 +2055,7 @@ Output strictly in JSON:
                     systemInstruction, 
                     temperature: 0.5,
                     onModelFallback: (detail) => {
-                        showFloatingToast(detail.friendlyMessage);
+                        showFloatingToast(detail.friendlyMessage, { duration: 4000 });
                     }
                 });
                 response = res.data;
@@ -1958,34 +2086,33 @@ Output strictly in JSON:
 
             } else {
                 const systemInstruction = `You are an empathetic, encouraging language tutor sitting across from the student.
-Student Native Language: ${myLangName}
-Target Learning Language: ${targetLangName}
-Target Proficiency Level: ${studyLevel}
-Tutor Mode: ${tutorMode}
-
-STRICT ARCHITECTURE MANDATES:
-1. "tutor_reply": ONLY 1-2 natural, spoken conversational sentences in ${targetLangName}. Keep it brief, friendly, and clean like in real conversation! DO NOT put grammar tips or explanations here!
-2. "tutor_reply_my": The exact translation of "tutor_reply" into ${myLangName}.
-3. "tutor_analysis": Comprehensive teaching notes in ${myLangName}. Put all grammar corrections, vocabulary nuance, and alternative native phrasing here.
+CRITICAL LANGUAGE ENFORCEMENT:
+- Student Native Language: "${myLangName}" (${myLang}).
+- Target Learning Language: "${targetLangName}" (${targetLang}).
+- Target Proficiency Level: ${studyLevel}
+- Tutor Mode: ${tutorMode}
+- You MUST write "user_my", "tutor_reply_my", and "tutor_analysis" STRICTLY and EXCLUSIVELY in the student's native language (${myLangName})!
+- Even if the student writes in ${targetLangName}, your grammar tips, notes, and translations MUST be in ${myLangName}.
+- "tutor_reply": ONLY 1-2 natural, spoken conversational sentences in ${targetLangName}. Keep it brief, friendly, and clean like in real conversation! DO NOT put grammar tips or explanations here!
 
 Recent Context:
 ${historyContext}
 Student Input: "${content}"
 ${materialText ? `Study Material Context: ${materialText}` : ''}
 
-Output strictly in JSON:
+Output strictly in JSON format:
 {
   "user_learning": "${targetLangName} natural polish of student input",
   "user_my": "${myLangName} translation of student input",
   "tutor_reply": "Brief 1-2 conversational sentences in ${targetLangName}",
   "tutor_reply_my": "Translation of tutor_reply into ${myLangName}",
-  "tutor_analysis": "Grammar correction, native tips, and phrase breakdown in ${myLangName}"
+  "tutor_analysis": "Grammar correction, native tips, and phrase breakdown written ENTIRELY in ${myLangName}"
 }`;
                 const res = await GugoAICore.generateJSON(content, { 
                     systemInstruction, 
                     temperature: 0.7,
                     onModelFallback: (detail) => {
-                        showFloatingToast(detail.friendlyMessage);
+                        showFloatingToast(detail.friendlyMessage, { duration: 4000 });
                     }
                 });
                 response = res.data;
@@ -2019,7 +2146,7 @@ Output strictly in JSON:
             const userMsgEl = document.querySelector(`[data-id="${msgId}"]`);
             const friendly = GugoAICore.getFriendlyErrorMessage(err);
             if (userMsgEl) userMsgEl.querySelector('.msg-my').textContent = friendly;
-            showFloatingToast(friendly);
+            showFloatingToast(friendly, { duration: 4500 });
         } finally {
             isSendingMessage = false;
         }
@@ -2159,7 +2286,7 @@ Output strictly in JSON:
 
         document.getElementById('btn-draft-cancel-action').onclick = () => {
             div.remove();
-            showFloatingToast("已取消該段語音草稿。");
+            showFloatingToast("已取消該段語音草稿。", { duration: 3000 });
         };
     }
 
@@ -2198,15 +2325,30 @@ Output strictly in JSON:
         }).join('');
     }
 
-    function showFloatingToast(msg) {
+    // 核心調整 1：支援持久常駐（persistent: true）之浮動提示橫幅
+    function showFloatingToast(msg, options = {}) {
         const panel = document.getElementById('error-panel');
         const txt = document.getElementById('error-msg');
         if (panel && txt) {
-            panel.classList.remove('busy');
+            if (options.busy) panel.classList.add('busy');
+            else panel.classList.remove('busy');
+
             txt.textContent = msg;
             panel.style.display = 'block';
             clearTimeout(showFloatingToast.timer);
-            showFloatingToast.timer = setTimeout(() => { panel.style.display = 'none'; }, 4500);
+
+            // 若未指定 persistent，則依照指定秒數或 4.5 秒自動隱藏；若為 persistent 則一直常駐直到下一次覆蓋或關閉
+            if (!options.persistent) {
+                showFloatingToast.timer = setTimeout(() => { panel.style.display = 'none'; }, options.duration || 4500);
+            }
+        }
+    }
+
+    function hideFloatingToast() {
+        const panel = document.getElementById('error-panel');
+        if (panel) {
+            panel.style.display = 'none';
+            clearTimeout(showFloatingToast.timer);
         }
     }
 
@@ -2269,12 +2411,6 @@ Output strictly in JSON:
         const inputMode = document.getElementById('speech-input-mode-select')?.value || 'text';
         setSpeechStatus('recording', `🎙️ 正在錄製 ${LANG_FLAGS[isLearning ? targetLang : myLang]}（點擊按鈕即可停止）...`);
 
-        // 核心架構：
-        // 全面採用穩如磐石的 MediaRecorder 原生常駐音訊流：
-        // 1. 絕無每 2-3 秒的系統提示音，整個過程 100% 絕對安靜！
-        // 2. 停頓多久都絕對不自動斷開！按鈕恆紅！
-        // 3. 手動點擊停止後，直接由 Gemini AI 進行多模態整句識別，字句精準流暢，徹底杜絕疊字！
-
         // 判斷是否為行動觸控裝置
         const isMobileOrTouch = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile|CriOS/i.test(navigator.userAgent) 
             || (navigator.maxTouchPoints && navigator.maxTouchPoints > 2)
@@ -2317,7 +2453,7 @@ Output strictly in JSON:
                         if (finalTranscribed) {
                             showDraftPreviewBubble(type, finalTranscribed);
                         } else {
-                            showFloatingToast('⚠️ 未辨識到清晰聲音，請再試一次');
+                            showFloatingToast('⚠️ 未辨識到清晰聲音，請再試一次', { duration: 4000 });
                         }
                         setSpeechStatus('idle', '');
                     }
@@ -2325,14 +2461,13 @@ Output strictly in JSON:
                 speechMediaRecorderInstance.start(250); // 每 250ms 切片收集
             } catch (err) {
                 console.warn('[MediaRecorder stream init error]', err);
-                showFloatingToast('⚠️ 麥克風已被封鎖或無可用音訊設備');
+                showFloatingToast('⚠️ 麥克風已被封鎖或無可用音訊設備', { duration: 4000 });
                 stopSpeechWorkflow(true);
                 return;
             }
         }
 
-        // 僅在「非手機（電腦桌機）環境」且「文字模式」下，才啟動 Web Speech 做桌面即時預覽（桌機不會每 2-3 秒響系統音）
-        // 在手機與觸控裝置端，100% 嚴禁啟動 SpeechRecognition，防止觸發 Android/iOS 系統每 2~3 秒的ビープ音！
+        // 僅在「非手機（電腦桌機）環境」且「文字模式」下，才啟動 Web Speech 做桌面即時預覽
         if (!isMobileOrTouch && inputMode === 'text') {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (SpeechRecognition) {
@@ -2363,7 +2498,6 @@ Output strictly in JSON:
         }
     }
 
-    // 核心手動停止：使用者再次點擊時才真正停止
     function stopSpeechWorkflow(cancelOnly = false) {
         if (!isUserActivelyRecording) return;
         isUserActivelyRecording = false;
@@ -2377,7 +2511,7 @@ Output strictly in JSON:
             try { rec.stop(); } catch (_) {}
         }
 
-        // 停止 MediaRecorder（停止後觸發 onstop 生成草稿氣泡）
+        // 停止 MediaRecorder
         if (speechMediaRecorderInstance && speechMediaRecorderInstance.state === 'recording') {
             try { speechMediaRecorderInstance.stop(); } catch (_) {}
         } else if (speechMediaAudioStream) {
@@ -2433,7 +2567,7 @@ Output strictly in JSON:
                 });
             }
 
-            showFloatingToast(`✓ 已成功套用：${selected === 'auto_collapse' ? '狀態 A（預設展開分析，下次對話自動收合）' : '狀態 B（預設隱藏分析）'}`);
+            showFloatingToast(`✓ 已成功套用：${selected === 'auto_collapse' ? '狀態 A（預設展開分析，下次對話自動收合）' : '狀態 B（預設隱藏分析）'}`, { duration: 3500 });
         };
     }
 
@@ -2459,7 +2593,7 @@ Output strictly in JSON:
             room.studyLevel = document.getElementById('study-level-select').value;
             room.tutorMode = document.getElementById('study-tutor-mode-select').value;
             saveRoomsToLocal();
-            showFloatingToast("已成功更新教室學習目標！");
+            showFloatingToast("已成功更新教室學習目標！", { duration: 3000 });
         }
         document.getElementById('modal-study-plan').style.display = 'none';
     };
@@ -2467,7 +2601,7 @@ Output strictly in JSON:
     async function handleMaterialFileUpload(file) {
         if (!file) return;
         const name = file.name;
-        showFloatingToast(`⏳ 正在解析教材檔案「${name}」...`);
+        showFloatingToast(`⏳ 正在解析教材檔案「${name}」...`, { duration: 4000 });
 
         try {
             let extractedText = '';
@@ -2489,9 +2623,9 @@ Output strictly in JSON:
             if (!extractedText) throw new Error("檔案內容為空");
 
             bindMaterialToCurrentRoom(name, extractedText);
-            showFloatingToast(`✓ 教材「${name}」導入成功！`);
+            showFloatingToast(`✓ 教材「${name}」導入成功！`, { duration: 3000 });
         } catch (err) {
-            showFloatingToast(`⚠️ 教材解析失敗: ${err.message}`);
+            showFloatingToast(`⚠️ 教材解析失敗: ${err.message}`, { duration: 4000 });
         }
     }
 
@@ -2537,7 +2671,7 @@ Output strictly in JSON:
             room.material = null;
             saveRoomsToLocal();
             updateMaterialBanner();
-            showFloatingToast("已清除本教室教材。");
+            showFloatingToast("已清除本教室教材。", { duration: 3000 });
         }
     };
     document.getElementById('btn-material-clear-modal').onclick = () => {
@@ -2550,7 +2684,7 @@ Output strictly in JSON:
         if (!paste) return;
         bindMaterialToCurrentRoom("自訂貼上文章", paste);
         document.getElementById('modal-material').style.display = 'none';
-        showFloatingToast("✓ 已成功儲存貼上的教材！");
+        showFloatingToast("✓ 已成功儲存貼上的教材！", { duration: 3000 });
     };
 
     document.getElementById('btn-room-export-ops').onclick = () => {
@@ -2573,9 +2707,9 @@ Output strictly in JSON:
                     room.messages = data[0]?.messages || [];
                     saveRoomsToLocal();
                     switchRoom(activeRoomId);
-                    showFloatingToast("紀錄已成功導入當前教室！");
+                    showFloatingToast("紀錄已成功導入當前教室！", { duration: 3000 });
                 }
-            } catch(_) { showFloatingToast("⚠️ 檔案格式不符合規範"); }
+            } catch(_) { showFloatingToast("⚠️ 檔案格式不符合規範", { duration: 4000 }); }
         };
         reader.readAsText(file);
         closeMenu();
@@ -2588,7 +2722,7 @@ Output strictly in JSON:
                 room.messages = [];
                 saveRoomsToLocal();
                 switchRoom(activeRoomId);
-                showFloatingToast("已清空當前教室對話。");
+                showFloatingToast("已清空當前教室對話。", { duration: 3000 });
             }
             closeMenu();
         });
@@ -2871,7 +3005,7 @@ Output strictly in JSON:
         GugoAICore.setActiveKeyIndex(idx);
         renderApiKeysManager();
         updateApiKeyButtonState();
-        showFloatingToast(`已切換使用第 ${idx + 1} 組金鑰 ✓`);
+        showFloatingToast(`已切換使用第 ${idx + 1} 組金鑰 ✓`, { duration: 3000 });
     };
 
     window.deleteKeyByIndex = function(idx) {
@@ -2883,7 +3017,7 @@ Output strictly in JSON:
             const res = GugoAICore.removeApiKey(idx);
             renderApiKeysManager();
             updateApiKeyButtonState();
-            showFloatingToast(res.message);
+            showFloatingToast(res.message, { duration: 3000 });
         });
     };
 
@@ -2906,9 +3040,9 @@ Output strictly in JSON:
             input.value = '';
             renderApiKeysManager();
             updateApiKeyButtonState();
-            showFloatingToast("✓ " + res.message);
+            showFloatingToast("✓ " + res.message, { duration: 3000 });
         } else {
-            showFloatingToast("⚠️ " + res.message);
+            showFloatingToast("⚠️ " + res.message, { duration: 4000 });
         }
     };
 
@@ -2967,7 +3101,7 @@ Output strictly in JSON:
     }
 
     window.deleteRoom = (id) => {
-        if (chatRooms.length <= 1) { showFloatingToast("⚠️ 至少需保留一個教室。"); return; }
+        if (chatRooms.length <= 1) { showFloatingToast("⚠️ 至少需保留一個教室。", { duration: 3000 }); return; }
         const rName = chatRooms.find(r => r.id === id)?.name || '';
         openConfirmModal(`確定要刪除「${rName}」嗎？所有對話將永久消失。`, () => {
             chatRooms = chatRooms.filter(r => r.id !== id);
@@ -2975,7 +3109,7 @@ Output strictly in JSON:
             saveRoomsToLocal();
             renderRoomList();
             switchRoom(activeRoomId);
-            showFloatingToast("已成功刪除教室。");
+            showFloatingToast("已成功刪除教室。", { duration: 3000 });
         });
     };
 
