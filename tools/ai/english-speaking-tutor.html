@@ -658,7 +658,7 @@
         .material-meta { color: var(--text-dim); font-size: 0.75rem; margin-bottom: 8px; }
         .material-file-note { color: var(--text-dim); font-size: 0.72rem; margin: 6px 0 10px; }
 
-        /* 多金鑰管理介面專用樣式 */
+        /* 多金鑰管理介面專用樣式（支援手機窄螢幕自適應） */
         .api-keys-management-box {
             margin: 14px 0 16px;
             padding: 12px;
@@ -701,6 +701,9 @@
             gap: 8px;
             font-size: 0.86rem;
             color: #f1f5f9;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         .api-key-active-badge {
             font-size: 0.68rem;
@@ -710,6 +713,7 @@
             background: rgba(34, 197, 94, 0.2);
             color: #86efac;
             border: 1px solid rgba(34, 197, 94, 0.4);
+            white-space: nowrap;
         }
         .btn-delete-key {
             background: none;
@@ -720,6 +724,7 @@
             border-radius: 6px;
             font-size: 0.85rem;
             transition: all 0.15s ease;
+            flex-shrink: 0;
         }
         .btn-delete-key:hover {
             color: #ff4d4f;
@@ -739,6 +744,7 @@
             color: #fff;
             font-size: 0.88rem;
             outline: none;
+            min-width: 0;
         }
         .api-key-add-input:focus {
             border-color: var(--primary-neon);
@@ -754,6 +760,7 @@
             cursor: pointer;
             white-space: nowrap;
             transition: all 0.2s ease;
+            flex-shrink: 0;
         }
         .btn-add-key:hover {
             transform: translateY(-1px);
@@ -783,6 +790,11 @@
             .capsule-composer-row.has-input-text .capsule-voice-button { display: none !important; }
             .capsule-composer-row.has-input-text .main-input-group.capsule-dock { width: 100% !important; flex: 1 1 100% !important; }
             .capsule-composer-row.has-input-text #btn-send { display: flex !important; }
+
+            .modal-content {
+                padding: 20px 16px;
+                border-radius: 18px;
+            }
         }
 
         @keyframes pulseApiKey {
@@ -1117,7 +1129,7 @@
 </div>
 
 <!-- Modals -->
-<!-- 多組 API Key 管理視窗（全面升級多 Key 新增/切換/刪除） -->
+<!-- 多組 API Key 管理視窗（全面升級多 Key 新增/切換/刪除，完美支援手機版與電腦版） -->
 <div class="modal-overlay" id="modal-api">
     <div class="modal-content modal">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
@@ -1279,7 +1291,7 @@
     let vocabularyList = [];
     let activeChallengeSession = null;
     
-    // 語音錄製獨立識別變數（徹底與底部手動輸入框 user-text 分流）
+    // 語音錄製獨立變數（徹底與手動輸入框 user-text 分流）
     let currentRecordedTranscript = '';
 
     const LANG_NAMES = {
@@ -2347,7 +2359,7 @@ Output strictly in JSON:
         } catch (_) {}
     }
 
-    // --- 核心糾偏：語音錄製徹底與 user-text 輸入框解耦 ---
+    // --- 核心修正：點擊錄音、再點結束；嚴禁將語音文字寫入 user-text 輸入框 ---
     async function startSpeechWorkflow(type) {
         if (!GugoAICore.hasApiKey()) {
             openApiKeyModal();
@@ -2363,12 +2375,12 @@ Output strictly in JSON:
         const currentLocale = isLearning ? (STT_LOCALES[targetLang] || targetLang) : (STT_LOCALES[myLang] || myLang);
 
         isRecordingSpeech = true;
-        currentRecordedTranscript = ''; // 重置語音累積文字
+        currentRecordedTranscript = ''; // 重置語音文字
         updateMicButtonsState(type);
         playStartCueTone();
 
         const inputMode = document.getElementById('speech-input-mode-select')?.value || 'text';
-        setSpeechStatus('recording', `🎙️ 正在錄製 ${LANG_FLAGS[isLearning ? targetLang : myLang]}（再次點擊麥克風停止）...`);
+        setSpeechStatus('recording', `🎙️ 正在錄製 ${LANG_FLAGS[isLearning ? targetLang : myLang]}（點擊麥克風即可停止）...`);
 
         if (inputMode === 'audio') {
             startAudioStreamRecording(type, currentLocale);
@@ -2386,7 +2398,7 @@ Output strictly in JSON:
                 recognitionInstance.interimResults = true;
                 recognitionInstance.lang = currentLocale;
 
-                // 核心關鍵：絕對不往 #user-text 寫入文字！僅記錄在變數與狀態提示中，避免觸發手機輸入框伸縮
+                // 核心關鍵：絕對不向 #user-text 賦值！不觸發任何輸入框伸縮跳動
                 recognitionInstance.onresult = (event) => {
                     let transcript = '';
                     for (let i = 0; i < event.results.length; i++) {
@@ -2941,7 +2953,7 @@ Output strictly in JSON:
     document.getElementById('btn-menu-close').onclick = () => closeMenu();
     overlay.onclick = () => closeMenu();
 
-    // --- 多金鑰管理視窗渲染與事件 ---
+    // --- 多金鑰管理視窗渲染與事件（完美相容手機與電腦） ---
     function renderApiKeysManager() {
         const listEl = document.getElementById('api-keys-list');
         const countBadge = document.getElementById('api-keys-count-badge');
@@ -3086,6 +3098,7 @@ Output strictly in JSON:
         });
     };
 
+    // 核心統一：手機版與電腦版行為 100% 相同（按一下錄音，再按一下停止）
     document.getElementById('btn-mic').onclick = () => {
         if (isRecordingSpeech) stopSpeechWorkflow();
         else startSpeechWorkflow('learning');

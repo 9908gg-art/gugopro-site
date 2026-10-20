@@ -2,12 +2,12 @@
  * GugoPro Unified AI Core Module (gugo-ai-core.js)
  * 適用於 GugoPro 旗下全站 AI 工具
  *
- * 核心升級重點：
- *  1. 完整支援多組 API Key 儲存、新增、刪除與使用中切換（相容舊版單 Key 儲存）。
- *  2. API 請求遇到 429 配額耗盡時，若配置了多組 Key，自動依序切換備用 Key 繼續請求。
- *  3. 完整錯誤碼白話人話解釋（400, 401, 403, 404, 429, 500, 503, 504）。
- *  4. 遇到 404 或 503 時，自動觸發動態模型降級（Model Fallback）轉移至備援模型。
- *  5. 全域配額精確扣減，杜絕 null 剩餘。
+ * 核心功能重點：
+ *  1. 完整保留舊版已輸入金鑰：啟動時自動遷移舊版 single key，絕不丟失使用者既有金鑰。
+ *  2. 完整支援多組 API Key 儲存、新增、刪除、使用中切換與輪詢。
+ *  3. API 請求遇到 429 配額耗盡或 401 異常時，自動切換至其他已儲存金鑰。
+ *  4. 白話文錯誤代碼解釋，遇到 404/503 自動階梯降級可用模型。
+ *  5. 支援多模態語音轉錄（STT），提供跨瀏覽器相容兜底。
  */
 
 (function(window) {
@@ -45,7 +45,7 @@
         'MISSING_API_KEY': '🔑 尚未設定 Gemini API Key，請先輸入您的免費金鑰即可開始使用。',
         'NO_ENABLED_MODELS': '⚠️ 目前所有 AI 模型均處於停用狀態，請於側邊欄開啟至少一個模型。',
         'HTTP_400': '⚠️ 輸入內容或音訊格式不相符，請確認後重新發送。',
-        'HTTP_401': '🔑 目前使用的 API Key 填寫有誤或已過期，請點擊設定檢查或切換有效金鑰。',
+        'HTTP_401': '🔑 目前使用的 API Key 填寫有誤或已失效，請點擊設定檢查或切換有效金鑰。',
         'HTTP_403': '🛡️ 目前 API Key 權限不足或受專案限制，請確認 Google Cloud 專案權限。',
         'HTTP_404': '⚠️ 該模型節點正在維護，系統已為您自動切換至備援模型繼續對話...',
         'HTTP_429': '⚡ 目前模型免費用量暫時飽和，系統已自動為您切換至負載較低的備援模型。',
@@ -77,47 +77,64 @@
         }
     }
 
-    // --- 多組 API KEY 管理引擎 ---
+    // --- 多組 API KEY 管理引擎（嚴格保護舊 Key 不丟失） ---
     function loadApiKeys() {
+        let loaded = [];
         try {
-            const saved = JSON.parse(localStorage.getItem(CONFIG.API_KEYS_STORAGE_KEY) || '[]');
-            state.apiKeys = Array.isArray(saved) ? saved.map(String).map(s => s.trim()).filter(Boolean) : [];
-        } catch (_) {
-            state.apiKeys = [];
-        }
-
-        // 向下相容舊版單一金鑰儲存
-        if (state.apiKeys.length === 0) {
-            for (const key of CONFIG.LEGACY_STORAGE_KEYS) {
-                const legacy = (localStorage.getItem(key) || '').trim();
-                const decoded = decodeApiKey(legacy);
-                if (decoded && !state.apiKeys.includes(decoded)) {
-                    state.apiKeys.push(decoded);
+            const rawStored = localStorage.getItem(CONFIG.API_KEYS_STORAGE_KEY);
+            if (rawStored) {
+                const parsed = JSON.parse(rawStored);
+                if (Array.isArray(parsed)) {
+                    loaded = parsed.map(String).map(s => s.trim()).filter(Boolean);
                 }
             }
-            if (state.apiKeys.length > 0) {
-                persistApiKeys();
+        } catch (_) {
+            loaded = [];
+        }
+
+        // 核心保護：檢測舊版 single-key 儲存，若存在且不在新列表內，自動追加保留，絕不讓舊 Key 消失！
+        let hasMigrated = false;
+        for (const legacyKey of CONFIG.LEGACY_STORAGE_KEYS) {
+            const oldVal = (localStorage.getItem(legacyKey) || '').trim();
+            const decoded = decodeApiKey(oldVal);
+            if (decoded && !loaded.includes(decoded)) {
+                loaded.push(decoded);
+                hasMigrated = true;
             }
         }
+
+        state.apiKeys = loaded;
 
         const savedIndex = parseInt(localStorage.getItem(CONFIG.ACTIVE_KEY_INDEX_STORAGE_KEY) || '0', 10);
         state.activeKeyIndex = (Number.isFinite(savedIndex) && savedIndex >= 0 && savedIndex < state.apiKeys.length) ? savedIndex : 0;
+
+        if (hasMigrated || !localStorage.getItem(CONFIG.API_KEYS_STORAGE_KEY)) {
+            persistApiKeys();
+        }
     }
 
     function persistApiKeys() {
         localStorage.setItem(CONFIG.API_KEYS_STORAGE_KEY, JSON.stringify(state.apiKeys));
         localStorage.setItem(CONFIG.ACTIVE_KEY_INDEX_STORAGE_KEY, String(state.activeKeyIndex));
-        // 同步覆蓋舊版單一 Key，確保相容舊外掛
-        const activeKey = getApiKey();
-        if (activeKey) {
-            CONFIG.LEGACY_STORAGE_KEYS.forEach(k => localStorage.setItem(k, activeKey));
+
+        // 同步保留給舊版插件或舊外掛讀取
+        const currentActiveKey = state.apiKeys[state.activeKeyIndex] || state.apiKeys[0] || '';
+        if (currentActiveKey) {
+            CONFIG.LEGACY_STORAGE_KEYS.forEach(k => localStorage.setItem(k, currentActiveKey));
         } else {
             CONFIG.LEGACY_STORAGE_KEYS.forEach(k => localStorage.removeItem(k));
         }
-        window.dispatchEvent(new CustomEvent('gugopro:apikey-updated', { detail: { count: state.apiKeys.length, hasKey: state.apiKeys.length > 0 } }));
+
+        window.dispatchEvent(new CustomEvent('gugopro:apikey-updated', {
+            detail: {
+                count: state.apiKeys.length,
+                hasKey: state.apiKeys.length > 0
+            }
+        }));
     }
 
     function getApiKeys() {
+        if (state.apiKeys.length === 0) loadApiKeys();
         return [...state.apiKeys];
     }
 
@@ -128,6 +145,13 @@
             state.activeKeyIndex = 0;
         }
         return state.apiKeys[state.activeKeyIndex] || state.apiKeys[0] || '';
+    }
+
+    function setApiKey(newSingleKey) {
+        // 向下相容單一金鑰呼叫
+        const clean = String(newSingleKey || '').trim();
+        if (!clean) return;
+        addApiKey(clean);
     }
 
     function hasApiKey() {
@@ -145,7 +169,7 @@
         }
 
         state.apiKeys.push(clean);
-        // 若為第一組新增的金鑰，預設設為啟用中
+        // 若為第一組新增，直接設為啟用中
         if (state.apiKeys.length === 1) {
             state.activeKeyIndex = 0;
         }
@@ -360,7 +384,7 @@
         return model ? model.display_name : apiName;
     }
 
-    // --- 核心請求排程執行器（支援多 Key 備援與動態模型降級） ---
+    // --- 核心請求排程執行器（多 Key 備援與動態模型降級） ---
     async function executeGeminiRequest(payload, options = {}) {
         loadApiKeys();
         const allKeys = getApiKeys();
@@ -386,7 +410,7 @@
         const attemptedModels = [];
         let lastError = null;
 
-        // 若配置了多組 Key，將使用中的 Key 放在最前面，其餘依序作為備援 Key
+        // 將當前選中的使用中 Key 放在最前，其餘依序作為備援 Key
         const keyQueue = [
             allKeys[state.activeKeyIndex] || allKeys[0],
             ...allKeys.filter((_, idx) => idx !== state.activeKeyIndex)
@@ -447,15 +471,15 @@
                         lastError.status = response.status;
                         lastError.code = `HTTP_${response.status}`;
                         lastError.friendlyMessage = ERROR_EXPLANATIONS[`HTTP_${response.status}`];
-                        break; // 跳出當前 Key 的模型循環，進入下一組 Key
+                        break; // 跳出當前 Key 的模型循環，進入下一組備援 Key
                     }
 
-                    // 遇到 404、429、500、503：自動切換至隊列中的下一個模型進行無縫降級（Fallback）！
+                    // 遇到 404、429、500、503：自動切換至隊列中的下一個模型進行無縫降級
                     if ([404, 429, 500, 503].includes(response.status)) {
                         const nextModel = queue[i + 1];
                         const failedName = getModelDisplayName(model.api_name);
                         const nextName = nextModel ? getModelDisplayName(nextModel.api_name) : '備用模型';
-                        
+
                         let reasonText = '';
                         if (response.status === 404) reasonText = '模型節點維護中 (404)';
                         else if (response.status === 429) reasonText = '免費用量暫時飽和 (429)';
@@ -644,6 +668,7 @@
 
     window.GugoAICore = {
         getApiKey,
+        setApiKey,
         getApiKeys,
         hasApiKey,
         addApiKey,
