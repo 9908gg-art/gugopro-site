@@ -1321,7 +1321,7 @@
 
                 <div class="tarot-guide-section">
                     <h5>一、一次 AI 塔羅解讀如何形成？</h5>
-                    <p>工具首先複製完整的 78 張韋特牌組，採用計算機科學標準的 Fisher–Yates 隨機洗牌算法進行重排，再依據所選牌陣抽出指定張數，確保同一輪抽牌絕不重複。洗牌演算法為每張牌獨立設定 35% 逆位生成機率，以精準映照潛意識中的「阻礙、內化或過度補償（Shadow）」。</p>
+                    <p>工具首先複製完整的 78 張韋特牌組，採用計算機科學標準的 Fisher–Yates 隨機洗牌算法進行重排，再依據所選牌陣抽出指定張数，確保同一輪抽牌絕不重複。洗牌演算法為每張牌獨立設定 35% 逆位生成機率，以精準映照潛意識中的「阻礙、內化或過度補償（Shadow）」。</p>
                     <p>在牌陣確立後，系統會將您的問題情境、抽出的牌面、空間位置與正逆位脈絡傳送給 Google Gemini 進行多維度分析。模型將依據分析心理學組織反思視角，提供客觀、溫和且具備洞察力的思考支點，而非宿命論式的命運宣告。</p>
                 </div>
 
@@ -1666,9 +1666,9 @@
             copyReadingBtn: '複製解牌',
             saveJournalBtn: '儲存日誌',
             followUpBtn: '繼續追問',
-            micListeningToast: '🎙️ 正在聆聽中，請說出想問的問題...',
-            micBlockedToast: '⚠️ 麥克風已被封鎖，請點擊網址列左側鎖頭開啟麥克風權限',
-            micNoDeviceToast: '⚠️ 目前瀏覽器（如 Firefox）未支援原生語音辨識，請改用 Google Chrome 或 Microsoft Edge 瀏覽器即可即時語音輸入！',
+            micListeningToast: '🎙️ 正在聆聽中，請說出想問的問題（再點擊一次即可停止）...',
+            micBlockedToast: '⚠️ 麥克風已被封鎖，請開啟瀏覽器麥克風權限',
+            micNoDeviceToast: '⚠️ 找不到錄音設備或麥克風未就緒，請確認設備已正確連接',
             micDoneToast: '語音輸入已完成 ✓',
             copyDoneToast: '解牌內容已成功複製！',
             journalSaveDone: '占卜紀錄已保存於本機日誌中 ✓'
@@ -1703,9 +1703,9 @@
             copyReadingBtn: 'Copy Reading',
             saveJournalBtn: 'Save Journal',
             followUpBtn: 'Follow Up',
-            micListeningToast: '🎙️ Listening... please speak your question clearly',
+            micListeningToast: '🎙️ Listening... speak your question (click again to stop)...',
             micBlockedToast: '⚠️ Microphone blocked. Please allow mic permission in browser settings.',
-            micNoDeviceToast: '⚠️ Speech recognition is not supported in this browser (e.g. Firefox). Please use Google Chrome or Microsoft Edge for native voice input!',
+            micNoDeviceToast: '⚠️ No audio input device found or microphone not ready.',
             micDoneToast: 'Voice input completed ✓',
             copyDoneToast: 'Reading copied to clipboard!',
             journalSaveDone: 'Reading saved to local journal ✓'
@@ -1740,9 +1740,9 @@
             copyReadingBtn: '解読をコピー',
             saveJournalBtn: '日誌に保存',
             followUpBtn: '続けて質問',
-            micListeningToast: '🎙️ 音声を聴き取っています... ご質問をお話しください',
+            micListeningToast: '🎙️ 音声を聴き取っています...（もう一度クリックで停止）',
             micBlockedToast: '⚠️ マイクが拒否されています。ブラウザ設定で許可してください。',
-            micNoDeviceToast: '⚠️ お使いのブラウザ（Firefoxなど）は音声認識に対応していません。Google ChromeまたはMicrosoft Edgeをご利用ください！',
+            micNoDeviceToast: '⚠️ マイクが見つかりません。接続を確認してください。',
             micDoneToast: '音声入力を完了しました ✓',
             copyDoneToast: '解読結果をコピーしました！',
             journalSaveDone: '占術日誌に記録を保存しました ✓'
@@ -1759,6 +1759,8 @@
     let tarotSelectedSpread = 'timeline';
     let isSendingMessage = false;
     let recognition = null;
+    let mediaRecorder = null;
+    let audioChunks = [];
     let isRecording = false;
     let drawerExpanded = true;
     let availableModels = [];
@@ -2928,16 +2930,8 @@ Please provide a warm, progressive reading with appropriate emojis, and ALWAYS e
     document.getElementById('btn-journal-header').onclick = openJournalModal;
     document.getElementById('btn-journal-sidebar').onclick = () => { openJournalModal(); closeMenu(); };
 
-    // --- 純瀏覽器原生 Web Speech API 語音輸入（含 Firefox 等瀏覽器明確指引） ---
-    function startVoiceInputFlow() {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-        if (!SpeechRecognition) {
-            // 直接彈出針對火狐等非 Chromium 瀏覽器的明確指引提示
-            showToast(t('micNoDeviceToast'));
-            return;
-        }
-
+    // --- 雙軌語音辨識（Web Speech API ＋ MediaRecorder/Gemini 雙兜底，火狐與所有瀏覽器均可直接語音輸入） ---
+    async function startVoiceInputFlow() {
         const input = document.getElementById('user-text');
         if (!input) return;
 
@@ -2948,56 +2942,137 @@ Please provide a warm, progressive reading with appropriate emojis, and ALWAYS e
         speechBasePrefix = val.slice(0, start);
         speechBaseSuffix = val.slice(end);
 
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        // 引擎 A: 原生 Web Speech API（適用於 Chrome / Edge / Safari）
+        if (SpeechRecognition) {
+            try {
+                if (!recognition) {
+                    recognition = new SpeechRecognition();
+                    recognition.continuous = false;
+                    recognition.interimResults = true;
+
+                    recognition.onstart = () => {
+                        isRecording = true;
+                        updateMicButtonState(true);
+                        showToast(t('micListeningToast'));
+                    };
+
+                    recognition.onresult = (event) => {
+                        let transcript = '';
+                        for (let i = 0; i < event.results.length; i++) {
+                            transcript += event.results[i][0].transcript;
+                        }
+                        if (input) {
+                            const newText = speechBasePrefix + transcript + speechBaseSuffix;
+                            input.value = newText;
+                            const newCursorPos = speechBasePrefix.length + transcript.length;
+                            input.setSelectionRange(newCursorPos, newCursorPos);
+                        }
+                    };
+
+                    recognition.onerror = (e) => {
+                        console.warn("Speech recognition error:", e.error);
+                        stopRecording();
+                        if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+                            showToast(t('micBlockedToast'));
+                        } else if (['network', 'no-speech'].includes(e.error)) {
+                            // 原生辨識因網路等異常中斷時，自動轉入 MediaRecorder 雙軌備援
+                            tryStartFallbackStream();
+                        }
+                    };
+
+                    recognition.onend = () => {
+                        stopRecording();
+                        const textNow = document.getElementById('user-text')?.value.trim();
+                        if (textNow && textNow !== (speechBasePrefix + speechBaseSuffix).trim()) {
+                            showToast(t('micDoneToast'));
+                        }
+                    };
+                }
+
+                const localeMap = { 'zh-TW': 'cmn-Hant-TW', 'en-US': 'en-US', 'ja-JP': 'ja-JP' };
+                recognition.lang = localeMap[currentUiLang] || 'cmn-Hant-TW';
+                recognition.start();
+                return;
+            } catch (err) {
+                console.warn("Native recognition start failed, switching to MediaRecorder fallback:", err);
+            }
+        }
+
+        // 引擎 B: 通用 MediaRecorder 錄音 ＋ GugoAICore 多模態轉譯（完美支援 Firefox 等無原生語音辨識之瀏覽器）
+        tryStartFallbackStream();
+    }
+
+    async function tryStartFallbackStream() {
+        if (!GugoAICore.hasApiKey()) {
+            document.getElementById('modal-api').style.display = 'flex';
+            document.getElementById('api-key-input')?.focus();
+            return;
+        }
+
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                startMediaRecorderFallback(stream);
+            } catch (err) {
+                console.warn("Microphone permission or device error:", err);
+                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                    showToast(t('micBlockedToast'));
+                } else {
+                    showToast(t('micNoDeviceToast'));
+                }
+            }
+        } else {
+            showToast(t('micNoDeviceToast'));
+        }
+    }
+
+    function startMediaRecorderFallback(stream) {
+        audioChunks = [];
         try {
-            if (!recognition) {
-                recognition = new SpeechRecognition();
-                recognition.continuous = false;
-                recognition.interimResults = true;
+            mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) audioChunks.push(e.data);
+            };
+            mediaRecorder.onstart = () => {
+                isRecording = true;
+                updateMicButtonState(true);
+                showToast(t('micListeningToast'));
+            };
+            mediaRecorder.onstop = async () => {
+                isRecording = false;
+                updateMicButtonState(false);
+                stream.getTracks().forEach(t => t.stop());
+                if (!audioChunks.length) return;
 
-                recognition.onstart = () => {
-                    isRecording = true;
-                    updateMicButtonState(true);
-                    showToast(t('micListeningToast'));
-                };
+                const transcribingToast = currentUiLang === 'en-US'
+                    ? '⏳ Transcribing voice with AI...'
+                    : (currentUiLang === 'ja-JP'
+                        ? '⏳ 音声をAIで文字起こし中...'
+                        : '⏳ 正在透過 AI 轉譯語音文字中...');
+                showToast(transcribingToast);
 
-                recognition.onresult = (event) => {
-                    let transcript = '';
-                    for (let i = 0; i < event.results.length; i++) {
-                        transcript += event.results[i][0].transcript;
-                    }
-                    if (input) {
-                        const newText = speechBasePrefix + transcript + speechBaseSuffix;
-                        input.value = newText;
-                        const newCursorPos = speechBasePrefix.length + transcript.length;
-                        input.setSelectionRange(newCursorPos, newCursorPos);
-                    }
-                };
-
-                recognition.onerror = (e) => {
-                    console.warn("Speech recognition error:", e.error);
-                    stopRecording();
-                    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
-                        showToast(t('micBlockedToast'));
-                    } else if (e.error !== 'no-speech') {
-                        showToast(t('micNoDeviceToast'));
-                    }
-                };
-
-                recognition.onend = () => {
-                    stopRecording();
-                    const textNow = document.getElementById('user-text')?.value.trim();
-                    if (textNow && textNow !== (speechBasePrefix + speechBaseSuffix).trim()) {
+                const audioBlob = new Blob(audioChunks, { type: audioChunks[0]?.type || 'audio/webm' });
+                try {
+                    const cleanText = await GugoAICore.transcribeAudio(audioBlob, { language: currentUiLang });
+                    if (cleanText) {
+                        const input = document.getElementById('user-text');
+                        if (input) {
+                            input.value = speechBasePrefix + cleanText + speechBaseSuffix;
+                            const newCursorPos = speechBasePrefix.length + cleanText.length;
+                            input.setSelectionRange(newCursorPos, newCursorPos);
+                        }
                         showToast(t('micDoneToast'));
                     }
-                };
-            }
-
-            const localeMap = { 'zh-TW': 'cmn-Hant-TW', 'en-US': 'en-US', 'ja-JP': 'ja-JP' };
-            recognition.lang = localeMap[currentUiLang] || 'cmn-Hant-TW';
-            recognition.start();
-        } catch (err) {
-            console.warn("Speech recognition start failed:", err);
-            stopRecording();
+                } catch (err) {
+                    console.warn('Audio transcription error:', err);
+                    showToast(currentUiLang === 'en-US' ? '⚠️ Speech transcription timed out' : (currentUiLang === 'ja-JP' ? '⚠️ 音声認識がタイムアウトしました' : '⚠️ 語音轉譯連線逾時，請再試一次'));
+                }
+            };
+            mediaRecorder.start();
+        } catch (e) {
+            console.error('MediaRecorder start failed:', e);
             showToast(t('micNoDeviceToast'));
         }
     }
@@ -3007,6 +3082,9 @@ Please provide a warm, progressive reading with appropriate emojis, and ALWAYS e
         updateMicButtonState(false);
         if (recognition) {
             try { recognition.stop(); } catch (_) {}
+        }
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+            try { mediaRecorder.stop(); } catch (_) {}
         }
     }
 
