@@ -583,10 +583,7 @@
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* ========================================================
-           對齊 圖片_2.jpg 之氣泡架構：
-           主體僅呈現核心對話與中文，分析預設向下收折
-           ======================================================== */
+        /* 氣泡訊息基本樣式 */
         .message {
             max-width: min(88%, 760px);
             padding: 14px 18px 10px;
@@ -622,7 +619,13 @@
             border-bottom-left-radius: 4px;
         }
 
-        /* 核心文字區：純淨緊湊，右上角 100% 淨空無任何按鈕干擾 */
+        /* 待送出草稿氣泡 */
+        .message-draft {
+            border: 1px dashed rgba(245, 158, 11, 0.6) !important;
+            background: linear-gradient(180deg, rgba(38, 32, 20, 0.95), rgba(24, 20, 10, 0.95)) !important;
+        }
+
+        /* 核心文字區 */
         .msg-learning {
             font-size: 1.05rem;
             font-weight: 600;
@@ -644,7 +647,54 @@
             margin-bottom: 8px;
         }
 
-        /* 氣泡底部單排緊湊內嵌功能列（非懸浮、零文字、純圖形） */
+        /* 氣泡音訊播放器 */
+        .msg-audio-player {
+            width: 100%;
+            height: 38px;
+            margin: 6px 0 8px;
+            border-radius: 8px;
+            outline: none;
+        }
+
+        /* 氣泡待確認送出列 */
+        .msg-draft-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 4px;
+        }
+
+        .btn-draft-send {
+            background: linear-gradient(135deg, #00f2ff, #0284c7);
+            border: none;
+            color: #0a0b10;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s;
+        }
+        .btn-draft-send:hover { transform: translateY(-1px); box-shadow: 0 0 10px rgba(0, 242, 255, 0.4); }
+
+        .btn-draft-cancel {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #cbd5e1;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-draft-cancel:hover { background: rgba(255, 59, 48, 0.15); color: #fda4af; border-color: rgba(255, 59, 48, 0.3); }
+
+        /* 氣泡底部單排緊湊內嵌功能列 */
         .msg-bottom-toolbar {
             display: flex;
             align-items: center;
@@ -745,7 +795,7 @@
             transform: translateX(-50%) translateY(-2px);
         }
 
-        /* 氣泡內分析卡片收合容器（預設隱藏收合） */
+        /* 氣泡內分析卡片收合容器 */
         .analysis-collapsible-wrapper {
             overflow: hidden;
             transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease, margin-top 0.25s ease;
@@ -789,7 +839,21 @@
         .diff-match { color: #86efac; }
         .diff-miss { color: #f87171; text-decoration: line-through; margin-right: 4px; }
 
-        /* 導師深度分析建議卡片（文法、地道表達） */
+        /* 使用者語音診斷分析卡片 */
+        .user-voice-diagnosis-box {
+            padding: 9px 12px;
+            border-radius: 10px;
+            background: rgba(245, 158, 11, 0.12);
+            border: 1px solid rgba(245, 158, 11, 0.35);
+            font-size: 0.84rem;
+            color: #fde68a;
+            line-height: 1.55;
+            width: 100%;
+            margin-top: 6px;
+        }
+        .user-voice-diagnosis-box strong { color: #fff; display: block; margin-bottom: 2px; }
+
+        /* 導師深度分析建議卡片 */
         .tutor-analysis-box {
             padding: 10px 13px;
             border-radius: 10px;
@@ -803,7 +867,7 @@
         }
         .tutor-analysis-box strong { color: #fff; display: block; margin-bottom: 4px; font-size: 0.88rem; }
 
-        /* 懸停查詞小浮層 Tooltip */
+        /* 懸停查詞 Tooltip（定位於單字上方） */
         .hover-word { display: inline-block; border-radius: 4px; transition: background 0.15s, color 0.15s; cursor: pointer; }
         .hover-word:hover { background: rgba(0, 242, 255, 0.2); color: #67e8f9; }
 
@@ -828,19 +892,20 @@
         }
         #word-hover-tooltip.visible { display: block; opacity: 1; transform: translateY(0); }
 
-        /* 選取文字浮動膠囊按鈕 */
+        /* 選取文字浮動「查單字 / 加入生詞」膠囊按鈕（內嵌簡明釋義） */
         #selection-lookup-bar {
             position: fixed;
             z-index: 2400;
             background: rgba(18, 22, 34, 0.96);
-            border: 1px solid rgba(245, 158, 11, 0.5);
+            border: 1px solid rgba(245, 158, 11, 0.55);
             border-radius: 20px;
-            padding: 4px 10px;
+            padding: 4px 12px;
             display: none;
             align-items: center;
-            gap: 6px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+            gap: 8px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.6);
             backdrop-filter: blur(8px);
+            max-width: 90vw;
         }
         #selection-lookup-bar button {
             background: none;
@@ -854,6 +919,15 @@
             gap: 4px;
         }
         #selection-lookup-bar button:hover { color: #fff; }
+        .selection-quick-def {
+            color: #67e8f9;
+            font-size: 0.74rem;
+            max-width: 140px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-weight: 500;
+        }
 
         .chat-floating-nav {
             position: fixed;
@@ -915,6 +989,7 @@
             width: 100%;
             min-width: 0;
             margin: 0 auto;
+            transition: all 0.25s ease;
         }
 
         .main-input-group.dual-stt-composer.capsule-dock {
@@ -932,6 +1007,7 @@
             background: linear-gradient(135deg, #1f2229 0%, #15171c 100%) !important;
             box-shadow: 0 8px 28px rgba(0,0,0,.26);
             overflow: hidden;
+            transition: all 0.2s ease;
         }
 
         .capsule-dock #user-text {
@@ -941,7 +1017,7 @@
             min-height: 38px !important;
             max-height: 110px;
             margin: 0;
-            padding: 7px 6px;
+            padding: 8px 6px;
             border: 0 !important;
             outline: 0 !important;
             resize: none;
@@ -949,10 +1025,13 @@
             overflow-y: auto;
             background: transparent !important;
             color: #f5f7fb;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             line-height: 1.45;
         }
-        .capsule-dock #user-text::placeholder { color: rgba(219,225,235,.55); }
+        .capsule-dock #user-text::placeholder {
+            color: rgba(219,225,235,.45);
+            font-size: 0.84rem;
+        }
 
         .speech-composer-status {
             position: absolute;
@@ -973,11 +1052,11 @@
 
         .capsule-voice-button {
             position: relative;
-            flex: 0 0 54px;
-            width: 54px !important;
-            min-width: 54px !important;
-            height: 54px !important;
-            min-height: 54px !important;
+            flex: 0 0 52px;
+            width: 52px !important;
+            min-width: 52px !important;
+            height: 52px !important;
+            min-height: 52px !important;
             padding: 0 !important;
             border: 1px solid rgba(255,255,255,.12) !important;
             border-radius: 50% !important;
@@ -990,7 +1069,7 @@
             transition: all 0.2s ease;
         }
         .capsule-voice-button:hover { background: rgba(255,255,255,.15) !important; transform: translateY(-1px); }
-        .capsule-voice-button .speech-button-language { font-size: 28px !important; line-height: 1; }
+        .capsule-voice-button .speech-button-language { font-size: 26px !important; line-height: 1; }
         .capsule-voice-button .capsule-mic-badge {
             position: absolute;
             right: -1px;
@@ -1024,17 +1103,17 @@
 
         .capsule-actions { display: flex; align-items: center; gap: 4px; flex: 0 0 auto; margin-left: auto; }
         .capsule-actions .btn-circle {
-            width: 40px !important;
-            min-width: 40px !important;
-            height: 40px !important;
-            min-height: 40px !important;
+            width: 38px !important;
+            min-width: 38px !important;
+            height: 38px !important;
+            min-height: 38px !important;
             border-radius: 50%;
             border: none;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             transition: all 0.2s;
         }
         .capsule-actions #btn-send { background: #e8edf5 !important; color: #1b2029 !important; }
@@ -1133,6 +1212,7 @@
         .material-meta { color: var(--text-dim); font-size: 0.75rem; margin-bottom: 8px; }
         .material-file-note { color: var(--text-dim); font-size: 0.72rem; margin: 6px 0 10px; }
 
+        /* 第 8 點與第 9 點：手機端響應式輸入框 */
         @media (max-width: 768px) {
             header {
                 padding: 6px 12px;
@@ -1157,6 +1237,23 @@
             #chat-container { padding: 12px 10px 20px; }
             .chat-floating-nav { right: 12px; top: 50%; transform: translateY(-50%); bottom: auto; gap: 8px; }
             .btn-float-nav { width: 36px; height: 36px; font-size: 0.9rem; }
+
+            /* 手機版輸入框無文字時：隱藏發送按鈕 */
+            .capsule-composer-row:not(.has-input-text) #btn-send {
+                display: none !important;
+            }
+
+            /* 手機版輸入框有文字時：隱藏兩側語音按鈕，輸入框撐滿並呈現發送按鈕 */
+            .capsule-composer-row.has-input-text .capsule-voice-button {
+                display: none !important;
+            }
+            .capsule-composer-row.has-input-text .main-input-group.capsule-dock {
+                width: 100% !important;
+                flex: 1 1 100% !important;
+            }
+            .capsule-composer-row.has-input-text #btn-send {
+                display: flex !important;
+            }
         }
 
         @keyframes pulseApiKey {
@@ -1298,18 +1395,16 @@
         </select>
     </div>
 
+    <!-- 第 4 點與第 5 點、第 7 點：精簡後的語音操作設定 -->
     <div id="speech-mode-section" class="menu-section capsule-speech-mode-section">
         <div class="menu-title">🎙️ 語音操作設定</div>
-        <label style="font-size:0.72rem; color:var(--text-dim); margin-bottom:4px; display:block;">語音觸發操作方式</label>
-        <select id="speech-mode-select" class="lang-select" aria-label="選擇語音操作方式">
-            <option value="tap">點擊開始，再次點擊停止</option>
-            <option value="smart" selected="selected">自動等待停頓後送出</option>
+        <label style="font-size:0.72rem; color:var(--text-dim); margin-bottom:4px; display:block;">傳送給 AI 的模式</label>
+        <select id="speech-input-mode-select" class="lang-select" aria-label="選擇傳送給 AI 的模式">
+            <option value="text" selected="selected">語音辨識為文字發送</option>
+            <option value="audio">直接傳送真實錄音給 AI</option>
         </select>
 
-        <label class="speech-silence-setting" for="speech-silence-seconds" style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; font-size:0.75rem; color:var(--text-dim);">
-            自動等待秒數 <input id="speech-silence-seconds" type="number" min="1" max="15" step="0.5" value="4.5" style="width:60px; padding:3px; border-radius:5px; background:rgba(0,0,0,0.3); border:1px solid var(--glass-border); color:#fff;">
-        </label>
-        <label class="speech-start-cue-setting" for="speech-start-cue-enabled" style="display:flex; align-items:center; gap:6px; margin-top:6px; font-size:0.72rem; color:var(--text-dim);">
+        <label class="speech-start-cue-setting" for="speech-start-cue-enabled" style="display:flex; align-items:center; gap:6px; margin-top:10px; font-size:0.72rem; color:var(--text-dim); cursor:pointer;">
             <input id="speech-start-cue-enabled" type="checkbox" checked="checked"> 按下語音時播放啟動提示音
         </label>
     </div>
@@ -1415,7 +1510,7 @@
                 <li><i aria-hidden="true" class="fa-solid fa-key" style="color: #00f2ff;"></i><span><strong data-page-copy="quickFreeTitle">官方免費額度支援</strong>：<span data-page-copy="quickFreeBody">本工具不收取任何訂閱月費，支援 Google 官方提供的 Gemini Free Tier 免費額度，日常對話與口說練習完全足夠，無須綁定信用卡或付費帳單。</span></span></li>
                 <li><i aria-hidden="true" class="fa-solid fa-shield-halved" style="color: #34c759;"></i><span><strong data-page-copy="quickPrivacyTitle">本地端點隱私防護</strong>：<span data-page-copy="quickPrivacyBody">您的 API Key、教材檔案與學習紀錄僅保存在您目前的瀏覽器本機儲存空間（localStorage），GugoPro 伺服器不會蒐集、備份或上傳您的金鑰與對話內容。</span></span></li>
                 <li><i aria-hidden="true" class="fa-solid fa-microphone-lines"></i><span data-page-copy="quickSpeech"><strong>雙語言即時語音發話、氣泡底部單排圖標與發音診斷</strong>：左側按鈕鎖定「學習語言」發話、右側按鈕鎖定「母語」提問。每則氣泡底部整合 🔊 朗讀、⏸ 停止、🎯🎙️ 發音練習評分、⚙️ 設定、🗑️ 刪除與 ▼ 展開/收折分析圖示！</span></li>
-                <li><i aria-hidden="true" class="fa-solid fa-hand-pointer"></i><span><strong>滑鼠懸停翻譯與生詞本</strong>：滑鼠停留在英文單字上 600ms 自動浮現翻譯；選取任何單字即可查字典並一鍵加入專屬生詞本。</span></li>
+                <li><i aria-hidden="true" class="fa-solid fa-hand-pointer"></i><span><strong>滑鼠懸停翻譯與生詞本</strong>：滑鼠停留在英文單字上 600ms 自動在上方浮現翻譯；選取任何單字即可查字典並一鍵加入專屬生詞本。</span></li>
                 <li><i aria-hidden="true" class="fa-solid fa-keyboard"></i><span data-page-copy="quickDock">底部輸入列固定在畫面最下方，支援多行文字；Enter 發送、Shift＋Enter 換行</span></li>
                 <li><i aria-hidden="true" class="fa-solid fa-paperclip"></i><span data-page-copy="quickMaterial">點擊頂部紙夾可導入 TXT、Markdown、PDF 教材，並綁定目前教室</span></li>
             </ul>
@@ -1508,7 +1603,8 @@
                 <span id="error-msg"></span>
             </div>
 
-            <div class="capsule-composer-row">
+            <!-- 第 8 點與第 9 點：手機版響應式伸縮容器 -->
+            <div class="capsule-composer-row" id="capsule-composer-row">
                 <!-- Left Button: Target Learning Language -->
                 <button aria-label="學習語言發話" class="btn-circle btn-mic dual-speech-button capsule-voice-button learning-speech" id="btn-mic" type="button" data-stt-locale="en-US" title="學習語言發話">
                     <span class="speech-button-language" id="learning-speech-label">🇺🇸</span>
@@ -1516,7 +1612,7 @@
                 </button>
                 <div class="main-input-group dual-stt-composer capsule-dock">
                     <div aria-atomic="true" aria-live="polite" class="speech-composer-status" data-state="idle" id="speech-composer-status"></div>
-                    <textarea autocapitalize="off" autocomplete="off" autocorrect="off" id="user-text" maxlength="8000" placeholder="點擊兩側語音按鈕直接說話；也可在此直接打字" rows="1" spellcheck="false"></textarea>
+                    <textarea autocapitalize="off" autocomplete="off" autocorrect="off" id="user-text" maxlength="8000" placeholder="點擊語音按鈕，或在此輸入文字..." rows="1" spellcheck="false"></textarea>
                     <div aria-label="發送" class="capsule-actions">
                         <button aria-label="發送" class="btn-circle btn-send" id="btn-send" type="button"><i class="fa-solid fa-paper-plane"></i></button>
                     </div>
@@ -1531,12 +1627,13 @@
     </div>
 </div>
 
-<!-- 懸停單字翻譯小浮層 (Tooltip) -->
+<!-- 懸停單字翻譯小浮層 (Tooltip - 位置在單字上方) -->
 <div id="word-hover-tooltip"></div>
 
-<!-- 選取文字浮動「查單字 / 加入生詞」膠囊按鈕 -->
+<!-- 選取文字浮動「查單字 / 加入生詞」膠囊按鈕 (自帶簡明翻譯) -->
 <div id="selection-lookup-bar">
-    <button type="button" id="btn-quick-lookup"><i class="fa-solid fa-magnifying-glass"></i> 查單字</button>
+    <span class="selection-quick-def" id="selection-quick-def">🔍 查詢中...</span>
+    <button type="button" id="btn-quick-lookup"><i class="fa-solid fa-magnifying-glass"></i> 詳細</button>
     <span style="color:rgba(255,255,255,0.2);">|</span>
     <button type="button" id="btn-quick-add-vocab"><i class="fa-solid fa-plus"></i> 生詞本</button>
 </div>
@@ -1559,7 +1656,7 @@
     </div>
 </div>
 
-<!-- 對話分析顯示偏好設定 Modal (狀態 A / 狀態 B) -->
+<!-- 第 3 點：對話分析顯示偏好設定 Modal (狀態 A 預設選中) -->
 <div class="modal-overlay" id="modal-analysis-pref">
     <div class="modal-content">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
@@ -1569,19 +1666,19 @@
         <p class="modal-p">請選擇您偏好的對話分析與發音診斷展示方式：</p>
         
         <div class="pref-radio-group">
-            <label class="pref-radio-item" id="pref-item-b" for="pref-radio-b">
-                <input type="radio" id="pref-radio-b" name="analysis_preference" value="minimal" checked="checked">
+            <label class="pref-radio-item" id="pref-item-a" for="pref-radio-a">
+                <input type="radio" id="pref-radio-a" name="analysis_preference" value="auto_collapse" checked="checked">
                 <div class="pref-radio-label">
-                    <span class="pref-radio-title">狀態 B（預設極簡）：對話時預設隱藏分析</span>
-                    <span class="pref-radio-desc">僅顯示核心的對話英文與中文翻譯，介面最清爽乾淨。若需查看文法建議，可隨時點擊氣泡底部的 ▼ 圖標展開。</span>
+                    <span class="pref-radio-title">狀態 A（預設推薦）：收到回覆直接展開分析</span>
+                    <span class="pref-radio-desc">收到回覆或評分時自動展開文法與發音建議；在您送出下一次新對話時，上一則訊息的分析將自動平滑收合。</span>
                 </div>
             </label>
 
-            <label class="pref-radio-item" id="pref-item-a" for="pref-radio-a">
-                <input type="radio" id="pref-radio-a" name="analysis_preference" value="auto_collapse">
+            <label class="pref-radio-item" id="pref-item-b" for="pref-radio-b">
+                <input type="radio" id="pref-radio-b" name="analysis_preference" value="minimal">
                 <div class="pref-radio-label">
-                    <span class="pref-radio-title">狀態 A（進階學習）：對話時預設直接展開分析</span>
-                    <span class="pref-radio-desc">收到回覆或評分時自動展開文法與發音建議；在您送出下一次新對話時，上一則訊息的分析將自動平滑收合。</span>
+                    <span class="pref-radio-title">狀態 B（極簡對話）：對話時預設隱藏分析</span>
+                    <span class="pref-radio-desc">僅顯示核心的對話英文與中文翻譯，介面最清爽乾淨。若需查看文法建議，可隨時點擊氣泡底部的 ▼ 圖標展開。</span>
                 </div>
             </label>
         </div>
@@ -1681,8 +1778,8 @@
     let currentModel = 'gemini-2.5-flash-lite';
     let isSendingMessage = false;
 
-    // 分析偏好設定：'minimal' (狀態 B 預設極簡: 預設隱藏分析) 或 'auto_collapse' (狀態 A: 預設展開，下次對話自動收合)
-    let analysisDisplayPreference = localStorage.getItem('gugopro_tutor_analysis_pref_v1') || 'minimal';
+    // 第 3 點：分析偏好設定預設為狀態 A ('auto_collapse')
+    let analysisDisplayPreference = localStorage.getItem('gugopro_tutor_analysis_pref_v1') || 'auto_collapse';
 
     // 原裝 TTS 與語音狀態管理
     let activeSpeechSession = null;
@@ -1698,6 +1795,9 @@
     // 語音輸入游標錨點
     let speechBasePrefix = '';
     let speechBaseSuffix = '';
+
+    // 第 6 點：目前待送出的錄音暫存
+    let pendingVoiceDraft = null;
 
     const LANG_NAMES = {
         'zh-TW': '繁體中文', 'zh-CN': '简体中文', 'en-US': 'English',
@@ -2150,6 +2250,7 @@
         }
     }
 
+    // 第 1 點：懸停單字翻譯小浮層 (Tooltip) 移至上方
     let hoverWordTimer = null;
     const tooltipEl = document.getElementById('word-hover-tooltip');
 
@@ -2170,40 +2271,64 @@
         }
     });
 
+    async function queryWordQuickMeaning(word) {
+        const clean = String(word || '').trim().toLowerCase();
+        if (!clean) return '';
+        if (!window.__hoverDictCache) window.__hoverDictCache = {};
+        if (window.__hoverDictCache[clean]) return window.__hoverDictCache[clean];
+
+        try {
+            const myLang = document.getElementById('my-lang')?.value || 'zh-TW';
+            const prompt = `Translate the English word "${clean}" to ${LANG_NAMES[myLang]}. Output strictly in this JSON format: {"meaning":"[short translation 4-8 words]"}`;
+            const res = await GugoAICore.generateJSON(prompt, { temperature: 0.1 });
+            const m = res.data?.meaning || '無翻譯';
+            window.__hoverDictCache[clean] = m;
+            return m;
+        } catch (_) {
+            return '查詢中';
+        }
+    }
+
     async function showHoverWordTooltip(wordSpan) {
         const word = (wordSpan.dataset.word || wordSpan.textContent || '').trim().replace(/^[^\w]+|[^\w]+$/g, '');
         if (!word || word.length < 2) return;
 
-        const rect = wordSpan.getBoundingClientRect();
-        tooltipEl.style.left = `${rect.left}px`;
-        tooltipEl.style.top = `${rect.bottom + 6}px`;
-        tooltipEl.innerHTML = `<span>🔍 查詢中...</span>`;
-        tooltipEl.classList.add('visible');
+        tooltipEl.innerHTML = `<strong>${escapeTutorHtml(word)}</strong>: <span>🔍 查詢中...</span>`;
+        tooltipEl.style.display = 'block';
+        tooltipEl.style.opacity = '0';
 
-        try {
-            let meaning = window.__hoverDictCache?.[word.toLowerCase()];
-            if (!meaning) {
-                if (!window.__hoverDictCache) window.__hoverDictCache = {};
-                const myLang = document.getElementById('my-lang')?.value || 'zh-TW';
-                const prompt = `Translate the English word "${word}" to ${LANG_NAMES[myLang]}. Output strictly in this JSON format: {"meaning":"[part of speech and short translation]"}`;
-                const res = await GugoAICore.generateJSON(prompt, { temperature: 0.1 });
-                meaning = res.data?.meaning || '無翻譯';
-                window.__hoverDictCache[word.toLowerCase()] = meaning;
-            }
+        // 先取得尺寸再計算位置（上方置中，隔開一段距離）
+        requestAnimationFrame(async () => {
+            const rect = wordSpan.getBoundingClientRect();
+            const tipHeight = tooltipEl.offsetHeight || 32;
+            const tipWidth = tooltipEl.offsetWidth || 120;
+
+            let topPos = rect.top - tipHeight - 8;
+            // 若上方超出視窗頂部，則退回下方
+            if (topPos < 10) topPos = rect.bottom + 8;
+
+            let leftPos = rect.left + (rect.width / 2) - (tipWidth / 2);
+            leftPos = Math.max(10, Math.min(window.innerWidth - tipWidth - 10, leftPos));
+
+            tooltipEl.style.left = `${leftPos}px`;
+            tooltipEl.style.top = `${topPos}px`;
+            tooltipEl.classList.add('visible');
+
+            const meaning = await queryWordQuickMeaning(word);
             tooltipEl.innerHTML = `<strong>${escapeTutorHtml(word)}</strong>: ${escapeTutorHtml(meaning)}`;
-        } catch (_) {
-            tooltipEl.innerHTML = `<strong>${escapeTutorHtml(word)}</strong>: (查詢失敗)`;
-        }
+        });
     }
 
     function hideHoverWordTooltip() {
         tooltipEl.classList.remove('visible');
     }
 
+    // 第 2 點：選取/拖拉文字浮動「查單字 / 加入生詞」膠囊按鈕（內嵌簡明翻譯）
     const selectionBar = document.getElementById('selection-lookup-bar');
+    const selectionQuickDef = document.getElementById('selection-quick-def');
     let selectedLookupTerm = '';
 
-    document.addEventListener('selectionchange', () => {
+    document.addEventListener('selectionchange', async () => {
         const selection = window.getSelection();
         const text = selection.toString().trim();
         if (!text || text.length > 50) {
@@ -2219,9 +2344,16 @@
         }
 
         selectedLookupTerm = text;
-        selectionBar.style.left = `${Math.max(10, rect.left + (rect.width / 2) - 60)}px`;
-        selectionBar.style.top = `${Math.max(10, rect.top - 38)}px`;
+        selectionBar.style.left = `${Math.max(10, rect.left + (rect.width / 2) - 80)}px`;
+        selectionBar.style.top = `${Math.max(10, rect.top - 42)}px`;
+        selectionQuickDef.textContent = `🔍 ${text}...`;
         selectionBar.style.display = 'inline-flex';
+
+        // 即時取得並顯示第一點的簡明翻譯
+        const quickMeaning = await queryWordQuickMeaning(text);
+        if (selectedLookupTerm === text) {
+            selectionQuickDef.textContent = `✦ ${quickMeaning}`;
+        }
     });
 
     document.getElementById('btn-quick-lookup').onclick = (e) => {
@@ -2233,7 +2365,10 @@
     document.getElementById('btn-quick-add-vocab').onclick = (e) => {
         e.stopPropagation();
         selectionBar.style.display = 'none';
-        if (selectedLookupTerm) addWordToVocabulary(selectedLookupTerm);
+        if (selectedLookupTerm) {
+            const m = selectionQuickDef.textContent.replace(/^✦\s*/, '') || '自訂生詞';
+            addWordToVocabulary(selectedLookupTerm, m);
+        }
     };
 
     async function openWordLookupModal(word) {
@@ -2329,8 +2464,8 @@
         closeMenu();
     };
 
-    // --- 主訊息發送流程：落實 Prompt 嚴格分流 ---
-    async function sendMessage() {
+    // 第 4 點與第 6 點：送出訊息主流程（支援真實錄音音訊直接傳給 AI ＆ 雙分析分流）
+    async function sendMessage(providedContent = null, audioPayload = null) {
         if (isSendingMessage) return;
 
         if (!GugoAICore.hasApiKey()) {
@@ -2339,13 +2474,19 @@
         }
 
         const input = document.getElementById('user-text');
-        const content = input.value.trim();
-        if (!content) return;
+        const content = (providedContent !== null ? providedContent : input.value).trim();
+        if (!content && !audioPayload) return;
+
+        // 移除待送出氣泡
+        document.getElementById('draft-message-bubble')?.remove();
 
         autoCollapsePreviousAnalyses();
 
-        input.value = '';
-        input.style.height = 'auto';
+        if (providedContent === null) {
+            input.value = '';
+            input.style.height = 'auto';
+            syncMobileComposerState();
+        }
 
         const myLang = document.getElementById('my-lang').value;
         const targetLang = document.getElementById('target-lang').value;
@@ -2353,7 +2494,9 @@
         const scoreForMsg = window.__pendingPronunciationScore || null;
         window.__pendingPronunciationScore = null;
 
-        addMessageToUI('user', content, '正在思考中...', null, msgId, targetLang, scoreForMsg);
+        // 使用者訊息氣泡：若是真實錄音，附帶音訊播放器回放
+        const userAudioUrl = audioPayload ? audioPayload.audioUrl : null;
+        addMessageToUI('user', content || '🎙️ [語音訊息]', '正在思考與分析發音中...', null, msgId, targetLang, scoreForMsg, null, userAudioUrl);
         isSendingMessage = true;
         scrollToLatestMessage();
 
@@ -2367,8 +2510,77 @@
             const studyLevel = room?.studyLevel || 'B1';
             const tutorMode = room?.tutorMode || 'casual';
 
-            // 嚴格分流：核心回覆與深度分析徹底分離，杜絕長篇文字污染主氣泡
-            const systemInstruction = `You are an empathetic, encouraging language tutor sitting across from the student.
+            let response = null;
+
+            if (audioPayload && audioPayload.base64Data) {
+                // 第 4 點：真實錄音模式傳給 Gemini 多模態 API，要求雙重分析
+                const systemInstruction = `You are an empathetic, expert language tutor listening directly to the student's voice recording.
+Student Native Language: ${myLangName}
+Target Learning Language: ${targetLangName}
+Target Proficiency Level: ${studyLevel}
+Tutor Mode: ${tutorMode}
+
+STRICT ARCHITECTURE MANDATES:
+1. "user_voice_diagnosis": Deep pronunciation and intonation diagnosis based on what you HEAR in their audio (in ${myLangName}). Identify phonetic accuracy, stress, connected speech, and rhythm!
+2. "tutor_reply": ONLY 1-2 natural, spoken conversational sentences in ${targetLangName}. Keep it brief, friendly, and clean like in real conversation! DO NOT put grammar tips here!
+3. "tutor_reply_my": The exact translation of "tutor_reply" into ${myLangName}.
+4. "tutor_analysis": Comprehensive teaching notes, grammar tips, and alternative native phrasing for their sentence in ${myLangName}.
+
+Recent Context:
+${historyContext}
+${materialText ? `Study Material Context: ${materialText}` : ''}
+
+Output strictly in JSON:
+{
+  "user_transcription": "${targetLangName} exact transcription of the student speech",
+  "user_my": "${myLangName} translation of what student said",
+  "user_voice_diagnosis": "Pronunciation, intonation, and phonetics feedback for the student in ${myLangName}",
+  "tutor_reply": "Brief 1-2 conversational sentences in ${targetLangName}",
+  "tutor_reply_my": "Translation of tutor_reply into ${myLangName}",
+  "tutor_analysis": "Grammar correction and phrase breakdown in ${myLangName}"
+}`;
+                const payloadContents = [
+                    {
+                        role: 'user',
+                        parts: [
+                            { inlineData: { mimeType: audioPayload.mimeType, data: audioPayload.base64Data } },
+                            { text: `Please listen to this audio and respond strictly in the required JSON format.` }
+                        ]
+                    }
+                ];
+
+                const res = await GugoAICore.generateJSON(payloadContents, { systemInstruction, temperature: 0.5 });
+                response = res.data;
+
+                // 更新使用者氣泡中的真實轉譯文字與語音診斷
+                const userMsgEl = document.querySelector(`[data-id="${msgId}"]`);
+                if (userMsgEl) {
+                    if (response.user_transcription) {
+                        const lEl = userMsgEl.querySelector('.msg-learning');
+                        if (lEl) lEl.innerHTML = wrapWordsForHover(response.user_transcription);
+                        userMsgEl.dataset.pureLearning = response.user_transcription;
+                    }
+                    userMsgEl.querySelector('.msg-my').textContent = response.user_my || '';
+
+                    // 第 4 點：使用者發話框呈現語音診斷
+                    if (response.user_voice_diagnosis) {
+                        const wrapper = userMsgEl.querySelector('.analysis-collapsible-wrapper');
+                        if (wrapper) {
+                            wrapper.innerHTML = `<div class="user-voice-diagnosis-box"><strong>🗣️ AI 發音與語調診斷：</strong><span>${escapeTutorHtml(response.user_voice_diagnosis)}</span></div>`;
+                            if (analysisDisplayPreference === 'auto_collapse') wrapper.classList.remove('collapsed');
+                            updateAnalysisButtonAvailability(userMsgEl);
+                        }
+                    }
+                }
+
+                room.messages.push({
+                    id: msgId, role: 'user', learning: response.user_transcription || content, my: response.user_my,
+                    speechLang: targetLang, audioUrl: userAudioUrl, userVoiceDiagnosis: response.user_voice_diagnosis
+                });
+
+            } else {
+                // 純文字發送模式（單一分析放在 AI 氣泡中）
+                const systemInstruction = `You are an empathetic, encouraging language tutor sitting across from the student.
 Student Native Language: ${myLangName}
 Target Learning Language: ${targetLangName}
 Target Proficiency Level: ${studyLevel}
@@ -2377,7 +2589,7 @@ Tutor Mode: ${tutorMode}
 STRICT ARCHITECTURE MANDATES:
 1. "tutor_reply": ONLY 1-2 natural, spoken conversational sentences in ${targetLangName}. Keep it brief, friendly, and clean like in real conversation! DO NOT put grammar tips or explanations here!
 2. "tutor_reply_my": The exact translation of "tutor_reply" into ${myLangName}.
-3. "tutor_analysis": Comprehensive teaching notes in ${myLangName}. Put all grammar corrections, vocabulary nuance, and alternative native phrasing here. If the student made no errors, provide an advanced alternative way to express their thought.
+3. "tutor_analysis": Comprehensive teaching notes in ${myLangName}. Put all grammar corrections, vocabulary nuance, and alternative native phrasing here.
 
 Recent Context:
 ${historyContext}
@@ -2392,18 +2604,19 @@ Output strictly in JSON:
   "tutor_reply_my": "Translation of tutor_reply into ${myLangName}",
   "tutor_analysis": "Grammar correction, native tips, and phrase breakdown in ${myLangName}"
 }`;
+                const res = await GugoAICore.generateJSON(content, { systemInstruction, temperature: 0.7 });
+                response = res.data;
 
-            const res = await GugoAICore.generateJSON(content, { systemInstruction, temperature: 0.7 });
-            const response = res.data;
+                const userMsgEl = document.querySelector(`[data-id="${msgId}"]`);
+                if (userMsgEl) userMsgEl.querySelector('.msg-my').textContent = response.user_my;
 
-            const userMsgEl = document.querySelector(`[data-id="${msgId}"]`);
-            if (userMsgEl) userMsgEl.querySelector('.msg-my').textContent = response.user_my;
+                room.messages.push({
+                    id: msgId, role: 'user', learning: content, my: response.user_my,
+                    speechLang: targetLang, pronunciation: scoreForMsg
+                });
+            }
 
-            room.messages.push({
-                id: msgId, role: 'user', learning: content, my: response.user_my,
-                speechLang: targetLang, pronunciation: scoreForMsg
-            });
-
+            // AI 導師氣泡
             const tutorId = 'tutor-' + Date.now();
             const tutorReplyText = response.tutor_reply || response.tutor_learning || '';
             const tutorReplyMyText = response.tutor_reply_my || response.tutor_my || '';
@@ -2438,8 +2651,8 @@ Output strictly in JSON:
         }).join('');
     }
 
-    // 氣泡 DOM 建構（對齊 圖片_2.jpg：主體純淨，分析預設收折）
-    function addMessageToUI(role, learning, my, analysis, id, speechLang = 'en-US', pronunciation = null, userVoiceDiagnosis = null) {
+    // 氣泡 DOM 建構（支援音訊播放與使用者語音診斷）
+    function addMessageToUI(role, learning, my, analysis, id, speechLang = 'en-US', pronunciation = null, userVoiceDiagnosis = null, audioUrl = null) {
         const container = document.getElementById('chat-container');
         const div = document.createElement('div');
         div.className = `message message-${role}`;
@@ -2452,7 +2665,7 @@ Output strictly in JSON:
             (role === 'user' && (pronunciation || (userVoiceDiagnosis && userVoiceDiagnosis !== "null")))
         );
 
-        // 預設強制收折分析，保持版面極簡
+        // 第 3 點：若為狀態 A 且有內容，預設展開；狀態 B 預設收折
         const isCollapsedByDefault = (analysisDisplayPreference === 'minimal') || (!hasCollapsibleContent);
 
         let toolbarHtml = '';
@@ -2474,6 +2687,7 @@ Output strictly in JSON:
                     <button type="button" class="btn-bubble-icon btn-stop-tts" onclick="return stopMessageSpeech(this)" data-tooltip="停止朗讀" disabled><i class="fa-solid fa-pause"></i></button>
                     <button type="button" class="btn-bubble-icon icon-challenge" onclick="triggerBubbleVoiceEvaluation('${id}', this)" data-tooltip="發音練習與評分"><i class="fa-solid fa-bullseye"></i><i class="fa-solid fa-microphone" style="font-size:0.7rem; margin-left:-2px;"></i></button>
                     <button type="button" class="btn-bubble-icon" onclick="deleteMessage('${id}')" data-tooltip="刪除訊息"><i class="fa-solid fa-trash-can"></i></button>
+                    <button type="button" class="btn-bubble-icon icon-toggle ${isCollapsedByDefault ? '' : 'active'}" onclick="toggleMessageAnalysis(this)" ${hasCollapsibleContent ? '' : 'disabled'} data-tooltip="${isCollapsedByDefault ? '展開診斷' : '收折診斷'}"><i class="fa-solid fa-chevron-down"></i></button>
                 </div>
             `;
         }
@@ -2481,7 +2695,7 @@ Output strictly in JSON:
         let collapsibleInnerHtml = '';
         if (role === 'user') {
             if (userVoiceDiagnosis && userVoiceDiagnosis !== "null") {
-                collapsibleInnerHtml += `<div class="user-voice-diagnosis-box"><strong>🗣️ AI 發音診斷建議：</strong><span>${escapeTutorHtml(userVoiceDiagnosis)}</span></div>`;
+                collapsibleInnerHtml += `<div class="user-voice-diagnosis-box"><strong>🗣️ AI 發音與語調診斷：</strong><span>${escapeTutorHtml(userVoiceDiagnosis)}</span></div>`;
             }
             if (pronunciation) {
                 collapsibleInnerHtml += renderPronunciationScoreHtml(pronunciation);
@@ -2492,8 +2706,11 @@ Output strictly in JSON:
             }
         }
 
+        const audioPlayerHtml = audioUrl ? `<audio controls class="msg-audio-player" src="${audioUrl}"></audio>` : '';
+
         div.innerHTML = `
             <div class="msg-learning"></div>
+            ${audioPlayerHtml}
             <div class="msg-my"></div>
             ${toolbarHtml}
             <div class="analysis-collapsible-wrapper ${isCollapsedByDefault ? 'collapsed' : ''}">
@@ -2508,6 +2725,61 @@ Output strictly in JSON:
 
         container.appendChild(div);
         updateAnalysisButtonAvailability(div);
+    }
+
+    // 第 6 點：建立待確認草稿氣泡
+    function showDraftPreviewBubble(type, contentText, audioBlob = null) {
+        document.getElementById('draft-message-bubble')?.remove();
+
+        const container = document.getElementById('chat-container');
+        const div = document.createElement('div');
+        div.className = 'message message-user message-draft';
+        div.id = 'draft-message-bubble';
+
+        let audioUrl = null;
+        let audioPlayerHtml = '';
+        if (audioBlob) {
+            audioUrl = URL.createObjectURL(audioBlob);
+            audioPlayerHtml = `<audio controls class="msg-audio-player" src="${audioUrl}"></audio>`;
+        }
+
+        const isAudioMode = (document.getElementById('speech-input-mode-select')?.value === 'audio') && audioBlob;
+
+        div.innerHTML = `
+            <div style="font-size:0.75rem; color:#fde68a; font-weight:700; margin-bottom:4px;">
+                <i class="fa-solid fa-pen-to-square"></i> 語音錄製完成 · 待確認送出
+            </div>
+            ${isAudioMode ? '' : `<textarea id="draft-edit-textarea" style="width:100%; min-height:48px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); border-radius:8px; color:#fff; padding:6px; font-size:0.95rem; font-family:inherit; resize:vertical;">${escapeTutorHtml(contentText)}</textarea>`}
+            ${audioPlayerHtml}
+            <div class="msg-draft-actions">
+                <button type="button" class="btn-draft-send" id="btn-draft-send-action"><i class="fa-solid fa-paper-plane"></i> 送出給 AI 分析</button>
+                <button type="button" class="btn-draft-cancel" id="btn-draft-cancel-action"><i class="fa-solid fa-xmark"></i> 放棄重錄</button>
+            </div>
+        `;
+
+        container.appendChild(div);
+        scrollToLatestMessage();
+
+        document.getElementById('btn-draft-send-action').onclick = async () => {
+            if (isAudioMode) {
+                // 轉為 Base64
+                const reader = new FileReader();
+                reader.readAsDataURL(audioBlob);
+                reader.onloadend = () => {
+                    const b64 = (reader.result || '').split(',')[1];
+                    const payload = { audioUrl, base64Data: b64, mimeType: audioBlob.type || 'audio/webm' };
+                    sendMessage(null, payload);
+                };
+            } else {
+                const editedText = document.getElementById('draft-edit-textarea')?.value.trim() || contentText;
+                sendMessage(editedText);
+            }
+        };
+
+        document.getElementById('btn-draft-cancel-action').onclick = () => {
+            div.remove();
+            showFloatingToast("已取消該段語音草稿。");
+        };
     }
 
     window.openAnalysisPreferenceModal = function() {
@@ -2550,7 +2822,6 @@ Output strictly in JSON:
     let mediaAudioChunks = [];
     let isRecordingSpeech = false;
     let recognitionInstance = null;
-    let speechSilenceTimer = null;
 
     function showFloatingToast(msg) {
         const panel = document.getElementById('error-panel');
@@ -2576,7 +2847,29 @@ Output strictly in JSON:
         document.getElementById('btn-mic-my')?.classList.toggle('recording', activeType === 'native');
     }
 
-    // --- 核心修復：徹底根除手機語音輸入疊字現象 ---
+    // 第 7 點：落實提示音核取開關
+    function playStartCueTone() {
+        const enabled = document.getElementById('speech-start-cue-enabled')?.checked;
+        if (!enabled) return;
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            const ctx = new AudioContext();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.12, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.11);
+        } catch (_) {}
+    }
+
+    // 第 5 點：點擊一下開始錄製，再點擊一下停止錄製（純單一模式）
     async function startSpeechWorkflow(type) {
         if (!GugoAICore.hasApiKey()) {
             document.getElementById('modal-api').style.display = 'flex';
@@ -2589,7 +2882,6 @@ Output strictly in JSON:
         const input = document.getElementById('user-text');
         if (!input) return;
 
-        // 鎖定當前文字與游標位置，防止覆蓋
         const val = input.value || '';
         const start = (input.selectionStart !== null && input.selectionStart !== undefined) ? input.selectionStart : val.length;
         const end = (input.selectionEnd !== null && input.selectionEnd !== undefined) ? input.selectionEnd : val.length;
@@ -2603,8 +2895,18 @@ Output strictly in JSON:
 
         isRecordingSpeech = true;
         updateMicButtonsState(type);
-        setSpeechStatus('recording', `🎙️ 正在聆聽 ${LANG_FLAGS[isLearning ? targetLang : myLang]} ${isLearning ? '學習語言' : '母語'}...`);
+        playStartCueTone();
 
+        const inputMode = document.getElementById('speech-input-mode-select')?.value || 'text';
+        setSpeechStatus('recording', `🎙️ 正在錄製 ${LANG_FLAGS[isLearning ? targetLang : myLang]}（再按一次麥克風停止）...`);
+
+        // 如果選擇「直接傳送真實錄音給 AI」，直接啟動 MediaRecorder
+        if (inputMode === 'audio') {
+            startAudioStreamRecording(type, currentLocale);
+            return;
+        }
+
+        // 文字模式：優先使用原生 Web Speech API
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (SpeechRecognition) {
             try {
@@ -2612,13 +2914,12 @@ Output strictly in JSON:
                     try { recognitionInstance.abort(); } catch (_) {}
                 }
                 recognitionInstance = new SpeechRecognition();
-                recognitionInstance.continuous = false; // 手機端設為 false 最穩健，避免重送疊字
+                recognitionInstance.continuous = true;
                 recognitionInstance.interimResults = true;
                 recognitionInstance.lang = currentLocale;
 
                 let lastConfidence = null;
 
-                // 採用局部重構（對齊塔羅牌），每次從 0 遍歷，嚴禁使用全域變數累加！
                 recognitionInstance.onresult = (event) => {
                     let transcript = '';
                     for (let i = 0; i < event.results.length; i++) {
@@ -2631,18 +2932,7 @@ Output strictly in JSON:
                         input.setSelectionRange(newCursorPos, newCursorPos);
                         input.style.height = 'auto';
                         input.style.height = Math.min(110, input.scrollHeight) + 'px';
-                    }
-
-                    const triggerMode = document.getElementById('speech-mode-select')?.value || 'smart';
-                    const waitSec = parseFloat(document.getElementById('speech-silence-seconds')?.value) || 4.5;
-                    if (triggerMode === 'smart' && transcript) {
-                        clearTimeout(speechSilenceTimer);
-                        speechSilenceTimer = setTimeout(() => {
-                            if (isRecordingSpeech) {
-                                stopSpeechWorkflow();
-                                handleSpeechComplete(input.value.trim(), type, lastConfidence);
-                            }
-                        }, waitSec * 1000);
+                        syncMobileComposerState();
                     }
                 };
 
@@ -2653,11 +2943,7 @@ Output strictly in JSON:
 
                 recognitionInstance.onend = () => {
                     if (isRecordingSpeech) {
-                        const textNow = document.getElementById('user-text')?.value.trim();
                         stopSpeechWorkflow();
-                        if (textNow && textNow !== (speechBasePrefix + speechBaseSuffix).trim()) {
-                            handleSpeechComplete(textNow, type, lastConfidence);
-                        }
                     }
                 };
 
@@ -2669,6 +2955,32 @@ Output strictly in JSON:
         }
 
         startFallbackAudioStt(type, currentLocale);
+    }
+
+    async function startAudioStreamRecording(type, localeCode) {
+        if (!navigator.mediaDevices?.getUserMedia) {
+            showFloatingToast('⚠️ 瀏覽器未支援麥克風錄音');
+            stopSpeechWorkflow();
+            return;
+        }
+        try {
+            mediaAudioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaAudioChunks = [];
+            mediaRecorderInstance = new MediaRecorder(mediaAudioStream);
+            mediaRecorderInstance.ondataavailable = e => { if (e.data.size > 0) mediaAudioChunks.push(e.data); };
+            mediaRecorderInstance.onstop = () => {
+                if (mediaAudioStream) { mediaAudioStream.getTracks().forEach(t => t.stop()); mediaAudioStream = null; }
+                if (!mediaAudioChunks.length) { setSpeechStatus('idle', ''); return; }
+                const audioBlob = new Blob(mediaAudioChunks, { type: mediaAudioChunks[0]?.type || 'audio/webm' });
+                // 第 6 點：音訊模式錄音完成後，彈出預覽氣泡讓使用者確認/播放
+                showDraftPreviewBubble(type, '', audioBlob);
+                setSpeechStatus('idle', '');
+            };
+            mediaRecorderInstance.start();
+        } catch (_) {
+            showFloatingToast('⚠️ 麥克風已被封鎖或無可用設備');
+            stopSpeechWorkflow();
+        }
     }
 
     async function startFallbackAudioStt(type, localeCode) {
@@ -2695,8 +3007,10 @@ Output strictly in JSON:
                             input.value = speechBasePrefix + text + speechBaseSuffix;
                             const newCursorPos = speechBasePrefix.length + text.length;
                             input.setSelectionRange(newCursorPos, newCursorPos);
+                            syncMobileComposerState();
                         }
-                        handleSpeechComplete(input.value.trim(), type, 0.9);
+                        // 第 6 點：文字模式錄完後在草稿氣泡中預覽，可確認編輯後送出
+                        showDraftPreviewBubble(type, input.value.trim());
                     }
                 } catch (_) {
                     showFloatingToast('⚠️ 語音辨識連線逾時');
@@ -2711,36 +3025,28 @@ Output strictly in JSON:
     }
 
     function stopSpeechWorkflow() {
-        clearTimeout(speechSilenceTimer);
         isRecordingSpeech = false;
         updateMicButtonsState(null);
         setSpeechStatus('idle', '');
 
+        const input = document.getElementById('user-text');
+        const textRecorded = input ? input.value.trim() : '';
+
         if (recognitionInstance) {
             try { recognitionInstance.stop(); } catch (_) {}
             recognitionInstance = null;
+            // 第 6 點：文字模式錄音結束，若有錄出文字，呈現在待確認氣泡中
+            if (textRecorded) {
+                showDraftPreviewBubble('user', textRecorded);
+            }
         }
+
         if (mediaRecorderInstance && mediaRecorderInstance.state === 'recording') {
             try { mediaRecorderInstance.stop(); } catch (_) {}
         }
     }
 
-    function handleSpeechComplete(text, type, confidence) {
-        const clean = String(text || '').trim();
-        if (!clean) return;
-
-        if (type === 'learning') {
-            const lastTutorMsg = [...document.querySelectorAll('.message-tutor')].pop();
-            const targetRef = lastTutorMsg?.dataset?.pureLearning || '';
-            const scoreObj = calculatePronunciationScore(targetRef || clean, clean, confidence);
-            window.__pendingPronunciationScore = scoreObj;
-        } else {
-            window.__pendingPronunciationScore = null;
-        }
-
-        sendMessage();
-    }
-
+    // 第 3 點：對話分析偏好設定 UI（狀態 A 預設選中）
     function initAnalysisPreferenceUI() {
         const itemA = document.getElementById('pref-item-a');
         const itemB = document.getElementById('pref-item-b');
@@ -2765,7 +3071,7 @@ Output strictly in JSON:
         itemB.onclick = () => updateRadioVisual('minimal');
 
         document.getElementById('btn-save-analysis-pref').onclick = () => {
-            const selected = document.querySelector('input[name="analysis_preference"]:checked')?.value || 'minimal';
+            const selected = document.querySelector('input[name="analysis_preference"]:checked')?.value || 'auto_collapse';
             analysisDisplayPreference = selected;
             localStorage.setItem('gugopro_tutor_analysis_pref_v1', analysisDisplayPreference);
             document.getElementById('modal-analysis-pref').style.display = 'none';
@@ -2783,7 +3089,7 @@ Output strictly in JSON:
                 });
             }
 
-            showFloatingToast(`✓ 已成功套用：${selected === 'minimal' ? '狀態 B（預設隱藏分析）' : '狀態 A（預設直接展開分析）'}`);
+            showFloatingToast(`✓ 已成功套用：${selected === 'auto_collapse' ? '狀態 A（預設展開分析，下次對話自動收合）' : '狀態 B（預設隱藏分析）'}`);
         };
     }
 
@@ -3091,7 +3397,8 @@ Output strictly in JSON:
             m.role, m.learning, m.my, m.correction, m.id,
             m.speechLang || room.language.learning,
             m.pronunciation || null,
-            m.userVoiceDiagnosis || null
+            m.userVoiceDiagnosis || null,
+            m.audioUrl || null
         ));
 
         updateMaterialBanner();
@@ -3279,7 +3586,21 @@ Output strictly in JSON:
         else startSpeechWorkflow('native');
     };
     document.getElementById('btn-send').onclick = () => sendMessage();
-    document.getElementById('user-text').onkeydown = (e) => {
+
+    // 第 8 點：監聽輸入框文字，動態切換手機端按鈕與伸展輸入框
+    const composerRow = document.getElementById('capsule-composer-row');
+    const userTextInput = document.getElementById('user-text');
+
+    function syncMobileComposerState() {
+        const hasText = Boolean(userTextInput?.value.trim().length > 0);
+        composerRow?.classList.toggle('has-input-text', hasText);
+    }
+
+    userTextInput.oninput = () => {
+        syncMobileComposerState();
+    };
+
+    userTextInput.onkeydown = (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             sendMessage();
@@ -3295,6 +3616,7 @@ Output strictly in JSON:
         updateApiKeyButtonState();
         updateLangDisplay();
         initModelSystem();
+        syncMobileComposerState();
     });
 </script>
 </body>
