@@ -648,7 +648,7 @@
 
         .hidden { display: none !important; }
 
-        .material-banner { display: flex; align-items: center; gap: 8px; width: 100%; max-width: 880px; margin: 0 auto 2px; padding: 7px 10px; border: 1px solid rgba(14, 165, 233, 0.42); border-radius: 9px; background: rgba(14, 165, 233, 0.12); color: #bae6fd; }
+        .material-banner { display: flex; align-items: center; gap: 8px; width: 100%; max-width: 880px; margin: 0 auto 2px; padding: 7px 10px; border: 1px solid rgba(14px, 165, 233, 0.42); border-radius: 9px; background: rgba(14, 165, 233, 0.12); color: #bae6fd; }
         .material-banner[hidden] { display: none; }
         .material-banner-trigger { flex: 1; min-width: 0; border: 0; padding: 0; overflow: hidden; background: transparent; color: inherit; text-align: left; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; font-size: 0.76rem; font-weight: 700; }
         .material-banner-clear { display: grid; place-items: center; flex: 0 0 38px; width: 38px; height: 38px; border: 0; border-radius: 8px; padding: 0; background: transparent; color: #bae6fd; cursor: pointer; font-size: 0.95rem; }
@@ -1292,13 +1292,15 @@
     let activeChallengeSession = null;
     
     // 語音錄製獨立變數（徹底與手動輸入框 user-text 分流）
-    let currentRecordedTranscript = '';
+    // 採用「已定稿片段列表 (Final Chunks)」+「當前臨時片段 (Interim Fragment)」防疊字架構
+    let speechFinalChunks = [];
+    let speechInterimFragment = '';
 
     const LANG_NAMES = {
         'zh-TW': '繁體中文', 'zh-CN': '简体中文', 'en-US': 'English',
         'ja-JP': '日本語', 'ko-KR': '한국어', 'fr-FR': 'Français',
         'de-DE': 'Deutsch', 'es-ES': 'Español', 'th-TH': 'ไทย',
-        'vi-VN': 'Tiếng Việt', 'id-ID': 'Bahasa Indonesia', 'pt-BR': 'Português',
+        'vi-VN': 'Tiếng設Viet', 'id-ID': 'Bahasa Indonesia', 'pt-BR': 'Português',
         'it-IT': 'Italiano', 'ru-RU': 'Русский', 'ar-SA': 'العربية',
         'hi-IN': 'हिन्दी', 'ms-MY': 'Bahasa Melayu', 'nl-NL': 'Nederlands',
         'pl-PL': 'Polski', 'tr-TR': 'Türkçe'
@@ -1569,7 +1571,7 @@
             stopChallengeRecording(true);
         }
         if (isRecordingSpeech) {
-            stopSpeechWorkflow();
+            stopSpeechWorkflow(true);
         }
 
         if (!GugoAICore.hasApiKey()) {
@@ -1593,7 +1595,8 @@
             buttonEl: btn,
             speechLang,
             currentLocale,
-            transcript: '',
+            finalChunks: [],
+            interimText: '',
             confidence: null,
             audioChunks: []
         };
@@ -1607,12 +1610,20 @@
                 rec.lang = currentLocale;
 
                 rec.onresult = (e) => {
-                    let full = '';
-                    for (let i = 0; i < e.results.length; i++) {
-                        full += e.results[i][0].transcript;
-                        if (e.results[i][0].confidence) activeChallengeSession.confidence = e.results[i][0].confidence;
+                    let interim = '';
+                    for (let i = e.resultIndex; i < e.results.length; i++) {
+                        const item = e.results[i][0];
+                        if (e.results[i].isFinal) {
+                            const trimmed = item.transcript.trim();
+                            if (trimmed) activeChallengeSession.finalChunks.push(trimmed);
+                            if (item.confidence) activeChallengeSession.confidence = item.confidence;
+                        } else {
+                            interim += item.transcript;
+                        }
                     }
-                    if (activeChallengeSession) activeChallengeSession.transcript = full.trim();
+                    if (activeChallengeSession) {
+                        activeChallengeSession.interimText = interim.trim();
+                    }
                 };
 
                 rec.onerror = (e) => {
@@ -1656,7 +1667,7 @@
                     try {
                         const recognized = await GugoAICore.transcribeAudio(audioBlob, { language: currentLocale });
                         if (activeChallengeSession) {
-                            activeChallengeSession.transcript = recognized;
+                            activeChallengeSession.finalChunks = [recognized.trim()];
                             activeChallengeSession.confidence = 0.9;
                             finishChallengeEvaluation();
                         }
@@ -1706,13 +1717,13 @@
         activeChallengeSession = null;
         resetChallengeButton(session.buttonEl);
 
-        const cleanTranscript = (session.transcript || '').trim();
-        if (!cleanTranscript) {
+        const joined = [...session.finalChunks, session.interimText].filter(Boolean).join(' ').trim();
+        if (!joined) {
             showFloatingToast('⚠️ 未辨識到清晰聲音，請再試一次');
             return;
         }
 
-        const scoreObj = calculatePronunciationScore(session.targetText, cleanTranscript, session.confidence);
+        const scoreObj = calculatePronunciationScore(session.targetText, joined, session.confidence);
         updateUserMessageScore(session.messageId, scoreObj);
         showFloatingToast(`🎯 發音評分完成：${scoreObj.score} 分 (${scoreObj.label})`);
     }
@@ -2313,6 +2324,8 @@ Output strictly in JSON:
     let mediaAudioChunks = [];
     let isRecordingSpeech = false;
     let recognitionInstance = null;
+    let activeSpeechType = null;
+    let speechActiveLocale = 'en-US';
 
     function showFloatingToast(msg) {
         const panel = document.getElementById('error-panel');
@@ -2359,7 +2372,15 @@ Output strictly in JSON:
         } catch (_) {}
     }
 
-    // --- 核心修正：點擊錄音、再點結束；嚴禁將語音文字寫入 user-text 輸入框 ---
+    // --- 核心防疊字與手動結束控制演算法 ---
+    function getAccumulatedSpokenText() {
+        const parts = [...speechFinalChunks];
+        if (speechInterimFragment) {
+            parts.push(speechInterimFragment);
+        }
+        return parts.join(' ').replace(/\s+/g, ' ').trim();
+    }
+
     async function startSpeechWorkflow(type) {
         if (!GugoAICore.hasApiKey()) {
             openApiKeyModal();
@@ -2375,7 +2396,13 @@ Output strictly in JSON:
         const currentLocale = isLearning ? (STT_LOCALES[targetLang] || targetLang) : (STT_LOCALES[myLang] || myLang);
 
         isRecordingSpeech = true;
-        currentRecordedTranscript = ''; // 重置語音文字
+        activeSpeechType = type;
+        speechActiveLocale = currentLocale;
+        
+        // 核心重置：徹底清空已定稿片段與臨時片段
+        speechFinalChunks = [];
+        speechInterimFragment = '';
+        
         updateMicButtonsState(type);
         playStartCueTone();
 
@@ -2392,32 +2419,52 @@ Output strictly in JSON:
             try {
                 if (recognitionInstance) {
                     try { recognitionInstance.abort(); } catch (_) {}
+                    recognitionInstance = null;
                 }
                 recognitionInstance = new SpeechRecognition();
                 recognitionInstance.continuous = true;
                 recognitionInstance.interimResults = true;
                 recognitionInstance.lang = currentLocale;
 
-                // 核心關鍵：絕對不向 #user-text 賦值！不觸發任何輸入框伸縮跳動
+                // 核心防疊字：嚴格依據 isFinal 與索引分流，杜絕全域重複累加
                 recognitionInstance.onresult = (event) => {
-                    let transcript = '';
-                    for (let i = 0; i < event.results.length; i++) {
-                        transcript += event.results[i][0].transcript;
+                    let currentInterim = '';
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        const res = event.results[i];
+                        const transcript = res[0]?.transcript || '';
+                        if (res.isFinal) {
+                            const cleanFinal = transcript.trim();
+                            if (cleanFinal) {
+                                speechFinalChunks.push(cleanFinal);
+                            }
+                        } else {
+                            currentInterim += transcript;
+                        }
                     }
-                    currentRecordedTranscript = transcript.trim();
-                    if (currentRecordedTranscript) {
-                        setSpeechStatus('recording', `🎙️ 聆聽中: "${currentRecordedTranscript.slice(-18)}"`);
+                    speechInterimFragment = currentInterim.trim();
+
+                    const liveText = getAccumulatedSpokenText();
+                    if (liveText) {
+                        setSpeechStatus('recording', `🎙️ 聆聽中: "${liveText.slice(-18)}"`);
                     }
                 };
 
                 recognitionInstance.onerror = (e) => {
                     console.warn('[Speech Error]', e);
-                    stopSpeechWorkflow();
+                    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+                        showFloatingToast('⚠️ 麥克風已被封鎖，請允許瀏覽器麥克風權限');
+                        stopSpeechWorkflow(true);
+                    }
                 };
 
+                // 核心防自動送出：手機版原生 VAD 斷開時，若使用者尚未主動按停止，自動無縫重啟，絕不私自送出！
                 recognitionInstance.onend = () => {
-                    if (isRecordingSpeech) {
-                        stopSpeechWorkflow();
+                    if (isRecordingSpeech && recognitionInstance) {
+                        try {
+                            recognitionInstance.start();
+                        } catch (_) {
+                            // 若原生重啟失敗，平滑維持狀態，等待使用者點擊停止
+                        }
                     }
                 };
 
@@ -2434,7 +2481,7 @@ Output strictly in JSON:
     async function startAudioStreamRecording(type, localeCode) {
         if (!navigator.mediaDevices?.getUserMedia) {
             showFloatingToast('⚠️ 瀏覽器未支援麥克風錄音');
-            stopSpeechWorkflow();
+            stopSpeechWorkflow(true);
             return;
         }
         try {
@@ -2452,14 +2499,14 @@ Output strictly in JSON:
             mediaRecorderInstance.start();
         } catch (_) {
             showFloatingToast('⚠️ 麥克風已被封鎖或無可用設備');
-            stopSpeechWorkflow();
+            stopSpeechWorkflow(true);
         }
     }
 
     async function startFallbackAudioStt(type, localeCode) {
         if (!navigator.mediaDevices?.getUserMedia) {
             showFloatingToast('⚠️ 瀏覽器未支援麥克風錄音');
-            stopSpeechWorkflow();
+            stopSpeechWorkflow(true);
             return;
         }
         try {
@@ -2485,22 +2532,26 @@ Output strictly in JSON:
             mediaRecorderInstance.start();
         } catch (_) {
             showFloatingToast('⚠️ 麥克風已被封鎖或無可用設備');
-            stopSpeechWorkflow();
+            stopSpeechWorkflow(true);
         }
     }
 
-    function stopSpeechWorkflow() {
+    // 核心統一：只有使用者主動點擊按鈕，或手動取消時，才真正停止語音！
+    function stopSpeechWorkflow(cancelOnly = false) {
         isRecordingSpeech = false;
         updateMicButtonsState(null);
         setSpeechStatus('idle', '');
 
-        const recognizedText = currentRecordedTranscript.trim();
-        currentRecordedTranscript = '';
+        const recognizedText = getAccumulatedSpokenText();
+        speechFinalChunks = [];
+        speechInterimFragment = '';
 
         if (recognitionInstance) {
-            try { recognitionInstance.stop(); } catch (_) {}
-            recognitionInstance = null;
-            if (recognizedText) {
+            const rec = recognitionInstance;
+            recognitionInstance = null; // 先清空指標防止 onend 循環重啟
+            try { rec.stop(); } catch (_) {}
+            
+            if (!cancelOnly && recognizedText) {
                 showDraftPreviewBubble('user', recognizedText);
             }
         }
