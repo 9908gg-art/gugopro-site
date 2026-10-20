@@ -305,7 +305,7 @@
                     };
                 }
 
-                if ([400, 401, 403, 404].includes(response.status)) {
+                if ([400, 401, 403].includes(response.status)) {
                     const errorBody = await response.text();
                     const fatalError = new Error(`HTTP_${response.status}`);
                     fatalError.status = response.status;
@@ -315,11 +315,15 @@
                     throw fatalError;
                 }
 
-                if ([429, 500, 503].includes(response.status)) {
+                if ([404, 429, 500, 502, 503].includes(response.status)) {
                     const nextModel = queue[i + 1];
                     const failedName = getModelDisplayName(model.api_name);
                     const nextName = nextModel ? getModelDisplayName(nextModel.api_name) : '備用模型';
-                    const reasonText = response.status === 429 ? '免費用量暫時達到上限 (429)' : `伺服器負載忙碌中 (${response.status})`;
+                    const reasonText = response.status === 429 
+                        ? '免費用量暫時達到上限 (429)' 
+                        : (response.status === 404 
+                            ? '模型失效或路由異常 (404)' 
+                            : `伺服器負載忙碌中 (${response.status})`);
 
                     console.warn(`[GugoAICore] ${failedName} ${reasonText}，即將切換至 ${nextName}...`);
 
@@ -373,7 +377,7 @@
                     lastError.status = 504;
                     continue;
                 }
-                if (err.status && [400, 401, 403, 404].includes(err.status)) {
+                if (err.status && [400, 401, 403].includes(err.status)) {
                     throw err;
                 }
                 lastError = err;
