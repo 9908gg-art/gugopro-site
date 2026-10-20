@@ -1668,7 +1668,7 @@
             followUpBtn: '繼續追問',
             micListeningToast: '🎙️ 正在聆聽中，請說出想問的問題...',
             micBlockedToast: '⚠️ 麥克風已被封鎖，請點擊網址列左側鎖頭開啟麥克風權限',
-            micNoDeviceToast: '⚠️ 找不到錄音設備或未支援語音辨識',
+            micNoDeviceToast: '⚠️ 目前瀏覽器（如 Firefox）未支援原生語音辨識，請改用 Google Chrome 或 Microsoft Edge 瀏覽器即可即時語音輸入！',
             micDoneToast: '語音輸入已完成 ✓',
             copyDoneToast: '解牌內容已成功複製！',
             journalSaveDone: '占卜紀錄已保存於本機日誌中 ✓'
@@ -1705,7 +1705,7 @@
             followUpBtn: 'Follow Up',
             micListeningToast: '🎙️ Listening... please speak your question clearly',
             micBlockedToast: '⚠️ Microphone blocked. Please allow mic permission in browser settings.',
-            micNoDeviceToast: '⚠️ Speech recognition is not available or supported in this browser.',
+            micNoDeviceToast: '⚠️ Speech recognition is not supported in this browser (e.g. Firefox). Please use Google Chrome or Microsoft Edge for native voice input!',
             micDoneToast: 'Voice input completed ✓',
             copyDoneToast: 'Reading copied to clipboard!',
             journalSaveDone: 'Reading saved to local journal ✓'
@@ -1742,7 +1742,7 @@
             followUpBtn: '続けて質問',
             micListeningToast: '🎙️ 音声を聴き取っています... ご質問をお話しください',
             micBlockedToast: '⚠️ マイクが拒否されています。ブラウザ設定で許可してください。',
-            micNoDeviceToast: '⚠️ お使いのブラウザは音声認識に対応していません。',
+            micNoDeviceToast: '⚠️ お使いのブラウザ（Firefoxなど）は音声認識に対応していません。Google ChromeまたはMicrosoft Edgeをご利用ください！',
             micDoneToast: '音声入力を完了しました ✓',
             copyDoneToast: '解読結果をコピーしました！',
             journalSaveDone: '占術日誌に記録を保存しました ✓'
@@ -2928,11 +2928,12 @@ Please provide a warm, progressive reading with appropriate emojis, and ALWAYS e
     document.getElementById('btn-journal-header').onclick = openJournalModal;
     document.getElementById('btn-journal-sidebar').onclick = () => { openJournalModal(); closeMenu(); };
 
-    // --- 純瀏覽器原生 Web Speech API 語音輸入（精確游標插入，徹底移除 AI 轉譯回退） ---
+    // --- 純瀏覽器原生 Web Speech API 語音輸入（含 Firefox 等瀏覽器明確指引） ---
     function startVoiceInputFlow() {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
         if (!SpeechRecognition) {
+            // 直接彈出針對火狐等非 Chromium 瀏覽器的明確指引提示
             showToast(t('micNoDeviceToast'));
             return;
         }
@@ -2997,6 +2998,7 @@ Please provide a warm, progressive reading with appropriate emojis, and ALWAYS e
         } catch (err) {
             console.warn("Speech recognition start failed:", err);
             stopRecording();
+            showToast(t('micNoDeviceToast'));
         }
     }
 
@@ -3055,7 +3057,7 @@ Please provide a warm, progressive reading with appropriate emojis, and ALWAYS e
         toast.textContent = text;
         toast.style.display = 'block';
         clearTimeout(showToast.timer);
-        showToast.timer = setTimeout(() => { toast.style.display = 'none'; }, 3200);
+        showToast.timer = setTimeout(() => { toast.style.display = 'none'; }, 4200);
     }
 
     function updateApiKeyButtonState() {
