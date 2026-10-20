@@ -1129,7 +1129,7 @@
 </div>
 
 <!-- Modals -->
-<!-- 多組 API Key 管理視窗（全面升級多 Key 新增/切換/刪除，完美支援手機版與電腦版） -->
+<!-- 多組 API Key 管理視窗 -->
 <div class="modal-overlay" id="modal-api">
     <div class="modal-content modal">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
@@ -1291,16 +1291,21 @@
     let vocabularyList = [];
     let activeChallengeSession = null;
     
-    // 語音錄製獨立變數（徹底與手動輸入框 user-text 分流）
-    // 採用「已定稿片段列表 (Final Chunks)」+「當前臨時片段 (Interim Fragment)」防疊字架構
-    let speechFinalChunks = [];
-    let speechInterimFragment = '';
+    // 語音全生命週期狀態管控
+    let isUserActivelyRecording = false; // 唯一手動錄音狀態旗標
+    let speechFullTranscript = '';       // 去重彙整文字
+    let speechRecognitionInstance = null;
+    let speechMediaRecorderInstance = null;
+    let speechMediaAudioStream = null;
+    let speechMediaAudioChunks = [];
+    let activeSpeechType = null;
+    let activeSpeechLocale = 'en-US';
 
     const LANG_NAMES = {
         'zh-TW': '繁體中文', 'zh-CN': '简体中文', 'en-US': 'English',
         'ja-JP': '日本語', 'ko-KR': '한국어', 'fr-FR': 'Français',
         'de-DE': 'Deutsch', 'es-ES': 'Español', 'th-TH': 'ไทย',
-        'vi-VN': 'Tiếng設Viet', 'id-ID': 'Bahasa Indonesia', 'pt-BR': 'Português',
+        'vi-VN': 'Tiếng Việt', 'id-ID': 'Bahasa Indonesia', 'pt-BR': 'Português',
         'it-IT': 'Italiano', 'ru-RU': 'Русский', 'ar-SA': 'العربية',
         'hi-IN': 'हिन्दी', 'ms-MY': 'Bahasa Melayu', 'nl-NL': 'Nederlands',
         'pl-PL': 'Polski', 'tr-TR': 'Türkçe'
@@ -1561,6 +1566,7 @@
         }
     }
 
+    // 氣泡內挑戰發音練習評分
     window.triggerBubbleVoiceEvaluation = async function(messageId, btn) {
         if (activeChallengeSession && activeChallengeSession.messageId === messageId) {
             stopChallengeRecording();
@@ -1570,7 +1576,7 @@
         if (activeChallengeSession) {
             stopChallengeRecording(true);
         }
-        if (isRecordingSpeech) {
+        if (isUserActivelyRecording) {
             stopSpeechWorkflow(true);
         }
 
@@ -1595,10 +1601,9 @@
             buttonEl: btn,
             speechLang,
             currentLocale,
-            finalChunks: [],
-            interimText: '',
+            finalText: '',
             confidence: null,
-            audioChunks: []
+            chunks: []
         };
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -1610,19 +1615,13 @@
                 rec.lang = currentLocale;
 
                 rec.onresult = (e) => {
-                    let interim = '';
-                    for (let i = e.resultIndex; i < e.results.length; i++) {
-                        const item = e.results[i][0];
-                        if (e.results[i].isFinal) {
-                            const trimmed = item.transcript.trim();
-                            if (trimmed) activeChallengeSession.finalChunks.push(trimmed);
-                            if (item.confidence) activeChallengeSession.confidence = item.confidence;
-                        } else {
-                            interim += item.transcript;
-                        }
+                    let totalStr = '';
+                    for (let i = 0; i < e.results.length; ++i) {
+                        totalStr += e.results[i][0].transcript;
+                        if (e.results[i][0].confidence) activeChallengeSession.confidence = e.results[i][0].confidence;
                     }
                     if (activeChallengeSession) {
-                        activeChallengeSession.interimText = interim.trim();
+                        activeChallengeSession.finalText = totalStr.trim();
                     }
                 };
 
@@ -1667,7 +1666,7 @@
                     try {
                         const recognized = await GugoAICore.transcribeAudio(audioBlob, { language: currentLocale });
                         if (activeChallengeSession) {
-                            activeChallengeSession.finalChunks = [recognized.trim()];
+                            activeChallengeSession.finalText = (recognized || '').trim();
                             activeChallengeSession.confidence = 0.9;
                             finishChallengeEvaluation();
                         }
@@ -1717,13 +1716,13 @@
         activeChallengeSession = null;
         resetChallengeButton(session.buttonEl);
 
-        const joined = [...session.finalChunks, session.interimText].filter(Boolean).join(' ').trim();
-        if (!joined) {
+        const text = (session.finalText || '').trim();
+        if (!text) {
             showFloatingToast('⚠️ 未辨識到清晰聲音，請再試一次');
             return;
         }
 
-        const scoreObj = calculatePronunciationScore(session.targetText, joined, session.confidence);
+        const scoreObj = calculatePronunciationScore(session.targetText, text, session.confidence);
         updateUserMessageScore(session.messageId, scoreObj);
         showFloatingToast(`🎯 發音評分完成：${scoreObj.score} 分 (${scoreObj.label})`);
     }
@@ -2319,14 +2318,6 @@ Output strictly in JSON:
         }).join('');
     }
 
-    let mediaRecorderInstance = null;
-    let mediaAudioStream = null;
-    let mediaAudioChunks = [];
-    let isRecordingSpeech = false;
-    let recognitionInstance = null;
-    let activeSpeechType = null;
-    let speechActiveLocale = 'en-US';
-
     function showFloatingToast(msg) {
         const panel = document.getElementById('error-panel');
         const txt = document.getElementById('error-msg');
@@ -2372,15 +2363,9 @@ Output strictly in JSON:
         } catch (_) {}
     }
 
-    // --- 核心防疊字與手動結束控制演算法 ---
-    function getAccumulatedSpokenText() {
-        const parts = [...speechFinalChunks];
-        if (speechInterimFragment) {
-            parts.push(speechInterimFragment);
-        }
-        return parts.join(' ').replace(/\s+/g, ' ').trim();
-    }
-
+    // ========================================================
+    // 終極防斷、防自動送出與防疊字音訊引擎
+    // ========================================================
     async function startSpeechWorkflow(type) {
         if (!GugoAICore.hasApiKey()) {
             openApiKeyModal();
@@ -2395,169 +2380,129 @@ Output strictly in JSON:
         const myLang = document.getElementById('my-lang').value;
         const currentLocale = isLearning ? (STT_LOCALES[targetLang] || targetLang) : (STT_LOCALES[myLang] || myLang);
 
-        isRecordingSpeech = true;
+        isUserActivelyRecording = true;
         activeSpeechType = type;
-        speechActiveLocale = currentLocale;
-        
-        // 核心重置：徹底清空已定稿片段與臨時片段
-        speechFinalChunks = [];
-        speechInterimFragment = '';
+        activeSpeechLocale = currentLocale;
+        speechFullTranscript = '';
         
         updateMicButtonsState(type);
         playStartCueTone();
 
         const inputMode = document.getElementById('speech-input-mode-select')?.value || 'text';
-        setSpeechStatus('recording', `🎙️ 正在錄製 ${LANG_FLAGS[isLearning ? targetLang : myLang]}（點擊麥克風即可停止）...`);
+        setSpeechStatus('recording', `🎙️ 正在錄製 ${LANG_FLAGS[isLearning ? targetLang : myLang]}（點擊按鈕即可停止）...`);
 
-        if (inputMode === 'audio') {
-            startAudioStreamRecording(type, currentLocale);
-            return;
-        }
-
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (SpeechRecognition) {
+        // 核心防斷：在手機上無論如何都要拉起 MediaRecorder 保底！
+        // 只要 MediaRecorder 在錄，手機麥克風永遠常駐，絕對不會因為靜音而中斷！
+        if (navigator.mediaDevices?.getUserMedia) {
             try {
-                if (recognitionInstance) {
-                    try { recognitionInstance.abort(); } catch (_) {}
-                    recognitionInstance = null;
-                }
-                recognitionInstance = new SpeechRecognition();
-                recognitionInstance.continuous = true;
-                recognitionInstance.interimResults = true;
-                recognitionInstance.lang = currentLocale;
+                speechMediaAudioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                speechMediaAudioChunks = [];
+                speechMediaRecorderInstance = new MediaRecorder(speechMediaAudioStream);
+                speechMediaRecorderInstance.ondataavailable = e => { 
+                    if (e.data.size > 0) speechMediaAudioChunks.push(e.data); 
+                };
+                speechMediaRecorderInstance.onstop = async () => {
+                    if (speechMediaAudioStream) {
+                        speechMediaAudioStream.getTracks().forEach(t => t.stop());
+                        speechMediaAudioStream = null;
+                    }
+                    if (!speechMediaAudioChunks.length) {
+                        setSpeechStatus('idle', '');
+                        return;
+                    }
+                    const audioBlob = new Blob(speechMediaAudioChunks, { type: speechMediaAudioChunks[0]?.type || 'audio/webm' });
 
-                // 核心防疊字：嚴格依據 isFinal 與索引分流，杜絕全域重複累加
-                recognitionInstance.onresult = (event) => {
-                    let currentInterim = '';
-                    for (let i = event.resultIndex; i < event.results.length; i++) {
-                        const res = event.results[i];
-                        const transcript = res[0]?.transcript || '';
-                        if (res.isFinal) {
-                            const cleanFinal = transcript.trim();
-                            if (cleanFinal) {
-                                speechFinalChunks.push(cleanFinal);
-                            }
+                    if (inputMode === 'audio') {
+                        // 音訊模式：直接生成帶播放器的草稿氣泡
+                        showDraftPreviewBubble(type, '', audioBlob);
+                        setSpeechStatus('idle', '');
+                    } else {
+                        // 文字模式：如果原生 Web Speech API 沒有抓到完整文字，使用 AI 高度精確兜底
+                        let finalTranscribed = speechFullTranscript.trim();
+                        if (!finalTranscribed) {
+                            setSpeechStatus('processing', '⏳ 正在轉譯語音文字中...');
+                            try {
+                                finalTranscribed = await GugoAICore.transcribeAudio(audioBlob, { language: currentLocale });
+                            } catch (_) {}
+                        }
+                        if (finalTranscribed) {
+                            showDraftPreviewBubble(type, finalTranscribed);
                         } else {
-                            currentInterim += transcript;
+                            showFloatingToast('⚠️ 未辨識到清晰聲音，請再試一次');
                         }
-                    }
-                    speechInterimFragment = currentInterim.trim();
-
-                    const liveText = getAccumulatedSpokenText();
-                    if (liveText) {
-                        setSpeechStatus('recording', `🎙️ 聆聽中: "${liveText.slice(-18)}"`);
+                        setSpeechStatus('idle', '');
                     }
                 };
-
-                recognitionInstance.onerror = (e) => {
-                    console.warn('[Speech Error]', e);
-                    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
-                        showFloatingToast('⚠️ 麥克風已被封鎖，請允許瀏覽器麥克風權限');
-                        stopSpeechWorkflow(true);
-                    }
-                };
-
-                // 核心防自動送出：手機版原生 VAD 斷開時，若使用者尚未主動按停止，自動無縫重啟，絕不私自送出！
-                recognitionInstance.onend = () => {
-                    if (isRecordingSpeech && recognitionInstance) {
-                        try {
-                            recognitionInstance.start();
-                        } catch (_) {
-                            // 若原生重啟失敗，平滑維持狀態，等待使用者點擊停止
-                        }
-                    }
-                };
-
-                recognitionInstance.start();
-                return;
+                speechMediaRecorderInstance.start(250); // 每 250ms 切片收集
             } catch (err) {
-                console.warn('[Native STT failed, switching to media]', err);
+                console.warn('[MediaRecorder stream init error]', err);
             }
         }
 
-        startFallbackAudioStt(type, currentLocale);
-    }
-
-    async function startAudioStreamRecording(type, localeCode) {
-        if (!navigator.mediaDevices?.getUserMedia) {
-            showFloatingToast('⚠️ 瀏覽器未支援麥克風錄音');
-            stopSpeechWorkflow(true);
-            return;
-        }
-        try {
-            mediaAudioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaAudioChunks = [];
-            mediaRecorderInstance = new MediaRecorder(mediaAudioStream);
-            mediaRecorderInstance.ondataavailable = e => { if (e.data.size > 0) mediaAudioChunks.push(e.data); };
-            mediaRecorderInstance.onstop = () => {
-                if (mediaAudioStream) { mediaAudioStream.getTracks().forEach(t => t.stop()); mediaAudioStream = null; }
-                if (!mediaAudioChunks.length) { setSpeechStatus('idle', ''); return; }
-                const audioBlob = new Blob(mediaAudioChunks, { type: mediaAudioChunks[0]?.type || 'audio/webm' });
-                showDraftPreviewBubble(type, '', audioBlob);
-                setSpeechStatus('idle', '');
-            };
-            mediaRecorderInstance.start();
-        } catch (_) {
-            showFloatingToast('⚠️ 麥克風已被封鎖或無可用設備');
-            stopSpeechWorkflow(true);
-        }
-    }
-
-    async function startFallbackAudioStt(type, localeCode) {
-        if (!navigator.mediaDevices?.getUserMedia) {
-            showFloatingToast('⚠️ 瀏覽器未支援麥克風錄音');
-            stopSpeechWorkflow(true);
-            return;
-        }
-        try {
-            mediaAudioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaAudioChunks = [];
-            mediaRecorderInstance = new MediaRecorder(mediaAudioStream);
-            mediaRecorderInstance.ondataavailable = e => { if (e.data.size > 0) mediaAudioChunks.push(e.data); };
-            mediaRecorderInstance.onstop = async () => {
-                setSpeechStatus('processing', '⏳ 正在轉譯語音中...');
-                if (mediaAudioStream) { mediaAudioStream.getTracks().forEach(t => t.stop()); mediaAudioStream = null; }
-                if (!mediaAudioChunks.length) { setSpeechStatus('idle', ''); return; }
-                const audioBlob = new Blob(mediaAudioChunks, { type: mediaAudioChunks[0]?.type || 'audio/webm' });
+        // 若為文字模式，且瀏覽器支援 Web Speech API，並行啟動 Web Speech 做即時流式識別
+        if (inputMode === 'text') {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (SpeechRecognition) {
                 try {
-                    const text = await GugoAICore.transcribeAudio(audioBlob, { language: localeCode });
-                    if (text) {
-                        showDraftPreviewBubble(type, text.trim());
-                    }
-                } catch (err) {
-                    showFloatingToast(GugoAICore.getFriendlyErrorMessage(err));
-                }
-                setSpeechStatus('idle', '');
-            };
-            mediaRecorderInstance.start();
-        } catch (_) {
-            showFloatingToast('⚠️ 麥克風已被封鎖或無可用設備');
-            stopSpeechWorkflow(true);
+                    speechRecognitionInstance = new SpeechRecognition();
+                    speechRecognitionInstance.continuous = true;
+                    speechRecognitionInstance.interimResults = true;
+                    speechRecognitionInstance.lang = currentLocale;
+
+                    // 核心防疊字：捨棄 Push 陣列，直接從 0 遍歷 event.results 唯一真實歷史！
+                    speechRecognitionInstance.onresult = (event) => {
+                        let totalResultText = '';
+                        for (let i = 0; i < event.results.length; ++i) {
+                            totalResultText += event.results[i][0].transcript;
+                        }
+                        speechFullTranscript = totalResultText.trim();
+                        if (speechFullTranscript) {
+                            setSpeechStatus('recording', `🎙️ 聆聽中: "${speechFullTranscript.slice(-18)}"`);
+                        }
+                    };
+
+                    speechRecognitionInstance.onerror = (e) => {
+                        console.warn('[WebSpeech error, fallback guarding]', e);
+                    };
+
+                    // 原生如果因靜音斷開，只要使用者沒手動停止，不執行任何停止動作（MediaRecorder 在保底）
+                    speechRecognitionInstance.onend = () => {
+                        if (isUserActivelyRecording && speechRecognitionInstance) {
+                            try { speechRecognitionInstance.start(); } catch (_) {}
+                        }
+                    };
+
+                    speechRecognitionInstance.start();
+                } catch (_) {}
+            }
         }
     }
 
-    // 核心統一：只有使用者主動點擊按鈕，或手動取消時，才真正停止語音！
+    // 核心手動停止：使用者再次點擊時才真正停止
     function stopSpeechWorkflow(cancelOnly = false) {
-        isRecordingSpeech = false;
+        if (!isUserActivelyRecording) return;
+        isUserActivelyRecording = false;
         updateMicButtonsState(null);
         setSpeechStatus('idle', '');
 
-        const recognizedText = getAccumulatedSpokenText();
-        speechFinalChunks = [];
-        speechInterimFragment = '';
-
-        if (recognitionInstance) {
-            const rec = recognitionInstance;
-            recognitionInstance = null; // 先清空指標防止 onend 循環重啟
+        // 停止 Web Speech
+        if (speechRecognitionInstance) {
+            const rec = speechRecognitionInstance;
+            speechRecognitionInstance = null;
             try { rec.stop(); } catch (_) {}
-            
-            if (!cancelOnly && recognizedText) {
-                showDraftPreviewBubble('user', recognizedText);
-            }
         }
 
-        if (mediaRecorderInstance && mediaRecorderInstance.state === 'recording') {
-            try { mediaRecorderInstance.stop(); } catch (_) {}
+        // 停止 MediaRecorder（停止後會觸發 onstop 彈出待確認草稿）
+        if (speechMediaRecorderInstance && speechMediaRecorderInstance.state === 'recording') {
+            try { speechMediaRecorderInstance.stop(); } catch (_) {}
+        } else if (speechMediaAudioStream) {
+            speechMediaAudioStream.getTracks().forEach(t => t.stop());
+            speechMediaAudioStream = null;
+        }
+
+        if (cancelOnly) {
+            speechFullTranscript = '';
+            speechMediaAudioChunks = [];
         }
     }
 
@@ -3004,7 +2949,7 @@ Output strictly in JSON:
     document.getElementById('btn-menu-close').onclick = () => closeMenu();
     overlay.onclick = () => closeMenu();
 
-    // --- 多金鑰管理視窗渲染與事件（完美相容手機與電腦） ---
+    // 多金鑰管理介面
     function renderApiKeysManager() {
         const listEl = document.getElementById('api-keys-list');
         const countBadge = document.getElementById('api-keys-count-badge');
@@ -3149,18 +3094,18 @@ Output strictly in JSON:
         });
     };
 
-    // 核心統一：手機版與電腦版行為 100% 相同（按一下錄音，再按一下停止）
+    // 核心統一：按一下錄音，再按一下停止
     document.getElementById('btn-mic').onclick = () => {
-        if (isRecordingSpeech) stopSpeechWorkflow();
+        if (isUserActivelyRecording) stopSpeechWorkflow();
         else startSpeechWorkflow('learning');
     };
     document.getElementById('btn-mic-my').onclick = () => {
-        if (isRecordingSpeech) stopSpeechWorkflow();
+        if (isUserActivelyRecording) stopSpeechWorkflow();
         else startSpeechWorkflow('native');
     };
     document.getElementById('btn-send').onclick = () => sendMessage();
 
-    // 手動打字狀態監聽（純打字時伸縮，與語音完全分流）
+    // 手動打字狀態監聽
     const composerRow = document.getElementById('capsule-composer-row');
     const userTextInput = document.getElementById('user-text');
 
