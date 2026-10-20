@@ -3,10 +3,11 @@
  * 適用於 GugoPro 旗下全站 AI 工具
  *
  * 核心升級重點：
- *  1. 完整錯誤碼白話人話解釋（400, 401, 403, 404, 429, 500, 503, 504）。
- *  2. 遇到 404 或 503 時，不卡死、不依賴更換 Key，而是直接觸發「動態模型降級（Model Fallback）」轉移至備援模型。
- *  3. 安全單 Key 運作，避免同 IP 頻繁更換多組 Key 觸發 Google 風控封鎖。
- *  4. 全域配額精確扣減，杜絕 null 剩餘。
+ *  1. 完整支援多組 API Key 儲存、新增、刪除與使用中切換（相容舊版單 Key 儲存）。
+ *  2. API 請求遇到 429 配額耗盡時，若配置了多組 Key，自動依序切換備用 Key 繼續請求。
+ *  3. 完整錯誤碼白話人話解釋（400, 401, 403, 404, 429, 500, 503, 504）。
+ *  4. 遇到 404 或 503 時，自動觸發動態模型降級（Model Fallback）轉移至備援模型。
+ *  5. 全域配額精確扣減，杜絕 null 剩餘。
  */
 
 (function(window) {
@@ -16,7 +17,9 @@
 
     const CONFIG = {
         QUOTA_MODELS_URL: 'https://quota.gugopro.com/gemini_rate_limits.json',
-        API_KEY_STORAGE_KEYS: ['gugopro_gemini_api_key', 'gemini_api_key'],
+        API_KEYS_STORAGE_KEY: 'gugopro_gemini_api_keys_v2',
+        ACTIVE_KEY_INDEX_STORAGE_KEY: 'gugopro_gemini_active_key_index_v2',
+        LEGACY_STORAGE_KEYS: ['gugopro_gemini_api_key', 'gemini_api_key'],
         MODEL_PREFERENCE_KEY: 'gugopro_ai_tutor_model_preference_v1',
         MODEL_DISABLED_KEY: 'gugopro_ai_tutor_disabled_models_v1',
         DYNAMIC_MODELS_CACHE_KEY: 'gugopro_dynamic_models_catalog_cache_v2',
@@ -32,7 +35,9 @@
         modelBusyStates: new Map(),
         currentModel: null,
         currentModelIndex: 0,
-        modelCatalogPromise: null
+        modelCatalogPromise: null,
+        apiKeys: [],
+        activeKeyIndex: 0
     };
 
     // 白話文錯誤代碼字典
@@ -40,7 +45,7 @@
         'MISSING_API_KEY': '🔑 尚未設定 Gemini API Key，請先輸入您的免費金鑰即可開始使用。',
         'NO_ENABLED_MODELS': '⚠️ 目前所有 AI 模型均處於停用狀態，請於側邊欄開啟至少一個模型。',
         'HTTP_400': '⚠️ 輸入內容或音訊格式不相符，請確認後重新發送。',
-        'HTTP_401': '🔑 API Key 填寫有誤或已過期，請點擊設定重新貼上正確的 Gemini API Key。',
+        'HTTP_401': '🔑 目前使用的 API Key 填寫有誤或已過期，請點擊設定檢查或切換有效金鑰。',
         'HTTP_403': '🛡️ 目前 API Key 權限不足或受專案限制，請確認 Google Cloud 專案權限。',
         'HTTP_404': '⚠️ 該模型節點正在維護，系統已為您自動切換至備援模型繼續對話...',
         'HTTP_429': '⚡ 目前模型免費用量暫時飽和，系統已自動為您切換至負載較低的備援模型。',
@@ -72,29 +77,119 @@
         }
     }
 
-    function getApiKey() {
-        for (const key of CONFIG.API_KEY_STORAGE_KEYS) {
-            const raw = (localStorage.getItem(key) || '').trim();
-            const decoded = decodeApiKey(raw);
-            if (decoded) return decoded;
+    // --- 多組 API KEY 管理引擎 ---
+    function loadApiKeys() {
+        try {
+            const saved = JSON.parse(localStorage.getItem(CONFIG.API_KEYS_STORAGE_KEY) || '[]');
+            state.apiKeys = Array.isArray(saved) ? saved.map(String).map(s => s.trim()).filter(Boolean) : [];
+        } catch (_) {
+            state.apiKeys = [];
         }
-        return '';
+
+        // 向下相容舊版單一金鑰儲存
+        if (state.apiKeys.length === 0) {
+            for (const key of CONFIG.LEGACY_STORAGE_KEYS) {
+                const legacy = (localStorage.getItem(key) || '').trim();
+                const decoded = decodeApiKey(legacy);
+                if (decoded && !state.apiKeys.includes(decoded)) {
+                    state.apiKeys.push(decoded);
+                }
+            }
+            if (state.apiKeys.length > 0) {
+                persistApiKeys();
+            }
+        }
+
+        const savedIndex = parseInt(localStorage.getItem(CONFIG.ACTIVE_KEY_INDEX_STORAGE_KEY) || '0', 10);
+        state.activeKeyIndex = (Number.isFinite(savedIndex) && savedIndex >= 0 && savedIndex < state.apiKeys.length) ? savedIndex : 0;
     }
 
-    function setApiKey(key) {
-        const trimmed = String(key || '').trim();
-        if (trimmed) {
-            CONFIG.API_KEY_STORAGE_KEYS.forEach(k => localStorage.setItem(k, trimmed));
+    function persistApiKeys() {
+        localStorage.setItem(CONFIG.API_KEYS_STORAGE_KEY, JSON.stringify(state.apiKeys));
+        localStorage.setItem(CONFIG.ACTIVE_KEY_INDEX_STORAGE_KEY, String(state.activeKeyIndex));
+        // 同步覆蓋舊版單一 Key，確保相容舊外掛
+        const activeKey = getApiKey();
+        if (activeKey) {
+            CONFIG.LEGACY_STORAGE_KEYS.forEach(k => localStorage.setItem(k, activeKey));
         } else {
-            CONFIG.API_KEY_STORAGE_KEYS.forEach(k => localStorage.removeItem(k));
+            CONFIG.LEGACY_STORAGE_KEYS.forEach(k => localStorage.removeItem(k));
         }
-        window.dispatchEvent(new CustomEvent('gugopro:apikey-updated', { detail: { hasKey: !!trimmed } }));
+        window.dispatchEvent(new CustomEvent('gugopro:apikey-updated', { detail: { count: state.apiKeys.length, hasKey: state.apiKeys.length > 0 } }));
+    }
+
+    function getApiKeys() {
+        return [...state.apiKeys];
+    }
+
+    function getApiKey() {
+        if (state.apiKeys.length === 0) loadApiKeys();
+        if (state.apiKeys.length === 0) return '';
+        if (state.activeKeyIndex < 0 || state.activeKeyIndex >= state.apiKeys.length) {
+            state.activeKeyIndex = 0;
+        }
+        return state.apiKeys[state.activeKeyIndex] || state.apiKeys[0] || '';
     }
 
     function hasApiKey() {
-        return !!getApiKey();
+        return getApiKeys().length > 0;
     }
 
+    function addApiKey(rawKey) {
+        const clean = String(rawKey || '').trim();
+        if (!clean) return { success: false, message: '金鑰內容不能為空' };
+        if (clean.length < 20) return { success: false, message: 'Gemini API Key 格式長度不足' };
+
+        loadApiKeys();
+        if (state.apiKeys.includes(clean)) {
+            return { success: false, message: '該金鑰已存在列表中' };
+        }
+
+        state.apiKeys.push(clean);
+        // 若為第一組新增的金鑰，預設設為啟用中
+        if (state.apiKeys.length === 1) {
+            state.activeKeyIndex = 0;
+        }
+        persistApiKeys();
+        return { success: true, message: '金鑰新增成功', count: state.apiKeys.length };
+    }
+
+    function removeApiKey(keyOrIndex) {
+        loadApiKeys();
+        let targetIndex = -1;
+        if (typeof keyOrIndex === 'number') {
+            targetIndex = keyOrIndex;
+        } else if (typeof keyOrIndex === 'string') {
+            targetIndex = state.apiKeys.indexOf(keyOrIndex.trim());
+        }
+
+        if (targetIndex < 0 || targetIndex >= state.apiKeys.length) {
+            return { success: false, message: '找不到欲刪除的金鑰' };
+        }
+
+        state.apiKeys.splice(targetIndex, 1);
+        if (state.activeKeyIndex >= state.apiKeys.length) {
+            state.activeKeyIndex = Math.max(0, state.apiKeys.length - 1);
+        }
+        persistApiKeys();
+        return { success: true, message: '金鑰已成功移除', count: state.apiKeys.length };
+    }
+
+    function setActiveKeyIndex(index) {
+        loadApiKeys();
+        if (index >= 0 && index < state.apiKeys.length) {
+            state.activeKeyIndex = index;
+            persistApiKeys();
+            return true;
+        }
+        return false;
+    }
+
+    function maskApiKey(key) {
+        if (!key || key.length < 12) return '******';
+        return `${key.slice(0, 6)}...${key.slice(-4)}`;
+    }
+
+    // --- 模型管理與配額計算 ---
     function loadDisabledModels() {
         try {
             const saved = JSON.parse(localStorage.getItem(CONFIG.MODEL_DISABLED_KEY) || '[]');
@@ -265,9 +360,11 @@
         return model ? model.display_name : apiName;
     }
 
+    // --- 核心請求排程執行器（支援多 Key 備援與動態模型降級） ---
     async function executeGeminiRequest(payload, options = {}) {
-        const apiKey = getApiKey();
-        if (!apiKey) {
+        loadApiKeys();
+        const allKeys = getApiKeys();
+        if (allKeys.length === 0) {
             const err = new Error('MISSING_API_KEY');
             err.code = 'MISSING_API_KEY';
             err.friendlyMessage = ERROR_EXPLANATIONS['MISSING_API_KEY'];
@@ -289,143 +386,147 @@
         const attemptedModels = [];
         let lastError = null;
 
-        for (let i = 0; i < queue.length; i++) {
-            const model = queue[i];
-            attemptedModels.push(model.api_name);
-            state.currentModel = model.api_name;
-            state.currentModelIndex = i;
+        // 若配置了多組 Key，將使用中的 Key 放在最前面，其餘依序作為備援 Key
+        const keyQueue = [
+            allKeys[state.activeKeyIndex] || allKeys[0],
+            ...allKeys.filter((_, idx) => idx !== state.activeKeyIndex)
+        ];
 
-            if (typeof options.onModelAttempt === 'function') {
-                options.onModelAttempt(model.api_name, i, queue.length);
-            }
+        for (let kIdx = 0; kIdx < keyQueue.length; kIdx++) {
+            const currentApiKey = keyQueue[kIdx];
 
-            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model.api_name)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+            for (let i = 0; i < queue.length; i++) {
+                const model = queue[i];
+                attemptedModels.push(`${model.api_name}[Key-${kIdx + 1}]`);
+                state.currentModel = model.api_name;
+                state.currentModelIndex = i;
 
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), CONFIG.REQUEST_TIMEOUT_MS);
-
-                const response = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload),
-                    signal: controller.signal
-                });
-                clearTimeout(timeoutId);
-
-                if (response.ok) {
-                    const data = await response.json();
-                    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-                    if (!text) throw new Error('EMPTY_RESPONSE');
-
-                    if (window.GugoProGlobalAIQuota?.recordUsage) {
-                        window.GugoProGlobalAIQuota.recordUsage(1, model.api_name);
-                    }
-                    state.modelBusyStates.delete(model.api_name);
-
-                    if (typeof options.onSuccess === 'function') {
-                        options.onSuccess(model.api_name);
-                    }
-
-                    return {
-                        text: text.trim(),
-                        raw: data,
-                        modelName: model.api_name
-                    };
+                if (typeof options.onModelAttempt === 'function') {
+                    options.onModelAttempt(model.api_name, i, queue.length);
                 }
 
-                // 401, 403 屬於金鑰本身的致命問題，必須立即彈出輸入視窗，不無謂重試
-                if ([401, 403].includes(response.status)) {
-                    const errorBody = await response.text();
-                    const fatalError = new Error(`HTTP_${response.status}`);
-                    fatalError.status = response.status;
-                    fatalError.code = `HTTP_${response.status}`;
-                    fatalError.friendlyMessage = ERROR_EXPLANATIONS[`HTTP_${response.status}`];
-                    fatalError.details = errorBody;
-                    fatalError.attemptedModels = attemptedModels;
-                    throw fatalError;
-                }
+                const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model.api_name)}:generateContent?key=${encodeURIComponent(currentApiKey)}`;
 
-                // 核心重點：遇到 404（模型失效/地區節點找不到）、429（配額暫時飽和）、500/503（伺服器負載）
-                // 絕對不要卡死！立刻切換至隊列中的下一個模型進行無縫降級（Fallback）！
-                if ([404, 429, 500, 503].includes(response.status)) {
-                    const nextModel = queue[i + 1];
-                    const failedName = getModelDisplayName(model.api_name);
-                    const nextName = nextModel ? getModelDisplayName(nextModel.api_name) : '備用模型';
-                    
-                    let reasonText = '';
-                    if (response.status === 404) reasonText = '模型節點維護中 (404)';
-                    else if (response.status === 429) reasonText = '免費用量暫時飽和 (429)';
-                    else reasonText = `伺服器負載忙碌 (${response.status})`;
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), CONFIG.REQUEST_TIMEOUT_MS);
 
-                    console.warn(`[GugoAICore] ${failedName} ${reasonText}，正在為您無縫切換至 ${nextName}...`);
+                    const response = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload),
+                        signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
 
-                    const fallbackDetail = {
-                        failedModel: model.api_name,
-                        failedDisplayName: failedName,
-                        nextModel: nextModel?.api_name,
-                        nextDisplayName: nextName,
-                        status: response.status,
-                        reason: reasonText,
-                        friendlyMessage: response.status === 404 
-                            ? `⚠️ 模型 ${failedName} 節點維護中，已自動為您切換至 ${nextName} 繼續對話...`
-                            : `⚡ 模型 ${failedName} 負載較高，已為您無縫切換至 ${nextName} 繼續服務。`
-                    };
+                    if (response.ok) {
+                        const data = await response.json();
+                        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+                        if (!text) throw new Error('EMPTY_RESPONSE');
 
-                    if (typeof options.onModelFallback === 'function') {
-                        options.onModelFallback(fallbackDetail);
+                        if (window.GugoProGlobalAIQuota?.recordUsage) {
+                            window.GugoProGlobalAIQuota.recordUsage(1, model.api_name);
+                        }
+                        state.modelBusyStates.delete(model.api_name);
+
+                        if (typeof options.onSuccess === 'function') {
+                            options.onSuccess(model.api_name);
+                        }
+
+                        return {
+                            text: text.trim(),
+                            raw: data,
+                            modelName: model.api_name
+                        };
                     }
 
-                    window.dispatchEvent(new CustomEvent('gugopro:model-fallback', { detail: fallbackDetail }));
-
-                    state.modelBusyStates.set(model.api_name, { status: response.status, time: Date.now() });
-                    lastError = new Error(`HTTP_${response.status}`);
-                    lastError.status = response.status;
-                    lastError.code = `HTTP_${response.status}`;
-                    lastError.friendlyMessage = ERROR_EXPLANATIONS[`HTTP_${response.status}`];
-                    continue;
-                }
-
-                // 其他 400 錯誤
-                const otherError = new Error(`HTTP_${response.status}`);
-                otherError.status = response.status;
-                otherError.code = `HTTP_${response.status}`;
-                otherError.friendlyMessage = ERROR_EXPLANATIONS[`HTTP_${response.status}`] || `⚠️ 伺服器回應異常 (${response.status})`;
-                throw otherError;
-
-            } catch (err) {
-                if (err.name === 'AbortError') {
-                    const nextModel = queue[i + 1];
-                    const failedName = getModelDisplayName(model.api_name);
-                    const nextName = nextModel ? getModelDisplayName(nextModel.api_name) : '備用模型';
-
-                    const timeoutDetail = {
-                        failedModel: model.api_name,
-                        failedDisplayName: failedName,
-                        nextModel: nextModel?.api_name,
-                        nextDisplayName: nextName,
-                        status: 504,
-                        reason: '連線反應逾時 (504)',
-                        friendlyMessage: `🌐 連線反應逾時，正在為您切換至 ${nextName} 重試...`
-                    };
-
-                    if (typeof options.onModelFallback === 'function') {
-                        options.onModelFallback(timeoutDetail);
+                    // 401 屬於該組 Key 無效，若有多組 Key，切換至下一組 Key 重試！
+                    if ([401, 403].includes(response.status)) {
+                        console.warn(`[GugoAICore] Key (${maskApiKey(currentApiKey)}) 回應 ${response.status} 權限無效，嘗試備援 Key...`);
+                        lastError = new Error(`HTTP_${response.status}`);
+                        lastError.status = response.status;
+                        lastError.code = `HTTP_${response.status}`;
+                        lastError.friendlyMessage = ERROR_EXPLANATIONS[`HTTP_${response.status}`];
+                        break; // 跳出當前 Key 的模型循環，進入下一組 Key
                     }
 
-                    window.dispatchEvent(new CustomEvent('gugopro:model-fallback', { detail: timeoutDetail }));
+                    // 遇到 404、429、500、503：自動切換至隊列中的下一個模型進行無縫降級（Fallback）！
+                    if ([404, 429, 500, 503].includes(response.status)) {
+                        const nextModel = queue[i + 1];
+                        const failedName = getModelDisplayName(model.api_name);
+                        const nextName = nextModel ? getModelDisplayName(nextModel.api_name) : '備用模型';
+                        
+                        let reasonText = '';
+                        if (response.status === 404) reasonText = '模型節點維護中 (404)';
+                        else if (response.status === 429) reasonText = '免費用量暫時飽和 (429)';
+                        else reasonText = `伺服器負載忙碌 (${response.status})`;
 
-                    state.modelBusyStates.set(model.api_name, { status: 'TIMEOUT', time: Date.now() });
-                    lastError = new Error('TIMEOUT');
-                    lastError.status = 504;
-                    lastError.code = 'HTTP_504';
-                    lastError.friendlyMessage = ERROR_EXPLANATIONS['HTTP_504'];
-                    continue;
+                        console.warn(`[GugoAICore] ${failedName} ${reasonText}，正在為您切換至 ${nextName}...`);
+
+                        const fallbackDetail = {
+                            failedModel: model.api_name,
+                            failedDisplayName: failedName,
+                            nextModel: nextModel?.api_name,
+                            nextDisplayName: nextName,
+                            status: response.status,
+                            reason: reasonText,
+                            friendlyMessage: response.status === 404 
+                                ? `⚠️ 模型 ${failedName} 節點維護中，已自動為您切換至 ${nextName} 繼續對話...`
+                                : `⚡ 模型 ${failedName} 負載較高，已為您無縫切換至 ${nextName} 繼續服務。`
+                        };
+
+                        if (typeof options.onModelFallback === 'function') {
+                            options.onModelFallback(fallbackDetail);
+                        }
+
+                        window.dispatchEvent(new CustomEvent('gugopro:model-fallback', { detail: fallbackDetail }));
+
+                        state.modelBusyStates.set(model.api_name, { status: response.status, time: Date.now() });
+                        lastError = new Error(`HTTP_${response.status}`);
+                        lastError.status = response.status;
+                        lastError.code = `HTTP_${response.status}`;
+                        lastError.friendlyMessage = ERROR_EXPLANATIONS[`HTTP_${response.status}`];
+                        continue;
+                    }
+
+                    // 其他 400 錯誤
+                    const otherError = new Error(`HTTP_${response.status}`);
+                    otherError.status = response.status;
+                    otherError.code = `HTTP_${response.status}`;
+                    otherError.friendlyMessage = ERROR_EXPLANATIONS[`HTTP_${response.status}`] || `⚠️ 伺服器回應異常 (${response.status})`;
+                    throw otherError;
+
+                } catch (err) {
+                    if (err.name === 'AbortError') {
+                        const nextModel = queue[i + 1];
+                        const failedName = getModelDisplayName(model.api_name);
+                        const nextName = nextModel ? getModelDisplayName(nextModel.api_name) : '備用模型';
+
+                        const timeoutDetail = {
+                            failedModel: model.api_name,
+                            failedDisplayName: failedName,
+                            nextModel: nextModel?.api_name,
+                            nextDisplayName: nextName,
+                            status: 504,
+                            reason: '連線反應逾時 (504)',
+                            friendlyMessage: `🌐 連線反應逾時，正在為您切換至 ${nextName} 重試...`
+                        };
+
+                        if (typeof options.onModelFallback === 'function') {
+                            options.onModelFallback(timeoutDetail);
+                        }
+
+                        window.dispatchEvent(new CustomEvent('gugopro:model-fallback', { detail: timeoutDetail }));
+
+                        state.modelBusyStates.set(model.api_name, { status: 'TIMEOUT', time: Date.now() });
+                        lastError = new Error('TIMEOUT');
+                        lastError.status = 504;
+                        lastError.code = 'HTTP_504';
+                        lastError.friendlyMessage = ERROR_EXPLANATIONS['HTTP_504'];
+                        continue;
+                    }
+                    lastError = err;
                 }
-                if (err.status && [401, 403].includes(err.status)) {
-                    throw err;
-                }
-                lastError = err;
             }
         }
 
@@ -543,8 +644,13 @@
 
     window.GugoAICore = {
         getApiKey,
-        setApiKey,
+        getApiKeys,
         hasApiKey,
+        addApiKey,
+        removeApiKey,
+        setActiveKeyIndex,
+        getActiveKeyIndex: () => state.activeKeyIndex,
+        maskApiKey,
         fetchModels,
         getAvailableModels: () => [...state.availableModels],
         getEnabledModels,
@@ -561,6 +667,7 @@
     };
 
     document.addEventListener('DOMContentLoaded', () => {
+        loadApiKeys();
         loadDisabledModels();
         try {
             const cached = JSON.parse(localStorage.getItem(CONFIG.DYNAMIC_MODELS_CACHE_KEY) || '[]');
