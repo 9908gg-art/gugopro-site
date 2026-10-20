@@ -896,10 +896,6 @@
             <option value="text" selected="selected">語音辨識為文字發送</option>
             <option value="audio">直接傳送真實錄音給 AI</option>
         </select>
-
-        <label class="speech-start-cue-setting" for="speech-start-cue-enabled" style="display:flex; align-items:center; gap:6px; margin-top:10px; font-size:0.72rem; color:var(--text-dim); cursor:pointer;">
-            <input id="speech-start-cue-enabled" type="checkbox" checked="checked"> 按下語音時播放啟動提示音
-        </label>
     </div>
 
     <div style="padding: 10px 16px 0; text-align: center;">
@@ -1606,45 +1602,6 @@
             chunks: []
         };
 
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (SpeechRecognition) {
-            try {
-                const rec = new SpeechRecognition();
-                rec.continuous = true;
-                rec.interimResults = true;
-                rec.lang = currentLocale;
-
-                rec.onresult = (e) => {
-                    let totalStr = '';
-                    for (let i = 0; i < e.results.length; ++i) {
-                        totalStr += e.results[i][0].transcript;
-                        if (e.results[i][0].confidence) activeChallengeSession.confidence = e.results[i][0].confidence;
-                    }
-                    if (activeChallengeSession) {
-                        activeChallengeSession.finalText = totalStr.trim();
-                    }
-                };
-
-                rec.onerror = (e) => {
-                    console.warn('[Challenge STT Error]', e);
-                    stopChallengeRecording();
-                };
-
-                rec.onend = () => {
-                    if (activeChallengeSession) {
-                        finishChallengeEvaluation();
-                    }
-                };
-
-                activeChallengeSession.recognition = rec;
-                rec.start();
-                showFloatingToast(`🎙️ 正在錄音...朗讀完畢後請再次點擊按鈕停止！`);
-                return;
-            } catch (err) {
-                console.warn('[Native challenge rec failed, fallback to media]', err);
-            }
-        }
-
         if (navigator.mediaDevices?.getUserMedia) {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -1666,8 +1623,8 @@
                     try {
                         const recognized = await GugoAICore.transcribeAudio(audioBlob, { language: currentLocale });
                         if (activeChallengeSession) {
-                            activeChallengeSession.finalText = (recognized || '').trim();
-                            activeChallengeSession.confidence = 0.9;
+                            activeChallengeSession.finalText = cleanDuplicatedSpeechText((recognized || '').trim());
+                            activeChallengeSession.confidence = 0.92;
                             finishChallengeEvaluation();
                         }
                     } catch (_) {
@@ -1676,7 +1633,7 @@
                         activeChallengeSession = null;
                     }
                 };
-                mr.start();
+                mr.start(250);
                 showFloatingToast(`🎙️ 正在錄音...朗讀完畢後請再次點擊按鈕停止！`);
             } catch (_) {
                 showFloatingToast('⚠️ 麥克風已被封鎖或無可用設備');
@@ -1697,15 +1654,12 @@
         const session = activeChallengeSession;
         if (cancelOnly) {
             resetChallengeButton(session.buttonEl);
-            if (session.recognition) { try { session.recognition.abort(); } catch(_) {} }
             if (session.mediaRecorder && session.mediaRecorder.state === 'recording') { try { session.mediaRecorder.stop(); } catch(_) {} }
             activeChallengeSession = null;
             return;
         }
 
-        if (session.recognition) {
-            try { session.recognition.stop(); } catch(_) {}
-        } else if (session.mediaRecorder && session.mediaRecorder.state === 'recording') {
+        if (session.mediaRecorder && session.mediaRecorder.state === 'recording') {
             try { session.mediaRecorder.stop(); } catch(_) {}
         }
     }
@@ -2272,7 +2226,8 @@ Output strictly in JSON:
                     sendMessage(null, payload);
                 };
             } else {
-                const editedText = document.getElementById('draft-edit-textarea')?.value.trim() || contentText;
+                const rawText = document.getElementById('draft-edit-textarea')?.value.trim() || contentText;
+                const editedText = cleanDuplicatedSpeechText(rawText);
                 sendMessage(editedText);
             }
         };
@@ -2342,29 +2297,28 @@ Output strictly in JSON:
         document.getElementById('btn-mic-my')?.classList.toggle('recording', activeType === 'native');
     }
 
-    function playStartCueTone() {
-        const enabled = document.getElementById('speech-start-cue-enabled')?.checked;
-        if (!enabled) return;
-        try {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            if (!AudioContext) return;
-            const ctx = new AudioContext();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(587.33, ctx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.1);
-            gain.gain.setValueAtTime(0.12, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start();
-            osc.stop(ctx.currentTime + 0.11);
-        } catch (_) {}
+    // 核心文字去重過濾演算法（徹底消滅「今天今天天氣天氣」等重複疊字）
+    function cleanDuplicatedSpeechText(text) {
+        let str = String(text || '').trim();
+        if (!str) return '';
+
+        // 1. 去除連續重複出現的單詞或字元 (如: 今天 今天 -> 今天)
+        str = str.replace(/([^\s]+)(\s+\1)+/gi, '$1');
+        
+        // 2. 針對中文字元無空格的重複 (如: 今天今天 -> 今天，天氣天氣 -> 天氣)
+        str = str.replace(/([\u4e00-\u9fa5]{1,8})\1+/g, '$1');
+        
+        // 3. 針對重複句子的清理 (如: 我想去圖書館我想去圖書館 -> 我想去圖書館)
+        for (let len = 12; len >= 2; len--) {
+            const regex = new RegExp(`(.{${len},}?)\\1+`, 'g');
+            str = str.replace(regex, '$1');
+        }
+
+        return str.trim();
     }
 
     // ========================================================
-    // 終極防斷、防自動送出與防疊字音訊引擎
+    // 終極防斷、徹底防疊字與絕對靜音音訊引擎
     // ========================================================
     async function startSpeechWorkflow(type) {
         if (!GugoAICore.hasApiKey()) {
@@ -2386,13 +2340,21 @@ Output strictly in JSON:
         speechFullTranscript = '';
         
         updateMicButtonsState(type);
-        playStartCueTone();
 
         const inputMode = document.getElementById('speech-input-mode-select')?.value || 'text';
         setSpeechStatus('recording', `🎙️ 正在錄製 ${LANG_FLAGS[isLearning ? targetLang : myLang]}（點擊按鈕即可停止）...`);
 
-        // 核心防斷：在手機上無論如何都要拉起 MediaRecorder 保底！
-        // 只要 MediaRecorder 在錄，手機麥克風永遠常駐，絕對不會因為靜音而中斷！
+        // 核心設計：
+        // 手機端若使用 Web Speech API，手機瀏覽器會在每 2-3 秒靜音時強制觸發 onend，
+        // 一旦在 onend 內自動重啟，手機系統底層會「每 2-3 秒狂響提示音」，並造成語音封包分段疊字！
+        // 因此在手機端（或任何行動觸控裝置），完全停用會發出系統提示音的 SpeechRecognition！
+        // 全面採用穩如磐石的 MediaRecorder 原生常駐音訊流：
+        // 1. 絕無每 2-3 秒的系統提示音，整個過程 100% 絕對安靜！
+        // 2. 停頓多久都絕對不自動斷開！按鈕恆紅！
+        // 3. 手動點擊停止後，直接由 Gemini AI 進行多模態整句識別，字句精準流暢，徹底杜絕疊字！
+        
+        const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || ('ontouchstart' in window && window.innerWidth <= 1024);
+
         if (navigator.mediaDevices?.getUserMedia) {
             try {
                 speechMediaAudioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -2417,14 +2379,16 @@ Output strictly in JSON:
                         showDraftPreviewBubble(type, '', audioBlob);
                         setSpeechStatus('idle', '');
                     } else {
-                        // 文字模式：如果原生 Web Speech API 沒有抓到完整文字，使用 AI 高度精確兜底
-                        let finalTranscribed = speechFullTranscript.trim();
-                        if (!finalTranscribed) {
-                            setSpeechStatus('processing', '⏳ 正在轉譯語音文字中...');
-                            try {
-                                finalTranscribed = await GugoAICore.transcribeAudio(audioBlob, { language: currentLocale });
-                            } catch (_) {}
+                        // 文字模式：一律使用高精度 AI 兜底轉譯整段音訊，杜絕手機端的斷字與疊字
+                        setSpeechStatus('processing', '⏳ 正在轉譯語音文字中...');
+                        let finalTranscribed = '';
+                        try {
+                            const rawAiText = await GugoAICore.transcribeAudio(audioBlob, { language: currentLocale });
+                            finalTranscribed = cleanDuplicatedSpeechText(rawAiText);
+                        } catch (_) {
+                            finalTranscribed = cleanDuplicatedSpeechText(speechFullTranscript);
                         }
+
                         if (finalTranscribed) {
                             showDraftPreviewBubble(type, finalTranscribed);
                         } else {
@@ -2436,11 +2400,14 @@ Output strictly in JSON:
                 speechMediaRecorderInstance.start(250); // 每 250ms 切片收集
             } catch (err) {
                 console.warn('[MediaRecorder stream init error]', err);
+                showFloatingToast('⚠️ 麥克風已被封鎖或無可用音訊設備');
+                stopSpeechWorkflow(true);
+                return;
             }
         }
 
-        // 若為文字模式，且瀏覽器支援 Web Speech API，並行啟動 Web Speech 做即時流式識別
-        if (inputMode === 'text') {
+        // 僅在「非手機（電腦桌機）環境」且「文字模式」下，才啟動 Web Speech 做桌面即時預覽（桌機不會每 2-3 秒響系統音）
+        if (!isMobileDevice && inputMode === 'text') {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (SpeechRecognition) {
                 try {
@@ -2449,27 +2416,19 @@ Output strictly in JSON:
                     speechRecognitionInstance.interimResults = true;
                     speechRecognitionInstance.lang = currentLocale;
 
-                    // 核心防疊字：捨棄 Push 陣列，直接從 0 遍歷 event.results 唯一真實歷史！
                     speechRecognitionInstance.onresult = (event) => {
                         let totalResultText = '';
                         for (let i = 0; i < event.results.length; ++i) {
                             totalResultText += event.results[i][0].transcript;
                         }
-                        speechFullTranscript = totalResultText.trim();
+                        speechFullTranscript = cleanDuplicatedSpeechText(totalResultText);
                         if (speechFullTranscript) {
                             setSpeechStatus('recording', `🎙️ 聆聽中: "${speechFullTranscript.slice(-18)}"`);
                         }
                     };
 
                     speechRecognitionInstance.onerror = (e) => {
-                        console.warn('[WebSpeech error, fallback guarding]', e);
-                    };
-
-                    // 原生如果因靜音斷開，只要使用者沒手動停止，不執行任何停止動作（MediaRecorder 在保底）
-                    speechRecognitionInstance.onend = () => {
-                        if (isUserActivelyRecording && speechRecognitionInstance) {
-                            try { speechRecognitionInstance.start(); } catch (_) {}
-                        }
+                        console.warn('[WebSpeech desktop error]', e);
                     };
 
                     speechRecognitionInstance.start();
@@ -2485,14 +2444,14 @@ Output strictly in JSON:
         updateMicButtonsState(null);
         setSpeechStatus('idle', '');
 
-        // 停止 Web Speech
+        // 停止桌面 Web Speech
         if (speechRecognitionInstance) {
             const rec = speechRecognitionInstance;
             speechRecognitionInstance = null;
             try { rec.stop(); } catch (_) {}
         }
 
-        // 停止 MediaRecorder（停止後會觸發 onstop 彈出待確認草稿）
+        // 停止 MediaRecorder（停止後觸發 onstop 生成草稿氣泡）
         if (speechMediaRecorderInstance && speechMediaRecorderInstance.state === 'recording') {
             try { speechMediaRecorderInstance.stop(); } catch (_) {}
         } else if (speechMediaAudioStream) {
