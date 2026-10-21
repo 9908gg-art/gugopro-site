@@ -583,18 +583,28 @@
         }
 
         .main-input-group.dual-stt-composer.capsule-dock {
-            box-sizing: border-box; position: relative; display: flex !important; align-items: flex-end; gap: 7px; flex: 1 1 auto; min-width: 0; width: auto; padding: 6px 8px; border: 1px solid rgba(255,255,255,.14) !important; border-radius: 28px !important; background: linear-gradient(135deg, #1f2229 0%, #15171c 100%) !important; box-shadow: 0 8px 28px rgba(0,0,0,.26); overflow: hidden; transition: all 0.2s ease;
+            box-sizing: border-box; position: relative; display: flex !important; align-items: center; gap: 6px; flex: 1 1 auto; min-width: 0; width: auto; min-height: 48px; padding: 4px 8px 4px 14px; border: 1px solid rgba(255,255,255,.14) !important; border-radius: 28px !important; background: linear-gradient(135deg, #1f2229 0%, #15171c 100%) !important; box-shadow: 0 8px 28px rgba(0,0,0,.26); overflow: hidden; transition: all 0.2s ease;
         }
 
         .capsule-dock #user-text {
-            flex: 1 1 auto; min-width: 0; width: 100%; min-height: 38px !important; max-height: 110px; margin: 0; padding: 8px 6px; border: 0 !important; outline: 0 !important; resize: none; overflow-x: hidden; overflow-y: auto; background: transparent !important; color: #f5f7fb; font-size: 0.9rem; line-height: 1.45;
+            flex: 1 1 auto; min-width: 0; width: 100%; min-height: 38px !important; max-height: 110px; margin: 0; padding: 8px 0; border: 0 !important; outline: 0 !important; resize: none; overflow-x: hidden; overflow-y: auto; background: transparent !important; color: #f5f7fb; font-size: 0.9rem; line-height: 1.45;
         }
-        .capsule-dock #user-text::placeholder { color: rgba(219,225,235,.45); font-size: 0.84rem; }
+        .capsule-dock #user-text::placeholder { color: rgba(219,225,235,.45); font-size: 0.84rem; text-overflow: ellipsis; white-space: nowrap; }
 
-        .speech-composer-status {
-            position: absolute; top: 4px; left: 12px; right: 92px; z-index: 2; overflow: hidden; color: #ffd54f; font-size: .72rem; font-weight: 700; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; pointer-events: none;
+        /* 當正在錄音或轉譯時，隱藏底層輸入框內容與游標 */
+        .capsule-dock.recording-active #user-text {
+            color: transparent !important;
+            caret-color: transparent !important;
         }
-        .speech-composer-status[data-state="idle"] { display: none; }
+        .capsule-dock.recording-active #user-text::placeholder {
+            color: transparent !important;
+        }
+
+        /* 放大並居中顯示狀態訊息，徹底根除與 placeholder 疊印 */
+        .speech-composer-status {
+            position: absolute; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; padding: 0 16px; background: rgba(24, 27, 34, 0.98); color: #fde047; font-size: 0.95rem; font-weight: 800; line-height: 1.3; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; pointer-events: none; animation: fadeIn 0.2s ease;
+        }
+        .speech-composer-status[data-state="idle"] { display: none !important; }
 
         .capsule-voice-button {
             position: relative; flex: 0 0 52px; width: 52px !important; min-width: 52px !important; height: 52px !important; min-height: 52px !important; padding: 0 !important; border: 1px solid rgba(255,255,255,.12) !important; border-radius: 50% !important; display: inline-flex !important; align-items: center; justify-content: center; background: rgba(255,255,255,.075) !important; color: #fff !important; cursor: pointer; transition: all 0.2s ease;
@@ -697,6 +707,23 @@
             #chat-container { padding: 12px 10px 20px; }
             .chat-floating-nav { right: 12px; top: 50%; transform: translateY(-50%); bottom: auto; gap: 8px; }
             .btn-float-nav { width: 36px; height: 36px; font-size: 0.9rem; }
+
+            /* 手機版輸入框：移除任何多餘右邊線，文字適當微縮，對齊舒適 */
+            .main-input-group.dual-stt-composer.capsule-dock {
+                padding: 3px 8px 3px 12px !important;
+                min-height: 44px !important;
+            }
+            .capsule-dock #user-text {
+                font-size: 0.85rem !important;
+                padding: 6px 0 !important;
+            }
+            .capsule-dock #user-text::placeholder {
+                font-size: 0.8rem !important;
+            }
+            .speech-composer-status {
+                font-size: 0.84rem !important;
+                padding: 0 8px !important;
+            }
 
             .capsule-composer-row:not(.has-input-text) #btn-send { display: none !important; }
             .capsule-composer-row.has-input-text .capsule-voice-button { display: none !important; }
@@ -1021,9 +1048,9 @@
                     <span class="speech-button-language" id="learning-speech-label">🇺🇸</span>
                     <span class="capsule-mic-badge"><i class="fa-solid fa-microphone"></i></span>
                 </button>
-                <div class="main-input-group dual-stt-composer capsule-dock">
+                <div class="main-input-group dual-stt-composer capsule-dock" id="capsule-dock">
                     <div aria-atomic="true" aria-live="polite" class="speech-composer-status" data-state="idle" id="speech-composer-status"></div>
-                    <textarea autocapitalize="off" autocomplete="off" autocorrect="off" id="user-text" maxlength="8000" placeholder="點擊語音按鈕，或在此輸入文字..." rows="1" spellcheck="false"></textarea>
+                    <textarea autocapitalize="off" autocomplete="off" autocorrect="off" id="user-text" maxlength="8000" placeholder="輸入訊息..." rows="1" spellcheck="false"></textarea>
                     <div aria-label="發送" class="capsule-actions">
                         <button aria-label="發送" class="btn-circle btn-send" id="btn-send" type="button"><i class="fa-solid fa-paper-plane"></i></button>
                     </div>
@@ -1095,16 +1122,16 @@
             <label class="pref-radio-item" id="pref-item-a" for="pref-radio-a">
                 <input type="radio" id="pref-radio-a" name="analysis_preference" value="auto_collapse" checked="checked">
                 <div class="pref-radio-label">
-                    <span class="pref-radio-title">狀態 A（預設推薦）：收到回覆直接展開分析</span>
-                    <span class="pref-radio-desc">收到回覆或評分時自動展開文法與發音建議；在您送出下一次新對話時，上一則訊息的分析將自動平滑收合。</span>
+                    <span class="pref-radio-title">狀態 A（預設推薦）：最新回覆展開分析</span>
+                    <span class="pref-radio-desc">最新收到的回覆直接展開分析；而最新一則之前的所有訊息分析將自動完全收折。</span>
                 </div>
             </label>
 
             <label class="pref-radio-item" id="pref-item-b" for="pref-radio-b">
                 <input type="radio" id="pref-radio-b" name="analysis_preference" value="minimal">
                 <div class="pref-radio-label">
-                    <span class="pref-radio-title">狀態 B（極簡對話）：對話時預設隱藏分析</span>
-                    <span class="pref-radio-desc">僅顯示核心的對話英文與中文翻譯，介面最清爽乾淨。若需查看文法建議，可隨時點擊氣泡底部的 ▼ 圖標展開。</span>
+                    <span class="pref-radio-title">狀態 B（極簡對話）：所有訊息預設隱藏分析</span>
+                    <span class="pref-radio-desc">僅顯示核心的對話英文與中文翻譯，介面最清爽乾淨。若需查看分析，可隨時點擊氣泡底部的 ▼ 圖標展開。</span>
                 </div>
             </label>
         </div>
@@ -1213,8 +1240,8 @@
     let activeChallengeSession = null;
     
     // 語音全生命週期狀態管控
-    let isUserActivelyRecording = false; // 唯一手動錄音狀態旗標
-    let speechFullTranscript = '';       // 去重彙整文字
+    let isUserActivelyRecording = false;
+    let speechFullTranscript = '';
     let speechRecognitionInstance = null;
     let speechMediaRecorderInstance = null;
     let speechMediaAudioStream = null;
@@ -1252,7 +1279,7 @@
         'pl-PL': 'pl-PL', 'tr-TR': 'tr-TR'
     };
 
-    // 發音練習與評分 多國語系文字字典（完全對齊「我的語言」）
+    // 發音練習與評分 多國語系文字字典
     const I18N_SCORE = {
         'zh-TW': {
             evaluating: '⏳ 正在分析發音與語調評分中，請稍候...',
@@ -1568,21 +1595,28 @@
         }
     };
 
-    function autoCollapsePreviousAnalyses() {
-        if (analysisDisplayPreference !== 'auto_collapse') return;
+    // 核心調整 1：將「最新一則」之前的所有氣泡分析、發音診斷全部嚴格收摺
+    function collapseAllPreviousAnalyses() {
         const chatContainer = document.getElementById('chat-container');
         if (!chatContainer) return;
 
-        const allWrappers = chatContainer.querySelectorAll('.analysis-collapsible-wrapper:not(.collapsed)');
-        allWrappers.forEach(wrap => {
-            wrap.classList.add('collapsed');
-            const msg = wrap.closest('.message');
-            const toggleBtn = msg?.querySelector('.icon-toggle');
+        // 取得所有真正的訊息氣泡（排除 draft）
+        const allMessages = Array.from(chatContainer.querySelectorAll('.message:not(.message-draft)'));
+        if (allMessages.length <= 1) return;
+
+        // 除了最後一則以外，前方的所有訊息無論是誰的，全部收合分析容器
+        for (let i = 0; i < allMessages.length - 1; i++) {
+            const msg = allMessages[i];
+            const wrapper = msg.querySelector('.analysis-collapsible-wrapper');
+            if (wrapper && !wrapper.classList.contains('collapsed')) {
+                wrapper.classList.add('collapsed');
+            }
+            const toggleBtn = msg.querySelector('.icon-toggle');
             if (toggleBtn) {
                 toggleBtn.classList.remove('active');
                 toggleBtn.setAttribute('data-tooltip', '展開分析');
             }
-        });
+        }
     }
 
     function updateAnalysisButtonAvailability(msgDiv) {
@@ -1600,10 +1634,11 @@
         } else {
             const isCollapsed = wrapper.classList.contains('collapsed');
             toggleBtn.setAttribute('data-tooltip', isCollapsed ? '展開分析' : '收折分析');
+            toggleBtn.classList.toggle('active', !isCollapsed);
         }
     }
 
-    // 氣泡內挑戰發音練習評分（支援進度常駐不提前關閉，並依照「我的語言」回傳）
+    // 氣泡內挑戰發音練習評分
     window.triggerBubbleVoiceEvaluation = async function(messageId, btn) {
         if (activeChallengeSession && activeChallengeSession.messageId === messageId) {
             stopChallengeRecording();
@@ -1664,7 +1699,6 @@
                         return;
                     }
                     
-                    // 核心調整 1：分析評分中常駐顯示，絕不提前自動關閉，直到結果出爐！
                     showFloatingToast(i18n.evaluating, { persistent: true, busy: true });
                     
                     const audioBlob = new Blob(activeChallengeSession.chunks, { type: activeChallengeSession.chunks[0]?.type || 'audio/webm' });
@@ -1727,11 +1761,9 @@
             return;
         }
 
-        // 核心調整 2：評分結果完全對齊「我的語言」
         const scoreObj = calculatePronunciationScore(session.targetText, text, session.confidence, myLang);
         updateUserMessageScore(session.messageId, scoreObj);
         
-        // 評分真正完成後，原有的常駐等待橫幅才替換為完成通知，並於 4.5 秒後消失
         showFloatingToast(`${i18n.complete}${scoreObj.score} ${i18n.pts} (${scoreObj.label})`, { duration: 4500 });
     }
 
@@ -1761,6 +1793,9 @@
             msg.pronunciation = scoreObj;
             saveRoomsToLocal();
         }
+
+        // 當評分完成展開時，確保最新一則之前的其他卡片維持收合
+        collapseAllPreviousAnalyses();
     }
 
     let hoverWordTimer = null;
@@ -1985,7 +2020,6 @@
         if (!content && !audioPayload) return;
 
         document.getElementById('draft-message-bubble')?.remove();
-        autoCollapsePreviousAnalyses();
 
         if (providedContent === null) {
             input.value = '';
@@ -2017,7 +2051,6 @@
             let response = null;
 
             if (audioPayload && audioPayload.base64Data) {
-                // 核心調整 2：強化 Prompt 語言約束，強制要求 AI 診斷與中文/日文翻譯 100% 以「我的語言」回覆
                 const systemInstruction = `You are an expert, empathetic language tutor listening to the student's voice recording.
 CRITICAL LANGUAGE ENFORCEMENT:
 - The student's native language is "${myLangName}" (${myLang}).
@@ -2175,6 +2208,7 @@ Output strictly in JSON format:
             (role === 'user' && (pronunciation || (userVoiceDiagnosis && userVoiceDiagnosis !== "null")))
         );
 
+        // 最新一則依照偏好決定展開或極簡；但稍後會執行全量前置歷史收合
         const isCollapsedByDefault = (analysisDisplayPreference === 'minimal') || (!hasCollapsibleContent);
 
         let toolbarHtml = '';
@@ -2234,6 +2268,9 @@ Output strictly in JSON format:
 
         container.appendChild(div);
         updateAnalysisButtonAvailability(div);
+
+        // 核心要求 1：最新一則之前的所有歷史訊息，全部強制收折！
+        collapseAllPreviousAnalyses();
     }
 
     function showDraftPreviewBubble(type, contentText, audioBlob = null) {
@@ -2302,6 +2339,7 @@ Output strictly in JSON format:
             saveRoomsToLocal();
         }
         document.querySelector(`[data-id="${id}"]`)?.remove();
+        collapseAllPreviousAnalyses();
     };
 
     function scrollToLatestMessage() {
@@ -2325,7 +2363,6 @@ Output strictly in JSON format:
         }).join('');
     }
 
-    // 核心調整 1：支援持久常駐（persistent: true）之浮動提示橫幅
     function showFloatingToast(msg, options = {}) {
         const panel = document.getElementById('error-panel');
         const txt = document.getElementById('error-msg');
@@ -2337,7 +2374,6 @@ Output strictly in JSON format:
             panel.style.display = 'block';
             clearTimeout(showFloatingToast.timer);
 
-            // 若未指定 persistent，則依照指定秒數或 4.5 秒自動隱藏；若為 persistent 則一直常駐直到下一次覆蓋或關閉
             if (!options.persistent) {
                 showFloatingToast.timer = setTimeout(() => { panel.style.display = 'none'; }, options.duration || 4500);
             }
@@ -2352,11 +2388,23 @@ Output strictly in JSON format:
         }
     }
 
+    // 核心調整 3：狀態指示器與輸入框 Placeholder 解耦，徹底杜絕文字重疊
     function setSpeechStatus(state, msg = '') {
         const el = document.getElementById('speech-composer-status');
+        const dock = document.getElementById('capsule-dock');
+        const textarea = document.getElementById('user-text');
         if (!el) return;
+
         el.dataset.state = state;
         el.textContent = msg;
+
+        if (state === 'idle' || !msg) {
+            dock?.classList.remove('recording-active');
+            if (textarea) textarea.placeholder = "輸入訊息...";
+        } else {
+            dock?.classList.add('recording-active');
+            if (textarea) textarea.placeholder = ""; // 清空，杜絕與狀態重疊！
+        }
     }
 
     function updateMicButtonsState(activeType) {
@@ -2364,18 +2412,13 @@ Output strictly in JSON format:
         document.getElementById('btn-mic-my')?.classList.toggle('recording', activeType === 'native');
     }
 
-    // 核心文字去重過濾演算法（徹底消滅「今天今天天氣天氣」等重複疊字）
     function cleanDuplicatedSpeechText(text) {
         let str = String(text || '').trim();
         if (!str) return '';
 
-        // 1. 去除連續重複出現的單詞或字元 (如: 今天 今天 -> 今天)
         str = str.replace(/([^\s]+)(\s+\1)+/gi, '$1');
-        
-        // 2. 針對中文字元無空格的重複 (如: 今天今天 -> 今天，天氣天氣 -> 天氣)
         str = str.replace(/([\u4e00-\u9fa5]{1,8})\1+/g, '$1');
         
-        // 3. 針對重複句子的清理 (如: 我想去圖書館我想去圖書館 -> 我想去圖書館)
         for (let len = 12; len >= 2; len--) {
             const regex = new RegExp(`(.{${len},}?)\\1+`, 'g');
             str = str.replace(regex, '$1');
@@ -2384,9 +2427,6 @@ Output strictly in JSON format:
         return str.trim();
     }
 
-    // ========================================================
-    // 終極防斷、徹底防疊字與絕對靜音音訊引擎
-    // ========================================================
     async function startSpeechWorkflow(type) {
         if (!GugoAICore.hasApiKey()) {
             openApiKeyModal();
@@ -2409,9 +2449,10 @@ Output strictly in JSON format:
         updateMicButtonsState(type);
 
         const inputMode = document.getElementById('speech-input-mode-select')?.value || 'text';
-        setSpeechStatus('recording', `🎙️ 正在錄製 ${LANG_FLAGS[isLearning ? targetLang : myLang]}（點擊按鈕即可停止）...`);
+        
+        // 核心調整 3：將狀態文案精確放大呈現，底層 placeholder 強制隱藏
+        setSpeechStatus('recording', `🎙️ 正在錄製 ${LANG_FLAGS[isLearning ? targetLang : myLang]}，完成請點擊按鈕停止...`);
 
-        // 判斷是否為行動觸控裝置
         const isMobileOrTouch = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile|CriOS/i.test(navigator.userAgent) 
             || (navigator.maxTouchPoints && navigator.maxTouchPoints > 2)
             || ('ontouchstart' in window);
@@ -2436,11 +2477,10 @@ Output strictly in JSON format:
                     const audioBlob = new Blob(speechMediaAudioChunks, { type: speechMediaAudioChunks[0]?.type || 'audio/webm' });
 
                     if (inputMode === 'audio') {
-                        // 音訊模式：直接生成帶播放器的草稿氣泡
                         showDraftPreviewBubble(type, '', audioBlob);
                         setSpeechStatus('idle', '');
                     } else {
-                        // 文字模式：一律使用高精度 AI 兜底轉譯整段音訊，杜絕手機端的斷字與疊字
+                        // 正在轉譯語音文字中，文字醒目清晰，無任何多餘背景干擾
                         setSpeechStatus('processing', '⏳ 正在轉譯語音文字中...');
                         let finalTranscribed = '';
                         try {
@@ -2458,7 +2498,7 @@ Output strictly in JSON format:
                         setSpeechStatus('idle', '');
                     }
                 };
-                speechMediaRecorderInstance.start(250); // 每 250ms 切片收集
+                speechMediaRecorderInstance.start(250);
             } catch (err) {
                 console.warn('[MediaRecorder stream init error]', err);
                 showFloatingToast('⚠️ 麥克風已被封鎖或無可用音訊設備', { duration: 4000 });
@@ -2467,7 +2507,6 @@ Output strictly in JSON format:
             }
         }
 
-        // 僅在「非手機（電腦桌機）環境」且「文字模式」下，才啟動 Web Speech 做桌面即時預覽
         if (!isMobileOrTouch && inputMode === 'text') {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (SpeechRecognition) {
@@ -2484,7 +2523,7 @@ Output strictly in JSON format:
                         }
                         speechFullTranscript = cleanDuplicatedSpeechText(totalResultText);
                         if (speechFullTranscript) {
-                            setSpeechStatus('recording', `🎙️ 聆聽中: "${speechFullTranscript.slice(-18)}"`);
+                            setSpeechStatus('recording', `🎙️ 聆聽中: "${speechFullTranscript.slice(-16)}"`);
                         }
                     };
 
@@ -2504,14 +2543,12 @@ Output strictly in JSON format:
         updateMicButtonsState(null);
         setSpeechStatus('idle', '');
 
-        // 停止桌面 Web Speech
         if (speechRecognitionInstance) {
             const rec = speechRecognitionInstance;
             speechRecognitionInstance = null;
             try { rec.stop(); } catch (_) {}
         }
 
-        // 停止 MediaRecorder
         if (speechMediaRecorderInstance && speechMediaRecorderInstance.state === 'recording') {
             try { speechMediaRecorderInstance.stop(); } catch (_) {}
         } else if (speechMediaAudioStream) {
@@ -2565,9 +2602,12 @@ Output strictly in JSON format:
                         btn.setAttribute('data-tooltip', '展開分析');
                     }
                 });
+            } else {
+                // 狀態 A：確保除了最新一則之外，前面全部收合
+                collapseAllPreviousAnalyses();
             }
 
-            showFloatingToast(`✓ 已成功套用：${selected === 'auto_collapse' ? '狀態 A（預設展開分析，下次對話自動收合）' : '狀態 B（預設隱藏分析）'}`, { duration: 3500 });
+            showFloatingToast(`✓ 已成功套用：${selected === 'auto_collapse' ? '狀態 A（最新回覆展開，前方訊息全部收合）' : '狀態 B（全部預設隱藏分析）'}`, { duration: 3500 });
         };
     }
 
@@ -2870,6 +2910,9 @@ Output strictly in JSON format:
             m.audioUrl || null
         ));
 
+        // 確保載入歷史訊息時，前置訊息全部處於收摺狀態
+        collapseAllPreviousAnalyses();
+
         updateMaterialBanner();
         renderRoomList();
         saveRoomsToLocal();
@@ -2968,7 +3011,6 @@ Output strictly in JSON format:
     document.getElementById('btn-menu-close').onclick = () => closeMenu();
     overlay.onclick = () => closeMenu();
 
-    // 多金鑰管理介面
     function renderApiKeysManager() {
         const listEl = document.getElementById('api-keys-list');
         const countBadge = document.getElementById('api-keys-count-badge');
@@ -3113,7 +3155,6 @@ Output strictly in JSON format:
         });
     };
 
-    // 核心統一：按一下錄音，再按一下停止
     document.getElementById('btn-mic').onclick = () => {
         if (isUserActivelyRecording) stopSpeechWorkflow();
         else startSpeechWorkflow('learning');
@@ -3124,7 +3165,6 @@ Output strictly in JSON format:
     };
     document.getElementById('btn-send').onclick = () => sendMessage();
 
-    // 手動打字狀態監聽
     const composerRow = document.getElementById('capsule-composer-row');
     const userTextInput = document.getElementById('user-text');
 
@@ -3144,7 +3184,6 @@ Output strictly in JSON format:
         }
     };
 
-    // 徹底確保手機端與電腦端 DOM 中 100% 絕無任何殘留提示音選項
     function purgeLegacyCueSettingsDOM() {
         const selectors = [
             '#speech-start-cue-enabled',
@@ -3156,7 +3195,6 @@ Output strictly in JSON format:
             document.querySelectorAll(sel).forEach(el => el.remove());
         });
 
-        // 徹底掃描側邊欄文字，若有任何「提示音」字眼的標籤即刻清除
         document.querySelectorAll('.side-menu label, .side-menu div').forEach(node => {
             if (node.textContent && node.textContent.includes('提示音') && !node.classList.contains('menu-title')) {
                 node.remove();
@@ -3176,7 +3214,6 @@ Output strictly in JSON format:
         initModelSystem();
         syncMobileComposerState();
         
-        // 500ms 後再次掃描，防止非同步外部腳本注入殘留 UI
         setTimeout(purgeLegacyCueSettingsDOM, 500);
         setTimeout(purgeLegacyCueSettingsDOM, 1500);
     });
