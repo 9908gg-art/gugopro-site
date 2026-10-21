@@ -2069,7 +2069,9 @@
         }
 
         function closeDrawerUi() {
-            setDrawerOpen(false);
+            if (window.innerWidth < 1024) {
+                setDrawerOpen(false);
+            }
         }
 
         function closeMenu({ syncHistory = true } = {}) {
@@ -2089,8 +2091,10 @@
         document.getElementById('nutrition-export-report')?.addEventListener('click', nutritionExportReport);
         document.getElementById('btn-new-room').onclick = () => createNutritionRoom();
         document.getElementById('btn-menu').onclick = () => {
-            if (isDrawerOpen()) closeMenu();
-            else openDrawer();
+            if (isDrawerOpen()) {
+                if (window.innerWidth >= 1024) setDrawerOpen(false);
+                else closeMenu();
+            } else openDrawer();
         };
         document.getElementById('btn-menu-close').onclick = () => closeMenu();
         overlay.onclick = () => closeMenu();

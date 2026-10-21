@@ -411,6 +411,10 @@ body { height: 100vh; min-height: 100vh; height: 100dvh; min-height: 100dvh; dis
   .filter-drawer .drawer-close { display: none; }
   .drawer-overlay { display: none !important; }
   .filter-drawer .drawer-title { padding-right: 2px; }
+  body.drawer-collapsed .hero,
+  body.drawer-collapsed .chat-wrapper { width: 100% !important; margin-right: 0 !important; }
+  .filter-drawer { transition: right 0.3s ease, box-shadow 0.3s ease; }
+  .filter-drawer.collapsed { right: -360px !important; box-shadow: none !important; }
 }
 @media (max-width: 900px) {
   .filter-drawer .drawer-close { display: inline-flex; }
@@ -521,7 +525,7 @@ body { height: 100vh; min-height: 100vh; height: 100dvh; min-height: 100dvh; dis
 <a class="btn-nav btn-coffee" href="https://ko-fi.com/R1K123XRS9" target="_blank" title="請開發者喝杯咖啡">
 <i class="fa-solid fa-mug-hot"></i> 贊助
     </a>
-<button aria-label="開啟模型與歷史設定" class="btn-nav" id="btn-menu" onclick="toggleDrawer()"><i class="fa-solid fa-bars"></i> 模型／歷史設定</button>
+<button aria-label="開啟模型與歷史設定" class="btn-nav" id="btn-menu" onclick="toggleDrawer(undefined, true)"><i class="fa-solid fa-bars"></i> 模型／歷史設定</button>
 
 <button class="btn-nav" id="btn-api-config" onclick="openApiModal()"><i class="fa-solid fa-key"></i> <span id="api-status-text">API 設定</span></button>
 </div>
@@ -871,13 +875,21 @@ window.switchMarket = function(mk) {
 };
 
 /* ===== FILTER DRAWER ===== */
-window.toggleDrawer = function(force) {
+window.toggleDrawer = function(force, isManualToggle) {
   updateKeyUI();
   var drawer = document.getElementById('filter-drawer'); var overlay = document.getElementById('drawer-overlay');
   var desktopRail = window.innerWidth >= 901;
   if (desktopRail) {
-    drawer.classList.add('open'); overlay.classList.remove('open');
-    amazonModelEngine.refresh({ silent: true });
+    if (!isManualToggle && force === false) {
+      return;
+    }
+    var shouldOpen = typeof force === 'boolean' ? force : drawer.classList.contains('collapsed');
+    drawer.classList.toggle('collapsed', !shouldOpen);
+    document.body.classList.toggle('drawer-collapsed', !shouldOpen);
+    overlay.classList.remove('open');
+    if (shouldOpen) {
+      amazonModelEngine.refresh({ silent: true });
+    }
     return;
   }
   var shouldOpen = typeof force === 'boolean' ? force : !drawer.classList.contains('open');
