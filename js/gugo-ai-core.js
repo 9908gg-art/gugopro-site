@@ -666,6 +666,377 @@
         return (result?.text || '').trim();
     }
 
+    const UI_I18N = {
+        'zh-TW': {
+            apiTitle: '管理您的 Gemini API Key',
+            apiCopy: '本工具使用 Google Gemini 官方模型。支援新增多組 API Key 備援，遇配額上限自動無縫切換。',
+            apiNoticeFree: '建議使用未綁定信用卡、免計費的 Google 帳號。目前免費配額每組 Key 每日可達 1,000 次以上，完全滿足日常學習。',
+            apiNoticeLocal: '金鑰 100% 儲存於目前設備瀏覽器本機儲存空間（localStorage），GugoPro 伺服器絕不蒐集或保存您的金鑰。',
+            apiTutorialLink: '👉 還沒有 API Key？點此觀看 1 分鐘免費申請教學',
+            apiListTitle: '已儲存金鑰列表（點擊切換使用中）：',
+            apiCountUnit: '組金鑰',
+            apiEmptyList: '尚未儲存任何金鑰。<br>請在下方貼上 Gemini API Key 並點擊「新增」。',
+            apiActiveBadge: '使用中',
+            apiDeleteKeyTitle: '刪除此組金鑰',
+            apiPlaceholder: '貼上新的 API Key (AIzaSy...)',
+            apiAddBtn: '新增',
+            apiDoneBtn: '完成並開始',
+            apiAddSuccess: '金鑰新增成功 ✓',
+            apiSwitchSuccess: '已切換使用第 {index} 組金鑰 ✓',
+            confirmDeleteTitle: '確認刪除金鑰',
+            confirmDeleteMsg: '確定要刪除金鑰 {key} 嗎？此操作無法復原。',
+            confirmTitle: '確認操作',
+            cancelBtn: '取消',
+            executeBtn: '確定執行'
+        },
+        'zh-CN': {
+            apiTitle: '管理您的 Gemini API Key',
+            apiCopy: '本工具使用 Google Gemini 官方模型。支持添加多组 API Key 备援，遇配额上限自动无缝切换。',
+            apiNoticeFree: '建议使用未绑定信用卡、免计费的 Google 账号。目前免费配额每组 Key 每日可达 1,000 次以上，完全满足日常学习。',
+            apiNoticeLocal: '密钥 100% 存储于当前设备浏览器本地存储空间（localStorage），GugoPro 服务器绝不收集或保存您的密钥。',
+            apiTutorialLink: '👉 还没有 API Key？点此观看 1 分钟免费申请教程',
+            apiListTitle: '已保存密钥列表（点击切换使用中）：',
+            apiCountUnit: '组密钥',
+            apiEmptyList: '尚未保存任何密钥。<br>请在下方粘贴 Gemini API Key 并点击“添加”。',
+            apiActiveBadge: '使用中',
+            apiDeleteKeyTitle: '删除此组密钥',
+            apiPlaceholder: '粘贴新的 API Key (AIzaSy...)',
+            apiAddBtn: '添加',
+            apiDoneBtn: '完成并开始',
+            apiAddSuccess: '密钥添加成功 ✓',
+            apiSwitchSuccess: '已切换使用第 {index} 组密钥 ✓',
+            confirmDeleteTitle: '确认删除密钥',
+            confirmDeleteMsg: '确定要删除密钥 {key} 吗？此操作无法撤销。',
+            confirmTitle: '确认操作',
+            cancelBtn: '取消',
+            executeBtn: '确定执行'
+        },
+        'en-US': {
+            apiTitle: 'Manage Gemini API Keys',
+            apiCopy: 'Powered by official Google Gemini models. Supports multiple backup API keys with automatic failover.',
+            apiNoticeFree: 'We recommend using a billing-free Google account. Generous official free quotas easily cover daily learning.',
+            apiNoticeLocal: 'API keys are stored 100% locally in your browser (localStorage). GugoPro servers never collect or upload your keys.',
+            apiTutorialLink: '👉 Don\'t have an API Key? Click here for the 1-minute free tutorial',
+            apiListTitle: 'Saved API Keys (Click to activate):',
+            apiCountUnit: 'keys',
+            apiEmptyList: 'No API keys saved yet.<br>Paste your Gemini API Key below and click "Add".',
+            apiActiveBadge: 'Active',
+            apiDeleteKeyTitle: 'Delete key',
+            apiPlaceholder: 'Paste new API Key (AIzaSy...)',
+            apiAddBtn: 'Add',
+            apiDoneBtn: 'Done & Start',
+            apiAddSuccess: 'API Key added successfully ✓',
+            apiSwitchSuccess: 'Switched to Key #{index} ✓',
+            confirmDeleteTitle: 'Confirm Key Deletion',
+            confirmDeleteMsg: 'Are you sure you want to delete key {key}? This cannot be undone.',
+            confirmTitle: 'Confirm Action',
+            cancelBtn: 'Cancel',
+            executeBtn: 'Confirm'
+        },
+        'ja-JP': {
+            apiTitle: 'Gemini API Key の管理',
+            apiCopy: 'Google Gemini 公式モデルを使用。複数のバックアップキーを登録でき、上限時は自動で切り替わります。',
+            apiNoticeFree: '課金設定のない無料のGoogleアカウント推奨。1日1,000回以上の無料枠で十分学習可能です。',
+            apiNoticeLocal: 'API Keyはブラウザ内（localStorage）に100%安全に保存され、サーバーへ送信・収集されることはありません。',
+            apiTutorialLink: '👉 API Keyをお持ちでない方はこちら（1分無料取得ガイド）',
+            apiListTitle: '保存済み API Key 一覧（クリックで使用切替）：',
+            apiCountUnit: '件',
+            apiEmptyList: 'まだ API Key が登録されていません。<br>下記に入力して「追加」をクリックしてください。',
+            apiActiveBadge: '使用中',
+            apiDeleteKeyTitle: 'このキーを削除',
+            apiPlaceholder: '新しい API Key を貼り付け (AIzaSy...)',
+            apiAddBtn: '追加',
+            apiDoneBtn: '完了して開始',
+            apiAddSuccess: 'API Key が正常に追加されました ✓',
+            apiSwitchSuccess: '{index} 番目のキーに切り替えました ✓',
+            confirmDeleteTitle: '削除の確認',
+            confirmDeleteMsg: 'API Key {key} を削除してもよろしいですか？この操作は取り消せません。',
+            confirmTitle: '確認',
+            cancelBtn: 'キャンセル',
+            executeBtn: '削除する'
+        }
+    };
+
+    function ensureUIStyles() {
+        if (document.getElementById('gugo-ai-core-styles')) return;
+        const style = document.createElement('style');
+        style.id = 'gugo-ai-core-styles';
+        style.textContent = `
+            .gugo-core-overlay {
+                position: fixed; inset: 0; width: 100%; height: 100%;
+                background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px);
+                display: none; justify-content: center; align-items: center;
+                z-index: 9999; padding: 16px; box-sizing: border-box;
+            }
+            .gugo-core-modal {
+                background: #15161c; border: 1px solid rgba(255, 255, 255, 0.12);
+                border-radius: 20px; padding: 24px; max-width: 480px; width: 100%;
+                max-height: 90vh; overflow-y: auto; box-sizing: border-box;
+                color: #e0e0e0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+                box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+            }
+            .gugo-core-header {
+                display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+            }
+            .gugo-core-title {
+                color: #00f2ff; margin: 0; font-size: 1.15rem; font-weight: 700;
+            }
+            .gugo-core-close {
+                background: none; border: none; color: #a0a0a0; font-size: 1.35rem; cursor: pointer; padding: 4px;
+            }
+            .gugo-core-close:hover { color: #fff; }
+            .gugo-core-p {
+                color: #a0a0a0; margin: 0 0 12px; line-height: 1.55; font-size: 0.86rem;
+            }
+            .gugo-core-notice {
+                color: #dbeafe; background: rgba(14, 116, 144, 0.16);
+                border: 1px solid rgba(34, 211, 238, 0.28); border-radius: 8px;
+                padding: 8px 10px; margin: 0 0 10px; line-height: 1.45; font-size: 0.78rem;
+            }
+            .gugo-core-tutorial-link {
+                background: rgba(255, 255, 255, 0.08); color: #fff; text-decoration: none;
+                margin: 0 0 14px; display: block; padding: 10px; border-radius: 8px;
+                text-align: center; font-weight: 700; font-size: 0.84rem; transition: background 0.2s;
+            }
+            .gugo-core-tutorial-link:hover { background: rgba(255, 255, 255, 0.14); }
+            .gugo-core-keys-box {
+                margin: 0 0 14px; padding: 12px; background: rgba(0, 0, 0, 0.35);
+                border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px;
+            }
+            .gugo-core-keys-list {
+                display: flex; flex-direction: column; gap: 8px; max-height: 160px;
+                overflow-y: auto; margin: 8px 0; padding-right: 2px;
+            }
+            .gugo-core-key-item {
+                display: flex; align-items: center; justify-content: space-between;
+                padding: 8px 10px; background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 8px;
+                cursor: pointer; transition: all 0.2s;
+            }
+            .gugo-core-key-item:hover { background: rgba(0, 242, 255, 0.08); border-color: rgba(0, 242, 255, 0.3); }
+            .gugo-core-key-item.is-active {
+                border-color: #00f2ff; background: rgba(0, 242, 255, 0.12);
+                box-shadow: 0 0 10px rgba(0, 242, 255, 0.2);
+            }
+            .gugo-core-key-info {
+                display: flex; align-items: center; gap: 8px; font-size: 0.84rem;
+                color: #f1f5f9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+            }
+            .gugo-core-key-badge {
+                font-size: 0.65rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;
+                background: rgba(34, 197, 94, 0.2); color: #86efac; border: 1px solid rgba(34, 197, 94, 0.4);
+            }
+            .gugo-core-key-del {
+                background: none; border: none; color: #fda4af; cursor: pointer;
+                padding: 4px 6px; border-radius: 6px; font-size: 0.84rem; transition: all 0.15s;
+            }
+            .gugo-core-key-del:hover { color: #ff4d4f; background: rgba(255, 77, 79, 0.15); }
+            .gugo-core-add-row { display: flex; gap: 8px; margin-top: 10px; }
+            .gugo-core-input {
+                flex: 1; padding: 9px 11px; background: rgba(0, 0, 0, 0.4);
+                border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px;
+                color: #fff; font-size: 0.86rem; outline: none; min-width: 0; box-sizing: border-box;
+            }
+            .gugo-core-input:focus { border-color: #00f2ff; }
+            .gugo-core-btn-add {
+                padding: 9px 14px; background: linear-gradient(135deg, #00f2ff, #0284c7);
+                color: #0a0b10; border: none; border-radius: 8px; font-weight: 700;
+                font-size: 0.84rem; cursor: pointer; white-space: nowrap; transition: all 0.2s;
+            }
+            .gugo-core-btn-add:hover { transform: translateY(-1px); box-shadow: 0 0 10px rgba(0, 242, 255, 0.35); }
+            .gugo-core-btn-done {
+                width: 100%; padding: 11px; border-radius: 8px; border: none;
+                font-weight: 700; cursor: pointer; font-size: 0.92rem;
+                background: #7000ff; color: #fff; transition: background 0.2s;
+            }
+            .gugo-core-btn-done:hover { background: #8519ff; }
+            .gugo-core-toast {
+                position: fixed; bottom: 84px; left: 50%; transform: translateX(-50%);
+                background: rgba(18, 16, 26, 0.96); color: #fde68a;
+                border: 1px solid rgba(245, 158, 11, 0.5); padding: 9px 18px;
+                border-radius: 24px; font-size: 0.84rem; font-weight: 700;
+                backdrop-filter: blur(12px); z-index: 10001; display: none;
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6); max-width: 90vw;
+                text-align: center; line-height: 1.45; pointer-events: none;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    function resolveUILocale(explicitLang) {
+        if (explicitLang && UI_I18N[explicitLang]) return explicitLang;
+        const htmlLang = document.documentElement.getAttribute('data-ui-lang') || document.documentElement.lang || '';
+        if (htmlLang && UI_I18N[htmlLang]) return htmlLang;
+        for (const k of Object.keys(UI_I18N)) {
+            if (htmlLang.startsWith(k.split('-')[0])) return k;
+        }
+        const nav = navigator.language || '';
+        for (const k of Object.keys(UI_I18N)) {
+            if (nav.startsWith(k.split('-')[0])) return k;
+        }
+        return 'zh-TW';
+    }
+
+    let toastTimer = null;
+    function showToast(text, options = {}) {
+        ensureUIStyles();
+        let el = document.getElementById('gugo-core-toast-pill');
+        if (!el) {
+            el = document.createElement('div');
+            el.id = 'gugo-core-toast-pill';
+            el.className = 'gugo-core-toast';
+            document.body.appendChild(el);
+        }
+        el.textContent = text;
+        el.style.display = 'block';
+        clearTimeout(toastTimer);
+        const duration = options.duration || 3600;
+        toastTimer = setTimeout(() => { el.style.display = 'none'; }, duration);
+    }
+
+    function confirmDialog(message, onConfirm, options = {}) {
+        ensureUIStyles();
+        const locale = resolveUILocale(options.lang);
+        const dict = UI_I18N[locale] || UI_I18N['zh-TW'];
+        let modal = document.getElementById('gugo-core-confirm-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'gugo-core-confirm-modal';
+            modal.className = 'gugo-core-overlay';
+            modal.innerHTML = `
+                <div class="gugo-core-modal" style="max-width:380px; text-align:center;">
+                    <div style="font-size:2rem; margin-bottom:8px; color:#f59e0b;">⚠️</div>
+                    <h3 class="gugo-core-title" id="gugo-confirm-title" style="margin-bottom:10px; font-size:1.1rem; color:#f8fafc;">${dict.confirmTitle}</h3>
+                    <p class="gugo-core-p" id="gugo-confirm-msg" style="margin-bottom:18px; color:#cbd5e1; font-size:0.9rem; line-height:1.55;"></p>
+                    <div style="display:flex; gap:10px; justify-content:center;">
+                        <button type="button" id="gugo-confirm-cancel" style="padding:9px 18px; border-radius:10px; border:1px solid rgba(255,255,255,0.15); background:rgba(255,255,255,0.06); color:#e0e0e0; cursor:pointer; font-weight:600; font-size:0.86rem;">${dict.cancelBtn}</button>
+                        <button type="button" id="gugo-confirm-ok" style="padding:9px 18px; border-radius:10px; border:none; background:#ef4444; color:#fff; font-weight:700; cursor:pointer; font-size:0.86rem;">${dict.executeBtn}</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        const titleEl = document.getElementById('gugo-confirm-title');
+        const msgEl = document.getElementById('gugo-confirm-msg');
+        const btnCancel = document.getElementById('gugo-confirm-cancel');
+        const btnOk = document.getElementById('gugo-confirm-ok');
+
+        if (titleEl) titleEl.textContent = options.title || dict.confirmTitle;
+        if (msgEl) msgEl.textContent = message;
+        if (btnCancel) btnCancel.textContent = options.cancelBtnText || dict.cancelBtn;
+        if (btnOk) btnOk.textContent = options.confirmBtnText || dict.executeBtn;
+
+        modal.style.display = 'flex';
+        const close = () => { modal.style.display = 'none'; };
+        btnCancel.onclick = close;
+        btnOk.onclick = () => {
+            close();
+            if (typeof onConfirm === 'function') onConfirm();
+        };
+    }
+
+    function renderKeyItemsInsideModal(locale) {
+        const listEl = document.getElementById('gugo-modal-keys-list');
+        const countBadge = document.getElementById('gugo-modal-keys-count');
+        if (!listEl) return;
+
+        const dict = UI_I18N[locale] || UI_I18N['zh-TW'];
+        const keys = getApiKeys();
+        const activeIdx = state.activeKeyIndex;
+        if (countBadge) countBadge.textContent = `${keys.length} ${dict.apiCountUnit}`;
+
+        if (keys.length === 0) {
+            listEl.innerHTML = `<div style="text-align:center; padding:14px 8px; color:#94a3b8; font-size:0.8rem; line-height:1.5;">${dict.apiEmptyList}</div>`;
+            return;
+        }
+
+        listEl.innerHTML = keys.map((k, idx) => {
+            const isActive = idx === activeIdx;
+            const masked = maskApiKey(k);
+            return `
+                <div class="gugo-core-key-item ${isActive ? 'is-active' : ''}" onclick="window.GugoAICore.selectKeyFromModal(${idx})">
+                    <div class="gugo-core-key-info">
+                        <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${isActive ? '#00f2ff' : 'rgba(255,255,255,0.2)'};"></span>
+                        <span style="font-family:'Courier New', monospace; font-weight:700;">${masked}</span>
+                        ${isActive ? `<span class="gugo-core-key-badge">${dict.apiActiveBadge}</span>` : ''}
+                    </div>
+                    <button type="button" class="gugo-core-key-del" title="${dict.apiDeleteKeyTitle}" onclick="event.stopPropagation(); window.GugoAICore.deleteKeyFromModal(${idx})">
+                        🗑️
+                    </button>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function openApiKeyModal(explicitLang) {
+        ensureUIStyles();
+        const locale = resolveUILocale(explicitLang);
+        const dict = UI_I18N[locale] || UI_I18N['zh-TW'];
+        let modal = document.getElementById('gugo-core-api-modal');
+
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'gugo-core-api-modal';
+            modal.className = 'gugo-core-overlay';
+            document.body.appendChild(modal);
+        }
+
+        modal.innerHTML = `
+            <div class="gugo-core-modal">
+                <div class="gugo-core-header">
+                    <h3 class="gugo-core-title">${dict.apiTitle}</h3>
+                    <button type="button" class="gugo-core-close" onclick="window.GugoAICore.closeApiKeyModal()">✕</button>
+                </div>
+                <p class="gugo-core-p">${dict.apiCopy}</p>
+                <div class="gugo-core-notice">${dict.apiNoticeFree}</div>
+                <div class="gugo-core-notice">${dict.apiNoticeLocal}</div>
+                <a class="gugo-core-tutorial-link" href="https://gugopro.com/tools/tutorials/how-to-get-gemini-api-key.html" target="_blank" rel="noopener">${dict.apiTutorialLink}</a>
+                
+                <div class="gugo-core-keys-box">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <span style="font-size:0.78rem; font-weight:700; color:#67e8f9;">🔑 ${dict.apiListTitle}</span>
+                        <span id="gugo-modal-keys-count" style="font-size:0.7rem; color:#94a3b8;"></span>
+                    </div>
+                    <div class="gugo-core-keys-list" id="gugo-modal-keys-list"></div>
+                    <div class="gugo-core-add-row">
+                        <input id="gugo-modal-key-input" class="gugo-core-input" placeholder="${dict.apiPlaceholder}" type="password" autocomplete="off" spellcheck="false">
+                        <button type="button" class="gugo-core-btn-add" id="gugo-modal-add-btn">＋ ${dict.apiAddBtn}</button>
+                    </div>
+                </div>
+
+                <button type="button" class="gugo-core-btn-done" onclick="window.GugoAICore.closeApiKeyModal()">${dict.apiDoneBtn}</button>
+            </div>
+        `;
+
+        renderKeyItemsInsideModal(locale);
+        modal.style.display = 'flex';
+
+        const addBtn = document.getElementById('gugo-modal-add-btn');
+        const inputEl = document.getElementById('gugo-modal-key-input');
+        if (addBtn && inputEl) {
+            addBtn.onclick = () => {
+                const val = inputEl.value.trim();
+                const res = addApiKey(val);
+                if (res.success) {
+                    inputEl.value = '';
+                    renderKeyItemsInsideModal(locale);
+                    showToast(dict.apiAddSuccess);
+                } else {
+                    showToast(`⚠️ ${res.message}`);
+                }
+            };
+            inputEl.onkeydown = (e) => {
+                if (e.key === 'Enter') addBtn.click();
+            };
+        }
+    }
+
+    function closeApiKeyModal() {
+        const modal = document.getElementById('gugo-core-api-modal');
+        if (modal) modal.style.display = 'none';
+    }
+
     window.GugoAICore = {
         getApiKey,
         setApiKey,
@@ -688,7 +1059,35 @@
         generateText,
         generateJSON,
         transcribeAudio,
-        getFriendlyErrorMessage
+        getFriendlyErrorMessage,
+        // 全新共用 UI 組件介面
+        openApiKeyModal,
+        closeApiKeyModal,
+        confirm: confirmDialog,
+        showToast,
+        selectKeyFromModal: (idx) => {
+            setActiveKeyIndex(idx);
+            const locale = resolveUILocale();
+            renderKeyItemsInsideModal(locale);
+            const dict = UI_I18N[locale] || UI_I18N['zh-TW'];
+            showToast(dict.apiSwitchSuccess.replace('{index}', String(idx + 1)));
+        },
+        deleteKeyFromModal: (idx) => {
+            const keys = getApiKeys();
+            const target = keys[idx];
+            const masked = maskApiKey(target);
+            const locale = resolveUILocale();
+            const dict = UI_I18N[locale] || UI_I18N['zh-TW'];
+            confirmDialog(
+                dict.confirmDeleteMsg.replace('{key}', masked),
+                () => {
+                    removeApiKey(idx);
+                    renderKeyItemsInsideModal(locale);
+                    showToast(dict.confirmDeleteTitle + ' ✓');
+                },
+                { title: dict.confirmDeleteTitle, lang: locale }
+            );
+        }
     };
 
     document.addEventListener('DOMContentLoaded', () => {
