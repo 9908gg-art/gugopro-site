@@ -8,6 +8,7 @@
 <meta name="description" content="免安裝、免 API Key！一鍵貼上 YouTube 影片網址，自動偵測下一季、續集、完結篇與跨頻道更新。支援動漫第二季、AI短劇連載與小說解說續作差量追蹤。 YouTube Sequel & Season Tracker.">
 <meta name="keywords" content="YouTube 續集追蹤器, GugoPro 續集追蹤器, YouTube 找下一季, YouTube 續作, 動漫第二季, AI短劇續集, YouTube sequel tracker, find season 2 on youtube, YouTube 続編 トラッカー, アニメ 2期 検索">
 <link href="https://gugopro.com/tools/ai-media/ai-video-tracker.html" rel="canonical">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
@@ -58,14 +59,257 @@
 @media(max-width:680px){.tracker-layout{display:block}.tracking-sidebar{width:100%;min-width:0;height:auto;max-height:none;overflow:visible;top:auto;border-radius:12px;margin-bottom:10px;padding:12px}.tracked-tags{flex-direction:row;max-height:none;overflow-x:auto;overflow-y:hidden}.tracked-tags .tag{flex:0 0 240px}.tracker-main{padding-right:0}.deep-faq{grid-template-columns:1fr}.seo{margin-top:18px}}
 </style>
 <style id="tracker-header-interaction-overrides">
-/* Compact one-row header: home link sits directly to the left of the site name. */
-.topbar{max-width:none;width:100%;margin:0;padding:8px 16px 7px;min-height:54px;display:flex;align-items:center;justify-content:flex-start;gap:10px}.topbar .home-link{order:0;flex:0 0 auto}.topbar .brand{order:1;flex:0 1 auto;margin-left:0;min-width:0;align-items:center}.topbar .brand-copy{display:block;min-width:0}
-/* Semantic visible H1 for top SEO ranking */
-.topbar .brand h1.brand-title{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:18px;margin:0;padding:0;color:#edf6ff;font-family:'Space Grotesk',sans-serif;font-weight:700;line-height:1.2}
-.topbar-actions{order:2;margin-left:auto;flex:0 0 auto}.topbar .lang{margin:0}.brand-mark{display:none}.hero{display:none!important}.howto{margin-top:0}.shell{padding-top:5px}
-/* The anchor remains the full thumbnail hit area; the hover preview is visual-only. */
-.thumb-wrap{cursor:pointer;isolation:isolate}.thumb-wrap::after{content:'↗';position:absolute;right:8px;top:8px;z-index:2;display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#000b;color:#fff;font-size:14px;opacity:0;transition:opacity .18s;pointer-events:none}.thumb-wrap:hover::after,.thumb-wrap:focus-visible::after{opacity:1}.thumb-wrap .preview-frame{pointer-events:none;z-index:3}.thumb-wrap .preview-badge{z-index:4}
-@media(max-width:680px){.topbar{padding:7px 10px;gap:7px;min-height:50px}.topbar .brand h1.brand-title{font-size:15px}.topbar-actions{margin-left:auto}.home-link{padding:7px 8px}.home-link span:last-child{display:none}.shell{padding-top:4px}}
+/* Full-width header: Left-aligned round logo, then home button, then title; language switcher on right */
+.topbar {
+    max-width: none !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 10px 20px !important;
+    min-height: 56px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 16px !important;
+    box-sizing: border-box !important;
+    background: rgba(7, 17, 31, 0.95) !important;
+    backdrop-filter: blur(15px) !important;
+    border-bottom: 1px solid var(--line) !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 100 !important;
+}
+.topbar-left {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+}
+.header-logo-link {
+    display: inline-flex !important;
+    align-items: center !important;
+    text-decoration: none !important;
+    flex-shrink: 0 !important;
+}
+.header-brand-logo {
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: 50% !important;
+    object-fit: contain !important;
+    display: block !important;
+    box-shadow: 0 0 10px rgba(103, 229, 244, 0.45) !important;
+    transition: transform 0.2s ease !important;
+}
+.header-logo-link:hover .header-brand-logo {
+    transform: scale(1.08) !important;
+}
+.btn-back-home, .topbar .home-link {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    min-height: 32px !important;
+    height: 32px !important;
+    width: auto !important;
+    min-width: auto !important;
+    padding: 0 14px !important;
+    border-radius: 999px !important;
+    border: 1px solid rgba(103, 229, 244, 0.65) !important;
+    background: linear-gradient(120deg, rgba(16, 41, 64, 0.92), rgba(18, 57, 85, 0.92)) !important;
+    box-shadow: 0 3px 10px rgba(103, 229, 244, 0.2) !important;
+    color: #ffffff !important;
+    font-size: 0.84rem !important;
+    font-weight: 700 !important;
+    text-decoration: none !important;
+    white-space: nowrap !important;
+    transition: all 0.2s ease !important;
+    flex-shrink: 0 !important;
+}
+.btn-back-home:hover, .topbar .home-link:hover {
+    transform: translateY(-1px) !important;
+    border-color: #67e5f4 !important;
+    background: linear-gradient(120deg, #18486e, #206394) !important;
+    box-shadow: 0 0 0 3px rgba(103, 229, 244, 0.2), 0 4px 14px rgba(103, 229, 244, 0.4) !important;
+    color: #ffffff !important;
+}
+.btn-back-home i, .topbar .home-link i {
+    font-size: 0.85rem !important;
+    margin: 0 !important;
+    color: #ffffff !important;
+}
+.topbar .brand {
+    display: flex !important;
+    align-items: center !important;
+    margin: 0 !important;
+    min-width: 0 !important;
+    cursor: default !important;
+    text-decoration: none !important;
+}
+.topbar .brand-copy {
+    display: block !important;
+    min-width: 0 !important;
+}
+.topbar .brand h1.brand-title {
+    display: block !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    font-size: 1.15rem !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color: #edf6ff !important;
+    font-family: 'Space Grotesk', system-ui, sans-serif !important;
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
+}
+.topbar-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    flex-shrink: 0 !important;
+    margin-left: auto !important;
+}
+.topbar .lang {
+    margin: 0 !important;
+}
+
+/* === 推薦專欄文章卡片 === */
+.featured-article-card-section {
+    margin: 24px 0 28px;
+    width: 100%;
+}
+.featured-article-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: linear-gradient(145deg, rgba(12, 27, 45, 0.95), rgba(8, 22, 36, 0.98));
+    border: 1px solid rgba(103, 229, 244, 0.3);
+    border-radius: 16px;
+    padding: 24px;
+    text-decoration: none;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
+}
+.featured-article-card:hover {
+    transform: translateY(-2px);
+    border-color: #67e5f4;
+    box-shadow: 0 14px 40px rgba(103, 229, 244, 0.22);
+}
+.featured-article-card .article-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.featured-article-card .article-badge {
+    background: rgba(103, 229, 244, 0.15);
+    color: #67e5f4;
+    border: 1px solid rgba(103, 229, 244, 0.35);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+}
+.featured-article-card .article-read-time {
+    color: #91a9c3;
+    font-size: 0.82rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.featured-article-card .article-title {
+    font-size: 1.22rem;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1.45;
+    margin: 0;
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    transition: color 0.2s ease;
+}
+.featured-article-card:hover .article-title {
+    color: #67e5f4 !important;
+}
+.featured-article-card .article-desc {
+    color: #bed0e3;
+    font-size: 0.92rem;
+    line-height: 1.65;
+    margin: 0;
+}
+.featured-article-card .article-companion-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding-top: 4px;
+    border-top: 1px dashed rgba(40, 73, 99, 0.6);
+}
+.featured-article-card .companion-label {
+    font-size: 0.82rem;
+    color: #91a9c3;
+    font-weight: 600;
+}
+.featured-article-card .companion-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(103, 229, 244, 0.1);
+    color: #67e5f4;
+    border: 1px solid rgba(103, 229, 244, 0.3);
+    padding: 3px 9px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+.featured-article-card .article-link-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #67e5f4;
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-top: 2px;
+}
+.featured-article-card:hover .article-link-action {
+    text-decoration: underline;
+}
+
+@media(max-width:768px){
+    .topbar {
+        padding: 8px 12px !important;
+        gap: 8px !important;
+    }
+    .topbar-left {
+        gap: 8px !important;
+    }
+    .header-brand-logo {
+        width: 28px !important;
+        height: 28px !important;
+    }
+    .topbar .brand h1.brand-title {
+        font-size: 0.95rem !important;
+    }
+    .btn-back-home, .topbar .home-link {
+        min-height: 28px !important;
+        height: 28px !important;
+        padding: 0 10px !important;
+        font-size: 0.78rem !important;
+    }
+    .featured-article-card {
+        padding: 16px;
+    }
+    .featured-article-card .article-title {
+        font-size: 1.05rem;
+    }
+}
+@media(max-width:480px){
+    .topbar .brand h1.brand-title {
+        font-size: 0.82rem !important;
+    }
+}
+
+.hero{display:none!important}.howto{margin-top:0}.shell{padding-top:5px}
 </style>
 <style id="tracker-controls-ad-overrides">
 .topbar .brand{cursor:default;text-decoration:none}.topbar-actions{align-self:center}
@@ -92,8 +336,17 @@
 </head>
 <body>
 <header class="topbar">
-<a aria-label="返回 GugoPro 主站首頁" class="home-link" href="https://gugopro.com/"><span class="home-icon">⌂</span><span data-i18n="backHome">返回首頁</span></a>
-<div aria-label="YouTube 續集與新季追蹤器" class="brand"><span class="brand-copy"><h1 class="brand-title" id="pageMainHeading">YouTube 續集與新季追蹤器</h1></span></div>
+<div class="topbar-left">
+<a href="https://gugopro.com/" class="header-logo-link" aria-label="返回 GugoPro 首頁" title="返回 GugoPro 首頁">
+<img src="https://gugopro.com/LOGO/logo-round2.png" alt="GugoPro" class="header-brand-logo">
+</a>
+<a aria-label="返回首頁" class="btn-back-home home-link" href="https://gugopro.com/" id="ui-back-home" title="返回首頁">
+<i aria-hidden="true" class="fa-solid fa-house"></i><span data-i18n="backHome" id="back-home-label">首頁</span>
+</a>
+<div aria-label="YouTube 續集與新季追蹤器" class="brand">
+<span class="brand-copy"><h1 class="brand-title" id="pageMainHeading">YouTube 續集與新季追蹤器</h1></span>
+</div>
+</div>
 <div class="topbar-actions"><select aria-label="Language" class="lang" id="language"><option value="zh-TW" selected="selected">繁中</option><option value="en">English</option><option value="ja">日本語</option></select></div>
 </header>
 <main class="shell">
@@ -114,6 +367,23 @@
 <div class="quick" id="quick"><button class="chip" type="button" data-add="AI 短劇 續集">AI 短劇 續集</button><button class="chip" type="button" data-add="動漫 第二季">動漫 第二季</button><button class="chip" type="button" data-add="小說解說 續集">小說解說 續集</button><button class="chip" type="button" data-add="AI 連載">AI 連載</button></div>
 <div class="bar-bottom"><label data-i18n="view">檢視：</label><select class="select" id="viewMode"><option data-i18n="all" value="all" selected="selected">全部綜合</option><option data-i18n="newOnly" value="new">只看新續集</option></select><label data-i18n="sortLabel">排序：</label><select class="select" id="sort"><option data-i18n="newest" value="season" selected="selected">季／集最新</option><option data-i18n="relevance" value="relevance">續集相關性</option></select><label data-i18n="collapseLabel">顯示：</label><select class="select" id="dedupe"><option data-i18n="showAll" value="off">全部影片</option><option data-i18n="collapseSeason" selected="selected" value="season">同季合併（每季一支）</option></select><div class="stats"><span data-i18n="tracked">已追蹤</span> <b id="seriesCount">0</b><span data-i18n="lastScan">上次巡檢</span> <b id="last">—</b><span data-i18n="newCount">本次新續集</span> <b id="newCount">0</b></div></div>
 <section><div class="tabs-row" id="tabs"></div><section class="result-zone history-zone"><div class="zone-heading compact-zone-heading"><span class="zone-summary" id="historySummary"></span></div><div hidden="" id="newResults"></div><div class="grid" id="historyResults"></div><div class="empty" id="empty" style="display: block;"><h3 data-i18n="emptyTitle">還沒有續集結果</h3><p data-i18n="emptyText">先貼上一支 YouTube 影片，工具會解析劇名並搜尋第二季、續集與下一部。</p></div></section></section></div></div></section>
+
+<!-- 推薦深度專欄文章卡片（100% 像素級對齊首頁） -->
+<section class="featured-article-card-section" aria-label="推薦深度專欄文章">
+<a href="https://gugopro.com/articles/youtube-sequel-tracker-guide.html" target="_blank" rel="noopener" class="featured-article-card">
+<div class="article-card-meta">
+<span class="article-badge">推薦演算法 · NLP去噪</span>
+<span class="article-read-time"><i class="fa-regular fa-clock"></i> 28 分鐘閱讀</span>
+</div>
+<h3 class="article-title">2026 YouTube 影音演算法與連載檢索全指南：如何破解推薦漏片迷思、利用 NLP 正則去噪與差量比對打造跨頻道追劇閉環</h3>
+<p class="article-desc">剖析 YouTube 雙塔神經網路推薦系統之候選生成與加權邏輯回歸排序瓶頸。詳解免 Key oEmbed 解析、六階段正則去噪、Local Diff 本機差量記憶與 SNR 提升 5 倍證明。</p>
+<div class="article-companion-box">
+<span class="companion-label">🛠️ 本篇配套工具：</span>
+<span class="companion-badge"><i class="fa-solid fa-satellite-dish"></i> 前往續集追蹤器</span>
+</div>
+<span class="article-link-action">閱讀完整專欄文章 →</span>
+</a>
+</section>
 
 <section class="seo"><section class="tool-seo-content"><h2 data-i18n="seoTitle">不再漏看分散在不同頻道的下一季</h2><p data-i18n="seoText">短劇、動漫、小說解說與 AI 連載影片的更新，常常分散在不同頻道，發布時間也不固定；平台推薦不一定會把真正的下一集或新一季推到首頁。當你記得角色卻忘了劇名，或只看到「完結篇」才發現第二季早已上線，反覆手動搜尋會讓追劇變成負擔。本工具把貼網址後的資訊整理成一個清楚的追蹤流程：先透過 YouTube oEmbed 免 Key 取得真實標題與頻道，再用 Regex 清洗 4K、字幕、標籤與集數雜訊，萃取系列核心詞；接著組合第二季、續集、下一部與 Season 2 等搜尋意圖，以明確季數、續作詞、系列重合度與最新發布時間加權排序。每次巡檢都會將結果的 Video ID 寫入瀏覽器 LocalStorage 快照，只保留尚未出現過的影片作為差量更新，讓你一眼鎖定真正值得點開的 🔥 最新續集上線。全程不需註冊或 API Key，追蹤資料只留在目前瀏覽器。</p><h3 data-i18n="steps">3 步驟操作指南</h3><ol><li data-i18n="step1">貼上任一集 YouTube 網址，確認自動解析的劇名與頻道。</li><li data-i18n="step2">按下「一鍵巡檢全部續集」，搜尋跨季與續作。</li><li data-i18n="step3">鎖定 🔥 最新續集上線 (NEW)，點擊卡片直接觀看。</li></ol></section><section><h2 data-i18n="faq">實用 FAQ</h2><div class="faq-item"><h3 data-i18n="q1">這個追蹤工具主要能幫我做什麼？</h3><p data-i18n="a1">專門幫您追蹤 YouTube 上的短劇、AI 系列長片、動畫或解說續集。只需貼上任何一集的網址，系統便會自動鎖定劇名並搜尋後續新季數，如第 2 季、第 3 季與完結篇，不用再手動反覆搜尋。</p></div><div class="faq-item"><h3 data-i18n="q2">點擊「一鍵巡檢」時，為什麼不會一直重複看到舊影片？</h3><p data-i18n="a2">本工具具備本機差量記憶機制。瀏覽器會自動記錄已搜尋過的影片 ID，每次巡檢時自動過濾掉舊片，只將真正新發現的續作標上 🔥 最新續集徽章呈現在您眼前。</p></div><div class="faq-item"><h3 data-i18n="q3">關閉網頁後我追蹤的影片清單會消失嗎？需要註冊登入嗎？</h3><p data-i18n="a3">完全不需要註冊或填寫任何金鑰。所有追蹤清單與看過紀錄皆自動保存在您當前瀏覽器的 LocalStorage，下次打開網頁即可恢復並直接巡檢；換裝置則不會同步。</p></div><section aria-labelledby="deep-guide-title" class="guide-deep"><h2 id="deep-guide-title">YouTube 續集追蹤方法：從第二季到大結局的判讀工作流</h2><p>追蹤短劇、動漫與小說解說時，最常見的問題不是找不到影片，而是同一個故事被拆成多個頻道、不同標題格式與不同上傳批次。有人使用「第 2 季」，有人寫「S2」，也有人直接標示「大結局」或「下半部」。本工具先把來源影片的標題清理成系列核心詞，再把季數、集數、續作詞與頻道資訊放進搜尋條件。這種做法不是宣稱能讀取所有 YouTube 內容，而是把公開標題與搜尋結果整理成一個可檢查的候選清單，讓使用者自行判斷影片是否真的屬於同一部作品。</p><h3>跨頻道續集鎖定與 Local Diff (Cross-channel Detection)</h3><p>跨頻道搬運比對的關鍵是不要只依賴頻道名稱。搜尋結果會先以核心詞和內文關鍵字篩選，再依明確季數、續作詞、標題重合度與發布時間計分；因此不同頻道只要仍保留作品核心詞或角色線索，就有機會被放進同一個系列群組。每次巡檢後，影片 ID 會保存在瀏覽器的 LocalStorage 快照中，下一次巡檢只把尚未出現的候選標記為 NEW。這種本機差分比對可以降低重複閱讀，不代表 YouTube 官方推薦或內容真偽認證。</p><h3>AI 短劇與動漫追番防坑指南 (Anime Season 2 & Drama Guide)</h3><p>看到「最新」「完整版」「大結局」不代表一定是新正片。建議先檢查發布日期、頻道、影片長度、縮圖是否重複，以及標題是否只是剪輯、預告或重新上傳。可以在「內文關鍵字」補上角色、世界觀、系統名稱或特殊地名，讓搜尋更接近原系列；發現錯誤結果時使用排除功能，並保留原始來源影片供回看。對於短劇大結局哪裡看、解說斷更續追或動漫第二季播出查詢等情境，本工具提供的是公開資料檢索與排序，不會替使用者保證播出日期。</p><h3>常見問題解答 (FAQ)</h3><div class="deep-faq"><div class="faq-item"><h3>為什麼有些續集分散在不同頻道也能被找出來？</h3><p>工具會綜合系列核心詞、內文關鍵字、季數／續作標記與標題相似度，而不是只比對頻道。因此不同頻道只要在公開標題中保留足夠線索，就可能被分到同一系列；仍建議點開來源自行確認。</p></div><div class="faq-item"><h3>遇到假續集、預告片或標題黨剪輯時，工具如何避免誤判？</h3><p>系統會把明確季數、集數、續作詞與發布時間納入排序，並保留頻道、縮圖與原始連結供檢查；但公開標題無法保證內容真實，使用者仍應確認影片長度、頻道、發布日期及是否只是預告或重新上傳。</p></div><div class="faq-item"><h3>追蹤清單有數量限制嗎？追蹤幾十部會不會導致網頁卡頓？</h3><p>追蹤資料採瀏覽器 LocalStorage 保存，工具只在畫面更新時渲染必要的清單與卡片；一般追蹤幾十部作品仍可使用。若累積大量歷史影片，建議定期移除錯誤連結或清理不再追蹤的系列，以維持搜尋與滾動順暢。</p></div></div><article class="tool-introduction" id="seo-tool-introduction"><h2>YouTube 續集追蹤器 (YouTube Sequel & Season Tracker)｜找動漫第二季、短劇續集與小說解說更新</h2><p class="tool-introduction-meta">內容維護：GugoPro｜本頁說明工具的操作流程、資料來源、隱私方式與使用限制。</p><p><strong>YouTube 續集追蹤器 (GugoPro Sequel Tracker)</strong> 是一個免安裝、免註冊的全球網頁工具，專門協助使用者追蹤短劇、動漫、AI 連載、小說解說與系列長片的後續更新。當影片分散在不同頻道，或同一部作品使用「第 2 季」、「S2」、「續集」、「完結篇」等不同標題格式時，單靠 YouTube 首頁推薦往往很難掌握。本工具讓你先貼上一支 YouTube 影片網址，再建立自己的系列追蹤清單，方便日後搜尋下一季與新發布的續作。</p><h3>這個工具可以解決什麼問題？</h3><p>很多觀眾記得角色、劇情或影片縮圖，卻忘記完整劇名；也有人看完第一季後，不知道第二季是否已經在另一個頻道上線。YouTube 續集追蹤器會先整理公開影片的標題與頻道資訊，推導系列核心詞，再結合季數、集數、續作、下一部與大結局等搜尋意圖，將候選影片集中到同一個結果區。你可以按照季數、相關性或最新發布時間查看結果，減少反覆輸入關鍵字的時間。</p><h3>如何使用 YouTube 續集追蹤器？</h3><ol><li><strong>貼上影片網址：</strong>輸入 YouTube watch、youtu.be、shorts 或 embed 連結，也可以直接輸入劇名關鍵字。</li><li><strong>解析並加入追蹤：</strong>確認系統整理出的系列核心詞、頻道與內文關鍵字；必要時補充角色、世界觀、系統名稱或特殊地名。</li><li><strong>一鍵巡檢全部續集：</strong>工具會依照季數、續作詞、標題重合度與發布時間整理跨頻道候選結果。</li><li><strong>判讀與觀看：</strong>新發現內容會標示「最新續集 (NEW)」，點擊完整縮圖可以前往 YouTube；滑鼠停留時也能使用影片預覽。</li></ol><h3>本機差量記憶與隱私設計 (Local Diff Engine)</h3><p>工具會在目前瀏覽器的 LocalStorage 保存追蹤清單、已看過的影片 ID 與歷史快照，讓下一次巡檢能區分已經看過的結果與新發現影片。不需要建立帳號，也不要求使用者輸入 API Key；不同裝置或清除瀏覽器資料後，清單不會自動同步，因此重要追蹤清單請自行備份。這個工具只整理公開資訊與候選連結，不下載或儲存 YouTube 影音檔案。</p><h3>適合搜尋的使用情境</h3><ul><li>查詢動漫第二季、第三季與新一集播出更新 (Find Anime Season 2 / 3)。</li><li>追蹤短劇續集、短劇大結局與跨頻道分集內容 (YouTube Short Drama Sequels)。</li><li>尋找小說解說續集、解說斷更後的後續影片。</li><li>整理 AI 短劇、AI 系列長片與連載故事的新季。</li><li>在手機上建立追劇清單，利用觸控按鈕快速巡檢。</li></ul><h3>使用前請注意</h3><p>搜尋結果來自公開節點與公開影片資訊，可能受到 YouTube 標題格式、頻道搬運、預告片、剪輯影片、網路狀況與第三方搜尋服務變動影響。看到「完整版」、「最新」或「大結局」等字樣時，仍應自行確認頻道、發布日期、影片長度、縮圖與影片內容。本工具是整理與追蹤輔助工具，不代表 YouTube 官方推薦，也不保證影片內容、播出日期或版權狀態。</p><h3>手機版與觸控操作</h3><p>本工具支援手機瀏覽器，追蹤清單會在小螢幕改為容易滑動的排列方式，搜尋輸入框、解析按鈕、巡檢按鈕、排序選單與左側追蹤項目都保留適合手指點按的觸控空間。影片縮圖本身是前往 YouTube 的完整連結，手機使用者可以直接點擊縮圖觀看；桌面使用者則可以把滑鼠停留在縮圖上查看預覽。當你在長頁面向上滑動且控制列已離開畫面，右下角會出現回到頂端快捷鍵，方便快速開始下一次巡檢。</p><h3>如何判斷搜尋結果是否為真正續集？</h3><p>結果卡片會顯示影片縮圖、影片時長、頻道、發布時間、系列核心詞與季數資訊。帶有「最新續集 (NEW)」的內容代表它是本機歷史中尚未出現的候選影片，不等於平台已認證它是官方續集。建議比較影片標題中的季數與集數、確認頻道是否為原作者、查看發布時間及影片長度，並使用「刪除錯誤連結」排除預告、剪輯、重複上傳或不相關內容。</p></article><p class="guide-keywords"><strong>適用情境：</strong>免安裝 YouTube 續集追蹤工具 (YouTube Sequel Tracker)，適合查詢動漫第二季播出更新、短劇大結局線上看、小說解說斷更續追，以及跨頻道分集自動整理。工具只整理公開資訊與候選連結，使用者仍應自行確認影片來源、發布日期與版權狀態。</p><p class="copyright-note"><strong>第三方平台與版權聲明：</strong>本工具僅提供公開 YouTube 影音資料的檢索、語意標籤整理與連結索引，不下載或儲存影音檔案。影片、縮圖、頻道與商標的權利屬 YouTube 及各原創作者；使用者應遵守 YouTube 服務條款與所在地法律。</p></section></section>
 <button aria-label="回到頂端" class="scroll-top-fab" id="scrollTopFab" type="button">↑ <span>回到頂端</span></button>
