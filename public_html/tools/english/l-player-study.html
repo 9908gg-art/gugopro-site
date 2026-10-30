@@ -780,7 +780,7 @@ body[data-training-mode="dictation"] #loopToggleControls,body[data-training-mode
 </style>
 </head>
 <body>
-<header class="topbar"><div class="shell topbar-inner"><a class="brand" href="https://gugopro.com/index.html"><img src="https://gugopro.com/LOGO/logo-round2.png?v=20261024" alt="GugoPro Logo" class="brand-logo-round"><span class="brand-copy"><h1 class="brand-title" id="pageMainHeading">YouTube 雙語精聽、聽寫與影子跟讀學習機</h1><small class="brand-tagline" data-training-copy="tagline">聽力盲聽・單句聽寫・口說對比 三合一沉浸式學習系統</small></span></a><a class="home-link" data-i18n="home" href="https://gugopro.com/">← 首頁</a><button aria-controls="videoUrl" aria-expanded="false" class="mobile-source-toggle" id="mobileSourceToggle" title="更換影片" type="button">🎬 換片</button><div class="loader"><input data-i18n-placeholder="url" id="videoUrl" placeholder="貼上 YouTube 影片網址" type="url"/><button aria-label="貼上影片網址" class="btn paste-btn" id="pasteVideoUrl" type="button">📋 貼上</button><button class="btn cyan" data-i18n="load" id="loadVideo">載入影片</button><button class="history-toggle" id="historyToggle" type="button">🕘 歷史</button><div class="history-drawer" hidden="" id="historyDrawer"><div class="history-title">影片歷史紀錄</div><div class="quick history-demo"><button data-i18n="demo" data-static-demo="true" data-video="CcqO2yhK9N0">🎬 載入精選示範影片</button></div><div id="historyList"></div><button class="history-clear" id="clearHistory" type="button">清除所有紀錄</button></div></div><div class="top-langs"><label data-i18n="ui" for="interfaceLang">介面</label><select class="lang-select" id="interfaceLang"><option value="zh-TW">繁中</option><option value="en">EN</option><option value="ja">JA</option></select></div></div></header>
+<header class="topbar"><div class="shell topbar-inner"><a class="brand" href="https://gugopro.com/index.html"><img src="https://gugopro.com/LOGO/logo-round2.png?v=20261024" alt="GugoPro Logo" class="brand-logo-round"><span class="brand-copy"><h1 class="brand-title" id="pageMainHeading">YouTube 雙語精聽、聽寫與影子跟讀學習機</h1><small class="brand-tagline" data-training-copy="tagline">聽力盲聽・單句聽寫・口說對比 三合一沉浸式學習系統</small></span></a><a class="home-link" data-i18n="home" href="https://gugopro.com/">← 首頁</a><button aria-controls="videoUrl" aria-expanded="false" class="mobile-source-toggle" id="mobileSourceToggle" title="更換影片" type="button">🎬 換片</button><div class="loader"><input data-i18n-placeholder="url" id="videoUrl" placeholder="貼上 YouTube 影片網址" type="url"/><button aria-label="貼上影片網址" class="btn paste-btn" id="pasteVideoUrl" type="button">📋 貼上</button><button class="btn cyan" data-i18n="load" id="loadVideo">載入影片</button><button class="history-toggle" id="historyToggle" type="button">🕘 歷史</button><div class="history-drawer" hidden="" id="historyDrawer"><div class="history-title">影片歷史紀錄</div><div class="quick history-demo"><button data-i18n="demo" data-static-demo="true" data-video="kMK4f58mrIM">🎬 載入精選示範影片</button></div><div id="historyList"></div><button class="history-clear" id="clearHistory" type="button">清除所有紀錄</button></div></div><div class="top-langs"><label data-i18n="ui" for="interfaceLang">介面</label><select class="lang-select" id="interfaceLang"><option value="zh-TW">繁中</option><option value="en">EN</option><option value="ja">JA</option></select></div></div></header>
 <main>
 
 <section class="shell stage">
@@ -1676,6 +1676,8 @@ body[data-training-mode="dictation"] #loopToggleControls,body[data-training-mode
       return byName(/Google.*(?:Japanese|日本語)/i) || byName(/Nanami/i) || byName(/Keiko/i) || candidates[0] || null;
     if (prefix === "ko")
       return byName(/Google.*(?:Korean|한국어|한국의)/i) || byName(/SunHi/i) || candidates[0] || null;
+    if (prefix === "es")
+      return byName(/Google.*(?:Spanish|Español)/i) || candidates.find((voice) => /Microsoft.*(?:Helena|Sabina|Laura|Raul)/i.test(voice.name || "")) || candidates[0] || null;
     return candidates[0] || null;
   }
   function speakText(text, button = null, language = null) {
@@ -2692,19 +2694,28 @@ body[data-training-mode="dictation"] #loopToggleControls,body[data-training-mode
   async function fetchStaticSubtitleData(id) { if(staticSubtitleCache.has(id))return staticSubtitleCache.get(id); const q=fetch("/data/subtitles/"+encodeURIComponent(id)+".json",{cache:"force-cache",credentials:"same-origin",headers:{Accept:"application/json"}}).then(r=>r.ok?r.json():null).catch(()=>null); staticSubtitleCache.set(id,q); return q; }
   function staticCues(data,language) { if(!data)return []; const code=apiLanguageCode(language||"en"), values=data.languages?.[language]||data.languages?.[code]||data.tracks?.[language]||data.tracks?.[code]||(Array.isArray(data)?data:data.segments||data.cues||data.captions); return Array.isArray(values)?parseJsonCaptions(JSON.stringify(values)):[]; }
   async function loadStaticTracks(id,sourceLang,helperLang) { const data=await fetchStaticSubtitleData(id), primary=staticCues(data,sourceLang); if(!primary.length)return null; state.usedLocalCache=true; return pairByTimestamp(primary,helperLang!=="none"?staticCues(data,helperLang):[]); }
-  const DEFAULT_VIDEO_ID = "UGHuqyPFb40";
+  const DEFAULT_VIDEO_ID = "kMK4f58mrIM";
   const DEFAULT_COURSE_TITLE = "【AB English Podcast】Ep.1 自我介紹與日常社交對話 (Mia & Alex)";
   const packagedSubtitleCache = new Map();
   async function fetchPackagedSubtitleCues(id) {
     if (!packagedSubtitleCache.has(id)) {
-      const url = new URL("subtitles/" + encodeURIComponent(id) + ".json", location.href);
-      const request = fetch(url.href, { cache: "force-cache", credentials: "same-origin", headers: { Accept: "application/json" } })
-        .then((response) => response.ok ? response.json() : null)
-        .catch(() => null);
+      const candidateUrls = [
+        `/tools/english/subtitles/${encodeURIComponent(id)}.json`,
+        new URL("subtitles/" + encodeURIComponent(id) + ".json", location.href).href
+      ];
+      const request = (async () => {
+        for (const u of candidateUrls) {
+          try {
+            const res = await fetch(u, { cache: "no-cache", headers: { Accept: "application/json" } });
+            if (res.ok) return await res.json();
+          } catch (_) {}
+        }
+        return null;
+      })();
       packagedSubtitleCache.set(id, request);
     }
     const data = await packagedSubtitleCache.get(id);
-    const rows = Array.isArray(data) ? data : data?.segments || data?.cues || data?.captions || [];
+    const rows = Array.isArray(data) ? data : data?.subtitles || data?.segments || data?.cues || data?.captions || [];
     if (!Array.isArray(rows)) return [];
     const normalized = rows.map((row) => ({
       start: row?.start ?? row?.startSeconds ?? row?.startTime,
@@ -4055,6 +4066,18 @@ body[data-training-mode="dictation"] #loopToggleControls,body[data-training-mode
   $("videoUrl").addEventListener("input", () => {
     if (!$("subtitleTutorialModal").hidden) $("tutorialVideoUrl").value = tutorialVideoUrl();
   });
+  const urlInputField = $("videoUrl");
+  if (urlInputField) {
+    urlInputField.addEventListener("focus", function() {
+      this.dataset.previousValue = this.value;
+      this.value = "";
+    });
+    urlInputField.addEventListener("blur", function() {
+      if (!this.value.trim() && this.dataset.previousValue) {
+        this.value = this.dataset.previousValue;
+      }
+    });
+  }
   $("loadVideo").onclick = () => load(idOf($("videoUrl").value), null, false, false, true);
   $("downloadEnglishSrt").onclick = (event) => {
     if (!state.id) {
