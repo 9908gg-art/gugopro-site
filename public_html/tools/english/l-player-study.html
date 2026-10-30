@@ -3123,10 +3123,38 @@ body[data-training-mode="dictation"] #loopToggleControls,body[data-training-mode
       saveProgress();
     }
   }
+  function sanitizeRollingCaptions(cues) {
+    if (!Array.isArray(cues) || cues.length <= 1) return cues || [];
+    const clean = [];
+    for (let i = 0; i < cues.length; i++) {
+      const cur = { ...cues[i] };
+      if (clean.length > 0) {
+        const prev = clean[clean.length - 1];
+        // 檢查英文/原文前綴疊加
+        const pCur = String(cur.primary || "").trim();
+        const pPrev = String(prev.primary || "").trim();
+        if (pPrev.length > 2 && pCur.toLowerCase().startsWith(pPrev.toLowerCase())) {
+          const rem = pCur.slice(pPrev.length).replace(/^[\s,.:;!?'"、，。！？-]+/, '').trim();
+          if (rem) cur.primary = rem;
+        }
+        // 檢查中文/譯文前綴疊加
+        if (cur.secondary && prev.secondary) {
+          const sCur = String(cur.secondary || "").trim();
+          const sPrev = String(prev.secondary || "").trim();
+          if (sPrev.length > 2 && sCur.startsWith(sPrev)) {
+            const rem = sCur.slice(sPrev.length).replace(/^[\s,.:;!?'"、，。！？-]+/, '').trim();
+            if (rem) cur.secondary = rem;
+          }
+        }
+      }
+      clean.push(cur);
+    }
+    return clean;
+  }
   function applyCaptionList(captions) {
     clearManualGuideNeeded();
     state.subtitleNotice = "";
-    state.captions = captions;
+    state.captions = sanitizeRollingCaptions(captions);
     state.active = state.pendingRestore ? -1 : captions.length ? 0 : -1;
     state.paused = false;
     state.loadingVideo = false;
@@ -3699,6 +3727,7 @@ body[data-training-mode="dictation"] #loopToggleControls,body[data-training-mode
     state.player.seekTo(Math.max(0, c.start + state.offset), true);
     state.player.playVideo();
     render();
+    scrollActiveCaptionIntoView();
     saveProgress();
   }
   function replayCurrent() {
@@ -3790,6 +3819,7 @@ body[data-training-mode="dictation"] #loopToggleControls,body[data-training-mode
         setPauseActions(true);
         $("playerState").textContent = t("spaceNext");
         render();
+        scrollActiveCaptionIntoView();
         return;
       }
     }
@@ -4144,38 +4174,9 @@ body[data-training-mode="dictation"] #loopToggleControls,body[data-training-mode
   document.querySelectorAll(".quick button").forEach(
     (b) =>
       (b.onclick = () => {
-        const id = b.dataset.video;
+        const id = b.dataset.video || DEFAULT_VIDEO_ID;
         if ($("historyDrawer")) $("historyDrawer").hidden = true;
-        if (b.dataset.staticDemo === "true") {
-          fetch(new URL("../../data/subtitles/CcqO2yhK9N0.json", location.href).href, { cache: "no-store" })
-            .then((response) => response.ok ? response.json() : Promise.reject(new Error("featured subtitles unavailable")))
-            .then((data) => {
-              const languages = data.languages || {};
-              const primary = parseJsonCaptions(JSON.stringify(languages.en || []));
-              const secondary = parseJsonCaptions(JSON.stringify(languages["zh-Hant"] || languages["zh-TW"] || []));
-              state.captionCache.set(id, { en: primary, "zh-Hant": secondary, "zh-TW": secondary });
-              load(id, null, true, false, true);
-              applyCachedLanguage();
-            })
-            .catch(() => toast(t("noCaptions")));
-          return;
-        }
-        const s = samples[b.dataset.sample];
-        const primary = s.map((x) => ({
-          start: time(x[0]),
-          end: time(x[1]),
-          primary: x[2],
-          secondary: "",
-        }));
-        const secondary = s.map((x) => ({
-          start: time(x[0]),
-          end: time(x[1]),
-          primary: x[3],
-          secondary: "",
-        }));
-        state.captionCache.set(id, { en: primary, "zh-Hant": secondary });
-        load(id, null, true, false, true);
-        applyCachedLanguage();
+        load(id, null, false, false, true);
       }),
   );
   $("closeLearningPanel").onclick = toggleLearningPanel;
