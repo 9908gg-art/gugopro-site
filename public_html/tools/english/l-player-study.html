@@ -3319,7 +3319,7 @@ body[data-training-mode="dictation"] #loopToggleControls,body[data-training-mode
     const learnLang = $("learnLang").value || "en";
     const helperLang = $("helperLang").value || "none";
 
-    // 1. 依當前語言配置構建基礎字幕
+    // 1. 依當前選定語言構建基礎雙語字幕模型（英、中直接秒取）
     const baseCues = rows.map((row) => {
       const start = Number(row?.start ?? row?.startSeconds ?? row?.startTime ?? 0);
       const end = Number(row?.end ?? row?.endSeconds ?? row?.endTime ?? (start + 4));
@@ -3344,60 +3344,64 @@ body[data-training-mode="dictation"] #loopToggleControls,body[data-training-mode
     state.usedLocalCache = true;
     applyCaptionList(baseCues);
 
-    // 2. 學習語言非英文/中文時，自動翻譯主字幕（如切換為西班牙語 es、日文 ja 等）
+    // 2. 學習語言需要動態翻譯時，直接更新畫面中的 state.captions 並快取回原始資料
     const needsPrimaryTranslate = 
       learnLang !== "none" && 
       learnLang !== "en" && 
       !learnLang.startsWith("zh") && 
-      baseCues.some(c => c._baseEn && c.primary === c._baseEn);
+      state.captions.some(c => c._baseEn && c.primary === c._baseEn);
 
     if (needsPrimaryTranslate) {
       const langLabel = $("learnLang").options[$("learnLang").selectedIndex]?.text || learnLang;
       $("status").textContent = `⏳ 正在載入學習語言 (${langLabel})…`;
       
-      for (let i = 0; i < baseCues.length; i += 6) {
+      for (let i = 0; i < state.captions.length; i++) {
         if (state.id !== id || state.captionRequestId !== requestId) return true;
-        const batch = baseCues.slice(i, i + 6);
-        await Promise.all(batch.map(async (cue) => {
-          if (cue._baseEn && cue.primary === cue._baseEn) {
-            const trans = await translateSentence(cue._baseEn, learnLang, "en");
-            if (trans) cue.primary = cleanCaptionText(trans);
+        const cur = state.captions[i];
+        if (cur._baseEn && (cur.primary === cur._baseEn || !cur.primary)) {
+          const trans = await translateSentence(cur._baseEn, learnLang, "en");
+          if (trans && state.id === id && state.captionRequestId === requestId) {
+            cur.primary = cleanCaptionText(trans);
+            if (rows[i]) rows[i][learnLang] = cur.primary;
           }
-        }));
-        if (state.id !== id || state.captionRequestId !== requestId) return true;
-        $("status").textContent = `⏳ 學習語言 (${langLabel}) 載入進度 ${Math.min(i + 6, baseCues.length)}/${baseCues.length}`;
-        render();
+        }
+        if (i % 6 === 0 || i === state.captions.length - 1) {
+          $("status").textContent = `⏳ 學習語言 (${langLabel}) 載入進度 ${i + 1}/${state.captions.length}`;
+          render();
+        }
       }
     }
 
-    // 3. 輔助對照非英文/中文時，自動翻譯副字幕（如切換為西班牙語 es、日文 ja 等）
+    // 3. 輔助對照需要動態翻譯時，直接更新畫面中的 state.captions 並快取回原始資料
     const needsHelperTranslate = 
       helperLang !== "none" && 
       helperLang !== "en" && 
       !helperLang.startsWith("zh") && 
-      baseCues.some(c => c._baseEn && !c.secondary);
+      state.captions.some(c => c._baseEn && !c.secondary);
 
     if (needsHelperTranslate) {
       const helperLabel = $("helperLang").options[$("helperLang").selectedIndex]?.text || helperLang;
       $("status").textContent = `⏳ 正在翻譯輔助對照 (${helperLabel})…`;
 
-      for (let i = 0; i < baseCues.length; i += 6) {
+      for (let i = 0; i < state.captions.length; i++) {
         if (state.id !== id || state.captionRequestId !== requestId) return true;
-        const batch = baseCues.slice(i, i + 6);
-        await Promise.all(batch.map(async (cue) => {
-          if (cue._baseEn && !cue.secondary) {
-            const trans = await translateSentence(cue._baseEn, helperLang, "en");
-            if (trans) cue.secondary = cleanCaptionText(trans);
+        const cur = state.captions[i];
+        if (cur._baseEn && !cur.secondary) {
+          const trans = await translateSentence(cur._baseEn, helperLang, "en");
+          if (trans && state.id === id && state.captionRequestId === requestId) {
+            cur.secondary = cleanCaptionText(trans);
+            if (rows[i]) rows[i][helperLang] = cur.secondary;
           }
-        }));
-        if (state.id !== id || state.captionRequestId !== requestId) return true;
-        $("status").textContent = `⏳ 輔助對照 (${helperLabel}) 翻譯進度 ${Math.min(i + 6, baseCues.length)}/${baseCues.length}`;
-        render();
+        }
+        if (i % 6 === 0 || i === state.captions.length - 1) {
+          $("status").textContent = `⏳ 輔助對照 (${helperLabel}) 翻譯進度 ${i + 1}/${state.captions.length}`;
+          render();
+        }
       }
     }
 
     if (state.id === id && state.captionRequestId === requestId) {
-      const msg = loadedCaptionStatus(baseCues.length);
+      const msg = loadedCaptionStatus(state.captions.length);
       $("status").textContent = msg;
       $("playerState").textContent = msg;
       render();
@@ -3626,25 +3630,35 @@ body[data-training-mode="dictation"] #loopToggleControls,body[data-training-mode
   function historySettings() {
     return {
       speed: speedValue(),
-      mode: $("autoPause").classList.contains("active")
-        ? "autoPause"
-        : $("repeat").classList.contains("active")
-          ? "repeat"
-          : "",
-      learnLang: $("learnLang").value,
-      helperLang: $("helperLang").value,
+      repeat: $("repeat")?.classList.contains("active") || false,
+      autoPause: $("autoPause")?.classList.contains("active") || false,
+      mode: $("repeat")?.classList.contains("active") ? "repeat" : ($("autoPause")?.classList.contains("active") ? "autoPause" : ""),
+      learnLang: $("learnLang")?.value || "en",
+      helperLang: $("helperLang")?.value || "zh-Hant",
+      trainingMode: state.trainingMode || "listening",
+      trainingView: state.trainingView || "both",
       captionMode: "off",
     };
   }
   function saveProgress() {
-    if (!state.id || !state.captions.length) return;
+    if (!state.id) return;
+    try {
+      localStorage.setItem("lplayer_last_video_id", state.id);
+      localStorage.setItem("lplayer_repeat", String($("repeat")?.classList.contains("active") || false));
+      localStorage.setItem("lplayer_auto_pause", String($("autoPause")?.classList.contains("active") || false));
+      localStorage.setItem("lplayer_training_mode", state.trainingMode || "listening");
+      localStorage.setItem("learn_lang", $("learnLang")?.value || "en");
+      localStorage.setItem("helper_lang", $("helperLang")?.value || "zh-Hant");
+    } catch (_) {}
+
+    if (!state.captions.length) return;
     const items = readHistory(),
       idx = items.findIndex((v) => v.id === state.id),
       entry = {
         id: state.id,
-        title: "YouTube · " + state.id,
+        title: $("screenVideoTitle")?.textContent || ("YouTube · " + state.id),
         time: state.player?.getCurrentTime?.() || 0,
-        activeSentence: state.active,
+        activeSentence: Math.max(0, state.active),
         timestamp: Date.now(),
         settings: historySettings(),
       };
@@ -3691,51 +3705,61 @@ body[data-training-mode="dictation"] #loopToggleControls,body[data-training-mode
   }
   function applyRestoreSettings(entry) {
     const x = entry?.settings || {};
-    if (
-      x.learnLang &&
-      [...$("learnLang").options].some((o) => o.value === x.learnLang)
-    )
-      $("learnLang").value = x.learnLang;
-    if (
-      x.helperLang &&
-      [...$("helperLang").options].some((o) => o.value === x.helperLang)
-    )
-      $("helperLang").value = x.helperLang;
+    // 1. 還原學習語言與輔助語言
+    const savedLearn = x.learnLang || localStorage.getItem("learn_lang");
+    if (savedLearn && [...$("learnLang").options].some((o) => o.value === savedLearn)) {
+      $("learnLang").value = savedLearn;
+    }
+    const savedHelper = x.helperLang || localStorage.getItem("helper_lang");
+    if (savedHelper && [...$("helperLang").options].some((o) => o.value === savedHelper)) {
+      $("helperLang").value = savedHelper;
+    }
+    enforceLanguages("init");
 
-    if (
-      Number.isFinite(Number(x.speed)) &&
-      Number(x.speed) >= 0.5 &&
-      Number(x.speed) <= 1.5
-    )
-      setSpeedValue(Number(x.speed));
-    if (x.mode === "repeat" || x.mode === "autoPause") {
-      setMode(x.mode);
-    } else {
-      $("repeat").classList.remove("active");
-      $("autoPause").classList.remove("active");
+    // 2. 還原播放速度
+    const sp = Number(x.speed || localStorage.getItem("player_speed"));
+    if (Number.isFinite(sp) && sp >= 0.5 && sp <= 1.5) {
+      setSpeedValue(sp);
+    }
+
+    // 3. 還原按鈕狀態（直接指定 classList，杜絕 toggle 反轉 Bug）
+    const isRepeat = x.repeat === true || x.mode === "repeat" || localStorage.getItem("lplayer_repeat") === "true";
+    const isAutoPause = x.autoPause === true || x.mode === "autoPause" || localStorage.getItem("lplayer_auto_pause") === "true";
+    $("repeat")?.classList.toggle("active", isRepeat);
+    $("autoPause")?.classList.toggle("active", !isRepeat && isAutoPause);
+
+    // 4. 還原學習訓練模式 (聽力 / 聽寫 / 口說)
+    const tm = x.trainingMode || localStorage.getItem("lplayer_training_mode");
+    if (tm && ["listening", "dictation", "speaking"].includes(tm)) {
+      state.trainingMode = tm;
+      document.body.dataset.trainingMode = tm;
+      $("trainingModeChoices")?.querySelectorAll("[data-training-mode]").forEach((btn) => {
+        const isCur = btn.dataset.trainingMode === tm;
+        btn.setAttribute("aria-checked", String(isCur));
+        btn.classList.toggle("active", isCur);
+      });
     }
   }
   function restoreAfterCaptions() {
     const entry = state.pendingRestore;
     if (!entry || !state.captions.length) return;
-    state.active = Math.max(
+    const targetIdx = Math.max(
       0,
       Math.min(state.captions.length - 1, Number(entry.activeSentence) || 0),
     );
+    state.active = targetIdx;
     state.paused = false;
     render();
+    scrollActiveCaptionIntoView(true);
     const cue = state.captions[state.active];
     if (state.player && state.ready) {
       const t = Number(entry.time);
-      state.player.seekTo(
-        Number.isFinite(t) && t > 0
-          ? t + state.offset
-          : cue.start + state.offset,
-        true,
-      );
+      const targetTime = Number.isFinite(t) && t > 0 ? t : (cue ? cue.start : 0);
+      state.player.seekTo(targetTime + state.offset, true);
       state.player.pauseVideo();
       state.pendingRestore = null;
       state.lastSavedAt = Date.now();
+      setTimeout(() => scrollActiveCaptionIntoView(true), 200);
     }
   }
   function load(id, restore, isDemo = false, manualOnly = false, userInitiated = false) {
@@ -4508,8 +4532,9 @@ body[data-training-mode="dictation"] #loopToggleControls,body[data-training-mode
   updateContextActionBar();
   const urlParams = new URLSearchParams(window.location.search);
   const requestedVideoId = idOf(urlParams.get("v")) || idOf(urlParams.get("videoId"));
-  const initialVideoId = requestedVideoId || DEFAULT_VIDEO_ID;
-  const initialHistory = readHistory().find((entry) => entry.id === initialVideoId) || null;
+  const lastSavedVideoId = localStorage.getItem("lplayer_last_video_id");
+  const initialVideoId = requestedVideoId || lastSavedVideoId || DEFAULT_VIDEO_ID;
+  const initialHistory = readHistory().find((entry) => entry.id === initialVideoId) || readHistory()[0] || null;
   setTimeout(() => load(initialVideoId, initialHistory, false, false, false), 0);
   applyLang();
   render();
