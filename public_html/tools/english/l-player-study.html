@@ -3313,43 +3313,71 @@ body[data-training-mode="dictation"] #loopToggleControls,body[data-training-mode
       (data[0] || []).map((x) => x[0] || "").join(""),
     );
   }
+  function extractLanguageTextFromRow(row, langCode) {
+    if (!row || typeof row !== "object") return "";
+    const code = String(langCode || "").toLowerCase().trim();
+    if (!code || code === "none") return "";
+
+    const candidates = {
+      es: [row.es, row.spanish, row["es-ES"], row["es-419"], row.esText, row.es_text],
+      ja: [row.ja, row.japanese, row["ja-JP"], row.jaText, row.ja_text],
+      ko: [row.ko, row.korean, row["ko-KR"], row.koText, row.ko_text],
+      fr: [row.fr, row.french, row["fr-FR"], row.frText, row.fr_text],
+      de: [row.de, row.german, row["de-DE"], row.deText, row.de_text],
+      "zh-hant": [row.zh, row["zh-Hant"], row["zh-TW"], row.traditionalChinese, row.chinese, row.zhText, row.secondary],
+      "zh-hans": [row.zh_cn, row["zh-Hans"], row["zh-CN"], row.simplifiedChinese, row.zh, row.chinese],
+      en: [row.en, row.english, row["en-US"], row.enText, row.en_text, row.primary, row.text]
+    };
+
+    const targetKey = code.startsWith("zh") ? (code.includes("hans") || code.includes("cn") ? "zh-hans" : "zh-hant") : code.split("-")[0];
+    const list = candidates[targetKey] || [row[code], row[targetKey]];
+
+    for (const val of list) {
+      const clean = cleanCaptionText(val);
+      if (clean) return clean;
+    }
+    return "";
+  }
+
   async function applyLanguagesToCaptions(id, requestId) {
     const rows = state.rawSubtitleRows;
     if (!Array.isArray(rows) || !rows.length) return false;
     const learnLang = $("learnLang").value || "en";
     const helperLang = $("helperLang").value || "none";
 
-    // 1. 依當前選定語言構建基礎雙語字幕模型（英、中直接秒取）
+    // 1. 全方位提取原生原裝字幕（優先採用 ab3 或影片自建之精準音軌）
     const baseCues = rows.map((row) => {
       const start = Number(row?.start ?? row?.startSeconds ?? row?.startTime ?? 0);
       const end = Number(row?.end ?? row?.endSeconds ?? row?.endTime ?? (start + 4));
       const duration = Number(row?.duration ?? (end - start));
-      const baseEn = cleanCaptionText(row?.en ?? row?.enText ?? row?.primary ?? row?.text ?? "");
-      const baseZh = cleanCaptionText(row?.zh ?? row?.zhText ?? row?.secondary ?? row?.translation ?? "");
+      
+      const nativeLearn = extractLanguageTextFromRow(row, learnLang);
+      const nativeHelper = extractLanguageTextFromRow(row, helperLang);
+      const baseEn = extractLanguageTextFromRow(row, "en");
+      const baseZh = extractLanguageTextFromRow(row, "zh-Hant");
 
-      let primary = baseEn;
-      if (learnLang === "en") primary = baseEn;
-      else if (learnLang === "zh-Hant" || learnLang === "zh-Hans") primary = baseZh || baseEn;
-      else if (row?.[learnLang]) primary = cleanCaptionText(row[learnLang]);
+      let primary = nativeLearn || baseEn;
+      let secondary = helperLang === "none" ? "" : (nativeHelper || (helperLang === "en" ? baseEn : baseZh));
 
-      let secondary = "";
-      if (helperLang === "none") secondary = "";
-      else if (helperLang === "en") secondary = baseEn;
-      else if (helperLang === "zh-Hant" || helperLang === "zh-Hans") secondary = baseZh || "";
-      else if (row?.[helperLang]) secondary = cleanCaptionText(row[helperLang]);
-
-      return { start, end, duration, primary, secondary, _baseEn: baseEn, _baseZh: baseZh };
+      return { 
+        start, end, duration, 
+        primary, secondary, 
+        _baseEn: baseEn, 
+        _baseZh: baseZh,
+        _hasNativePrimary: Boolean(nativeLearn),
+        _hasNativeSecondary: Boolean(nativeHelper)
+      };
     });
 
     state.usedLocalCache = true;
     applyCaptionList(baseCues);
 
-    // 2. 學習語言需要動態翻譯時，直接更新畫面中的 state.captions 並快取回原始資料
+    // 2. 學習語言：僅在「完全沒有原生音軌」時才調用機器翻譯補齊
     const needsPrimaryTranslate = 
       learnLang !== "none" && 
       learnLang !== "en" && 
       !learnLang.startsWith("zh") && 
-      state.captions.some(c => c._baseEn && c.primary === c._baseEn);
+      state.captions.some(c => !c._hasNativePrimary && c._baseEn && c.primary === c._baseEn);
 
     if (needsPrimaryTranslate) {
       const langLabel = $("learnLang").options[$("learnLang").selectedIndex]?.text || learnLang;
@@ -3358,7 +3386,7 @@ body[data-training-mode="dictation"] #loopToggleControls,body[data-training-mode
       for (let i = 0; i < state.captions.length; i++) {
         if (state.id !== id || state.captionRequestId !== requestId) return true;
         const cur = state.captions[i];
-        if (cur._baseEn && (cur.primary === cur._baseEn || !cur.primary)) {
+        if (!cur._hasNativePrimary && cur._baseEn && (cur.primary === cur._baseEn || !cur.primary)) {
           const trans = await translateSentence(cur._baseEn, learnLang, "en");
           if (trans && state.id === id && state.captionRequestId === requestId) {
             cur.primary = cleanCaptionText(trans);
@@ -3372,12 +3400,12 @@ body[data-training-mode="dictation"] #loopToggleControls,body[data-training-mode
       }
     }
 
-    // 3. 輔助對照需要動態翻譯時，直接更新畫面中的 state.captions 並快取回原始資料
+    // 3. 輔助對照：僅在「完全沒有原生音軌」時才調用機器翻譯補齊
     const needsHelperTranslate = 
       helperLang !== "none" && 
       helperLang !== "en" && 
       !helperLang.startsWith("zh") && 
-      state.captions.some(c => c._baseEn && !c.secondary);
+      state.captions.some(c => !c._hasNativeSecondary && c._baseEn && !c.secondary);
 
     if (needsHelperTranslate) {
       const helperLabel = $("helperLang").options[$("helperLang").selectedIndex]?.text || helperLang;
@@ -3386,7 +3414,7 @@ body[data-training-mode="dictation"] #loopToggleControls,body[data-training-mode
       for (let i = 0; i < state.captions.length; i++) {
         if (state.id !== id || state.captionRequestId !== requestId) return true;
         const cur = state.captions[i];
-        if (cur._baseEn && !cur.secondary) {
+        if (!cur._hasNativeSecondary && cur._baseEn && !cur.secondary) {
           const trans = await translateSentence(cur._baseEn, helperLang, "en");
           if (trans && state.id === id && state.captionRequestId === requestId) {
             cur.secondary = cleanCaptionText(trans);
