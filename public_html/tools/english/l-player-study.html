@@ -2696,9 +2696,9 @@ body[data-training-mode="dictation"] #loopToggleControls,body[data-training-mode
   async function loadStaticTracks(id,sourceLang,helperLang) { const data=await fetchStaticSubtitleData(id), primary=staticCues(data,sourceLang); if(!primary.length)return null; state.usedLocalCache=true; return pairByTimestamp(primary,helperLang!=="none"?staticCues(data,helperLang):[]); }
   const DEFAULT_VIDEO_ID = "kMK4f58mrIM";
   const DEFAULT_COURSE_TITLE = "【AB English Podcast】Ep.2 如何自然聊日常作息 (Mia & Alex)";
-  const packagedSubtitleCache = new Map();
-  async function fetchPackagedSubtitleCues(id) {
-    if (!packagedSubtitleCache.has(id)) {
+  const rawSubtitleCache = new Map();
+  async function fetchRawSubtitleRows(id) {
+    if (!rawSubtitleCache.has(id)) {
       const candidateUrls = [
         `/tools/english/subtitles/${encodeURIComponent(id)}.json`,
         new URL("subtitles/" + encodeURIComponent(id) + ".json", location.href).href
@@ -2707,24 +2707,18 @@ body[data-training-mode="dictation"] #loopToggleControls,body[data-training-mode
         for (const u of candidateUrls) {
           try {
             const res = await fetch(u, { cache: "no-cache", headers: { Accept: "application/json" } });
-            if (res.ok) return await res.json();
+            if (res.ok) {
+              const data = await res.json();
+              const rows = Array.isArray(data) ? data : data?.subtitles || data?.segments || data?.cues || data?.captions || [];
+              if (Array.isArray(rows) && rows.length > 0) return rows;
+            }
           } catch (_) {}
         }
         return null;
       })();
-      packagedSubtitleCache.set(id, request);
+      rawSubtitleCache.set(id, request);
     }
-    const data = await packagedSubtitleCache.get(id);
-    const rows = Array.isArray(data) ? data : data?.subtitles || data?.segments || data?.cues || data?.captions || [];
-    if (!Array.isArray(rows)) return [];
-    const normalized = rows.map((row) => ({
-      start: row?.start ?? row?.startSeconds ?? row?.startTime,
-      end: row?.end ?? row?.endSeconds ?? row?.endTime,
-      duration: row?.duration,
-      primary: row?.en ?? row?.enText ?? row?.primary ?? row?.text ?? "",
-      secondary: row?.zh ?? row?.zhText ?? row?.secondary ?? row?.translation ?? "",
-    }));
-    return parseJsonCaptions(JSON.stringify(normalized));
+    return await rawSubtitleCache.get(id);
   }
   const API_TIMEOUTS = [75000, 90000];
   const API_RETRY_DELAY_MS = 1500;
@@ -3319,6 +3313,99 @@ body[data-training-mode="dictation"] #loopToggleControls,body[data-training-mode
       (data[0] || []).map((x) => x[0] || "").join(""),
     );
   }
+  async function applyLanguagesToCaptions(id, requestId) {
+    const rows = state.rawSubtitleRows;
+    if (!Array.isArray(rows) || !rows.length) return false;
+    const learnLang = $("learnLang").value || "en";
+    const helperLang = $("helperLang").value || "none";
+
+    // 1. 依當前語言配置構建基礎字幕
+    const baseCues = rows.map((row) => {
+      const start = Number(row?.start ?? row?.startSeconds ?? row?.startTime ?? 0);
+      const end = Number(row?.end ?? row?.endSeconds ?? row?.endTime ?? (start + 4));
+      const duration = Number(row?.duration ?? (end - start));
+      const baseEn = cleanCaptionText(row?.en ?? row?.enText ?? row?.primary ?? row?.text ?? "");
+      const baseZh = cleanCaptionText(row?.zh ?? row?.zhText ?? row?.secondary ?? row?.translation ?? "");
+
+      let primary = baseEn;
+      if (learnLang === "en") primary = baseEn;
+      else if (learnLang === "zh-Hant" || learnLang === "zh-Hans") primary = baseZh || baseEn;
+      else if (row?.[learnLang]) primary = cleanCaptionText(row[learnLang]);
+
+      let secondary = "";
+      if (helperLang === "none") secondary = "";
+      else if (helperLang === "en") secondary = baseEn;
+      else if (helperLang === "zh-Hant" || helperLang === "zh-Hans") secondary = baseZh || "";
+      else if (row?.[helperLang]) secondary = cleanCaptionText(row[helperLang]);
+
+      return { start, end, duration, primary, secondary, _baseEn: baseEn, _baseZh: baseZh };
+    });
+
+    state.usedLocalCache = true;
+    applyCaptionList(baseCues);
+
+    // 2. 學習語言非英文/中文時，自動翻譯主字幕（如切換為西班牙語 es、日文 ja 等）
+    const needsPrimaryTranslate = 
+      learnLang !== "none" && 
+      learnLang !== "en" && 
+      !learnLang.startsWith("zh") && 
+      baseCues.some(c => c._baseEn && c.primary === c._baseEn);
+
+    if (needsPrimaryTranslate) {
+      const langLabel = $("learnLang").options[$("learnLang").selectedIndex]?.text || learnLang;
+      $("status").textContent = `⏳ 正在載入學習語言 (${langLabel})…`;
+      
+      for (let i = 0; i < baseCues.length; i += 6) {
+        if (state.id !== id || state.captionRequestId !== requestId) return true;
+        const batch = baseCues.slice(i, i + 6);
+        await Promise.all(batch.map(async (cue) => {
+          if (cue._baseEn && cue.primary === cue._baseEn) {
+            const trans = await translateSentence(cue._baseEn, learnLang, "en");
+            if (trans) cue.primary = cleanCaptionText(trans);
+          }
+        }));
+        if (state.id !== id || state.captionRequestId !== requestId) return true;
+        $("status").textContent = `⏳ 學習語言 (${langLabel}) 載入進度 ${Math.min(i + 6, baseCues.length)}/${baseCues.length}`;
+        render();
+      }
+    }
+
+    // 3. 輔助對照非英文/中文時，自動翻譯副字幕（如切換為西班牙語 es、日文 ja 等）
+    const needsHelperTranslate = 
+      helperLang !== "none" && 
+      helperLang !== "en" && 
+      !helperLang.startsWith("zh") && 
+      baseCues.some(c => c._baseEn && !c.secondary);
+
+    if (needsHelperTranslate) {
+      const helperLabel = $("helperLang").options[$("helperLang").selectedIndex]?.text || helperLang;
+      $("status").textContent = `⏳ 正在翻譯輔助對照 (${helperLabel})…`;
+
+      for (let i = 0; i < baseCues.length; i += 6) {
+        if (state.id !== id || state.captionRequestId !== requestId) return true;
+        const batch = baseCues.slice(i, i + 6);
+        await Promise.all(batch.map(async (cue) => {
+          if (cue._baseEn && !cue.secondary) {
+            const trans = await translateSentence(cue._baseEn, helperLang, "en");
+            if (trans) cue.secondary = cleanCaptionText(trans);
+          }
+        }));
+        if (state.id !== id || state.captionRequestId !== requestId) return true;
+        $("status").textContent = `⏳ 輔助對照 (${helperLabel}) 翻譯進度 ${Math.min(i + 6, baseCues.length)}/${baseCues.length}`;
+        render();
+      }
+    }
+
+    if (state.id === id && state.captionRequestId === requestId) {
+      const msg = loadedCaptionStatus(baseCues.length);
+      $("status").textContent = msg;
+      $("playerState").textContent = msg;
+      render();
+      saveProgress();
+    }
+    return true;
+  }
+
   async function fetchTracks(id) {
     state.usedLocalCache = false;
     state.subtitleNetworkRequests = 0;
@@ -3326,11 +3413,11 @@ body[data-training-mode="dictation"] #loopToggleControls,body[data-training-mode
     const requestId = ++state.captionRequestId;
     try {
       if (state.demo && applyCachedLanguage()) return;
-      const packagedCues = await fetchPackagedSubtitleCues(id);
+      const rawRows = await fetchRawSubtitleRows(id);
       if (state.id !== id || state.captionRequestId !== requestId) return;
-      if (packagedCues.length) {
-        state.usedLocalCache = true;
-        applyCaptionList(packagedCues);
+      if (Array.isArray(rawRows) && rawRows.length > 0) {
+        state.rawSubtitleRows = rawRows;
+        await applyLanguagesToCaptions(id, requestId);
         return;
       }
       state.subtitleNotice = id === DEFAULT_VIDEO_ID ? "" : "已成功載入影片，此集專屬字幕正在準備中，您亦可手動貼上字幕";
@@ -4225,28 +4312,30 @@ body[data-training-mode="dictation"] #loopToggleControls,body[data-training-mode
   $("search").oninput = render;
   $("learnLang").onchange = () => {
     enforceLanguages("learn");
-    render();
     saveProgress();
     if (state.id) {
-      state.loadingVideo = true;
-      $("status").textContent = t("statusLoading");
-      $("playerState").textContent = t("statusLoading");
-      setLoading(true);
-      if (state.demo) applyCachedLanguage();
-      else fetchTracks(state.id);
+      const requestId = ++state.captionRequestId;
+      if (state.rawSubtitleRows?.length) {
+        applyLanguagesToCaptions(state.id, requestId);
+      } else {
+        fetchTracks(state.id);
+      }
+    } else {
+      render();
     }
   };
   $("helperLang").onchange = () => {
     enforceLanguages("helper");
-    render();
     saveProgress();
     if (state.id) {
-      state.loadingVideo = true;
-      $("status").textContent = t("statusLoading");
-      $("playerState").textContent = t("statusLoading");
-      setLoading(true);
-      if (state.demo) applyCachedLanguage();
-      else fetchTracks(state.id);
+      const requestId = ++state.captionRequestId;
+      if (state.rawSubtitleRows?.length) {
+        applyLanguagesToCaptions(state.id, requestId);
+      } else {
+        fetchTracks(state.id);
+      }
+    } else {
+      render();
     }
   };
   $("subtitleFile").onchange = (e) => {
