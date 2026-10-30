@@ -3248,30 +3248,33 @@ body[data-training-mode="dictation"] #loopToggleControls,body[data-training-mode
     await applyStoredTranslations(id, sourceLang, helperLang, captions);
     if (state.id !== id || state.captionRequestId !== requestId) return;
     applyCaptionList(captions);
+    
     const needsTranslation =
       helperLang !== "none" &&
       apiLanguageCode(helperLang) !== sourceLang &&
-      captions.some((cue) => !cue.secondary);
+      state.captions.some((cue) => !cue.secondary);
+      
     if (needsTranslation) {
-      $("status").textContent = t("statusTranslating", { n: captions.length });
+      const helperLabel = $("helperLang").options[$("helperLang").selectedIndex]?.text || helperLang;
+      $("status").textContent = `⏳ 正在翻譯輔助對照 (${helperLabel})…`;
+      
       translateSentenceCues(
-        captions,
+        state.captions,
         helperLang,
         (done, total) => {
-          if (state.id === id && state.captionRequestId === requestId)
-            $("status").textContent = t("statusTranslatingProgress", {
-              done,
-              total,
-            });
+          if (state.id === id && state.captionRequestId === requestId) {
+            $("status").textContent = `⏳ 輔助對照 (${helperLabel}) 翻譯進度 ${done}/${total}`;
+            render();
+          }
         },
         () => state.id === id && state.captionRequestId === requestId,
         sourceLang,
       )
         .then(async () => {
           if (state.id !== id || state.captionRequestId !== requestId) return;
-          await persistStoredTranslations(id, sourceLang, helperLang, captions);
+          await persistStoredTranslations(id, sourceLang, helperLang, state.captions);
           if (state.id !== id || state.captionRequestId !== requestId) return;
-          const message = loadedCaptionStatus(captions.length);
+          const message = loadedCaptionStatus(state.captions.length);
           $("status").textContent = message;
           $("playerState").textContent = message;
           render();
@@ -3295,23 +3298,28 @@ body[data-training-mode="dictation"] #loopToggleControls,body[data-training-mode
   async function translateCaptionText(text, target, sourceLanguage = "en") {
     state.translationNetworkRequests++;
     const sourceCode = translationStorageLanguage(sourceLanguage) || "en";
+    const targetCode = translationStorageLanguage(target) || "zh-TW";
     const url =
       "https://translate.googleapis.com/translate_a/single?client=gtx&sl=" +
       encodeURIComponent(sourceCode) +
       "&tl=" +
-      encodeURIComponent(target) +
+      encodeURIComponent(targetCode) +
       "&dt=t&q=" +
       encodeURIComponent(text);
-    const response = await fetch(url, {
-      mode: "cors",
-      credentials: "omit",
-      cache: "no-store",
-    });
-    if (!response.ok) return "";
-    const data = await response.json();
-    return cleanCaptionText(
-      (data[0] || []).map((x) => x[0] || "").join(""),
-    );
+    try {
+      const response = await fetch(url, {
+        mode: "cors",
+        credentials: "omit",
+        cache: "no-store",
+      });
+      if (!response.ok) return "";
+      const data = await response.json();
+      return cleanCaptionText(
+        (data[0] || []).map((x) => x[0] || "").join(""),
+      );
+    } catch (_) {
+      return "";
+    }
   }
   function extractLanguageTextFromRow(row, langCode) {
     if (!row || typeof row !== "object") return "";
