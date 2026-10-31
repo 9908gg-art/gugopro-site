@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="zh-TW" data-ui-lang="zh-TW">
 <head>
+<!-- Google WRS Headless Sandbox Storage & Runtime Shield -->
+<script src="/js/wrs-guard.js"></script>
+
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <!-- GugoPro AdSense publisher script -->
@@ -2189,34 +2192,48 @@ Output strictly in JSON format:
             isRecording = false;
             document.getElementById('btn-mic').classList.remove('recording');
         } else {
-            recognition = new SpeechRecognition();
-            recognition.lang = currentUiLang === 'en-US' ? 'en-US' : (currentUiLang === 'ja-JP' ? 'ja-JP' : 'cmn-Hant-TW');
-            recognition.continuous = false;
-            recognition.interimResults = false;
+            try {
+                recognition = new SpeechRecognition();
+            } catch (err) {
+                console.warn('[SpeechRecognition init error]', err);
+                showToast('語音識別初始化失敗，請改用文字輸入');
+                return;
+            }
 
-            recognition.onstart = () => {
-                isRecording = true;
-                document.getElementById('btn-mic').classList.add('recording');
-                showToast('🎙️ 正在聆聽您的發話...');
-            };
+            try {
+                recognition.lang = currentUiLang === 'en-US' ? 'en-US' : (currentUiLang === 'ja-JP' ? 'ja-JP' : 'cmn-Hant-TW');
+                recognition.continuous = false;
+                recognition.interimResults = false;
 
-            recognition.onresult = (e) => {
-                const text = e.results[0][0].transcript;
-                const input = document.getElementById('user-text');
-                input.value = (input.value ? input.value + ' ' : '') + text;
-            };
+                recognition.onstart = () => {
+                    isRecording = true;
+                    document.getElementById('btn-mic').classList.add('recording');
+                    showToast('🎙️ 正在聆聽您的發話...');
+                };
 
-            recognition.onerror = () => {
+                recognition.onresult = (e) => {
+                    const text = e.results[0][0].transcript;
+                    const input = document.getElementById('user-text');
+                    input.value = (input.value ? input.value + ' ' : '') + text;
+                };
+
+                recognition.onerror = () => {
+                    isRecording = false;
+                    document.getElementById('btn-mic').classList.remove('recording');
+                };
+
+                recognition.onend = () => {
+                    isRecording = false;
+                    document.getElementById('btn-mic').classList.remove('recording');
+                };
+
+                recognition.start();
+            } catch (err) {
+                console.warn('[SpeechRecognition start error]', err);
                 isRecording = false;
                 document.getElementById('btn-mic').classList.remove('recording');
-            };
-
-            recognition.onend = () => {
-                isRecording = false;
-                document.getElementById('btn-mic').classList.remove('recording');
-            };
-
-            recognition.start();
+                showToast('無法存取麥克風設備，請確認權限或改用文字輸入');
+            }
         }
     };
 

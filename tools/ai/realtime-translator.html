@@ -2,6 +2,9 @@
 
 <html lang="zh-TW">
 <head>
+<!-- Google WRS Headless Sandbox Storage & Runtime Shield -->
+<script src="/js/wrs-guard.js"></script>
+
 <!-- GugoPro AdSense publisher script -->
 <script async="" crossorigin="anonymous" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4756902118634553"></script><meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
@@ -1670,13 +1673,8 @@
             document.getElementById('mode-tap').classList.remove('active');
         });
 
-        // Speech Recognition Setup
-        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            recognition = new SpeechRecognition();
-            recognition.continuous = false;
-            recognition.interimResults = false;
-        }
+        // Speech Recognition Setup: Lazy initialized on user gesture to avoid WRS sandbox errors
+        // (SpeechRecognition is safely constructed inside startRecording)
 
         // Copy Function
         document.querySelectorAll('.btn-copy').forEach(btn => {
@@ -1825,20 +1823,36 @@
         }
 
         function startRecording(mode) {
-            if (!recognition) {
-                showToast(uiText('speechUnsupported'));
-                return;
-            }
             if (isRecording) {
                 stopRecording();
                 return;
+            }
+
+            const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognitionClass) {
+                showToast(uiText('speechUnsupported'));
+                return;
+            }
+
+            if (!recognition) {
+                try {
+                    recognition = new SpeechRecognitionClass();
+                    recognition.continuous = false;
+                    recognition.interimResults = false;
+                } catch (err) {
+                    console.warn('[SpeechRecognition init error]', err);
+                    showToast(uiText('speechUnsupported'));
+                    return;
+                }
             }
 
             const selfLang = document.getElementById('self-lang').value;
             const partnerLang = document.getElementById('partner-lang').value;
             const area = document.getElementById(`${mode}-area`);
             activeRecordMode = mode;
-            recognition.lang = (mode === 'self') ? selfLang : partnerLang;
+            try {
+                recognition.lang = (mode === 'self') ? selfLang : partnerLang;
+            } catch (_) {}
             
             recognition.onstart = () => {
                 isRecording = true;

@@ -1,0 +1,20 @@
+# ==============================================================================
+# GugoPro Apache Configuration (HTTP 410 Gone & WRS Optimization)
+# 適用於以 Apache / LiteSpeed 作為 Web Server 的主機環境
+# ==============================================================================
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # 1. 精準攔截歷史 24 筆圖片與多媒體轉換工具，強制回傳 HTTP 410 Gone (Gone: [G])
+    RewriteRule ^tools/converter-.*\.html$ - [G,L]
+    RewriteRule ^converter-(image|audio|video|chart|crypto|excel|finance|office|pdf|unit|color).*\.html$ - [G,L]
+</IfModule>
+
+# 2. 為 410 Gone 注入 X-Robots-Tag 永久刪除指令
+<IfModule mod_headers.c>
+    <FilesMatch "^converter-.*\.html$">
+        Header always set X-Robots-Tag "noindex, delete"
+    </FilesMatch>
+</IfModule>

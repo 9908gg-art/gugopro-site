@@ -1,0 +1,21 @@
+# ==============================================================================
+# GugoPro Nginx Server Configuration (HTTP 410 Gone & WRS Optimization)
+# 適用於以 Nginx 作為 Reverse Proxy 或 Web Server 的主機環境
+# ==============================================================================
+
+# 1. 精準攔截歷史 24 筆圖片與多媒體轉換工具，宣告永久刪除 (HTTP 410 Gone)
+# 向 Googlebot 與所有搜尋引擎爬蟲宣告資源永久註銷，徹底截斷抓取預算浪費與負面權重
+location ~* ^/tools/converter-.*\.html$ {
+    add_header X-Robots-Tag "noindex, delete" always;
+    return 410;
+}
+
+location ~* ^/converter-(image|audio|video|chart|crypto|excel|finance|office|pdf|unit|color).*\.html$ {
+    add_header X-Robots-Tag "noindex, delete" always;
+    return 410;
+}
+
+# 2. HTTP/2 並行串流與 Keepalive 連線優化（防止 Googlebot 密集檢索引發 TCP Reset）
+# http2_max_concurrent_streams 256;
+# keepalive_timeout 65s;
+# keepalive_requests 1000;
