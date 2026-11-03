@@ -564,6 +564,33 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 
 function readJSON(key,fallback){try{const v=JSON.parse(localStorage.getItem(key)||'null');return v??fallback}catch{return fallback}}
 
+function isVideoUnavailable(v){
+    if(!v || !v.id) return true;
+    if(excluded.has(v.id)) return true;
+    const t = String(v.title || '').trim();
+    if(!t) return true;
+    if(/\[?(?:deleted|private)\s*video\]?|^deleted$|^private$|影片已無法使用|已下架|此影片已無法播放|此影片已被移除|video unavailable|this video is unavailable/i.test(t)){
+        return true;
+    }
+    return false;
+}
+
+window.handleUnavailableVideo = function(imgEl, vid){
+    if(!vid) return;
+    excluded.add(vid);
+    catalog = catalog.filter(v => v.id !== vid);
+    unacknowledgedNewIds.delete(vid);
+    seen.delete(vid);
+    newResults = newResults.filter(v => v.id !== vid);
+    historyResults = historyResults.filter(v => v.id !== vid);
+    results = results.filter(v => v.id !== vid);
+    save();
+    renderStats();
+    refreshNewAlertNotice();
+    const card = imgEl?.closest('.card');
+    if(card) card.remove();
+};
+
 function load(){
     const raw=readJSON(SERIES_KEY,[]);
     if(Array.isArray(raw))series=raw;
@@ -572,7 +599,7 @@ function load(){
     excluded=new Set(readJSON(EXCLUDED_KEY,[]));
     catalog=readJSON(CATALOG_KEY,[]);
     if(!Array.isArray(catalog))catalog=[];
-    catalog=catalog.filter(v=>!excluded.has(v.id));
+    catalog=catalog.filter(v=>!excluded.has(v.id) && !isVideoUnavailable(v));
 
     // 嚴格片名匹配（75% 重疊率），徹底杜絕同頻道不同片名誤串
     catalog=catalog.filter(v=>{
@@ -912,10 +939,12 @@ function formatDuration(value){
 function normalizeResult(v,source,core){
     let id=v.videoId||v.id||v.url?.match(/[?&]v=([\w-]+)/)?.[1];
     if(!id)return null;
+    const title=v.title||'Untitled video';
+    if(isVideoUnavailable({id, title})) return null;
     let published=v.published||v.uploadDate||Date.now();
     return{
         id,
-        title:v.title||'Untitled video',
+        title,
         channel:v.author||v.uploaderName||v.uploader||'YouTube',
         published:Number.isFinite(new Date(published).getTime())?published:Date.now(),
         publishedText:v.publishedText||'',
@@ -924,7 +953,7 @@ function normalizeResult(v,source,core){
         source,
         coreKeyword:core,
         duration:durationSeconds(v.lengthSeconds??v.duration??v.durationText),
-        season:parseSeason(v.title||'')
+        season:parseSeason(title)
     };
 }
 
@@ -1079,12 +1108,14 @@ function collapseSeasonRows(rows){
         });
         if(existing){
             existing.items.push(v);
-            if(v.isNew && !existing.item.isNew) existing.item=v;
         }else{
             groups.push({season,episode:ep,coreKeyword:v.coreKeyword,item:v,items:[v]});
         }
     }
-    return groups.map(g=>({...g.item,duplicateCount:g.items.length}));
+    return groups.map(g=>{
+        const isAnyNew = g.items.some(x => unacknowledgedNewIds.has(x.id));
+        return {...g.item, isNew: isAnyNew, duplicateCount: g.items.length};
+    });
 }
 
 function getRenderedRows(){
@@ -1103,7 +1134,7 @@ function renderCard(v){
     <article class="card ${v.isNew?'is-new':''}" data-video-url="${esc(v.url)}" data-video-id="${esc(v.id)}">
         ${v.isNew?`<span class="new">🔥 NEW 續集</span>`:''}
         <div class="thumb-wrap">
-            <img class="thumb" loading="lazy" src="${esc(v.thumb)}" alt="${esc(v.title)}">
+            <img class="thumb" loading="lazy" src="${esc(v.thumb)}" alt="${esc(v.title)}" onerror="handleUnavailableVideo(this, '${esc(v.id)}')">
             <span class="video-duration-badge">${esc(formatDuration(v.duration))}</span>
             <span class="preview-badge">▶ 停留預覽</span>
         </div>
@@ -1250,15 +1281,8 @@ function acknowledgeAllSeries(){
     refreshNewAlertNotice();
 }
 
-function seriesHasNew(s){
-    return catalog.some(v => v.coreKeyword === s.coreKeyword && unacknowledgedNewIds.has(v.id));
-}
-
 function orderedSeries(){
     return [...series].sort((a,b)=>{
-        const aNew = seriesHasNew(a) ? 1 : 0;
-        const bNew = seriesHasNew(b) ? 1 : 0;
-        if(bNew !== aNew) return bNew - aNew; // 找到新片的影集優先排在最前面
         const bTime = b.updatedAt || b.addedAt || 0;
         const aTime = a.updatedAt || a.addedAt || 0;
         return bTime - aTime;
@@ -1376,6 +1400,21 @@ function relative(date){
     return `${Math.floor(d/7)} 週前`;
 }
 
+const CANNOT_IDENTIFY_TITLE_MAP = {
+    'zh-TW': '無法辨別影片名稱，請自行輸入',
+    'en': 'Cannot identify video title, please enter manually',
+    'ja': '動画名を識別できません。手動で入力してください',
+    'ko': '동영상 제목을 식별할 수 없습니다. 직접 입력해주세요',
+    'es': 'No se puede identificar el título, ingréselo manualmente',
+    'vi': 'Không thể nhận diện tên video, vui lòng tự nhập',
+    'id': 'Tidak dapat mengidentifikasi judul video, silakan masukkan secara manual'
+};
+
+function getCannotIdentifyText(){
+    const lang = $('language')?.value || document.documentElement.lang || 'zh-TW';
+    return CANNOT_IDENTIFY_TITLE_MAP[lang] || CANNOT_IDENTIFY_TITLE_MAP['zh-TW'];
+}
+
 async function prepare(){
     const input=$('sourceInput').value.trim();
     if(!input)return;
@@ -1386,17 +1425,11 @@ async function prepare(){
             const meta=await getMeta(input);
             const detected = extractCore(meta.title);
             meta.needsManualCore = !detected || detected.length > 20;
-            meta.coreKeyword = detected || suggestCoreCandidate(meta.title);
-            if(meta.needsManualCore) meta.suggestedCore = meta.coreKeyword;
+            meta.coreKeyword = detected || '';
 
-            // 若片名明確精確辨識（無歧義），直接加入追蹤並開始全網巡檢
-            if(!meta.needsManualCore && meta.coreKeyword){
-                pending = meta;
-                addSeries();
-            } else {
-                showPreview(meta);
-                showNoticeText('','');
-            }
+            // 取消自動加入追蹤，一律彈出預覽面板供使用者檢查與調整核心詞，由使用者按下「加入追蹤」才開始
+            showPreview(meta);
+            showNoticeText('','');
         }else{
             showPreview({title:input,channel:'',thumbnail:'',url:'',coreKeyword:input,needsManualCore:false});
             showNoticeText('','');
@@ -1414,8 +1447,13 @@ function updateCorePrompt(){
     $('metaPreview').classList.toggle('needs-manual', needsReview);
     $('corePrompt').hidden = !needsReview;
     $('coreInput').setAttribute('aria-invalid', missing ? 'true' : 'false');
-    if(needsReview) $('coreInput').placeholder = '請輸入具辨識度的片名…';
-    else $('coreInput').removeAttribute('placeholder');
+    const tip = getCannotIdentifyText();
+    $('corePrompt').textContent = `⚠️ ${tip}`;
+    if(needsReview) {
+        $('coreInput').placeholder = tip;
+    } else {
+        $('coreInput').removeAttribute('placeholder');
+    }
 }
 
 function showPreview(meta){
@@ -1425,7 +1463,8 @@ function showPreview(meta){
     $('metaThumb').src=meta.thumbnail||'';
     $('metaTitle').textContent=meta.title||meta.coreKeyword;
     $('metaChannel').textContent=meta.channel?`頻道: ${meta.channel}`:'';
-    $('coreInput').value=meta.coreKeyword||meta.suggestedCore||'';
+    // 若無法辨識片名，在系列核心詞不要隨意輸入，保持空值讓 placeholder 顯示各國翻譯文字
+    $('coreInput').value = pending.needsManualCore ? '' : (meta.coreKeyword || '');
     updateCorePrompt();
 }
 
@@ -1807,6 +1846,7 @@ $('scan').onclick=()=>scan();
 $('viewMode').onchange=render;
 $('dedupe').onchange=render;
 $('trackSearch').oninput=renderTags;
+$('language')?.addEventListener('change', updateCorePrompt);
 
 $('sidebarClear').onclick=()=>{
     if(confirm('確定要清空所有追蹤清單嗎？')){
@@ -1819,6 +1859,10 @@ load();
 render();
 if(unacknowledgedNewIds.size > 0){
     showNewAlertNotice();
+}
+// 網頁重新整理時自動發起全網巡檢，自動搜索最新續集
+if(series.length > 0){
+    scan();
 }
 })();
 </script>
