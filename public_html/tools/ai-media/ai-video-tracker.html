@@ -236,6 +236,63 @@
   }
 }
 
+
+.series-group {
+    scroll-margin-top: 76px;
+    margin: 0 0 16px;
+    padding: 12px;
+    border: 1px solid #284963;
+    border-radius: 12px;
+    background: #091827;
+    transition: border-color .3s, box-shadow .3s;
+}
+.series-group-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 0 0 10px;
+    padding: 0 2px;
+}
+.series-group-heading h4 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+}
+.series-group-heading button {
+    border: 0;
+    background: transparent;
+    color: var(--cyan);
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+    min-width: 0;
+    padding: 0;
+}
+.series-group-heading button:hover {
+    text-decoration: underline;
+}
+@keyframes jumpHighlight {
+    0%, 100% { border-color: #284963; box-shadow: none; }
+    50% { border-color: var(--cyan); box-shadow: 0 0 0 3px #67e5f455, 0 0 24px #67e5f477; }
+}
+.series-group.jump-flash {
+    animation: jumpHighlight 1.5s ease-in-out;
+}
+.tracked-tags .tag {
+    cursor: pointer;
+    transition: .18s;
+}
+.tracked-tags .tag:hover {
+    border-color: var(--cyan);
+    background: #173b58;
+}
+.tracked-tags .tag.is-active {
+    border-color: var(--cyan);
+    box-shadow: inset 3px 0 var(--cyan), 0 0 12px rgba(103, 229, 244, 0.2);
+    background: #143552;
+}
+
 </style>
 </head>
 <body>
@@ -927,35 +984,55 @@ function renderCard(v){
 }
 
 // 核心修正：100% 還原第二張圖的單一大網格佈局！
+
+function orderedSeries(){
+    return [...series].sort((a,b)=>(b.updatedAt||b.addedAt||0)-(a.updatedAt||a.addedAt||0));
+}
+
+function seriesAnchor(s){
+    return `series-${String(s.id).replace(/[^a-zA-Z0-9_-]/g,'-')}`;
+}
+
 function groupedResults(rows){
-    if(!rows.length) return '';
+    const list = orderedSeries();
+    if(!list.length) return '';
+    return list.map(s=>{
+        const items = rows.filter(v=>v.coreKeyword === s.coreKeyword || String(v.coreKeyword).toLowerCase() === String(s.coreKeyword).toLowerCase());
+        const fresh = items.filter(v=>v.isNew);
+        const old = items.filter(v=>!v.isNew);
+        const ordered = [...fresh, ...old];
+        const id = seriesAnchor(s);
+        const stamp = s.addedAt ? relative(s.addedAt) : '';
 
-    // 若有選中特定影集，只顯示該影集；若未選中則優先選中第一部
-    const selectedSeries = series.find(s=>s.id === active) || series[0];
-    const targetCore = selectedSeries ? selectedSeries.coreKeyword : null;
+        if(!items.length){
+            return `
+            <section id="${esc(id)}" class="series-group empty-group" data-series-group="${esc(s.id)}">
+                <div class="series-group-heading">
+                    <h4><button type="button" data-jump="${esc(id)}">${esc(s.coreKeyword)}</button></h4>
+                    <small style="color:var(--muted)">${esc(stamp)} · 0 部影片</small>
+                </div>
+                <div class="empty-group-prompt" style="padding:16px;text-align:center;color:var(--muted);background:rgba(0,0,0,.2);border-radius:8px;margin-top:6px">
+                    <p style="margin:0 0 8px">📺 此影集目前尚未檢索到續集資料。</p>
+                    <button type="button" class="btn secondary btn-sm" data-rescan-series="${esc(s.id)}">🚀 立即巡檢此系列</button>
+                </div>
+            </section>`;
+        }
 
-    let displayRows = rows;
-    if(targetCore){
-        const matched = rows.filter(v=>v.coreKeyword === targetCore);
-        if(matched.length) displayRows = matched;
-    }
-
-    const titleText = targetCore || '全部追蹤影片';
-    return `
-    <div class="series-group">
-        <div class="series-group-heading">
-            <h4>${esc(titleText)}</h4>
-            <small style="color:var(--muted)">共 ${displayRows.length} 部影片</small>
-        </div>
-        <!-- 真正一排 4 張大卡片的網格，完全對齊第二張圖 -->
-        <div class="grid">${displayRows.map(v=>renderCard(v)).join('')}</div>
-    </div>`;
+        return `
+        <section id="${esc(id)}" class="series-group${ordered.some(v=>v.isNew)?' is-new-group':''}" data-series-group="${esc(s.id)}">
+            <div class="series-group-heading">
+                <h4><button type="button" data-jump="${esc(id)}">${esc(s.coreKeyword)}</button></h4>
+                <small style="color:var(--muted)">${esc(stamp)} · 共 ${ordered.length} 部影片</small>
+            </div>
+            <div class="grid">${ordered.map(v=>renderCard(v)).join('')}</div>
+        </section>`;
+    }).join('');
 }
 
 function renderTags(){
     const list=$('trackedTags');
     const filter=String($('trackSearch')?.value||'').trim().toLowerCase();
-    const visible=series.filter(s=>!filter||s.coreKeyword.toLowerCase().includes(filter));
+    const visible=orderedSeries().filter(s=>!filter||s.coreKeyword.toLowerCase().includes(filter));
     
     list.innerHTML=visible.map(s=>{
         const isCurrentActive = (active === s.id);
@@ -1254,24 +1331,73 @@ document.body.addEventListener('pointerout', (e)=>{
 
 // 點擊左側影集標籤：切換顯示該影集，高亮並連動下拉選單
 $('trackedTags').onclick=e=>{
-    const remId=e.target.dataset.removeId;
-    if(remId){
-        series=series.filter(s=>s.id!==remId);
-        if(active===remId) active = series[0]?.id || 'all';
+    const remBtn=e.target.closest('[data-remove-id]');
+    if(remBtn){
+        const remId=remBtn.dataset.removeId;
+        const removeIndex=series.findIndex(item=>String(item.id)===String(remId));
+        const removed=removeIndex>=0?series.splice(removeIndex,1)[0]:null;
+        if(removed){
+            const removedIds=new Set(catalog.filter(v=>v.coreKeyword===removed.coreKeyword).map(v=>v.id));
+            catalog=catalog.filter(v=>v.coreKeyword!==removed.coreKeyword);
+            newResults=newResults.filter(v=>v.coreKeyword!==removed.coreKeyword);
+            historyResults=historyResults.filter(v=>v.coreKeyword!==removed.coreKeyword);
+            results=results.filter(v=>v.coreKeyword!==removed.coreKeyword);
+            removedIds.forEach(id=>{seen.delete(id);unacknowledgedNewIds.delete(id);});
+        }
+        if(String(active)===String(remId)) active='all';
         save();render();showNoticeText('已移除追蹤影集','success');
         return;
     }
-    const actId=e.target.dataset.active;
+    const actBtn=e.target.closest('[data-active]') || e.target.closest('[data-series-item]');
+    const actId=actBtn?.dataset?.active || actBtn?.dataset?.seriesItem;
     if(actId){
         active = actId;
-        const item=series.find(s=>s.id===actId);
+        renderTags();
+        const item=series.find(s=>String(s.id)===String(actId));
         if(item){
-            $('editSeriesSelect').value=item.id;
-            $('editCoreKeywordInput').value=item.coreKeyword;
+            if($('editSeriesSelect')) $('editSeriesSelect').value=item.id;
+            if($('editCoreKeywordInput')) $('editCoreKeywordInput').value=item.coreKeyword;
         }
-        render();
+        const anchorId = seriesAnchor(item || { id: actId });
+        let node = document.getElementById(anchorId) || document.querySelector(`[data-series-group="${actId}"]`);
+        if(!node && $('viewMode') && $('viewMode').value !== 'all'){
+            $('viewMode').value = 'all';
+            render();
+            node = document.getElementById(anchorId) || document.querySelector(`[data-series-group="${actId}"]`);
+        }
+        if(node){
+            const rect = node.getBoundingClientRect();
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const targetY = Math.max(0, scrollTop + rect.top - 76);
+            window.scrollTo({ top: targetY, behavior: 'smooth' });
+            node.classList.remove('jump-flash');
+            void node.offsetWidth;
+            node.classList.add('jump-flash');
+            setTimeout(() => node.classList.remove('jump-flash'), 1800);
+        }
     }
 };
+
+// 點擊右側卡片區標題跳轉與空群組重新巡檢
+$('historyResults')?.addEventListener('click', e => {
+    const jumpBtn = e.target.closest('[data-jump]');
+    if (jumpBtn) {
+        const id = jumpBtn.dataset.jump;
+        const node = document.getElementById(id);
+        if (node) {
+            const rect = node.getBoundingClientRect();
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const targetY = Math.max(0, scrollTop + rect.top - 76);
+            window.scrollTo({ top: targetY, behavior: 'smooth' });
+        }
+    }
+    const rescanBtn = e.target.closest('[data-rescan-series]');
+    if (rescanBtn) {
+        const sId = rescanBtn.dataset.rescanSeries;
+        const targetItem = series.find(s => String(s.id) === String(sId));
+        if (targetItem) scan([targetItem]);
+    }
+});
 
 // 按鈕事件綁定
 $('parse').onclick=prepare;
