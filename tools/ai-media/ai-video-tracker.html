@@ -713,7 +713,9 @@ function parseSeason(title){
 
 function normalizeMatch(value){
     return String(value||'').toLowerCase()
+        .replaceAll('現','现').replaceAll('農','农').replaceAll('門','门').replaceAll('窮','穷')
         .replaceAll('島','岛').replaceAll('劇','剧').replaceAll('漢','汉').replaceAll('臺','台').replaceAll('動漫','动漫').replaceAll('動畫','动画')
+        .replaceAll('國','国').replaceAll('體','体').replaceAll('連','连').replaceAll('載','载')
         .replace(/[\s\p{P}\p{S}]+/gu,'');
 }
 
@@ -723,9 +725,12 @@ function tokenize(value){
 
 // 嚴格片名匹配（75% 重疊率），片名不符即使同頻道也絕對不誤串
 function resultMatches(v, core){
+    if(v.id && pending && v.id === pending.id) return true;
+    if(v.source === 'source-url') return true;
+
     const titleClean = normalizeMatch(v.title);
     const needleClean = normalizeMatch(core);
-    if(!needleClean) return false;
+    if(!needleClean || !titleClean) return false;
 
     if(titleClean.includes(needleClean)) return true;
 
@@ -733,6 +738,15 @@ function resultMatches(v, core){
     if(coreTokens.length >= 2){
         const hits = coreTokens.filter(t=>titleClean.includes(t)).length;
         if(hits / coreTokens.length >= 0.75) return true;
+    }
+
+    const coreChars = [...needleClean];
+    if(coreChars.length >= 3){
+        let matched = 0;
+        for(const ch of coreChars){
+            if(titleClean.includes(ch)) matched++;
+        }
+        if(matched / coreChars.length >= 0.75) return true;
     }
     return false;
 }
@@ -781,7 +795,7 @@ function extractCore(title){
         if (bName && !isGenericSeriesTerm(bName)) return bName;
     }
 
-    let s = raw.replace(/[\p{Extended_Pictographic}\uFE0F\u200D]+/gu, ' ');
+    let s = raw.replace(/[\p{Extended_Pictographic}\uFE0F\u200D]+/gu, ' ').trim();
     s = s.replace(/^[【\[][^】\]]{0,60}[】\]]\s*/gu, '');
     s = s.replace(HYPE_PREFIX, '');
     s = s.replace(/(?:[\s_—–-]|(?<=[\p{Script=Han}]))(?:S\d+|Season\s*\d+|第\s*[0-9一二三四五六七八九十百廿卅〇壹貳叁肆伍陸柒捌玖]+\s*[季集部期話话回]|EP\s*\d+).*/iu, '');
@@ -1151,8 +1165,15 @@ async function prepare(){
             meta.needsManualCore = !detected || detected.length > 20;
             meta.coreKeyword = detected || suggestCoreCandidate(meta.title);
             if(meta.needsManualCore) meta.suggestedCore = meta.coreKeyword;
-            showPreview(meta);
-            showNoticeText('','');
+
+            // 若片名明確精確辨識（無歧義），直接加入追蹤並開始全網巡檢
+            if(!meta.needsManualCore && meta.coreKeyword){
+                pending = meta;
+                addSeries();
+            } else {
+                showPreview(meta);
+                showNoticeText('','');
+            }
         }else{
             showPreview({title:input,channel:'',thumbnail:'',url:'',coreKeyword:input,needsManualCore:false});
             showNoticeText('','');
@@ -1220,14 +1241,38 @@ function addSeries(){
         channel:pending.channel||'',
         thumbnail:pending.thumbnail||'',
         sourceUrl:pending.url||'',
+        sourceVideoId:pending.id||'',
         addedAt:Date.now()
     };
     series.push(s);
     active=s.id;
+
+    // 將使用者輸入的這部影片直接納入 catalog，保證「網址的這一片」100% 存在且立即可見
+    if(pending.id){
+        const sourceVideo={
+            id:pending.id,
+            title:pending.title||core,
+            channel:pending.channel||'YouTube',
+            published:Date.now(),
+            publishedText:'追蹤來源影片',
+            thumb:pending.thumbnail||`https://i.ytimg.com/vi/${pending.id}/hqdefault.jpg`,
+            url:pending.url||videoUrl(pending.id),
+            source:'source-url',
+            coreKeyword:core,
+            duration:0,
+            season:parseSeason(pending.title||'')
+        };
+        if(!catalog.some(v=>v.id===sourceVideo.id)){
+            catalog.unshift(sourceVideo);
+        }
+    }
+
     hidePreview();
     $('sourceInput').value='';
     save();
     renderTags();
+    renderStats();
+    render();
     showNoticeText(`已成功加入追蹤：${core}`,'success');
     scan([s]);
 }
