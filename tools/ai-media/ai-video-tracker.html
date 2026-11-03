@@ -659,24 +659,34 @@ function addSeries(){if(!pending)return;const typedCore=$('coreInput').value.tri
 function parseSeason(title){
   const s=String(title||'');
   let m;
-  m=s.match(/第\s*([0-9一二兩两三四五六七八九十百]+)\s*季/iu)||s.match(/(?:season|第)?\s*([0-9]{1,2})\s*季/iu);
+  // 1. 中文：第 X 季、第 X 部
+  m=s.match(/第\s*([0-9一二兩两三四五六七八九十百]+)\s*[季部]/iu)||s.match(/(?:season|第)?\s*([0-9]{1,2})\s*季/iu);
   if(m){
     const number=Number(toNumber(m[1]))||0;
     return{label:`${tr('season')} ${number||toNumber(m[1])}`,number,explicit:true,weight:105+number};
   }
-  m=s.match(/(?:^|[\s\p{P}])season\s*([0-9]+)/iu)||s.match(/(?:^|[\s\p{P}])S\s*([0-9]+)(?=[\s\p{P}]|$)/iu);
+  // 2. 日語：第 X 期, シーズン X, X期
+  m=s.match(/第\s*([0-9]+)\s*期/iu)||s.match(/シーズン\s*([0-9]+)/iu)||s.match(/([0-9]+)\s*期/iu);
   if(m){const number=Number(m[1]);return{label:`${tr('season')} ${number}`,number,explicit:true,weight:105+number}}
+  // 3. 國際格式：S02E01, S2, Season 2, 2nd Season
+  m=s.match(/S\s*([0-9]{1,2})\s*(?:E|EP|\b|[\s\p{P}])/iu)||
+    s.match(/(?:^|[\s\p{P}])season\s*([0-9]+)/iu)||
+    s.match(/([0-9]+)(?:st|nd|rd|th)\s*season/iu);
+  if(m){const number=Number(m[1]);return{label:`${tr('season')} ${number}`,number,explicit:true,weight:105+number}}
+  // 4. 韓語：시즌 X, X기, 제 X 시즌
   m=s.match(/시즌\s*([0-9]+)/iu)||s.match(/(?:제\s*)?([0-9]+)\s*(?:시즌|기)/iu);
   if(m){const number=Number(m[1]);return{label:`${tr('season')} ${number}`,number,explicit:true,weight:105+number}}
+  // 5. 越南語：Mùa X, Mùa thứ X, Phần X
   m=s.match(/(?:^|[\s\p{P}])mùa\s*(?:thứ\s*)?([0-9]+)/iu)||s.match(/(?:^|[\s\p{P}])phần\s*([0-9]+)/iu);
   if(m){const number=Number(m[1]);return{label:`${tr('season')} ${number}`,number,explicit:true,weight:105+number}}
-  m=s.match(/(?:^|[\s\p{P}])musim\s*(?:ke-?\s*)?([0-9]+)/iu);
+  // 6. 印尼語：Musim X, Musim ke-X, Bagian X
+  m=s.match(/(?:^|[\s\p{P}])musim\s*(?:ke-?\s*)?([0-9]+)/iu)||s.match(/(?:^|[\s\p{P}])bagian\s*([0-9]+)/iu);
   if(m){const number=Number(m[1]);return{label:`${tr('season')} ${number}`,number,explicit:true,weight:105+number}}
+  // 7. 西班牙語：Temporada X, Temp X, T X
   m=s.match(/(?:^|[\s\p{P}])temporada\s*([0-9]+)/iu)||s.match(/(?:^|[\s\p{P}])temp\.?\s*([0-9]+)/iu)||s.match(/(?:^|[\s\p{P}])T([0-9]+)(?=[\s\p{P}]|$)/iu);
   if(m){const number=Number(m[1]);return{label:`${tr('season')} ${number}`,number,explicit:true,weight:105+number}}
-  m=s.match(/第\s*([0-9]+)\s*期/iu)||s.match(/シーズン\s*([0-9]+)/iu);
-  if(m){const number=Number(m[1]);return{label:`${tr('season')} ${number}`,number,explicit:true,weight:105+number}}
-  if(/續集|续集|續作|续作|下一部|follow[- ]?up|sequel|finale|完結篇|完结篇|tập\s*cuối|tamat|final|결말|最終回/iu.test(s))
+  // 續集通配詞
+  if(/續集|续集|續作|续作|下一部|follow[- ]?up|sequel|finale|完結篇|完结篇|tập\s*cuối|tamat|final|결말|最終回|2nd|후속/iu.test(s))
     return{label:tr('season'),number:0,explicit:true,weight:78};
   return{label:'',number:0,explicit:false,weight:0};
 }
@@ -693,84 +703,169 @@ function toNumber(value){
 function parseEpisode(title){
   const s=String(title||'');
   let m;
-  m=s.match(/第\s*([0-9一二兩两三四五六七八九十百]+)\s*[集話话回期]/iu);
+  // 1. S02E05, S2EP05, S1E12 格式
+  m=s.match(/S\s*[0-9]+\s*(?:E|EP)\s*([0-9]+)/iu);
+  if(m)return Number(m[1])||0;
+  // 2. 中文：第 X 集/話/回
+  m=s.match(/第\s*([0-9一二兩两三四五六七八九十百]+)\s*[集話话回]/iu);
   if(m)return Number(toNumber(m[1]))||0;
+  // 3. 國際格式：Episode X, Ep X, E X
   m=s.match(/(?:^|[\s\p{P}])(?:episode|ep\.?|E)\s*([0-9]+)(?=[\s\p{P}]|$)/iu);
   if(m)return Number(m[1])||0;
+  // 4. 韓語：제 X 화, X회, X화
   m=s.match(/(?:제\s*)?([0-9]+)\s*(?:회|화)/iu);
   if(m)return Number(m[1])||0;
+  // 5. 越南語：Tập X
   m=s.match(/(?:^|[\s\p{P}])tập\s*([0-9]+)/iu);
   if(m)return Number(m[1])||0;
-  m=s.match(/(?:^|[\s\p{P}])(?:episode|eps?\.?)\s*([0-9]+)(?=[\s\p{P}]|$)/iu);
-  if(m)return Number(m[1])||0;
+  // 6. 西班牙語：Capítulo X, Cap X
   m=s.match(/(?:^|[\s\p{P}])cap[íi]tulo\s*([0-9]+)/iu)||s.match(/(?:^|[\s\p{P}])cap\.?\s*([0-9]+)/iu);
   if(m)return Number(m[1])||0;
-  m=s.match(/第\s*([0-9]+)\s*[話回]/iu);
+  // 7. 日語：第 X 話, 第 X 回, X話
+  m=s.match(/第\s*([0-9]+)\s*[話回]/iu)||s.match(/([0-9]+)\s*[話回]/iu);
   if(m)return Number(m[1])||0;
   return 0;
 }
-function isNewSeasonOrEpisode(v,previous){const current=parseSeason(v.title),episode=parseEpisode(v.title);if(!current.number&&!episode)return false;const same=previous.filter(x=>x.coreKeyword===v.coreKeyword);const priorSeasons=same.map(x=>parseSeason(x.title).number).filter(Boolean);const maxSeason=priorSeasons.length?Math.max(...priorSeasons):0;if(current.number>maxSeason)return true;if(current.number&&current.number===maxSeason&&episode){const maxEpisode=Math.max(0,...same.filter(x=>parseSeason(x.title).number===current.number).map(parseEpisode));return episode>maxEpisode}if(!current.number&&episode){const maxEpisode=Math.max(0,...same.map(parseEpisode));return episode>maxEpisode}return false}
-function tokenize(value){return String(value||'').toLowerCase().match(/[\p{Script=Han}]{2,}|[a-z0-9]{2,}/giu)||[]}
+function isNewSeasonOrEpisode(v,previous=[],seriesOrigin=null){
+  const currentSeason=parseSeason(v.title).number;
+  const currentEpisode=parseEpisode(v.title);
+  const same=previous.filter(x=>x.coreKeyword===v.coreKeyword);
+  const priorSeasons=same.map(x=>parseSeason(x.title).number).filter(Boolean);
+  let baselineSeason=priorSeasons.length?Math.max(...priorSeasons):0;
+  if(seriesOrigin&&seriesOrigin.coreKeyword===v.coreKeyword){
+    const originSeason=parseSeason(seriesOrigin.title||'').number;
+    if(originSeason>baselineSeason)baselineSeason=originSeason;
+  }
+  // 1. 新季判定：季數大於歷史基準
+  if(currentSeason>baselineSeason&&currentSeason>1)return true;
+  // 2. 發現第 2 季及以上且尚未被基準涵蓋
+  if(currentSeason>=2&&(!same.length||baselineSeason<currentSeason))return true;
+  // 3. 同季內集數增長
+  if(currentSeason&&currentSeason===baselineSeason&&currentEpisode){
+    const maxEpisode=Math.max(0,...same.filter(x=>parseSeason(x.title).number===currentSeason).map(x=>parseEpisode(x.title)));
+    if(currentEpisode>maxEpisode)return true;
+  }
+  // 4. 無季數但集數超出歷史基準
+  if(!currentSeason&&currentEpisode){
+    const maxEpisode=Math.max(0,...same.map(x=>parseEpisode(x.title)));
+    if(maxEpisode>0&&currentEpisode>maxEpisode)return true;
+  }
+  return false;
+}
+function tokenize(value){return String(value||'').toLowerCase().match(/[\p{L}\p{N}]{2,}/giu)||[]}
 function normalizeMatch(value){return String(value||'').toLowerCase().replaceAll('島','岛').replaceAll('劇','剧').replaceAll('漢','汉').replaceAll('臺','台').replaceAll('動漫','动漫').replaceAll('動畫','动画')}
-function isRelevantResult(v,core){const title=normalizeMatch(v.title),needle=normalizeMatch(core);if(!needle||!title.includes(needle))return false;const season=parseSeason(v.title);const sequel=/續集|续集|續作|续作|下一部|follow[- ]?up|sequel|finale|完結篇|完结篇|第\s*[0-9一二三四五六七八九十百]+\s*季|season\s*[0-9]+|\bS\s*[0-9]+/iu.test(v.title);return season.number>0||sequel}
+function isRelevantResult(v,core){
+  const title=normalizeMatch(v.title),needle=normalizeMatch(core);
+  if(!needle)return false;
+  const cleanNeedle=needle.replace(/[\s\p{P}]+/gu,'');
+  const cleanTitle=title.replace(/[\s\p{P}]+/gu,'');
+  const matchCore=title.includes(needle)||(cleanNeedle.length>=2&&cleanTitle.includes(cleanNeedle));
+  if(!matchCore)return false;
+  const season=parseSeason(v.title);
+  const ep=parseEpisode(v.title);
+  const sequel=/續集|续集|續作|续作|下一部|follow[- ]?up|sequel|finale|完結篇|完结篇|tập\s*cuối|tamat|final|결말|最終回|2nd|후속|第\s*[0-9一二兩两三四五六七八九十百]+\s*季|season\s*[0-9]+|\bS\s*[0-9]+|시즌\s*[0-9]+|mùa\s*[0-9]+|musim\s*[0-9]+|temporada\s*[0-9]+|第\s*[0-9]+\s*期/iu.test(v.title);
+  return season.number>0||ep>0||sequel;
+}
 function scoreResult(v,core,keywords=[]){const title=normalizeMatch(v.title),cleanCore=normalizeMatch(core),terms=splitKeywords(keywords).map(normalizeMatch);const season=parseSeason(v.title);const coreHit=title.includes(cleanCore)?1:0;const keywordHits=terms.filter(t=>t&&title.includes(t)).length;const recency=Math.max(0,Math.min(20,Math.round((new Date(v.published||0).getTime()/86400000)%20)));return season.weight+coreHit*80+keywordHits*28+recency}
-function resultMatches(v,core,keywords=[],channel=''){const title=normalizeMatch(v.title),needle=normalizeMatch(core),terms=splitKeywords(keywords).map(normalizeMatch).filter(Boolean);const coreTokens=tokenize(needle).filter(t=>t.length>=2);const tokenHits=coreTokens.filter(t=>title.includes(t)).length;const coreHit=Boolean(needle&&(title.includes(needle)||(coreTokens.length>=2&&tokenHits/coreTokens.length>=.5)));const channelHit=Boolean(channel&&normalizeMatch(v.channel).includes(normalizeMatch(channel)));const hits=terms.filter(t=>title.includes(t)).length;const season=parseSeason(v.title);const sequel=/續集|续集|續作|续作|下一部|follow[- ]?up|sequel|finale|完結篇|完结篇|第\s*[0-9一二三四五六七八九十百]+\s*季|season\s*[0-9]+|\bS\s*[0-9]+/iu.test(v.title);return Boolean(coreHit||(channelHit&&season.explicit&&coreTokens.length>0&&tokenHits/coreTokens.length>=.45))}
+function resultMatches(v,core,keywords=[],channel=''){
+  const title=normalizeMatch(v.title),needle=normalizeMatch(core);
+  if(!needle)return false;
+  const cleanNeedle=needle.replace(/[\s\p{P}]+/gu,'');
+  const cleanTitle=title.replace(/[\s\p{P}]+/gu,'');
+  if(title.includes(needle)||(cleanNeedle.length>=2&&cleanTitle.includes(cleanNeedle)))return true;
+  const coreTokens=tokenize(needle).filter(t=>t.length>=2);
+  if(coreTokens.length>=2){
+    const tokenHits=coreTokens.filter(t=>title.includes(t)).length;
+    if(tokenHits/coreTokens.length>=.5)return true;
+  }
+  const channelHit=Boolean(channel&&normalizeMatch(v.channel).includes(normalizeMatch(channel)));
+  const season=parseSeason(v.title);
+  const ep=parseEpisode(v.title);
+  if(channelHit&&(season.explicit||ep>0))return true;
+  return false;
+}
 function durationSeconds(value){if(value===null||value===undefined)return 0;if(typeof value==='number'&&Number.isFinite(value))return Math.max(0,Math.round(value));const text=String(value).trim();if(!text)return 0;if(/^PT/i.test(text)){const h=Number(text.match(/(\d+(?:\.\d+)?H)/i)?.[1]||0),m=Number(text.match(/(\d+(?:\.\d+)?M)/i)?.[1]||0),sec=Number(text.match(/(\d+(?:\.\d+)?S)/i)?.[1]||0);return Math.round(h*3600+m*60+sec)}if(/^\d+(?::\d+){1,2}$/.test(text)){const parts=text.split(':').map(Number);return parts.length===2?parts[0]*60+parts[1]:parts[0]*3600+parts[1]*60+parts[2]}const numeric=Number(text);return Number.isFinite(numeric)?Math.max(0,Math.round(numeric)):0}function formatDuration(value){const total=durationSeconds(value);if(!total)return '—:—';const h=Math.floor(total/3600),m=Math.floor(total%3600/60),sec=total%60;return h?`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`}function normalizeResult(v,source,core){let id=v.videoId||v.id||v.url?.match(/[?&]v=([\w-]+)/)?.[1];if(!id)return null;let published=v.published||v.uploadDate||v.uploadedDate||v.timestamp||Date.now();if(typeof published==='number'&&published<1e11)published*=1000;if(typeof published==='string'&&/^\d+$/.test(published))published=Number(published)*(Number(published)<1e11?1000:1);return{id,title:v.title||v.name||'Untitled video',channel:v.author||v.uploaderName||v.channelName||v.uploader||tr('unknown'),published:Number.isFinite(new Date(published).getTime())?published:Date.now(),publishedText:v.publishedText||v.uploadedDateText||'',thumb:v.videoThumbnails?.find(x=>x.quality==='medium')?.url||v.thumbnail||v.thumbnailUrl||`https://i.ytimg.com/vi/${id}/hqdefault.jpg`,url:videoUrl(id),source,coreKeyword:core,duration:durationSeconds(v.lengthSeconds??v.duration??v.durationText??v.length),season:parseSeason(v.title||'')}}
 function queryUrl(ep,q){return ep.kind==='proxy'?`${ep.base}${encodeURIComponent(`https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`)}`:`${ep.base}?q=${encodeURIComponent(q)}${ep.kind==='invidious'?'&type=video':'&filter=videos'}`}
 function parseYouTubeSearchHtml(html,source,core){const rows=[];const re=/"videoId":"([\w-]{6,})"[\s\S]{0,1600}?"title":\{"runs":\[\{"text":"((?:[^"\\]|\\.)*)"/g;let m;while((m=re.exec(html))&&rows.length<200){const title=m[2].replace(/\\"/g,'"');rows.push(normalizeResult({videoId:m[1],title,author:'YouTube',published:Date.now()},source,core))}return rows.filter(Boolean)}
 async function queryEndpoint(ep,q,core,keywords,channel=''){const d=await fetchJSON(queryUrl(ep,q));if(ep.kind==='proxy')return parseYouTubeSearchHtml(typeof d==='string'?d:JSON.stringify(d),ep.kind,core).filter(v=>resultMatches(v,core,keywords,channel));const rows=Array.isArray(d)?d:(d.items||d.data||[]);return rows.map(v=>normalizeResult(v,ep.kind,core)).filter(Boolean).filter(v=>resultMatches(v,core,keywords,channel))}
 async function seedSeries(core){const seed=DISCOVERY_SEEDS.find(x=>x.keys.some(k=>k.toLowerCase()===core.toLowerCase()));if(!seed)return[];const rows=await Promise.allSettled(seed.ids.map(async id=>{const m=await getMeta(videoUrl(id));return normalizeResult({videoId:id,title:m.title,author:m.channel,published:Date.now(),thumbnail:m.thumbnail},'verified-seed',core)}));return rows.filter(x=>x.status==='fulfilled'&&x.value).map(x=>x.value).filter(v=>isRelevantResult(v,core)||v.source==='verified-seed')}
-async function searchSeries(s,onProgress=()=>{}){const seeded=await seedSeries(s.coreKeyword);const keywords=splitKeywords(s.contentKeywords);const variants=[s.coreKeyword,s.coreKeyword.replaceAll('汉','漢').replaceAll('剧','劇'),s.coreKeyword.replaceAll('漢','汉').replaceAll('劇','剧')];const channelTerms=[s.channel,s.channelHandle].filter(Boolean);const sources=[
- {kind:'invidious',base:'https://inv.nadeko.net/api/v1/search'},{kind:'invidious',base:'https://invidious.nerdvpn.de/api/v1/search'},{kind:'invidious',base:'https://yt.chocolatemoo53.com/api/v1/search'},{kind:'invidious',base:'https://invidious.tiekoetter.com/api/v1/search'},{kind:'invidious',base:'https://invidious.f5.si/api/v1/search'},
- {kind:'piped',base:'https://pipedapi.kavin.rocks/search'},{kind:'piped',base:'https://pipedapi.adminforge.de/search'},
- {kind:'proxy',base:'https://api.allorigins.win/raw?url='},{kind:'proxy',base:'https://corsproxy.io/?url='}
-];const queryAll=async(q,expectedSeason=0)=>{const settled=await Promise.allSettled(sources.map(ep=>queryEndpoint(ep,q,s.coreKeyword,keywords,s.channel)));const rows=settled.flatMap(x=>x.status==='fulfilled'?x.value:[]);return expectedSeason?rows.filter(v=>parseSeason(v.title).number===expectedSeason):rows};const baseQueries=[...new Set(variants.concat(channelTerms.flatMap(ch=>[`${ch} ${s.coreKeyword}`,`${ch} ${s.coreKeyword} 第季`])).concat(keywords.flatMap(k=>variants.flatMap(core=>[`${core} ${k}`,`${k} ${core}`]))))];let rows=[...seeded];const baseRows=await Promise.all(baseQueries.map(q=>queryAll(q)));rows.push(...baseRows.flat());const seasonLimit=30;let emptyWindows=0;for(let startSeason=1;startSeason<=seasonLimit;startSeason+=5){const endSeason=Math.min(startSeason+4,seasonLimit);onProgress(`${tr('scanSeason')} ${startSeason}-${endSeason}`);function buildSeasonSearchQueries(core, n, currentLang = lang, variants = [], channelTerms = []) {
-  const list = [];
-  const allCores = [core, ...variants.filter(v => v !== core)];
-  allCores.forEach(c => {
-    switch(currentLang) {
-      case 'vi':
-        list.push(`${c} Mùa ${n}`, `${c} Phần ${n}`, `${c} S${n}`, `${c} Season ${n}`);
-        break;
-      case 'id':
-        list.push(`${c} Musim ${n}`, `${c} Season ${n}`, `${c} S${n}`);
-        break;
-      case 'ko':
-        list.push(`${c} 시즌${n}`, `${c} ${n}기`, `${c} S${n}`, `${c} Season ${n}`);
-        break;
-      case 'es':
-        list.push(`${c} Temporada ${n}`, `${c} Season ${n}`, `${c} S${n}`);
-        break;
-      case 'ja':
-        list.push(`${c} 第${n}期`, `${c} シーズン${n}`, `${c} S${n}`, `${c} Season ${n}`);
-        break;
-      case 'en':
-        list.push(`${c} Season ${n}`, `${c} S${n}`);
-        break;
-      case 'zh-TW':
-      default:
-        list.push(`${c} 第${n}季`, `${c} 第${n}季 全集`, `${c} Season ${n}`, `${c} S${n}`);
-        break;
-    }
-  });
-  channelTerms.forEach(ch => {
-    switch(currentLang) {
-      case 'vi': list.push(`${ch} ${core} Mùa ${n}`); break;
-      case 'id': list.push(`${ch} ${core} Musim ${n}`); break;
-      case 'ko': list.push(`${ch} ${core} 시즌${n}`); break;
-      case 'es': list.push(`${ch} ${core} Temporada ${n}`); break;
-      case 'ja': list.push(`${ch} ${core} 第${n}期`); break;
-      case 'en': list.push(`${ch} ${core} Season ${n}`); break;
-      default: list.push(`${ch} ${core} 第${n}季`); break;
-    }
-  });
-  return [...new Set(list)];
+async function searchSeries(s,onProgress=()=>{}){
+  const seeded=await seedSeries(s.coreKeyword);
+  const keywords=splitKeywords(s.contentKeywords);
+  const variants=[...new Set([
+    s.coreKeyword,
+    s.coreKeyword.replaceAll('汉','漢').replaceAll('剧','劇'),
+    s.coreKeyword.replaceAll('漢','汉').replaceAll('劇','剧')
+  ])];
+  const channelTerms=[s.channel,s.channelHandle].filter(Boolean);
+  const sources=[
+    {kind:'invidious',base:'https://inv.nadeko.net/api/v1/search'},
+    {kind:'invidious',base:'https://invidious.nerdvpn.de/api/v1/search'},
+    {kind:'invidious',base:'https://yt.chocolatemoo53.com/api/v1/search'},
+    {kind:'invidious',base:'https://invidious.tiekoetter.com/api/v1/search'},
+    {kind:'invidious',base:'https://invidious.f5.si/api/v1/search'},
+    {kind:'piped',base:'https://pipedapi.kavin.rocks/search'},
+    {kind:'piped',base:'https://pipedapi.adminforge.de/search'},
+    {kind:'proxy',base:'https://api.allorigins.win/raw?url='},
+    {kind:'proxy',base:'https://corsproxy.io/?url='}
+  ];
+
+  const queryAll=async(q)=>{
+    const settled=await Promise.allSettled(sources.map(ep=>queryEndpoint(ep,q,s.coreKeyword,keywords,s.channel)));
+    return settled.flatMap(x=>x.status==='fulfilled'?x.value:[]);
+  };
+
+  // =========================================================================
+  // 【第一階段：純粹片名廣泛搜尋（Broad Core Fetch）】
+  // 不加生硬繁複限定詞，保證 YouTube / API 能傳回最豐富完整的相關影片列表
+  // =========================================================================
+  onProgress(tr('scanOne')+' '+s.coreKeyword);
+  const stage1Queries=[...variants];
+  if(keywords.length)stage1Queries.push(`${s.coreKeyword} ${keywords[0]}`);
+
+  let allRows=[...seeded];
+  const stage1Results=await Promise.all(stage1Queries.map(q=>queryAll(q)));
+  allRows.push(...stage1Results.flat());
+
+  const stage1Map=new Map();
+  allRows.filter(Boolean).forEach(v=>stage1Map.set(v.id,v));
+
+  // =========================================================================
+  // 【第二階段：分析現有進度 + 定向新季極簡探針（Focused Next-Season Probes）】
+  // 分析第一階段獲取之影片與歷史記錄中的最高季數 M，針對 M+1 與 M+2 定向補充
+  // =========================================================================
+  const allCurrentItems=[...stage1Map.values()];
+  const knownSeasons=allCurrentItems.map(v=>parseSeason(v.title).number).filter(n=>n>0);
+  const currentMaxSeason=knownSeasons.length?Math.max(...knownSeasons):1;
+
+  const targetNextSeasons=[currentMaxSeason+1,currentMaxSeason+2].filter(n=>n<=30);
+  if(targetNextSeasons.length){
+    onProgress(`${tr('scanSeason')} ${targetNextSeasons.join(', ')}`);
+    const stage2Queries=[];
+    targetNextSeasons.forEach(n=>{
+      stage2Queries.push(`${s.coreKeyword} S${n}`);
+      stage2Queries.push(`${s.coreKeyword} Season ${n}`);
+      switch(lang){
+        case 'zh-TW': stage2Queries.push(`${s.coreKeyword} 第${n}季`); break;
+        case 'ja': stage2Queries.push(`${s.coreKeyword} 第${n}期`); break;
+        case 'ko': stage2Queries.push(`${s.coreKeyword} 시즌${n}`); break;
+        case 'vi': stage2Queries.push(`${s.coreKeyword} Mùa ${n}`); break;
+        case 'id': stage2Queries.push(`${s.coreKeyword} Musim ${n}`); break;
+        case 'es': stage2Queries.push(`${s.coreKeyword} Temporada ${n}`); break;
+        default: stage2Queries.push(`${s.coreKeyword} 第${n}季`); break;
+      }
+    });
+
+    const uniqueStage2Queries=[...new Set(stage2Queries)];
+    const stage2Results=await Promise.all(uniqueStage2Queries.map(q=>queryAll(q)));
+    stage2Results.flat().forEach(v=>{
+      if(v&&v.id)stage1Map.set(v.id,v);
+    });
+  }
+
+  const finalRows=[...stage1Map.values()];
+  return scanCardRows(finalRows);
 }
-const batch=await Promise.all(Array.from({length:endSeason-startSeason+1},(_,i)=>{
-  const n=startSeason+i;
-  const queries=buildSeasonSearchQueries(s.coreKeyword,n,lang,variants,channelTerms);
-  return Promise.all(queries.map(q=>queryAll(q,n))).then(x=>x.flat());
-}));const found=batch.flat();rows.push(...found);if(found.length)emptyWindows=0;else emptyWindows++;if(emptyWindows>=2&&startSeason>10)break}const unique=[...new Map(rows.filter(Boolean).map(v=>[v.id,v])).values()];return scanCardRows(unique)}
 function mergeCatalog(rows){const map=new Map(catalog.map(v=>[v.id,v]));rows.forEach(v=>map.set(v.id,v));catalog=[...map.values()].sort((a,b)=>new Date(b.published)-new Date(a.published)).slice(0,5000)}
 function titleSimilarity(a,b){const aa=new Set(tokenize(normalizeMatch(a)).filter(x=>x.length>=2)),bb=new Set(tokenize(normalizeMatch(b)).filter(x=>x.length>=2));if(!aa.size||!bb.size)return 0;const hit=[...aa].filter(x=>bb.has(x)).length;return hit/Math.max(1,Math.min(aa.size,bb.size))}
 function collapseSeasonRows(rows){if($('dedupe')?.value!=='season')return rows;const groups=[];for(const v of rows){const season=parseSeason(v.title).number;const existing=groups.find(g=>g.season===season&&g.coreKeyword===v.coreKeyword&&((season&&titleSimilarity(g.item.title,v.title)>=.72)||(g.item.duration&&v.duration&&Math.abs(g.item.duration-v.duration)<=Math.max(30,g.item.duration*.05))));if(existing){existing.items.push(v);const candidateIsNew=Boolean(v.isNew),currentIsNew=Boolean(existing.item.isNew),betterSameType=(v.score||0)>(existing.item.score||0)||(v.score===existing.item.score&&new Date(v.published)>new Date(existing.item.published));if(candidateIsNew&&!currentIsNew||(candidateIsNew===currentIsNew&&betterSameType))existing.item=v}else groups.push({season,coreKeyword:v.coreKeyword,item:v,items:[v]})}return groups.map(g=>({...g.item,duplicateCount:g.items.length}))}
@@ -805,10 +900,24 @@ try{
 const batches=await Promise.all(target.map((item,i)=>{showNoticeText(`${tr('scanOne')} ${i+1}/${target.length} · ${item.coreKeyword}`,'progress');return searchSeries(item,stage=>showNoticeText(`${tr('scanOne')} ${i+1}/${target.length} · ${item.coreKeyword} · ${stage}`,'progress'))}));
 if(run!==scanRun)return;
 const byId=new Map();batches.flat().filter(v=>!excluded.has(v.id)).forEach(v=>{if(!byId.has(v.id))byId.set(v.id,v)});
-const all=[...byId.values()];const previousIds=new Set(catalog.map(v=>v.id));const firstScan=!catalog.length;
-const unseen=all.filter(v=>!previousIds.has(v.id));const fresh=firstScan?[]:unseen.filter(v=>isNewSeasonOrEpisode(v,catalog));
-fresh.forEach(v=>{unacknowledgedNewIds.add(v.id);const owner=series.find(x=>x.coreKeyword===v.coreKeyword);if(owner)owner.updatedAt=Date.now()});
-mergeCatalog(all);if(firstScan)all.forEach(v=>seen.add(v.id));
+const all=[...byId.values()];
+
+// 核心比對：比對歷史 catalog，有真正新季（Season > 基準）或新集數者，標記為 NEW
+const fresh=all.filter(v=>{
+  if(seen.has(v.id)||unacknowledgedNewIds.has(v.id))return false;
+  const ownerSeries=series.find(x=>x.coreKeyword===v.coreKeyword);
+  return isNewSeasonOrEpisode(v,catalog,ownerSeries);
+});
+
+fresh.forEach(v=>{
+  unacknowledgedNewIds.add(v.id);
+  const owner=series.find(x=>x.coreKeyword===v.coreKeyword);
+  if(owner)owner.updatedAt=Date.now();
+});
+
+// 將所有搜尋到的資料完整記錄保存至本機歷史快照
+mergeCatalog(all);
+
 newResults=scanCardRows(catalog.filter(v=>unacknowledgedNewIds.has(v.id)));
 historyResults=scanCardRows(catalog.filter(v=>!unacknowledgedNewIds.has(v.id)));
 results=[...newResults,...historyResults];lastScan=Date.now();save();renderStats();render();
