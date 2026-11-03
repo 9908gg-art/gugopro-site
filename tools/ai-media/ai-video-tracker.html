@@ -11,7 +11,7 @@
 <link rel="shortcut icon" href="https://gugopro.com/favicon.ico?v=20261024">
 <link rel="apple-touch-icon" href="https://gugopro.com/apple-touch-icon.png?v=20261024" sizes="180x180">
 <link rel="manifest" href="https://gugopro.com/manifest.json?v=20261024">
-<meta name="description" content="短劇、動漫、小說解說與 AI 連載影片的更新，常常分散在不同頻道，發布時間也不固定；平台推薦不一定會把真正的下一集或新一季推到首頁。當你記得角色卻忘了劇名，或只看到「完結篇」才發現第二季早已上線，反覆手動搜尋會讓追劇變成負擔。本工具把貼網址後的資訊整理成一個清楚的追蹤流程：先透過 YouTube oEmbed 免 Key 取得真實標題與頻道，再用 Regex 清洗 4K、字幕、標籤與集數雜訊，萃取系列核心詞；接著組合第二季、續集、下一部與 Season 2 等搜尋意圖，以明確季數、續作詞、系列重合度與最新發布時間加權排序。每次巡檢都會將結果的 Video ID 寫入瀏覽器 LocalStorage 快照，只保留尚未出現過的影片作為差量更新，讓你一眼鎖定真正值得點開的 🔥 最新續集上線。全程不需註冊或 API Key，追蹤資料只留在目前瀏覽器。">
+<meta name="description" content="短劇、動漫、小說解說與 AI 連載影片的更新，常常分散在不同頻道，發布時間也不固定；平台推薦不一定會把真正的下一集或新一季推到首頁。當你記得角色卻忘了劇名，或只看到「完結篇」才發現第二季早已上線，反覆手動搜尋會讓追劇變成負擔。本工具把貼網址後的資訊整理成一個清楚的追蹤流程：先透過 YouTube oEmbed 免 Key 取得真實標題與頻道，再用 Regex 清洗 4K、字幕、標籤與集數雜訊，萃取劇名關鍵字；接著組合第二季、續集、下一部與 Season 2 等搜尋意圖，以明確季數、續作詞、系列重合度與最新發布時間加權排序。每次巡檢都會將結果的 Video ID 寫入瀏覽器 LocalStorage 快照，只保留尚未出現過的影片作為差量更新，讓你一眼鎖定真正值得點開的 🔥 最新續集上線。全程不需註冊或 API Key，追蹤資料只留在目前瀏覽器。">
 <meta name="keywords" content="YouTube 續集追蹤器, GugoPro 續集追蹤器, YouTube 找下一季, YouTube 續作, 動漫第二季, AI短劇續集, YouTube sequel tracker, find season 2 on youtube, YouTube 続編 トラッカー, アニメ 2期 検索">
 <link href="https://gugopro.com/tools/ai-media/ai-video-tracker.html" rel="canonical">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -359,14 +359,14 @@
 <button class="btn secondary" id="scan"><span id="scanIcon">🚀</span> <span data-i18n="scan">一鍵巡檢全部續集</span></button>
 </div>
 
-<!-- 新增：編輯影集關鍵字管理面板 -->
+<!-- 編輯劇名關鍵字管理面板 -->
 <div class="edit-series-bar" id="editSeriesBar">
-<span class="edit-series-label"><i class="fa-solid fa-pen-to-square"></i> 編輯影集關鍵字：</span>
+<span class="edit-series-label"><i class="fa-solid fa-pen-to-square"></i> 編輯劇名關鍵字：</span>
 <select id="editSeriesSelect" class="edit-series-select" aria-label="選擇欲編輯的影集">
 <option value="" disabled selected>-- 選擇已追蹤影集 --</option>
 </select>
-<input id="editCoreKeywordInput" class="edit-series-input" type="text" placeholder="請選取影集後修改系列核心詞...">
-<button type="button" id="btnSaveAndRescan" class="btn-save-edit"><i class="fa-solid fa-floppy-disk"></i> 儲存並重巡檢</button>
+<input id="editCoreKeywordInput" class="edit-series-input" type="text" placeholder="請先選取影集..." disabled style="display:none;">
+<button type="button" id="btnSaveAndRescan" class="btn-save-edit" style="display:none;"><i class="fa-solid fa-floppy-disk"></i> 儲存並重巡檢</button>
 </div>
 
 <!-- 解析預覽彈窗：已移除無效的內文關鍵字 -->
@@ -376,10 +376,10 @@
 <strong id="metaTitle"></strong>
 <small id="metaChannel"></small>
 <div class="core-row">
-<span class="core-label" data-i18n="coreLabel">系列核心詞</span>
+<span class="core-label" data-i18n="coreLabel">劇名關鍵字</span>
 <input class="core-input" id="coreInput" type="text">
 </div>
-<small class="core-prompt" data-i18n="manualCorePrompt" hidden id="corePrompt">⚠️ 無法可靠辨識片名，已先從影片標題整理候選核心詞。請確認並自行調整為具辨識度的作品名稱，再加入追蹤。</small>
+<small class="core-prompt" data-i18n="manualCorePrompt" hidden id="corePrompt">⚠️ 無法辨別影片名稱，請自行輸入</small>
 </div>
 <div class="preview-actions">
 <button class="btn primary" data-i18n="confirmAdd" id="confirmAdd">加入追蹤</button>
@@ -399,6 +399,13 @@
 <option data-i18n="showAll" value="off">全部影片</option>
 <option data-i18n="collapseSeason" selected value="season">同季合併（每季一支）</option>
 </select>
+
+<label for="blacklistSelect">黑名單：</label>
+<select class="select" id="blacklistSelect" style="max-width:210px;" aria-label="選擇黑名單項目">
+<option value="" disabled selected>-- 黑名單 (無) --</option>
+</select>
+<button type="button" class="btn secondary" id="btnRemoveBlacklist" style="padding:6px 11px;font-size:12px;font-weight:700;" disabled>刪除黑名單</button>
+
 <div class="stats">
 <span data-i18n="tracked">已追蹤</span> <b id="seriesCount">0</b>
 <span data-i18n="lastScan">上次巡檢</span> <b id="last">—</b>
@@ -444,7 +451,7 @@
 <section class="seo">
 <section class="tool-seo-content">
 <h2 data-i18n="seoTitle">不再漏看分散在不同頻道的下一季</h2>
-<p data-i18n="seoText">短劇、動漫、小說解說與 AI 連載影片的更新，常常分散在不同頻道，發布時間也不固定；平台推薦不一定會把真正的下一集或新一季推到首頁。當你記得角色卻忘了劇名，或只看到「完結篇」才發現第二季早已上線，反覆手動搜尋會讓追劇變成負擔。本工具把貼網址後的資訊整理成一個清楚的追蹤流程：先透過 YouTube oEmbed 免 Key 取得真實標題與頻道，再用 Regex 清洗 4K、字幕、標籤與集數雜訊，萃取系列核心詞；接著組合第二季、續集、下一部與 Season 2 等搜尋意圖，以明確季數、續作詞、系列重合度與最新發布時間加權排序。每次巡檢都會將結果的 Video ID 寫入瀏覽器 LocalStorage 快照，只保留尚未出現過的影片作為差量更新，讓你一眼鎖定真正值得點開的 🔥 最新續集上線。全程不需註冊或 API Key，追蹤資料只留在目前瀏覽器。</p>
+<p data-i18n="seoText">短劇、動漫、小說解說與 AI 連載影片的更新，常常分散在不同頻道，發布時間也不固定；平台推薦不一定會把真正的下一集或新一季推到首頁。當你記得角色卻忘了劇名，或只看到「完結篇」才發現第二季早已上線，反覆手動搜尋會讓追劇變成負擔。本工具把貼網址後的資訊整理成一個清楚的追蹤流程：先透過 YouTube oEmbed 免 Key 取得真實標題與頻道，再用 Regex 清洗 4K、字幕、標籤與集數雜訊，萃取劇名關鍵字；接著組合第二季、續集、下一部與 Season 2 等搜尋意圖，以明確季數、續作詞、系列重合度與最新發布時間加權排序。每次巡檢都會將結果的 Video ID 寫入瀏覽器 LocalStorage 快照，只保留尚未出現過的影片作為差量更新，讓你一眼鎖定真正值得點開的 🔥 最新續集上線。全程不需註冊或 API Key，追蹤資料只留在目前瀏覽器。</p>
 <h3 data-i18n="steps">3 步驟操作指南</h3>
 <ol>
 <li data-i18n="step1">貼上任一集 YouTube 網址，確認自動解析的劇名與頻道。</li>
@@ -471,7 +478,7 @@
 
 <section aria-labelledby="deep-guide-title" class="guide-deep">
 <h2 id="deep-guide-title">YouTube 續集追蹤方法：從第二季到大結局的判讀工作流</h2>
-<p>追蹤短劇、動漫與小說解說時，最常見的問題不是找不到影片，而是同一個故事被拆成多個頻道、不同標題格式與不同上傳批次。有人使用「第 2 季」，有人寫「S2」，也有人直接標示「大結局」或「下半部」。本工具先把來源影片的標題清理成系列核心詞，再把季數、集數、續作詞與頻道資訊放進搜尋條件。這種做法不是宣稱能讀取所有 YouTube 內容，而是把公開標題與搜尋結果整理成一個可檢查的候選清單，讓使用者自行判斷影片是否真的屬於同一部作品。</p>
+<p>追蹤短劇、動漫與小說解說時，最常見的問題不是找不到影片，而是同一個故事被拆成多個頻道、不同標題格式與不同上傳批次。有人使用「第 2 季」，有人寫「S2」，也有人直接標示「大結局」或「下半部」。本工具先把來源影片的標題清理成劇名關鍵字，再把季數、集數、續作詞與頻道資訊放進搜尋條件。這種做法不是宣稱能讀取所有 YouTube 內容，而是把公開標題與搜尋結果整理成一個可檢查的候選清單，讓使用者自行判斷影片是否真的屬於同一部作品。</p>
 
 <h3>跨頻道續集鎖定與 Local Diff (Cross-channel Detection)</h3>
 <p>跨頻道搬運比對的關鍵是不要只依賴頻道名稱。搜尋結果會先以核心詞和內文關鍵字篩選，再依明確季數、續作詞、標題重合度與發布時間計分；因此不同頻道只要仍保留作品核心詞或角色線索，就有機會被放進同一個系列群組。每次巡檢後，影片 ID 會保存在瀏覽器的 LocalStorage 快照中，下一次巡檢只把尚未出現的候選標記為 NEW。這種本機差分比對可以降低重複閱讀，不代表 YouTube 官方推薦或內容真偽認證。</p>
@@ -483,7 +490,7 @@
 <div class="deep-faq">
 <div class="faq-item">
 <h3>為什麼有些續集分散在不同頻道也能被找出來？</h3>
-<p>工具會綜合系列核心詞、內文關鍵字、季數／續作標記與標題相似度，而不是只比對頻道。因此不同頻道只要在公開標題中保留足夠線索，就可能被分到同一系列；仍建議點開來源自行確認。</p>
+<p>工具會綜合劇名關鍵字、內文關鍵字、季數／續作標記與標題相似度，而不是只比對頻道。因此不同頻道只要在公開標題中保留足夠線索，就可能被分到同一系列；仍建議點開來源自行確認。</p>
 </div>
 <div class="faq-item">
 <h3>遇到假續集、預告片或標題黨剪輯時，工具如何避免誤判？</h3>
@@ -502,12 +509,12 @@
 <p><strong>YouTube 續集追蹤器 (GugoPro Sequel Tracker)</strong> 是一個免安裝、免註冊的全球網頁工具，專門協助使用者追蹤短劇、動漫、AI 連載、小說解說與系列長片的後續更新。當影片分散在不同頻道，或同一部作品使用「第 2 季」、「S2」、「續集」、「完結篇」等不同標題格式時，單靠 YouTube 首頁推薦往往很難掌握。本工具讓你先貼上一支 YouTube 影片網址，再建立自己的系列追蹤清單，方便日後搜尋下一季與新發布的續作。</p>
 
 <h3>這個工具可以解決什麼問題？</h3>
-<p>很多觀眾記得角色、劇情或影片縮圖，卻忘記完整劇名；也有人看完第一季後，不知道第二季是否已經在另一個頻道上線。YouTube 續集追蹤器會先整理公開影片的標題與頻道資訊，推導系列核心詞，再結合季數、集數、續作、下一部與大結局等搜尋意圖，將候選影片集中到同一個結果區。你可以按照季數、相關性或最新發布時間查看結果，減少反覆輸入關鍵字的時間。</p>
+<p>很多觀眾記得角色、劇情或影片縮圖，卻忘記完整劇名；也有人看完第一季後，不知道第二季是否已經在另一個頻道上線。YouTube 續集追蹤器會先整理公開影片的標題與頻道資訊，推導劇名關鍵字，再結合季數、集數、續作、下一部與大結局等搜尋意圖，將候選影片集中到同一個結果區。你可以按照季數、相關性或最新發布時間查看結果，減少反覆輸入關鍵字的時間。</p>
 
 <h3>如何使用 YouTube 續集追蹤器？</h3>
 <ol>
 <li><strong>貼上影片網址：</strong>輸入 YouTube watch、youtu.be、shorts 或 embed 連結，也可以直接輸入劇名關鍵字。</li>
-<li><strong>解析並加入追蹤：</strong>確認系統整理出的系列核心詞、頻道與內文關鍵字；必要時補充角色、世界觀、系統名稱或特殊地名。</li>
+<li><strong>解析並加入追蹤：</strong>確認系統整理出的劇名關鍵字、頻道與內文關鍵字；必要時補充角色、世界觀、系統名稱或特殊地名。</li>
 <li><strong>一鍵巡檢全部續集：</strong>工具會依照季數、續作詞、標題重合度與發布時間整理跨頻道候選結果。</li>
 <li><strong>判讀與觀看：</strong>新發現內容會標示「最新續集 (NEW)」，點擊完整縮圖可以前往 YouTube；滑鼠停留時也能使用影片預覽。</li>
 </ol>
@@ -531,7 +538,7 @@
 <p>本工具支援手機瀏覽器，追蹤清單會在小螢幕改為容易滑動的排列方式，搜尋輸入框、解析按鈕、巡檢按鈕、排序選單與左側追蹤項目都保留適合手指點按的觸控空間。影片縮圖本身是前往 YouTube 的完整連結，手機使用者可以直接點擊縮圖觀看；桌面使用者則可以把滑鼠停留在縮圖上查看預覽。當你在長頁面向上滑動且控制列已離開畫面，右下角會出現回到頂端快捷鍵，方便快速開始下一次巡檢。</p>
 
 <h3>如何判斷搜尋結果是否為真正續集？</h3>
-<p>結果卡片會顯示影片縮圖、影片時長、頻道、發布時間、系列核心詞與季數資訊。帶有「最新續集 (NEW)」的內容代表它是本機歷史中尚未出現的候選影片，不等於平台已認證它是官方續集。建議比較影片標題中的季數與集數、確認頻道是否為原作者、查看發布時間及影片長度，並使用「刪除錯誤連結」排除預告、剪輯、重複上傳或不相關內容。</p>
+<p>結果卡片會顯示影片縮圖、影片時長、頻道、發布時間、劇名關鍵字與季數資訊。帶有「最新續集 (NEW)」的內容代表它是本機歷史中尚未出現的候選影片，不等於平台已認證它是官方續集。建議比較影片標題中的季數與集數、確認頻道是否為原作者、查看發布時間及影片長度，並使用「刪除錯誤連結」排除預告、剪輯、重複上傳或不相關內容。</p>
 
 <p class="guide-keywords"><strong>適用情境：</strong>免安裝 YouTube 續集追蹤工具 (YouTube Sequel Tracker)，適合查詢動漫第二季播出更新、短劇大結局線上看、小說解說斷更續追，以及跨頻道分集自動整理。工具只整理公開資訊與候選連結，使用者仍應自行確認影片來源、發布日期與版權狀態。</p>
 <p class="copyright-note"><strong>第三方平台與版權聲明：</strong>本工具僅提供公開 YouTube 影音資料的檢索、語意標籤整理與連結索引，不下載或儲存影音檔案。影片、縮圖、頻道與商標的權利屬 YouTube 及各原創作者；使用者應遵守 YouTube 服務條款與所在地法律。</p>
@@ -553,9 +560,9 @@
 
 <script>
 (()=>{'use strict';
-const SERIES_KEY='tracked_series',SEEN_KEY='seen_video_ids',CATALOG_KEY='series_catalog',EXCLUDED_KEY='excluded_video_ids',META_KEY='tracked_series_meta',UNACK_KEY='unacknowledged_new_ids';
+const SERIES_KEY='tracked_series',SEEN_KEY='seen_video_ids',CATALOG_KEY='series_catalog',EXCLUDED_KEY='excluded_video_ids',META_KEY='tracked_series_meta',UNACK_KEY='unacknowledged_new_ids',BLACKLIST_KEY='series_blacklist';
 
-let series=[],seen=new Set(),catalog=[],active='all',newResults=[],historyResults=[],results=[],unacknowledgedNewIds=new Set(),pending=null,scanRun=0,lastScan=null;
+let series=[],seen=new Set(),catalog=[],active='all',newResults=[],historyResults=[],results=[],unacknowledgedNewIds=new Set(),pending=null,scanRun=0,lastScan=null,blacklist=[];
 let previewTimers=new Map();
 let excluded=new Set();
 
@@ -563,6 +570,44 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 function readJSON(key,fallback){try{const v=JSON.parse(localStorage.getItem(key)||'null');return v??fallback}catch{return fallback}}
+
+function isBlacklisted(vid, coreKeyword){
+    if(!vid) return false;
+    const coreNorm = String(coreKeyword||'').toLowerCase().trim();
+    return blacklist.some(b => b.id === vid && String(b.coreKeyword||'').toLowerCase().trim() === coreNorm);
+}
+
+function renderBlacklistDropdown(){
+    const sel = $('blacklistSelect');
+    const btn = $('btnRemoveBlacklist');
+    if(!sel) return;
+    if(!blacklist.length){
+        sel.innerHTML = '<option value="" disabled selected>-- 黑名單 (無) --</option>';
+        if(btn) btn.disabled = true;
+        return;
+    }
+    
+    // 按劇名關鍵字分組排序，同劇名關鍵字排在一起
+    const sorted = [...blacklist].sort((a,b) => String(a.coreKeyword||'').localeCompare(String(b.coreKeyword||'')) || ((b.addedAt||0) - (a.addedAt||0)));
+    const groups = {};
+    sorted.forEach(item => {
+        const k = item.coreKeyword || '未分類';
+        if(!groups[k]) groups[k] = [];
+        groups[k].push(item);
+    });
+
+    let html = `<option value="" disabled selected>-- 黑名單管理 (共 ${blacklist.length} 部) --</option>`;
+    for(const core in groups){
+        html += `<optgroup label="【${esc(core)}】(${groups[core].length} 部)">`;
+        groups[core].forEach(item => {
+            const titleSnippet = item.title ? (item.title.length > 26 ? item.title.slice(0, 26) + '…' : item.title) : item.id;
+            html += `<option value="${esc(item.coreKeyword)}:::${esc(item.id)}">${esc(titleSnippet)}</option>`;
+        });
+        html += `</optgroup>`;
+    }
+    sel.innerHTML = html;
+    if(btn) btn.disabled = !sel.value;
+}
 
 function isVideoUnavailable(v){
     if(!v || !v.id) return true;
@@ -597,9 +642,12 @@ function load(){
     else if(raw&&Array.isArray(raw.series))series=raw.series;
     seen=new Set(readJSON(SEEN_KEY,[]));
     excluded=new Set(readJSON(EXCLUDED_KEY,[]));
+    blacklist=readJSON(BLACKLIST_KEY,[]);
+    if(!Array.isArray(blacklist)) blacklist=[];
+
     catalog=readJSON(CATALOG_KEY,[]);
     if(!Array.isArray(catalog))catalog=[];
-    catalog=catalog.filter(v=>!excluded.has(v.id) && !isVideoUnavailable(v));
+    catalog=catalog.filter(v=>!excluded.has(v.id) && !isBlacklisted(v.id, v.coreKeyword) && !isVideoUnavailable(v));
 
     // 嚴格片名匹配（75% 重疊率），徹底杜絕同頻道不同片名誤串
     catalog=catalog.filter(v=>{
@@ -620,6 +668,7 @@ function load(){
     newResults=scanCardRows(catalog.filter(v=>unacknowledgedNewIds.has(v.id)));
     historyResults=scanCardRows(catalog.filter(v=>!unacknowledgedNewIds.has(v.id)));
     results=[...newResults,...historyResults];
+    renderBlacklistDropdown();
 }
 
 function save(){
@@ -628,6 +677,7 @@ function save(){
     localStorage.setItem(CATALOG_KEY,JSON.stringify(catalog.filter(v=>!excluded.has(v.id)).slice(-5000)));
     localStorage.setItem(UNACK_KEY,JSON.stringify([...unacknowledgedNewIds].slice(-5000)));
     localStorage.setItem(EXCLUDED_KEY,JSON.stringify([...excluded].slice(-5000)));
+    localStorage.setItem(BLACKLIST_KEY,JSON.stringify(blacklist.slice(-5000)));
     localStorage.setItem(META_KEY,JSON.stringify({lastScan}));
 }
 
@@ -791,6 +841,7 @@ function tokenize(value){
 
 // 嚴格片名匹配（75% 重疊率），片名不符即使同頻道也絕對不誤串
 function resultMatches(v, core){
+    if(isBlacklisted(v.id, core)) return false;
     if(v.id && pending && v.id === pending.id) return true;
     if(v.source === 'source-url') return true;
 
@@ -1152,7 +1203,7 @@ function renderCard(v){
                     ${epBadge}
                     ${v.duplicateCount>1?`<span class="duplicate-count">× ${v.duplicateCount}</span>`:''}
                 </div>
-                <button class="exclude-video" type="button" data-exclude="${esc(v.id)}">× 排除此片</button>
+                <button class="exclude-video" type="button" data-exclude="${esc(v.id)}" data-core="${esc(v.coreKeyword)}">× 刪除此片</button>
             </div>
         </div>
     </article>`;
@@ -1484,7 +1535,7 @@ function addSeries(){
     if(!core){
         updateCorePrompt();
         $('coreInput').focus();
-        showNoticeText('請填入系列核心片名','warning');
+        showNoticeText('請填入劇名關鍵字','warning');
         return;
     }
     const duplicate=series.find(s=>s.coreKeyword.toLowerCase()===core.toLowerCase());
@@ -1614,19 +1665,32 @@ $('scrollTopFab').onclick = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
-// 編輯影集關鍵字：下拉選取帶入
-$('editSeriesSelect').addEventListener('change', (e)=>{
+// 編輯劇名關鍵字：下拉選取帶入
+$('editSeriesSelect')?.addEventListener('change', (e)=>{
     const selectedId = e.target.value;
     const item = series.find(s=>s.id===selectedId);
     if(item){
         active = item.id;
-        $('editCoreKeywordInput').value = item.coreKeyword;
-        $('editCoreKeywordInput').focus();
+        if($('editCoreKeywordInput')){
+            $('editCoreKeywordInput').style.display = 'inline-block';
+            $('editCoreKeywordInput').disabled = false;
+            $('editCoreKeywordInput').value = item.coreKeyword;
+            $('editCoreKeywordInput').placeholder = '修改此影集的劇名關鍵字...';
+            $('editCoreKeywordInput').focus();
+        }
+        if($('btnSaveAndRescan')) $('btnSaveAndRescan').style.display = 'inline-block';
         render();
+    } else {
+        if($('editCoreKeywordInput')){
+            $('editCoreKeywordInput').style.display = 'none';
+            $('editCoreKeywordInput').disabled = true;
+            $('editCoreKeywordInput').value = '';
+        }
+        if($('btnSaveAndRescan')) $('btnSaveAndRescan').style.display = 'none';
     }
 });
 
-// 編輯影集關鍵字：儲存並重新發起巡檢
+// 編輯劇名關鍵字：儲存並重新發起巡檢
 $('btnSaveAndRescan').addEventListener('click', ()=>{
     const select = $('editSeriesSelect');
     const selectedId = select.value;
@@ -1637,7 +1701,7 @@ $('btnSaveAndRescan').addEventListener('click', ()=>{
         return;
     }
     if(!newCore){
-        alert('系列核心詞不能為空！');
+        alert('劇名關鍵字不能為空！');
         return;
     }
 
@@ -1659,25 +1723,43 @@ $('btnSaveAndRescan').addEventListener('click', ()=>{
     scan([item]);
 });
 
-// 全域點擊委派：依序處理排除、標記已看過、卡片跳轉（點擊卡片跳轉 YouTube 時自動標記已看過）
+// 全域點擊委派：依序處理刪除此片（黑名單）、標記已看過、卡片跳轉
 document.body.addEventListener('click', (e)=>{
-    // 1. 排除此片
+    // 1. 刪除此片（加入該劇名關鍵字專屬黑名單）
     const excBtn = e.target.closest('[data-exclude]');
     if(excBtn){
         e.stopPropagation();
         const excId = excBtn.dataset.exclude;
-        excluded.add(excId);
-        catalog = catalog.filter(v=>v.id!==excId);
+        const excCore = excBtn.dataset.core || '';
+        const v = catalog.find(item => item.id === excId) || { id: excId, title: '', coreKeyword: excCore };
+        const core = v.coreKeyword || excCore;
+
+        if(!blacklist.some(b => b.id === excId && b.coreKeyword === core)){
+            blacklist.push({
+                id: excId,
+                title: v.title || '未知標題',
+                coreKeyword: core,
+                channel: v.channel || '',
+                thumb: v.thumb || '',
+                addedAt: Date.now()
+            });
+        }
+
+        catalog = catalog.filter(item => !(item.id === excId && item.coreKeyword === core));
         unacknowledgedNewIds.delete(excId);
         seen.delete(excId);
-        newResults = newResults.filter(v=>v.id!==excId);
-        historyResults = historyResults.filter(v=>v.id!==excId);
-        results = results.filter(v=>v.id!==excId);
+        newResults = newResults.filter(item => !(item.id === excId && item.coreKeyword === core));
+        historyResults = historyResults.filter(item => !(item.id === excId && item.coreKeyword === core));
+        results = results.filter(item => !(item.id === excId && item.coreKeyword === core));
         save();
         renderStats();
         render();
         refreshNewAlertNotice();
-        showNoticeText('已排除該影片','success');
+        renderBlacklistDropdown();
+
+        // 手機跟電腦都要彈出提示表示已加入XXXX 劇名關鍵字-黑名單
+        alert(`已加入「${core}」劇名關鍵字 - 黑名單`);
+        showNoticeText(`已加入「${core}」劇名關鍵字 - 黑名單`,'warning');
         return;
     }
 
@@ -1793,7 +1875,13 @@ $('trackedTags').onclick=e=>{
         const item=series.find(s=>String(s.id)===String(actId));
         if(item){
             if($('editSeriesSelect')) $('editSeriesSelect').value=item.id;
-            if($('editCoreKeywordInput')) $('editCoreKeywordInput').value=item.coreKeyword;
+            if($('editCoreKeywordInput')){
+                $('editCoreKeywordInput').style.display='inline-block';
+                $('editCoreKeywordInput').disabled=false;
+                $('editCoreKeywordInput').value=item.coreKeyword;
+                $('editCoreKeywordInput').placeholder='修改此影集的劇名關鍵字...';
+            }
+            if($('btnSaveAndRescan')) $('btnSaveAndRescan').style.display='inline-block';
         }
         const anchorId = seriesAnchor(item || { id: actId });
         let node = document.getElementById(anchorId) || document.querySelector(`[data-series-group="${actId}"]`);
@@ -1847,6 +1935,27 @@ $('viewMode').onchange=render;
 $('dedupe').onchange=render;
 $('trackSearch').oninput=renderTags;
 $('language')?.addEventListener('change', updateCorePrompt);
+
+$('blacklistSelect')?.addEventListener('change', () => {
+    if($('btnRemoveBlacklist')) $('btnRemoveBlacklist').disabled = !$('blacklistSelect').value;
+});
+
+$('btnRemoveBlacklist')?.addEventListener('click', () => {
+    const val = $('blacklistSelect')?.value;
+    if(!val) {
+        alert('請先在下拉選單中選擇要移出的黑名單項目！');
+        return;
+    }
+    const [core, id] = val.split(':::');
+    const idx = blacklist.findIndex(b => b.id === id && b.coreKeyword === core);
+    if(idx >= 0){
+        const removed = blacklist.splice(idx, 1)[0];
+        save();
+        renderBlacklistDropdown();
+        alert(`已將「${removed.title || removed.id}」從「${core}」劇名關鍵字黑名單中移除！下次巡檢可正常搜尋到。`);
+        showNoticeText(`已自「${core}」黑名單中移除，下次巡檢將可正常檢索。`, 'success');
+    }
+});
 
 $('sidebarClear').onclick=()=>{
     if(confirm('確定要清空所有追蹤清單嗎？')){
