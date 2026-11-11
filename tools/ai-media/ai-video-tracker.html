@@ -690,7 +690,7 @@ function load(){
     if(!Array.isArray(catalog))catalog=[];
     catalog=catalog.filter(v=>!excluded.has(v.id) && !isBlacklisted(v.id, v.coreKeyword) && !isVideoUnavailable(v));
 
-    // 嚴格片名匹配（75% 重疊率），徹底杜絕同頻道不同片名誤串
+    // 嚴格片名匹配（90% 高相關度），徹底杜絕同頻道不同片名誤串
     catalog=catalog.filter(v=>{
         const owner=series.find(s=>s.coreKeyword===v.coreKeyword);
         return !owner||resultMatches(v,owner.coreKeyword);
@@ -887,7 +887,7 @@ function tokenize(value){
     return String(value||'').toLowerCase().match(/[\p{Script=Han}]{2,}|[a-z0-9]{2,}/giu)||[];
 }
 
-// 嚴格片名匹配（75% 重疊率），片名不符即使同頻道也絕對不誤串
+// 嚴格片名匹配（90% 高相關度），片名不符即使同頻道也絕對不誤串
 function resultMatches(v, core){
     if(isBlacklisted(v.id, core)) return false;
     if(v.id && pending && v.id === pending.id) return true;
@@ -902,7 +902,7 @@ function resultMatches(v, core){
     const coreTokens = tokenize(needleClean).filter(t=>t.length>=2);
     if(coreTokens.length >= 2){
         const hits = coreTokens.filter(t=>titleClean.includes(t)).length;
-        if(hits / coreTokens.length >= 0.75) return true;
+        if(hits / coreTokens.length >= 0.90) return true;
     }
 
     const coreChars = [...needleClean];
@@ -911,7 +911,7 @@ function resultMatches(v, core){
         for(const ch of coreChars){
             if(titleClean.includes(ch)) matched++;
         }
-        if(matched / coreChars.length >= 0.75) return true;
+        if(matched / coreChars.length >= 0.90) return true;
     }
     return false;
 }
@@ -1665,16 +1665,16 @@ async function scan(target=series){
         const previousIds=new Set(catalog.map(v=>v.id));
         const isFirst=!catalog.length;
 
-        // 依各影集預先統計當前列表中已存在的季數與最高集數（以季為絕對基準，集為輔助）
-        const seriesExistingSeasons = new Map();
-        const seriesExistingMaxEp = new Map();
+        // 依各影集預先統計當前列表中已追蹤的最新最高季數與最高集數（季為基準，集為輔助）
+        const seriesTrackedMaxSeason = new Map();
+        const seriesTrackedMaxEp = new Map();
 
         target.forEach(item => {
             const items = catalog.filter(c => c.coreKeyword === item.coreKeyword);
-            const seasons = new Set(items.map(c => parseSeason(c.title).number).filter(n => n > 0));
+            const maxSeason = Math.max(0, ...items.map(c => parseSeason(c.title).number).filter(n => n > 0));
             const maxEp = Math.max(0, ...items.map(c => parseEpisode(c.title)).filter(e => e > 0));
-            seriesExistingSeasons.set(item.coreKeyword, seasons);
-            seriesExistingMaxEp.set(item.coreKeyword, maxEp);
+            seriesTrackedMaxSeason.set(item.coreKeyword, maxSeason);
+            seriesTrackedMaxEp.set(item.coreKeyword, maxEp);
         });
 
         all.forEach(v=>{
@@ -1688,25 +1688,36 @@ async function scan(target=series){
                         return;
                     }
 
-                    const existingSeasons = seriesExistingSeasons.get(v.coreKeyword) || new Set();
-                    const existingMaxEp = seriesExistingMaxEp.get(v.coreKeyword) || 0;
+                    const currentMaxSeason = seriesTrackedMaxSeason.get(v.coreKeyword) || 0;
+                    const currentMaxEp = seriesTrackedMaxEp.get(v.coreKeyword) || 0;
                     const vSeason = parseSeason(v.title).number;
                     const vEp = parseEpisode(v.title);
 
                     let isTrulyNew = false;
 
                     if(vSeason > 0){
-                        // 季為基準：如果列表中「已經有這一季」（例如已經有第6季），不管標題顯示第1集或名稱有微小差異，都絕不顯示為新影片！
-                        if(!existingSeasons.has(vSeason)){
-                            // 列表中從未出現過的全新季數才算真正的新續集！
+                        // 核心規則：只要比現在追蹤最新季數低或相等的（例如已追蹤第24季，搜索到第20季或第24季），都不顯示發現全新續集提醒，默默將卡片加入列表就好！
+                        // 只有嚴格大於目前追蹤最新季數（例如原本最高24季，現在發現第25季），才觸發全新續集提醒！
+                        if(currentMaxSeason > 0){
+                            if(vSeason > currentMaxSeason){
+                                isTrulyNew = true;
+                                seriesTrackedMaxSeason.set(v.coreKeyword, vSeason);
+                            }
+                        } else {
+                            // 列表中原先完全沒有標示季數，首次發現明確季數
                             isTrulyNew = true;
-                            existingSeasons.add(vSeason);
+                            seriesTrackedMaxSeason.set(v.coreKeyword, vSeason);
                         }
-                    } else if(existingSeasons.size === 0 && vEp > 0){
-                        // 集為輔助：僅在完全沒有標示季數的連載影集中，集數嚴格大於列表中既有最大集數才算新集數
-                        if(existingMaxEp > 0 ? (vEp > existingMaxEp) : false){
+                    } else if(currentMaxSeason === 0 && vEp > 0){
+                        // 集的規則也是一樣：只要比目前追蹤最新集數低或相等的（例如已追蹤第149集，搜索到第20集），默默加入就好；只有嚴格大於目前最新集數才觸發提醒！
+                        if(currentMaxEp > 0){
+                            if(vEp > currentMaxEp){
+                                isTrulyNew = true;
+                                seriesTrackedMaxEp.set(v.coreKeyword, vEp);
+                            }
+                        } else {
                             isTrulyNew = true;
-                            seriesExistingMaxEp.set(v.coreKeyword, Math.max(existingMaxEp, vEp));
+                            seriesTrackedMaxEp.set(v.coreKeyword, vEp);
                         }
                     }
 
