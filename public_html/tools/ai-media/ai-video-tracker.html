@@ -773,12 +773,20 @@ function parseUniversalChineseNumber(raw){
     return hasMatch ? total : (Number(str) || 0);
 }
 
+const CN_NUMS=['〇','一','二','三','四','五','六','七','八','九','十',
+               '十一','十二','十三','十四','十五','十六','十七','十八','十九','二十',
+               '二十一','二十二','二十三','二十四','二十五','二十六','二十七','二十八','二十九','三十'];
+function toCnNum(n){
+    if(n>=1 && n<CN_NUMS.length) return CN_NUMS[n];
+    return String(n);
+}
+
 // 支援多國語言季數表記（韓、英、西、越、印尼、日、中）
 function parseSeason(title){
     const s=String(title||'');
     let m;
 
-    m=s.match(/第\s*([0-9一二兩两三四五六七八九十百廿卅〇壹貳叁肆伍陸柒捌玖]+)\s*季/iu) || s.match(/(?:season|第)?\s*([0-9]{1,3})\s*季/iu);
+    m=s.match(/(?:第\s*)?([0-9一二兩两三四五六七八九十百廿卅〇壹貳叁肆伍陸柒捌玖]{1,5})\s*季/iu) || s.match(/(?:season|第)?\s*([0-9]{1,3})\s*季/iu);
     if(m){
         const num = parseUniversalChineseNumber(m[1]);
         if(num > 0) return { label: `第 ${num} 季`, number: num, explicit: true, weight: 105 + num };
@@ -880,6 +888,12 @@ function normalizeMatch(value){
         .replaceAll('現','现').replaceAll('農','农').replaceAll('門','门').replaceAll('窮','穷')
         .replaceAll('島','岛').replaceAll('劇','剧').replaceAll('漢','汉').replaceAll('臺','台').replaceAll('動漫','动漫').replaceAll('動畫','动画')
         .replaceAll('國','国').replaceAll('體','体').replaceAll('連','连').replaceAll('載','载')
+        .replaceAll('後','后')
+        .replace(/#[\p{L}\p{N}_-]+/gu,' ')
+        .replace(/[【\[][^】\]]{0,60}[】\]]/gu,m=>/(4k|8k|1080|720|hd|字幕|中字|官方|正版|高清|剪辑|vietsub|thuyết minh|sub|completo|full)/iu.test(m)?' ':m)
+        .replace(/第\s*[0-9一二兩两三四五六七八九十百廿卅〇壹貳叁肆伍陸柒捌玖]+\s*[季集部期話话回]/giu,' ')
+        .replace(/(?:^|[\s\p{P}])(?:season\s*[0-9]+|s\s*[0-9]+|mùa\s*[0-9]+|musim\s*[0-9]+|temporada\s*[0-9]+)(?=[\s\p{P}]|$)/giu,' ')
+        .replace(/(?:官方正版|高清中字|繁中字幕|简中字幕|完整版|大結局|大结局|完結篇|完结篇|全集|合集|預告片|预告片|正片|小說解說|小说解说)/giu,' ')
         .replace(/[\s\p{P}\p{S}]+/gu,'');
 }
 
@@ -887,7 +901,7 @@ function tokenize(value){
     return String(value||'').toLowerCase().match(/[\p{Script=Han}]{2,}|[a-z0-9]{2,}/giu)||[];
 }
 
-// 嚴格片名匹配（90% 高相關度），片名不符即使同頻道也絕對不誤串
+// 劇名精準匹配：標題包含完整劇名或關鍵主副標即認定屬於該劇，排除集數/季數/畫質等干擾詞
 function resultMatches(v, core){
     if(isBlacklisted(v.id, core)) return false;
     if(v.id && pending && v.id === pending.id) return true;
@@ -897,21 +911,34 @@ function resultMatches(v, core){
     const needleClean = normalizeMatch(core);
     if(!needleClean || !titleClean) return false;
 
+    // 1. 標題完全包含劇名關鍵字（100% 吻合）
     if(titleClean.includes(needleClean)) return true;
 
-    const coreTokens = tokenize(needleClean).filter(t=>t.length>=2);
-    if(coreTokens.length >= 2){
-        const hits = coreTokens.filter(t=>titleClean.includes(t)).length;
-        if(hits / coreTokens.length >= 0.90) return true;
+    // 2. 複合劇名（包含空格、冒號或破折號的主副標題，例如「莞城往事 我的房東叫紅姐」或「末世躺贏指南 到末世十年後」）
+    const parts = core.split(/[\s:：_—–-]+/).map(p => normalizeMatch(p)).filter(p => p.length >= 2);
+    if(parts.length >= 2){
+        // 若標題包含全部子段落
+        if(parts.every(p => titleClean.includes(p))) return true;
+        // 若標題包含主要長段落（長度 >= 3 且非通用泛詞，例如「莞城往事」、「我的房東叫紅姐」）
+        const matchedPart = parts.find(p => p.length >= 3 && !isGenericSeriesTerm(p) && titleClean.includes(p));
+        if(matchedPart) return true;
     }
 
+    // 3. 詞元比對（排除修飾語與通用詞後，覆蓋率 >= 80%）
+    const coreTokens = tokenize(needleClean).filter(t => t.length >= 2 && !isGenericSeriesTerm(t));
+    if(coreTokens.length >= 2){
+        const hits = coreTokens.filter(t => titleClean.includes(t)).length;
+        if(hits / coreTokens.length >= 0.80) return true;
+    }
+
+    // 4. 字元比對（去噪後匹配度 >= 85%）
     const coreChars = [...needleClean];
     if(coreChars.length >= 3){
         let matched = 0;
         for(const ch of coreChars){
             if(titleClean.includes(ch)) matched++;
         }
-        if(matched / coreChars.length >= 0.90) return true;
+        if(matched / coreChars.length >= 0.85) return true;
     }
     return false;
 }
@@ -993,7 +1020,7 @@ function normalizeId(input){
 function videoUrl(id){return `https://www.youtube.com/watch?v=${encodeURIComponent(id)}`}
 
 async function fetchJSON(url){
-    const r=await fetch(url,{signal:AbortSignal.timeout(5000),headers:{Accept:'application/json'}});
+    const r=await fetch(url,{signal:AbortSignal.timeout(8000),headers:{Accept:'application/json'}});
     if(!r.ok)throw Error(`HTTP ${r.status}`);
     return r.json();
 }
@@ -1068,32 +1095,43 @@ function parseYouTubeSearchHtml(html,source,core){
 }
 
 async function queryEndpoint(ep,q,core){
-    const queryUrl=ep.kind==='proxy'
-        ? `${ep.base}${encodeURIComponent(`https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`)}`
-        : `${ep.base}?q=${encodeURIComponent(q)}${ep.kind==='invidious'?'&type=video':'&filter=videos'}`;
-    const d=await fetchJSON(queryUrl);
-    if(ep.kind==='proxy') return parseYouTubeSearchHtml(typeof d==='string'?d:JSON.stringify(d),ep.kind,core).filter(v=>resultMatches(v,core));
-    const rows=Array.isArray(d)?d:(d.items||d.data||[]);
-    return rows.map(v=>normalizeResult(v,ep.kind,core)).filter(Boolean).filter(v=>resultMatches(v,core));
+    try{
+        if(ep.kind==='proxy'){
+            const targetUrl=`https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
+            const queryUrl=`${ep.base}${encodeURIComponent(targetUrl)}`;
+            const r=await fetch(queryUrl,{signal:AbortSignal.timeout(8000)});
+            if(!r.ok) throw Error(`HTTP ${r.status}`);
+            const text=await r.text();
+            return parseYouTubeSearchHtml(text,ep.kind,core).filter(v=>resultMatches(v,core));
+        }
+        const queryUrl=`${ep.base}?q=${encodeURIComponent(q)}${ep.kind==='invidious'?'&type=video':'&filter=videos'}`;
+        const d=await fetchJSON(queryUrl);
+        const rows=Array.isArray(d)?d:(d.items||d.data||[]);
+        return rows.map(v=>normalizeResult(v,ep.kind,core)).filter(Boolean).filter(v=>resultMatches(v,core));
+    }catch(_){
+        return [];
+    }
 }
 
 // 兩階段搜尋架構
 async function searchSeriesTwoStages(s, onProgress=()=>{}){
     const core=s.coreKeyword;
-    const coreTrad=core.replaceAll('汉','漢').replaceAll('剧','劇').replaceAll('门','門').replaceAll('国','國');
-    const coreSimp=core.replaceAll('漢','汉').replaceAll('劇','剧').replaceAll('門','门').replaceAll('國','国');
+    const coreTrad=core.replaceAll('汉','漢').replaceAll('剧','劇').replaceAll('门','門').replaceAll('国','國').replaceAll('后','後');
+    const coreSimp=core.replaceAll('漢','汉').replaceAll('劇','剧').replaceAll('門','门').replaceAll('國','国').replaceAll('後','后');
     const coreVariants=[...new Set([core, coreTrad, coreSimp])];
 
+    // 若關鍵字為複合結構（含空格或標點，如「莞城往事 我的房東叫紅姐」或「末世躺贏指南 到末世十年後」），自動拆分子段落並行檢索
+    const segments = core.split(/[\s:：_—–-]+/).map(p=>p.trim()).filter(p=>p.length>=2 && !isGenericSeriesTerm(p));
+
     const sources=[
+        {kind:'invidious',base:'https://yt.chocolatemoo53.com/api/v1/search'},
+        {kind:'invidious',base:'https://invidious.ducks.party/api/v1/search'},
         {kind:'invidious',base:'https://inv.nadeko.net/api/v1/search'},
         {kind:'invidious',base:'https://invidious.nerdvpn.de/api/v1/search'},
-        {kind:'invidious',base:'https://yt.chocolatemoo53.com/api/v1/search'},
         {kind:'invidious',base:'https://invidious.tiekoetter.com/api/v1/search'},
         {kind:'invidious',base:'https://invidious.f5.si/api/v1/search'},
         {kind:'piped',base:'https://pipedapi.kavin.rocks/search'},
-        {kind:'piped',base:'https://pipedapi.adminforge.de/search'},
-        {kind:'proxy',base:'https://api.allorigins.win/raw?url='},
-        {kind:'proxy',base:'https://corsproxy.io/?url='}
+        {kind:'piped',base:'https://pipedapi.adminforge.de/search'}
     ];
 
     const queryAll=async(q)=>{
@@ -1103,6 +1141,14 @@ async function searchSeriesTwoStages(s, onProgress=()=>{}){
 
     onProgress(`第一階段：純核心片名檢索 (${core})`);
     const stage1Queries=[...coreVariants];
+    if(segments.length >= 2){
+        segments.forEach(seg => {
+            const segTrad = seg.replaceAll('汉','漢').replaceAll('剧','劇').replaceAll('门','門').replaceAll('国','國').replaceAll('后','後');
+            const segSimp = seg.replaceAll('漢','汉').replaceAll('劇','剧').replaceAll('門','门').replaceAll('國','国').replaceAll('後','后');
+            stage1Queries.push(seg, segTrad, segSimp);
+        });
+    }
+
     const stage1Batches=await Promise.all(stage1Queries.map(q=>queryAll(q)));
     let collectedRows=stage1Batches.flat().filter(v=>v&&v.id&&resultMatches(v,core));
 
@@ -1134,23 +1180,47 @@ async function searchSeriesTwoStages(s, onProgress=()=>{}){
 
     const probeQueries=[];
     if(seasonsToProbe.length>0){
-        probeQueries.push(...seasonsToProbe.flatMap(n=>[
-            `${core} 第${n}季`,
-            `${core} S${n}`,
-            `${core} Season ${n}`,
-            `${core} 第${n}期`,
-            `${core} 시즌${n}`,
-            `${core} Temporada ${n}`,
-            `${core} Mùa ${n}`
-        ]));
+        seasonsToProbe.forEach(n=>{
+            const cn = toCnNum(n);
+            probeQueries.push(
+                `${core} 第${n}季`,
+                `${core} 第${cn}季`,
+                `${core} S${n}`,
+                `${core} Season ${n}`,
+                `${core} 第${n}期`,
+                `${core} 第${cn}期`,
+                `${core} 시즌${n}`,
+                `${core} Temporada ${n}`,
+                `${core} Mùa ${n}`
+            );
+            if(segments.length >= 2){
+                probeQueries.push(
+                    `${segments[0]} 第${n}季`,
+                    `${segments[0]} 第${cn}季`,
+                    `${segments[0]} S${n}`,
+                    `${segments[0]} Season ${n}`
+                );
+            }
+        });
     }
     if(episodesToProbe.length>0){
-        probeQueries.push(...episodesToProbe.flatMap(n=>[
-            `${core} 第${n}集`,
-            `${core} EP${n}`,
-            `${core} ${n}集`,
-            `${core} Tập ${n}`
-        ]));
+        episodesToProbe.forEach(n=>{
+            const cn = toCnNum(n);
+            probeQueries.push(
+                `${core} 第${n}集`,
+                `${core} 第${cn}集`,
+                `${core} EP${n}`,
+                `${core} ${n}集`,
+                `${core} Tập ${n}`
+            );
+            if(segments.length >= 2){
+                probeQueries.push(
+                    `${segments[0]} 第${n}集`,
+                    `${segments[0]} 第${cn}集`,
+                    `${segments[0]} EP${n}`
+                );
+            }
+        });
     }
 
     if(probeQueries.length>0){
@@ -1667,14 +1737,22 @@ async function scan(target=series){
 
         // 依各影集預先統計當前列表中已追蹤的最新最高季數與最高集數（季為基準，集為輔助）
         const seriesTrackedMaxSeason = new Map();
-        const seriesTrackedMaxEp = new Map();
+        const seriesTrackedMaxEpOfLatestSeason = new Map();
+        const seriesTrackedMaxEpGlobal = new Map();
 
         target.forEach(item => {
             const items = catalog.filter(c => c.coreKeyword === item.coreKeyword);
             const maxSeason = Math.max(0, ...items.map(c => parseSeason(c.title).number).filter(n => n > 0));
-            const maxEp = Math.max(0, ...items.map(c => parseEpisode(c.title)).filter(e => e > 0));
             seriesTrackedMaxSeason.set(item.coreKeyword, maxSeason);
-            seriesTrackedMaxEp.set(item.coreKeyword, maxEp);
+
+            // 最高季目前已記錄的最高集數
+            const latestSeasonItems = items.filter(c => parseSeason(c.title).number === maxSeason);
+            const maxEpOfLatest = Math.max(0, ...latestSeasonItems.map(c => parseEpisode(c.title)).filter(e => e > 0));
+            seriesTrackedMaxEpOfLatestSeason.set(item.coreKeyword, maxEpOfLatest);
+
+            // 全局最高集數（用於純連載未分季情況）
+            const maxEpGlobal = Math.max(0, ...items.map(c => parseEpisode(c.title)).filter(e => e > 0));
+            seriesTrackedMaxEpGlobal.set(item.coreKeyword, maxEpGlobal);
         });
 
         all.forEach(v=>{
@@ -1689,35 +1767,50 @@ async function scan(target=series){
                     }
 
                     const currentMaxSeason = seriesTrackedMaxSeason.get(v.coreKeyword) || 0;
-                    const currentMaxEp = seriesTrackedMaxEp.get(v.coreKeyword) || 0;
+                    const currentMaxEpOfLatestSeason = seriesTrackedMaxEpOfLatestSeason.get(v.coreKeyword) || 0;
+                    const currentMaxEpGlobal = seriesTrackedMaxEpGlobal.get(v.coreKeyword) || 0;
                     const vSeason = parseSeason(v.title).number;
                     const vEp = parseEpisode(v.title);
 
                     let isTrulyNew = false;
 
                     if(vSeason > 0){
-                        // 核心規則：只要比現在追蹤最新季數低或相等的（例如已追蹤第24季，搜索到第20季或第24季），都不顯示發現全新續集提醒，默默將卡片加入列表就好！
-                        // 只有嚴格大於目前追蹤最新季數（例如原本最高24季，現在發現第25季），才觸發全新續集提醒！
+                        // 核心規則：以季為第一基準！
                         if(currentMaxSeason > 0){
                             if(vSeason > currentMaxSeason){
+                                // 全新一季（如原本最高第4季，現發現第5季；或第24季出到第25季）
                                 isTrulyNew = true;
                                 seriesTrackedMaxSeason.set(v.coreKeyword, vSeason);
+                                seriesTrackedMaxEpOfLatestSeason.set(v.coreKeyword, vEp > 0 ? vEp : 0);
+                            } else if(vSeason === currentMaxSeason){
+                                // 同季連載：若有明確集數，且大於該季已追蹤的最高集數（如 S24 E6 > S24 E5），判定為該季最新連載更新！
+                                if(vEp > 0 && currentMaxEpOfLatestSeason > 0){
+                                    if(vEp > currentMaxEpOfLatestSeason){
+                                        isTrulyNew = true;
+                                        seriesTrackedMaxEpOfLatestSeason.set(v.coreKeyword, vEp);
+                                    }
+                                } else if(vEp > 0 && currentMaxEpOfLatestSeason === 0){
+                                    isTrulyNew = true;
+                                    seriesTrackedMaxEpOfLatestSeason.set(v.coreKeyword, vEp);
+                                }
                             }
+                            // 若 vSeason < currentMaxSeason（例如已追蹤第 24 季，找到第 20 季），isTrulyNew 保持 false，默默加入列表！
                         } else {
                             // 列表中原先完全沒有標示季數，首次發現明確季數
                             isTrulyNew = true;
                             seriesTrackedMaxSeason.set(v.coreKeyword, vSeason);
+                            if(vEp > 0) seriesTrackedMaxEpOfLatestSeason.set(v.coreKeyword, vEp);
                         }
                     } else if(currentMaxSeason === 0 && vEp > 0){
-                        // 集的規則也是一樣：只要比目前追蹤最新集數低或相等的（例如已追蹤第149集，搜索到第20集），默默加入就好；只有嚴格大於目前最新集數才觸發提醒！
-                        if(currentMaxEp > 0){
-                            if(vEp > currentMaxEp){
+                        // 純集數連載影集（無季數，如 第149集）：只要比目前追蹤最新集數高才觸發提醒，低於或相等的默默加入就好！
+                        if(currentMaxEpGlobal > 0){
+                            if(vEp > currentMaxEpGlobal){
                                 isTrulyNew = true;
-                                seriesTrackedMaxEp.set(v.coreKeyword, vEp);
+                                seriesTrackedMaxEpGlobal.set(v.coreKeyword, vEp);
                             }
                         } else {
                             isTrulyNew = true;
-                            seriesTrackedMaxEp.set(v.coreKeyword, vEp);
+                            seriesTrackedMaxEpGlobal.set(v.coreKeyword, vEp);
                         }
                     }
 

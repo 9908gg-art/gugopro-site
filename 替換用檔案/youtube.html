@@ -1,0 +1,2216 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html lang="zh-TW"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport">
+<title>YouTube 續集與新季追蹤器｜跨頻道自動找下一集、新季數與短劇連載 - GugoPro</title>
+<!-- GugoPro 官方統一 Favicon 配置 -->
+<link rel="icon" href="https://gugopro.com/favicon.png?v=20261024" type="image/png" sizes="32x32">
+<link rel="icon" href="https://gugopro.com/favicon-192x192.png?v=20261024" type="image/png" sizes="192x192">
+<link rel="icon" href="https://gugopro.com/favicon.svg?v=20261024" type="image/svg+xml">
+<link rel="shortcut icon" href="https://gugopro.com/favicon.ico?v=20261024">
+<link rel="apple-touch-icon" href="https://gugopro.com/apple-touch-icon.png?v=20261024" sizes="180x180">
+<link rel="manifest" href="https://gugopro.com/manifest.json?v=20261024">
+<meta name="description" content="短劇、動漫、小說解說與 AI 連載影片的更新，常常分散在不同頻道，發布時間也不固定；平台推薦不一定會把真正的下一集或新一季推到首頁。當你記得角色卻忘了劇名，或只看到「完結篇」才發現第二季早已上線，反覆手動搜尋會讓追劇變成負擔。本工具把貼網址後的資訊整理成一個清楚的追蹤流程：先透過 YouTube oEmbed 免 Key 取得真實標題與頻道，再用 Regex 清洗 4K、字幕、標籤與集數雜訊，萃取劇名關鍵字；接著組合第二季、續集、下一部與 Season 2 等搜尋意圖，以明確季數、續作詞、系列重合度與最新發布時間加權排序。每次巡檢都會將結果的 Video ID 寫入瀏覽器 LocalStorage 快照，只保留尚未出現過的影片作為差量更新，讓你一眼鎖定真正值得點開的 🔥 最新續集上線。全程不需註冊或 API Key，追蹤資料只留在目前瀏覽器。">
+<meta name="keywords" content="YouTube 續集追蹤器, GugoPro 續集追蹤器, YouTube 找下一季, YouTube 續作, 動漫第二季, AI短劇續集, YouTube sequel tracker, find season 2 on youtube, YouTube 続編 トラッカー, アニメ 2期 検索">
+<link href="https://gugopro.com/tools/ai-media/ai-video-tracker.html" rel="canonical">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@600;700;800&family=Noto+Sans+TC:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="GugoPro">
+<meta property="og:title" content="YouTube 續集與新季追蹤器 - GugoPro Sequel Tracker">
+<meta property="og:description" content="貼上 YouTube 網址一鍵偵測下一季/續作，採用本機差量技術，只提醒你真正上線的全新續集。">
+<meta property="og:url" content="https://gugopro.com/tools/ai-media/ai-video-tracker.html">
+<meta property="og:locale" content="zh_TW">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="YouTube 續集與新季追蹤器 - GugoPro">
+<meta name="twitter:description" content="免 API Key 自動比對跨頻道下一季、動漫第二季與短劇續集。">
+
+<link href="https://gugopro.com/tools/ai-media/ai-video-tracker.html" hreflang="zh-TW" rel="alternate">
+<link href="https://gugopro.com/tools/ai-media/ai-video-tracker.html" hreflang="x-default" rel="alternate">
+
+<style>
+:root{--bg:#07111f;--panel:#0c1b2d;--panel2:#112841;--line:#284963;--text:#edf6ff;--muted:#91a9c3;--cyan:#67e5f4;--violet:#b49cff;--red:#ff7180;--orange:#ffb45c;--green:#72f4bd;--shadow:0 18px 55px #0005}*{box-sizing:border-box}body{margin:0;color:var(--text);background:radial-gradient(circle at 8% 0,#193958,transparent 30rem),radial-gradient(circle at 92% 15%,#332650,transparent 32rem),var(--bg);font:14px/1.55 'DM Sans','Noto Sans TC',system-ui,sans-serif}a{color:inherit}.topbar,.shell,.footer{max-width:1240px;margin:auto}.topbar{max-width:none!important;width:100%!important;margin:0!important;padding:10px 20px!important;min-height:56px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:16px!important;box-sizing:border-box!important;background:rgba(7,17,31,0.95)!important;backdrop-filter:blur(15px)!important;border-bottom:1px solid var(--line)!important;position:sticky!important;top:0!important;z-index:100!important}.topbar-left{display:flex!important;align-items:center!important;gap:12px!important;min-width:0!important;flex:1 1 auto!important}.header-logo-link{display:inline-flex!important;align-items:center!important;text-decoration:none!important;flex-shrink:0!important}.header-brand-logo{width:34px!important;height:34px!important;border-radius:50%!important;object-fit:contain!important;display:block!important;box-shadow:0 0 10px rgba(103,229,244,0.45)!important;transition:transform .2s ease!important}.header-logo-link:hover .header-brand-logo{transform:scale(1.08)!important}.btn-back-home{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:6px!important;min-height:32px!important;height:32px!important;padding:0 14px!important;border-radius:999px!important;border:1px solid rgba(103,229,244,0.65)!important;background:linear-gradient(120deg,rgba(16,41,64,0.92),rgba(18,57,85,0.92))!important;box-shadow:0 3px 10px rgba(103,229,244,0.2)!important;color:#fff!important;font-size:.84rem!important;font-weight:700!important;text-decoration:none!important;white-space:nowrap!important;transition:all .2s ease!important;flex-shrink:0!important}.btn-back-home:hover{transform:translateY(-1px)!important;border-color:#67e5f4!important;background:linear-gradient(120deg,#18486e,#206394)!important;box-shadow:0 0 0 3px rgba(103,229,244,0.2),0 4px 14px rgba(103,229,244,0.4)!important}.topbar .brand{display:flex!important;align-items:center!important;margin:0!important;min-width:0!important;text-decoration:none!important}.topbar .brand h1.brand-title{white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;font-size:1.15rem!important;margin:0!important;color:#edf6ff!important;font-family:'Space Grotesk',sans-serif!important;font-weight:700!important}.topbar-actions{display:flex!important;align-items:center!important;gap:10px!important;flex-shrink:0!important;margin-left:auto!important}.lang{background:#091727;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 9px;outline:none}.shell{padding:10px 20px 55px}.howto{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#102940;border:1px solid #315574;border-radius:10px;padding:9px 12px;margin-bottom:10px;color:#cfe2f4;font-size:12px}.howto span{display:flex;align-items:center;gap:6px}.howto b{display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--cyan);color:#06111d}.howto i{color:var(--cyan);font-style:normal}.notice{display:none;background:#173653;border:1px solid #4d799d;padding:10px 12px;border-radius:9px;margin-bottom:12px}#noticeText{flex:1 1 280px;min-width:0}.notice-actions:not([hidden]){display:flex;flex:1 1 100%;gap:7px;flex-wrap:wrap;margin-top:5px}.notice-actions[hidden]{display:none}.notice-dismiss{border:1px solid #57947f;background:#123d3a;color:#b7ffe5;border-radius:7px;padding:5px 9px;cursor:pointer;font:700 12px 'DM Sans',system-ui,sans-serif;max-width:100%;white-space:normal;text-align:left;transition:all .15s}.notice-dismiss:hover,.notice-dismiss:focus-visible{background:#18524e;color:#fff}.notice.show{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}.notice.warning{border-color:#a46a43;background:#3b2a26}.notice.success{border-color:#3a8f77;background:#123d3a}.notice a{color:var(--cyan);font-weight:700;white-space:nowrap}.notice.new-alert{animation:newAlertPulse 1.1s ease-in-out infinite}.notice.progress{animation:progressPulse 1s ease-in-out infinite;border-color:#67e5f4;background:#12364a}@keyframes progressPulse{50%{box-shadow:0 0 0 4px #67e5f455,0 0 22px #67e5f477}}@keyframes newAlertPulse{50%{box-shadow:0 0 0 4px #ff9b5b55,0 0 28px #ff744266;border-color:#ffc05c;background:#4a2d26}}.workbench{background:rgba(12,27,45,.93);border:1px solid var(--line);border-radius:15px;padding:14px;margin-bottom:18px;box-shadow:var(--shadow)}.tracker-layout{display:grid;grid-template-columns:320px minmax(0,1fr);gap:16px;align-items:start}.tracking-sidebar{position:sticky;top:70px;height:calc(100vh - 84px);max-height:calc(100vh - 84px);overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;border:1px solid #315574;border-radius:12px;background:linear-gradient(160deg,#102b43,#0a1727);padding:14px;box-shadow:0 12px 30px #0004}.sidebar-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px}.sidebar-kicker{color:var(--cyan);font-size:9px;font-weight:800;letter-spacing:.15em}.sidebar-heading h2{font:600 17px 'Space Grotesk';margin:3px 0 0}.count-pill{display:inline-grid;place-items:center;min-width:23px;height:21px;padding:0 6px;border-radius:99px;color:#06111d;background:var(--cyan);font:700 11px 'DM Sans'}.sidebar-clear{border:1px solid #78404b;color:#ffb7bf;background:#421e2a;border-radius:6px;padding:5px 7px;cursor:pointer;font-size:11px}.track-search{width:100%;background:#081624;border:1px solid #31516f;border-radius:7px;color:var(--text);padding:8px 9px;outline:none;margin-bottom:9px}.tracked-tags{display:flex;flex-direction:column;gap:7px;padding:2px 2px 12px}.tracked-tags .tag{position:relative;display:flex;align-items:center;gap:6px;min-width:0;padding:8px 10px;background:#122d46;border:1px solid #315a78;border-radius:9px;color:#d5e8fa;transition:.2s}.tracked-tags .tag:hover{border-color:var(--cyan);background:#173b58}
+.tracked-tags .tag.is-active{border-color:var(--cyan);box-shadow:inset 3px 0 var(--cyan);background:#15395b}
+.tracked-tags .tag.is-new{border-color:#ff9b5b;box-shadow:0 0 0 1px #ff9b5b66,0 4px 14px #ff744244;animation:newTagPulse 1.1s ease-in-out infinite}
+@keyframes newTagPulse{50%{border-color:#ffc05c;box-shadow:0 0 0 3px #ff9b5b88,0 0 18px #ff7442aa;background:#1e3c5e}}
+.tracked-tags .tag button[data-active]{border:0;background:transparent;color:inherit;cursor:pointer;text-align:left;line-height:1.4;font-size:13px;flex:1;font-weight:700;word-break:break-word}.tracked-tags .tag button[data-remove]{border:0;background:transparent;color:#9eb6cb;cursor:pointer;font-size:16px;line-height:1;padding:2px;margin-left:auto}.tracked-tags .tag button[data-remove]:hover{color:#ff9aa5}.watch-badge{flex:0 0 auto;color:#06111d;background:#ffc05c;border-radius:99px;padding:2px 6px;font-size:10px;font-weight:900}.latest-season-badge{flex:0 0 auto;color:#06111d;background:linear-gradient(135deg,#ffd470,#ffb237);border-radius:99px;padding:2px 6px;font-size:10px;font-weight:900}.tracking-empty{color:var(--muted);font-size:12px;border:1px dashed #315574;border-radius:8px;padding:10px;margin:0}.tracker-main{min-width:0}.dashboard-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}.keyword{flex:1 1 280px;min-width:180px;background:#081624;border:1px solid #31516f;border-radius:8px;color:var(--text);padding:10px 12px;outline:none}.keyword:focus,.core-input:focus{border-color:var(--cyan);box-shadow:0 0 0 3px #67e5f422}.btn{border:0;border-radius:8px;padding:10px 14px;cursor:pointer;font-weight:700;white-space:nowrap}.btn.primary{background:linear-gradient(135deg,var(--cyan),#87b9ff);color:#06111d}.btn.secondary{background:linear-gradient(135deg,#ffd43b 0%,#ff9f1c 58%,#f97316 100%);border:2px solid #ffe69a;color:#241200;font-size:15px;font-weight:950;padding:10px 16px;box-shadow:0 0 0 2px #ff9f1c55,0 0 22px #ffb52e99}.btn.secondary:hover{filter:brightness(1.1);transform:translateY(-1px)}.btn:disabled{opacity:.55;cursor:wait}.btn-blacklist-manage{background:#15304b;border:1px solid #2e5377;color:#cfe2f4;font-size:12px;font-weight:700;padding:6px 12px;border-radius:7px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:.2s;line-height:1.4}.btn-blacklist-manage:hover{background:#1d4267;border-color:#48749e;color:#fff}#parse:disabled{opacity:.4;cursor:not-allowed;pointer-events:none}.blacklist-modal-backdrop{position:fixed;inset:0;background:rgba(4,10,18,0.82);backdrop-filter:blur(4px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px}.blacklist-modal-card{background:#0a192a;border:1px solid #284c6e;border-radius:12px;width:100%;max-width:680px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 20px 40px rgba(0,0,0,0.65);overflow:hidden}.blacklist-modal-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:#0f233a;border-bottom:1px solid #1e3956}.blacklist-modal-header h3{margin:0;font-size:16px;color:#fff;font-weight:700;display:flex;align-items:center;gap:8px}.btn-modal-close{background:transparent;border:0;color:#9eb6cb;font-size:24px;line-height:1;cursor:pointer;padding:0 4px}.btn-modal-close:hover{color:#fff}.blacklist-modal-body{padding:16px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:14px}.blacklist-modal-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 18px;background:#081625;border-top:1px solid #1e3956}.blacklist-group{background:rgba(13,31,51,0.5);border:1px solid #1e3956;border-radius:8px;padding:10px 12px}.blacklist-group-title{font-size:13px;font-weight:700;color:var(--cyan);margin:0 0 10px 0;display:flex;align-items:center;gap:6px}.blacklist-items-grid{display:flex;flex-direction:column;gap:8px}.blacklist-item-row{display:flex;align-items:center;gap:12px;background:#071524;border:1px solid #1c3650;border-radius:8px;padding:8px 10px}.blacklist-item-thumb{width:88px;aspect-ratio:16/9;object-fit:cover;border-radius:6px;flex-shrink:0;background:#000}.blacklist-item-info{flex:1;min-width:0}.blacklist-item-title{font-size:13px;font-weight:700;color:#edf6ff;text-decoration:none;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;line-height:1.35}.blacklist-item-title:hover{color:var(--cyan)}.blacklist-item-meta{font-size:11px;color:var(--muted);margin-top:4px}.btn-remove-from-blacklist{background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fff;border:0;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:filter .15s;flex-shrink:0}.btn-remove-from-blacklist:hover{filter:brightness(1.15)}.empty-blacklist-box{text-align:center;padding:36px 16px;color:var(--muted);font-size:14px}.edit-series-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:rgba(8,22,36,0.8);border:1px solid #284c6e;border-radius:10px;padding:8px 12px;margin-bottom:10px}.edit-series-label{color:var(--cyan);font-weight:700;font-size:12px;display:flex;align-items:center;gap:5px;white-space:nowrap}.edit-series-select{background:#0a192a;border:1px solid #315574;border-radius:7px;color:#edf6ff;padding:7px 10px;font-size:13px;max-width:220px;outline:none}.edit-series-input{flex:1 1 180px;min-width:140px;background:#081624;border:1px solid #31516f;border-radius:7px;color:#fff;padding:7px 10px;font-size:13px;outline:none}.btn-save-edit{background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:7px;padding:7px 12px;font-weight:700;font-size:12px;cursor:pointer;transition:all .2s;white-space:nowrap}.btn-save-edit:hover{filter:brightness(1.15);transform:translateY(-1px)}@keyframes coreInputAttention{0%,100%{border-color:#31516f;box-shadow:0 0 0 0 #ffb74d00}50%{border-color:#ffc45b;box-shadow:0 0 0 4px #ffb74d55,0 0 18px #ff9e3d88}}@keyframes corePromptAttention{0%,100%{opacity:.72}50%{opacity:1;text-shadow:0 0 10px #ffc45b}}.meta-preview{display:none;gap:12px;align-items:center;margin-top:10px;padding:12px;border:1px solid #365979;border-radius:10px;background:#0a192a}.meta-preview.show{display:flex}.meta-preview.needs-manual .core-input{animation:coreInputAttention 1s ease-in-out infinite;border-color:#ffc45b}.core-prompt{display:none;color:#ffd27a;font-size:12px;line-height:1.5;margin-top:6px}.meta-preview.needs-manual .core-prompt:not([hidden]){display:block;animation:corePromptAttention 1s ease-in-out infinite}.meta-thumb{width:112px;aspect-ratio:16/9;object-fit:cover;border-radius:7px;background:#07111f}.meta-copy{min-width:0;flex:1}.meta-copy strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.meta-copy small{display:block;color:var(--muted);margin-top:3px}.core-row{display:flex;gap:7px;align-items:center;margin-top:7px}.core-label{color:var(--muted);font-size:12px;white-space:nowrap}.core-input{min-width:0;flex:1;background:#081624;color:var(--text);border:1px solid #31516f;border-radius:7px;padding:7px 9px;outline:none}.preview-actions{display:flex;gap:6px;flex-wrap:wrap}.bar-bottom{display:flex;gap:7px;align-items:center;flex-wrap:wrap;border-top:1px solid #1d3852;padding-top:10px}.select{background:#091727;color:var(--text);border:1px solid #31516f;border-radius:7px;padding:7px 8px}.bar-bottom label{color:var(--muted);font-size:12px}.stats{display:flex;gap:13px;margin-left:auto;color:var(--muted);font-size:12px;flex-wrap:wrap}.stats b{color:var(--text)}
+
+/* 核心修正：還原第二張圖寬廣的 4 欄卡片大網格 */
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;width:100%}
+.card{position:relative;overflow:hidden;background:linear-gradient(155deg,#11263d,#0c1929);border:1px solid var(--line);border-radius:11px;transition:.2s;display:flex;flex-direction:column;cursor:pointer;width:100%}
+.card:hover{transform:translateY(-3px);border-color:#5d8caf;box-shadow:0 13px 26px #0005}
+.card.is-new{border-color:#b06d4c;box-shadow:0 0 0 1px #ff9b5b44,0 10px 30px #ff744422;animation:newCardPulse 1.1s ease-in-out infinite}
+@keyframes newCardPulse{50%{border-color:#ffc05c;box-shadow:0 0 0 4px #ff9b5b55,0 0 28px #ff744277}}
+.thumb-wrap{display:block;position:relative;aspect-ratio:16/9;background:#07111f;overflow:hidden;cursor:pointer;width:100%}
+.thumb{width:100%;height:100%;object-fit:cover;transition:.3s}
+.card:hover .thumb{transform:scale(1.05)}
+.preview-frame{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000;z-index:3;pointer-events:none}
+.preview-badge{position:absolute;right:7px;bottom:7px;z-index:4;background:#000b;color:#fff;border-radius:5px;padding:3px 6px;font-size:10px;pointer-events:none}
+.video-duration-badge{position:absolute;bottom:7px;right:7px;background:rgba(0,0,0,.82);color:#fff;font-size:11px;font-weight:600;padding:2px 6px;border-radius:4px;z-index:2;pointer-events:none}
+.video-duration-badge + .preview-badge{right:7px;bottom:32px}
+.new{position:absolute;top:7px;left:7px;z-index:2;background:linear-gradient(135deg,#ff705f,#ffc05c);color:#241009;border-radius:999px;padding:4px 8px;font-weight:800;font-size:10px;box-shadow:0 0 15px #ff8d5c99}
+.card-body{padding:10px;display:flex;flex-direction:column;flex:1;min-width:0}
+.card-title{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;text-decoration:none;font-weight:700;line-height:1.3;min-height:36px;color:#edf6ff;font-size:13px}
+.card-title:hover{color:var(--cyan)}
+.meta{color:var(--muted);font-size:11px;display:flex;justify-content:space-between;gap:6px;margin-top:6px}
+.card-footer-row{display:flex;align-items:flex-end;justify-content:space-between;gap:6px;margin-top:auto;padding-top:7px;border-top:1px solid #1d3852}
+.card-badges{display:flex;align-items:center;gap:4px;flex-wrap:wrap;min-width:0}
+.series-label{color:var(--cyan);background:#103248;border-radius:4px;padding:2px 5px;font-size:10px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.season-label{color:#211507;background:linear-gradient(135deg,#ffd36a,#ff9f43);font-size:13px;font-weight:900;padding:4px 8px;border-radius:6px;line-height:1.1;white-space:nowrap}
+.duplicate-count{color:#c8d8e8;background:#243c55;border-radius:4px;padding:2px 5px;font-size:10px}
+.exclude-video{border:1px solid #78404b;background:#421e2a;color:#ffb7bf;border-radius:6px;padding:4px 6px;cursor:pointer;font-size:10px;line-height:1.2;white-space:nowrap}
+.exclude-video:hover{border-color:#ff8c99;color:#fff}
+.mark-seen{margin-top:7px;width:100%;padding:5px 7px;border:1px solid #3e7d70;background:#123d3a;color:#a9f6db;border-radius:6px;cursor:pointer;font-weight:700;font-size:11px}
+.series-group{margin:0 0 20px;width:100%}
+.series-group-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px;padding-bottom:4px}
+.series-group-heading h4{margin:0;font-size:16px;color:#fff;font-weight:700}
+.empty{text-align:center;border:1px dashed #315575;border-radius:12px;padding:38px 15px;color:var(--muted)}.empty h3{color:var(--text);margin:0 0 5px}
+
+/* 置頂快速鍵 FAB：畫面中間偏上，平滑浮現 */
+.scroll-top-fab{
+    position: fixed;
+    top: 72px;
+    left: 50%;
+    transform: translate(-50%, -10px);
+    z-index: 9999;
+    border: 1px solid #ffe69a;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #ffd43b, #ff9f1c, #f97316);
+    color: #241200;
+    padding: 8px 18px;
+    font-weight: 900;
+    font-size: 13px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6), 0 0 20px rgba(255,181,46,0.5);
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease, filter 0.18s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+.scroll-top-fab.show{
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate(-50%, 0);
+}
+.scroll-top-fab:hover{
+    filter: brightness(1.1);
+    box-shadow: 0 12px 35px rgba(0,0,0,0.7), 0 0 28px rgba(255,181,46,0.7);
+}
+
+.featured-article-card-section{margin:24px 0 28px;width:100%}
+.featured-article-card{display:flex;flex-direction:column;gap:12px;background:linear-gradient(145deg,rgba(12,27,45,0.95),rgba(8,22,36,0.98));border:1px solid rgba(103,229,244,0.3);border-radius:16px;padding:22px;text-decoration:none;box-shadow:0 10px 30px rgba(0,0,0,0.35);transition:transform .2s ease,border-color .2s ease}
+.featured-article-card:hover{transform:translateY(-2px);border-color:#67e5f4}
+.featured-article-card .article-badge{background:rgba(103,229,244,0.15);color:#67e5f4;border:1px solid rgba(103,229,244,0.35);padding:4px 10px;border-radius:6px;font-size:.8rem;font-weight:700}
+.featured-article-card .article-title{font-size:1.18rem;font-weight:800;color:#fff;margin:0}
+.featured-article-card .article-desc{color:#bed0e3;font-size:.88rem;line-height:1.65;margin:0}
+.featured-article-card .companion-badge{background:rgba(103,229,244,0.1);color:#67e5f4;border:1px solid rgba(103,229,244,0.3);padding:3px 9px;border-radius:6px;font-size:.8rem;font-weight:700}
+.featured-article-card .article-link-action{color:#67e5f4;font-weight:700;font-size:.88rem}
+
+.seo{display:block;margin-top:24px;width:100%}
+.seo>section{margin-bottom:14px;background:#0c1b2d;border:1px solid var(--line);border-radius:12px;padding:20px}
+.seo h2{font:600 20px 'Space Grotesk';margin:0 0 10px;color:#edf6ff}
+.seo h3{font:600 15px 'Space Grotesk';color:var(--cyan);margin:16px 0 6px}
+.seo p,.seo li{color:var(--muted);line-height:1.75}
+.seo ol,.seo ul{padding-left:22px}
+.guide-deep{background:#0c1b2d;border:1px solid #284963;border-radius:12px;padding:20px;margin-top:14px}
+.guide-deep h2{font:600 23px 'Space Grotesk';color:#edf6ff;margin:0 0 10px}
+.guide-deep h3{font:600 16px 'Space Grotesk';color:var(--cyan);margin:20px 0 6px}
+.guide-deep p,.guide-deep li{color:#a9bfd3;line-height:1.8}
+.deep-faq{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 18px;margin-top:10px}
+.deep-faq .faq-item{border:1px solid #284963;border-radius:8px;padding:12px 14px;background:#091827}
+.deep-faq .faq-item h3{font:700 14px 'Space Grotesk';color:var(--cyan);margin:0 0 6px}
+.deep-faq .faq-item p{font-size:13px;line-height:1.65;color:#afc5d8;margin:0}
+.copyright-note{border-left:3px solid var(--orange);background:#2b2430;padding:10px 14px;margin-top:14px;border-radius:4px}
+.tool-introduction{margin:18px 0 0;padding:20px;border:1px solid #315574;border-radius:12px;background:linear-gradient(145deg,#102b43,#0b1828)}
+.tool-introduction h2{margin:0 0 10px;color:#edf6ff;font:600 23px/1.3 'Space Grotesk'}
+.tool-introduction h3{margin:18px 0 6px;color:var(--cyan);font:600 16px/1.4 'Space Grotesk'}
+.tool-introduction p,.tool-introduction li{color:#afc5d8;line-height:1.82}
+.tool-introduction ul,.tool-introduction ol{padding-left:22px}
+.tool-introduction strong{color:#e8f5ff}
+.tool-introduction-meta{margin:-3px 0 12px!important;color:#8fa9bf!important;font-size:12px}
+.guide-keywords{border-left:3px solid var(--cyan);background:#102940;padding:10px 14px;color:#c7dced!important;margin-top:14px;border-radius:4px}
+.faq-item{border-top:1px solid var(--line);padding:13px 0}
+.faq-item:first-of-type{border-top:none}
+.faq-item h3{font:700 15px/1.4 'Space Grotesk';color:#edf6ff;margin:0 0 6px}
+.faq-item p{margin:0;line-height:1.75;color:#afc5d8}
+
+.footer{border-top:1px solid var(--line);padding:18px 20px;color:var(--muted);font-size:12px;text-align:center}
+.footer-brand{display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap}
+.footer-brand>a{color:var(--cyan);font-weight:800;text-decoration:none}
+.compliance-nav{display:flex;justify-content:center;flex-wrap:wrap;gap:8px 18px;margin-top:12px}
+.compliance-nav a{color:#b9d2e6;text-decoration:none;font-weight:700}
+.compliance-nav a:hover{color:#fff;text-decoration:underline}
+
+.spin{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:1100px){
+    .grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:950px){
+    .tracker-layout{grid-template-columns:1fr}
+    .tracking-sidebar{position:relative;top:auto;height:auto;max-height:none}
+    .tracked-tags{flex-direction:row;overflow-x:auto;padding-bottom:6px}
+    .tracked-tags .tag{flex:0 0 220px}
+    .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .deep-faq{grid-template-columns:1fr}
+}
+@media(max-width:680px){
+    .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+    .topbar{padding:8px 12px!important}
+    .topbar .brand h1.brand-title{font-size:.95rem!important}
+    .btn-back-home{min-height:28px!important;height:28px!important;padding:0 10px!important;font-size:.78rem!important}
+    .header-brand-logo{width:28px!important;height:28px!important}
+    .scroll-top-fab{top:64px;padding:7px 14px;font-size:12px}
+    .deep-faq{grid-template-columns:1fr}
+}
+@media(max-width:440px){
+    .grid{grid-template-columns:1fr}
+}
+
+/* ==========================================================================
+   全螢幕桌面佈局（同 OLD 版完整還原）：內容佈滿螢幕，不再受限於 1240px 居中
+   ========================================================================== */
+@media (min-width: 951px) {
+  .shell {
+    max-width: none !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-top: 8px;
+  }
+  .howto, .notice {
+    margin-left: 20px;
+    margin-right: 20px;
+  }
+  .workbench {
+    border-left: 0;
+    border-right: 0;
+    border-radius: 0;
+    padding: 13px 0 20px;
+    padding-top: 10px;
+  }
+  .tracker-layout {
+    grid-template-columns: 340px minmax(0, 1fr);
+    gap: 16px;
+  }
+  .tracking-sidebar {
+    border-left: 0;
+    border-radius: 0 12px 12px 0;
+    padding-left: 20px;
+    width: 340px;
+    min-width: 320px;
+  }
+  .tracker-main {
+    padding-right: 20px;
+    flex: 1;
+    min-width: 0;
+  }
+  .tracker-main .tabs-row {
+    margin-top: 12px;
+  }
+  .tracker-main .result-zone {
+    margin-bottom: 28px;
+  }
+  .featured-article-card-section {
+    max-width: 1240px;
+    margin: 24px auto 28px;
+    padding: 0 20px;
+  }
+  .seo {
+    max-width: 1240px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+  .grid {
+    gap: 10px;
+  }
+}
+
+
+.series-group {
+    scroll-margin-top: 76px;
+    margin: 0 0 16px;
+    padding: 12px;
+    border: 1px solid #284963;
+    border-radius: 12px;
+    background: #091827;
+    transition: border-color .3s, box-shadow .3s;
+}
+.series-group-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 0 0 10px;
+    padding: 0 2px;
+}
+.series-group-heading h4 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+}
+.series-group-heading button {
+    border: 0;
+    background: transparent;
+    color: var(--cyan);
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+    min-width: 0;
+    padding: 0;
+}
+.series-group-heading button:hover {
+    text-decoration: underline;
+}
+@keyframes jumpHighlight {
+    0%, 100% { border-color: #284963; box-shadow: none; }
+    50% { border-color: var(--cyan); box-shadow: 0 0 0 3px #67e5f455, 0 0 24px #67e5f477; }
+}
+.series-group.jump-flash {
+    animation: jumpHighlight 1.5s ease-in-out;
+}
+.tracked-tags .tag {
+    cursor: pointer;
+    transition: .18s;
+}
+.tracked-tags .tag:hover {
+    border-color: var(--cyan);
+    background: #173b58;
+}
+.tracked-tags .tag.is-active {
+    border-color: var(--cyan);
+    box-shadow: inset 3px 0 var(--cyan), 0 0 12px rgba(103, 229, 244, 0.2);
+    background: #143552;
+}
+
+</style>
+</head>
+<body>
+<header class="topbar">
+<div class="topbar-left">
+<a href="https://gugopro.com/" class="header-logo-link" aria-label="返回 GugoPro 首頁" title="返回 GugoPro 首頁">
+<img src="https://gugopro.com/LOGO/logo-round2.png" alt="GugoPro" class="header-brand-logo">
+</a>
+<a aria-label="返回首頁" class="btn-back-home home-link" href="https://gugopro.com/" id="ui-back-home" title="返回首頁">
+<i aria-hidden="true" class="fa-solid fa-house"></i><span>返回首頁</span>
+</a>
+<div aria-label="YouTube 續集與新季追蹤器" class="brand">
+<h1 class="brand-title" id="pageMainHeading">YouTube 續集與新季追蹤器</h1>
+</div>
+</div>
+<div class="topbar-actions">
+<select aria-label="Language" class="lang" id="language">
+<option value="zh-TW" selected>繁中</option>
+<option value="en">English</option>
+<option value="ja">日本語</option>
+<option value="ko">한국어</option>
+<option value="es">Español</option>
+<option value="vi">Tiếng Việt</option>
+<option value="id">Bahasa Indonesia</option>
+</select>
+</div>
+</header>
+
+<main class="shell">
+<!-- 頂部置頂快速鍵 FAB：畫面中間偏上 -->
+<button aria-label="回到最頂端" class="scroll-top-fab" id="scrollTopFab" type="button">
+<i class="fa-solid fa-arrow-up"></i> <span>回到最頂端</span>
+</button>
+
+<div aria-label="操作步驟" class="howto">
+<span><b>1</b><strong data-i18n="how1">貼上任一集網址</strong></span><i>→</i>
+<span><b>2</b><strong data-i18n="how2">解析並加入追蹤</strong></span><i>→</i>
+<span><b>3</b><strong data-i18n="how3">巡檢並鎖定 NEW 續集</strong></span>
+</div>
+
+<div aria-live="polite" class="notice" id="notice" role="status">
+<span id="noticeText"></span>
+<div class="notice-actions" hidden id="newAlertActions"></div>
+</div>
+
+<section aria-label="YouTube 續集追蹤工作台" class="workbench">
+<div class="tracker-layout">
+<aside aria-label="已追蹤影集清單" class="tracking-sidebar">
+<div class="sidebar-heading">
+<div><span class="sidebar-kicker">WATCHLIST</span><h2>📺 <span data-i18n="trackedList">已追蹤影集</span> <span class="count-pill" id="sidebarSeriesCount">0</span></h2></div>
+<button class="sidebar-clear" data-i18n="clearShort" id="sidebarClear" type="button">清空</button>
+</div>
+<input autocomplete="off" class="track-search" data-i18n-placeholder="trackSearchPlaceholder" id="trackSearch" placeholder="搜尋追蹤清單…" type="search">
+<div aria-live="polite" class="tracked-tags" id="trackedTags"></div>
+<p class="tracking-empty" data-i18n="trackingEmpty" id="trackingEmpty">尚未加入追蹤影集。</p>
+</aside>
+
+<div class="tracker-main">
+<div class="dashboard-bar">
+<input autocomplete="off" class="keyword" data-i18n-placeholder="placeholder" id="sourceInput" placeholder="貼上 YouTube 網址或輸入劇名關鍵字…" type="text">
+<button class="btn primary" data-i18n="parse" id="parse" disabled style="display:none;">🔍 解析並加入追蹤</button>
+<button class="btn secondary" id="scan"><span id="scanIcon">🚀</span> <span data-i18n="scan">一鍵巡檢全部續集</span></button>
+</div>
+
+<!-- 編輯劇名關鍵字管理面板 -->
+<div class="edit-series-bar" id="editSeriesBar">
+<span class="edit-series-label"><i class="fa-solid fa-pen-to-square"></i> 編輯劇名關鍵字：</span>
+<select id="editSeriesSelect" class="edit-series-select" aria-label="選擇欲編輯的影集">
+<option value="" disabled selected>-- 選擇已追蹤影集 --</option>
+</select>
+<input id="editCoreKeywordInput" class="edit-series-input" type="text" placeholder="請先選取影集..." disabled style="display:none;">
+<button type="button" id="btnSaveAndRescan" class="btn-save-edit" style="display:none;"><i class="fa-solid fa-floppy-disk"></i> 儲存並重巡檢</button>
+</div>
+
+<!-- 解析預覽彈窗：已移除無效的內文關鍵字 -->
+<div class="meta-preview" id="metaPreview">
+<img alt="" class="meta-thumb" id="metaThumb">
+<div class="meta-copy">
+<strong id="metaTitle"></strong>
+<small id="metaChannel"></small>
+<div class="core-row">
+<span class="core-label" data-i18n="coreLabel">劇名關鍵字</span>
+<input class="core-input" id="coreInput" type="text">
+</div>
+<small class="core-prompt" data-i18n="manualCorePrompt" hidden id="corePrompt">⚠️ 無法辨別影片名稱，請自行輸入</small>
+</div>
+<div class="preview-actions">
+<button class="btn primary" data-i18n="confirmAdd" id="confirmAdd">加入追蹤</button>
+<button class="btn secondary" data-i18n="cancel" id="cancelPreview">取消</button>
+</div>
+</div>
+
+<div class="bar-bottom">
+<label data-i18n="view">檢視：</label>
+<select class="select" id="viewMode">
+<option data-i18n="all" value="all" selected>全部綜合</option>
+<option data-i18n="newOnly" value="new">只看新續集</option>
+</select>
+
+<label data-i18n="collapseLabel">顯示：</label>
+<select class="select" id="dedupe">
+<option data-i18n="showAll" value="off">全部影片</option>
+<option data-i18n="collapseSeason" selected value="season">同季合併（每季一支）</option>
+</select>
+
+<button type="button" class="btn-blacklist-manage" id="btnOpenBlacklistModal"><i class="fa-solid fa-ban"></i> 黑名單管理 (<span id="blacklistCount">0</span>)</button>
+
+<div class="stats">
+<span data-i18n="tracked">已追蹤</span> <b id="seriesCount">0</b>
+<span data-i18n="lastScan">上次巡檢</span> <b id="last">—</b>
+<span data-i18n="newCount">本次新續集</span> <b id="newCount">0</b>
+</div>
+</div>
+
+<section style="margin-top:14px;">
+<div class="tabs-row" id="tabs"></div>
+<section class="result-zone history-zone">
+<div class="zone-heading compact-zone-heading"><span class="zone-summary" id="historySummary"></span></div>
+<div hidden id="newResults"></div>
+<!-- 卡片大容器：原裝平鋪展示 -->
+<div id="historyResults"></div>
+<div class="empty" id="empty" style="display: block;">
+<h3 data-i18n="emptyTitle">還沒有續集結果</h3>
+<p data-i18n="emptyText">先貼上一支 YouTube 影片，工具會解析劇名並搜尋第二季、續集與下一部。</p>
+</div>
+</section>
+</section>
+</div>
+</div>
+</section>
+
+<!-- 黑名單管理彈窗 -->
+<div id="blacklistModal" class="blacklist-modal-backdrop" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="blacklistModalTitle">
+    <div class="blacklist-modal-card">
+        <div class="blacklist-modal-header">
+            <h3 id="blacklistModalTitle"><i class="fa-solid fa-ban" style="color:#ef4444;"></i> 黑名單管理 (<span id="modalBlacklistCount">0</span>)</h3>
+            <button type="button" class="btn-modal-close" id="btnCloseBlacklistModal" aria-label="關閉">&times;</button>
+        </div>
+        <div class="blacklist-modal-body" id="blacklistModalBody"></div>
+        <div class="blacklist-modal-footer">
+            <small style="color:var(--muted)">💡 提示：刪除黑名單後，該影片下次巡檢時即可正常搜尋找回。</small>
+            <button type="button" class="btn secondary" id="btnCloseBlacklistModalBottom" style="padding:6px 14px;font-size:12px;">關閉視窗</button>
+        </div>
+    </div>
+</div>
+
+<!-- 推薦深度專欄文章卡片 -->
+<section class="featured-article-card-section" aria-label="推薦深度專欄文章">
+<a href="https://gugopro.com/articles/youtube-sequel-tracker-guide.html" target="_blank" rel="noopener" class="featured-article-card">
+<div class="article-card-meta">
+<span class="article-badge">推薦演算法 · NLP去噪</span>
+<span class="article-read-time"><i class="fa-regular fa-clock"></i> 28 分鐘閱讀</span>
+</div>
+<h3 class="article-title">2026 YouTube 影音演算法與連載檢索全指南：如何破解推薦漏片迷思、利用 NLP 正則去噪與差量比對打造跨頻道追劇閉環</h3>
+<p class="article-desc">剖析 YouTube 雙塔神經網路推薦系統之候選生成與加權邏輯回歸排序瓶頸。詳解免 Key oEmbed 解析、六階段正則去噪、Local Diff 本機差量記憶與 SNR 提升 5 倍證明。</p>
+<div class="article-companion-box">
+<span class="companion-label">🛠️ 本篇配套工具：</span>
+<span class="companion-badge"><i class="fa-solid fa-satellite-dish"></i> 前往續集追蹤器</span>
+</div>
+<span class="article-link-action">閱讀完整專欄文章 →</span>
+</a>
+</section>
+
+<!-- 原裝文字 100% 完整保留 -->
+<section class="seo">
+<section class="tool-seo-content">
+<h2 data-i18n="seoTitle">不再漏看分散在不同頻道的下一季</h2>
+<p data-i18n="seoText">短劇、動漫、小說解說與 AI 連載影片的更新，常常分散在不同頻道，發布時間也不固定；平台推薦不一定會把真正的下一集或新一季推到首頁。當你記得角色卻忘了劇名，或只看到「完結篇」才發現第二季早已上線，反覆手動搜尋會讓追劇變成負擔。本工具把貼網址後的資訊整理成一個清楚的追蹤流程：先透過 YouTube oEmbed 免 Key 取得真實標題與頻道，再用 Regex 清洗 4K、字幕、標籤與集數雜訊，萃取劇名關鍵字；接著組合第二季、續集、下一部與 Season 2 等搜尋意圖，以明確季數、續作詞、系列重合度與最新發布時間加權排序。每次巡檢都會將結果的 Video ID 寫入瀏覽器 LocalStorage 快照，只保留尚未出現過的影片作為差量更新，讓你一眼鎖定真正值得點開的 🔥 最新續集上線。全程不需註冊或 API Key，追蹤資料只留在目前瀏覽器。</p>
+<h3 data-i18n="steps">3 步驟操作指南</h3>
+<ol>
+<li data-i18n="step1">貼上任一集 YouTube 網址，確認自動解析的劇名與頻道。</li>
+<li data-i18n="step2">按下「一鍵巡檢全部續集」，搜尋跨季與續作。</li>
+<li data-i18n="step3">鎖定 🔥 最新續集上線 (NEW)，點擊卡片直接觀看。</li>
+</ol>
+</section>
+
+<section>
+<h2 data-i18n="faq">實用 FAQ</h2>
+<div class="faq-item">
+<h3 data-i18n="q1">這個追蹤工具主要能幫我做什麼？</h3>
+<p data-i18n="a1">專門幫您追蹤 YouTube 上的短劇、AI 系列長片、動畫或解說續集。只需貼上任何一集的網址，系統便會自動鎖定劇名並搜尋後續新季數，如第 2 季、第 3 季與完結篇，不用再手動反覆搜尋。</p>
+</div>
+<div class="faq-item">
+<h3 data-i18n="q2">點擊「一鍵巡檢」時，為什麼不會一直重複看到舊影片？</h3>
+<p data-i18n="a2">本工具具備本機差量記憶機制。瀏覽器會自動記錄已搜尋過的影片 ID，每次巡檢時自動過濾掉舊片，只將真正新發現的續作標上 🔥 最新續集徽章呈現在您眼前。</p>
+</div>
+<div class="faq-item">
+<h3 data-i18n="q3">關閉網頁後我追蹤的影片清單會消失嗎？需要註冊登入嗎？</h3>
+<p data-i18n="a3">完全不需要註冊或填寫任何金鑰。所有追蹤清單與看過紀錄皆自動保存在您當前瀏覽器的 LocalStorage，下次打開網頁即可恢復並直接巡檢；換裝置則不會同步。</p>
+</div>
+</section>
+
+<section aria-labelledby="deep-guide-title" class="guide-deep">
+<h2 id="deep-guide-title">YouTube 續集追蹤方法：從第二季到大結局的判讀工作流</h2>
+<p>追蹤短劇、動漫與小說解說時，最常見的問題不是找不到影片，而是同一個故事被拆成多個頻道、不同標題格式與不同上傳批次。有人使用「第 2 季」，有人寫「S2」，也有人直接標示「大結局」或「下半部」。本工具先把來源影片的標題清理成劇名關鍵字，再把季數、集數、續作詞與頻道資訊放進搜尋條件。這種做法不是宣稱能讀取所有 YouTube 內容，而是把公開標題與搜尋結果整理成一個可檢查的候選清單，讓使用者自行判斷影片是否真的屬於同一部作品。</p>
+
+<h3>跨頻道續集鎖定與 Local Diff (Cross-channel Detection)</h3>
+<p>跨頻道搬運比對的關鍵是不要只依賴頻道名稱。搜尋結果會先以核心詞和內文關鍵字篩選，再依明確季數、續作詞、標題重合度與發布時間計分；因此不同頻道只要仍保留作品核心詞或角色線索，就有機會被放進同一個系列群組。每次巡檢後，影片 ID 會保存在瀏覽器的 LocalStorage 快照中，下一次巡檢只把尚未出現的候選標記為 NEW。這種本機差分比對可以降低重複閱讀，不代表 YouTube 官方推薦或內容真偽認證。</p>
+
+<h3>AI 短劇與動漫追番防坑指南 (Anime Season 2 &amp; Drama Guide)</h3>
+<p>看到「最新」「完整版」「大結局」不代表一定是新正片。建議先檢查發布日期、頻道、影片長度、縮圖是否重複，以及標題是否只是剪輯、預告或重新上傳。可以在「內文關鍵字」補上角色、世界觀、系統名稱或特殊地名，讓搜尋更接近原系列；發現錯誤結果時使用排除功能，並保留原始來源影片供回看。對於短劇大結局哪裡看、解說斷更續追或動漫第二季播出查詢等情境，本工具提供的是公開資料檢索與排序，不會替使用者保證播出日期。</p>
+
+<h3>常見問題解答 (FAQ)</h3>
+<div class="deep-faq">
+<div class="faq-item">
+<h3>為什麼有些續集分散在不同頻道也能被找出來？</h3>
+<p>工具會綜合劇名關鍵字、內文關鍵字、季數／續作標記與標題相似度，而不是只比對頻道。因此不同頻道只要在公開標題中保留足夠線索，就可能被分到同一系列；仍建議點開來源自行確認。</p>
+</div>
+<div class="faq-item">
+<h3>遇到假續集、預告片或標題黨剪輯時，工具如何避免誤判？</h3>
+<p>系統會把明確季數、集數、續作詞與發布時間納入排序，並保留頻道、縮圖與原始連結供檢查；但公開標題無法保證內容真實，使用者仍應確認影片長度、頻道、發布日期及是否只是預告或重新上傳。</p>
+</div>
+<div class="faq-item">
+<h3>追蹤清單有數量限制嗎？追蹤幾十部會不會導致網頁卡頓？</h3>
+<p>追蹤資料採瀏覽器 LocalStorage 保存，工具只在畫面更新時渲染必要的清單與卡片；一般追蹤幾十部作品仍可使用。若累積大量歷史影片，建議定期移除錯誤連結或清理不再追蹤的系列，以維持搜尋與滾動順暢。</p>
+</div>
+</div>
+</section>
+
+<article class="tool-introduction" id="seo-tool-introduction">
+<h2>YouTube 續集追蹤器 (YouTube Sequel &amp; Season Tracker)｜找動漫第二季、短劇續集與小說解說更新</h2>
+<p class="tool-introduction-meta">內容維護：GugoPro｜本頁說明工具的操作流程、資料來源、隱私方式與使用限制。</p>
+<p><strong>YouTube 續集追蹤器 (GugoPro Sequel Tracker)</strong> 是一個免安裝、免註冊的全球網頁工具，專門協助使用者追蹤短劇、動漫、AI 連載、小說解說與系列長片的後續更新。當影片分散在不同頻道，或同一部作品使用「第 2 季」、「S2」、「續集」、「完結篇」等不同標題格式時，單靠 YouTube 首頁推薦往往很難掌握。本工具讓你先貼上一支 YouTube 影片網址，再建立自己的系列追蹤清單，方便日後搜尋下一季與新發布的續作。</p>
+
+<h3>這個工具可以解決什麼問題？</h3>
+<p>很多觀眾記得角色、劇情或影片縮圖，卻忘記完整劇名；也有人看完第一季後，不知道第二季是否已經在另一個頻道上線。YouTube 續集追蹤器會先整理公開影片的標題與頻道資訊，推導劇名關鍵字，再結合季數、集數、續作、下一部與大結局等搜尋意圖，將候選影片集中到同一個結果區。你可以按照季數、相關性或最新發布時間查看結果，減少反覆輸入關鍵字的時間。</p>
+
+<h3>如何使用 YouTube 續集追蹤器？</h3>
+<ol>
+<li><strong>貼上影片網址：</strong>輸入 YouTube watch、youtu.be、shorts 或 embed 連結，也可以直接輸入劇名關鍵字。</li>
+<li><strong>解析並加入追蹤：</strong>確認系統整理出的劇名關鍵字、頻道與內文關鍵字；必要時補充角色、世界觀、系統名稱或特殊地名。</li>
+<li><strong>一鍵巡檢全部續集：</strong>工具會依照季數、續作詞、標題重合度與發布時間整理跨頻道候選結果。</li>
+<li><strong>判讀與觀看：</strong>新發現內容會標示「最新續集 (NEW)」，點擊完整縮圖可以前往 YouTube；滑鼠停留時也能使用影片預覽。</li>
+</ol>
+
+<h3>本機差量記憶與隱私設計 (Local Diff Engine)</h3>
+<p>工具會在目前瀏覽器的 LocalStorage 保存追蹤清單、已看過的影片 ID 與歷史快照，讓下一次巡檢能區分已經看過的結果與新發現影片。不需要建立帳號，也不要求使用者輸入 API Key；不同裝置或清除瀏覽器資料後，清單不會自動同步，因此重要追蹤清單請自行備份。這個工具只整理公開資訊與候選連結，不下載或儲存 YouTube 影音檔案。</p>
+
+<h3>適合搜尋的使用情境</h3>
+<ul>
+<li>查詢動漫第二季、第三季與新一集播出更新 (Find Anime Season 2 / 3)。</li>
+<li>追蹤短劇續集、短劇大結局與跨頻道分集內容 (YouTube Short Drama Sequels)。</li>
+<li>尋找小說解說續集、解說斷更後的後續影片。</li>
+<li>整理 AI 短劇、AI 系列長片與連載故事的新季。</li>
+<li>在手機上建立追劇清單，利用觸控按鈕快速巡檢。</li>
+</ul>
+
+<h3>使用前請注意</h3>
+<p>搜尋結果來自公開節點與公開影片資訊，可能受到 YouTube 標題格式、頻道搬運、預告片、剪輯影片、網路狀況與第三方搜尋服務變動影響。看到「完整版」、「最新」或「大結局」等字樣時，仍應自行確認頻道、發布日期、影片長度、縮圖與影片內容。本工具是整理與追蹤輔助工具，不代表 YouTube 官方推薦，也不保證影片內容、播出日期或版權狀態。</p>
+
+<h3>手機版與觸控操作</h3>
+<p>本工具支援手機瀏覽器，追蹤清單會在小螢幕改為容易滑動的排列方式，搜尋輸入框、解析按鈕、巡檢按鈕、排序選單與左側追蹤項目都保留適合手指點按的觸控空間。影片縮圖本身是前往 YouTube 的完整連結，手機使用者可以直接點擊縮圖觀看；桌面使用者則可以把滑鼠停留在縮圖上查看預覽。當你在長頁面向上滑動且控制列已離開畫面，右下角會出現回到頂端快捷鍵，方便快速開始下一次巡檢。</p>
+
+<h3>如何判斷搜尋結果是否為真正續集？</h3>
+<p>結果卡片會顯示影片縮圖、影片時長、頻道、發布時間、劇名關鍵字與季數資訊。帶有「最新續集 (NEW)」的內容代表它是本機歷史中尚未出現的候選影片，不等於平台已認證它是官方續集。建議比較影片標題中的季數與集數、確認頻道是否為原作者、查看發布時間及影片長度，並使用「刪除錯誤連結」排除預告、剪輯、重複上傳或不相關內容。</p>
+
+<p class="guide-keywords"><strong>適用情境：</strong>免安裝 YouTube 續集追蹤工具 (YouTube Sequel Tracker)，適合查詢動漫第二季播出更新、短劇大結局線上看、小說解說斷更續追，以及跨頻道分集自動整理。工具只整理公開資訊與候選連結，使用者仍應自行確認影片來源、發布日期與版權狀態。</p>
+<p class="copyright-note"><strong>第三方平台與版權聲明：</strong>本工具僅提供公開 YouTube 影音資料的檢索、語意標籤整理與連結索引，不下載或儲存影音檔案。影片、縮圖、頻道與商標的權利屬 YouTube 及各原創作者；使用者應遵守 YouTube 服務條款與所在地法律。</p>
+</article>
+</section>
+</main>
+
+<footer class="footer">
+<div class="footer-brand"><a href="https://gugopro.com/">GugoPro</a><span data-i18n="footer">YouTube 續集與新季追蹤器：用本機差量比對，讓你更快掌握連載更新。</span></div>
+<nav aria-label="網站資訊與法律文件" class="compliance-nav">
+<a data-i18n="footerAbout" href="https://gugopro.com/about.html">關於我們</a>
+<a data-i18n="footerContact" href="https://gugopro.com/contact.html">聯絡我們</a>
+<a data-i18n="footerPrivacy" href="https://gugopro.com/privacy.html">隱私權政策</a>
+<a data-i18n="footerTerms" href="https://gugopro.com/terms.html">服務條款</a>
+<a data-i18n="footerDisclaimer" href="https://gugopro.com/disclaimer.html">免責聲明</a>
+</nav>
+<p class="trademark-disclaimer" style="margin-top:6px; font-size:0.75rem; color:#64748b; line-height:1.5;">GugoPro 為獨立軟體研發專案，與 Google LLC、YouTube、Amazon.com, Inc. 或 GoPro, Inc. 均無任何附屬、官方授權、贊助或背書關係。網站提及之所有商標與品牌名稱均屬其各自法定擁有者所有。</p>
+</footer>
+
+<script>
+(()=>{'use strict';
+const SERIES_KEY='tracked_series',SEEN_KEY='seen_video_ids',CATALOG_KEY='series_catalog',EXCLUDED_KEY='excluded_video_ids',META_KEY='tracked_series_meta',UNACK_KEY='unacknowledged_new_ids',BLACKLIST_KEY='series_blacklist';
+
+let series=[],seen=new Set(),catalog=[],active='all',newResults=[],historyResults=[],results=[],unacknowledgedNewIds=new Set(),pending=null,scanRun=0,lastScan=null,blacklist=[];
+let previewTimers=new Map();
+let excluded=new Set();
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function readJSON(key,fallback){try{const v=JSON.parse(localStorage.getItem(key)||'null');return v??fallback}catch{return fallback}}
+
+function isBlacklisted(vid, coreKeyword){
+    if(!vid) return false;
+    const coreNorm = String(coreKeyword||'').toLowerCase().trim();
+    return blacklist.some(b => b.id === vid && String(b.coreKeyword||'').toLowerCase().trim() === coreNorm);
+}
+
+function renderBlacklistCount(){
+    const count = blacklist.length;
+    const countEl = $('blacklistCount');
+    if(countEl) countEl.textContent = count;
+    const modalCountEl = $('modalBlacklistCount');
+    if(modalCountEl) modalCountEl.textContent = count;
+}
+
+function renderBlacklistModal(){
+    renderBlacklistCount();
+    const body = $('blacklistModalBody');
+    if(!body) return;
+
+    if(!blacklist.length){
+        body.innerHTML = `
+            <div class="empty-blacklist-box">
+                <i class="fa-solid fa-circle-check" style="font-size:28px;color:#10b981;margin-bottom:10px;display:block;"></i>
+                <p style="margin:0 0 6px;color:#fff;font-weight:700;">目前沒有任何黑名單影片</p>
+                <small style="color:var(--muted)">若您在卡片點擊「× 刪除此片」，該影片將會出現在此處，並專屬於該劇名關鍵字。</small>
+            </div>`;
+        return;
+    }
+
+    // 按劇名關鍵字分組排序，同劇名關鍵字排在一起
+    const sorted = [...blacklist].sort((a,b) => String(a.coreKeyword||'').localeCompare(String(b.coreKeyword||'')) || ((b.addedAt||0) - (a.addedAt||0)));
+    const groups = {};
+    sorted.forEach(item => {
+        const k = item.coreKeyword || '未指定劇名';
+        if(!groups[k]) groups[k] = [];
+        groups[k].push(item);
+    });
+
+    let html = '';
+    for(const core in groups){
+        html += `
+        <div class="blacklist-group">
+            <h4 class="blacklist-group-title"><i class="fa-solid fa-folder-closed"></i> 劇名關鍵字：【${esc(core)}】 <span style="color:var(--muted);font-weight:normal;font-size:12px">(${groups[core].length} 部)</span></h4>
+            <div class="blacklist-items-grid">
+                ${groups[core].map(item => {
+                    const thumbUrl = item.thumb || `https://i.ytimg.com/vi/${esc(item.id)}/mqdefault.jpg`;
+                    const watchUrl = `https://www.youtube.com/watch?v=${esc(item.id)}`;
+                    return `
+                    <div class="blacklist-item-row">
+                        <img class="blacklist-item-thumb" src="${esc(thumbUrl)}" alt="${esc(item.title)}" loading="lazy">
+                        <div class="blacklist-item-info">
+                            <a class="blacklist-item-title" href="${esc(watchUrl)}" target="_blank" rel="noopener" title="${esc(item.title)}">${esc(item.title || item.id)}</a>
+                            <div class="blacklist-item-meta">
+                                <span><i class="fa-brands fa-youtube" style="color:#ef4444"></i> ${esc(item.channel || 'YouTube')}</span>
+                                ${item.addedAt ? `<span style="margin-left:8px">${relative(item.addedAt)}加入</span>` : ''}
+                            </div>
+                        </div>
+                        <button type="button" class="btn-remove-from-blacklist" data-del-blacklist-core="${esc(item.coreKeyword)}" data-del-blacklist-id="${esc(item.id)}">
+                            <i class="fa-solid fa-trash-can"></i> 刪除黑名單
+                        </button>
+                    </div>`;
+                }).join('')}
+            </div>
+        </div>`;
+    }
+    body.innerHTML = html;
+}
+
+function isVideoUnavailable(v){
+    if(!v || !v.id) return true;
+    if(excluded.has(v.id)) return true;
+    const t = String(v.title || '').trim();
+    if(!t) return true;
+    if(/\[?(?:deleted|private)\s*video\]?|^deleted$|^private$|影片已無法使用|已下架|此影片已無法播放|此影片已被移除|video unavailable|this video is unavailable/i.test(t)){
+        return true;
+    }
+    return false;
+}
+
+window.handleUnavailableVideo = function(imgEl, vid){
+    if(!vid) return;
+    excluded.add(vid);
+    catalog = catalog.filter(v => v.id !== vid);
+    unacknowledgedNewIds.delete(vid);
+    seen.delete(vid);
+    newResults = newResults.filter(v => v.id !== vid);
+    historyResults = historyResults.filter(v => v.id !== vid);
+    results = results.filter(v => v.id !== vid);
+    save();
+    renderStats();
+    refreshNewAlertNotice();
+    const card = imgEl?.closest('.card');
+    if(card) card.remove();
+};
+
+function load(){
+    const raw=readJSON(SERIES_KEY,[]);
+    if(Array.isArray(raw))series=raw;
+    else if(raw&&Array.isArray(raw.series))series=raw.series;
+    seen=new Set(readJSON(SEEN_KEY,[]));
+    excluded=new Set(readJSON(EXCLUDED_KEY,[]));
+    blacklist=readJSON(BLACKLIST_KEY,[]);
+    if(!Array.isArray(blacklist)) blacklist=[];
+
+    catalog=readJSON(CATALOG_KEY,[]);
+    if(!Array.isArray(catalog))catalog=[];
+    catalog=catalog.filter(v=>!excluded.has(v.id) && !isBlacklisted(v.id, v.coreKeyword) && !isVideoUnavailable(v));
+
+    // 嚴格片名匹配（90% 高相關度），徹底杜絕同頻道不同片名誤串
+    catalog=catalog.filter(v=>{
+        const owner=series.find(s=>s.coreKeyword===v.coreKeyword);
+        return !owner||resultMatches(v,owner.coreKeyword);
+    });
+
+    const validUnreadIds=new Set(catalog.map(v=>v.id));
+    const storedUnreadIds=readJSON(UNACK_KEY,[]);
+    unacknowledgedNewIds=new Set((Array.isArray(storedUnreadIds)?storedUnreadIds:[]).filter(id=>validUnreadIds.has(id)&&!seen.has(id)&&!excluded.has(id)));
+    lastScan=readJSON(META_KEY,{}).lastScan||null;
+
+    // 預設 active 設定為第一部影集，若有歷史記億則優先顯示
+    if(series.length && active==='all'){
+        active=series[0].id;
+    }
+
+    newResults=scanCardRows(catalog.filter(v=>unacknowledgedNewIds.has(v.id)));
+    historyResults=scanCardRows(catalog.filter(v=>!unacknowledgedNewIds.has(v.id)));
+    results=[...newResults,...historyResults];
+    renderBlacklistCount();
+}
+
+function save(){
+    localStorage.setItem(SERIES_KEY,JSON.stringify(series));
+    localStorage.setItem(SEEN_KEY,JSON.stringify([...seen].slice(-5000)));
+    localStorage.setItem(CATALOG_KEY,JSON.stringify(catalog.filter(v=>!excluded.has(v.id)).slice(-5000)));
+    localStorage.setItem(UNACK_KEY,JSON.stringify([...unacknowledgedNewIds].slice(-5000)));
+    localStorage.setItem(EXCLUDED_KEY,JSON.stringify([...excluded].slice(-5000)));
+    localStorage.setItem(BLACKLIST_KEY,JSON.stringify(blacklist.slice(-5000)));
+    localStorage.setItem(META_KEY,JSON.stringify({lastScan}));
+}
+
+// 核心革新：單字映射累加數字解析法（不受 20 季限制，任何季數、大寫或非標準排列皆可精確解碼）
+function parseUniversalChineseNumber(raw){
+    if(!raw) return 0;
+    const str=String(raw).trim();
+    if(/^\d+$/.test(str)) return Number(str);
+
+    const DIGIT_MAP = {
+        '0':0, '1':1, '2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9,
+        '零':0, '〇':0, '○':0,
+        '一':1, '壹':1,
+        '二':2, '貳':2, '两':2, '兩':2,
+        '三':3, '叁':3, '參':3,
+        '四':4, '肆':4,
+        '五':5, '伍':5,
+        '六':6, '陸':6,
+        '七':7, '柒':7,
+        '八':8, '捌':8,
+        '九':9, '玖':9
+    };
+
+    let total = 0;
+    let currentNumber = 0;
+    let hasMatch = false;
+
+    for(let i=0; i<str.length; i++){
+        const char = str[i];
+        if(DIGIT_MAP[char] !== undefined){
+            currentNumber = currentNumber * 10 + DIGIT_MAP[char];
+            hasMatch = true;
+        } else if(char === '十' || char === '拾'){
+            total += (currentNumber === 0 ? 1 : currentNumber) * 10;
+            currentNumber = 0;
+            hasMatch = true;
+        } else if(char === '廿'){
+            total += 20;
+            currentNumber = 0;
+            hasMatch = true;
+        } else if(char === '卅'){
+            total += 30;
+            currentNumber = 0;
+            hasMatch = true;
+        } else if(char === '百' || char === '佰'){
+            total += (currentNumber === 0 ? 1 : currentNumber) * 100;
+            currentNumber = 0;
+            hasMatch = true;
+        }
+    }
+    total += currentNumber;
+    return hasMatch ? total : (Number(str) || 0);
+}
+
+const CN_NUMS=['〇','一','二','三','四','五','六','七','八','九','十',
+               '十一','十二','十三','十四','十五','十六','十七','十八','十九','二十',
+               '二十一','二十二','二十三','二十四','二十五','二十六','二十七','二十八','二十九','三十'];
+function toCnNum(n){
+    if(n>=1 && n<CN_NUMS.length) return CN_NUMS[n];
+    return String(n);
+}
+
+// 支援多國語言季數表記（韓、英、西、越、印尼、日、中）
+function parseSeason(title){
+    const s=String(title||'');
+    let m;
+
+    m=s.match(/(?:第\s*)?([0-9一二兩两三四五六七八九十百廿卅〇壹貳叁肆伍陸柒捌玖]{1,5})\s*季/iu) || s.match(/(?:season|第)?\s*([0-9]{1,3})\s*季/iu);
+    if(m){
+        const num = parseUniversalChineseNumber(m[1]);
+        if(num > 0) return { label: `第 ${num} 季`, number: num, explicit: true, weight: 105 + num };
+    }
+
+    m=s.match(/(?:^|[\s\p{P}])season\s*([0-9]+)/iu) || s.match(/(?:^|[\s\p{P}])S\s*([0-9]+)(?=[\s\p{P}]|$)/iu);
+    if(m){
+        const num = Number(m[1]);
+        if(num > 0) return { label: `Season ${num}`, number: num, explicit: true, weight: 105 + num };
+    }
+
+    m=s.match(/시즌\s*([0-9]+)/iu) || s.match(/(?:제\s*)?([0-9]+)\s*(?:시즌|기)/iu);
+    if(m){
+        const num = Number(m[1]);
+        if(num > 0) return { label: `시즌 ${num}`, number: num, explicit: true, weight: 105 + num };
+    }
+
+    m=s.match(/(?:^|[\s\p{P}])temporada\s*([0-9]+)/iu) || s.match(/(?:^|[\s\p{P}])temp\.?\s*([0-9]+)/iu) || s.match(/(?:^|[\s\p{P}])T([0-9]+)(?=[\s\p{P}]|$)/iu);
+    if(m){
+        const num = Number(m[1]);
+        if(num > 0) return { label: `Temporada ${num}`, number: num, explicit: true, weight: 105 + num };
+    }
+
+    m=s.match(/(?:^|[\s\p{P}])mùa\s*(?:thứ\s*)?([0-9]+)/iu) || s.match(/(?:^|[\s\p{P}])phần\s*([0-9]+)/iu);
+    if(m){
+        const num = Number(m[1]);
+        if(num > 0) return { label: `Mùa ${num}`, number: num, explicit: true, weight: 105 + num };
+    }
+
+    m=s.match(/(?:^|[\s\p{P}])musim\s*(?:ke-?\s*)?([0-9]+)/iu);
+    if(m){
+        const num = Number(m[1]);
+        if(num > 0) return { label: `Musim ${num}`, number: num, explicit: true, weight: 105 + num };
+    }
+
+    m=s.match(/第\s*([0-9]+)\s*期/iu) || s.match(/シーズン\s*([0-9]+)/iu);
+    if(m){
+        const num = Number(m[1]);
+        if(num > 0) return { label: `第 ${num} 期`, number: num, explicit: true, weight: 105 + num };
+    }
+
+    if(/續集|续集|續作|续作|下一部|follow[- ]?up|sequel|finale|完結篇|完结篇|tập\s*cuối|tamat|final|결말|最終回/iu.test(s))
+        return { label: '續集', number: 0, explicit: true, weight: 78 };
+
+    return { label: '', number: 0, explicit: false, weight: 0 };
+}
+
+// 完整擴充集數辨識：以「集」前後文字為基準（如 1-149集 抓 149 避免誤判為第1集；支援 集149、中文數字、EP/Episode、多國語系、編號與括號）
+function parseEpisode(title){
+    const s = String(title || '');
+
+    // 1. 集字前面的數字（優先抓取緊鄰「集/話/回/期」前面的數字；若為區間如 第1-149集、1-149集、35-36集，精準抓取最新集數 149/36，絕不誤抓 1）
+    let m = s.match(/(?:第\s*)?(?:[0-9一二兩两三四五六七八九十百廿卅〇壹貳叁肆伍陸柒捌玖]{1,5}\s*[-~～到至]\s*)?([0-9一二兩两三四五六七八九十百廿卅〇壹貳叁肆伍陸柒捌玖]{1,5})\s*[集話话回期]/iu);
+    if(m){
+        const num = parseUniversalChineseNumber(m[1]);
+        if(num > 0) return num;
+    }
+
+    // 2. 集字後面的數字（尋找集前後的字，如 集35, 集 149, 第3季 集05）
+    m = s.match(/[集話话回期]\s*[:：#第]?\s*([0-9]{1,4})(?=[\s\p{P}\p{S}]|$)/iu);
+    if(m){
+        const num = Number(m[1]);
+        if(num > 0) return num;
+    }
+
+    // 3. 英文常見前綴：S1E35, EP35, ep.35, E35, Episode 35, Eps 35（支援區間 EP1-149 抓 149）
+    m = s.match(/(?:^|[\s\p{P}\p{S}])(?:s\s*[0-9]+\s*)?(?:episode|eps?\.?|e)\s*(?:[0-9]+\s*[-~～到至]\s*)?([0-9]{1,4})(?=[\s\p{P}\p{S}]|$)/iu);
+    if(m){
+        const num = Number(m[1]);
+        if(num > 0) return num;
+    }
+
+    // 4. 多國語系：越南語 Tập 35, 印尼語 Bagian 35 / Eps 35（支援區間 Tập 1-149 抓 149）
+    m = s.match(/(?:^|[\s\p{P}\p{S}])(?:tập|tap|bagian)\s*\.?\s*(?:[0-9]+\s*[-~～到至]\s*)?([0-9]{1,4})(?=[\s\p{P}\p{S}]|$)/iu);
+    if(m){
+        const num = Number(m[1]);
+        if(num > 0) return num;
+    }
+
+    // 5. 編號標記：#35, No.35, Vol.35
+    m = s.match(/(?:^|[\s\p{P}\p{S}])(?:#|no\.?|vol\.?)\s*(?:[0-9]+\s*[-~～到至]\s*)?([0-9]{1,4})(?=[\s\p{P}\p{S}]|$)/iu);
+    if(m){
+        const num = Number(m[1]);
+        if(num > 0) return num;
+    }
+
+    // 6. 括號內的獨立數字集數：【35】、[35]、(35)、「35」 (排除常見年份與規格如 2024, 1080, 720, 480；若為區間 【1-149】 抓 149)
+    m = s.match(/[【\[\(「『]\s*(?:[0-9]{1,4}\s*[-~～到至]\s*)?([0-9]{1,3})\s*[】\]\)」』]/u);
+    if(m){
+        const num = Number(m[1]);
+        if(num > 0 && num !== 720 && num !== 480 && num !== 360) return num;
+    }
+
+    return 0;
+}
+
+function normalizeMatch(value){
+    return String(value||'').toLowerCase()
+        .replaceAll('現','现').replaceAll('農','农').replaceAll('門','门').replaceAll('窮','穷')
+        .replaceAll('島','岛').replaceAll('劇','剧').replaceAll('漢','汉').replaceAll('臺','台').replaceAll('動漫','动漫').replaceAll('動畫','动画')
+        .replaceAll('國','国').replaceAll('體','体').replaceAll('連','连').replaceAll('載','载')
+        .replaceAll('後','后')
+        .replace(/#[\p{L}\p{N}_-]+/gu,' ')
+        .replace(/[【\[][^】\]]{0,60}[】\]]/gu,m=>/(4k|8k|1080|720|hd|字幕|中字|官方|正版|高清|剪辑|vietsub|thuyết minh|sub|completo|full)/iu.test(m)?' ':m)
+        .replace(/第\s*[0-9一二兩两三四五六七八九十百廿卅〇壹貳叁肆伍陸柒捌玖]+\s*[季集部期話话回]/giu,' ')
+        .replace(/(?:^|[\s\p{P}])(?:season\s*[0-9]+|s\s*[0-9]+|mùa\s*[0-9]+|musim\s*[0-9]+|temporada\s*[0-9]+)(?=[\s\p{P}]|$)/giu,' ')
+        .replace(/(?:官方正版|高清中字|繁中字幕|简中字幕|完整版|大結局|大结局|完結篇|完结篇|全集|合集|預告片|预告片|正片|小說解說|小说解说)/giu,' ')
+        .replace(/[\s\p{P}\p{S}]+/gu,'');
+}
+
+function tokenize(value){
+    return String(value||'').toLowerCase().match(/[\p{Script=Han}]{2,}|[a-z0-9]{2,}/giu)||[];
+}
+
+// 劇名精準匹配：標題包含完整劇名或關鍵主副標即認定屬於該劇，排除集數/季數/畫質等干擾詞
+function resultMatches(v, core){
+    if(isBlacklisted(v.id, core)) return false;
+    if(v.id && pending && v.id === pending.id) return true;
+    if(v.source === 'source-url') return true;
+
+    const titleClean = normalizeMatch(v.title);
+    const needleClean = normalizeMatch(core);
+    if(!needleClean || !titleClean) return false;
+
+    // 1. 標題完全包含劇名關鍵字（100% 吻合）
+    if(titleClean.includes(needleClean)) return true;
+
+    // 2. 複合劇名（包含空格、冒號或破折號的主副標題，例如「莞城往事 我的房東叫紅姐」或「末世躺贏指南 到末世十年後」）
+    const parts = core.split(/[\s:：_—–-]+/).map(p => normalizeMatch(p)).filter(p => p.length >= 2);
+    if(parts.length >= 2){
+        // 若標題包含全部子段落
+        if(parts.every(p => titleClean.includes(p))) return true;
+        // 若標題包含主要長段落（長度 >= 3 且非通用泛詞，例如「莞城往事」、「我的房東叫紅姐」）
+        const matchedPart = parts.find(p => p.length >= 3 && !isGenericSeriesTerm(p) && titleClean.includes(p));
+        if(matchedPart) return true;
+    }
+
+    // 3. 詞元比對（排除修飾語與通用詞後，覆蓋率 >= 80%）
+    const coreTokens = tokenize(needleClean).filter(t => t.length >= 2 && !isGenericSeriesTerm(t));
+    if(coreTokens.length >= 2){
+        const hits = coreTokens.filter(t => titleClean.includes(t)).length;
+        if(hits / coreTokens.length >= 0.80) return true;
+    }
+
+    // 4. 字元比對（去噪後匹配度 >= 85%）
+    const coreChars = [...needleClean];
+    if(coreChars.length >= 3){
+        let matched = 0;
+        for(const ch of coreChars){
+            if(titleClean.includes(ch)) matched++;
+        }
+        if(matched / coreChars.length >= 0.85) return true;
+    }
+    return false;
+}
+
+function cleanTitle(title){
+    let s=String(title||'');
+    s=s.replace(/#[\p{L}\p{N}_-]+/gu,' ')
+       .replace(/[【\[][^】\]]{0,60}[】\]]/gu,m=>/(4k|8k|1080|720|hd|字幕|中字|官方|正版|高清|剪辑|vietsub|thuyết minh|sub|completo|full)/iu.test(m)?' ':m);
+    s=s.replace(/(?:^|[\s\p{P}])(?:sub\s*indo|full\s*movie|full\s*episodes?|一口氣看完|一口气看完|全話まとめ)(?=[\s\p{P}]|$)/giu,' ');
+    s=s.replace(/第\s*[0-9一二兩两三四五六七八九十百廿卅〇壹貳叁肆伍陸柒捌玖]+\s*[季集部期話话回]/giu,' ');
+    s=s.replace(/(?:^|[\s\p{P}])(?:season\s*[0-9]+|s\s*[0-9]+|mùa\s*[0-9]+|musim\s*[0-9]+|temporada\s*[0-9]+)(?=[\s\p{P}]|$)/giu,' ');
+    s=s.replace(/(?:官方正版|高清中字|繁中字幕|简中字幕|完整版|大結局|大结局|完結篇|完结篇|全集|合集|預告片|预告片|正片)/giu,' ');
+    s=s.replace(/[|｜·•:：_—–-]+/gu,' ')
+       .replace(/[()（）「」『』【】\[\]《》〈〉]/gu,' ')
+       .replace(/\s+/gu,' ')
+       .trim();
+    return s;
+}
+
+const GENERIC_SERIES_TERMS = new Set([
+    '修仙','修真','仙俠','仙侠','动漫','動漫','動畫','动画','漫剧','漫劇','短剧','短劇',
+    '解说','解說','小说','小說','玄幻','都市','末世','系统','系統','穿越','重生','逆袭','逆襲',
+    '爽文','战神','戰神','总裁','總裁','霸总','霸總','古风','古風','言情','科幻','奇幻','悬疑','懸疑',
+    '恋爱','戀愛','熱血','热血','推薦','推荐','最新','精選','精选','合集','全集','連載','连载','新番',
+    '熱門','热门','超燃','爆款','強推','强推','搞笑','日常','一口氣看完','一口气看完'
+]);
+
+function isGenericSeriesTerm(value){
+    const term = String(value || '').trim().replace(/[\s\p{P}\p{S}\d]+/gu, '');
+    if (!term || term.length < 2) return true;
+    if (GENERIC_SERIES_TERMS.has(term)) return true;
+    let rem = term;
+    for (const g of GENERIC_SERIES_TERMS) {
+        rem = rem.replaceAll(g, '');
+    }
+    return rem.length === 0;
+}
+
+const HYPE_PREFIX = /^\s*(?:最新|超燃|熱門|热门|強推|强烈|強烈|爆款|精選|精选)?\s*(?:動漫|动漫|動畫|动画|漫劇|漫剧|短劇|短剧|小說解說|小说解说|AI短劇|AI短剧|連載|连载|新番|一口氣看完|一口气看完|推薦|推荐|安利|必看)+[！!。…,:：\s-]*/iu;
+
+function extractCore(title){
+    let raw = String(title || '').trim();
+    const bracket = raw.match(/《([^》]{2,60})》/);
+    if (bracket) {
+        const bName = cleanTitle(bracket[1]);
+        if (bName && !isGenericSeriesTerm(bName)) return bName;
+    }
+
+    let s = raw.replace(/[\p{Extended_Pictographic}\uFE0F\u200D]+/gu, ' ').trim();
+    s = s.replace(/^[【\[][^】\]]{0,60}[】\]]\s*/gu, '');
+    s = s.replace(HYPE_PREFIX, '');
+    s = s.replace(/(?:[\s_—–-]|(?<=[\p{Script=Han}]))(?:S\d+|Season\s*\d+|第\s*[0-9一二三四五六七八九十百廿卅〇壹貳叁肆伍陸柒捌玖]+\s*[季集部期話话回]|EP\s*\d+).*/iu, '');
+    s = s.split(/[|｜,，。!?！？_—–]/)[0].trim();
+    s = cleanTitle(s);
+
+    if (isGenericSeriesTerm(s) || s.length > 28) return '';
+    return s;
+}
+
+function suggestCoreCandidate(title){
+    let s = String(title || '').trim();
+    s = s.replace(/#[\p{L}\p{N}_-]+/gu, ' ')
+         .replace(/[\p{Extended_Pictographic}\uFE0F\u200D]+/gu, ' ');
+    s = s.replace(/^[【\[][^】\]]{0,60}[】\]]\s*/gu, '');
+    s = s.replace(HYPE_PREFIX, '');
+    const parts = s.split(/[，,。！？!?;；|｜/\\_—–]/u).map(p => cleanTitle(p)).filter(Boolean);
+    const selected = parts.find(p => p.length >= 2 && !isGenericSeriesTerm(p)) || parts[0] || cleanTitle(title);
+    return selected.slice(0, 28).trim();
+}
+
+function normalizeId(input){
+    try{
+        const u=new URL(input.startsWith('http')?input:'https://'+input);
+        if(!/(^|\.)youtube\.com$|(^|\.)youtu\.be$/.test(u.hostname))return null;
+        return u.searchParams.get('v')||u.pathname.match(/\/(?:shorts|embed|live)\/([\w-]{6,})/)?.[1]||u.pathname.split('/').filter(Boolean).pop()||null;
+    }catch{return null;}
+}
+
+function videoUrl(id){return `https://www.youtube.com/watch?v=${encodeURIComponent(id)}`}
+
+async function fetchJSON(url){
+    const r=await fetch(url,{signal:AbortSignal.timeout(8000),headers:{Accept:'application/json'}});
+    if(!r.ok)throw Error(`HTTP ${r.status}`);
+    return r.json();
+}
+
+async function getMeta(url){
+    const encoded=encodeURIComponent(url);
+    for(const endpoint of [`https://noembed.com/embed?url=${encoded}`,`https://www.youtube.com/oembed?url=${encoded}&format=json`]){
+        try{
+            const d=await fetchJSON(endpoint);
+            if(d&&d.title){
+                return{
+                    id:normalizeId(url),
+                    title:d.title,
+                    channel:d.author_name||'未知頻道',
+                    thumbnail:d.thumbnail_url||`https://i.ytimg.com/vi/${normalizeId(url)}/hqdefault.jpg`,
+                    url
+                };
+            }
+        }catch(_) {}
+    }
+    throw Error('metadata');
+}
+
+function durationSeconds(value){
+    if(typeof value==='number'&&Number.isFinite(value))return Math.max(0,Math.round(value));
+    const text=String(value||'').trim();
+    if(!text)return 0;
+    if(/^\d+(?::\d+){1,2}$/.test(text)){
+        const p=text.split(':').map(Number);
+        return p.length===2?p[0]*60+p[1]:p[0]*3600+p[1]*60+p[2];
+    }
+    return Number(text)||0;
+}
+
+function formatDuration(value){
+    const total=durationSeconds(value);
+    if(!total)return '—:—';
+    const h=Math.floor(total/3600),m=Math.floor(total%3600/60),sec=total%60;
+    return h?`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+
+function normalizeResult(v,source,core){
+    let id=v.videoId||v.id||v.url?.match(/[?&]v=([\w-]+)/)?.[1];
+    if(!id)return null;
+    const title=v.title||'Untitled video';
+    if(isVideoUnavailable({id, title})) return null;
+    let published=v.published||v.uploadDate||Date.now();
+    return{
+        id,
+        title,
+        channel:v.author||v.uploaderName||v.uploader||'YouTube',
+        published:Number.isFinite(new Date(published).getTime())?published:Date.now(),
+        publishedText:v.publishedText||'',
+        thumb:v.videoThumbnails?.find(x=>x.quality==='medium')?.url||v.thumbnail||`https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
+        url:videoUrl(id),
+        source,
+        coreKeyword:core,
+        duration:durationSeconds(v.lengthSeconds??v.duration??v.durationText),
+        season:parseSeason(title)
+    };
+}
+
+function parseYouTubeSearchHtml(html,source,core){
+    const rows=[];
+    const re=/"videoId":"([\w-]{6,})"[\s\S]{0,1600}?"title":\{"runs":\[\{"text":"((?:[^"\\]|\\.)*)"/g;
+    let m;
+    while((m=re.exec(html))&&rows.length<200){
+        const title=m[2].replace(/\\"/g,'"');
+        rows.push(normalizeResult({videoId:m[1],title},source,core));
+    }
+    return rows.filter(Boolean);
+}
+
+async function queryEndpoint(ep,q,core){
+    try{
+        if(ep.kind==='proxy'){
+            const targetUrl=`https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
+            const queryUrl=`${ep.base}${encodeURIComponent(targetUrl)}`;
+            const r=await fetch(queryUrl,{signal:AbortSignal.timeout(8000)});
+            if(!r.ok) throw Error(`HTTP ${r.status}`);
+            const text=await r.text();
+            return parseYouTubeSearchHtml(text,ep.kind,core).filter(v=>resultMatches(v,core));
+        }
+        const queryUrl=`${ep.base}?q=${encodeURIComponent(q)}${ep.kind==='invidious'?'&type=video':'&filter=videos'}`;
+        const d=await fetchJSON(queryUrl);
+        const rows=Array.isArray(d)?d:(d.items||d.data||[]);
+        return rows.map(v=>normalizeResult(v,ep.kind,core)).filter(Boolean).filter(v=>resultMatches(v,core));
+    }catch(_){
+        return [];
+    }
+}
+
+// 兩階段搜尋架構
+async function searchSeriesTwoStages(s, onProgress=()=>{}){
+    const core=s.coreKeyword;
+    const coreTrad=core.replaceAll('汉','漢').replaceAll('剧','劇').replaceAll('门','門').replaceAll('国','國').replaceAll('后','後');
+    const coreSimp=core.replaceAll('漢','汉').replaceAll('劇','剧').replaceAll('門','门').replaceAll('國','国').replaceAll('後','后');
+    const coreVariants=[...new Set([core, coreTrad, coreSimp])];
+
+    // 若關鍵字為複合結構（含空格或標點，如「莞城往事 我的房東叫紅姐」或「末世躺贏指南 到末世十年後」），自動拆分子段落並行檢索
+    const segments = core.split(/[\s:：_—–-]+/).map(p=>p.trim()).filter(p=>p.length>=2 && !isGenericSeriesTerm(p));
+
+    const sources=[
+        {kind:'invidious',base:'https://yt.chocolatemoo53.com/api/v1/search'},
+        {kind:'invidious',base:'https://invidious.ducks.party/api/v1/search'},
+        {kind:'invidious',base:'https://inv.nadeko.net/api/v1/search'},
+        {kind:'invidious',base:'https://invidious.nerdvpn.de/api/v1/search'},
+        {kind:'invidious',base:'https://invidious.tiekoetter.com/api/v1/search'},
+        {kind:'invidious',base:'https://invidious.f5.si/api/v1/search'},
+        {kind:'piped',base:'https://pipedapi.kavin.rocks/search'},
+        {kind:'piped',base:'https://pipedapi.adminforge.de/search'}
+    ];
+
+    const queryAll=async(q)=>{
+        const settled=await Promise.allSettled(sources.map(ep=>queryEndpoint(ep,q,core)));
+        return settled.flatMap(x=>x.status==='fulfilled'?x.value:[]);
+    };
+
+    onProgress(`第一階段：純核心片名檢索 (${core})`);
+    const stage1Queries=[...coreVariants];
+    if(segments.length >= 2){
+        segments.forEach(seg => {
+            const segTrad = seg.replaceAll('汉','漢').replaceAll('剧','劇').replaceAll('门','門').replaceAll('国','國').replaceAll('后','後');
+            const segSimp = seg.replaceAll('漢','汉').replaceAll('劇','剧').replaceAll('門','门').replaceAll('國','国').replaceAll('後','后');
+            stage1Queries.push(seg, segTrad, segSimp);
+        });
+    }
+
+    const stage1Batches=await Promise.all(stage1Queries.map(q=>queryAll(q)));
+    let collectedRows=stage1Batches.flat().filter(v=>v&&v.id&&resultMatches(v,core));
+
+    const foundSeasons=new Set(collectedRows.map(v=>parseSeason(v.title).number).filter(n=>n>0));
+    const existingSeasons=new Set(catalog.filter(v=>v.coreKeyword===core).map(v=>parseSeason(v.title).number).filter(n=>n>0));
+    const knownSeasons=new Set([...foundSeasons, ...existingSeasons]);
+
+    const foundEpisodes=new Set(collectedRows.map(v=>parseEpisode(v.title)).filter(n=>n>0));
+    const existingEpisodes=new Set(catalog.filter(v=>v.coreKeyword===core).map(v=>parseEpisode(v.title)).filter(n=>n>0));
+    const knownEpisodes=new Set([...foundEpisodes, ...existingEpisodes]);
+
+    const seasonsToProbe=[];
+    if(knownSeasons.size===0){
+        seasonsToProbe.push(2);
+    }else{
+        const maxSeason=Math.max(...knownSeasons);
+        for(let n=1; n<maxSeason; n++){
+            if(!knownSeasons.has(n)) seasonsToProbe.push(n);
+        }
+        seasonsToProbe.push(maxSeason + 1);
+    }
+
+    const episodesToProbe=[];
+    if(knownEpisodes.size>0){
+        const maxEp=Math.max(...knownEpisodes);
+        episodesToProbe.push(maxEp + 1);
+        episodesToProbe.push(maxEp + 2);
+    }
+
+    const probeQueries=[];
+    if(seasonsToProbe.length>0){
+        seasonsToProbe.forEach(n=>{
+            const cn = toCnNum(n);
+            probeQueries.push(
+                `${core} 第${n}季`,
+                `${core} 第${cn}季`,
+                `${core} S${n}`,
+                `${core} Season ${n}`,
+                `${core} 第${n}期`,
+                `${core} 第${cn}期`,
+                `${core} 시즌${n}`,
+                `${core} Temporada ${n}`,
+                `${core} Mùa ${n}`
+            );
+            if(segments.length >= 2){
+                probeQueries.push(
+                    `${segments[0]} 第${n}季`,
+                    `${segments[0]} 第${cn}季`,
+                    `${segments[0]} S${n}`,
+                    `${segments[0]} Season ${n}`
+                );
+            }
+        });
+    }
+    if(episodesToProbe.length>0){
+        episodesToProbe.forEach(n=>{
+            const cn = toCnNum(n);
+            probeQueries.push(
+                `${core} 第${n}集`,
+                `${core} 第${cn}集`,
+                `${core} EP${n}`,
+                `${core} ${n}集`,
+                `${core} Tập ${n}`
+            );
+            if(segments.length >= 2){
+                probeQueries.push(
+                    `${segments[0]} 第${n}集`,
+                    `${segments[0]} 第${cn}集`,
+                    `${segments[0]} EP${n}`
+                );
+            }
+        });
+    }
+
+    if(probeQueries.length>0){
+        const probeDesc = [
+            seasonsToProbe.length ? seasonsToProbe.map(n=>`S${n}`).join('、') : '',
+            episodesToProbe.length ? episodesToProbe.map(n=>`第${n}集`).join('、') : ''
+        ].filter(Boolean).join('、');
+        onProgress(`第二階段：定向補齊探針（${probeDesc}）…`);
+        const probeResults=await Promise.all(probeQueries.map(q=>queryAll(q)));
+        collectedRows.push(...probeResults.flat().filter(v=>v&&v.id&&resultMatches(v,core)));
+    }
+
+    const uniqueMap=new Map();
+    collectedRows.forEach(v=>{
+        if(!uniqueMap.has(v.id)) uniqueMap.set(v.id, v);
+    });
+
+    return scanCardRows([...uniqueMap.values()]);
+}
+
+function scanCardRows(rows){
+    return rows.map(v=>({
+        ...v,
+        isNew:unacknowledgedNewIds.has(v.id),
+        score:parseSeason(v.title).weight + (normalizeMatch(v.title).includes(normalizeMatch(v.coreKeyword))?80:0)
+    })).sort((a,b)=>{
+        const sa=parseSeason(a.title).number, sb=parseSeason(b.title).number;
+        const ea=parseEpisode(a.title), eb=parseEpisode(b.title);
+        return (sb - sa) || (eb - ea) || (b.score - a.score) || (new Date(b.published) - new Date(a.published));
+    });
+}
+
+function collapseSeasonRows(rows){
+    if($('dedupe')?.value==='off') return rows;
+    const groups=[];
+    for(const v of rows){
+        const season=parseSeason(v.title).number;
+        const ep=parseEpisode(v.title);
+        const existing=groups.find(g=>{
+            if(g.coreKeyword!==v.coreKeyword) return false;
+            // 若兩部皆有明確集數：必須集數相同才算重複（若皆有指定季，季數也必須相同）
+            if(ep > 0 && g.episode > 0){
+                return ep === g.episode && (season === 0 || g.season === 0 || season === g.season);
+            }
+            // 若其中一部有集數，另一部沒有集數，絕不能合併為重複
+            if((ep > 0 && g.episode === 0) || (ep === 0 && g.episode > 0)){
+                return false;
+            }
+            // 若兩部皆無集數，但皆有明確季數：季數相同才算重複
+            if(season > 0 && g.season > 0){
+                return season === g.season;
+            }
+            return false;
+        });
+        if(existing){
+            existing.items.push(v);
+        }else{
+            groups.push({season,episode:ep,coreKeyword:v.coreKeyword,item:v,items:[v]});
+        }
+    }
+    return groups.map(g=>{
+        const allIds = g.items.map(x => x.id);
+        const isAnyNew = g.items.some(x => unacknowledgedNewIds.has(x.id));
+        return {...g.item, isNew: isAnyNew, duplicateCount: g.items.length, allIds: allIds};
+    });
+}
+
+function getRenderedRows(){
+    const mode=$('viewMode')?.value;
+    const baseList = (mode === 'new')
+        ? catalog.filter(v => unacknowledgedNewIds.has(v.id))
+        : catalog;
+    return collapseSeasonRows(scanCardRows(baseList));
+}
+
+function renderCard(v){
+    const epNum = parseEpisode(v.title);
+    const epBadge = epNum > 0 ? `<span class="season-label" style="background:linear-gradient(135deg,#38bdf8,#0284c7);color:#081b2d">第 ${epNum} 集</span>` : '';
+    const allIds = (v.allIds && v.allIds.length) ? v.allIds : [v.id];
+    const allIdsStr = allIds.join(',');
+
+    return `
+    <article class="card ${v.isNew?'is-new':''}" data-video-url="${esc(v.url)}" data-video-id="${esc(v.id)}" data-video-ids="${esc(allIdsStr)}">
+        ${v.isNew?`<span class="new">🔥 NEW 續集</span>`:''}
+        <div class="thumb-wrap">
+            <img class="thumb" loading="lazy" src="${esc(v.thumb)}" alt="${esc(v.title)}" onerror="handleUnavailableVideo(this, '${esc(v.id)}')">
+            <span class="video-duration-badge">${esc(formatDuration(v.duration))}</span>
+            <span class="preview-badge">▶ 停留預覽</span>
+        </div>
+        <div class="card-body">
+            <a class="card-title" target="_blank" rel="noopener" href="${esc(v.url)}">${esc(v.title)}</a>
+            <div class="meta">
+                <span>${esc(v.channel)}</span>
+                <span>${esc(relative(v.published))}</span>
+            </div>
+            ${v.isNew?`<button class="mark-seen" type="button" data-seen="${esc(v.id)}" data-seen-ids="${esc(allIdsStr)}">✓ 標記為已看過</button>`:''}
+            <div class="card-footer-row">
+                <div class="card-badges">
+                    <span class="series-label">${esc(v.coreKeyword)}</span>
+                    ${v.season?.label?`<span class="season-label">🔥 ${esc(v.season.label)}</span>`:''}
+                    ${epBadge}
+                    ${v.duplicateCount>1?`<span class="duplicate-count">× ${v.duplicateCount}</span>`:''}
+                </div>
+                <button class="exclude-video" type="button" data-exclude="${esc(v.id)}" data-core="${esc(v.coreKeyword)}">× 刪除此片</button>
+            </div>
+        </div>
+    </article>`;
+}
+
+// 核心修正：100% 還原第二張圖的單一大網格佈局！
+
+function getUniqueUnitKey(v){
+    const sNum = parseSeason(v?.title||'').number;
+    const epNum = parseEpisode(v?.title||'');
+    if(sNum > 0 && epNum > 0) return `${v.coreKeyword}__s_${sNum}_ep_${epNum}`;
+    if(sNum > 0) return `${v.coreKeyword}__s_${sNum}`;
+    if(epNum > 0) return `${v.coreKeyword}__ep_${epNum}`;
+    return `${v.coreKeyword}__id_${v.id}`;
+}
+
+function countUniqueUnits(items){
+    const set = new Set();
+    for(const v of items){
+        set.add(getUniqueUnitKey(v));
+    }
+    return set.size;
+}
+
+function unacknowledgedSeriesEntries(){
+    const map = new Map();
+    for(const id of unacknowledgedNewIds){
+        const v = catalog.find(item => item.id === id);
+        if(!v) continue;
+        const core = v.coreKeyword;
+        if(!map.has(core)){
+            map.set(core, []);
+        }
+        map.get(core).push(v);
+    }
+    return [...map.entries()].map(([coreKeyword, items]) => ({
+        coreKeyword,
+        items,
+        count: countUniqueUnits(items)
+    }));
+}
+
+function formatNewAlertSummary(entries){
+    if(!entries.length) return '';
+    const parts = entries.map(e => `「${e.coreKeyword}」(${e.count} 部新續集)`);
+    return `🔥 巡檢發現全新續集：${parts.join('、')}！`;
+}
+
+function renderNewAlertActions(entries){
+    const container = $('newAlertActions');
+    if(!container) return;
+    if(!entries.length){
+        container.innerHTML = '';
+        container.hidden = true;
+        return;
+    }
+    container.innerHTML = entries.map(e => `
+        <button type="button" class="notice-dismiss" data-ack-series="${esc(e.coreKeyword)}">
+            ✕ 關閉「${esc(e.coreKeyword)}」新片提示
+        </button>
+    `).join('') + (entries.length > 1 ? `
+        <button type="button" class="notice-dismiss notice-dismiss-all" data-ack-all="true">
+            ✕ 全部關閉
+        </button>
+    ` : '');
+    container.hidden = false;
+}
+
+function showNewAlertNotice(){
+    const entries = unacknowledgedSeriesEntries();
+    if(!entries.length){
+        const container = $('newAlertActions');
+        if(container){
+            container.innerHTML = '';
+            container.hidden = true;
+        }
+        showNoticeText('', '');
+        return;
+    }
+    const summary = formatNewAlertSummary(entries);
+    showNoticeText(summary, 'success new-alert');
+    renderNewAlertActions(entries);
+}
+
+function refreshNewAlertNotice(){
+    if(unacknowledgedNewIds.size > 0){
+        showNewAlertNotice();
+    } else {
+        const container = $('newAlertActions');
+        if(container){
+            container.innerHTML = '';
+            container.hidden = true;
+        }
+        if($('notice').classList.contains('new-alert')){
+            showNoticeText('新片提示已全部關閉。', 'success');
+        }
+    }
+}
+
+function acknowledgeSeries(coreKeyword){
+    const toClear = catalog.filter(v => v.coreKeyword === coreKeyword && unacknowledgedNewIds.has(v.id));
+    toClear.forEach(v => {
+        unacknowledgedNewIds.delete(v.id);
+        seen.add(v.id);
+    });
+    newResults = scanCardRows(catalog.filter(v => unacknowledgedNewIds.has(v.id)));
+    historyResults = scanCardRows(catalog.filter(v => !unacknowledgedNewIds.has(v.id)));
+    results = [...newResults, ...historyResults];
+    save();
+    renderStats();
+    render();
+    refreshNewAlertNotice();
+}
+
+function acknowledgeAllSeries(){
+    for(const id of unacknowledgedNewIds){
+        seen.add(id);
+    }
+    unacknowledgedNewIds.clear();
+    newResults = scanCardRows(catalog.filter(v => unacknowledgedNewIds.has(v.id)));
+    historyResults = scanCardRows(catalog.filter(v => !unacknowledgedNewIds.has(v.id)));
+    results = [...newResults, ...historyResults];
+    save();
+    renderStats();
+    render();
+    refreshNewAlertNotice();
+}
+
+function orderedSeries(){
+    return [...series].sort((a,b)=>{
+        const bTime = b.updatedAt || b.addedAt || 0;
+        const aTime = a.updatedAt || a.addedAt || 0;
+        return bTime - aTime;
+    });
+}
+
+function seriesAnchor(s){
+    return `series-${String(s.id).replace(/[^a-zA-Z0-9_-]/g,'-')}`;
+}
+
+function groupedResults(rows){
+    const list = orderedSeries();
+    if(!list.length) return '';
+    return list.map(s=>{
+        const items = rows.filter(v=>v.coreKeyword === s.coreKeyword || String(v.coreKeyword).toLowerCase() === String(s.coreKeyword).toLowerCase());
+        const id = seriesAnchor(s);
+        const stamp = s.addedAt ? relative(s.addedAt) : '';
+
+        if(!items.length){
+            return `
+            <section id="${esc(id)}" class="series-group empty-group" data-series-group="${esc(s.id)}">
+                <div class="series-group-heading">
+                    <h4><button type="button" data-jump="${esc(id)}">${esc(s.coreKeyword)}</button></h4>
+                    <small style="color:var(--muted)">${esc(stamp)} · 0 部影片</small>
+                </div>
+                <div class="empty-group-prompt" style="padding:16px;text-align:center;color:var(--muted);background:rgba(0,0,0,.2);border-radius:8px;margin-top:6px">
+                    <p style="margin:0 0 8px">📺 此影集目前尚未檢索到續集資料。</p>
+                    <button type="button" class="btn secondary btn-sm" data-rescan-series="${esc(s.id)}">🚀 立即巡檢此系列</button>
+                </div>
+            </section>`;
+        }
+
+        const uniqueCount = countUniqueUnits(items);
+        return `
+        <section id="${esc(id)}" class="series-group${items.some(v=>v.isNew)?' is-new-group':''}" data-series-group="${esc(s.id)}">
+            <div class="series-group-heading">
+                <h4><button type="button" data-jump="${esc(id)}">${esc(s.coreKeyword)}</button></h4>
+                <small style="color:var(--muted)">${esc(stamp)} · 共 ${uniqueCount} 部影片</small>
+            </div>
+            <div class="grid">${items.map(v=>renderCard(v)).join('')}</div>
+        </section>`;
+    }).join('');
+}
+
+function renderTags(){
+    const list=$('trackedTags');
+    const filter=String($('trackSearch')?.value||'').trim().toLowerCase();
+    const visible=orderedSeries().filter(s=>!filter||s.coreKeyword.toLowerCase().includes(filter));
+    
+    list.innerHTML=visible.map(s=>{
+        const isCurrentActive = (active === s.id);
+        const seriesItems = catalog.filter(v=>v.coreKeyword === s.coreKeyword);
+        const maxSeasonNum = Math.max(0, ...seriesItems.map(v=>parseSeason(v.title).number||0));
+        const seasonBadge = maxSeasonNum > 0 ? `<span class="latest-season-badge">最新 S${maxSeasonNum}</span>` : '';
+        const seriesNewItems = seriesItems.filter(v=>unacknowledgedNewIds.has(v.id));
+        const newCount = countUniqueUnits(seriesNewItems);
+        const freshBadge = newCount > 0 ? `<span class="watch-badge">+${newCount} NEW</span>` : '';
+        const isNewSeries = newCount > 0;
+
+        return `
+        <span class="tag ${isCurrentActive?'is-active':''} ${isNewSeries?'is-new':''}">
+            <button type="button" data-active="${esc(s.id)}">${esc(s.coreKeyword)}</button>
+            ${seasonBadge}
+            ${freshBadge}
+            <button type="button" data-remove-id="${esc(s.id)}" title="刪除追蹤">×</button>
+        </span>`;
+    }).join('');
+
+    $('seriesCount').textContent=series.length;
+    $('sidebarSeriesCount').textContent=series.length;
+    $('trackingEmpty').hidden=Boolean(visible.length);
+
+    renderEditSeriesDropdown();
+}
+
+function renderEditSeriesDropdown(){
+    const select=$('editSeriesSelect');
+    if(!select) return;
+    const currentVal=select.value;
+    select.innerHTML='<option value="" disabled selected>-- 選擇已追蹤影集 --</option>' + 
+        series.map(s=>`<option value="${esc(s.id)}">${esc(s.coreKeyword)}</option>`).join('');
+    if(currentVal && series.some(s=>s.id===currentVal)){
+        select.value=currentVal;
+    }
+}
+
+function renderStats(){
+    $('last').textContent=lastScan?relative(lastScan):'—';
+    const allNew = catalog.filter(v=>unacknowledgedNewIds.has(v.id));
+    $('newCount').textContent=countUniqueUnits(allNew);
+    $('seriesCount').textContent=series.length;
+}
+
+function render(){
+    const combined=getRenderedRows();
+    renderTags();
+    $('historyResults').innerHTML=groupedResults(combined);
+    $('empty').style.display=combined.length?'none':'block';
+}
+
+function showNoticeText(text,tone){
+    const n=$('notice');
+    $('noticeText').textContent=text||'';
+    n.className='notice'+(text?' show ':'')+(tone?' '+tone:'');
+}
+
+function relative(date){
+    const diff=Math.max(0,Date.now()-new Date(date).getTime()),m=Math.floor(diff/60000);
+    if(m<1)return '剛剛';
+    if(m<60)return `${m} 分鐘前`;
+    const h=Math.floor(m/60);
+    if(h<24)return `${h} 小時前`;
+    const d=Math.floor(h/24);
+    if(d<7)return `${d} 天前`;
+    return `${Math.floor(d/7)} 週前`;
+}
+
+const CANNOT_IDENTIFY_TITLE_MAP = {
+    'zh-TW': '無法辨別影片名稱，請自行輸入',
+    'en': 'Cannot identify video title, please enter manually',
+    'ja': '動画名を識別できません。手動で入力してください',
+    'ko': '동영상 제목을 식별할 수 없습니다. 직접 입력해주세요',
+    'es': 'No se puede identificar el título, ingréselo manualmente',
+    'vi': 'Không thể nhận diện tên video, vui lòng tự nhập',
+    'id': 'Tidak dapat mengidentifikasi judul video, silakan masukkan secara manual'
+};
+
+function getCannotIdentifyText(){
+    const lang = $('language')?.value || document.documentElement.lang || 'zh-TW';
+    return CANNOT_IDENTIFY_TITLE_MAP[lang] || CANNOT_IDENTIFY_TITLE_MAP['zh-TW'];
+}
+
+async function prepare(){
+    const input=$('sourceInput').value.trim();
+    if(!input)return;
+    showNoticeText('正在取得影片資訊…','success');
+    $('parse').disabled=true;
+    try{
+        if(normalizeId(input)){
+            const meta=await getMeta(input);
+            const detected = extractCore(meta.title);
+            meta.needsManualCore = !detected || detected.length > 20;
+            meta.coreKeyword = detected || '';
+
+            // 取消自動加入追蹤，一律彈出預覽面板供使用者檢查與調整核心詞，由使用者按下「加入追蹤」才開始
+            showPreview(meta);
+            showNoticeText('','');
+        }else{
+            showPreview({title:input,channel:'',thumbnail:'',url:'',coreKeyword:input,needsManualCore:false});
+            showNoticeText('','');
+        }
+    }catch(e){
+        showNoticeText('無法取得影片資訊，請檢查網址','warning');
+    }finally{
+        $('parse').disabled=false;
+    }
+}
+
+function updateCorePrompt(){
+    const needsReview = Boolean(pending?.needsManualCore);
+    const missing = needsReview && !$('coreInput').value.trim();
+    $('metaPreview').classList.toggle('needs-manual', needsReview);
+    $('corePrompt').hidden = !needsReview;
+    $('coreInput').setAttribute('aria-invalid', missing ? 'true' : 'false');
+    const tip = getCannotIdentifyText();
+    $('corePrompt').textContent = `⚠️ ${tip}`;
+    if(needsReview) {
+        $('coreInput').placeholder = tip;
+    } else {
+        $('coreInput').removeAttribute('placeholder');
+    }
+}
+
+function showPreview(meta){
+    pending=meta;
+    pending.needsManualCore = Boolean(meta.needsManualCore || !String(meta.coreKeyword||'').trim());
+    $('metaPreview').classList.add('show');
+    $('metaThumb').src=meta.thumbnail||'';
+    $('metaTitle').textContent=meta.title||meta.coreKeyword;
+    $('metaChannel').textContent=meta.channel?`頻道: ${meta.channel}`:'';
+    // 若無法辨識片名，在系列核心詞不要隨意輸入，保持空值讓 placeholder 顯示各國翻譯文字
+    $('coreInput').value = pending.needsManualCore ? '' : (meta.coreKeyword || '');
+    updateCorePrompt();
+}
+
+function hidePreview(){
+    pending=null;
+    $('metaPreview').classList.remove('show', 'needs-manual');
+    $('corePrompt').hidden=true;
+    $('coreInput').removeAttribute('aria-invalid');
+    $('coreInput').removeAttribute('placeholder');
+    $('coreInput').value='';
+}
+
+function addSeries(){
+    if(!pending) return;
+    const typedCore=$('coreInput').value.trim();
+    const core=typedCore||(pending.needsManualCore?'':pending.coreKeyword);
+    if(!core){
+        updateCorePrompt();
+        $('coreInput').focus();
+        showNoticeText('請填入劇名關鍵字','warning');
+        return;
+    }
+    const duplicate=series.find(s=>s.coreKeyword.toLowerCase()===core.toLowerCase());
+    if(duplicate){
+        active=duplicate.id;
+        hidePreview();
+        $('sourceInput').value='';
+        updateParseButtonState();
+        showNoticeText(`已在追蹤清單中：${core}`,'success');
+        scan([duplicate]);
+        return;
+    }
+    const s={
+        id:`series-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
+        title:core,
+        coreKeyword:core,
+        channel:pending.channel||'',
+        thumbnail:pending.thumbnail||'',
+        sourceUrl:pending.url||'',
+        sourceVideoId:pending.id||'',
+        addedAt:Date.now()
+    };
+    series.push(s);
+    active=s.id;
+
+    // 將使用者輸入的這部影片直接納入 catalog，保證「網址的這一片」100% 存在且立即可見
+    if(pending.id){
+        const sourceVideo={
+            id:pending.id,
+            title:pending.title||core,
+            channel:pending.channel||'YouTube',
+            published:Date.now(),
+            publishedText:'追蹤來源影片',
+            thumb:pending.thumbnail||`https://i.ytimg.com/vi/${pending.id}/hqdefault.jpg`,
+            url:pending.url||videoUrl(pending.id),
+            source:'source-url',
+            coreKeyword:core,
+            duration:0,
+            season:parseSeason(pending.title||'')
+        };
+        if(!catalog.some(v=>v.id===sourceVideo.id)){
+            catalog.unshift(sourceVideo);
+        }
+    }
+
+    hidePreview();
+    $('sourceInput').value='';
+    updateParseButtonState();
+    save();
+    renderTags();
+    renderStats();
+    render();
+    showNoticeText(`已成功加入追蹤：${core}`,'success');
+    scan([s]);
+}
+
+async function scan(target=series){
+    if(!target.length){
+        showNoticeText('尚未加入追蹤影集','warning');
+        return;
+    }
+    const run=++scanRun;
+    $('scan').disabled=true;
+    $('scanIcon').classList.add('spin');
+    showNoticeText(`正在巡檢影集 (0/${target.length})…`,'progress');
+
+    try{
+        const batches=await Promise.all(target.map((item,i)=>{
+            return searchSeriesTwoStages(item,stage=>{
+                showNoticeText(`(${i+1}/${target.length}) ${item.coreKeyword}：${stage}`,'progress');
+            });
+        }));
+
+        if(run!==scanRun) return;
+        const all=batches.flat().filter(v=>!excluded.has(v.id));
+        const previousIds=new Set(catalog.map(v=>v.id));
+        const isFirst=!catalog.length;
+
+        // 依各影集預先統計當前列表中已追蹤的最新最高季數與最高集數（季為基準，集為輔助）
+        const seriesTrackedMaxSeason = new Map();
+        const seriesTrackedMaxEpOfLatestSeason = new Map();
+        const seriesTrackedMaxEpGlobal = new Map();
+
+        target.forEach(item => {
+            const items = catalog.filter(c => c.coreKeyword === item.coreKeyword);
+            const maxSeason = Math.max(0, ...items.map(c => parseSeason(c.title).number).filter(n => n > 0));
+            seriesTrackedMaxSeason.set(item.coreKeyword, maxSeason);
+
+            // 最高季目前已記錄的最高集數
+            const latestSeasonItems = items.filter(c => parseSeason(c.title).number === maxSeason);
+            const maxEpOfLatest = Math.max(0, ...latestSeasonItems.map(c => parseEpisode(c.title)).filter(e => e > 0));
+            seriesTrackedMaxEpOfLatestSeason.set(item.coreKeyword, maxEpOfLatest);
+
+            // 全局最高集數（用於純連載未分季情況）
+            const maxEpGlobal = Math.max(0, ...items.map(c => parseEpisode(c.title)).filter(e => e > 0));
+            seriesTrackedMaxEpGlobal.set(item.coreKeyword, maxEpGlobal);
+        });
+
+        all.forEach(v=>{
+            if(!previousIds.has(v.id)){
+                catalog.push(v);
+                previousIds.add(v.id);
+
+                if(!isFirst){
+                    // 1. 已看過、已排除、或已列入黑名單的影片，絕不標記為新片
+                    if(seen.has(v.id) || excluded.has(v.id) || isBlacklisted(v.id, v.coreKeyword)){
+                        return;
+                    }
+
+                    const currentMaxSeason = seriesTrackedMaxSeason.get(v.coreKeyword) || 0;
+                    const currentMaxEpOfLatestSeason = seriesTrackedMaxEpOfLatestSeason.get(v.coreKeyword) || 0;
+                    const currentMaxEpGlobal = seriesTrackedMaxEpGlobal.get(v.coreKeyword) || 0;
+                    const vSeason = parseSeason(v.title).number;
+                    const vEp = parseEpisode(v.title);
+
+                    let isTrulyNew = false;
+
+                    if(vSeason > 0){
+                        // 核心規則：以季為第一基準！
+                        if(currentMaxSeason > 0){
+                            if(vSeason > currentMaxSeason){
+                                // 全新一季（如原本最高第4季，現發現第5季；或第24季出到第25季）
+                                isTrulyNew = true;
+                                seriesTrackedMaxSeason.set(v.coreKeyword, vSeason);
+                                seriesTrackedMaxEpOfLatestSeason.set(v.coreKeyword, vEp > 0 ? vEp : 0);
+                            } else if(vSeason === currentMaxSeason){
+                                // 同季連載：若有明確集數，且大於該季已追蹤的最高集數（如 S24 E6 > S24 E5），判定為該季最新連載更新！
+                                if(vEp > 0 && currentMaxEpOfLatestSeason > 0){
+                                    if(vEp > currentMaxEpOfLatestSeason){
+                                        isTrulyNew = true;
+                                        seriesTrackedMaxEpOfLatestSeason.set(v.coreKeyword, vEp);
+                                    }
+                                } else if(vEp > 0 && currentMaxEpOfLatestSeason === 0){
+                                    isTrulyNew = true;
+                                    seriesTrackedMaxEpOfLatestSeason.set(v.coreKeyword, vEp);
+                                }
+                            }
+                            // 若 vSeason < currentMaxSeason（例如已追蹤第 24 季，找到第 20 季），isTrulyNew 保持 false，默默加入列表！
+                        } else {
+                            // 列表中原先完全沒有標示季數，首次發現明確季數
+                            isTrulyNew = true;
+                            seriesTrackedMaxSeason.set(v.coreKeyword, vSeason);
+                            if(vEp > 0) seriesTrackedMaxEpOfLatestSeason.set(v.coreKeyword, vEp);
+                        }
+                    } else if(currentMaxSeason === 0 && vEp > 0){
+                        // 純集數連載影集（無季數，如 第149集）：只要比目前追蹤最新集數高才觸發提醒，低於或相等的默默加入就好！
+                        if(currentMaxEpGlobal > 0){
+                            if(vEp > currentMaxEpGlobal){
+                                isTrulyNew = true;
+                                seriesTrackedMaxEpGlobal.set(v.coreKeyword, vEp);
+                            }
+                        } else {
+                            isTrulyNew = true;
+                            seriesTrackedMaxEpGlobal.set(v.coreKeyword, vEp);
+                        }
+                    }
+
+                    if(isTrulyNew){
+                        unacknowledgedNewIds.add(v.id);
+                        const owner = series.find(s=>s.coreKeyword === v.coreKeyword);
+                        if(owner){
+                            owner.updatedAt = Date.now();
+                        }
+                    }
+                }
+            }
+        });
+
+        newResults=scanCardRows(catalog.filter(v=>unacknowledgedNewIds.has(v.id)));
+        historyResults=scanCardRows(catalog.filter(v=>!unacknowledgedNewIds.has(v.id)));
+        results=[...newResults,...historyResults];
+        lastScan=Date.now();
+        save();
+        renderStats();
+        render();
+
+        if(unacknowledgedNewIds.size){
+            showNewAlertNotice();
+        }else{
+            showNoticeText('已完成全網巡檢，目前皆為最新進度。','success');
+        }
+    }catch(e){
+        showNoticeText('搜尋節點繁忙，請稍後重試','warning');
+    }finally{
+        $('scan').disabled=false;
+        $('scanIcon').classList.remove('spin');
+    }
+}
+
+// 置頂快速鍵 FAB 動態顯示控制
+let lastScrollY = window.scrollY;
+window.addEventListener('scroll', ()=>{
+    const currentY = window.scrollY;
+    const fab = $('scrollTopFab');
+    if(!fab) return;
+
+    if(currentY > 180 && currentY < lastScrollY){
+        fab.classList.add('show');
+    } else {
+        fab.classList.remove('show');
+    }
+    lastScrollY = currentY;
+}, { passive: true });
+
+$('scrollTopFab').onclick = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+// 編輯劇名關鍵字：下拉選取帶入
+$('editSeriesSelect')?.addEventListener('change', (e)=>{
+    const selectedId = e.target.value;
+    const item = series.find(s=>s.id===selectedId);
+    if(item){
+        active = item.id;
+        if($('editCoreKeywordInput')){
+            $('editCoreKeywordInput').style.display = 'inline-block';
+            $('editCoreKeywordInput').disabled = false;
+            $('editCoreKeywordInput').value = item.coreKeyword;
+            $('editCoreKeywordInput').placeholder = '修改此影集的劇名關鍵字...';
+            $('editCoreKeywordInput').focus();
+        }
+        if($('btnSaveAndRescan')) $('btnSaveAndRescan').style.display = 'inline-block';
+        render();
+    } else {
+        if($('editCoreKeywordInput')){
+            $('editCoreKeywordInput').style.display = 'none';
+            $('editCoreKeywordInput').disabled = true;
+            $('editCoreKeywordInput').value = '';
+        }
+        if($('btnSaveAndRescan')) $('btnSaveAndRescan').style.display = 'none';
+    }
+});
+
+// 編輯劇名關鍵字：儲存並重新發起巡檢
+$('btnSaveAndRescan').addEventListener('click', ()=>{
+    const select = $('editSeriesSelect');
+    const selectedId = select.value;
+    const newCore = $('editCoreKeywordInput').value.trim();
+
+    if(!selectedId){
+        alert('請先在下拉選單中選取要編輯的影集！');
+        return;
+    }
+    if(!newCore){
+        alert('劇名關鍵字不能為空！');
+        return;
+    }
+
+    const item = series.find(s=>s.id===selectedId);
+    if(!item) return;
+
+    const oldCore = item.coreKeyword;
+    item.coreKeyword = newCore;
+    item.title = newCore;
+
+    catalog.forEach(v=>{
+        if(v.coreKeyword === oldCore) v.coreKeyword = newCore;
+    });
+
+    save();
+    renderTags();
+    render();
+    showNoticeText(`已更新「${newCore}」，正在立即為您重新巡檢…`, 'progress');
+    scan([item]);
+});
+
+// 全域點擊委派：依序處理刪除此片（黑名單）、標記已看過、卡片跳轉
+document.body.addEventListener('click', (e)=>{
+    // 1. 刪除此片（加入該劇名關鍵字專屬黑名單）
+    const excBtn = e.target.closest('[data-exclude]');
+    if(excBtn){
+        e.stopPropagation();
+        const excId = excBtn.dataset.exclude;
+        const excCore = excBtn.dataset.core || '';
+        const v = catalog.find(item => item.id === excId) || { id: excId, title: '', coreKeyword: excCore };
+        const core = v.coreKeyword || excCore;
+
+        if(!blacklist.some(b => b.id === excId && b.coreKeyword === core)){
+            blacklist.push({
+                id: excId,
+                title: v.title || '未知標題',
+                coreKeyword: core,
+                channel: v.channel || '',
+                thumb: v.thumb || '',
+                addedAt: Date.now()
+            });
+        }
+
+        catalog = catalog.filter(item => !(item.id === excId && item.coreKeyword === core));
+        unacknowledgedNewIds.delete(excId);
+        seen.delete(excId);
+        newResults = newResults.filter(item => !(item.id === excId && item.coreKeyword === core));
+        historyResults = historyResults.filter(item => !(item.id === excId && item.coreKeyword === core));
+        results = results.filter(item => !(item.id === excId && item.coreKeyword === core));
+        save();
+        renderStats();
+        render();
+        refreshNewAlertNotice();
+        renderBlacklistCount();
+        if($('blacklistModal')?.style.display === 'flex') renderBlacklistModal();
+
+        // 手機跟電腦都要彈出提示表示已加入XXXX 劇名關鍵字-黑名單
+        alert(`已加入「${core}」劇名關鍵字 - 黑名單`);
+        showNoticeText(`已加入「${core}」劇名關鍵字 - 黑名單`,'warning');
+        return;
+    }
+
+    // 2. 標記我已看過按鈕
+    const seenBtn = e.target.closest('[data-seen]');
+    if(seenBtn){
+        e.stopPropagation();
+        const idsStr = seenBtn.dataset.seenIds || seenBtn.dataset.seen || '';
+        const ids = idsStr.split(',').map(s=>s.trim()).filter(Boolean);
+        ids.forEach(id => {
+            seen.add(id);
+            unacknowledgedNewIds.delete(id);
+        });
+        newResults = scanCardRows(catalog.filter(v=>unacknowledgedNewIds.has(v.id)));
+        historyResults = scanCardRows(catalog.filter(v=>!unacknowledgedNewIds.has(v.id)));
+        results = [...newResults, ...historyResults];
+        save();
+        renderStats();
+        render();
+        refreshNewAlertNotice();
+        showNoticeText('已標記為看過','success');
+        return;
+    }
+
+    // 3. 點擊卡片跳轉 YouTube（點擊後自動標記為已看過，回來時即更新為已看狀態）
+    const card = e.target.closest('.card[data-video-url]');
+    if(card){
+        const url = card.dataset.videoUrl;
+        const idsStr = card.dataset.videoIds || card.dataset.videoId || '';
+        const ids = idsStr.split(',').map(s=>s.trim()).filter(Boolean);
+        if(ids.length){
+            ids.forEach(id => {
+                seen.add(id);
+                unacknowledgedNewIds.delete(id);
+            });
+            newResults = scanCardRows(catalog.filter(v=>unacknowledgedNewIds.has(v.id)));
+            historyResults = scanCardRows(catalog.filter(v=>!unacknowledgedNewIds.has(v.id)));
+            results = [...newResults, ...historyResults];
+            save();
+            renderStats();
+            render();
+            refreshNewAlertNotice();
+        }
+        if(e.target.closest('a.card-title')){
+            e.preventDefault();
+        }
+        if(url){
+            window.open(url, '_blank', 'noopener,noreferrer');
+        }
+        return;
+    }
+});
+
+// 頂部新片提示關閉事件
+$('newAlertActions')?.addEventListener('click', (e)=>{
+    const btn = e.target.closest('[data-ack-series]');
+    if(btn){
+        e.stopPropagation();
+        acknowledgeSeries(btn.dataset.ackSeries);
+        return;
+    }
+    if(e.target.closest('[data-ack-all]')){
+        e.stopPropagation();
+        acknowledgeAllSeries();
+    }
+});
+
+document.body.addEventListener('pointerover', (e)=>{
+    const card = e.target.closest('.card[data-video-id]');
+    if(!card || card.contains(e.relatedTarget)) return;
+    const id = card.dataset.videoId;
+    clearTimeout(previewTimers.get(id));
+    
+    previewTimers.set(id, setTimeout(()=>{
+        const wrap = card.querySelector('.thumb-wrap');
+        if(!wrap || wrap.querySelector('.preview-frame')) return;
+        const iframe = document.createElement('iframe');
+        iframe.className = 'preview-frame';
+        iframe.src = `https://www.youtube.com/embed/${encodeURIComponent(id)}?autoplay=1&mute=1&controls=0&rel=0&modestbranding=1`;
+        iframe.allow = 'autoplay; encrypted-media';
+        wrap.appendChild(iframe);
+    }, 450));
+});
+
+document.body.addEventListener('pointerout', (e)=>{
+    const card = e.target.closest('.card[data-video-id]');
+    if(!card || card.contains(e.relatedTarget)) return;
+    const id = card.dataset.videoId;
+    clearTimeout(previewTimers.get(id));
+    const wrap = card.querySelector('.thumb-wrap');
+    const iframe = wrap?.querySelector('.preview-frame');
+    if(iframe) iframe.remove();
+});
+
+// 點擊左側影集標籤：切換顯示該影集，高亮並連動下拉選單
+$('trackedTags').onclick=e=>{
+    const remBtn=e.target.closest('[data-remove-id]');
+    if(remBtn){
+        const remId=remBtn.dataset.removeId;
+        const removeIndex=series.findIndex(item=>String(item.id)===String(remId));
+        const removed=removeIndex>=0?series.splice(removeIndex,1)[0]:null;
+        if(removed){
+            const removedIds=new Set(catalog.filter(v=>v.coreKeyword===removed.coreKeyword).map(v=>v.id));
+            catalog=catalog.filter(v=>v.coreKeyword!==removed.coreKeyword);
+            newResults=newResults.filter(v=>v.coreKeyword!==removed.coreKeyword);
+            historyResults=historyResults.filter(v=>v.coreKeyword!==removed.coreKeyword);
+            results=results.filter(v=>v.coreKeyword!==removed.coreKeyword);
+            removedIds.forEach(id=>{seen.delete(id);unacknowledgedNewIds.delete(id);});
+        }
+        if(String(active)===String(remId)) active='all';
+        save();render();showNoticeText('已移除追蹤影集','success');
+        return;
+    }
+    const actBtn=e.target.closest('[data-active]') || e.target.closest('[data-series-item]');
+    const actId=actBtn?.dataset?.active || actBtn?.dataset?.seriesItem;
+    if(actId){
+        active = actId;
+        renderTags();
+        const item=series.find(s=>String(s.id)===String(actId));
+        if(item){
+            if($('editSeriesSelect')) $('editSeriesSelect').value=item.id;
+            if($('editCoreKeywordInput')){
+                $('editCoreKeywordInput').style.display='inline-block';
+                $('editCoreKeywordInput').disabled=false;
+                $('editCoreKeywordInput').value=item.coreKeyword;
+                $('editCoreKeywordInput').placeholder='修改此影集的劇名關鍵字...';
+            }
+            if($('btnSaveAndRescan')) $('btnSaveAndRescan').style.display='inline-block';
+        }
+        const anchorId = seriesAnchor(item || { id: actId });
+        let node = document.getElementById(anchorId) || document.querySelector(`[data-series-group="${actId}"]`);
+        if(!node && $('viewMode') && $('viewMode').value !== 'all'){
+            $('viewMode').value = 'all';
+            render();
+            node = document.getElementById(anchorId) || document.querySelector(`[data-series-group="${actId}"]`);
+        }
+        if(node){
+            const rect = node.getBoundingClientRect();
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const targetY = Math.max(0, scrollTop + rect.top - 76);
+            window.scrollTo({ top: targetY, behavior: 'smooth' });
+            node.classList.remove('jump-flash');
+            void node.offsetWidth;
+            node.classList.add('jump-flash');
+            setTimeout(() => node.classList.remove('jump-flash'), 1800);
+        }
+    }
+};
+
+// 點擊右側卡片區標題跳轉與空群組重新巡檢
+$('historyResults')?.addEventListener('click', e => {
+    const jumpBtn = e.target.closest('[data-jump]');
+    if (jumpBtn) {
+        const id = jumpBtn.dataset.jump;
+        const node = document.getElementById(id);
+        if (node) {
+            const rect = node.getBoundingClientRect();
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const targetY = Math.max(0, scrollTop + rect.top - 76);
+            window.scrollTo({ top: targetY, behavior: 'smooth' });
+        }
+    }
+    const rescanBtn = e.target.closest('[data-rescan-series]');
+    if (rescanBtn) {
+        const sId = rescanBtn.dataset.rescanSeries;
+        const targetItem = series.find(s => String(s.id) === String(sId));
+        if (targetItem) scan([targetItem]);
+    }
+});
+
+// 解析並加入追蹤按鈕動態狀態：輸入框未輸入時隱藏/停用
+function updateParseButtonState(){
+    const val = ($('sourceInput')?.value || '').trim();
+    const btn = $('parse');
+    if(!btn) return;
+    if(val){
+        btn.disabled = false;
+        btn.style.display = 'inline-flex';
+    } else {
+        btn.disabled = true;
+        btn.style.display = 'none';
+    }
+}
+$('sourceInput')?.addEventListener('input', updateParseButtonState);
+
+// 按鈕事件綁定
+$('parse').onclick=prepare;
+$('sourceInput').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();prepare();}};
+$('confirmAdd').onclick=addSeries;
+$('coreInput').addEventListener('input',updateCorePrompt);
+$('cancelPreview').onclick=hidePreview;
+$('scan').onclick=()=>scan();
+$('viewMode').onchange=render;
+$('dedupe').onchange=render;
+$('trackSearch').oninput=renderTags;
+$('language')?.addEventListener('change', updateCorePrompt);
+
+// 黑名單彈窗開啟與關閉
+function openBlacklistModal(){
+    renderBlacklistModal();
+    const modal = $('blacklistModal');
+    if(modal) modal.style.display = 'flex';
+}
+function closeBlacklistModal(){
+    const modal = $('blacklistModal');
+    if(modal) modal.style.display = 'none';
+}
+$('btnOpenBlacklistModal')?.addEventListener('click', openBlacklistModal);
+$('btnCloseBlacklistModal')?.addEventListener('click', closeBlacklistModal);
+$('btnCloseBlacklistModalBottom')?.addEventListener('click', closeBlacklistModal);
+$('blacklistModal')?.addEventListener('click', e => {
+    if(e.target === $('blacklistModal')){
+        closeBlacklistModal();
+    }
+});
+
+// 在黑名單彈窗內刪除指定黑名單項目
+$('blacklistModalBody')?.addEventListener('click', e => {
+    const btn = e.target.closest('[data-del-blacklist-id]');
+    if(!btn) return;
+    const id = btn.dataset.delBlacklistId;
+    const core = btn.dataset.delBlacklistCore;
+    const idx = blacklist.findIndex(b => b.id === id && b.coreKeyword === core);
+    if(idx >= 0){
+        const removed = blacklist.splice(idx, 1)[0];
+        save();
+        renderBlacklistModal();
+        alert(`已將「${removed.title || removed.id}」從「${core}」劇名關鍵字黑名單中移除！下次巡檢可正常搜尋到。`);
+        showNoticeText(`已自「${core}」黑名單中移除，下次巡檢將可正常檢索。`, 'success');
+    }
+});
+
+$('sidebarClear').onclick=()=>{
+    if(confirm('確定要清空所有追蹤清單嗎？')){
+        series=[];catalog=[];unacknowledgedNewIds.clear();seen.clear();
+        active='all';save();render();showNoticeText('已清空所有追蹤清單','success');
+    }
+};
+
+load();
+render();
+updateParseButtonState();
+if(unacknowledgedNewIds.size > 0){
+    showNewAlertNotice();
+}
+// 網頁重新整理時自動發起全網巡檢，自動搜索最新續集
+if(series.length > 0){
+    scan();
+}
+})();
+</script>
+</body>
+</html>
