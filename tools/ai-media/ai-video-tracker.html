@@ -901,7 +901,7 @@ function tokenize(value){
     return String(value||'').toLowerCase().match(/[\p{Script=Han}]{2,}|[a-z0-9]{2,}/giu)||[];
 }
 
-// 劇名精準匹配：標題包含完整劇名或關鍵主副標即認定屬於該劇，排除集數/季數/畫質等干擾詞
+// 劇名精準匹配（90% 高相關度），片名不符即使同頻道也絕對不誤串
 function resultMatches(v, core){
     if(isBlacklisted(v.id, core)) return false;
     if(v.id && pending && v.id === pending.id) return true;
@@ -914,31 +914,27 @@ function resultMatches(v, core){
     // 1. 標題完全包含劇名關鍵字（100% 吻合）
     if(titleClean.includes(needleClean)) return true;
 
-    // 2. 複合劇名（包含空格、冒號或破折號的主副標題，例如「莞城往事 我的房東叫紅姐」或「末世躺贏指南 到末世十年後」）
+    // 2. 複合劇名（包含空格、冒號或破折號的主副標題，例如「莞城往事 八十五块闯出亿万身家」）：標題必須同時包含所有子段落
     const parts = core.split(/[\s:：_—–-]+/).map(p => normalizeMatch(p)).filter(p => p.length >= 2);
     if(parts.length >= 2){
-        // 若標題包含全部子段落
         if(parts.every(p => titleClean.includes(p))) return true;
-        // 若標題包含主要長段落（長度 >= 3 且非通用泛詞，例如「莞城往事」、「我的房東叫紅姐」）
-        const matchedPart = parts.find(p => p.length >= 3 && !isGenericSeriesTerm(p) && titleClean.includes(p));
-        if(matchedPart) return true;
     }
 
-    // 3. 詞元比對（排除修飾語與通用詞後，覆蓋率 >= 80%）
+    // 3. 詞元比對（排除修飾語與通用詞後，覆蓋率嚴格 >= 90%）
     const coreTokens = tokenize(needleClean).filter(t => t.length >= 2 && !isGenericSeriesTerm(t));
     if(coreTokens.length >= 2){
         const hits = coreTokens.filter(t => titleClean.includes(t)).length;
-        if(hits / coreTokens.length >= 0.80) return true;
+        if(hits / coreTokens.length >= 0.90) return true;
     }
 
-    // 4. 字元比對（去噪後匹配度 >= 85%）
+    // 4. 字元比對（去噪後匹配度嚴格 >= 90%）
     const coreChars = [...needleClean];
     if(coreChars.length >= 3){
         let matched = 0;
         for(const ch of coreChars){
             if(titleClean.includes(ch)) matched++;
         }
-        if(matched / coreChars.length >= 0.85) return true;
+        if(matched / coreChars.length >= 0.90) return true;
     }
     return false;
 }
@@ -1142,7 +1138,8 @@ async function searchSeriesTwoStages(s, onProgress=()=>{}){
     onProgress(`第一階段：純核心片名檢索 (${core})`);
     const stage1Queries=[...coreVariants];
     if(segments.length >= 2){
-        segments.forEach(seg => {
+        const specificSegments = segments.filter(seg => seg.length >= 6);
+        specificSegments.forEach(seg => {
             const segTrad = seg.replaceAll('汉','漢').replaceAll('剧','劇').replaceAll('门','門').replaceAll('国','國').replaceAll('后','後');
             const segSimp = seg.replaceAll('漢','汉').replaceAll('劇','剧').replaceAll('門','门').replaceAll('國','国').replaceAll('後','后');
             stage1Queries.push(seg, segTrad, segSimp);
@@ -1193,14 +1190,6 @@ async function searchSeriesTwoStages(s, onProgress=()=>{}){
                 `${core} Temporada ${n}`,
                 `${core} Mùa ${n}`
             );
-            if(segments.length >= 2){
-                probeQueries.push(
-                    `${segments[0]} 第${n}季`,
-                    `${segments[0]} 第${cn}季`,
-                    `${segments[0]} S${n}`,
-                    `${segments[0]} Season ${n}`
-                );
-            }
         });
     }
     if(episodesToProbe.length>0){
@@ -1213,13 +1202,6 @@ async function searchSeriesTwoStages(s, onProgress=()=>{}){
                 `${core} ${n}集`,
                 `${core} Tập ${n}`
             );
-            if(segments.length >= 2){
-                probeQueries.push(
-                    `${segments[0]} 第${n}集`,
-                    `${segments[0]} 第${cn}集`,
-                    `${segments[0]} EP${n}`
-                );
-            }
         });
     }
 
